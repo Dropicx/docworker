@@ -1,0 +1,142 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+  
+  body {
+    @apply bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen antialiased;
+  }
+  
+  * {
+    @apply selection:bg-medical-200 selection:text-medical-800;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-medical-600 hover:bg-medical-700 text-white font-medium py-3 px-6 rounded-lg 
+           transition-all duration-200 shadow-md hover:shadow-lg disabled:opacity-50 
+           disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-medical-500 
+           focus:ring-offset-2;
+  }
+  
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-gray-700 font-medium py-3 px-6 rounded-lg 
+           border border-gray-300 transition-all duration-200 shadow-sm hover:shadow-md 
+           disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 
+           focus:ring-gray-500 focus:ring-offset-2;
+  }
+  
+  .card {
+    @apply bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden;
+  }
+  
+  .card-body {
+    @apply p-6;
+  }
+  
+  .progress-bar {
+    @apply w-full bg-gray-200 rounded-full h-2 overflow-hidden;
+  }
+  
+  .progress-fill {
+    @apply h-full bg-gradient-to-r from-medical-500 to-medical-600 
+           transition-all duration-300 ease-out;
+  }
+  
+  .upload-area {
+    @apply border-2 border-dashed border-gray-300 rounded-xl p-8 text-center 
+           transition-all duration-200 hover:border-medical-400 hover:bg-medical-50/50
+           focus-within:border-medical-500 focus-within:ring-2 focus-within:ring-medical-200;
+  }
+  
+  .upload-area.dragover {
+    @apply border-medical-500 bg-medical-50 scale-105;
+  }
+  
+  .text-result {
+    @apply bg-gray-50 border border-gray-200 rounded-lg p-4 text-sm 
+           font-mono leading-relaxed max-h-96 overflow-y-auto;
+  }
+  
+  .status-badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-medium;
+  }
+  
+  .status-pending {
+    @apply bg-warning-100 text-warning-800;
+  }
+  
+  .status-processing {
+    @apply bg-medical-100 text-medical-800 animate-pulse-soft;
+  }
+  
+  .status-completed {
+    @apply bg-success-100 text-success-800;
+  }
+  
+  .status-error {
+    @apply bg-error-100 text-error-800;
+  }
+  
+  .loading-spinner {
+    @apply inline-block w-5 h-5 border-2 border-current border-t-transparent 
+           rounded-full animate-spin;
+  }
+  
+  .floating-tooltip {
+    @apply absolute z-50 px-3 py-2 text-xs font-medium text-white 
+           bg-gray-900 rounded-md shadow-lg opacity-0 invisible 
+           transition-all duration-200 pointer-events-none;
+  }
+  
+  .medical-gradient {
+    @apply bg-gradient-to-r from-medical-600 to-medical-700;
+  }
+  
+  .glass-effect {
+    @apply backdrop-blur-md bg-white/80 border border-white/20;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+  
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
+  }
+  
+  .animate-slide-up {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8;
+  }
+} 
