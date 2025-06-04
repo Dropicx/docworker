@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Stethoscope, Shield, Clock, AlertTriangle, Sparkles, FileText, Zap } from 'lucide-react';
+import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
@@ -115,7 +115,7 @@ function App() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-primary-900 tracking-tight">
-                  DocTranslator
+                  HealthLingo
                 </h1>
                 <p className="text-sm text-primary-600 font-medium">
                   Medizinische Dokumente verstehen
@@ -125,10 +125,6 @@ function App() {
             
             <div className="flex items-center space-x-6">
               {renderHealthIndicator()}
-              <div className="flex items-center space-x-2 text-xs text-primary-500 bg-primary-50 px-3 py-1.5 rounded-full">
-                <Clock className="w-3 h-3" />
-                <span>{new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>
-              </div>
             </div>
           </div>
         </div>
@@ -307,12 +303,12 @@ function App() {
                 <Stethoscope className="w-5 h-5 text-white" />
               </div>
               <span className="text-lg font-bold text-primary-900">
-                DocTranslator
+                HealthLingo
               </span>
             </div>
             
             <div className="flex justify-center space-x-8 text-sm text-primary-600">
-              <span>© 2024 DocTranslator</span>
+              <span>© 2025 HealthLingo</span>
               <span>•</span>
               <span>DSGVO-konform</span>
               <span>•</span>
