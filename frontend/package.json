@@ -47,5 +47,9 @@
     "postcss": "^8.4.32",
     "@tailwindcss/forms": "^0.5.7"
   },
-  "proxy": "http://localhost:8000"
+  "overrides": {
+    "ajv": "^8.12.0",
+    "ajv-keywords": "^5.1.0"
+  },
+  "proxy": "http://localhost:9122"
 } 

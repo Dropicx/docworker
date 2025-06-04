@@ -1,5 +1,5 @@
 # Multi-stage build for React app
-FROM node:18-slim as build
+FROM node:16-slim as build
 
 # Set working directory
 WORKDIR /app
@@ -14,9 +14,10 @@ RUN apt-get update && apt-get install -y \
 # Copy package files
 COPY package*.json ./
 
-# Clear npm cache and install dependencies
+# Clear npm cache and install dependencies with fix for ajv issue
 RUN npm cache clean --force && \
-    npm install --legacy-peer-deps
+    rm -rf node_modules package-lock.json && \
+    npm install --legacy-peer-deps --force
 
 # Copy source code
 COPY . .
