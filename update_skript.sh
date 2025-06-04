@@ -12,6 +12,7 @@
 USERNAME="${GIT_USERNAME}"
 TOKEN="${GIT_TOKEN}"
 REPO_URL="https://github.com/Dropicx/doctranslator"
+BRANCH="${1:-main}"  # Standard Branch ist 'main', kann als Parameter übergeben werden
 
 # Farben für Output
 RED='\033[0;31m'
@@ -28,7 +29,17 @@ if [ -z "$GIT_USERNAME" ] || [ -z "$GIT_TOKEN" ]; then
     exit 1
 fi
 
-echo -e "${YELLOW}Starting deployment process...${NC}"
+echo -e "${YELLOW}Starting deployment process for branch: ${BRANCH}${NC}"
+
+# Branch Selection - falls interaktive Auswahl gewünscht
+if [ "$1" = "--interactive" ] || [ "$1" = "-i" ]; then
+    echo -e "${YELLOW}Available branches:${NC}"
+    git branch -r --format="%(refname:short)" | grep -v HEAD | sed 's/origin\///'
+    echo ""
+    read -p "Enter branch name (default: main): " INPUT_BRANCH
+    BRANCH="${INPUT_BRANCH:-main}"
+    echo -e "${GREEN}Selected branch: ${BRANCH}${NC}"
+fi
 
 # Docker Compose Down
 echo -e "${YELLOW}Stopping existing containers...${NC}"
@@ -41,8 +52,9 @@ else
 fi
 
 # Git Pull mit Token
-echo -e "${YELLOW}Pulling latest changes from Git...${NC}"
-sudo git pull https://${USERNAME}:${TOKEN}@${REPO_URL#https://}
+echo -e "${YELLOW}Switching to branch ${BRANCH} and pulling latest changes...${NC}"
+git checkout ${BRANCH}
+git pull https://${USERNAME}:${TOKEN}@${REPO_URL#https://} ${BRANCH}
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Git pull successful${NC}"
