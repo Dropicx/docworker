@@ -113,6 +113,12 @@ class SupportedLanguage(str, Enum):
     UMBUNDU = "umb"
     URDU = "ur"
     UZBEK = "uz"
+    VIETNAMESE = "vi"
+    WELSH = "cy"
+    WOLOF = "wo"
+    XHOSA = "xh"
+    YORUBA = "yo"
+    ZULU = "zu"
 
 # Sprachname-Mapping für die UI
 LANGUAGE_NAMES = {
