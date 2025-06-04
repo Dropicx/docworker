@@ -255,18 +255,7 @@ function App() {
                 </div>
               </div>
 
-              {/* Trust Indicators */}
-              <div className="glass-card p-8 text-center">
-                <p className="text-sm text-primary-600 mb-4 font-medium">
-                  Vertraut von Patienten und medizinischen Einrichtungen
-                </p>
-                <div className="flex justify-center items-center space-x-8 opacity-60">
-                  <div className="h-8 w-24 bg-gradient-to-r from-primary-200 to-primary-300 rounded-lg"></div>
-                  <div className="h-8 w-20 bg-gradient-to-r from-brand-200 to-brand-300 rounded-lg"></div>
-                  <div className="h-8 w-28 bg-gradient-to-r from-accent-200 to-accent-300 rounded-lg"></div>
-                  <div className="h-8 w-22 bg-gradient-to-r from-primary-200 to-primary-300 rounded-lg"></div>
-                </div>
-              </div>
+
             </div>
           )}
 

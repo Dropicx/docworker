@@ -20,6 +20,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [showCamera, setShowCamera] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [cameraStream, setCameraStream] = useState<MediaStream | null>(null);
 
   const handleFileUpload = useCallback(async (file: File) => {
@@ -207,7 +208,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         {...getRootProps()}
         className={`upload-area ${isDragActive ? 'dragover' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${isUploading ? 'pointer-events-none' : ''}`}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} ref={fileInputRef} />
         
         <div className="space-y-6">
           <div className="flex justify-center">
@@ -241,7 +242,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               <p className="text-primary-600 text-lg leading-relaxed max-w-md mx-auto">
                 {isDragActive 
                   ? 'Lassen Sie die Datei los, um sie hochzuladen'
-                  : 'Ziehen Sie eine Datei hierher oder klicken Sie zum Auswählen'
+                  : 'Ziehen Sie eine Datei hierher, klicken Sie zum Auswählen oder nutzen Sie die Kamera'
                 }
               </p>
             )}
@@ -267,22 +268,30 @@ const FileUpload: React.FC<FileUploadProps> = ({
               </div>
             </div>
           )}
+
+          {/* Integrated Action Buttons */}
+          {!isUploading && (
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="btn-secondary group flex-1 max-w-xs"
+                disabled={disabled}
+              >
+                <Upload className="w-5 h-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                <span>Datei auswählen</span>
+              </button>
+              <button
+                onClick={startCamera}
+                className="btn-secondary group flex-1 max-w-xs"
+                disabled={disabled}
+              >
+                <Camera className="w-5 h-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
+                <span>Kamera nutzen</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Camera Button */}
-      {!isUploading && (
-        <div className="flex justify-center">
-          <button
-            onClick={startCamera}
-            className="btn-secondary group"
-            disabled={disabled}
-          >
-            <Camera className="w-5 h-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
-            <span>Mit Kamera fotografieren</span>
-          </button>
-        </div>
-      )}
 
       {/* Validation Error */}
       {validationError && (
