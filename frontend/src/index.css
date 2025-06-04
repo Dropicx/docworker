@@ -168,7 +168,7 @@
   
   /* Feature Grid */
   .feature-card {
-    @apply group relative overflow-hidden bg-white rounded-2xl p-8 shadow-soft 
+    @apply relative overflow-hidden bg-white rounded-2xl p-8 shadow-soft 
            border border-primary-100/50 transition-all duration-300
            hover:shadow-medium hover:-translate-y-1 hover:border-brand-200;
   }
