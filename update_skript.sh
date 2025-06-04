@@ -56,6 +56,7 @@ echo -e "${YELLOW}Switching to branch ${BRANCH} and pulling latest changes...${N
 sudo git checkout ${BRANCH}
 sudo git pull https://${USERNAME}:${TOKEN}@${REPO_URL#https://} ${BRANCH}
 
+
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Git pull successful${NC}"
 else
