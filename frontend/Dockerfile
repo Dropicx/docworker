@@ -1,5 +1,5 @@
 # Multi-stage build for React app
-FROM node:16-slim as build
+FROM node:18-slim as build
 
 # Set working directory
 WORKDIR /app
@@ -17,7 +17,8 @@ COPY package*.json ./
 # Clear npm cache and install dependencies with fix for ajv issue
 RUN npm cache clean --force && \
     rm -rf node_modules package-lock.json && \
-    npm install --legacy-peer-deps --force
+    npm install --legacy-peer-deps && \
+    npm ls ajv ajv-keywords || true
 
 # Copy source code
 COPY . .
