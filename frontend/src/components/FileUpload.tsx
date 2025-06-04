@@ -58,7 +58,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
       'application/pdf': ['.pdf'],
       'image/jpeg': ['.jpg', '.jpeg'],
       'image/png': ['.png']
-    }
+    },
+    noClick: false,
+    noKeyboard: false
   });
 
 
@@ -75,11 +77,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
 
 
+  const handleClick = () => {
+    if (fileInputRef.current && !disabled && !isUploading) {
+      fileInputRef.current.click();
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Upload Area */}
       <div
         {...getRootProps()}
+        onClick={handleClick}
         className={`upload-area ${isDragActive ? 'dragover' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${isUploading ? 'pointer-events-none' : ''}`}
       >
         <input {...getInputProps()} ref={fileInputRef} />
