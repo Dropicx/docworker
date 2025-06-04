@@ -60,3 +60,7 @@ services:
 networks:
   medical-translator:
     external: false
+  proxy:
+    external: true
+  ollama:
+    external: true
