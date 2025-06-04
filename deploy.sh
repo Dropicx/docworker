@@ -58,9 +58,8 @@ else
     log_warn "⚠️ Backend-Gesundheitscheck fehlgeschlagen"
 fi
 
-# 8. Installiere Ollama-Modell
-log_info "Installiere Ollama-Modell (das kann einige Minuten dauern)..."
-docker-compose exec -d ollama ollama pull mistral:7b
+# 8. Überspringe Ollama-Modell Installation (entfernt)
+log_info "Ollama-Integration wurde entfernt"
 
 # 9. Zeige finale Informationen
 echo ""
