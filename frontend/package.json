@@ -48,18 +48,8 @@
     "@tailwindcss/forms": "^0.5.7"
   },
   "overrides": {
-    "ajv": "6.12.6",
-    "ajv-keywords": "3.5.2",
-    "schema-utils": "3.3.0",
-    "terser-webpack-plugin": "5.3.10",
-    "fork-ts-checker-webpack-plugin": "6.5.3"
-  },
-  "resolutions": {
-    "ajv": "6.12.6", 
-    "ajv-keywords": "3.5.2",
-    "schema-utils": "3.3.0",
-    "terser-webpack-plugin": "5.3.10",
-    "fork-ts-checker-webpack-plugin": "6.5.3"
+    "ajv": "^6.12.6",
+    "ajv-keywords": "^3.5.2"
   },
   "proxy": "http://localhost:9122"
 } 

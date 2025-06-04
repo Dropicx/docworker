@@ -1,25 +1,22 @@
-# Multi-stage build for React app
-FROM node:18-slim as build
+# Multi-stage build for React app  
+FROM node:16-alpine as build
 
 # Set working directory
 WORKDIR /app
 
-# Install necessary system dependencies
-RUN apt-get update && apt-get install -y \
+# Install necessary system dependencies  
+RUN apk add --no-cache \
     python3 \
     make \
-    g++ \
-    && rm -rf /var/lib/apt/lists/*
+    g++
 
 # Copy package files
 COPY package*.json ./
 
-# Clear npm cache and install dependencies with fix for ajv issue
+# Clear npm cache and install dependencies
 RUN npm cache clean --force && \
     rm -rf node_modules package-lock.json && \
-    npm install --legacy-peer-deps && \
-    npm install ajv@6.12.6 ajv-keywords@3.5.2 --save-dev --legacy-peer-deps && \
-    npm ls ajv ajv-keywords || true
+    npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
