@@ -34,7 +34,7 @@ echo -e "${YELLOW}Starting deployment process for branch: ${BRANCH}${NC}"
 # Branch Selection - falls interaktive Auswahl gewünscht
 if [ "$1" = "--interactive" ] || [ "$1" = "-i" ]; then
     echo -e "${YELLOW}Available branches:${NC}"
-    git branch -r --format="%(refname:short)" | grep -v HEAD | sed 's/origin\///'
+    sudo git branch -r --format="%(refname:short)" | grep -v HEAD | sed 's/origin\///'
     echo ""
     read -p "Enter branch name (default: main): " INPUT_BRANCH
     BRANCH="${INPUT_BRANCH:-main}"
@@ -53,8 +53,9 @@ fi
 
 # Git Pull mit Token
 echo -e "${YELLOW}Switching to branch ${BRANCH} and pulling latest changes...${NC}"
-git checkout ${BRANCH}
-git pull https://${USERNAME}:${TOKEN}@${REPO_URL#https://} ${BRANCH}
+sudo git checkout ${BRANCH}
+sudo git pull https://${USERNAME}:${TOKEN}@${REPO_URL#https://} ${BRANCH}
+
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Git pull successful${NC}"
