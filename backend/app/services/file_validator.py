@@ -26,20 +26,27 @@ class FileValidator:
             Tuple[bool, Optional[str]]: (is_valid, error_message)
         """
         try:
+            print(f"📋 FileValidator: Validiere {file.filename}")
+            
             # Dateiinhalt lesen
             content = await file.read()
             await file.seek(0)  # Zurück zum Anfang
             
             # Größenvalidierung
             file_size = len(content)
+            print(f"📋 FileValidator: Dateigröße {file_size} bytes")
+            
             if file_size < MIN_FILE_SIZE:
+                print(f"❌ FileValidator: Datei zu klein ({file_size} < {MIN_FILE_SIZE})")
                 return False, f"Datei zu klein. Mindestgröße: {MIN_FILE_SIZE} Bytes"
             
             if file_size > MAX_FILE_SIZE:
+                print(f"❌ FileValidator: Datei zu groß ({file_size} > {MAX_FILE_SIZE})")
                 return False, f"Datei zu groß. Maximalgröße: {MAX_FILE_SIZE // 1024 // 1024}MB"
             
             # MIME-Type über magic bestimmen
             detected_mime = magic.from_buffer(content, mime=True)
+            print(f"📋 FileValidator: Erkannter MIME-Type: {detected_mime}")
             
             # Dateiendung prüfen
             filename_lower = file.filename.lower() if file.filename else ""
@@ -47,11 +54,13 @@ class FileValidator:
             
             # MIME-Type validieren
             if detected_mime not in ALLOWED_MIME_TYPES:
+                print(f"❌ FileValidator: MIME-Type nicht erlaubt: {detected_mime}, Erlaubt: {list(ALLOWED_MIME_TYPES.keys())}")
                 return False, f"Dateityp nicht erlaubt: {detected_mime}"
             
             # Endung gegen MIME-Type prüfen
             allowed_extensions = ALLOWED_MIME_TYPES[detected_mime]
             if file_extension not in allowed_extensions:
+                print(f"❌ FileValidator: Dateiendung '{file_extension}' passt nicht zu MIME-Type '{detected_mime}'. Erlaubt: {allowed_extensions}")
                 return False, f"Dateiendung '{file_extension}' passt nicht zum Dateityp '{detected_mime}'"
             
             # Spezifische Validierung nach Dateityp
@@ -65,9 +74,11 @@ class FileValidator:
                 if not is_valid:
                     return False, error
             
+            print(f"✅ FileValidator: Datei {file.filename} erfolgreich validiert")
             return True, None
             
         except Exception as e:
+            print(f"❌ FileValidator: Exception bei Validierung: {str(e)}")
             return False, f"Fehler bei der Dateivalidierung: {str(e)}"
     
     @staticmethod

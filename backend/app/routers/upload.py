@@ -32,16 +32,21 @@ async def upload_document(
     """
     
     try:
+        print(f"🔍 Upload-Request erhalten: {file.filename}, Content-Type: {file.content_type}, Size: {file.size if hasattr(file, 'size') else 'unknown'}")
+        
         # Grundlegende Validierung
         if not file.filename:
+            print(f"❌ Dateiname fehlt!")
             raise HTTPException(
                 status_code=400,
                 detail="Dateiname fehlt"
             )
         
         # Dateivalidierung
+        print(f"🔍 Validiere Datei: {file.filename}")
         is_valid, error_message = await FileValidator.validate_file(file)
         if not is_valid:
+            print(f"❌ Dateivalidierung fehlgeschlagen: {error_message}")
             raise HTTPException(
                 status_code=400,
                 detail=f"Dateivalidierung fehlgeschlagen: {error_message}"
