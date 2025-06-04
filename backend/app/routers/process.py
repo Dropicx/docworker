@@ -305,7 +305,7 @@ async def get_available_models():
         return {
             "connected": connection_status,
             "models": models,
-            "recommended": "llama3.2:latest" if "llama3.2:latest" in models else models[0] if models else None,
+            "recommended": "mistral-nemo:latest" if "mistral-nemo:latest" in models else models[0] if models else None,
             "timestamp": datetime.now()
         }
         

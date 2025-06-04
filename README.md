@@ -153,11 +153,12 @@ Nach dem ersten Start müssen Sie die gewünschten Sprachmodelle herunterladen:
 # Ins Ollama-Container verbinden
 docker-compose exec ollama bash
 
-# Modell herunterladen (Beispiel: Llama2 für Deutsch)
-ollama pull llama2:7b
+# Standard-Modell für medizinische Übersetzungen
+ollama pull mistral-nemo:latest
 
-# Oder ein spezielles medizinisches Modell
-ollama pull meditron
+# Zusätzliche empfohlene Modelle
+ollama pull llama3.2:latest
+ollama pull meditron:7b
 ```
 
 ### Logs und Monitoring
@@ -194,7 +195,7 @@ docker-compose logs -f backend
 3. **Ollama-Modelle nicht verfügbar**:
    ```bash
    docker-compose exec ollama ollama list
-   docker-compose exec ollama ollama pull llama2:7b
+   docker-compose exec ollama ollama pull mistral-nemo:latest
    ```
 
 ### Performance-Optimierung

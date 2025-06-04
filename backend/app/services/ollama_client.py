@@ -43,7 +43,7 @@ class OllamaClient:
         self, 
         text: str, 
         document_type: str = "general",
-        model: str = "llama3.2:latest"
+        model: str = "mistral-nemo:latest"
     ) -> tuple[str, str, float]:
         """
         Übersetzt medizinischen Text in einfache Sprache
@@ -176,10 +176,10 @@ EINFACHE ÜBERSETZUNG:"""
                 print(f"⚠️ Modell {model} nicht verfügbar, verwende Fallback...")
                 available_models = await self.list_models()
                 
-                # Fallback-Logik: Bevorzuge Llama-Modelle, dann andere
+                # Fallback-Logik: Bevorzuge Mistral-Nemo, dann andere
                 fallback_models = [
-                    "llama3.2:latest", "llama3.1", "mistral:7b", 
-                    "deepseek-r1:7b", "gemma3:27b"
+                    "mistral-nemo:latest", "llama3.2:latest", "llama3.1", 
+                    "mistral:7b", "deepseek-r1:7b", "gemma3:27b"
                 ]
                 
                 for fallback in fallback_models:
@@ -269,7 +269,7 @@ EINFACHE ÜBERSETZUNG:"""
     async def generate_streaming(
         self, 
         prompt: str, 
-        model: str = "llama3.2:latest"
+        model: str = "mistral-nemo:latest"
     ) -> AsyncGenerator[str, None]:
         """Streaming-Generation für Live-Updates"""
         try:
