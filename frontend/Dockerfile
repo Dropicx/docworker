@@ -1,14 +1,22 @@
 # Multi-stage build for React app
-FROM node:18-alpine as build
+FROM node:18-slim as build
 
 # Set working directory
 WORKDIR /app
 
+# Install necessary system dependencies
+RUN apt-get update && apt-get install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Clear npm cache and install dependencies
+RUN npm cache clean --force && \
+    npm install --legacy-peer-deps
 
 # Copy source code
 COPY . .
