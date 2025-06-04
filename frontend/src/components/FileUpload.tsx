@@ -143,19 +143,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             </div>
           )}
 
-          {/* Integrated Action Buttons */}
-          {!isUploading && (
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="btn-secondary group max-w-xs"
-                disabled={disabled}
-              >
-                <Upload className="w-5 h-5 mr-2 transition-transform duration-200 group-hover:scale-110" />
-                <span>Datei auswählen</span>
-              </button>
-            </div>
-          )}
+
         </div>
       </div>
 
