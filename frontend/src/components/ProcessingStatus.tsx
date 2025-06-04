@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CheckCircle, AlertCircle, Loader, RefreshCw, X } from 'lucide-react';
+import { Clock, CheckCircle, AlertCircle, Loader, RefreshCw, X, Sparkles, Zap, FileCheck } from 'lucide-react';
 import ApiService from '../services/api';
 import { ProcessingProgress, ProcessingStatus as Status } from '../types/api';
 
@@ -30,7 +30,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
         
         if (statusResponse.status === 'completed') {
           setIsPolling(false);
-          setTimeout(onComplete, 1000); // Kurze Verzögerung für UX
+          setTimeout(onComplete, 1500); // Etwas längere Verzögerung für bessere UX
         } else if (statusResponse.status === 'error') {
           setIsPolling(false);
           setError(statusResponse.error || 'Unbekannter Fehler');
@@ -74,34 +74,44 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
       case 'processing':
       case 'extracting_text':
       case 'translating':
-        return <Loader className="w-5 h-5 text-medical-600 animate-spin" />;
+        return <Loader className="w-5 h-5 text-brand-600 animate-spin" />;
       case 'completed':
         return <CheckCircle className="w-5 h-5 text-success-600" />;
       case 'error':
         return <AlertCircle className="w-5 h-5 text-error-600" />;
       default:
-        return <RefreshCw className="w-5 h-5 text-gray-600" />;
+        return <RefreshCw className="w-5 h-5 text-primary-600" />;
     }
   };
 
   const getProgressColor = (status: Status) => {
     switch (status) {
       case 'completed':
-        return 'from-success-500 to-success-600';
+        return 'from-success-500 via-success-600 to-success-700';
       case 'error':
-        return 'from-error-500 to-error-600';
+        return 'from-error-500 via-error-600 to-error-700';
       default:
-        return 'from-medical-500 to-medical-600';
+        return 'from-brand-500 via-brand-600 to-accent-600';
     }
   };
 
   if (!status) {
     return (
-      <div className="card animate-slide-up">
+      <div className="card-elevated animate-scale-in">
         <div className="card-body">
-          <div className="flex items-center justify-center py-8">
-            <Loader className="w-8 h-8 text-medical-600 animate-spin mr-3" />
-            <span className="text-gray-600">Status wird geladen...</span>
+          <div className="flex flex-col items-center justify-center py-12 space-y-4">
+            <div className="relative">
+              <div className="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center animate-pulse-soft">
+                <Loader className="w-8 h-8 text-white animate-spin" />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center animate-pulse-soft">
+                <div className="w-2 h-2 bg-white rounded-full"></div>
+              </div>
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-semibold text-primary-900 mb-1">Status wird geladen</h3>
+              <p className="text-primary-600 text-sm">Verbindung zum Verarbeitungsserver...</p>
+            </div>
           </div>
         </div>
       </div>
@@ -109,18 +119,33 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
   }
 
   return (
-    <div className="card animate-slide-up">
+    <div className="card-elevated animate-scale-in">
       <div className="card-body">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">
-            Verarbeitungsfortschritt
-          </h3>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center space-x-3">
+            <div className="w-12 h-12 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center">
+              {status.status === 'completed' ? (
+                <Sparkles className="w-6 h-6 text-white" />
+              ) : (
+                <Zap className="w-6 h-6 text-white" />
+              )}
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-primary-900">
+                KI-Verarbeitung
+              </h3>
+              <p className="text-sm text-primary-600">
+                Ihr Dokument wird analysiert und übersetzt
+              </p>
+            </div>
+          </div>
           
           {(status.status === 'pending' || status.status === 'processing' || 
             status.status === 'extracting_text' || status.status === 'translating') && onCancel && (
             <button
               onClick={handleCancel}
-              className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+              className="p-2 text-primary-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200"
               title="Verarbeitung abbrechen"
             >
               <X className="w-5 h-5" />
@@ -128,104 +153,169 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
           )}
         </div>
 
-        {/* Status Badge */}
-        <div className="flex items-center mb-4">
-          {getStatusIcon(status.status)}
-          <span className={`ml-2 status-badge ${ApiService.getStatusColor(status.status)}`}>
-            {ApiService.getStatusText(status.status)}
-          </span>
-        </div>
+        {/* Status Display */}
+        <div className="space-y-6">
+          {/* Current Status */}
+          <div className="glass-effect p-6 rounded-2xl">
+            <div className="flex items-center space-x-3 mb-4">
+              {getStatusIcon(status.status)}
+              <span className={`status-badge ${ApiService.getStatusColor(status.status)}`}>
+                {ApiService.getStatusText(status.status)}
+              </span>
+              {status.status === 'completed' && (
+                <div className="flex items-center text-xs text-success-600">
+                  <div className="w-2 h-2 bg-success-500 rounded-full mr-2 animate-pulse-soft"></div>
+                  Abgeschlossen
+                </div>
+              )}
+            </div>
 
-        {/* Progress Bar */}
-        <div className="mb-4">
-          <div className="flex justify-between text-sm text-gray-600 mb-2">
-            <span>Fortschritt</span>
-            <span>{status.progress_percent}%</span>
-          </div>
-          
-          <div className="progress-bar">
-            <div
-              className={`progress-fill bg-gradient-to-r ${getProgressColor(status.status)}`}
-              style={{ width: `${status.progress_percent}%` }}
-            />
-          </div>
-        </div>
+            {/* Progress Bar */}
+            <div className="space-y-3">
+              <div className="flex justify-between text-sm">
+                <span className="font-medium text-primary-700">Fortschritt</span>
+                <span className="font-bold text-primary-900">{status.progress_percent}%</span>
+              </div>
+              
+              <div className="progress-bar h-3">
+                <div
+                  className={`progress-fill bg-gradient-to-r ${getProgressColor(status.status)} transition-all duration-700 ease-out`}
+                  style={{ width: `${status.progress_percent}%` }}
+                />
+              </div>
 
-        {/* Current Step */}
-        <div className="text-sm text-gray-600 mb-4">
-          <strong>Aktueller Schritt:</strong> {status.current_step}
-        </div>
-
-        {/* Processing ID */}
-        <div className="text-xs text-gray-500 mb-4">
-          <strong>Verarbeitungs-ID:</strong> {status.processing_id}
-        </div>
-
-        {/* Error Message */}
-        {error && (
-          <div className="flex items-center p-3 bg-error-50 border border-error-200 rounded-lg">
-            <AlertCircle className="w-5 h-5 text-error-600 mr-2 flex-shrink-0" />
-            <div className="text-error-700 text-sm">{error}</div>
-          </div>
-        )}
-
-        {/* Status Message */}
-        {status.message && !error && (
-          <div className="p-3 bg-medical-50 border border-medical-200 rounded-lg">
-            <div className="text-medical-700 text-sm">{status.message}</div>
-          </div>
-        )}
-
-        {/* Completion Message */}
-        {status.status === 'completed' && (
-          <div className="flex items-center p-3 bg-success-50 border border-success-200 rounded-lg">
-            <CheckCircle className="w-5 h-5 text-success-600 mr-2" />
-            <div className="text-success-700 text-sm">
-              Verarbeitung erfolgreich abgeschlossen! Das Ergebnis wird geladen...
+              <p className="text-sm text-primary-600 leading-relaxed">
+                {status.current_step}
+              </p>
             </div>
           </div>
-        )}
 
-        {/* Processing Steps */}
-        <div className="mt-6">
-          <h4 className="text-sm font-medium text-gray-900 mb-3">Verarbeitungsschritte</h4>
-          <div className="space-y-2">
-            {[
-              { step: 'pending', label: 'Upload abgeschlossen', completed: status.progress_percent >= 10 },
-              { step: 'extracting_text', label: 'Text-Extraktion', completed: status.progress_percent >= 30 },
-              { step: 'translating', label: 'KI-Übersetzung', completed: status.progress_percent >= 70 },
-              { step: 'completed', label: 'Fertigstellung', completed: status.progress_percent >= 100 }
-            ].map((item, index) => (
-              <div key={index} className="flex items-center">
-                <div
-                  className={`w-3 h-3 rounded-full mr-3 ${
-                    item.completed
-                      ? 'bg-success-500'
-                      : status.current_step.toLowerCase().includes(item.step)
-                      ? 'bg-medical-500 animate-pulse'
-                      : 'bg-gray-300'
-                  }`}
-                />
-                <span
-                  className={`text-sm ${
-                    item.completed
-                      ? 'text-success-700 font-medium'
-                      : status.current_step.toLowerCase().includes(item.step)
-                      ? 'text-medical-700 font-medium'
-                      : 'text-gray-600'
-                  }`}
-                >
-                  {item.label}
-                </span>
-              </div>
-            ))}
+          {/* Processing Steps */}
+          <div className="space-y-4">
+            <h4 className="text-lg font-semibold text-primary-900 flex items-center">
+              <FileCheck className="w-5 h-5 mr-2 text-brand-600" />
+              Verarbeitungsschritte
+            </h4>
+            
+            <div className="space-y-3">
+              {[
+                { 
+                  step: 'upload', 
+                  label: 'Dokument hochgeladen', 
+                  icon: CheckCircle,
+                  completed: status.progress_percent >= 10,
+                  active: status.progress_percent >= 0 && status.progress_percent < 30
+                },
+                { 
+                  step: 'extract', 
+                  label: 'Text wird extrahiert', 
+                  icon: Loader,
+                  completed: status.progress_percent >= 30,
+                  active: status.progress_percent >= 10 && status.progress_percent < 70
+                },
+                { 
+                  step: 'translate', 
+                  label: 'KI übersetzt das Dokument', 
+                  icon: Zap,
+                  completed: status.progress_percent >= 70,
+                  active: status.progress_percent >= 30 && status.progress_percent < 100
+                },
+                { 
+                  step: 'finalize', 
+                  label: 'Übersetzung wird finalisiert', 
+                  icon: Sparkles,
+                  completed: status.progress_percent >= 100,
+                  active: status.progress_percent >= 70 && status.progress_percent < 100
+                }
+              ].map((item, index) => {
+                const IconComponent = item.icon;
+                return (
+                  <div key={index} className={`flex items-center space-x-4 p-4 rounded-xl transition-all duration-300 ${
+                    item.completed 
+                      ? 'bg-gradient-to-r from-success-50 to-success-50/50 border border-success-200' 
+                      : item.active 
+                        ? 'bg-gradient-to-r from-brand-50 to-accent-50/50 border border-brand-200' 
+                        : 'bg-neutral-50 border border-neutral-200'
+                  }`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                      item.completed 
+                        ? 'bg-gradient-to-br from-success-500 to-success-600' 
+                        : item.active 
+                          ? 'bg-gradient-to-br from-brand-500 to-brand-600' 
+                          : 'bg-neutral-200'
+                    }`}>
+                      <IconComponent className={`w-5 h-5 ${
+                        item.completed || item.active ? 'text-white' : 'text-neutral-500'
+                      } ${item.active && !item.completed ? 'animate-pulse-soft' : ''}`} />
+                    </div>
+                    <div className="flex-1">
+                      <div className={`font-medium ${
+                        item.completed 
+                          ? 'text-success-900' 
+                          : item.active 
+                            ? 'text-brand-900' 
+                            : 'text-neutral-600'
+                      }`}>
+                        {item.label}
+                      </div>
+                    </div>
+                    {item.completed && (
+                      <div className="w-6 h-6 bg-success-100 rounded-full flex items-center justify-center">
+                        <CheckCircle className="w-4 h-4 text-success-600" />
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        {/* Timestamp */}
-        <div className="mt-4 pt-4 border-t border-gray-200">
-          <div className="text-xs text-gray-500">
-            Letzte Aktualisierung: {new Date(status.timestamp).toLocaleTimeString('de-DE')}
+          {/* Messages */}
+          {error && (
+            <div className="card-elevated border-error-200/50 bg-gradient-to-br from-error-50/50 to-white">
+              <div className="card-compact">
+                <div className="flex items-start space-x-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-error-500 to-error-600 rounded-xl flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-error-900 mb-1">Verarbeitung fehlgeschlagen</h4>
+                    <p className="text-error-700 text-sm leading-relaxed">{error}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {status.message && !error && (
+            <div className="glass-effect p-4 rounded-xl border border-brand-200/50">
+              <div className="text-brand-700 text-sm leading-relaxed">{status.message}</div>
+            </div>
+          )}
+
+          {status.status === 'completed' && (
+            <div className="card-elevated border-success-200/50 bg-gradient-to-br from-success-50/50 to-white">
+              <div className="card-compact">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-success-500 to-success-600 rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-success-900 mb-1">Übersetzung abgeschlossen!</h4>
+                    <p className="text-success-700 text-sm leading-relaxed">
+                      Ihr Dokument wurde erfolgreich in verständliche Sprache übersetzt. Das Ergebnis wird geladen...
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Processing ID */}
+          <div className="text-center">
+            <p className="text-xs text-primary-500">
+              Verarbeitungs-ID: <span className="font-mono">{status.processing_id}</span>
+            </p>
           </div>
         </div>
       </div>

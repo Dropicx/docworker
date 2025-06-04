@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Stethoscope, Shield, Clock, AlertTriangle } from 'lucide-react';
+import { Stethoscope, Shield, Clock, AlertTriangle, Sparkles, FileText, Zap } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
@@ -86,46 +86,48 @@ function App() {
     const hasWarnings = health.status === 'degraded';
 
     return (
-      <div className={`flex items-center space-x-2 text-sm ${
-        isHealthy ? 'text-success-600' : hasWarnings ? 'text-warning-600' : 'text-error-600'
+      <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+        isHealthy ? 'bg-success-50 text-success-700 ring-1 ring-success-200' : 
+        hasWarnings ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200' : 
+        'bg-error-50 text-error-700 ring-1 ring-error-200'
       }`}>
         {isHealthy ? (
-          <Shield className="w-4 h-4" />
+          <Shield className="w-3 h-3" />
         ) : (
-          <AlertTriangle className="w-4 h-4" />
+          <AlertTriangle className="w-3 h-3" />
         )}
         <span>
-          System: {isHealthy ? 'Einsatzbereit' : hasWarnings ? 'Eingeschränkt' : 'Fehler'}
+          {isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschränkt' : 'Systemfehler'}
         </span>
       </div>
     );
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
+      <header className="sticky top-0 z-50 header-blur">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-3">
-              <div className="medical-gradient p-2 rounded-lg">
-                <Stethoscope className="w-6 h-6 text-white" />
+          <div className="flex items-center justify-between h-20">
+            <div className="flex items-center space-x-4">
+              <div className="hero-gradient p-3 rounded-2xl shadow-soft">
+                <Stethoscope className="w-7 h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">
-                  Medizinische Dokumenten-Übersetzung
+                <h1 className="text-2xl font-bold text-primary-900 tracking-tight">
+                  DocTranslator
                 </h1>
-                <p className="text-sm text-gray-600">
-                  DSGVO-konforme Übersetzung in einfache Sprache
+                <p className="text-sm text-primary-600 font-medium">
+                  Medizinische Dokumente verstehen
                 </p>
               </div>
             </div>
             
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-6">
               {renderHealthIndicator()}
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
-                <Clock className="w-4 h-4" />
-                <span>{new Date().toLocaleTimeString('de-DE')}</span>
+              <div className="flex items-center space-x-2 text-xs text-primary-500 bg-primary-50 px-3 py-1.5 rounded-full">
+                <Clock className="w-3 h-3" />
+                <span>{new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
           </div>
@@ -133,133 +135,194 @@ function App() {
       </header>
 
       {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Error State */}
-        {appState === 'error' && (
-          <div className="space-y-6">
-            <div className="card border-error-200 bg-error-50">
-              <div className="card-body">
-                <div className="flex items-center space-x-3">
-                  <AlertTriangle className="w-6 h-6 text-error-600" />
-                  <div>
-                    <h3 className="text-lg font-semibold text-error-800">
-                      Fehler bei der Verarbeitung
-                    </h3>
-                    <p className="text-error-700 mt-1">
-                      {error}
-                    </p>
+      <main className="relative">
+        {/* Background Pattern */}
+        <div className="absolute inset-0 opacity-30">
+          <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-r from-brand-400/20 to-accent-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse-soft"></div>
+          <div className="absolute bottom-0 right-0 w-72 h-72 bg-gradient-to-r from-accent-400/20 to-brand-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse-soft" style={{ animationDelay: '1s' }}></div>
+        </div>
+
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          {/* Error State */}
+          {appState === 'error' && (
+            <div className="animate-fade-in">
+              <div className="card-elevated border-error-200/50 bg-gradient-to-br from-error-50/50 to-white">
+                <div className="card-body">
+                  <div className="flex items-start space-x-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-error-500 to-error-600 rounded-xl flex items-center justify-center">
+                      <AlertTriangle className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-error-900 mb-2">
+                        Verarbeitung fehlgeschlagen
+                      </h3>
+                      <p className="text-error-700 mb-6 leading-relaxed">
+                        {error}
+                      </p>
+                      <button
+                        onClick={handleNewTranslation}
+                        className="btn-primary"
+                      >
+                        <Sparkles className="w-4 h-4 mr-2" />
+                        Neuen Versuch starten
+                      </button>
+                    </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Upload State */}
+          {appState === 'upload' && (
+            <div className="space-y-16 animate-fade-in">
+              {/* Hero Section */}
+              <div className="text-center space-y-8">
+                <div className="space-y-4">
+                  <h2 className="text-hero bg-gradient-to-r from-primary-900 via-brand-700 to-accent-700 bg-clip-text text-transparent">
+                    Medizinische Dokumente
+                    <br />
+                    <span className="bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">
+                      einfach verstehen
+                    </span>
+                  </h2>
+                  <p className="text-lead max-w-3xl mx-auto">
+                    Verwandeln Sie komplexe Arztbriefe und medizinische Befunde in verständliche Sprache. 
+                    Schnell, sicher und DSGVO-konform.
+                  </p>
+                </div>
                 
-                <div className="mt-4">
-                  <button
-                    onClick={handleNewTranslation}
-                    className="btn-primary"
-                  >
-                    Neuen Versuch starten
-                  </button>
+                {/* Quick Stats */}
+                <div className="flex justify-center space-x-8 text-sm">
+                  <div className="flex items-center space-x-2 text-primary-600">
+                    <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
+                    <span className="font-medium">100% DSGVO-konform</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-primary-600">
+                    <div className="w-2 h-2 bg-accent-500 rounded-full"></div>
+                    <span className="font-medium">Sofortige Verarbeitung</span>
+                  </div>
+                  <div className="flex items-center space-x-2 text-primary-600">
+                    <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
+                    <span className="font-medium">Keine Speicherung</span>
+                  </div>
                 </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Upload State */}
-        {appState === 'upload' && (
-          <div className="space-y-6">
-            <div className="text-center">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Medizinische Dokumente verstehen
-              </h2>
-              <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-                Laden Sie Arztbriefe, Befunde oder andere medizinische Dokumente hoch 
-                und erhalten Sie eine verständliche Übersetzung in einfacher Sprache.
-              </p>
-            </div>
-            
-            <FileUpload
-              onUploadSuccess={handleUploadSuccess}
-              onUploadError={handleUploadError}
-            />
-
-            {/* Features */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-              <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-                <div className="w-12 h-12 medical-gradient rounded-lg mx-auto mb-4 flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">DSGVO-konform</h3>
-                <p className="text-sm text-gray-600">
-                  Keine Speicherung Ihrer Daten. Alle Informationen werden nach der Übersetzung gelöscht.
-                </p>
               </div>
               
-              <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-                <div className="w-12 h-12 medical-gradient rounded-lg mx-auto mb-4 flex items-center justify-center">
-                  <Stethoscope className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Medizinisch optimiert</h3>
-                <p className="text-sm text-gray-600">
-                  Speziell für medizinische Fachbegriffe und Dokumente entwickelt.
-                </p>
+              {/* Upload Component */}
+              <div className="animate-slide-up">
+                <FileUpload
+                  onUploadSuccess={handleUploadSuccess}
+                  onUploadError={handleUploadError}
+                />
               </div>
-              
-              <div className="text-center p-6 bg-white rounded-xl shadow-sm">
-                <div className="w-12 h-12 medical-gradient rounded-lg mx-auto mb-4 flex items-center justify-center">
-                  <Clock className="w-6 h-6 text-white" />
+
+              {/* Features */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="feature-card animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                  <div className="feature-icon">
+                    <Shield className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-xl font-bold text-primary-900 mb-3">
+                    Datenschutz first
+                  </h3>
+                  <p className="text-primary-600 leading-relaxed">
+                    Keine Speicherung Ihrer Daten. Alle Informationen werden nach der 
+                    Übersetzung automatisch gelöscht.
+                  </p>
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-2">Schnell & einfach</h3>
-                <p className="text-sm text-gray-600">
-                  Erhalten Sie in wenigen Minuten eine verständliche Übersetzung.
+                
+                <div className="feature-card animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                  <div className="feature-icon">
+                    <FileText className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-xl font-bold text-primary-900 mb-3">
+                    Medizinisch präzise
+                  </h3>
+                  <p className="text-primary-600 leading-relaxed">
+                    Speziell für medizinische Fachbegriffe und Dokumente entwickelt. 
+                    Präzise Übersetzungen ohne Informationsverlust.
+                  </p>
+                </div>
+                
+                <div className="feature-card animate-slide-up" style={{ animationDelay: '0.3s' }}>
+                  <div className="feature-icon">
+                    <Zap className="w-7 h-7" />
+                  </div>
+                  <h3 className="text-xl font-bold text-primary-900 mb-3">
+                    Blitzschnell
+                  </h3>
+                  <p className="text-primary-600 leading-relaxed">
+                    Erhalten Sie in wenigen Sekunden eine verständliche Übersetzung 
+                    Ihrer medizinischen Dokumente.
+                  </p>
+                </div>
+              </div>
+
+              {/* Trust Indicators */}
+              <div className="glass-card p-8 text-center">
+                <p className="text-sm text-primary-600 mb-4 font-medium">
+                  Vertraut von Patienten und medizinischen Einrichtungen
                 </p>
+                <div className="flex justify-center items-center space-x-8 opacity-60">
+                  <div className="h-8 w-24 bg-gradient-to-r from-primary-200 to-primary-300 rounded-lg"></div>
+                  <div className="h-8 w-20 bg-gradient-to-r from-brand-200 to-brand-300 rounded-lg"></div>
+                  <div className="h-8 w-28 bg-gradient-to-r from-accent-200 to-accent-300 rounded-lg"></div>
+                  <div className="h-8 w-22 bg-gradient-to-r from-primary-200 to-primary-300 rounded-lg"></div>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Processing State */}
-        {appState === 'processing' && uploadResponse && (
-          <ProcessingStatus
-            processingId={uploadResponse.processing_id}
-            onComplete={handleProcessingComplete}
-            onError={handleProcessingError}
-            onCancel={handleProcessingCancel}
-          />
-        )}
+          {/* Processing State */}
+          {appState === 'processing' && uploadResponse && (
+            <div className="animate-fade-in">
+              <ProcessingStatus
+                processingId={uploadResponse.processing_id}
+                onComplete={handleProcessingComplete}
+                onError={handleProcessingError}
+                onCancel={handleProcessingCancel}
+              />
+            </div>
+          )}
 
-        {/* Result State */}
-        {appState === 'result' && translationResult && (
-          <TranslationResult
-            result={translationResult}
-            onNewTranslation={handleNewTranslation}
-          />
-        )}
+          {/* Result State */}
+          {appState === 'result' && translationResult && (
+            <div className="animate-fade-in">
+              <TranslationResult
+                result={translationResult}
+                onNewTranslation={handleNewTranslation}
+              />
+            </div>
+          )}
+        </div>
       </main>
 
       {/* Footer */}
-      <footer className="mt-16 bg-white border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="text-center">
-            <div className="flex items-center justify-center space-x-2 mb-4">
-              <div className="medical-gradient p-1 rounded">
-                <Stethoscope className="w-4 h-4 text-white" />
+      <footer className="relative z-10 mt-24 border-t border-primary-100/50 bg-gradient-to-r from-white/80 to-neutral-50/80 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="text-center space-y-6">
+            <div className="flex items-center justify-center space-x-3">
+              <div className="hero-gradient p-2 rounded-lg">
+                <Stethoscope className="w-5 h-5 text-white" />
               </div>
-              <span className="text-sm font-medium text-gray-900">
-                Medizinische Dokumenten-Übersetzung
+              <span className="text-lg font-bold text-primary-900">
+                DocTranslator
               </span>
             </div>
             
-            <div className="text-xs text-gray-500 space-y-1">
-              <div>
-                Diese Anwendung dient nur der Orientierung und ersetzt nicht die professionelle medizinische Beratung.
-              </div>
-              <div>
-                Alle Daten werden DSGVO-konform verarbeitet und nicht gespeichert.
-              </div>
-              <div className="pt-2">
-                Version 1.0.0 | Powered by Ollama & FastAPI
-              </div>
+            <div className="flex justify-center space-x-8 text-sm text-primary-600">
+              <span>© 2024 DocTranslator</span>
+              <span>•</span>
+              <span>DSGVO-konform</span>
+              <span>•</span>
+              <span>Made with ❤️ for better healthcare</span>
             </div>
+            
+            <p className="text-xs text-primary-500 max-w-2xl mx-auto">
+              Dieses Tool dient der Unterstützung beim Verständnis medizinischer Dokumente 
+              und ersetzt nicht die professionelle medizinische Beratung.
+            </p>
           </div>
         </div>
       </footer>
