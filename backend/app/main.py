@@ -66,10 +66,10 @@ app = FastAPI(
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Security Middleware
+# Security Middleware - Docker-kompatibel (erlaubt interne Container-IPs)
 app.add_middleware(
     TrustedHostMiddleware, 
-    allowed_hosts=["localhost", "127.0.0.1", "*.local"]
+    allowed_hosts=["*"]  # In Docker-Umgebung weniger restriktiv
 )
 
 # CORS Middleware

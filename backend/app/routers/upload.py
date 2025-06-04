@@ -23,6 +23,16 @@ async def upload_document(
     request: Request,
     file: UploadFile = File(..., description="Medizinisches Dokument (PDF, JPG, PNG)")
 ):
+    # Debug: Log incoming request details
+    print(f"🔍 === UPLOAD REQUEST DEBUG ===")
+    print(f"🔍 Method: {request.method}")
+    print(f"🔍 URL: {request.url}")
+    print(f"🔍 Headers: {dict(request.headers)}")
+    print(f"🔍 Client: {request.client}")
+    print(f"🔍 Content-Type: {request.headers.get('content-type', 'NOT SET')}")
+    print(f"🔍 Content-Length: {request.headers.get('content-length', 'NOT SET')}")
+    print(f"🔍 File object: {file}")
+    print(f"🔍 === END DEBUG ===")
     """
     Lädt ein medizinisches Dokument hoch und startet die Verarbeitung
     

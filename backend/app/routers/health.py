@@ -1,5 +1,5 @@
 from datetime import datetime
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from app.models.document import HealthCheck
 from app.services.cleanup import get_memory_usage
 from app.services.ollama_client import OllamaClient
@@ -10,10 +10,19 @@ import shutil
 router = APIRouter()
 
 @router.get("/health", response_model=HealthCheck)
-async def health_check():
+async def health_check(request: Request = None):
     """
     Umfassender Gesundheitscheck des Systems
     """
+    
+    # Debug: Log health check request
+    if request:
+        print(f"🔍 === HEALTH REQUEST DEBUG ===")
+        print(f"🔍 Method: {request.method}")
+        print(f"🔍 URL: {request.url}")
+        print(f"🔍 Headers: {dict(request.headers)}")
+        print(f"🔍 Client: {request.client}")
+        print(f"🔍 === END HEALTH DEBUG ===")
     
     try:
         services = {}
