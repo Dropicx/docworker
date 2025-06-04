@@ -15,7 +15,7 @@ services:
       - ./logs:/app/logs
     networks:
       - medical-translator
-      - ollama
+      - openwebui-ollama_ollama
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9122/api/health/simple"]
       interval: 30s
@@ -62,5 +62,5 @@ networks:
     external: false
   proxy:
     external: true
-  ollama:
+  openwebui-ollama_ollama:
     external: true
