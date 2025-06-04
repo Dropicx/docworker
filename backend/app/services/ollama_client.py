@@ -126,9 +126,29 @@ WICHTIGE REGELN:
 - Übersetze NUR was im Dokument steht, füge NICHTS hinzu
 - Lasse KEINE medizinische Information weg
 - Erkläre JEDEN Fachbegriff sofort in Klammern
-- Verwende einfache, kurze Sätze
+- Spreche den Patienten DIREKT an, wenn das Dokument an ihn gerichtet ist (nutze "Sie", "Ihr", "Ihnen")
 - Markiere Unsicherheiten mit [?]
 - Bei unklaren Begriffen: "Bitte klären Sie dies mit Ihrem Arzt"
+
+SPRACHLICHE RICHTLINIEN:
+
+VERWENDE:
+- Kurze Hauptsätze (maximal 15-20 Wörter)
+- Aktive Formulierungen ("Der Arzt untersucht" statt "Es wird untersucht")
+- Konkrete Begriffe ("Blutdruck messen" statt "Blutdruckkontrolle durchführen")
+- Alltagssprache ("Herz" zusätzlich zu "kardial")
+- Vergleiche aus dem Alltag (z.B. "groß wie eine Walnuss")
+- Zahlen ausschreiben wenn verständlicher ("zwei Mal täglich" statt "2x tägl.")
+- Direkte Ansprache ("Sie waren", "Ihr Blutdruck", "Sie sollen")
+
+VERMEIDE:
+- Verschachtelte Nebensätze
+- Passive Konstruktionen
+- Abstrakte Formulierungen
+- Unaufgelöste Abkürzungen
+- Fachsprache ohne Erklärung
+- Mehrdeutige Aussagen
+- Unpersönliche Formulierungen wie "Der Patient"
 
 ÜBERSETZUNGSFORMAT:
 Erstelle eine strukturierte Übersetzung mit folgenden Abschnitten:
@@ -136,28 +156,28 @@ Erstelle eine strukturierte Übersetzung mit folgenden Abschnitten:
 # [DOKUMENTTYP] - Verständliche Fassung
 
 ## Wichtigste Information
-[Ein Satz über das Wesentliche]
+[Ein Satz über das Wesentliche - direkte Ansprache]
 
 ## Was wurde untersucht/behandelt?
-[Grund des Arztbesuchs in einfachen Worten]
+[Grund des Arztbesuchs in einfachen Worten - direkte Ansprache]
 
 ## Was wurde festgestellt?
 ### Hauptbefunde:
-• [Jeder Befund in einfacher Sprache]
+• [Jeder Befund in einfacher Sprache - direkte Ansprache]
   → Was bedeutet das? [Kurze Erklärung]
 
 ### Diagnosen:
-• [Deutsche Bezeichnung]
+• [Deutsche Bezeichnung - direkte Ansprache]
   → Fachbegriff: [Original]
   → Erklärung: [Was ist das genau?]
 
 ## Behandlung/Medikamente
-• [Medikament/Maßnahme]
+• [Medikament/Maßnahme - direkte Ansprache]
   → Zweck: [Wofür?]
   → Wichtig zu wissen: [Besonderheiten]
 
 ## Was passiert als Nächstes?
-• [Nächste Schritte]
+• [Nächste Schritte - direkte Ansprache]
 • [Kontrolltermine]
 • [Verhaltensempfehlungen]
 
@@ -169,13 +189,13 @@ Diese Übersetzung ersetzt nicht das Gespräch mit Ihrem Arzt. Bei Fragen wenden
 
 **Rechtlicher Hinweis:** Diese Übersetzung dient nur Ihrem Verständnis und stellt keine medizinische Beratung dar. Bei Notfällen wählen Sie 112."""
         
-        # Einfache dokumenttyp-spezifische Anweisungen
+        # Dokumenttyp-spezifische Anweisungen mit direkter Ansprache
         specific_instructions = {
-            "arztbrief": "Fokussiere dich besonders auf Diagnosen und Therapieempfehlungen. Erkläre alle Medikamente und nächste Schritte.",
-            "laborbefund": "Erkläre jeden Laborwert mit seinem Normalbereich. Sage klar, ob Werte normal, erhöht oder erniedrigt sind.",
-            "radiologie": "Erkläre die Untersuchungsmethode und was die Bilder zeigen. Übersetze anatomische Begriffe.",
-            "pathologie": "Sei einfühlsam bei Gewebeveränderungen. Erkläre Befunde verständlich aber nicht beunruhigend.",
-            "entlassungsbrief": "Fasse den Krankenhausaufenthalt zusammen. Erkläre alle Medikamente und Nachsorge-Termine."
+            "arztbrief": "Fokussiere dich besonders auf Diagnosen und Therapieempfehlungen. Erkläre alle Medikamente und nächste Schritte. Sprich den Patienten direkt an: 'Sie haben', 'Ihr Arzt empfiehlt', 'Sie sollen'.",
+            "laborbefund": "Erkläre jeden Laborwert mit seinem Normalbereich. Sage klar, ob Werte normal, erhöht oder erniedrigt sind. Nutze direkte Ansprache: 'Ihre Blutwerte zeigen', 'Ihr Blutdruck war'.",
+            "radiologie": "Erkläre die Untersuchungsmethode und was die Bilder zeigen. Übersetze anatomische Begriffe. Direkte Ansprache: 'Bei Ihrer Untersuchung', 'Ihr Röntgenbild zeigt'.",
+            "pathologie": "Sei einfühlsam bei Gewebeveränderungen. Erkläre Befunde verständlich aber nicht beunruhigend. Direkte Ansprache: 'Ihr Gewebe wurde untersucht', 'Die Probe zeigt'.",
+            "entlassungsbrief": "Fasse den Krankenhausaufenthalt zusammen. Erkläre alle Medikamente und Nachsorge-Termine. Direkte Ansprache: 'Sie waren im Krankenhaus', 'Sie sollen zuhause', 'Ihre Medikamente'."
         }
         
         instruction = base_instruction
