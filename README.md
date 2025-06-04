@@ -15,6 +15,32 @@ DocTranslator ist eine webbasierte Anwendung, die es ermöglicht, medizinische D
 - 🎨 **Moderne Benutzeroberfläche** - React-basiertes Frontend mit Tailwind CSS
 - ⚡ **Schnelle API** - FastAPI-Backend für optimale Performance
 
+### 🔬 Spezialisierter Medizinischer Systemprompt
+
+Der DocTranslator verwendet einen hochspezialisierten Systemprompt für maximale medizinische Genauigkeit:
+
+#### Kernfeatures:
+- **⚕️ Absolute Sicherheitsregeln**: Verhindert das Hinzufügen, Weglassen oder Verändern von Diagnosen
+- **📋 Strukturiertes Ausgabeformat**: Klare Gliederung mit Zusammenfassung, Befunden, Diagnosen und Wörterbuch
+- **🎯 4-Stufen-Verarbeitungsprozess**:
+  1. **Analyse**: Dokumenttyp-Erkennung und Strukturanalyse
+  2. **Extraktion**: Systematische Erfassung aller medizinischen Informationen
+  3. **Übersetzung**: Schrittweise Übersetzung in verständliche Sprache
+  4. **Validierung**: Qualitätskontrolle und Vollständigkeitsprüfung
+
+#### Dokumenttyp-Spezialisierung:
+- **🩺 Arztbriefe**: Fokus auf Diagnosen und Therapieempfehlungen
+- **🧪 Laborbefunde**: Detaillierte Werteerklärungen mit Normalbereich-Vergleichen
+- **📷 Radiologie-Befunde**: Bildgebungserklärungen und anatomische Strukturen
+- **🔬 Pathologie-Befunde**: Sensitive Kommunikation von Gewebeveränderungen
+- **🏠 Entlassungsbriefe**: Nachsorgehinweise und Verhaltensempfehlungen
+
+#### Sprachliche Qualität:
+- **💬 Patientenfreundliche Sprache**: Kurze Hauptsätze, aktive Formulierungen
+- **📚 Fachbegriff-Wörterbuch**: Alphabetische Erklärung aller medizinischen Begriffe
+- **🛡️ Sicherheitsmechanismen**: Markierung von Unsicherheiten mit [?] und Arzt-Rücksprache-Hinweisen
+- **⚖️ Rechtlicher Hinweis**: Klare Abgrenzung zur medizinischen Beratung
+
 ### Technischer Stack
 
 - **Frontend**: React 18 mit TypeScript und Tailwind CSS
