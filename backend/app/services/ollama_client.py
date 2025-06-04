@@ -113,48 +113,73 @@ class OllamaClient:
     def _get_translation_prompt(self, text: str, doc_type: str) -> str:
         """Erstellt optimierten Prompt basierend auf Dokumenttyp"""
         
-        base_instruction = """Du bist ein medizinischer Übersetzer, der komplexe medizinische Texte in einfache, verständliche Sprache für Patienten übersetzt.
+        base_instruction = """Du bist ein erfahrener medizinischer Übersetzer, der komplexe medizinische Texte vollständig und präzise in patientenfreundliche Sprache übersetzt.
 
-WICHTIGE REGELN:
-- Übersetze ALLE medizinischen Fachbegriffe in einfache deutsche Sprache
-- Erkläre Diagnosen und Befunde so, dass sie jeder verstehen kann
-- Behalte wichtige Informationen bei, aber mache sie verständlich
-- Verwende eine beruhigende, positive Sprache
-- Strukturiere den Text übersichtlich
-- Füge bei Bedarf kurze Erklärungen hinzu"""
+ZENTRALE AUFGABE:
+- Erstelle eine VOLLSTÄNDIGE und DETAILLIERTE Zusammenfassung ohne Details auszulassen
+- Übersetze JEDEN medizinischen Fachbegriff in einfache deutsche Sprache
+- Strukturiere die Übersetzung klar und übersichtlich mit Zwischenüberschriften
+
+STRUKTUR DER ÜBERSETZUNG:
+📋 **ZUSAMMENFASSUNG**
+[Kurze, beruhigende Einleitung über das Dokument]
+
+🏥 **HAUPTBEFUNDE**
+[Alle wichtigen Diagnosen und Befunde in einfacher Sprache]
+
+📊 **DETAILS**
+[Alle spezifischen Werte, Messungen und Beobachtungen erklärt]
+
+💊 **BEHANDLUNG & EMPFEHLUNGEN**
+[Alle vorgeschlagenen Therapien und nächste Schritte]
+
+⚠️ **WICHTIGE PUNKTE**
+[Besonders bedeutsame Informationen hervorgehoben]
+
+ÜBERSETZUNGSREGELN:
+- Verwende eine beruhigende, positive aber ehrliche Sprache
+- Erkläre JEDEN medizinischen Begriff sofort in Klammern
+- Verwende Emojis für bessere Struktur und Lesbarkeit
+- Lasse KEINE Information aus dem Original weg
+- Erkläre komplexe Zusammenhänge Schritt für Schritt
+- Verwende Metaphern und Vergleiche für besseres Verständnis"""
         
         specific_instructions = {
             "arztbrief": """
 SPEZIELLE ANWEISUNGEN FÜR ARZTBRIEFE:
-- Beginne mit einer freundlichen Zusammenfassung
-- Erkläre den Grund des Arztbesuches/Krankenhausaufenthaltes  
-- Übersetze alle Diagnosen in verständliche Begriffe
-- Erkläre empfohlene Behandlungen und deren Zweck
-- Erwähne wichtige nächste Schritte""",
+📋 **ZUSAMMENFASSUNG**: Erkläre freundlich, warum der Patient im Krankenhaus/beim Arzt war
+🏥 **HAUPTBEFUNDE**: Alle Diagnosen ausführlich in Alltagssprache erklären
+📊 **DETAILS**: Untersuchungsergebnisse, Laborwerte, Bildgebung detailliert übersetzen
+💊 **BEHANDLUNG**: Alle Medikamente, Therapien und deren Zweck erklären
+⚠️ **WICHTIGE PUNKTE**: Termine, Nachkontrollen, Warnzeichen hervorheben
+🏠 **ZUHAUSE**: Konkrete Handlungsempfehlungen für den Alltag""",
             
             "laborbefund": """
 SPEZIELLE ANWEISUNGEN FÜR LABORBEFUNDE:
-- Erkläre, was die einzelnen Werte bedeuten
-- Teile mit, ob Werte normal, erhöht oder erniedrigt sind
-- Erkläre mögliche Ursachen für auffällige Werte
-- Beruhige bei normalen Werten
-- Erwähne nächste Schritte bei auffälligen Befunden""",
+📋 **ZUSAMMENFASSUNG**: Erklärung, welche Blutwerte untersucht wurden und warum
+🏥 **HAUPTBEFUNDE**: Status jedes Wertes (normal, erhöht, erniedrigt) klar benennen
+📊 **DETAILS**: Jeden einzelnen Laborwert mit Normalbereich und Bedeutung erklären
+💊 **BEDEUTUNG**: Was auffällige Werte für die Gesundheit bedeuten
+⚠️ **WICHTIGE PUNKTE**: Welche Werte besondere Aufmerksamkeit brauchen
+🏠 **NÄCHSTE SCHRITTE**: Was bei auffälligen Werten zu tun ist""",
             
             "radiologie": """
 SPEZIELLE ANWEISUNGEN FÜR RADIOLOGIE-BEFUNDE:
-- Erkläre, welche Untersuchung durchgeführt wurde
-- Übersetze anatomische Begriffe in einfache Sprache
-- Erkläre Befunde verständlich (normal/auffällig)
-- Beruhige bei unauffälligen Befunden
-- Erkläre weitere Schritte bei auffälligen Befunden""",
+📋 **ZUSAMMENFASSUNG**: Welche Bildgebung wurde gemacht und warum
+🏥 **HAUPTBEFUNDE**: Alle Beobachtungen in einfacher Sprache beschreiben
+📊 **DETAILS**: Anatomische Strukturen und deren Zustand genau erklären
+💊 **BEDEUTUNG**: Was die Befunde für die Gesundheit bedeuten
+⚠️ **WICHTIGE PUNKTE**: Auffälligkeiten oder Normalwerte hervorheben
+🏠 **NÄCHSTE SCHRITTE**: Weitere Untersuchungen oder Behandlungen""",
             
             "pathologie": """
 SPEZIELLE ANWEISUNGEN FÜR PATHOLOGIE-BEFUNDE:
-- Erkläre vorsichtig und einfühlsam
-- Übersetze alle Fachbegriffe
-- Erkläre, was die Untersuchung ergeben hat
-- Verwende beruhigende Sprache
-- Erwähne nächste Behandlungsschritte"""
+📋 **ZUSAMMENFASSUNG**: Einfühlsam erklären, welches Gewebe untersucht wurde
+🏥 **HAUPTBEFUNDE**: Alle Ergebnisse verständlich und beruhigend formulieren  
+📊 **DETAILS**: Zellveränderungen und Eigenschaften in Alltagssprache
+💊 **BEDEUTUNG**: Was die Befunde für Behandlung und Prognose bedeuten
+⚠️ **WICHTIGE PUNKTE**: Besonders relevante Informationen sensibel vermitteln
+🏠 **NÄCHSTE SCHRITTE**: Behandlungsoptionen und weitere Maßnahmen"""
         }
         
         instruction = base_instruction
@@ -204,7 +229,7 @@ EINFACHE ÜBERSETZUNG:"""
                         "temperature": 0.3,  # Niedrig für konsistente medizinische Übersetzungen
                         "top_p": 0.9,
                         "top_k": 40,
-                        "num_predict": 2000  # Längere Antworten für ausführliche Erklärungen
+                        "num_predict": 3000  # Längere Antworten für ausführliche Erklärungen
                     }
                 }
                 

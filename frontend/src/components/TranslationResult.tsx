@@ -121,21 +121,26 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
       </div>
 
       {/* Übersetzter Text */}
-      <div className="card">
+      <div className="card shadow-xl">
         <div className="card-body">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Text in einfacher Sprache
-            </h3>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-gradient-to-r from-success-500 to-medical-500 rounded-lg flex items-center justify-center">
+                <span className="text-white text-lg">📄</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900">
+                Verständliche Zusammenfassung
+              </h3>
+            </div>
             <div className="flex space-x-2">
               <button
                 onClick={() => handleCopy(result.translated_text, 'translated')}
-                className="btn-secondary flex items-center space-x-2 text-sm"
+                className="btn-secondary flex items-center space-x-2 text-sm hover:scale-105 transition-transform"
               >
                 {copiedText === 'translated' ? (
                   <>
-                    <CheckCircle className="w-4 h-4" />
-                    <span>Kopiert!</span>
+                    <CheckCircle className="w-4 h-4 text-success-600" />
+                    <span className="text-success-600">Kopiert!</span>
                   </>
                 ) : (
                   <>
@@ -148,11 +153,26 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
           </div>
 
           <div className="prose max-w-none">
-            <div className="bg-gradient-to-r from-success-50 to-medical-50 border-l-4 border-success-500 p-6 rounded-lg">
-              <div className="text-gray-800 leading-relaxed whitespace-pre-wrap">
+            <div className="bg-gradient-to-br from-success-50 via-medical-50 to-blue-50 border-l-4 border-success-500 p-8 rounded-xl shadow-inner">
+              <div className="medical-text-formatted text-gray-800 leading-relaxed whitespace-pre-wrap">
                 {result.translated_text}
               </div>
             </div>
+          </div>
+
+          {/* Quality indicator */}
+          <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
+            <div className="flex items-center space-x-2">
+              <span className="flex items-center">
+                <Star className="w-4 h-4 text-yellow-500 mr-1" />
+                Qualität: <span className={`ml-1 font-medium ${getConfidenceColor(result.confidence_score)}`}>
+                  {getConfidenceText(result.confidence_score)}
+                </span>
+              </span>
+            </div>
+            <span className="text-xs text-gray-500">
+              Verarbeitungszeit: {ApiService.formatDuration(result.processing_time_seconds)}
+            </span>
           </div>
         </div>
       </div>

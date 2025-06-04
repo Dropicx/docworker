@@ -1,5 +1,13 @@
 #!/bin/bash
 
+# Umgebungsvariablen setzen
+#export GIT_USERNAME='dein_username'
+#export GIT_TOKEN='dein_token'
+
+# Skript ausführbar machen und starten
+#chmod +x deploy.sh
+#./deploy.sh
+
 # Konfiguration über Umgebungsvariablen
 USERNAME="${GIT_USERNAME}"
 TOKEN="${GIT_TOKEN}"

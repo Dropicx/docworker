@@ -139,4 +139,65 @@
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
     background: #94a3b8;
   }
+
+  /* Medical text formatting styles */
+  .medical-text-formatted {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #374151;
+  }
+
+  /* Enhanced styling for structured medical content */
+  .medical-content-section {
+    margin: 1.5rem 0;
+    padding: 1.25rem;
+    border-left: 4px solid #10b981;
+    background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+    border-radius: 0.75rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  /* Style for medical highlights */
+  .medical-highlight {
+    background: linear-gradient(120deg, #dbeafe 0%, #bfdbfe 100%);
+    color: #1e40af;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    border: 1px solid #93c5fd;
+  }
+
+  /* Enhanced readability for medical terms */
+  .medical-term {
+    background-color: #fef3c7;
+    color: #92400e;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-weight: 500;
+    border: 1px solid #fbbf24;
+  }
+
+  /* Improved spacing and typography for medical documents */
+  .medical-text-formatted p {
+    margin-bottom: 1rem;
+  }
+
+  .medical-text-formatted h3,
+  .medical-text-formatted h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    color: #1f2937;
+    font-weight: 700;
+  }
+
+  .medical-text-formatted ul,
+  .medical-text-formatted ol {
+    margin: 1rem 0;
+    padding-left: 1.5rem;
+  }
+
+  .medical-text-formatted li {
+    margin-bottom: 0.5rem;
+    line-height: 1.6;
+  }
 } 
