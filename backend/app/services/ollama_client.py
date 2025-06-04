@@ -43,7 +43,7 @@ class OllamaClient:
         self, 
         text: str, 
         document_type: str = "general",
-        model: str = "llama3.1"
+        model: str = "llama3.2:latest"
     ) -> tuple[str, str, float]:
         """
         Übersetzt medizinischen Text in einfache Sprache
@@ -171,6 +171,30 @@ EINFACHE ÜBERSETZUNG:"""
     async def _generate_response(self, prompt: str, model: str) -> str:
         """Generiert Antwort von Ollama"""
         try:
+            # Erst versuchen, verfügbare Modelle zu laden, falls das angegebene Modell nicht existiert
+            if model not in await self.list_models():
+                print(f"⚠️ Modell {model} nicht verfügbar, verwende Fallback...")
+                available_models = await self.list_models()
+                
+                # Fallback-Logik: Bevorzuge Llama-Modelle, dann andere
+                fallback_models = [
+                    "llama3.2:latest", "llama3.1", "mistral:7b", 
+                    "deepseek-r1:7b", "gemma3:27b"
+                ]
+                
+                for fallback in fallback_models:
+                    if fallback in available_models:
+                        model = fallback
+                        print(f"✅ Verwende Fallback-Modell: {model}")
+                        break
+                else:
+                    # Wenn kein Fallback gefunden, nimm das erste verfügbare Modell
+                    if available_models:
+                        model = available_models[0]
+                        print(f"✅ Verwende erstes verfügbares Modell: {model}")
+                    else:
+                        return "Fehler: Keine Modelle verfügbar"
+            
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 payload = {
                     "model": model,
@@ -184,6 +208,7 @@ EINFACHE ÜBERSETZUNG:"""
                     }
                 }
                 
+                print(f"🤖 Generiere mit Modell: {model}")
                 response = await client.post(
                     f"{self.base_url}/api/generate",
                     json=payload
@@ -193,6 +218,7 @@ EINFACHE ÜBERSETZUNG:"""
                     result = response.json()
                     return result.get("response", "Keine Antwort erhalten").strip()
                 else:
+                    print(f"❌ Ollama API Error: {response.status_code} - {response.text}")
                     return f"Fehler bei der Ollama-Anfrage: {response.status_code}"
                     
         except Exception as e:
@@ -243,7 +269,7 @@ EINFACHE ÜBERSETZUNG:"""
     async def generate_streaming(
         self, 
         prompt: str, 
-        model: str = "llama3.1"
+        model: str = "llama3.2:latest"
     ) -> AsyncGenerator[str, None]:
         """Streaming-Generation für Live-Updates"""
         try:
