@@ -34,7 +34,7 @@ fi
 
 # Git Pull mit Token
 echo -e "${YELLOW}Pulling latest changes from Git...${NC}"
-git pull https://${USERNAME}:${TOKEN}@${REPO_URL#https://}
+sudo git pull https://${USERNAME}:${TOKEN}@${REPO_URL#https://}
 
 if [ $? -eq 0 ]; then
     echo -e "${GREEN}Git pull successful${NC}"
