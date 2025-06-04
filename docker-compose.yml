@@ -43,7 +43,7 @@ services:
       - "traefik.http.routers.medical-app-secure.rule=Host(`medical.fra-la.de`)"
       - "traefik.http.routers.medical-app-secure.entrypoints=websecure"
       - "traefik.http.routers.medical-app-secure.middlewares=default@file"
-      - "traefik.http.routers.medical-app-secure.service=medical-translator-frontend"
+      - "traefik.http.routers.medical-app-secure.service=medical-app"
       - "traefik.http.routers.medical-app-secure.tls=true"
       - "traefik.http.routers.medical-app-secure.tls.certresolver=tls_resolver"
       - "traefik.http.routers.medical-app.entrypoints=web"
