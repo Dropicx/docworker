@@ -5,11 +5,19 @@ from PIL import Image
 import PyPDF2
 from fastapi import UploadFile, HTTPException
 
-# Erlaubte MIME-Types und Dateiendungen
+# Erlaubte MIME-Types und Dateiendungen (inkl. Fallbacks)
 ALLOWED_MIME_TYPES = {
     "application/pdf": [".pdf"],
     "image/jpeg": [".jpg", ".jpeg"],
     "image/png": [".png"]
+}
+
+# Fallback MIME-Types (manchmal erkennt magic library nicht korrekt)
+FALLBACK_MIME_TYPES = {
+    "text/plain": [".pdf", ".jpg", ".jpeg", ".png"],  # Magic erkennt manchmal falsch
+    "application/octet-stream": [".pdf", ".jpg", ".jpeg", ".png"],  # Generischer binary type
+    "image/x-png": [".png"],  # Alternative PNG-Erkennung
+    "image/pjpeg": [".jpg", ".jpeg"]  # Alternative JPEG-Erkennung
 }
 
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
@@ -52,24 +60,43 @@ class FileValidator:
             filename_lower = file.filename.lower() if file.filename else ""
             file_extension = os.path.splitext(filename_lower)[1]
             
-            # MIME-Type validieren
-            if detected_mime not in ALLOWED_MIME_TYPES:
-                print(f"❌ FileValidator: MIME-Type nicht erlaubt: {detected_mime}, Erlaubt: {list(ALLOWED_MIME_TYPES.keys())}")
-                return False, f"Dateityp nicht erlaubt: {detected_mime}"
+            # MIME-Type validieren (mit Fallback-Unterstützung)
+            mime_valid = False
+            used_mime_type = detected_mime
             
-            # Endung gegen MIME-Type prüfen
-            allowed_extensions = ALLOWED_MIME_TYPES[detected_mime]
-            if file_extension not in allowed_extensions:
-                print(f"❌ FileValidator: Dateiendung '{file_extension}' passt nicht zu MIME-Type '{detected_mime}'. Erlaubt: {allowed_extensions}")
-                return False, f"Dateiendung '{file_extension}' passt nicht zum Dateityp '{detected_mime}'"
+            if detected_mime in ALLOWED_MIME_TYPES:
+                # Direkter Match
+                allowed_extensions = ALLOWED_MIME_TYPES[detected_mime]
+                if file_extension in allowed_extensions:
+                    mime_valid = True
+                    print(f"✅ FileValidator: Direkter MIME-Type Match: {detected_mime} mit Endung {file_extension}")
+            elif detected_mime in FALLBACK_MIME_TYPES:
+                # Fallback-Match basierend auf Dateiendung
+                allowed_extensions = FALLBACK_MIME_TYPES[detected_mime]
+                if file_extension in allowed_extensions:
+                    mime_valid = True
+                    print(f"⚠️ FileValidator: Fallback MIME-Type Match: {detected_mime} mit Endung {file_extension}")
+                    # Bestimme den eigentlichen MIME-Type basierend auf Endung
+                    if file_extension == ".pdf":
+                        used_mime_type = "application/pdf"
+                    elif file_extension in [".jpg", ".jpeg"]:
+                        used_mime_type = "image/jpeg"
+                    elif file_extension == ".png":
+                        used_mime_type = "image/png"
             
-            # Spezifische Validierung nach Dateityp
-            if detected_mime == "application/pdf":
+            if not mime_valid:
+                print(f"❌ FileValidator: MIME-Type/Endung nicht unterstützt: {detected_mime} mit {file_extension}")
+                print(f"   Erlaubte MIME-Types: {list(ALLOWED_MIME_TYPES.keys())}")
+                print(f"   Fallback MIME-Types: {list(FALLBACK_MIME_TYPES.keys())}")
+                return False, f"Dateityp nicht unterstützt: {detected_mime} mit Endung {file_extension}"
+            
+            # Spezifische Validierung nach erkanntem Dateityp
+            if used_mime_type == "application/pdf":
                 is_valid, error = await FileValidator._validate_pdf(content)
                 if not is_valid:
                     return False, error
                     
-            elif detected_mime.startswith("image/"):
+            elif used_mime_type.startswith("image/"):
                 is_valid, error = await FileValidator._validate_image(content)
                 if not is_valid:
                     return False, error

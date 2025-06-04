@@ -3,7 +3,7 @@
 import magic
 import os
 import sys
-from app.services.file_validator import FileValidator, ALLOWED_MIME_TYPES, MAX_FILE_SIZE, MIN_FILE_SIZE
+from app.services.file_validator import FileValidator, ALLOWED_MIME_TYPES, FALLBACK_MIME_TYPES, MAX_FILE_SIZE, MIN_FILE_SIZE
 
 def debug_magic():
     print("=== Magic Library Debug ===")
@@ -15,6 +15,7 @@ def debug_magic():
         
         # Check available MIME types
         print(f"📋 Allowed MIME types: {list(ALLOWED_MIME_TYPES.keys())}")
+        print(f"🔄 Fallback MIME types: {list(FALLBACK_MIME_TYPES.keys())}")
         print(f"📏 File size limits: {MIN_FILE_SIZE} - {MAX_FILE_SIZE} bytes")
         
     except Exception as e:
@@ -37,7 +38,15 @@ def test_common_files():
     for content, description in test_cases:
         try:
             mime_type = magic.from_buffer(content, mime=True)
-            print(f"📄 {description}: {mime_type}")
+            
+            # Check if it would be accepted
+            status = "❌"
+            if mime_type in ALLOWED_MIME_TYPES:
+                status = "✅ DIRECT"
+            elif mime_type in FALLBACK_MIME_TYPES:
+                status = "⚠️ FALLBACK"
+                
+            print(f"{status} {description}: {mime_type}")
         except Exception as e:
             print(f"❌ {description} error: {e}")
 
