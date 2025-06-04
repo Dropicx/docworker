@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap } from 'lucide-react';
+import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap, Globe } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
 import ApiService from './services/api';
-import { UploadResponse, TranslationResult as TranslationData, HealthCheck } from './types/api';
+import { UploadResponse, TranslationResult as TranslationData, HealthCheck, ProcessingOptions, SupportedLanguage } from './types/api';
 
 type AppState = 'upload' | 'processing' | 'result' | 'error';
 
@@ -14,6 +14,9 @@ function App() {
   const [translationResult, setTranslationResult] = useState<TranslationData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [health, setHealth] = useState<HealthCheck | null>(null);
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const [availableLanguages, setAvailableLanguages] = useState<SupportedLanguage[]>([]);
+  const [languagesLoaded, setLanguagesLoaded] = useState(false);
 
   // Health check beim Start
   useEffect(() => {
@@ -26,7 +29,19 @@ function App() {
       }
     };
 
+    const loadLanguages = async () => {
+      try {
+        const languagesResponse = await ApiService.getAvailableLanguages();
+        setAvailableLanguages(languagesResponse.languages);
+        setLanguagesLoaded(true);
+      } catch (error) {
+        console.error('Language loading failed:', error);
+        setLanguagesLoaded(true); // Set true even on error to show UI
+      }
+    };
+
     checkHealth();
+    loadLanguages();
   }, []);
 
   const handleUploadSuccess = async (response: UploadResponse) => {
@@ -34,8 +49,13 @@ function App() {
     setError(null);
     
     try {
-      // Verarbeitung automatisch starten
-      await ApiService.startProcessing(response.processing_id);
+      // Verarbeitung automatisch starten mit Sprachoptionen
+      const options: ProcessingOptions = {};
+      if (selectedLanguage) {
+        options.target_language = selectedLanguage;
+      }
+      
+      await ApiService.startProcessing(response.processing_id, options);
       setAppState('processing');
     } catch (error: any) {
       setError(error.message);
@@ -77,6 +97,7 @@ function App() {
     setUploadResponse(null);
     setTranslationResult(null);
     setError(null);
+    setSelectedLanguage(null);
   };
 
   const renderHealthIndicator = () => {
@@ -99,6 +120,87 @@ function App() {
         <span>
           {isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschränkt' : 'Systemfehler'}
         </span>
+      </div>
+    );
+  };
+
+  const renderLanguageSelector = () => {
+    if (!languagesLoaded) {
+      return (
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-neutral-700">
+            Übersetzung (optional)
+          </label>
+          <div className="w-full px-4 py-3 border border-neutral-300 rounded-xl bg-neutral-50 flex items-center justify-center">
+            <div className="animate-pulse flex items-center space-x-2">
+              <Globe className="w-4 h-4 text-neutral-400" />
+              <span className="text-sm text-neutral-500">Sprachen werden geladen...</span>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const popularLanguages = availableLanguages.filter(lang => lang.popular);
+    const selectedLanguageInfo = availableLanguages.find(lang => lang.code === selectedLanguage);
+
+    return (
+      <div className="space-y-3">
+        <label className="block text-sm font-medium text-neutral-700">
+          Übersetzung (optional)
+        </label>
+        
+        {/* Popular language quick buttons */}
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setSelectedLanguage(null)}
+            className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+              !selectedLanguage
+                ? 'bg-neutral-100 text-neutral-700 ring-2 ring-neutral-300'
+                : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
+            }`}
+          >
+            Nur vereinfachen
+          </button>
+          
+          {popularLanguages.slice(0, 6).map((language) => (
+            <button
+              key={language.code}
+              onClick={() => setSelectedLanguage(language.code === selectedLanguage ? null : language.code)}
+              className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+                selectedLanguage === language.code
+                  ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-300'
+                  : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
+              }`}
+            >
+              {language.name}
+            </button>
+          ))}
+        </div>
+
+        {/* Selected language info */}
+        {selectedLanguage && selectedLanguageInfo && (
+          <div className="flex items-center space-x-3 px-4 py-3 bg-brand-50 rounded-xl border border-brand-200">
+            <Globe className="w-4 h-4 text-brand-600" />
+            <span className="text-sm text-brand-700">
+              <strong>Ausgewählt:</strong> {selectedLanguageInfo.name}
+            </span>
+            <button
+              onClick={() => setSelectedLanguage(null)}
+              className="ml-auto text-brand-600 hover:text-brand-700 text-sm font-medium"
+            >
+              ✕
+            </button>
+          </div>
+        )}
+
+        {/* Info text */}
+        <p className="text-xs text-neutral-500">
+          {selectedLanguage 
+            ? 'Das Dokument wird zuerst vereinfacht und dann in die gewählte Sprache übersetzt.'
+            : 'Optional: Wählen Sie eine Sprache, um das vereinfachte Ergebnis zusätzlich zu übersetzen.'
+          }
+        </p>
       </div>
     );
   };
@@ -201,6 +303,15 @@ function App() {
                   <div className="flex items-center space-x-2 text-primary-600">
                     <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
                     <span className="font-medium">Keine Speicherung</span>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Language Selection */}
+              <div className="animate-slide-up">
+                <div className="card-elevated max-w-2xl mx-auto">
+                  <div className="card-body">
+                    {renderLanguageSelector()}
                   </div>
                 </div>
               </div>

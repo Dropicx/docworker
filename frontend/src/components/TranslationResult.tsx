@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, Download, Eye, EyeOff, CheckCircle, FileText, Clock, Star, Sparkles, RefreshCw, ArrowLeft } from 'lucide-react';
+import { Copy, Download, Eye, EyeOff, CheckCircle, FileText, Clock, Star, Sparkles, RefreshCw, ArrowLeft, Globe } from 'lucide-react';
 import ApiService from '../services/api';
 import { TranslationResult as TranslationData } from '../types/api';
 
@@ -13,9 +13,10 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
   onNewTranslation
 }) => {
   const [showOriginal, setShowOriginal] = useState(false);
-  const [copiedText, setCopiedText] = useState<'original' | 'translated' | null>(null);
+  const [copiedText, setCopiedText] = useState<'original' | 'translated' | 'language' | null>(null);
+  const [activeTab, setActiveTab] = useState<'simplified' | 'language'>('simplified');
 
-  const handleCopy = async (text: string, type: 'original' | 'translated') => {
+  const handleCopy = async (text: string, type: 'original' | 'translated' | 'language') => {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedText(type);
@@ -31,11 +32,18 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
 
 Dokumenttyp: ${result.document_type_detected}
 Vertrauensgrad: ${(result.confidence_score * 100).toFixed(1)}%
+${result.language_confidence_score ? `Übersetzungsqualität: ${(result.language_confidence_score * 100).toFixed(1)}%` : ''}
 Verarbeitungszeit: ${ApiService.formatDuration(result.processing_time_seconds)}
 Zeitstempel: ${new Date(result.timestamp).toLocaleString('de-DE')}
+${result.target_language ? `Zielsprache: ${result.target_language}` : ''}
 
 ÜBERSETZUNG IN EINFACHER SPRACHE:
 ${result.translated_text}
+
+${result.language_translated_text && result.target_language ? `
+ÜBERSETZUNG IN ${result.target_language.toUpperCase()}:
+${result.language_translated_text}
+` : ''}
 
 ${showOriginal ? `
 ORIGINALTEXT:
@@ -74,6 +82,21 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
     return '⚠️';
   };
 
+  // Bestimme die anzuzeigende Übersetzung basierend auf dem aktiven Tab
+  const getDisplayedText = () => {
+    if (activeTab === 'language' && result.language_translated_text) {
+      return result.language_translated_text;
+    }
+    return result.translated_text;
+  };
+
+  const getDisplayedConfidence = () => {
+    if (activeTab === 'language' && result.language_confidence_score) {
+      return result.language_confidence_score;
+    }
+    return result.confidence_score;
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Hero Section */}
@@ -89,13 +112,16 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
             Übersetzung abgeschlossen
           </h2>
           <p className="text-lg text-primary-600 max-w-2xl mx-auto">
-            Ihr medizinisches Dokument wurde erfolgreich in verständliche Sprache übersetzt
+            {result.language_translated_text 
+              ? 'Ihr medizinisches Dokument wurde vereinfacht und übersetzt'
+              : 'Ihr medizinisches Dokument wurde erfolgreich in verständliche Sprache übersetzt'
+            }
           </p>
         </div>
       </div>
 
       {/* Metadata Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 ${result.language_translated_text ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
         {/* Dokumenttyp */}
         <div className="feature-card group">
           <div className="flex items-center space-x-4">
@@ -119,13 +145,30 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
             </div>
             <div className="flex-1">
               <div className="text-sm font-medium text-primary-600 mb-1">Qualität</div>
-              <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold ring-1 ring-inset ${getConfidenceColor(result.confidence_score)}`}>
-                <span className="mr-1">{getConfidenceIcon(result.confidence_score)}</span>
-                {getConfidenceText(result.confidence_score)} ({(result.confidence_score * 100).toFixed(0)}%)
+              <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold ring-1 ring-inset ${getConfidenceColor(getDisplayedConfidence())}`}>
+                <span className="mr-1">{getConfidenceIcon(getDisplayedConfidence())}</span>
+                {getConfidenceText(getDisplayedConfidence())} ({(getDisplayedConfidence() * 100).toFixed(0)}%)
               </div>
             </div>
           </div>
         </div>
+
+        {/* Sprache (nur wenn übersetzt) */}
+        {result.language_translated_text && result.target_language && (
+          <div className="feature-card group">
+            <div className="flex items-center space-x-4">
+              <div className="feature-icon">
+                <Globe className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <div className="text-sm font-medium text-primary-600 mb-1">Sprache</div>
+                <div className="font-bold text-primary-900 text-lg">
+                  {result.target_language.toUpperCase()}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Verarbeitungszeit */}
         <div className="feature-card group">
@@ -143,31 +186,70 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
         </div>
       </div>
 
+      {/* Tabs für Sprachversionen (nur wenn Sprachübersetzung vorhanden) */}
+      {result.language_translated_text && (
+        <div className="flex justify-center">
+          <div className="inline-flex bg-neutral-100 rounded-xl p-1">
+            <button
+              onClick={() => setActiveTab('simplified')}
+              className={`px-6 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                activeTab === 'simplified'
+                  ? 'bg-white text-brand-700 shadow-sm'
+                  : 'text-neutral-600 hover:text-neutral-800'
+              }`}
+            >
+              📄 Vereinfacht (Deutsch)
+            </button>
+            <button
+              onClick={() => setActiveTab('language')}
+              className={`px-6 py-3 text-sm font-medium rounded-lg transition-all duration-200 ${
+                activeTab === 'language'
+                  ? 'bg-white text-brand-700 shadow-sm'
+                  : 'text-neutral-600 hover:text-neutral-800'
+              }`}
+            >
+              <Globe className="w-4 h-4 inline mr-2" />
+              {result.target_language?.toUpperCase()}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Main Translation Card */}
       <div className="card-elevated border-brand-200/50 bg-gradient-to-br from-brand-50/30 to-accent-50/30">
         <div className="card-body">
           <div className="flex items-center justify-between mb-8">
             <div className="flex items-center space-x-4">
               <div className="w-14 h-14 bg-gradient-to-br from-brand-500 via-brand-600 to-accent-600 rounded-2xl flex items-center justify-center shadow-soft">
-                <span className="text-2xl">📄</span>
+                {activeTab === 'language' ? (
+                  <Globe className="w-7 h-7 text-white" />
+                ) : (
+                  <span className="text-2xl">📄</span>
+                )}
               </div>
               <div>
                 <h3 className="text-2xl font-bold text-primary-900">
-                  Verständliche Übersetzung
+                  {activeTab === 'language' 
+                    ? `Übersetzung (${result.target_language?.toUpperCase()})`
+                    : 'Verständliche Übersetzung'
+                  }
                 </h3>
                 <p className="text-primary-600">
-                  Ihr Dokument in einfacher Sprache erklärt
+                  {activeTab === 'language'
+                    ? `Ihr Dokument in ${result.target_language}`
+                    : 'Ihr Dokument in einfacher Sprache erklärt'
+                  }
                 </p>
               </div>
             </div>
             
             <div className="flex space-x-3">
               <button
-                onClick={() => handleCopy(result.translated_text, 'translated')}
+                onClick={() => handleCopy(getDisplayedText(), activeTab === 'language' ? 'language' : 'translated')}
                 className="btn-secondary group"
-                disabled={copiedText === 'translated'}
+                disabled={copiedText === (activeTab === 'language' ? 'language' : 'translated')}
               >
-                {copiedText === 'translated' ? (
+                {copiedText === (activeTab === 'language' ? 'language' : 'translated') ? (
                   <>
                     <CheckCircle className="w-4 h-4 text-success-600" />
                     <span className="text-success-600 ml-2">Kopiert!</span>
@@ -194,7 +276,7 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
           <div className="relative">
             <div className="glass-card p-8 md:p-10">
               <div className="medical-text-formatted text-primary-800 leading-relaxed whitespace-pre-wrap">
-                {result.translated_text}
+                {getDisplayedText()}
               </div>
             </div>
             
@@ -207,15 +289,15 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
           <div className="mt-6 glass-effect p-4 rounded-xl">
             <div className="flex items-center justify-between text-sm">
               <div className="flex items-center space-x-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getConfidenceColor(result.confidence_score)}`}>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getConfidenceColor(getDisplayedConfidence())}`}>
                   <Star className="w-4 h-4" />
                 </div>
                 <div>
                   <span className="font-medium text-primary-700">
-                    Übersetzungsqualität: <span className="font-bold">{getConfidenceText(result.confidence_score)}</span>
+                    {activeTab === 'language' ? 'Übersetzungsqualität' : 'Vereinfachungsqualität'}: <span className="font-bold">{getConfidenceText(getDisplayedConfidence())}</span>
                   </span>
                   <div className="text-xs text-primary-500">
-                    Vertrauen: {(result.confidence_score * 100).toFixed(1)}%
+                    Vertrauen: {(getDisplayedConfidence() * 100).toFixed(1)}%
                   </div>
                 </div>
               </div>

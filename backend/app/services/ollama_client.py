@@ -4,6 +4,7 @@ import asyncio
 import os
 from typing import Optional, Dict, Any, AsyncGenerator
 import re
+from app.models.document import SupportedLanguage, LANGUAGE_NAMES
 
 class OllamaClient:
     
@@ -291,6 +292,39 @@ EINFACHE ÜBERSETZUNG:"""
         
         return min(confidence, 1.0)
     
+    async def _evaluate_language_translation_quality(self, original: str, translated: str) -> float:
+        """Bewertet Qualität der Sprachübersetzung"""
+        if not translated or translated.startswith("Fehler"):
+            return 0.0
+        
+        confidence = 0.6  # Basis-Vertrauen höher als bei medizinischer Vereinfachung
+        
+        # Länge der Übersetzung sollte ähnlich dem Original sein
+        if len(translated) > 50:
+            confidence += 0.1
+        
+        # Verhältnis Original zu Übersetzung
+        length_ratio = len(translated) / max(len(original), 1)
+        if 0.7 <= length_ratio <= 1.5:
+            confidence += 0.1
+        
+        # Struktur-Elemente sollten erhalten bleiben (Emojis)
+        emoji_pattern = r'[😀-🿿]|[\U0001F300-\U0001F5FF]|[\U0001F600-\U0001F64F]|[\U0001F680-\U0001F6FF]|[\U0001F700-\U0001F77F]|[\U0001F780-\U0001F7FF]|[\U0001F800-\U0001F8FF]|[\U00002600-\U000027BF]'
+        original_emojis = len(re.findall(emoji_pattern, original))
+        translated_emojis = len(re.findall(emoji_pattern, translated))
+        
+        if original_emojis > 0:
+            emoji_retention = min(translated_emojis / original_emojis, 1.0)
+            confidence += emoji_retention * 0.1
+        
+        # Text sollte nicht zu viele englische Wörter enthalten (außer bei englischer Zielsprache)
+        english_words = ["the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by"]
+        english_count = sum(1 for word in english_words if word in translated.lower())
+        if english_count < 3:  # Weniger englische Wörter ist besser
+            confidence += 0.1
+        
+        return min(confidence, 1.0)
+    
     async def generate_streaming(
         self, 
         prompt: str, 
@@ -327,4 +361,62 @@ EINFACHE ÜBERSETZUNG:"""
                                 continue
                                 
         except Exception as e:
-            yield f"Streaming-Fehler: {str(e)}" 
+            yield f"Streaming-Fehler: {str(e)}"
+    
+    async def translate_to_language(
+        self,
+        simplified_text: str,
+        target_language: SupportedLanguage,
+        model: str = "mannix/llamax3-8b-alpaca:latest"
+    ) -> tuple[str, float]:
+        """
+        Übersetzt vereinfachten Text in eine andere Sprache
+        
+        Args:
+            simplified_text: Der bereits vereinfachte Text
+            target_language: Die Zielsprache
+            model: Das zu verwendende Modell
+            
+        Returns:
+            tuple[str, float]: (translated_text, confidence)
+        """
+        try:
+            language_name = LANGUAGE_NAMES.get(target_language, target_language.value)
+            
+            prompt = self._get_language_translation_prompt(simplified_text, target_language, language_name)
+            
+            # Übersetzung durchführen
+            translated_text = await self._generate_response(prompt, model)
+            
+            # Qualität bewerten
+            confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
+            
+            return translated_text, confidence
+            
+        except Exception as e:
+            print(f"❌ Sprachübersetzung fehlgeschlagen: {e}")
+            return f"Fehler bei der Sprachübersetzung: {str(e)}", 0.0
+
+    def _get_language_translation_prompt(self, text: str, target_language: SupportedLanguage, language_name: str) -> str:
+        """Erstellt Prompt für Sprachübersetzung"""
+        
+        return f"""Du bist ein professioneller medizinischer Übersetzer, der bereits vereinfachte medizinische Texte in andere Sprachen übersetzt.
+
+AUFGABE:
+- Übersetze den folgenden bereits vereinfachten medizinischen Text in {language_name} ({target_language.value})
+- Behalte die einfache, verständliche Sprache bei
+- Übersetze alle medizinischen Begriffe korrekt und angemessen
+- Behalte die Struktur mit Emojis und Überschriften bei
+- Stelle sicher, dass der Text für Patienten verständlich bleibt
+
+WICHTIGE REGELN:
+- Verwende einfache, klare Sprache in der Zielsprache
+- Behalte medizinische Genauigkeit bei
+- Übersetze Emojis und Struktur-Elemente nicht - behalte sie bei
+- Falls ein medizinischer Begriff keine direkte Übersetzung hat, erkläre ihn in Klammern
+- Stelle sicher, dass der übersetzte Text genauso verständlich ist wie das Original
+
+ORIGINAL TEXT (bereits vereinfacht):
+{text}
+
+ÜBERSETZUNG IN {language_name.upper()}:""" 
