@@ -157,8 +157,8 @@ class FileValidator:
                 if width < 100 or height < 100:
                     return False, "Bild zu klein (Mindestgröße: 100x100 Pixel)"
                 
-                if width > 4000 or height > 4000:
-                    return False, "Bild zu groß (Maximalgröße: 4000x4000 Pixel)"
+                if width > 8000 or height > 8000:
+                    return False, "Bild zu groß (Maximalgröße: 8000x8000 Pixel)"
                 
                 # Überprüfung auf beschädigte Bilddaten
                 img.verify()

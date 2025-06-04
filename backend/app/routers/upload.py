@@ -166,7 +166,7 @@ async def get_upload_limits():
         "rate_limit": "5 uploads per minute",
         "max_pages_pdf": 50,
         "min_image_size": "100x100 pixels",
-        "max_image_size": "4000x4000 pixels",
+        "max_image_size": "8000x8000 pixels",
         "processing_timeout_minutes": 30
     }
 
