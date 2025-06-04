@@ -18,7 +18,8 @@ COPY package*.json ./
 RUN npm cache clean --force && \
     rm -rf node_modules package-lock.json && \
     npm install --legacy-peer-deps && \
-    npm ls ajv ajv-keywords || true
+    npm install --save-dev schema-utils@3.3.0 fork-ts-checker-webpack-plugin@6.5.3 --legacy-peer-deps && \
+    npm ls ajv ajv-keywords schema-utils fork-ts-checker-webpack-plugin || true
 
 # Copy source code
 COPY . .
