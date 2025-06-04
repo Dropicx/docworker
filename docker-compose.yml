@@ -26,7 +26,7 @@ services:
   frontend:
     build: 
       context: ./frontend
-      dockerfile: Dockerfile.simple
+      dockerfile: Dockerfile
     container_name: medical-translator-frontend
     restart: unless-stopped
     depends_on:
