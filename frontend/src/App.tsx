@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap, Globe } from 'lucide-react';
+import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap, Globe, ChevronDown, Search } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
@@ -17,6 +17,8 @@ function App() {
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [availableLanguages, setAvailableLanguages] = useState<SupportedLanguage[]>([]);
   const [languagesLoaded, setLanguagesLoaded] = useState(false);
+  const [showAllLanguages, setShowAllLanguages] = useState(false);
+  const [languageSearchTerm, setLanguageSearchTerm] = useState('');
 
   // Health check beim Start
   useEffect(() => {
@@ -142,10 +144,14 @@ function App() {
     }
 
     const popularLanguages = availableLanguages.filter(lang => lang.popular);
+    const allLanguages = availableLanguages.filter(lang => 
+      lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
+      lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
+    );
     const selectedLanguageInfo = availableLanguages.find(lang => lang.code === selectedLanguage);
 
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         <label className="block text-sm font-medium text-neutral-700">
           Übersetzung (optional)
         </label>
@@ -176,7 +182,82 @@ function App() {
               {language.name}
             </button>
           ))}
+          
+          {/* "Mehr Sprachen" Button */}
+          <button
+            onClick={() => setShowAllLanguages(!showAllLanguages)}
+            className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 flex items-center space-x-1 ${
+              showAllLanguages
+                ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-200'
+                : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100 border border-neutral-200'
+            }`}
+          >
+            <span>Mehr Sprachen</span>
+            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${
+              showAllLanguages ? 'rotate-180' : ''
+            }`} />
+          </button>
         </div>
+
+        {/* All Languages Dropdown */}
+        {showAllLanguages && (
+          <div className="animate-slide-down">
+            <div className="border border-neutral-200 rounded-xl bg-white shadow-lg">
+              {/* Search */}
+              <div className="p-3 border-b border-neutral-100">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
+                  <input
+                    type="text"
+                    placeholder="Sprache suchen..."
+                    value={languageSearchTerm}
+                    onChange={(e) => setLanguageSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 text-sm border border-neutral-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Language Grid */}
+              <div className="p-3 max-h-64 overflow-y-auto">
+                <div className="grid grid-cols-2 gap-2">
+                  {allLanguages.map((language) => (
+                    <button
+                      key={language.code}
+                      onClick={() => {
+                        setSelectedLanguage(language.code === selectedLanguage ? null : language.code);
+                        setShowAllLanguages(false);
+                        setLanguageSearchTerm('');
+                      }}
+                      className={`text-left px-3 py-2 text-sm rounded-lg transition-colors duration-150 ${
+                        selectedLanguage === language.code
+                          ? 'bg-brand-100 text-brand-700 font-medium'
+                          : 'text-neutral-700 hover:bg-neutral-50'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="truncate">{language.name}</span>
+                        <span className="text-xs text-neutral-500 font-mono ml-2">
+                          {language.code}
+                        </span>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                
+                {allLanguages.length === 0 && languageSearchTerm && (
+                  <div className="text-center py-4 text-sm text-neutral-500">
+                    Keine Sprachen gefunden für "{languageSearchTerm}"
+                  </div>
+                )}
+              </div>
+              
+              {/* Footer Info */}
+              <div className="px-3 py-2 border-t border-neutral-100 bg-neutral-50 text-xs text-neutral-500 text-center rounded-b-xl">
+                {availableLanguages.length} Sprachen verfügbar
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Selected language info */}
         {selectedLanguage && selectedLanguageInfo && (
