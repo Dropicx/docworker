@@ -82,9 +82,6 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
           <div className="w-20 h-20 bg-gradient-to-br from-success-500 via-brand-600 to-accent-600 rounded-3xl flex items-center justify-center mx-auto shadow-glow">
             <Sparkles className="w-10 h-10 text-white" />
           </div>
-          <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-success-400 to-success-500 rounded-full flex items-center justify-center">
-            <CheckCircle className="w-5 h-5 text-white" />
-          </div>
         </div>
         
         <div className="space-y-2">
