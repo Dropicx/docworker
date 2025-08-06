@@ -5,6 +5,9 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
     networks:
       - traefik-proxy
     ports:
@@ -15,6 +18,9 @@ services:
       - NETCUP_CUSTOMER_NUMBER=${NETCUP_CUSTOMER_NUMBER}
       - NETCUP_API_KEY=${NETCUP_API_KEY}
       - NETCUP_API_PASSWORD=${NETCUP_API_PASSWORD}
+      - NETCUP_PROPAGATION_TIMEOUT=120
+      - NETCUP_POLLING_INTERVAL=10
+      - NETCUP_HTTP_TIMEOUT=30
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
