@@ -33,12 +33,12 @@ certificatesResolvers:
       storage: acme.json
       dnsChallenge:
         provider: netcup
-        delayBeforeCheck: 90
+        delayBeforeCheck: 120
         resolvers:
-          - "1.1.1.1:53"
-          - "1.0.0.1:53"
-          - "8.8.8.8:53"
-          - "8.8.4.4:53"
+          - "127.0.0.53:53"
+          - "193.148.166.4:53"
+          - "46.38.225.230:53"
+          - "46.38.252.230:53"
 
 log:
   level: INFO

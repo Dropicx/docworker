@@ -6,8 +6,9 @@ services:
     security_opt:
       - no-new-privileges:true
     dns:
-      - 1.1.1.1
-      - 8.8.8.8
+      - 127.0.0.53  # Lokaler systemd-resolved
+      - 193.148.166.4  # Netcup DNS 1
+      - 46.38.225.230  # Netcup DNS 2
     networks:
       - traefik-proxy
     ports:
