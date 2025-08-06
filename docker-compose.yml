@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     build: 
@@ -65,7 +63,7 @@ services:
     tty: true
     restart: unless-stopped
     image: docker.io/ollama/ollama:latest
-    command: ["/bin/bash", "/startup.sh"]
+    entrypoint: ["/bin/sh", "/startup.sh"]
     ports:
       - 7869:11434
     environment:

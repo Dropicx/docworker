@@ -1,39 +1,13 @@
-#!/bin/bash
+#!/bin/sh
 
 # Ollama Model Pre-loader Script
 # This script ensures all required models are available for the doctranslator application
 
-echo "🚀 Starting Ollama model initialization..."
+echo "🚀 Starting Ollama service with model pre-loading..."
 
-# Array of models required by the application (in priority order)
-MODELS=(
-    "mistral-nemo:latest"
-    "llama3.2:latest"
-    "llama3.1"
-    "mistral:7b"
-    "deepseek-r1:7b"
-    "gemma3:27b"
-)
-
-# Function to check if a model exists
-check_model() {
-    local model=$1
-    ollama list 2>/dev/null | grep -q "$model"
-    return $?
-}
-
-# Function to pull a model
-pull_model() {
-    local model=$1
-    echo "📥 Pulling model: $model"
-    if ollama pull "$model"; then
-        echo "✅ Successfully pulled: $model"
-        return 0
-    else
-        echo "⚠️ Failed to pull: $model"
-        return 1
-    fi
-}
+# Start Ollama service in the background
+ollama serve &
+OLLAMA_PID=$!
 
 # Wait for Ollama to be ready
 echo "⏳ Waiting for Ollama service to be ready..."
@@ -41,7 +15,7 @@ max_retries=30
 retry_count=0
 
 while [ $retry_count -lt $max_retries ]; do
-    if ollama list &>/dev/null; then
+    if ollama list >/dev/null 2>&1; then
         echo "✅ Ollama service is ready!"
         break
     fi
@@ -55,46 +29,41 @@ if [ $retry_count -eq $max_retries ]; then
     exit 1
 fi
 
-# Check and pull models
+# Array of models required by the application (in priority order)
 echo "🔍 Checking required models..."
-pulled_count=0
-failed_count=0
 
-for model in "${MODELS[@]}"; do
-    if check_model "$model"; then
-        echo "✅ Model already exists: $model"
+# Primary model - critical
+MODEL="mistral-nemo:latest"
+if ! ollama list 2>/dev/null | grep -q "$MODEL"; then
+    echo "📥 Pulling primary model: $MODEL"
+    if ollama pull "$MODEL"; then
+        echo "✅ Successfully pulled: $MODEL"
     else
-        echo "⚠️ Model not found: $model"
-        if pull_model "$model"; then
-            pulled_count=$((pulled_count + 1))
-        else
-            failed_count=$((failed_count + 1))
-            # Only fail critically for the primary model
-            if [ "$model" = "mistral-nemo:latest" ]; then
-                echo "❌ Critical: Failed to pull primary model!"
-                exit 1
-            fi
-        fi
+        echo "⚠️ Failed to pull primary model, trying fallback..."
+    fi
+else
+    echo "✅ Primary model already exists: $MODEL"
+fi
+
+# Fallback models - optional
+for MODEL in "llama3.2:latest" "llama3.1" "mistral:7b"; do
+    if ! ollama list 2>/dev/null | grep -q "$MODEL"; then
+        echo "📥 Pulling fallback model: $MODEL"
+        ollama pull "$MODEL" || echo "⚠️ Failed to pull: $MODEL (non-critical)"
+    else
+        echo "✅ Model already exists: $MODEL"
     fi
 done
-
-# Summary
-echo ""
-echo "📊 Model initialization complete!"
-echo "   - Models checked: ${#MODELS[@]}"
-echo "   - Models pulled: $pulled_count"
-echo "   - Failed pulls: $failed_count"
 
 # List all available models
 echo ""
 echo "📋 Available models:"
 ollama list
 
-# Keep the container running
 echo ""
 echo "🎯 Ollama is ready to serve requests!"
 echo "   Primary model: mistral-nemo:latest"
 echo "   Listening on port 11434"
 
-# Start Ollama server (this will keep the container running)
-exec ollama serve
+# Keep the Ollama service running in foreground
+wait $OLLAMA_PID

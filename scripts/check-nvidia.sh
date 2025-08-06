@@ -140,9 +140,13 @@ echo "==========================================="
 echo "📊 Configuration Summary"
 echo "==========================================="
 
-COMPOSE_FILE="/home/catchmelit/Projects/doctranslator/docker-compose.yml"
-COMPOSE_GPU_FILE="/home/catchmelit/Projects/doctranslator/docker-compose.gpu.yml"
-COMPOSE_CPU_FILE="/home/catchmelit/Projects/doctranslator/docker-compose.cpu.yml"
+# Get the script's parent directory (project root)
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+COMPOSE_FILE="$PROJECT_ROOT/docker-compose.yml"
+COMPOSE_GPU_FILE="$PROJECT_ROOT/docker-compose.gpu.yml"
+COMPOSE_CPU_FILE="$PROJECT_ROOT/docker-compose.cpu.yml"
 
 if [ "$USE_GPU" = true ]; then
     print_success "✨ GPU support is ENABLED"
