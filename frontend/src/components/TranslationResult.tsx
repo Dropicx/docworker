@@ -296,8 +296,9 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
                         {children}
                       </blockquote>
                     ),
-                    code: ({inline, children}) => 
-                      inline ? (
+                    code: ({children, className}) => {
+                      const isInline = !className?.includes('language-');
+                      return isInline ? (
                         <code className="bg-primary-100 text-primary-800 px-1.5 py-0.5 rounded text-sm font-mono">
                           {children}
                         </code>
@@ -305,7 +306,8 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
                         <pre className="bg-primary-100 text-primary-800 p-4 rounded-lg overflow-x-auto mb-4">
                           <code className="font-mono text-sm">{children}</code>
                         </pre>
-                      ),
+                      );
+                    },
                     hr: () => <hr className="my-6 border-primary-200" />,
                     table: ({children}) => (
                       <div className="overflow-x-auto mb-4">
@@ -434,8 +436,9 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
                     li: ({children}) => <li className="ml-4">{children}</li>,
                     strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
                     em: ({children}) => <em className="italic text-primary-600">{children}</em>,
-                    code: ({inline, children}) => 
-                      inline ? (
+                    code: ({children, className}) => {
+                      const isInline = !className?.includes('language-');
+                      return isInline ? (
                         <code className="bg-primary-100 text-primary-800 px-1 py-0.5 rounded text-xs font-mono">
                           {children}
                         </code>
@@ -443,7 +446,8 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
                         <pre className="bg-primary-100 text-primary-800 p-3 rounded-lg overflow-x-auto mb-3">
                           <code className="font-mono text-xs">{children}</code>
                         </pre>
-                      ),
+                      );
+                    },
                   }}
                 >
                   {result.original_text}
