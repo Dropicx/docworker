@@ -13,7 +13,7 @@ echo ""
 
 # Stop only doctranslator project containers
 echo "1️⃣  Stopping doctranslator containers..."
-docker-compose down 2>/dev/null || true
+docker compose down 2>/dev/null || true
 # Only stop containers from this project (with medical-translator prefix or ollama)
 docker stop medical-translator-backend medical-translator-frontend ollama 2>/dev/null || true
 echo "✅ Doctranslator containers stopped"
@@ -72,7 +72,7 @@ echo ""
 # Rebuild images to ensure clean state
 echo "5️⃣  Rebuilding Docker images..."
 echo "   This may take a few minutes..."
-docker-compose build --no-cache
+docker compose build --no-cache
 echo "✅ Images rebuilt"
 echo ""
 
@@ -80,10 +80,10 @@ echo ""
 echo "6️⃣  Starting services..."
 if [ -f docker-compose.gpu.yml ]; then
     echo "   Starting with GPU support..."
-    docker-compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+    docker compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
 else
     echo "   Starting without GPU override..."
-    docker-compose up -d
+    docker compose up -d
 fi
 echo ""
 
@@ -93,7 +93,7 @@ sleep 10
 
 # Check service status
 echo "8️⃣  Checking service status..."
-docker-compose ps
+docker compose ps
 echo ""
 
 # Test Ollama
@@ -133,7 +133,7 @@ echo "  - Backend:  http://localhost:9122"
 echo "  - Ollama:   http://localhost:11434"
 echo ""
 echo "To check logs, run:"
-echo "  docker-compose logs -f [service-name]"
+echo "  docker compose logs -f [service-name]"
 echo ""
 echo "If services are still starting, wait a minute and run:"
-echo "  docker-compose ps"
+echo "  docker compose ps"

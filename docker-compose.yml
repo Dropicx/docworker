@@ -13,6 +13,8 @@ services:
       - ./logs:/app/logs
     networks:
       - medical-translator
+    ports:
+      - "9122:9122"  # Direkt erreichbar für lokale Entwicklung
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9122/api/health/simple"]
       interval: 30s
@@ -32,27 +34,9 @@ services:
     environment:
       - REACT_APP_API_URL=/api
     networks:
-      - proxy
       - medical-translator
-    labels:
-      - "traefik.docker.network=proxy"
-      - "traefik.enable=true"
-      - "traefik.http.routers.medical-app-secure.rule=Host(`medical.fra-la.de`)"
-      - "traefik.http.routers.medical-app-secure.entrypoints=websecure"
-      - "traefik.http.routers.medical-app-secure.middlewares=default@file"
-      - "traefik.http.routers.medical-app-secure.service=medical-app"
-      - "traefik.http.routers.medical-app-secure.tls=true"
-      - "traefik.http.routers.medical-app-secure.tls.certresolver=tls_resolver"
-      - "traefik.http.routers.medical-app.entrypoints=web"
-      - "traefik.http.routers.medical-app.rule=Host(`medical.fra-la.de`)"
-      - "traefik.http.services.medical-app.loadbalancer.server.port=9121"
-      # Sicherheits-Middleware
-      #- "traefik.http.routers.medical-app.middlewares=secure-headers@docker"
-      #- "traefik.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
-      #- "traefik.http.middlewares.secure-headers.headers.frameDeny=true"
-      #- "traefik.http.middlewares.secure-headers.headers.browserXssFilter=true"
-      #- "traefik.http.middlewares.secure-headers.headers.forceSTSHeader=true"
-      #- "traefik.http.middlewares.secure-headers.headers.stsSeconds=31536000"
+    ports:
+      - "9121:9121"  # Direkt erreichbar für lokale Entwicklung
 
   ollama:
     volumes:
@@ -81,5 +65,3 @@ services:
 networks:
   medical-translator:
     external: false
-  proxy:
-    external: true

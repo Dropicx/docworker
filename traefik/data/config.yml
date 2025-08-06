@@ -1,0 +1,25 @@
+http:
+  middlewares:
+    default-headers:
+      headers:
+        frameDeny: true
+        browserXssFilter: true
+        contentTypeNosniff: true
+        forceSTSHeader: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 15552000
+        customFrameOptionsValue: SAMEORIGIN
+        customRequestHeaders:
+          X-Forwarded-Proto: https
+
+    default-whitelist:
+      ipWhiteList:
+        sourceRange:
+          - "0.0.0.0/0"  # Erlaubt alle IPs - anpassen nach Bedarf
+
+    secured:
+      chain:
+        middlewares:
+          - default-whitelist
+          - default-headers

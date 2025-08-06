@@ -37,22 +37,22 @@ fi
 
 # 3. Stoppe alte Container (falls vorhanden)
 log_info "Stoppe alte Container..."
-docker-compose down 2>/dev/null || true
+docker compose down 2>/dev/null || true
 
 # 4. Baue neue Images
 log_info "Baue neue Docker Images..."
-docker-compose build --no-cache
+docker compose build --no-cache
 
 # 5. Starte Services
 log_info "Starte Services..."
-docker-compose up -d
+docker compose up -d
 
 # 6. Warte auf Gesundheitscheck
 log_info "Warte auf Gesundheitschecks..."
 sleep 30
 
 # 7. Prüfe Status
-if docker-compose ps | grep -q "Up (healthy)"; then
+if docker compose ps | grep -q "Up (healthy)"; then
     log_info "✅ Backend ist gesund"
 else
     log_warn "⚠️ Backend-Gesundheitscheck fehlgeschlagen"
@@ -70,7 +70,7 @@ echo "   Frontend: https://$(grep 'Host(' docker-compose.yml | cut -d'`' -f2)"
 echo "   Backend Health: https://$(grep 'Host(' docker-compose.yml | cut -d'`' -f2)/api/health"
 echo ""
 echo "📊 Container-Status:"
-docker-compose ps
+docker compose ps
 echo ""
 echo "📝 Logs verfolgen:"
-echo "   docker-compose logs -f"
+echo "   docker compose logs -f"

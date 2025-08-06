@@ -4,20 +4,20 @@ echo "🔄 Aktualisiere DocTranslator mit verbessertem Systemprompt und Frontend
 echo ""
 
 # Prüfe ob Docker Compose läuft
-if ! docker-compose ps | grep -q "Up"; then
+if ! docker compose ps | grep -q "Up"; then
     echo "⚠️ Starte Docker Compose Services..."
-    docker-compose up -d
+    docker compose up -d
     echo "⏳ Warte 10 Sekunden bis Services bereit sind..."
     sleep 10
 fi
 
 # Backend neu starten um Code-Änderungen zu laden
 echo "🔄 Starte Backend mit neuen Prompts neu..."
-docker-compose restart backend
+docker compose restart backend
 
 # Frontend neu bauen und starten
 echo "🎨 Aktualisiere Frontend mit neuen Styles..."
-docker-compose restart frontend
+docker compose restart frontend
 
 echo "⏳ Warte 30 Sekunden bis alles bereit ist..."
 sleep 30

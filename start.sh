@@ -30,13 +30,14 @@ if ! command -v docker &> /dev/null; then
     exit 1
 fi
 
-if ! command -v docker-compose &> /dev/null; then
-    echo -e "${RED}❌ Docker Compose is not installed${NC}"
-    echo "Please install Docker Compose first: https://docs.docker.com/compose/install/"
+# Check for Docker Compose v2
+if docker compose version &> /dev/null; then
+    echo -e "${GREEN}✅ Docker and Docker Compose v2 are installed${NC}"
+else
+    echo -e "${RED}❌ Docker Compose v2 is not installed${NC}"
+    echo "Please install Docker Compose v2: https://docs.docker.com/compose/install/"
     exit 1
 fi
-
-echo -e "${GREEN}✅ Docker and Docker Compose are installed${NC}"
 
 # Run NVIDIA check script
 echo ""
@@ -70,7 +71,7 @@ case "$COMMAND" in
     up|start)
         echo ""
         echo "Starting all services..."
-        docker-compose $COMPOSE_FILES up -d "$@"
+        docker compose $COMPOSE_FILES up -d "$@"
         
         echo ""
         echo -e "${GREEN}✅ Services started successfully!${NC}"
@@ -80,49 +81,49 @@ case "$COMMAND" in
         echo "   - Backend API: http://localhost:9122"
         echo "   - Ollama: http://localhost:7869"
         echo ""
-        echo "📊 Check status with: docker-compose ps"
-        echo "📜 View logs with: docker-compose logs -f"
+        echo "📊 Check status with: docker compose ps"
+        echo "📜 View logs with: docker compose logs -f"
         ;;
     
     down|stop)
         echo "Stopping all services..."
-        docker-compose $COMPOSE_FILES down "$@"
+        docker compose $COMPOSE_FILES down "$@"
         echo -e "${GREEN}✅ Services stopped${NC}"
         ;;
     
     restart)
         echo "Restarting all services..."
-        docker-compose $COMPOSE_FILES restart "$@"
+        docker compose $COMPOSE_FILES restart "$@"
         echo -e "${GREEN}✅ Services restarted${NC}"
         ;;
     
     logs)
-        docker-compose $COMPOSE_FILES logs "$@"
+        docker compose $COMPOSE_FILES logs "$@"
         ;;
     
     ps|status)
-        docker-compose $COMPOSE_FILES ps "$@"
+        docker compose $COMPOSE_FILES ps "$@"
         ;;
     
     pull)
         echo "Pulling latest images..."
-        docker-compose $COMPOSE_FILES pull "$@"
+        docker compose $COMPOSE_FILES pull "$@"
         echo -e "${GREEN}✅ Images updated${NC}"
         ;;
     
     build)
         echo "Building services..."
-        docker-compose $COMPOSE_FILES build "$@"
+        docker compose $COMPOSE_FILES build "$@"
         echo -e "${GREEN}✅ Build completed${NC}"
         ;;
     
     exec)
-        docker-compose $COMPOSE_FILES exec "$@"
+        docker compose $COMPOSE_FILES exec "$@"
         ;;
     
     config)
         echo "Effective configuration:"
-        docker-compose $COMPOSE_FILES config "$@"
+        docker compose $COMPOSE_FILES config "$@"
         ;;
     
     gpu-status)
@@ -137,7 +138,7 @@ case "$COMMAND" in
     
     models)
         echo "Checking Ollama models..."
-        docker-compose $COMPOSE_FILES exec ollama ollama list || echo "Ollama container not running"
+        docker compose $COMPOSE_FILES exec ollama ollama list || echo "Ollama container not running"
         ;;
     
     help|--help|-h)
@@ -166,8 +167,8 @@ case "$COMMAND" in
         ;;
     
     *)
-        # Pass through any other docker-compose commands
-        docker-compose $COMPOSE_FILES "$COMMAND" "$@"
+        # Pass through any other docker compose commands
+        docker compose $COMPOSE_FILES "$COMMAND" "$@"
         ;;
 esac
 

@@ -1,0 +1,43 @@
+version: '3.8'
+
+# Diese Datei erweitert die Standard docker-compose.yml mit Traefik-Labels
+# Verwendung: docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
+
+services:
+  # Backend braucht keine Traefik-Labels, da es nur intern erreichbar sein soll
+  # Die Frontend-zu-Backend Kommunikation läuft über das interne Docker-Netzwerk
+  
+  frontend:
+    networks:
+      - traefik-proxy
+      - medical-translator
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-proxy"
+      # HTTPS Router
+      - "traefik.http.routers.medical-app-secure.rule=Host(`medical.fra-la.de`)"
+      - "traefik.http.routers.medical-app-secure.entrypoints=https"
+      - "traefik.http.routers.medical-app-secure.tls=true"
+      - "traefik.http.routers.medical-app-secure.tls.certresolver=netcup"
+      - "traefik.http.services.medical-app-secure.loadbalancer.server.port=9121"
+      # HTTP Router (Redirect to HTTPS)
+      - "traefik.http.routers.medical-app.rule=Host(`medical.fra-la.de`)"
+      - "traefik.http.routers.medical-app.entrypoints=http"
+      - "traefik.http.routers.medical-app.middlewares=https-redirect"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.https-redirect.redirectscheme.permanent=true"
+      # Security Headers
+      - "traefik.http.routers.medical-app-secure.middlewares=secure-headers"
+      - "traefik.http.middlewares.secure-headers.headers.contentTypeNosniff=true"
+      - "traefik.http.middlewares.secure-headers.headers.frameDeny=true"
+      - "traefik.http.middlewares.secure-headers.headers.browserXssFilter=true"
+      - "traefik.http.middlewares.secure-headers.headers.forceSTSHeader=true"
+      - "traefik.http.middlewares.secure-headers.headers.stsSeconds=31536000"
+      - "traefik.http.middlewares.secure-headers.headers.stsIncludeSubdomains=true"
+      - "traefik.http.middlewares.secure-headers.headers.stsPreload=true"
+
+networks:
+  traefik-proxy:
+    external: true
+  medical-translator:
+    external: false
