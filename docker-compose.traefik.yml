@@ -18,7 +18,7 @@ services:
       - "traefik.http.routers.medical-app-secure.rule=Host(`medical.fra-la.de`)"
       - "traefik.http.routers.medical-app-secure.entrypoints=https"
       - "traefik.http.routers.medical-app-secure.tls=true"
-      - "traefik.http.routers.medical-app-secure.tls.certresolver=netcup"
+      - "traefik.http.routers.medical-app-secure.tls.certresolver=letsencrypt"
       - "traefik.http.services.medical-app-secure.loadbalancer.server.port=9121"
       # HTTP Router (Redirect to HTTPS)
       - "traefik.http.routers.medical-app.rule=Host(`medical.fra-la.de`)"

@@ -5,23 +5,14 @@ services:
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
-    dns:
-      - 127.0.0.53  # Lokaler systemd-resolved
-      - 193.148.166.4  # Netcup DNS 1
-      - 46.38.225.230  # Netcup DNS 2
     networks:
       - traefik-proxy
     ports:
       - "80:80"
       - "443:443"
       - "8080:8080"  # Dashboard (optional, kann später deaktiviert werden)
-    environment:
-      - NETCUP_CUSTOMER_NUMBER=${NETCUP_CUSTOMER_NUMBER}
-      - NETCUP_API_KEY=${NETCUP_API_KEY}
-      - NETCUP_API_PASSWORD=${NETCUP_API_PASSWORD}
-      - NETCUP_PROPAGATION_TIMEOUT=120
-      - NETCUP_POLLING_INTERVAL=10
-      - NETCUP_HTTP_TIMEOUT=30
+    # environment:
+    #   Netcup API nicht mehr benötigt mit HTTP-Challenge
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro
@@ -40,9 +31,7 @@ services:
       - "traefik.http.routers.traefik-secure.rule=Host(`traefik.fra-la.de`)"
       - "traefik.http.routers.traefik-secure.middlewares=traefik-auth"
       - "traefik.http.routers.traefik-secure.tls=true"
-      - "traefik.http.routers.traefik-secure.tls.certresolver=netcup"
-      - "traefik.http.routers.traefik-secure.tls.domains[0].main=fra-la.de"
-      - "traefik.http.routers.traefik-secure.tls.domains[0].sans=*.fra-la.de"
+      - "traefik.http.routers.traefik-secure.tls.certresolver=letsencrypt"
       - "traefik.http.routers.traefik-secure.service=api@internal"
 
 networks:

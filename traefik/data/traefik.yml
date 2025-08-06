@@ -27,18 +27,14 @@ providers:
     watch: true
 
 certificatesResolvers:
-  netcup:
+  letsencrypt:
     acme:
       email: admin@fra-la.de  # Ändern Sie dies zu Ihrer E-Mail
       storage: acme.json
-      dnsChallenge:
-        provider: netcup
-        delayBeforeCheck: 120
-        resolvers:
-          - "127.0.0.53:53"
-          - "193.148.166.4:53"
-          - "46.38.225.230:53"
-          - "46.38.252.230:53"
+      httpChallenge:
+        entryPoint: http
+      # Optional: Staging zum Testen (entfernen für Produktion)
+      # caServer: https://acme-staging-v02.api.letsencrypt.org/directory
 
 log:
   level: INFO
