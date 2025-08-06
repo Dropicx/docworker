@@ -7,6 +7,8 @@ import {
   UploadLimits,
   AvailableModels,
   ActiveProcessesResponse,
+  ProcessingOptions,
+  AvailableLanguagesResponse,
   ApiError
 } from '../types/api';
 
@@ -64,9 +66,12 @@ export class ApiService {
     return response.data;
   }
 
-  // Start processing
-  static async startProcessing(processingId: string): Promise<{ message: string; processing_id: string; status: string }> {
-    const response = await api.post(`/process/${processingId}`);
+  // Start processing with optional language
+  static async startProcessing(
+    processingId: string, 
+    options?: ProcessingOptions
+  ): Promise<{ message: string; processing_id: string; status: string; target_language?: string }> {
+    const response = await api.post(`/process/${processingId}`, options || {});
     return response.data;
   }
 
@@ -126,6 +131,12 @@ export class ApiService {
     return response.data;
   }
 
+  // Language support
+  static async getAvailableLanguages(): Promise<AvailableLanguagesResponse> {
+    const response: AxiosResponse<AvailableLanguagesResponse> = await api.get('/process/languages');
+    return response.data;
+  }
+
   // Utility methods
   static formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
@@ -158,6 +169,7 @@ export class ApiService {
       case 'processing':
       case 'extracting_text':
       case 'translating':
+      case 'language_translating':
         return 'status-processing';
       case 'completed':
         return 'status-completed';
@@ -177,6 +189,8 @@ export class ApiService {
       case 'extracting_text':
         return 'Text-Extraktion';
       case 'translating':
+        return 'Vereinfachung';
+      case 'language_translating':
         return 'Übersetzung';
       case 'completed':
         return 'Abgeschlossen';

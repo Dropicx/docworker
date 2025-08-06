@@ -12,7 +12,10 @@ from app.models.document import (
     ProcessingProgress, 
     TranslationResult, 
     ProcessingStatus,
-    ErrorResponse
+    ProcessingOptions,
+    SupportedLanguage,
+    ErrorResponse,
+    LANGUAGE_NAMES
 )
 from app.services.cleanup import (
     get_from_processing_store, 
@@ -34,12 +37,14 @@ ollama_client = OllamaClient()
 async def start_processing(
     processing_id: str,
     request: Request,
-    background_tasks: BackgroundTasks
+    background_tasks: BackgroundTasks,
+    options: Optional[ProcessingOptions] = None
 ):
     """
     Startet die Verarbeitung eines hochgeladenen Dokuments
     
     - **processing_id**: ID des hochgeladenen Dokuments
+    - **options**: Verarbeitungsoptionen (z.B. Zielsprache)
     """
     
     try:
@@ -66,6 +71,10 @@ async def start_processing(
                 detail="Verarbeitung bereits abgeschlossen"
             )
         
+        # Verarbeitungsoptionen speichern
+        if options:
+            processing_data["options"] = options.dict()
+        
         # Verarbeitung im Hintergrund starten
         background_tasks.add_task(process_document, processing_id)
         
@@ -74,15 +83,17 @@ async def start_processing(
             "status": ProcessingStatus.PROCESSING,
             "progress_percent": 10,
             "current_step": "Verarbeitung gestartet",
-            "started_at": datetime.now()
+            "started_at": datetime.now(),
+            "options": options.dict() if options else {}
         })
         
-        print(f"🔄 Verarbeitung gestartet: {processing_id[:8]}")
+        print(f"🔄 Verarbeitung gestartet: {processing_id[:8]} (Sprache: {options.target_language if options else 'Keine'})")
         
         return {
             "message": "Verarbeitung gestartet",
             "processing_id": processing_id,
-            "status": ProcessingStatus.PROCESSING
+            "status": ProcessingStatus.PROCESSING,
+            "target_language": options.target_language if options else None
         }
         
     except HTTPException:
@@ -104,6 +115,8 @@ async def process_document(processing_id: str):
             return
         
         start_time = time.time()
+        options = processing_data.get("options", {})
+        target_language = options.get("target_language")
         
         # Schritt 1: Textextraktion
         update_processing_store(processing_id, {
@@ -123,10 +136,10 @@ async def process_document(processing_id: str):
         if not extracted_text or len(extracted_text.strip()) < 10:
             raise Exception("Nicht genügend Text extrahiert")
         
-        # Schritt 2: Text-Übersetzung
+        # Schritt 2: Text-Vereinfachung
         update_processing_store(processing_id, {
             "status": ProcessingStatus.TRANSLATING,
-            "progress_percent": 60,
+            "progress_percent": 40,
             "current_step": "Text wird in einfache Sprache übersetzt..."
         })
         
@@ -138,22 +151,43 @@ async def process_document(processing_id: str):
             extracted_text
         )
         
-        # Schritt 3: Ergebnis finalisieren
+        # Schritt 3: Optionale Sprachübersetzung
+        language_translated_text = None
+        language_confidence_score = None
+        
+        if target_language:
+            update_processing_store(processing_id, {
+                "status": ProcessingStatus.LANGUAGE_TRANSLATING,
+                "progress_percent": 70,
+                "current_step": f"Übersetzung in {target_language.value}..."
+            })
+            
+            language_translated_text, language_confidence_score = await ollama_client.translate_to_language(
+                translated_text, target_language
+            )
+        
+        # Schritt 4: Ergebnis finalisieren
+        progress_percent = 90
         update_processing_store(processing_id, {
-            "progress_percent": 90,
+            "progress_percent": progress_percent,
             "current_step": "Ergebnis wird vorbereitet..."
         })
         
         processing_time = time.time() - start_time
-        overall_confidence = (text_confidence + translation_confidence) / 2
+        overall_confidence = translation_confidence
+        if language_confidence_score:
+            overall_confidence = (translation_confidence + language_confidence_score) / 2
         
         # Ergebnis speichern
         result = TranslationResult(
             processing_id=processing_id,
             original_text=extracted_text,
             translated_text=translated_text,
+            language_translated_text=language_translated_text,
+            target_language=SupportedLanguage(target_language) if target_language else None,
             document_type_detected=detected_doc_type,
             confidence_score=overall_confidence,
+            language_confidence_score=language_confidence_score,
             processing_time_seconds=processing_time
         )
         
@@ -165,7 +199,8 @@ async def process_document(processing_id: str):
             "completed_at": datetime.now()
         })
         
-        print(f"✅ Verarbeitung abgeschlossen: {processing_id[:8]} ({processing_time:.2f}s)")
+        language_info = f" + {target_language}" if target_language else ""
+        print(f"✅ Verarbeitung abgeschlossen: {processing_id[:8]} ({processing_time:.2f}s{language_info})")
         
     except Exception as e:
         print(f"❌ Verarbeitungsfehler {processing_id[:8]}: {e}")
@@ -314,5 +349,68 @@ async def get_available_models():
             "connected": False,
             "error": str(e),
             "models": [],
+            "timestamp": datetime.now()
+        }
+
+@router.get("/process/languages")
+async def get_available_languages():
+    """
+    Gibt verfügbare Sprachen für die Übersetzung zurück
+    """
+    
+    try:
+        # Beliebte Sprachen zuerst
+        popular_languages = [
+            SupportedLanguage.ENGLISH,
+            SupportedLanguage.SPANISH,
+            SupportedLanguage.FRENCH,
+            SupportedLanguage.ITALIAN,
+            SupportedLanguage.PORTUGUESE,
+            SupportedLanguage.DUTCH,
+            SupportedLanguage.POLISH,
+            SupportedLanguage.TURKISH,
+            SupportedLanguage.RUSSIAN,
+            SupportedLanguage.ARABIC,
+            SupportedLanguage.CHINESE_SIMPLIFIED,
+            SupportedLanguage.JAPANESE,
+            SupportedLanguage.KOREAN
+        ]
+        
+        # Alle verfügbaren Sprachen
+        all_languages = []
+        
+        # Zuerst beliebte Sprachen
+        for lang in popular_languages:
+            all_languages.append({
+                "code": lang.value,
+                "name": LANGUAGE_NAMES[lang],
+                "popular": True
+            })
+        
+        # Dann andere Sprachen alphabetisch
+        remaining_languages = []
+        for lang in SupportedLanguage:
+            if lang not in popular_languages:
+                remaining_languages.append({
+                    "code": lang.value,
+                    "name": LANGUAGE_NAMES[lang],
+                    "popular": False
+                })
+        
+        # Alphabetisch sortieren
+        remaining_languages.sort(key=lambda x: x["name"])
+        all_languages.extend(remaining_languages)
+        
+        return {
+            "languages": all_languages,
+            "total_count": len(all_languages),
+            "popular_count": len(popular_languages),
+            "timestamp": datetime.now()
+        }
+        
+    except Exception as e:
+        return {
+            "error": str(e),
+            "languages": [],
             "timestamp": datetime.now()
         } 

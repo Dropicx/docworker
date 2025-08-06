@@ -4,6 +4,7 @@ import asyncio
 import os
 from typing import Optional, Dict, Any, AsyncGenerator
 import re
+from app.models.document import SupportedLanguage, LANGUAGE_NAMES
 
 class OllamaClient:
     
@@ -78,22 +79,28 @@ class OllamaClient:
         patterns = {
             "arztbrief": [
                 "sehr geehrte", "liebe kollegin", "lieber kollege", 
-                "entlassung", "aufnahme", "diagnose", "therapie",
-                "empfehlung", "weiterbehandlung", "hochachtungsvoll"
+                "diagnose", "therapie", "empfehlung", "weiterbehandlung", 
+                "hochachtungsvoll", "mit freundlichen grüßen"
+            ],
+            "entlassungsbrief": [
+                "entlassung", "entlassen", "aufnahme", "krankenhausaufenthalt",
+                "stationäre behandlung", "heimkehr", "hausarzt", "nachsorge",
+                "medikation bei entlassung", "verhaltensempfehlungen"
             ],
             "laborbefund": [
                 "laborwerte", "blutwerte", "referenzbereich", 
                 "hämatologie", "klinische chemie", "mg/dl", "mmol/l",
-                "erhöht", "erniedrigt", "normal"
+                "erhöht", "erniedrigt", "normal", "labor"
             ],
             "radiologie": [
                 "röntgen", "ct", "mrt", "ultraschall", "befund",
                 "darstellung", "kontrastmittel", "auffällig",
-                "unauffällig", "verdacht"
+                "unauffällig", "verdacht", "bildgebung"
             ],
             "pathologie": [
                 "histologie", "biopsie", "gewebeprobe", "tumor",
-                "maligne", "benigne", "metastase", "grading"
+                "maligne", "benigne", "metastase", "grading",
+                "pathologisch", "zytologie"
             ]
         }
         
@@ -113,85 +120,94 @@ class OllamaClient:
     def _get_translation_prompt(self, text: str, doc_type: str) -> str:
         """Erstellt optimierten Prompt basierend auf Dokumenttyp"""
         
-        base_instruction = """Du bist ein erfahrener medizinischer Übersetzer, der komplexe medizinische Texte vollständig und präzise in patientenfreundliche Sprache übersetzt.
+        base_instruction = """Du bist ein hochspezialisierter medizinischer Übersetzer. Deine Aufgabe ist es, medizinische Dokumente vollständig und präzise in patientenfreundliche Sprache zu übersetzen.
 
-ZENTRALE AUFGABE:
-- Erstelle eine VOLLSTÄNDIGE und DETAILLIERTE Zusammenfassung ohne Details auszulassen
-- Übersetze JEDEN medizinischen Fachbegriff in einfache deutsche Sprache
-- Strukturiere die Übersetzung klar und übersichtlich mit Zwischenüberschriften
+WICHTIGE REGELN:
+- Übersetze NUR was im Dokument steht, füge NICHTS hinzu
+- Lasse KEINE medizinische Information weg
+- Erkläre JEDEN Fachbegriff sofort in Klammern
+- Spreche den Patienten DIREKT an, wenn das Dokument an ihn gerichtet ist (nutze "Sie", "Ihr", "Ihnen")
+- Markiere Unsicherheiten mit [?]
+- Bei unklaren Begriffen: "Bitte klären Sie dies mit Ihrem Arzt"
 
-STRUKTUR DER ÜBERSETZUNG:
-📋 **ZUSAMMENFASSUNG**
-[Kurze, beruhigende Einleitung über das Dokument]
+SPRACHLICHE RICHTLINIEN:
 
-🏥 **HAUPTBEFUNDE**
-[Alle wichtigen Diagnosen und Befunde in einfacher Sprache]
+VERWENDE:
+- Kurze Hauptsätze (maximal 15-20 Wörter)
+- Aktive Formulierungen ("Der Arzt untersucht" statt "Es wird untersucht")
+- Konkrete Begriffe ("Blutdruck messen" statt "Blutdruckkontrolle durchführen")
+- Alltagssprache ("Herz" zusätzlich zu "kardial")
+- Vergleiche aus dem Alltag (z.B. "groß wie eine Walnuss")
+- Zahlen ausschreiben wenn verständlicher ("zwei Mal täglich" statt "2x tägl.")
+- Direkte Ansprache ("Sie waren", "Ihr Blutdruck", "Sie sollen")
 
-📊 **DETAILS**
-[Alle spezifischen Werte, Messungen und Beobachtungen erklärt]
+VERMEIDE:
+- Verschachtelte Nebensätze
+- Passive Konstruktionen
+- Abstrakte Formulierungen
+- Unaufgelöste Abkürzungen
+- Fachsprache ohne Erklärung
+- Mehrdeutige Aussagen
+- Unpersönliche Formulierungen wie "Der Patient"
 
-💊 **BEHANDLUNG & EMPFEHLUNGEN**
-[Alle vorgeschlagenen Therapien und nächste Schritte]
+ÜBERSETZUNGSFORMAT:
+Erstelle eine strukturierte Übersetzung mit folgenden Abschnitten:
 
-⚠️ **WICHTIGE PUNKTE**
-[Besonders bedeutsame Informationen hervorgehoben]
+# [DOKUMENTTYP] - Verständliche Fassung
 
-ÜBERSETZUNGSREGELN:
-- Verwende eine beruhigende, positive aber ehrliche Sprache
-- Erkläre JEDEN medizinischen Begriff sofort in Klammern
-- Verwende Emojis für bessere Struktur und Lesbarkeit
-- Lasse KEINE Information aus dem Original weg
-- Erkläre komplexe Zusammenhänge Schritt für Schritt
-- Verwende Metaphern und Vergleiche für besseres Verständnis"""
+## Wichtigste Information
+[Ein Satz über das Wesentliche - direkte Ansprache]
+
+## Was wurde untersucht/behandelt?
+[Grund des Arztbesuchs in einfachen Worten - direkte Ansprache]
+
+## Was wurde festgestellt?
+### Hauptbefunde:
+• [Jeder Befund in einfacher Sprache - direkte Ansprache]
+  → Was bedeutet das? [Kurze Erklärung]
+
+### Diagnosen:
+• [Deutsche Bezeichnung - direkte Ansprache]
+  → Fachbegriff: [Original]
+  → Erklärung: [Was ist das genau?]
+
+## Behandlung/Medikamente
+• [Medikament/Maßnahme - direkte Ansprache]
+  → Zweck: [Wofür?]
+  → Wichtig zu wissen: [Besonderheiten]
+
+## Was passiert als Nächstes?
+• [Nächste Schritte - direkte Ansprache]
+• [Kontrolltermine]
+• [Verhaltensempfehlungen]
+
+## Wörterbuch der Fachbegriffe
+• **[Fachbegriff]**: [Verständliche Erklärung]
+
+## Wichtiger Hinweis
+Diese Übersetzung ersetzt nicht das Gespräch mit Ihrem Arzt. Bei Fragen wenden Sie sich an Ihr Behandlungsteam.
+
+**Rechtlicher Hinweis:** Diese Übersetzung dient nur Ihrem Verständnis und stellt keine medizinische Beratung dar. Bei Notfällen wählen Sie 112."""
         
+        # Dokumenttyp-spezifische Anweisungen mit direkter Ansprache
         specific_instructions = {
-            "arztbrief": """
-SPEZIELLE ANWEISUNGEN FÜR ARZTBRIEFE:
-📋 **ZUSAMMENFASSUNG**: Erkläre freundlich, warum der Patient im Krankenhaus/beim Arzt war
-🏥 **HAUPTBEFUNDE**: Alle Diagnosen ausführlich in Alltagssprache erklären
-📊 **DETAILS**: Untersuchungsergebnisse, Laborwerte, Bildgebung detailliert übersetzen
-💊 **BEHANDLUNG**: Alle Medikamente, Therapien und deren Zweck erklären
-⚠️ **WICHTIGE PUNKTE**: Termine, Nachkontrollen, Warnzeichen hervorheben
-🏠 **ZUHAUSE**: Konkrete Handlungsempfehlungen für den Alltag""",
-            
-            "laborbefund": """
-SPEZIELLE ANWEISUNGEN FÜR LABORBEFUNDE:
-📋 **ZUSAMMENFASSUNG**: Erklärung, welche Blutwerte untersucht wurden und warum
-🏥 **HAUPTBEFUNDE**: Status jedes Wertes (normal, erhöht, erniedrigt) klar benennen
-📊 **DETAILS**: Jeden einzelnen Laborwert mit Normalbereich und Bedeutung erklären
-💊 **BEDEUTUNG**: Was auffällige Werte für die Gesundheit bedeuten
-⚠️ **WICHTIGE PUNKTE**: Welche Werte besondere Aufmerksamkeit brauchen
-🏠 **NÄCHSTE SCHRITTE**: Was bei auffälligen Werten zu tun ist""",
-            
-            "radiologie": """
-SPEZIELLE ANWEISUNGEN FÜR RADIOLOGIE-BEFUNDE:
-📋 **ZUSAMMENFASSUNG**: Welche Bildgebung wurde gemacht und warum
-🏥 **HAUPTBEFUNDE**: Alle Beobachtungen in einfacher Sprache beschreiben
-📊 **DETAILS**: Anatomische Strukturen und deren Zustand genau erklären
-💊 **BEDEUTUNG**: Was die Befunde für die Gesundheit bedeuten
-⚠️ **WICHTIGE PUNKTE**: Auffälligkeiten oder Normalwerte hervorheben
-🏠 **NÄCHSTE SCHRITTE**: Weitere Untersuchungen oder Behandlungen""",
-            
-            "pathologie": """
-SPEZIELLE ANWEISUNGEN FÜR PATHOLOGIE-BEFUNDE:
-📋 **ZUSAMMENFASSUNG**: Einfühlsam erklären, welches Gewebe untersucht wurde
-🏥 **HAUPTBEFUNDE**: Alle Ergebnisse verständlich und beruhigend formulieren  
-📊 **DETAILS**: Zellveränderungen und Eigenschaften in Alltagssprache
-💊 **BEDEUTUNG**: Was die Befunde für Behandlung und Prognose bedeuten
-⚠️ **WICHTIGE PUNKTE**: Besonders relevante Informationen sensibel vermitteln
-🏠 **NÄCHSTE SCHRITTE**: Behandlungsoptionen und weitere Maßnahmen"""
+            "arztbrief": "Fokussiere dich besonders auf Diagnosen und Therapieempfehlungen. Erkläre alle Medikamente und nächste Schritte. Sprich den Patienten direkt an: 'Sie haben', 'Ihr Arzt empfiehlt', 'Sie sollen'.",
+            "laborbefund": "Erkläre jeden Laborwert mit seinem Normalbereich. Sage klar, ob Werte normal, erhöht oder erniedrigt sind. Nutze direkte Ansprache: 'Ihre Blutwerte zeigen', 'Ihr Blutdruck war'.",
+            "radiologie": "Erkläre die Untersuchungsmethode und was die Bilder zeigen. Übersetze anatomische Begriffe. Direkte Ansprache: 'Bei Ihrer Untersuchung', 'Ihr Röntgenbild zeigt'.",
+            "pathologie": "Sei einfühlsam bei Gewebeveränderungen. Erkläre Befunde verständlich aber nicht beunruhigend. Direkte Ansprache: 'Ihr Gewebe wurde untersucht', 'Die Probe zeigt'.",
+            "entlassungsbrief": "Fasse den Krankenhausaufenthalt zusammen. Erkläre alle Medikamente und Nachsorge-Termine. Direkte Ansprache: 'Sie waren im Krankenhaus', 'Sie sollen zuhause', 'Ihre Medikamente'."
         }
         
         instruction = base_instruction
         if doc_type in specific_instructions:
-            instruction += specific_instructions[doc_type]
+            instruction += f"\n\nSPEZIELL FÜR DIESEN DOKUMENTTYP: {specific_instructions[doc_type]}"
         
         return f"""{instruction}
 
 ORIGINAL MEDIZINISCHER TEXT:
 {text}
 
-EINFACHE ÜBERSETZUNG:"""
+ÜBERSETZUNG IN EINFACHER SPRACHE:"""
     
     async def _generate_response(self, prompt: str, model: str) -> str:
         """Generiert Antwort von Ollama"""
@@ -291,6 +307,39 @@ EINFACHE ÜBERSETZUNG:"""
         
         return min(confidence, 1.0)
     
+    async def _evaluate_language_translation_quality(self, original: str, translated: str) -> float:
+        """Bewertet Qualität der Sprachübersetzung"""
+        if not translated or translated.startswith("Fehler"):
+            return 0.0
+        
+        confidence = 0.6  # Basis-Vertrauen höher als bei medizinischer Vereinfachung
+        
+        # Länge der Übersetzung sollte ähnlich dem Original sein
+        if len(translated) > 50:
+            confidence += 0.1
+        
+        # Verhältnis Original zu Übersetzung
+        length_ratio = len(translated) / max(len(original), 1)
+        if 0.7 <= length_ratio <= 1.5:
+            confidence += 0.1
+        
+        # Struktur-Elemente sollten erhalten bleiben (Emojis)
+        emoji_pattern = r'[😀-🿿]|[\U0001F300-\U0001F5FF]|[\U0001F600-\U0001F64F]|[\U0001F680-\U0001F6FF]|[\U0001F700-\U0001F77F]|[\U0001F780-\U0001F7FF]|[\U0001F800-\U0001F8FF]|[\U00002600-\U000027BF]'
+        original_emojis = len(re.findall(emoji_pattern, original))
+        translated_emojis = len(re.findall(emoji_pattern, translated))
+        
+        if original_emojis > 0:
+            emoji_retention = min(translated_emojis / original_emojis, 1.0)
+            confidence += emoji_retention * 0.1
+        
+        # Text sollte nicht zu viele englische Wörter enthalten (außer bei englischer Zielsprache)
+        english_words = ["the", "and", "or", "but", "in", "on", "at", "to", "for", "of", "with", "by"]
+        english_count = sum(1 for word in english_words if word in translated.lower())
+        if english_count < 3:  # Weniger englische Wörter ist besser
+            confidence += 0.1
+        
+        return min(confidence, 1.0)
+    
     async def generate_streaming(
         self, 
         prompt: str, 
@@ -327,4 +376,62 @@ EINFACHE ÜBERSETZUNG:"""
                                 continue
                                 
         except Exception as e:
-            yield f"Streaming-Fehler: {str(e)}" 
+            yield f"Streaming-Fehler: {str(e)}"
+    
+    async def translate_to_language(
+        self,
+        simplified_text: str,
+        target_language: SupportedLanguage,
+        model: str = "mannix/llamax3-8b-alpaca:latest"
+    ) -> tuple[str, float]:
+        """
+        Übersetzt vereinfachten Text in eine andere Sprache
+        
+        Args:
+            simplified_text: Der bereits vereinfachte Text
+            target_language: Die Zielsprache
+            model: Das zu verwendende Modell
+            
+        Returns:
+            tuple[str, float]: (translated_text, confidence)
+        """
+        try:
+            language_name = LANGUAGE_NAMES.get(target_language, target_language.value)
+            
+            prompt = self._get_language_translation_prompt(simplified_text, target_language, language_name)
+            
+            # Übersetzung durchführen
+            translated_text = await self._generate_response(prompt, model)
+            
+            # Qualität bewerten
+            confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
+            
+            return translated_text, confidence
+            
+        except Exception as e:
+            print(f"❌ Sprachübersetzung fehlgeschlagen: {e}")
+            return f"Fehler bei der Sprachübersetzung: {str(e)}", 0.0
+
+    def _get_language_translation_prompt(self, text: str, target_language: SupportedLanguage, language_name: str) -> str:
+        """Erstellt Prompt für Sprachübersetzung"""
+        
+        return f"""Du bist ein professioneller medizinischer Übersetzer, der bereits vereinfachte medizinische Texte in andere Sprachen übersetzt.
+
+AUFGABE:
+- Übersetze den folgenden bereits vereinfachten medizinischen Text in {language_name} ({target_language.value})
+- Behalte die einfache, verständliche Sprache bei
+- Übersetze alle medizinischen Begriffe korrekt und angemessen
+- Behalte die Struktur mit Emojis und Überschriften bei
+- Stelle sicher, dass der Text für Patienten verständlich bleibt
+
+WICHTIGE REGELN:
+- Verwende einfache, klare Sprache in der Zielsprache
+- Behalte medizinische Genauigkeit bei
+- Übersetze Emojis und Struktur-Elemente nicht - behalte sie bei
+- Falls ein medizinischer Begriff keine direkte Übersetzung hat, erkläre ihn in Klammern
+- Stelle sicher, dass der übersetzte Text genauso verständlich ist wie das Original
+
+ORIGINAL TEXT (bereits vereinfacht):
+{text}
+
+ÜBERSETZUNG IN {language_name.upper()}:""" 

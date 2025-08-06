@@ -22,10 +22,31 @@ export interface TranslationResult {
   processing_id: string;
   original_text: string;
   translated_text: string;
+  language_translated_text?: string;
+  target_language?: string;
   document_type_detected: string;
   confidence_score: number;
+  language_confidence_score?: number;
   processing_time_seconds: number;
   timestamp: string;
+}
+
+export interface ProcessingOptions {
+  target_language?: string;
+}
+
+export interface SupportedLanguage {
+  code: string;
+  name: string;
+  popular: boolean;
+}
+
+export interface AvailableLanguagesResponse {
+  languages: SupportedLanguage[];
+  total_count: number;
+  popular_count: number;
+  timestamp: string;
+  error?: string;
 }
 
 export interface ErrorResponse {
@@ -53,6 +74,7 @@ export type ProcessingStatus =
   | 'processing'
   | 'extracting_text'
   | 'translating'
+  | 'language_translating'
   | 'completed'
   | 'error';
 
