@@ -50,6 +50,32 @@ Der DocTranslator verwendet einen hochspezialisierten Systemprompt für maximale
 - **Reverse Proxy**: Traefik (für Produktion)
 - **OCR**: Tesseract für Texterkennung in Bildern
 
+### Projektstruktur
+
+```
+doctranslator/
+├── backend/            # FastAPI Backend-Anwendung
+│   ├── app/           # Hauptanwendung
+│   └── tests/         # Test-Dateien
+├── frontend/          # React Frontend-Anwendung
+│   ├── src/          # React-Quellcode
+│   └── public/       # Statische Dateien
+├── docs/             # Projektdokumentation
+│   ├── api/          # API-Dokumentation
+│   ├── architecture/ # Architektur-Dokumentation
+│   ├── deployment/   # Deployment-Anleitungen
+│   └── user-guide/   # Benutzerhandbuch
+├── scripts/          # Utility-Skripte
+│   └── claude-flow/  # Claude-Flow Integration
+├── ollama/           # Ollama-Konfiguration
+├── traefik/          # Traefik-Konfiguration
+├── memory/           # Claude-Flow Speicher
+├── docker-compose.yml        # Docker-Compose Hauptkonfiguration
+├── docker-compose.traefik.yml # Traefik-spezifische Konfiguration
+├── start.sh          # Hauptstart-Skript
+└── start-with-traefik.sh # Start-Skript mit Traefik
+```
+
 ## 🚀 Installation auf Ubuntu Server
 
 ### Voraussetzungen
@@ -117,7 +143,7 @@ cd /opt/doctranslator
 
 # Berechtigungen setzen
 sudo chown -R $USER:$USER /opt/doctranslator
-chmod +x check.sh deploy.sh
+chmod +x start.sh start-with-traefik.sh scripts/*.sh
 ```
 
 ### 6. Konfiguration anpassen
@@ -155,7 +181,7 @@ docker-compose logs -f
 
 ```bash
 # Integrierten Check verwenden
-./check.sh
+./scripts/check.sh
 
 # Oder manuell prüfen
 docker-compose ps
@@ -264,8 +290,9 @@ docker-compose up -d
 Bei Problemen oder Fragen:
 
 1. Überprüfen Sie die Logs: `docker-compose logs`
-2. Führen Sie den Gesundheitscheck aus: `./check.sh`
-3. Dokumentation der verwendeten Technologien konsultieren
+2. Führen Sie den Gesundheitscheck aus: `./scripts/check.sh`
+3. Dokumentation im `docs/` Ordner konsultieren
+4. Technische Dokumentation der verwendeten Frameworks prüfen
 
 ## 📄 Lizenz
 
