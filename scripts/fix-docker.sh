@@ -11,18 +11,23 @@ echo "🔧 Docker Environment Fix Script"
 echo "================================================"
 echo ""
 
-# Stop all running containers
-echo "1️⃣  Stopping all containers..."
+# Stop only doctranslator project containers
+echo "1️⃣  Stopping doctranslator containers..."
 docker-compose down 2>/dev/null || true
-docker stop $(docker ps -q) 2>/dev/null || true
-echo "✅ All containers stopped"
+# Only stop containers from this project (with medical-translator prefix or ollama)
+docker stop medical-translator-backend medical-translator-frontend ollama 2>/dev/null || true
+echo "✅ Doctranslator containers stopped"
 echo ""
 
-# Remove problematic containers and images
-echo "2️⃣  Cleaning up Docker environment..."
+# Remove only doctranslator project containers and volumes
+echo "2️⃣  Cleaning up doctranslator Docker resources..."
+# Remove specific containers
 docker rm -f ollama medical-translator-backend medical-translator-frontend 2>/dev/null || true
-docker system prune -f --volumes 2>/dev/null || true
-echo "✅ Cleanup completed"
+# Remove only volumes from this project
+docker volume rm doctranslator_ollama_data 2>/dev/null || true
+# Remove only dangling images related to this project
+docker images | grep -E "(medical-translator|doctranslator)" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+echo "✅ Doctranslator cleanup completed"
 echo ""
 
 # Create docker-compose.gpu.yml with proper permissions
