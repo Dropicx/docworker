@@ -1,0 +1,426 @@
+# ===========================
+# Python / Backend
+# ===========================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# ===========================
+# Node.js / Frontend
+# ===========================
+
+# Dependencies
+node_modules/
+jspm_packages/
+
+# Build outputs
+dist/
+dist-ssr/
+*.local
+
+# Testing
+coverage/
+*.lcov
+
+# Production
+/build
+
+# TypeScript
+*.tsbuildinfo
+
+# Vite
+.vite/
+
+# npm/yarn/pnpm
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+yarn-error.log
+.yarn/
+.pnp.*
+
+# ===========================
+# Docker
+# ===========================
+
+# Docker volumes
+docker-volumes/
+.docker/
+
+# Docker override files
+docker-compose.override.yml
+docker-compose.local.yml
+
+# ===========================
+# IDE / Editors
+# ===========================
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# IntelliJ IDEA / PyCharm
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+.netrwhist
+Session.vim
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list/
+
+# ===========================
+# Operating System
+# ===========================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+Icon
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Linux
+.directory
+.Trash-*
+.nfs*
+
+# ===========================
+# Project Specific
+# ===========================
+
+# Logs
+logs/
+*.log
+log/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+/tmp/medical-translator/
+
+# Upload directories
+uploads/
+uploaded_files/
+
+# Cache
+.cache/
+*.cache
+
+# Database files
+*.db
+*.db-journal
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-journal
+*.sqlite-wal
+
+# Environment files
+.env
+.env.*
+!.env.example
+!.env.template
+
+# Claude Flow specific
+claude-flow*
+.roo*
+.claude
+.claude/settings.local.json
+.claude-flow/
+.swarm/
+.hive-mind/
+.mcp.json
+claude-flow.config.json
+memory/claude-flow-data.json
+memory/sessions/*
+!memory/sessions/README.md
+memory/agents/*
+!memory/agents/README.md
+coordination/memory_bank/*
+coordination/orchestration/*
+coordination/subtasks/*
+hive-mind-prompt-*.txt
+
+# Claude Flow executables (tracked in repo for this project)
+# Uncomment these if you want to exclude them:
+# claude-flow
+# claude-flow.bat
+# claude-flow.ps1
+
+# API keys and secrets
+*.key
+*.pem
+*.cert
+*.crt
+secrets/
+credentials/
+private/
+
+# Configuration overrides
+*.local.*
+config.local.json
+settings.local.json
+
+# Test data
+test-data/
+test-files/
+*.test.pdf
+*.test.docx
+*.test.txt
+test_*.pdf
+test_*.docx
+
+# OCR and processing temp files
+tesseract_temp/
+ocr_output/
+processed_files/
+extraction_temp/
+
+# Backup files
+*.backup
+*.bak
+*.old
+*.orig
+backup/
+backups/
+
+# Package lock files (optional - uncomment if you don't want to track)
+# package-lock.json
+# pnpm-lock.yaml
+# yarn.lock
+
+# Large files
+*.sql
+*.csv
+*.xlsx
+*.xls
+*.dump
+
+# Media files (usually not needed in repo)
+*.mp4
+*.avi
+*.mov
+*.wmv
+*.mp3
+*.wav
+
+# Archives
+*.tar
+*.tar.gz
+*.tgz
+*.zip
+*.rar
+*.7z
+
+# AI/ML model files
+*.h5
+*.pkl
+*.pickle
+*.model
+*.weights
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+*.ipynb
+
+# ===========================
+# Security & Sensitive Files
+# ===========================
+
+# Private keys
+id_rsa*
+id_dsa*
+id_ecdsa*
+id_ed25519*
+*.key
+
+# AWS
+.aws/
+aws.json
+
+# Azure
+.azure/
+
+# Google Cloud
+.gcloud/
+*.json.keyfile
+gcp-key.json
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+
+# ===========================
+# Keep these files
+# ===========================
+
+# Keep directory structure markers
+!.gitkeep
+!.keep
+
+# Keep important configuration templates
+!*.example
+!*.sample
+!*.template
+
+# Keep documentation
+!README.md
+!CHANGELOG.md
+!LICENSE
+!CONTRIBUTING.md
+!docs/**/*.md
+!CLAUDE.md
+
+# Keep GitHub files
+!.github/
+!.github/**/*
+
+# Keep CI/CD configuration
+!.gitlab-ci.yml
+!.travis.yml
+!Jenkinsfile
+!azure-pipelines.yml
+
+# Keep linting configuration
+!.eslintrc*
+!.prettierrc*
+!.stylelintrc*
+!.pylintrc
+!.flake8
+!pyproject.toml
+!setup.cfg
+!tox.ini
+
+# Keep package files
+!package.json
+!requirements.txt
+!Pipfile
+!poetry.lock
+!composer.json
+!Gemfile
+!go.mod
+!Cargo.toml
+
+# Keep Docker files
+!Dockerfile
+!docker-compose.yml
+!docker-compose.yaml
+!.dockerignore
+
+# Keep configuration files
+!tsconfig.json
+!vite.config.ts
+!tailwind.config.js
+!postcss.config.js
+!nginx.conf
+
+# Keep shell scripts
+!*.sh
+!deploy.sh
+!check.sh
+!update_*.sh
