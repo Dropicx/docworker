@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { Copy, Download, Eye, EyeOff, CheckCircle, FileText, Clock, Star, Sparkles, RefreshCw, ArrowLeft, Globe } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import ApiService from '../services/api';
 import { TranslationResult as TranslationData } from '../types/api';
 
@@ -275,8 +277,60 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
           {/* Translation Content */}
           <div className="relative">
             <div className="glass-card p-8 md:p-10">
-              <div className="medical-text-formatted text-primary-800 leading-relaxed whitespace-pre-wrap">
-                {getDisplayedText()}
+              <div className="medical-text-formatted text-primary-800 leading-relaxed markdown-content">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({children}) => <h1 className="text-3xl font-bold text-primary-900 mb-6 mt-4 first:mt-0">{children}</h1>,
+                    h2: ({children}) => <h2 className="text-2xl font-bold text-primary-900 mb-4 mt-6 first:mt-0">{children}</h2>,
+                    h3: ({children}) => <h3 className="text-xl font-semibold text-primary-900 mb-3 mt-4">{children}</h3>,
+                    h4: ({children}) => <h4 className="text-lg font-semibold text-primary-800 mb-2 mt-3">{children}</h4>,
+                    p: ({children}) => <p className="mb-4 text-primary-700 leading-relaxed">{children}</p>,
+                    ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-2 text-primary-700">{children}</ul>,
+                    ol: ({children}) => <ol className="list-decimal list-inside mb-4 space-y-2 text-primary-700">{children}</ol>,
+                    li: ({children}) => <li className="ml-4">{children}</li>,
+                    strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
+                    em: ({children}) => <em className="italic text-primary-600">{children}</em>,
+                    blockquote: ({children}) => (
+                      <blockquote className="border-l-4 border-brand-400 pl-4 py-2 my-4 bg-brand-50/50 rounded-r-lg">
+                        {children}
+                      </blockquote>
+                    ),
+                    code: ({inline, children}) => 
+                      inline ? (
+                        <code className="bg-primary-100 text-primary-800 px-1.5 py-0.5 rounded text-sm font-mono">
+                          {children}
+                        </code>
+                      ) : (
+                        <pre className="bg-primary-100 text-primary-800 p-4 rounded-lg overflow-x-auto mb-4">
+                          <code className="font-mono text-sm">{children}</code>
+                        </pre>
+                      ),
+                    hr: () => <hr className="my-6 border-primary-200" />,
+                    table: ({children}) => (
+                      <div className="overflow-x-auto mb-4">
+                        <table className="min-w-full divide-y divide-primary-200">
+                          {children}
+                        </table>
+                      </div>
+                    ),
+                    thead: ({children}) => <thead className="bg-primary-50">{children}</thead>,
+                    tbody: ({children}) => <tbody className="divide-y divide-primary-100">{children}</tbody>,
+                    tr: ({children}) => <tr>{children}</tr>,
+                    th: ({children}) => (
+                      <th className="px-4 py-2 text-left text-xs font-medium text-primary-700 uppercase tracking-wider">
+                        {children}
+                      </th>
+                    ),
+                    td: ({children}) => (
+                      <td className="px-4 py-2 text-sm text-primary-600">
+                        {children}
+                      </td>
+                    ),
+                  }}
+                >
+                  {getDisplayedText()}
+                </ReactMarkdown>
               </div>
             </div>
             
@@ -367,8 +421,33 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
 
           {showOriginal && (
             <div className="animate-slide-down">
-              <div className="text-result bg-gradient-to-br from-neutral-50 to-primary-50/30">
-                {result.original_text}
+              <div className="text-result bg-gradient-to-br from-neutral-50 to-primary-50/30 markdown-content">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  components={{
+                    h1: ({children}) => <h1 className="text-2xl font-bold text-primary-900 mb-4 mt-3">{children}</h1>,
+                    h2: ({children}) => <h2 className="text-xl font-bold text-primary-900 mb-3 mt-4">{children}</h2>,
+                    h3: ({children}) => <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">{children}</h3>,
+                    p: ({children}) => <p className="mb-3 text-primary-700 leading-relaxed">{children}</p>,
+                    ul: ({children}) => <ul className="list-disc list-inside mb-3 space-y-1 text-primary-700">{children}</ul>,
+                    ol: ({children}) => <ol className="list-decimal list-inside mb-3 space-y-1 text-primary-700">{children}</ol>,
+                    li: ({children}) => <li className="ml-4">{children}</li>,
+                    strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
+                    em: ({children}) => <em className="italic text-primary-600">{children}</em>,
+                    code: ({inline, children}) => 
+                      inline ? (
+                        <code className="bg-primary-100 text-primary-800 px-1 py-0.5 rounded text-xs font-mono">
+                          {children}
+                        </code>
+                      ) : (
+                        <pre className="bg-primary-100 text-primary-800 p-3 rounded-lg overflow-x-auto mb-3">
+                          <code className="font-mono text-xs">{children}</code>
+                        </pre>
+                      ),
+                  }}
+                >
+                  {result.original_text}
+                </ReactMarkdown>
               </div>
             </div>
           )}

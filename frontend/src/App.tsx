@@ -290,7 +290,7 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30">
       {/* Header */}
       <header className="sticky top-0 z-50 header-blur">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-20">
             <div className="flex items-center space-x-4">
               <div className="hero-gradient p-3 rounded-2xl shadow-soft">
@@ -390,7 +390,7 @@ function App() {
               
               {/* Language Selection */}
               <div className="animate-slide-up">
-                <div className="card-elevated max-w-2xl mx-auto">
+                <div className="card-elevated">
                   <div className="card-body">
                     {renderLanguageSelector()}
                   </div>
@@ -477,7 +477,7 @@ function App() {
 
       {/* Footer */}
       <footer className="relative z-10 mt-24 border-t border-primary-100/50 bg-gradient-to-r from-white/80 to-neutral-50/80 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="text-center space-y-6">
             <div className="flex items-center justify-center space-x-3">
               <div className="hero-gradient p-2 rounded-lg">
