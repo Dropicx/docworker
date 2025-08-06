@@ -44,7 +44,7 @@ class OllamaClient:
         self, 
         text: str, 
         document_type: str = "general",
-        model: str = "mistral-nemo:latest"
+        model: str = "gpt-oss:20b"  # MANDATORY: Always use gpt-oss:20b for document analysis
     ) -> tuple[str, str, float]:
         """
         Übersetzt medizinischen Text in einfache Sprache
@@ -212,12 +212,21 @@ ORIGINAL MEDIZINISCHER TEXT:
     async def _generate_response(self, prompt: str, model: str) -> str:
         """Generiert Antwort von Ollama"""
         try:
-            # Erst versuchen, verfügbare Modelle zu laden, falls das angegebene Modell nicht existiert
-            if model not in await self.list_models():
-                print(f"⚠️ Modell {model} nicht verfügbar, verwende Fallback...")
-                available_models = await self.list_models()
+            # MANDATORY: Ensure gpt-oss:20b is used for document analysis and translation
+            primary_model = "gpt-oss:20b"
+            
+            # Check if primary model is available
+            available_models = await self.list_models()
+            
+            # For medical document translation, ALWAYS use gpt-oss:20b if available
+            if primary_model in available_models:
+                model = primary_model
+                print(f"✅ Using mandatory model for document analysis: {model}")
+            elif model not in available_models:
+                print(f"⚠️ CRITICAL: Primary model {primary_model} not available!")
+                print(f"⚠️ Model {model} also not available, trying fallbacks...")
                 
-                # Fallback-Logik: Bevorzuge Mistral-Nemo, dann andere
+                # Fallback-Logik: Only use if gpt-oss:20b is truly unavailable
                 fallback_models = [
                     "mistral-nemo:latest", "llama3.2:latest", "llama3.1", 
                     "mistral:7b", "deepseek-r1:7b", "gemma3:27b"
@@ -226,15 +235,15 @@ ORIGINAL MEDIZINISCHER TEXT:
                 for fallback in fallback_models:
                     if fallback in available_models:
                         model = fallback
-                        print(f"✅ Verwende Fallback-Modell: {model}")
+                        print(f"⚠️ Using fallback model (gpt-oss:20b not available): {model}")
                         break
                 else:
                     # Wenn kein Fallback gefunden, nimm das erste verfügbare Modell
                     if available_models:
                         model = available_models[0]
-                        print(f"✅ Verwende erstes verfügbares Modell: {model}")
+                        print(f"⚠️ Using first available model: {model}")
                     else:
-                        return "Fehler: Keine Modelle verfügbar"
+                        return "ERROR: No models available. Please ensure gpt-oss:20b is loaded."
             
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 payload = {
@@ -343,7 +352,7 @@ ORIGINAL MEDIZINISCHER TEXT:
     async def generate_streaming(
         self, 
         prompt: str, 
-        model: str = "mistral-nemo:latest"
+        model: str = "gpt-oss:20b"  # MANDATORY: Default to gpt-oss:20b
     ) -> AsyncGenerator[str, None]:
         """Streaming-Generation für Live-Updates"""
         try:
@@ -382,7 +391,7 @@ ORIGINAL MEDIZINISCHER TEXT:
         self,
         simplified_text: str,
         target_language: SupportedLanguage,
-        model: str = "mannix/llamax3-8b-alpaca:latest"
+        model: str = "gpt-oss:20b"  # MANDATORY: Use gpt-oss:20b for all translations
     ) -> tuple[str, float]:
         """
         Übersetzt vereinfachten Text in eine andere Sprache

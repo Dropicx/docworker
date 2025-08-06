@@ -32,24 +32,27 @@ fi
 # Array of models required by the application (in priority order)
 echo "🔍 Checking required models..."
 
-# Primary model - critical
-MODEL="mistral-nemo:latest"
+# Primary model - MANDATORY for document analysis and translation
+MODEL="gpt-oss:20b"
 if ! ollama list 2>/dev/null | grep -q "$MODEL"; then
-    echo "📥 Pulling primary model: $MODEL"
+    echo "📥 Pulling MANDATORY primary model: $MODEL"
     if ollama pull "$MODEL"; then
         echo "✅ Successfully pulled: $MODEL"
     else
-        echo "⚠️ Failed to pull primary model, trying fallback..."
+        echo "❌ CRITICAL: Failed to pull mandatory model $MODEL"
+        echo "   This model is required for document analysis and translation!"
+        echo "   Please ensure the model is available and try again."
+        exit 1
     fi
 else
     echo "✅ Primary model already exists: $MODEL"
 fi
 
-# Fallback models - optional
-for MODEL in "llama3.2:latest" "llama3.1" "mistral:7b"; do
+# Secondary/fallback models - optional
+for MODEL in "mistral-nemo:latest" "llama3.2:latest" "llama3.1" "mistral:7b"; do
     if ! ollama list 2>/dev/null | grep -q "$MODEL"; then
-        echo "📥 Pulling fallback model: $MODEL"
-        ollama pull "$MODEL" || echo "⚠️ Failed to pull: $MODEL (non-critical)"
+        echo "📥 Pulling secondary model: $MODEL"
+        ollama pull "$MODEL" || echo "⚠️ Failed to pull: $MODEL (optional)"
     else
         echo "✅ Model already exists: $MODEL"
     fi
@@ -62,7 +65,8 @@ ollama list
 
 echo ""
 echo "🎯 Ollama is ready to serve requests!"
-echo "   Primary model: mistral-nemo:latest"
+echo "   Primary model (MANDATORY): gpt-oss:20b"
+echo "   Secondary models: mistral-nemo:latest, llama3.2:latest, etc."
 echo "   Listening on port 11434"
 
 # Keep the Ollama service running in foreground
