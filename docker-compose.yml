@@ -59,11 +59,13 @@ services:
   ollama:
     volumes:
       - ./ollama/ollama:/root/.ollama
+      - ./ollama/ollama-startup.sh:/startup.sh:ro
     container_name: ollama
     pull_policy: always
     tty: true
     restart: unless-stopped
     image: docker.io/ollama/ollama:latest
+    command: ["/bin/bash", "/startup.sh"]
     ports:
       - 7869:11434
     environment:
