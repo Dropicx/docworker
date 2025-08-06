@@ -34,12 +34,16 @@ if [ ! -f data/acme.json ]; then
     echo -e "${GREEN}✅ acme.json created with correct permissions${NC}"
 fi
 
-# Check if traefik network exists
-if ! docker network ls | grep -q "traefik-proxy"; then
-    echo "Creating traefik-proxy network..."
-    docker network create traefik-proxy
-    echo -e "${GREEN}✅ Network traefik-proxy created${NC}"
+# Remove old network if it exists with wrong configuration
+if docker network ls | grep -q "traefik-proxy"; then
+    echo "Removing old traefik-proxy network..."
+    docker network rm traefik-proxy 2>/dev/null || true
 fi
+
+# Create fresh network
+echo "Creating traefik-proxy network..."
+docker network create traefik-proxy
+echo -e "${GREEN}✅ Network traefik-proxy created${NC}"
 
 # Stop old Traefik if running
 echo "Checking for existing Traefik container..."
