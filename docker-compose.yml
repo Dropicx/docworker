@@ -15,7 +15,6 @@ services:
       - ./logs:/app/logs
     networks:
       - medical-translator
-      - openwebui-ollama_ollama
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9122/api/health/simple"]
       interval: 30s
@@ -57,10 +56,30 @@ services:
       #- "traefik.http.middlewares.secure-headers.headers.forceSTSHeader=true"
       #- "traefik.http.middlewares.secure-headers.headers.stsSeconds=31536000"
 
+  ollama:
+    volumes:
+      - ./ollama/ollama:/root/.ollama
+    container_name: ollama
+    pull_policy: always
+    tty: true
+    restart: unless-stopped
+    image: docker.io/ollama/ollama:latest
+    ports:
+      - 7869:11434
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    networks:
+      - medical-translator
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all 
+              capabilities: [gpu]
+
 networks:
   medical-translator:
     external: false
   proxy:
-    external: true
-  openwebui-ollama_ollama:
     external: true
