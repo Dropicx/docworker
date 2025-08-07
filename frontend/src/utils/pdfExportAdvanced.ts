@@ -25,8 +25,8 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
     tempDiv.style.position = 'absolute';
     tempDiv.style.left = '-9999px';
     tempDiv.style.top = '0';
-    tempDiv.style.width = '180mm'; // Reduzierte Breite für bessere Ränder
-    tempDiv.style.padding = '20mm'; // Großzügige Innenabstände
+    tempDiv.style.width = '190mm'; // Optimierte Breite für weniger Seitenrand
+    tempDiv.style.padding = '10mm 15mm'; // Reduzierte Abstände: oben/unten 10mm, links/rechts 15mm
     tempDiv.style.backgroundColor = 'white';
     tempDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
     tempDiv.style.fontSize = '12pt';
@@ -47,20 +47,28 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
       h1 { 
         font-size: 24px; 
         font-weight: bold; 
-        margin-bottom: 16px; 
-        margin-top: 8px;
+        margin-bottom: 12px; 
+        margin-top: 0;
+        padding-top: 0;
         color: #1f2937; 
         page-break-after: avoid;
         page-break-inside: avoid;
       }
+      h1:first-child {
+        margin-top: 0;
+        padding-top: 0;
+      }
       h2 { 
         font-size: 20px; 
         font-weight: bold; 
-        margin-top: 24px; 
-        margin-bottom: 12px; 
+        margin-top: 20px; 
+        margin-bottom: 10px; 
         color: #374151; 
         page-break-after: avoid;
         page-break-inside: avoid;
+      }
+      h2:first-child {
+        margin-top: 0;
       }
       h3 { 
         font-size: 18px; 
@@ -73,11 +81,14 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
       }
       p { 
         font-size: 14px; 
-        line-height: 1.8; 
-        margin-bottom: 12px; 
+        line-height: 1.7; 
+        margin-bottom: 10px; 
         color: #4b5563; 
         text-align: justify;
         page-break-inside: avoid;
+      }
+      p:first-child {
+        margin-top: 0;
       }
       ul, ol { 
         margin-left: 20px; 
@@ -139,9 +150,9 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
     // Warte kurz auf Rendering
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Konvertiere zu Canvas mit höherer Qualität
+    // Konvertiere zu Canvas mit optimierter Qualität (für kleinere Dateigröße)
     const canvas = await html2canvas(tempDiv, {
-      scale: 3, // Höhere Qualität
+      scale: 1.5, // Reduziert von 3 auf 1.5 für kleinere Dateien
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
@@ -163,11 +174,11 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
     const pageWidth = 210;
     const pageHeight = 297;
     
-    // Großzügige Ränder für bessere Lesbarkeit
-    const marginTop = 25;    // 25mm oben
-    const marginBottom = 25;  // 25mm unten
-    const marginLeft = 20;    // 20mm links
-    const marginRight = 20;   // 20mm rechts
+    // Optimierte Ränder für mehr Inhalt
+    const marginTop = 15;    // 15mm oben (reduziert von 25mm)
+    const marginBottom = 20;  // 20mm unten für Seitenzahl
+    const marginLeft = 15;    // 15mm links (reduziert von 20mm)
+    const marginRight = 15;   // 15mm rechts (reduziert von 20mm)
     
     // Berechne verfügbaren Platz
     const contentWidth = pageWidth - marginLeft - marginRight;
@@ -210,11 +221,11 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
           pageCanvas.width, pageCanvas.height // Destination size
         );
         
-        // Füge zum PDF hinzu
-        const pageData = pageCanvas.toDataURL('image/png', 1.0);
+        // Füge zum PDF hinzu mit JPEG Kompression für kleinere Dateien
+        const pageData = pageCanvas.toDataURL('image/jpeg', 0.85); // JPEG mit 85% Qualität
         pdf.addImage(
           pageData, 
-          'PNG', 
+          'JPEG', // Geändert von PNG zu JPEG
           marginLeft, 
           marginTop, 
           imgWidth, 
@@ -255,9 +266,9 @@ const exportSimplePDF = async (elementId: string, filename: string, options?: PD
     
     const pdf = new jsPDF('p', 'mm', 'a4');
     
-    // Verwende html2canvas direkt auf dem Element
+    // Verwende html2canvas direkt auf dem Element mit reduzierter Qualität
     const canvas = await html2canvas(element, {
-      scale: 2,
+      scale: 1.2, // Reduziert von 2 auf 1.2
       useCORS: true,
       logging: false
     });
@@ -266,10 +277,10 @@ const exportSimplePDF = async (elementId: string, filename: string, options?: PD
     const imgWidth = 170; // 210mm - 40mm Ränder
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
     
-    // Füge Bild mit Rändern hinzu
+    // Füge Bild mit Rändern hinzu - JPEG für kleinere Dateien
     pdf.addImage(
-      canvas.toDataURL('image/png'),
-      'PNG',
+      canvas.toDataURL('image/jpeg', 0.8), // JPEG mit 80% Qualität
+      'JPEG',
       20, // 20mm linker Rand
       20, // 20mm oberer Rand
       imgWidth,
@@ -284,8 +295,8 @@ const exportSimplePDF = async (elementId: string, filename: string, options?: PD
       while (remainingHeight > 0) {
         pdf.addPage();
         pdf.addImage(
-          canvas.toDataURL('image/png'),
-          'PNG',
+          canvas.toDataURL('image/jpeg', 0.8),
+          'JPEG',
           20,
           position + 20, // Mit oberem Rand auf neuer Seite
           imgWidth,
