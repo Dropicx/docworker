@@ -502,22 +502,27 @@ ORIGINAL MEDIZINISCHER TEXT:
         try:
             language_name = LANGUAGE_NAMES.get(target_language, target_language.value)
             
-            # Versuche zuerst mit BGE-M3 für neutrale Übersetzung
-            if model == "bge-m3:latest":
-                prompt = self._get_neutral_translation_prompt(simplified_text, target_language, language_name)
-                try:
-                    translated_text = await self._generate_response(prompt, model)
-                    if translated_text and len(translated_text.strip()) > 0:
-                        confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
-                        return translated_text, confidence
-                except Exception as bge_error:
-                    logger.warning(f"BGE-M3 translation failed, falling back to GPT-OSS: {bge_error}")
-                    model = "gpt-oss:20b"  # Fallback
-            
-            # Fallback oder direkt mit GPT-OSS
-            prompt = self._get_language_translation_prompt(simplified_text, target_language, language_name)
+            # KEIN FALLBACK - Zwangsweise BGE-M3 verwenden
+            prompt = self._get_neutral_translation_prompt(simplified_text, target_language, language_name)
             translated_text = await self._generate_response(prompt, model)
             confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
+            
+            # # Versuche zuerst mit BGE-M3 für neutrale Übersetzung
+            # if model == "bge-m3:latest":
+            #     prompt = self._get_neutral_translation_prompt(simplified_text, target_language, language_name)
+            #     try:
+            #         translated_text = await self._generate_response(prompt, model)
+            #         if translated_text and len(translated_text.strip()) > 0:
+            #             confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
+            #             return translated_text, confidence
+            #     except Exception as bge_error:
+            #         logger.warning(f"BGE-M3 translation failed, falling back to GPT-OSS: {bge_error}")
+            #         model = "gpt-oss:20b"  # Fallback
+            # 
+            # # Fallback oder direkt mit GPT-OSS
+            # prompt = self._get_language_translation_prompt(simplified_text, target_language, language_name)
+            # translated_text = await self._generate_response(prompt, model)
+            # confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
             
             return translated_text, confidence
             
@@ -619,16 +624,19 @@ ORIGINALTEXT:
 
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
-        try:
-            # Versuche mit llama3.2:latest für bessere Performance
-            cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
-        except Exception as e:
-            # Fallback auf das ursprüngliche Modell
-            try:
-                logger.warning(f"Llama3.2 preprocessing failed, falling back to {model}: {e}")
-            except:
-                print(f"⚠️ Llama3.2 preprocessing failed, falling back to {model}")
-            cleaned_text = await self._generate_response(preprocess_prompt, model)
+        # KEIN FALLBACK - Zwangsweise llama3.2:latest verwenden
+        cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
+        
+        # try:
+        #     # Versuche mit llama3.2:latest für bessere Performance
+        #     cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
+        # except Exception as e:
+        #     # Fallback auf das ursprüngliche Modell
+        #     try:
+        #         logger.warning(f"Llama3.2 preprocessing failed, falling back to {model}: {e}")
+        #     except:
+        #         print(f"⚠️ Llama3.2 preprocessing failed, falling back to {model}")
+        #     cleaned_text = await self._generate_response(preprocess_prompt, model)
         
         # Nachbearbeitung: Entferne doppelte Nummerierung und doppelte Bullet-Points
         import re
