@@ -2,7 +2,7 @@ import httpx
 import json
 import asyncio
 import os
-from typing import Optional, Dict, Any, AsyncGenerator
+from typing import Optional, Dict, Any, AsyncGenerator, Tuple
 import re
 from app.models.document import SupportedLanguage, LANGUAGE_NAMES
 
@@ -53,54 +53,87 @@ class OllamaClient:
             tuple[str, str, float]: (translated_text, detected_doc_type, confidence)
         """
         try:
-            # Dokumenttyp erkennen
-            detected_type = await self._detect_document_type(text)
+            # SCHRITT 1: Text vorverarbeiten - PII entfernen für schnellere Verarbeitung
+            print("📝 Schritt 1: Entferne irrelevante Informationen...")
+            cleaned_text, removed_info = await self._preprocess_and_anonymize(text)
             
-            # Passenden Prompt auswählen
-            prompt = self._get_translation_prompt(text, detected_type)
+            # SCHRITT 2: Dokumenttyp erkennen
+            print("🔍 Schritt 2: Erkenne Dokumenttyp...")
+            detected_type = await self._detect_document_type(cleaned_text)
             
-            # Übersetzung durchführen
+            # SCHRITT 3: Hauptübersetzung mit konservativen Einstellungen
+            print("🤖 Schritt 3: Übersetze in einfache Sprache...")
+            prompt = self._get_translation_prompt(cleaned_text, detected_type)
             translated_text = await self._generate_response(prompt, model)
             
-            # Qualität bewerten
-            confidence = await self._evaluate_translation_quality(text, translated_text)
+            # SCHRITT 4: Validierung auf Halluzinationen
+            print("✅ Schritt 4: Validiere Übersetzung auf Halluzinationen...")
+            validated_text = await self._validate_translation(cleaned_text, translated_text, model)
             
-            return translated_text, detected_type, confidence
+            # SCHRITT 5: Qualität bewerten
+            confidence = await self._evaluate_translation_quality(cleaned_text, validated_text)
+            
+            return validated_text, detected_type, confidence
             
         except Exception as e:
             print(f"❌ Übersetzung fehlgeschlagen: {e}")
             return f"Fehler bei der Übersetzung: {str(e)}", "error", 0.0
     
     async def _detect_document_type(self, text: str) -> str:
-        """Erkennt Art des medizinischen Dokuments"""
+        """Erkennt Art des medizinischen Dokuments - vereinfacht in 3 Hauptkategorien"""
         text_lower = text.lower()
         
-        # Schlüsselwörter für verschiedene Dokumenttypen
+        # VEREINFACHTE Kategorien für konsistenten Output
         patterns = {
+            # KATEGORIE 1: Arztbriefe (alle Arten von Briefen zwischen Ärzten)
             "arztbrief": [
-                "sehr geehrte", "liebe kollegin", "lieber kollege", 
-                "diagnose", "therapie", "empfehlung", "weiterbehandlung", 
-                "hochachtungsvoll", "mit freundlichen grüßen"
+                # Allgemeine Arztbriefe
+                "sehr geehrte", "liebe kollegin", "lieber kollege",
+                "mit freundlichen grüßen", "hochachtungsvoll", "gez.",
+                # Entlassungsbriefe
+                "entlassung", "entlassen", "krankenhausaufenthalt", "stationär",
+                # Überweisungen
+                "überweisung", "überweisen", "vorstellung", "konsil",
+                # Therapieberichte
+                "therapie", "behandlung", "medikation", "empfehlung",
+                # Befundberichte
+                "befund", "diagnose", "anamnese", "untersuchung",
+                # Operationsberichte
+                "operation", "op-bericht", "eingriff", "narkose"
             ],
-            "entlassungsbrief": [
-                "entlassung", "entlassen", "aufnahme", "krankenhausaufenthalt",
-                "stationäre behandlung", "heimkehr", "hausarzt", "nachsorge",
-                "medikation bei entlassung", "verhaltensempfehlungen"
-            ],
+            
+            # KATEGORIE 2: Laborbefunde (alle Labor- und Messwerte)
             "laborbefund": [
-                "laborwerte", "blutwerte", "referenzbereich", 
-                "hämatologie", "klinische chemie", "mg/dl", "mmol/l",
-                "erhöht", "erniedrigt", "normal", "labor"
+                # Blutwerte
+                "laborwerte", "blutwerte", "blutbild", "hämatologie",
+                # Einheiten
+                "mg/dl", "mmol/l", "µg/l", "u/l", "g/dl", "pg/ml",
+                # Referenzbereiche
+                "referenzbereich", "normalbereich", "norm", "referenz",
+                # Bewertungen
+                "erhöht", "erniedrigt", "normal", "pathologisch",
+                # Spezielle Tests
+                "hba1c", "cholesterin", "ldl", "hdl", "triglyceride",
+                "kreatinin", "gfr", "tsh", "psa", "ck", "troponin",
+                # Urinwerte
+                "urin", "urinstatus", "urinkultur",
+                # Mikrobiologie
+                "bakterien", "keime", "resistenz", "antibiogramm"
             ],
-            "radiologie": [
-                "röntgen", "ct", "mrt", "ultraschall", "befund",
-                "darstellung", "kontrastmittel", "auffällig",
-                "unauffällig", "verdacht", "bildgebung"
-            ],
-            "pathologie": [
-                "histologie", "biopsie", "gewebeprobe", "tumor",
-                "maligne", "benigne", "metastase", "grading",
-                "pathologisch", "zytologie"
+            
+            # KATEGORIE 3: Bildgebung (alle bildgebenden Verfahren)
+            "bildgebung": [
+                # Verfahren
+                "röntgen", "ct", "mrt", "mri", "ultraschall", "sonographie",
+                "szintigraphie", "pet", "angiographie", "mammographie",
+                # Befundbeschreibung
+                "darstellung", "kontrastmittel", "schnittbild", "aufnahme",
+                "auffällig", "unauffällig", "verdacht", "hinweis",
+                # Anatomie
+                "thorax", "abdomen", "schädel", "wirbelsäule", "gelenk",
+                # Pathologie in Bildern
+                "tumor", "metastase", "zyste", "knoten", "herd",
+                "fraktur", "läsion", "infiltrat", "erguss"
             ]
         }
         
@@ -109,26 +142,31 @@ class OllamaClient:
             score = sum(1 for keyword in keywords if keyword in text_lower)
             scores[doc_type] = score
         
-        # Höchsten Score finden
+        # Höchsten Score finden - mit niedrigerer Schwelle für bessere Erkennung
         if scores:
             detected = max(scores, key=scores.get)
-            if scores[detected] >= 2:  # Mindestens 2 Treffer
+            if scores[detected] >= 1:  # Nur 1 Treffer nötig
                 return detected
         
-        return "allgemein"
+        # Fallback auf "arztbrief" statt "allgemein" für konsistenteres Format
+        return "arztbrief"  # Standard-Kategorie
     
     def _get_translation_prompt(self, text: str, doc_type: str) -> str:
         """Erstellt optimierten Prompt basierend auf Dokumenttyp"""
         
         base_instruction = """Du bist ein hochspezialisierter medizinischer Übersetzer. Deine Aufgabe ist es, medizinische Dokumente vollständig und präzise in patientenfreundliche Sprache zu übersetzen.
 
-WICHTIGE REGELN:
-- Übersetze NUR was im Dokument steht, füge NICHTS hinzu
-- Lasse KEINE medizinische Information weg
-- Erkläre JEDEN Fachbegriff sofort in Klammern
-- Spreche den Patienten DIREKT an, wenn das Dokument an ihn gerichtet ist (nutze "Sie", "Ihr", "Ihnen")
-- Markiere Unsicherheiten mit [?]
-- Bei unklaren Begriffen: "Bitte klären Sie dies mit Ihrem Arzt"
+KRITISCHE ANTI-HALLUZINATIONS-REGELN:
+- ⛔ FÜGE NICHTS HINZU was nicht explizit im Dokument steht
+- ⛔ KEINE Vermutungen, Annahmen oder "könnte sein" Aussagen
+- ⛔ KEINE allgemeinen medizinischen Ratschläge die nicht im Text stehen
+- ⛔ KEINE zusätzlichen Erklärungen außer direkte Übersetzung von Fachbegriffen
+- ✅ Übersetze NUR was wörtlich im Dokument steht
+- ✅ Lasse KEINE medizinische Information weg
+- ✅ Erkläre Fachbegriffe kurz in Klammern (nur Definition, keine Zusatzinfos)
+- ✅ Spreche den Patienten DIREKT an (nutze "Sie", "Ihr", "Ihnen")
+- ✅ Bei Unklarheiten: markiere mit [unklar] statt zu interpretieren
+- ✅ KEINE Behandlungsempfehlungen die nicht im Original stehen
 
 SPRACHLICHE RICHTLINIEN:
 
@@ -150,52 +188,80 @@ VERMEIDE:
 - Mehrdeutige Aussagen
 - Unpersönliche Formulierungen wie "Der Patient"
 
-ÜBERSETZUNGSFORMAT:
-Erstelle eine strukturierte Übersetzung mit folgenden Abschnitten:
+EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
-# [DOKUMENTTYP] - Verständliche Fassung
+# 📋 Ihre medizinische Dokumentation - Einfach erklärt
 
-## Wichtigste Information
-[Ein Satz über das Wesentliche - direkte Ansprache]
+## 🎯 Das Wichtigste zuerst
+[Die zentrale Information in einem klaren Satz]
 
-## Was wurde untersucht/behandelt?
-[Grund des Arztbesuchs in einfachen Worten - direkte Ansprache]
+## 📊 Zusammenfassung
+### Was wurde gemacht?
+• [Untersuchung/Behandlung in einfachen Worten]
+• [Zeitraum/Datum wenn vorhanden]
 
-## Was wurde festgestellt?
-### Hauptbefunde:
-• [Jeder Befund in einfacher Sprache - direkte Ansprache]
-  → Was bedeutet das? [Kurze Erklärung]
+### Was wurde gefunden?
+• [Hauptbefund 1 in einfacher Sprache]
+  → Bedeutung: [Was heißt das für Sie?]
+• [Hauptbefund 2 in einfacher Sprache]
+  → Bedeutung: [Was heißt das für Sie?]
 
-### Diagnosen:
-• [Deutsche Bezeichnung - direkte Ansprache]
-  → Fachbegriff: [Original]
+## 🏥 Ihre Diagnosen
+• [Diagnose in Alltagssprache]
+  → Medizinisch: [Fachbegriff]
   → Erklärung: [Was ist das genau?]
 
-## Behandlung/Medikamente
-• [Medikament/Maßnahme - direkte Ansprache]
-  → Zweck: [Wofür?]
-  → Wichtig zu wissen: [Besonderheiten]
+## 💊 Behandlung & Medikamente
+• [Medikament/Behandlung]
+  → Wofür: [Zweck]
+  → Einnahme: [Wie und wann]
+  → Wichtig: [Besonderheiten/Nebenwirkungen]
 
-## Was passiert als Nächstes?
-• [Nächste Schritte - direkte Ansprache]
-• [Kontrolltermine]
-• [Verhaltensempfehlungen]
+## ✅ Ihre nächsten Schritte
+• [Was Sie tun sollen]
+• [Termine die anstehen]
+• [Worauf Sie achten müssen]
 
-## Wörterbuch der Fachbegriffe
-• **[Fachbegriff]**: [Verständliche Erklärung]
+## 📖 Fachbegriffe verstehen
+• **[Begriff 1]**: [Einfache Erklärung]
+• **[Begriff 2]**: [Einfache Erklärung]
 
-## Wichtiger Hinweis
-Diese Übersetzung ersetzt nicht das Gespräch mit Ihrem Arzt. Bei Fragen wenden Sie sich an Ihr Behandlungsteam.
+## ⚠️ Wichtige Hinweise
+• Diese Übersetzung hilft Ihnen, Ihre Unterlagen zu verstehen
+• Besprechen Sie alle Fragen mit Ihrem Arzt
+• Bei Notfällen: 112 anrufen
 
-**Rechtlicher Hinweis:** Diese Übersetzung dient nur Ihrem Verständnis und stellt keine medizinische Beratung dar. Bei Notfällen wählen Sie 112."""
+---
+*Übersetzung erstellt am: [Datum]*"""
         
-        # Dokumenttyp-spezifische Anweisungen mit direkter Ansprache
+        # VEREINFACHTE Anweisungen für 3 Hauptkategorien - alle nutzen dasselbe Format!
         specific_instructions = {
-            "arztbrief": "Fokussiere dich besonders auf Diagnosen und Therapieempfehlungen. Erkläre alle Medikamente und nächste Schritte. Sprich den Patienten direkt an: 'Sie haben', 'Ihr Arzt empfiehlt', 'Sie sollen'.",
-            "laborbefund": "Erkläre jeden Laborwert mit seinem Normalbereich. Sage klar, ob Werte normal, erhöht oder erniedrigt sind. Nutze direkte Ansprache: 'Ihre Blutwerte zeigen', 'Ihr Blutdruck war'.",
-            "radiologie": "Erkläre die Untersuchungsmethode und was die Bilder zeigen. Übersetze anatomische Begriffe. Direkte Ansprache: 'Bei Ihrer Untersuchung', 'Ihr Röntgenbild zeigt'.",
-            "pathologie": "Sei einfühlsam bei Gewebeveränderungen. Erkläre Befunde verständlich aber nicht beunruhigend. Direkte Ansprache: 'Ihr Gewebe wurde untersucht', 'Die Probe zeigt'.",
-            "entlassungsbrief": "Fasse den Krankenhausaufenthalt zusammen. Erkläre alle Medikamente und Nachsorge-Termine. Direkte Ansprache: 'Sie waren im Krankenhaus', 'Sie sollen zuhause', 'Ihre Medikamente'."
+            "arztbrief": """
+                FOKUS: Diagnosen, Behandlungsplan und nächste Schritte.
+                - Beginne mit: "Ihr Arzt hat Sie untersucht/behandelt..."
+                - Erkläre ALLE Diagnosen in einfachen Worten
+                - Liste ALLE Medikamente mit Dosierung auf
+                - Betone die nächsten Schritte klar
+                - Verwende IMMER das einheitliche Format oben
+            """,
+            
+            "laborbefund": """
+                FOKUS: Messwerte und deren Bedeutung.
+                - Beginne mit: "Ihre Laborwerte wurden untersucht..."
+                - Erkläre JEDEN Wert: Name → Ihr Wert → Normalbereich → Bedeutung
+                - Nutze Ampelsystem: 🟢 Normal, 🟡 Leicht verändert, 🔴 Deutlich verändert
+                - Gruppiere Werte nach Organsystemen (Leber, Niere, Blutbild, etc.)
+                - Verwende IMMER das einheitliche Format oben
+            """,
+            
+            "bildgebung": """
+                FOKUS: Was wurde wie untersucht und was zeigen die Bilder.
+                - Beginne mit: "Bei Ihnen wurde eine [Untersuchung] durchgeführt..."
+                - Erkläre die Untersuchungsmethode kurz
+                - Beschreibe Befunde in Alltagssprache ("Schatten" statt "Verschattung")
+                - Nutze Vergleiche ("groß wie...", "aussehen wie...")
+                - Verwende IMMER das einheitliche Format oben
+            """
         }
         
         instruction = base_instruction
@@ -251,10 +317,12 @@ ORIGINAL MEDIZINISCHER TEXT:
                     "prompt": prompt,
                     "stream": False,
                     "options": {
-                        "temperature": 0.3,  # Niedrig für konsistente medizinische Übersetzungen
-                        "top_p": 0.9,
-                        "top_k": 40,
-                        "num_predict": 3000  # Längere Antworten für ausführliche Erklärungen
+                        "temperature": 0.1,  # SEHR niedrig gegen Halluzinationen
+                        "top_p": 0.5,  # Konservativ - nur wahrscheinlichste Tokens
+                        "top_k": 10,  # Stark eingeschränkt für Präzision
+                        "num_predict": 3000,  # Längere Antworten für ausführliche Erklärungen
+                        "repeat_penalty": 1.2,  # Verhindert Wiederholungen
+                        "seed": 42  # Für reproduzierbare Ergebnisse
                     }
                 }
                 
@@ -362,9 +430,11 @@ ORIGINAL MEDIZINISCHER TEXT:
                     "prompt": prompt,
                     "stream": True,
                     "options": {
-                        "temperature": 0.3,
-                        "top_p": 0.9,
-                        "top_k": 40
+                        "temperature": 0.1,  # SEHR konservativ
+                        "top_p": 0.5,
+                        "top_k": 10,
+                        "repeat_penalty": 1.2,
+                        "seed": 42
                     }
                 }
                 
@@ -444,3 +514,134 @@ ORIGINAL TEXT (bereits vereinfacht):
 {text}
 
 ÜBERSETZUNG IN {language_name.upper()}:""" 
+
+    async def _preprocess_and_anonymize(self, text: str) -> Tuple[str, dict]:
+        """Entfernt irrelevante persönliche Informationen für schnellere Verarbeitung"""
+        removed_info = {
+            "names": [],
+            "addresses": [],
+            "dates": [],
+            "ids": []
+        }
+        
+        cleaned_text = text
+        
+        # Entferne Adressen (Straßen, PLZ, Orte)
+        address_patterns = [
+            r'\b\d{5}\s+[A-Za-zäöüÄÖÜß\s]+\b',  # PLZ + Ort
+            r'\b[A-Za-zäöüÄÖÜß]+straße\s+\d+[a-z]?\b',  # Straße + Hausnummer
+            r'\b[A-Za-zäöüÄÖÜß]+weg\s+\d+[a-z]?\b',
+            r'\b[A-Za-zäöüÄÖÜß]+platz\s+\d+[a-z]?\b',
+            r'\b[A-Za-zäöüÄÖÜß]+allee\s+\d+[a-z]?\b'
+        ]
+        
+        for pattern in address_patterns:
+            matches = re.findall(pattern, cleaned_text, re.IGNORECASE)
+            removed_info["addresses"].extend(matches)
+            cleaned_text = re.sub(pattern, "[ADRESSE]", cleaned_text, flags=re.IGNORECASE)
+        
+        # Entferne Geburtsdaten und andere Datumsangaben (außer medizinisch relevante)
+        date_pattern = r'\b\d{1,2}[.]\d{1,2}[.]\d{2,4}\b'
+        dates = re.findall(date_pattern, cleaned_text)
+        for date in dates:
+            # Behalte medizinisch relevante Daten (z.B. OP-Termine, Untersuchungsdaten)
+            if not any(keyword in cleaned_text[max(0, cleaned_text.find(date)-50):cleaned_text.find(date)+50].lower() 
+                      for keyword in ['untersuchung', 'operation', 'op', 'eingriff', 'behandlung', 'termin', 'kontroll']):
+                removed_info["dates"].append(date)
+                cleaned_text = cleaned_text.replace(date, "[DATUM]")
+        
+        # Entferne Patientennummern, Versicherungsnummern, etc.
+        id_patterns = [
+            r'\b[A-Z]\d{9,12}\b',  # Versicherungsnummer
+            r'\bPat[.]?-?Nr[.]?:?\s*\d+\b',  # Patientennummer
+            r'\bFallnr[.]?:?\s*\d+\b',  # Fallnummer
+            r'\bAktenzeichen:?\s*[A-Z0-9/-]+\b'
+        ]
+        
+        for pattern in id_patterns:
+            matches = re.findall(pattern, cleaned_text, re.IGNORECASE)
+            removed_info["ids"].extend(matches)
+            cleaned_text = re.sub(pattern, "[ID]", cleaned_text, flags=re.IGNORECASE)
+        
+        # Entferne Telefonnummern
+        phone_pattern = r'\b(?:\+49|0)[1-9]\d{1,14}\b'
+        phones = re.findall(phone_pattern, cleaned_text)
+        if phones:
+            removed_info["phones"] = phones
+            cleaned_text = re.sub(phone_pattern, "[TELEFON]", cleaned_text)
+        
+        # Entferne E-Mail-Adressen
+        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        emails = re.findall(email_pattern, cleaned_text)
+        if emails:
+            removed_info["emails"] = emails
+            cleaned_text = re.sub(email_pattern, "[EMAIL]", cleaned_text)
+        
+        # Entferne Grußformeln und Unterschriften (nicht medizinisch relevant)
+        greeting_patterns = [
+            r'Mit freundlichen Grüßen[\s\S]{0,100}$',
+            r'Hochachtungsvoll[\s\S]{0,100}$',
+            r'gez\.[\s\S]{0,50}$',
+            r'i\.A\.[\s\S]{0,50}$'
+        ]
+        
+        for pattern in greeting_patterns:
+            cleaned_text = re.sub(pattern, "", cleaned_text, flags=re.IGNORECASE)
+        
+        # Log was entfernt wurde
+        total_removed = sum(len(v) if isinstance(v, list) else 0 for v in removed_info.values())
+        if total_removed > 0:
+            print(f"🧹 Entfernt: {total_removed} irrelevante Informationen für schnellere Verarbeitung")
+            print(f"   Original: {len(text)} Zeichen → Bereinigt: {len(cleaned_text)} Zeichen")
+            print(f"   Einsparung: {100 * (1 - len(cleaned_text)/len(text)):.1f}%")
+        
+        return cleaned_text, removed_info
+    
+    async def _validate_translation(self, original_text: str, translation: str, model: str) -> str:
+        """Validiert die Übersetzung auf Halluzinationen und Fehler"""
+        
+        validation_prompt = f"""Du bist ein medizinischer Qualitätsprüfer. Deine Aufgabe ist es, eine Übersetzung auf Halluzinationen und Fehler zu prüfen.
+
+WICHTIGE REGELN:
+- Prüfe ob ALLE Informationen aus dem Original in der Übersetzung vorhanden sind
+- Prüfe ob NEUE Informationen hinzugefügt wurden, die NICHT im Original stehen
+- Markiere Halluzinationen mit [HALLUZINATION ENTFERNT]
+- Korrigiere nur offensichtliche Fehler
+- Füge NICHTS hinzu, was nicht im Original steht
+
+ORIGINAL TEXT:
+{original_text}
+
+ÜBERSETZUNG ZU PRÜFEN:
+{translation}
+
+AUFGABE:
+1. Entferne alle Informationen, die NICHT im Original vorkommen
+2. Stelle sicher, dass ALLE medizinischen Fakten aus dem Original enthalten sind
+3. Gib die KORRIGIERTE Version zurück
+4. Wenn keine Korrekturen nötig sind, gib die Übersetzung unverändert zurück
+
+KORRIGIERTE ÜBERSETZUNG:"""
+        
+        validated_text = await self._generate_response(validation_prompt, model)
+        
+        # Zusätzliche Sicherheitsprüfung: Entferne typische Halluzinations-Phrasen
+        hallucination_phrases = [
+            "könnte darauf hinweisen",
+            "möglicherweise",
+            "es ist anzunehmen",
+            "vermutlich",
+            "wahrscheinlich",
+            "in der Regel",
+            "üblicherweise",
+            "oft",
+            "häufig"
+        ]
+        
+        # Prüfe ob diese Phrasen im Original vorkommen
+        for phrase in hallucination_phrases:
+            if phrase in validated_text.lower() and phrase not in original_text.lower():
+                # Diese Phrase war nicht im Original - könnte Halluzination sein
+                print(f"⚠️ Potenzielle Halluzination erkannt: '{phrase}'")
+        
+        return validated_text 
