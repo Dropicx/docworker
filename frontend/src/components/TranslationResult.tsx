@@ -249,60 +249,28 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                       </ol>
                     ),
                     li: ({children}) => {
-                      // Konvertiere children zu String für einfachere Verarbeitung
-                      const childrenArray = React.Children.toArray(children);
-                      const textContent = childrenArray.map(child => 
-                        typeof child === 'string' ? child : ''
-                      ).join('');
+                      // Einfache Prüfung: Konvertiere zu String
+                      const text = React.Children.toArray(children)
+                        .map(child => {
+                          if (typeof child === 'string') return child;
+                          return '';
+                        })
+                        .join('');
                       
-                      // Prüfe ob die Zeile mit einem Pfeil beginnt
-                      const startsWithArrow = textContent.trimStart().startsWith('→');
-                      
-                      if (startsWithArrow) {
-                        // Eingerückter Unterpunkt mit Pfeil
+                      // Prüfe ob Text mit Leerzeichen und Pfeil beginnt
+                      // Template hat "  → Bedeutung:" Format
+                      if (text.match(/^\s+→/)) {
+                        // Eingerückter Pfeil-Unterpunkt
                         return (
-                          <li className="pl-8 leading-relaxed text-primary-600">
+                          <li className="ml-8 text-primary-600 leading-relaxed">
                             {children}
                           </li>
                         );
                       }
                       
-                      // Prüfe ob die Zeile Pfeile enthält (für komplexere Strukturen)
-                      const hasArrow = textContent.includes('→');
-                      
-                      if (hasArrow && !startsWithArrow) {
-                        // Zeile mit Pfeil irgendwo drin (nicht am Anfang)
-                        return (
-                          <li className="pl-2 leading-relaxed">
-                            <div className="space-y-1">
-                              {childrenArray.map((child, idx) => {
-                                if (typeof child === 'string' && child.includes('→')) {
-                                  // Teile bei Pfeil und formatiere
-                                  const parts = child.split('→');
-                                  return parts.map((part, partIdx) => {
-                                    if (partIdx === 0) {
-                                      return <span key={`${idx}-${partIdx}`}>{part}</span>;
-                                    } else {
-                                      // Nach dem Pfeil - einrücken
-                                      return (
-                                        <div key={`${idx}-${partIdx}`} className="pl-6 mt-1">
-                                          <span className="text-primary-400">→</span>
-                                          <span className="ml-2 text-primary-600">{part.trim()}</span>
-                                        </div>
-                                      );
-                                    }
-                                  });
-                                }
-                                return <React.Fragment key={idx}>{child}</React.Fragment>;
-                              })}
-                            </div>
-                          </li>
-                        );
-                      }
-                      
-                      // Standard Listeneintrag ohne Pfeile
+                      // Standard Listeneintrag
                       return (
-                        <li className="pl-2 leading-relaxed">
+                        <li className="leading-relaxed">
                           {children}
                         </li>
                       );

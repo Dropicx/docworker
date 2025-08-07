@@ -321,7 +321,7 @@ ORIGINAL MEDIZINISCHER TEXT:
                 
                 # Fallback-Logik: Only use if gpt-oss:20b is truly unavailable
                 fallback_models = [
-                    "mistral-nemo:latest", "deepseek-r1:1.5b", "llama3.1", 
+                    "mistral-nemo:latest", "gemma3:4b", "llama3.1", 
                     "mistral:7b", "deepseek-r1:7b", "gemma3:27b"
                 ]
                 
@@ -558,17 +558,17 @@ ORIGINAL TEXT (bereits vereinfacht):
 
 ÜBERSETZUNG IN {language_name.upper()}:""" 
 
-    async def _ai_preprocess_text(self, text: str, model: str = "deepseek-r1:1.5b") -> str:
+    async def _ai_preprocess_text(self, text: str, model: str = "gemma3:4b") -> str:
         """
         Nutzt KI um nur wirklich irrelevante Formatierungen zu entfernen
-        Verwendet deepseek-r1:1.5b für schnelleres Preprocessing
+        Verwendet gemma3:4b für schnelleres Preprocessing mit Deutsch-Unterstützung
         """
         
-        # Überschreibe model für Preprocessing mit deepseek-r1:1.5b für bessere Performance
-        preprocessing_model = "deepseek-r1:1.5b"
+        # Überschreibe model für Preprocessing mit gemma3:4b für bessere Performance und Deutsch-Support
+        preprocessing_model = "gemma3:4b"
         
         try:
-            # Versuche mit deepseek-r1:1.5b
+            # Versuche mit gemma3:4b
             logger.info(f"Starting preprocessing with {preprocessing_model} for better performance")
         except:
             print(f"🚀 Starting preprocessing with {preprocessing_model} for better performance")
@@ -625,13 +625,13 @@ ORIGINALTEXT:
 
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
-        # KEIN FALLBACK - Zwangsweise deepseek-r1:1.5b verwenden
+        # KEIN FALLBACK - Zwangsweise gemma3:4b verwenden
         print(f"🔧 PREPROCESSING: Verwende Model: {preprocessing_model}")
         cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
         print(f"✅ PREPROCESSING: Erfolgreich mit {preprocessing_model}")
         
         # try:
-        #     # Versuche mit deepseek-r1:1.5b für bessere Performance
+        #     # Versuche mit gemma3:4b für bessere Performance
         #     cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
         # except Exception as e:
         #     # Fallback auf das ursprüngliche Modell
