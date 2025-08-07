@@ -169,6 +169,8 @@ KRITISCHE ANTI-HALLUZINATIONS-REGELN:
 - ⛔ KEINE Vermutungen, Annahmen oder "könnte sein" Aussagen
 - ⛔ KEINE allgemeinen medizinischen Ratschläge die nicht im Text stehen
 - ⛔ KEINE zusätzlichen Erklärungen außer direkte Übersetzung von Fachbegriffen
+- ⛔ KEINE Verweise auf Anhänge ("siehe Anhang", "weitere Werte im Anhang") wenn diese nicht explizit im Text erwähnt werden
+- ⛔ ERFINDE KEINE zusätzlichen Informationen die nicht da sind
 - ✅ Übersetze NUR was wörtlich im Dokument steht
 - ✅ Lasse KEINE medizinische Information weg
 - ✅ Erkläre Fachbegriffe kurz in Klammern (nur Definition, keine Zusatzinfos)
@@ -540,47 +542,55 @@ ORIGINAL TEXT (bereits vereinfacht):
     async def _ai_preprocess_text(self, text: str, model: str) -> str:
         """Nutzt KI um nur wirklich irrelevante Formatierungen zu entfernen"""
         
-        preprocess_prompt = f"""Du bist ein medizinischer Dokumentenbereiniger. Deine Aufgabe ist es, den Text MINIMAL zu bereinigen.
+        preprocess_prompt = f"""Du bist ein medizinischer Dokumentenbereiniger für Datenschutz und Übersichtlichkeit.
 
-KRITISCHE REGEL: BEHALTE DEN VOLLSTÄNDIGEN MEDIZINISCHEN INHALT!
+WICHTIGE REGEL: BEHALTE ALLE MEDIZINISCHEN INFORMATIONEN!
 
-NUR DIESE DINGE ENTFERNEN:
-- Briefköpfe mit Praxislogo-Beschreibungen
-- Fax- und Telefonnummern in Kopfzeilen
-- E-Mail-Adressen in Kopfzeilen
-- Seitenzahlen (z.B. "Seite 1 von 3")
-- Wiederholte Kopf-/Fußzeilen
-- Formatierungszeichen wie "========" oder "--------"
+ENTFERNE KOMPLETT (nicht ersetzen, sondern löschen):
+- Patientennamen und Patientenadressen
+- Geburtsdaten von Patienten
+- Arztnamen und Unterschriften
+- Versicherungsnummern, Patientennummern
+- Telefonnummern und E-Mails
+- Briefköpfe, Logos, Formatierungszeichen
+- Seitenzahlen, Kopf-/Fußzeilen
+- Grußformeln (z.B. "Mit freundlichen Grüßen", "Sehr geehrte", "Liebe Patientin")
+- Anreden und Verabschiedungen
+- Unterschriftszeilen
 
-ALLES ANDERE MUSS BLEIBEN:
-✅ ALLE medizinischen Informationen
+MUSS BLEIBEN:
 ✅ ALLE Diagnosen, Befunde, Laborwerte
-✅ ALLE Medikamente und Dosierungen
-✅ ALLE Daten und Zeitangaben
-✅ Namen von Ärzten und Patienten
-✅ Krankenhaus-/Praxisnamen
-✅ Versicherungsnummern, Patientennummern (könnten relevant sein)
-✅ Adressen (könnten für Nachsorge relevant sein)
-✅ Der komplette Fließtext
-✅ Grußformeln (zeigen Briefende an)
+✅ ALLE Medikamente und Dosierungen  
+✅ ALLE medizinischen Daten (Untersuchungsdaten, OP-Termine)
+✅ Krankenhaus-/Abteilungsnamen (wichtig für Kontext)
+✅ Der komplette medizinische Inhalt
+✅ Medizinische Codes (ICD, OPS, etc.)
 
-WICHTIG: Im Zweifel IMMER behalten! Lieber zu viel als zu wenig!
-Gib den Text fast unverändert zurück, nur ohne störende Formatierungen.
+BEISPIEL:
+Original: "Sehr geehrte Frau Maria Müller, geb. 15.03.1965, wohnhaft Hauptstr. 5"
+Bereinigt: "" (komplett entfernt)
+
+Original: "Mit freundlichen Grüßen, Dr. med. Klaus Schmidt"  
+Bereinigt: "" (komplett entfernt)
 
 ORIGINALTEXT:
 {text}
 
-BEREINIGTER TEXT (fast identisch zum Original):"""
+BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
         cleaned_text = await self._generate_response(preprocess_prompt, model)
         
-        # Nachbearbeitung: Entferne doppelte Nummerierung vor Stichpunkten
+        # Nachbearbeitung: Entferne doppelte Nummerierung und doppelte Bullet-Points
         import re
         # Entfernt Muster wie "1. •", "2. -", "1) •" etc.
         cleaned_text = re.sub(r'^\s*\d+[.)]\s*[•\-\*]', '•', cleaned_text, flags=re.MULTILINE)
         cleaned_text = re.sub(r'^\s*\d+\.\s*[•\-\*]', '•', cleaned_text, flags=re.MULTILINE)
         # Entfernt auch Nummerierung wenn danach direkt Text kommt (für Listen)
         cleaned_text = re.sub(r'^\s*\d+[.)]\s+(?=[A-Z])', '• ', cleaned_text, flags=re.MULTILINE)
+        # Entfernt doppelte Bullet-Points (• • oder - -)
+        cleaned_text = re.sub(r'^[•\-\*]\s*[•\-\*]\s*', '• ', cleaned_text, flags=re.MULTILINE)
+        # Entfernt mehrfache Bullet-Points in einer Zeile
+        cleaned_text = re.sub(r'([•\-\*])\s*\1+', r'\1', cleaned_text)
         
         # Fallback wenn KI-Preprocessing fehlschlägt
         if not cleaned_text or cleaned_text.startswith("Fehler") or len(cleaned_text) < 50:
