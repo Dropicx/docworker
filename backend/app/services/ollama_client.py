@@ -182,8 +182,6 @@ KRITISCHE ANTI-HALLUZINATIONS-REGELN:
 ✅ KEINE Behandlungsempfehlungen die nicht im Original stehen
 ✅ ERKLÄRE IMMER medizinische Codes (ICD, OPS, DRG, etc.) - nie nur auflisten!
 
-WICHTIG: VERWENDE KEINE BULLET POINTS (•, -, *) IN DEINER ANTWORT!
-Schreibe jeden Punkt in einer neuen Zeile ohne Aufzählungszeichen.
 
 SPRACHLICHE RICHTLINIEN:
 
@@ -204,7 +202,6 @@ Unaufgelöste Abkürzungen
 Fachsprache ohne Erklärung
 Mehrdeutige Aussagen
 Unpersönliche Formulierungen wie "Der Patient"
-BULLET POINTS oder Aufzählungszeichen jeder Art
 Meta-Kommentare über die Übersetzung selbst
 Sätze wie "Alle Angaben entsprechen dem Originaltext"
 Hinweise wie "Laut Dokument" oder "Gemäß den Unterlagen"
@@ -218,35 +215,35 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
 ## 📊 Zusammenfassung
 ### Was wurde gemacht?
-[Untersuchung/Behandlung in einfachen Worten]
-[Zeitraum/Datum wenn vorhanden]
+• [Untersuchung/Behandlung in einfachen Worten]
+• [Zeitraum/Datum wenn vorhanden]
 
 ### Was wurde gefunden?
-[Hauptbefund 1 in einfacher Sprache]
+• [Hauptbefund 1 in einfacher Sprache]
   → Bedeutung: [Was heißt das für Sie?]
-[Hauptbefund 2 in einfacher Sprache]
+• [Hauptbefund 2 in einfacher Sprache]
   → Bedeutung: [Was heißt das für Sie?]
 
 ## 🏥 Ihre Diagnosen
-[Diagnose in Alltagssprache]
+• [Diagnose in Alltagssprache]
   → Medizinisch: [Fachbegriff]
   → ICD-Code falls vorhanden: [Code mit Erklärung, z.B. "I10.90 - Bluthochdruck ohne bekannte Ursache"]
   → Erklärung: [Was ist das genau?]
 
 ## 💊 Behandlung & Medikamente
-[Medikament/Behandlung]
+• [Medikament/Behandlung]
   → Wofür: [Zweck]
   → Einnahme: [Wie und wann]
   → Wichtig: [Besonderheiten/Nebenwirkungen]
 
 ## ✅ Ihre nächsten Schritte
-[Was Sie tun sollen]
-[Termine die anstehen]
-[Worauf Sie achten müssen]
+• [Was Sie tun sollen]
+• [Termine die anstehen]
+• [Worauf Sie achten müssen]
 
 ## 📖 Fachbegriffe verstehen
-**[Begriff 1]**: [Einfache Erklärung]
-**[Begriff 2]**: [Einfache Erklärung]
+• **[Begriff 1]**: [Einfache Erklärung]
+• **[Begriff 2]**: [Einfache Erklärung]
 
 ## 🔢 Medizinische Codes erklärt (falls vorhanden)
 ### ICD-Codes (Diagnose-Schlüssel):
@@ -491,16 +488,16 @@ ORIGINAL MEDIZINISCHER TEXT:
         self,
         simplified_text: str,
         target_language: SupportedLanguage,
-        model: str = "bge-m3:latest"  # Use BGE-M3 for neutral translation
+        model: str = "zongwei/gemma3-translator:4b"  # Use gemma3-translator for language translation
     ) -> tuple[str, float]:
         """
         Übersetzt vereinfachten Text in eine andere Sprache
-        Verwendet BGE-M3 für neutrale, präzise Übersetzungen
+        Verwendet gemma3-translator:4b für präzise Übersetzungen
         
         Args:
             simplified_text: Der bereits vereinfachte Text
             target_language: Die Zielsprache
-            model: Das zu verwendende Modell (Standard: bge-m3:latest)
+            model: Das zu verwendende Modell (Standard: gemma3-translator:4b)
             
         Returns:
             tuple[str, float]: (translated_text, confidence)
@@ -508,9 +505,8 @@ ORIGINAL MEDIZINISCHER TEXT:
         try:
             language_name = LANGUAGE_NAMES.get(target_language, target_language.value)
             
-            # KEIN FALLBACK - Zwangsweise BGE-M3 verwenden
             print(f"🌐 TRANSLATION: Verwende Model: {model} für Sprache: {language_name}")
-            prompt = self._get_neutral_translation_prompt(simplified_text, target_language, language_name)
+            prompt = self._get_language_translation_prompt(simplified_text, target_language, language_name)
             translated_text = await self._generate_response(prompt, model)
             print(f"✅ TRANSLATION: Erfolgreich mit {model}")
             confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
@@ -537,19 +533,6 @@ ORIGINAL MEDIZINISCHER TEXT:
         except Exception as e:
             print(f"❌ Sprachübersetzung fehlgeschlagen: {e}")
             return f"Fehler bei der Sprachübersetzung: {str(e)}", 0.0
-
-    def _get_neutral_translation_prompt(self, text: str, target_language: SupportedLanguage, language_name: str) -> str:
-        """Erstellt Prompt für neutrale, direkte Übersetzung mit BGE-M3"""
-        
-        return f"""Translate the following medical text directly from German to {language_name}.
-Maintain medical accuracy and terminology.
-Preserve the exact structure and formatting.
-Do not add explanations or simplifications.
-
-Text:
-{text}
-
-Direct translation to {language_name}:"""
 
     def _get_language_translation_prompt(self, text: str, target_language: SupportedLanguage, language_name: str) -> str:
         """Erstellt Prompt für Sprachübersetzung"""
@@ -658,16 +641,12 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         #         print(f"⚠️ Llama3.2 preprocessing failed, falling back to {model}")
         #     cleaned_text = await self._generate_response(preprocess_prompt, model)
         
-        # Nachbearbeitung: Entferne ALLE Bullet Points und Nummerierungen am Zeilenanfang
+        # Nachbearbeitung: Entferne nur DOPPELTE Bullet Points und unnötige Nummerierungen
         import re
-        # Entfernt ALLE Bullet-Points, Striche und Sterne am Zeilenanfang
-        cleaned_text = re.sub(r'^\s*[•\-\*]\s+', '', cleaned_text, flags=re.MULTILINE)
-        # Entfernt Nummerierungen mit Bullet Points
-        cleaned_text = re.sub(r'^\s*\d+[.)]\s*[•\-\*]\s*', '', cleaned_text, flags=re.MULTILINE)
-        # Entfernt reine Nummerierungen 
-        cleaned_text = re.sub(r'^\s*\d+[.)]\s+', '', cleaned_text, flags=re.MULTILINE)
-        # Entfernt mehrfache Bullet-Points hintereinander
-        cleaned_text = re.sub(r'^[•\-\*]\s*[•\-\*]\s*', '• ', cleaned_text, flags=re.MULTILINE)
+        # Entfernt Nummerierung VOR Bullet Points (z.B. "1. •" wird zu "•")
+        cleaned_text = re.sub(r'^\s*\d+[.)]\s*([•\-\*])', r'\1', cleaned_text, flags=re.MULTILINE)
+        # Entfernt doppelte Bullet-Points (z.B. "• •" wird zu "•")
+        cleaned_text = re.sub(r'^([•\-\*])\s*[•\-\*]+\s*', r'\1 ', cleaned_text, flags=re.MULTILINE)
         # Entfernt mehrfache Bullet-Points in einer Zeile
         cleaned_text = re.sub(r'([•\-\*])\s*\1+', r'\1', cleaned_text)
         

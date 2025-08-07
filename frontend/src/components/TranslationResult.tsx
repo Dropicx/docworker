@@ -239,12 +239,12 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     h4: ({children}) => <h4 className="text-lg font-semibold text-primary-800 mb-2 mt-3">{children}</h4>,
                     p: ({children}) => <p className="mb-4 text-primary-700 leading-relaxed">{children}</p>,
                     ul: ({children}) => (
-                      <ul className="list-none mb-4 text-primary-700">
+                      <ul className="mb-4 text-primary-700 space-y-2">
                         {children}
                       </ul>
                     ),
                     ol: ({children}) => (
-                      <ol className="list-none mb-4 text-primary-700">
+                      <ol className="list-decimal ml-6 mb-4 text-primary-700 space-y-2">
                         {children}
                       </ol>
                     ),
@@ -301,11 +301,10 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         );
                       }
                       
-                      // Standard Listeneintrag mit besserer Einrückung für mehrzeilige Texte
+                      // Standard Listeneintrag ohne zusätzliche Bullets (Text hat bereits •)
                       return (
-                        <li className="relative pl-8">
-                          <span className="absolute left-0 top-0.5 text-primary-500">•</span>
-                          <div className="leading-relaxed">{children}</div>
+                        <li className="pl-2 leading-relaxed">
+                          {children}
                         </li>
                       );
                     },
@@ -456,19 +455,18 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     h3: ({children}) => <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">{children}</h3>,
                     p: ({children}) => <p className="mb-3 text-primary-700 leading-relaxed">{children}</p>,
                     ul: ({children}) => (
-                      <ul className="list-none mb-3 space-y-2 text-primary-700">
+                      <ul className="mb-3 space-y-2 text-primary-700">
                         {children}
                       </ul>
                     ),
                     ol: ({children}) => (
-                      <ol className="list-none mb-3 space-y-2 text-primary-700">
+                      <ol className="list-decimal ml-6 mb-3 space-y-2 text-primary-700">
                         {children}
                       </ol>
                     ),
                     li: ({children}) => (
-                      <li className="relative pl-8">
-                        <span className="absolute left-0 top-0.5 text-primary-500">•</span>
-                        <div className="leading-relaxed">{children}</div>
+                      <li className="pl-2 leading-relaxed">
+                        {children}
                       </li>
                     ),
                     strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
