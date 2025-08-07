@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { Copy, Download, Eye, EyeOff, CheckCircle, FileText, Clock, Star, Sparkles, RefreshCw, ArrowLeft, Globe } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ApiService from '../services/api';
 import { TranslationResult as TranslationData } from '../types/api';
+import { exportToPDF } from '../utils/pdfExport';
 
 interface TranslationResultProps {
   result: TranslationData;
@@ -28,24 +29,37 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
     }
   };
 
-  const handleDownload = () => {
-    const content = `Medizinische Dokumentenübersetzung
-========================================
-
-Dokumenttyp: ${result.document_type_detected}
-Vertrauensgrad: ${(result.confidence_score * 100).toFixed(1)}%
-${result.language_confidence_score ? `Übersetzungsqualität: ${(result.language_confidence_score * 100).toFixed(1)}%` : ''}
-Verarbeitungszeit: ${ApiService.formatDuration(result.processing_time_seconds)}
-Zeitstempel: ${new Date(result.timestamp).toLocaleString('de-DE')}
-${result.target_language ? `Zielsprache: ${result.target_language}` : ''}
-
-ÜBERSETZUNG IN EINFACHER SPRACHE:
-${result.translated_text}
-
-${result.language_translated_text && result.target_language ? `
-ÜBERSETZUNG IN ${result.target_language.toUpperCase()}:
-${result.language_translated_text}
-` : ''}
+  const handleDownload = async () => {
+    try {
+      // Bestimme welcher Text exportiert werden soll
+      const textToExport = getDisplayedText();
+      const isLanguageExport = activeTab === 'language' && result.language_translated_text;
+      
+      // Generiere Dateinamen
+      const timestamp = new Date().toISOString().split('T')[0];
+      const languageSuffix = isLanguageExport ? `_${result.target_language}` : '_DE';
+      const filename = `medizinische_uebersetzung_${timestamp}${languageSuffix}.pdf`;
+      
+      // Exportiere als PDF mit der aktuellen Markdown-Formatierung
+      const elementId = isLanguageExport ? 'translation-content-language' : 'translation-content-simplified';
+      
+      // Warte kurz, damit das Element sicher gerendert ist
+      setTimeout(async () => {
+        await exportToPDF(elementId, filename, {
+          title: isLanguageExport 
+            ? `Übersetzung (${result.target_language?.toUpperCase()})` 
+            : 'Verständliche Übersetzung',
+          content: textToExport,
+          isTranslation: true,
+          language: isLanguageExport ? result.target_language : 'Deutsch',
+          processingTime: result.processing_time_seconds,
+          documentType: result.document_type_detected
+        });
+      }, 100);
+    } catch (error) {
+      console.error('PDF Export failed:', error);
+      alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
+    }
 
 ${showOriginal ? `
 ORIGINALTEXT:
@@ -122,71 +136,24 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
         </div>
       </div>
 
-      {/* Metadata Cards */}
-      <div className={`grid grid-cols-1 ${result.language_translated_text ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
-        {/* Dokumenttyp */}
-        <div className="feature-card group">
-          <div className="flex items-center space-x-4">
-            <div className="feature-icon">
-              <FileText className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <div className="text-sm font-medium text-primary-600 mb-1">Dokumenttyp</div>
-              <div className="font-bold text-primary-900 capitalize text-lg">
-                {result.document_type_detected || 'Medizinisches Dokument'}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Vertrauensgrad */}
-        <div className="feature-card group">
-          <div className="flex items-center space-x-4">
-            <div className="feature-icon">
-              <Star className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <div className="text-sm font-medium text-primary-600 mb-1">Qualität</div>
-              <div className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-semibold ring-1 ring-inset ${getConfidenceColor(getDisplayedConfidence())}`}>
-                <span className="mr-1">{getConfidenceIcon(getDisplayedConfidence())}</span>
-                {getConfidenceText(getDisplayedConfidence())} ({(getDisplayedConfidence() * 100).toFixed(0)}%)
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Sprache (nur wenn übersetzt) */}
-        {result.language_translated_text && result.target_language && (
-          <div className="feature-card group">
+      {/* Sprache Card (nur wenn übersetzt) */}
+      {result.language_translated_text && result.target_language && (
+        <div className="flex justify-center mb-6">
+          <div className="feature-card group max-w-xs">
             <div className="flex items-center space-x-4">
               <div className="feature-icon">
                 <Globe className="w-6 h-6" />
               </div>
               <div className="flex-1">
-                <div className="text-sm font-medium text-primary-600 mb-1">Sprache</div>
+                <div className="text-sm font-medium text-primary-600 mb-1">Zielsprache</div>
                 <div className="font-bold text-primary-900 text-lg">
                   {result.target_language.toUpperCase()}
                 </div>
               </div>
             </div>
           </div>
-        )}
-
-        {/* Verarbeitungszeit */}
-        <div className="feature-card group">
-          <div className="flex items-center space-x-4">
-            <div className="feature-icon">
-              <Clock className="w-6 h-6" />
-            </div>
-            <div className="flex-1">
-              <div className="text-sm font-medium text-primary-600 mb-1">Verarbeitungszeit</div>
-              <div className="font-bold text-primary-900 text-lg">
-                {ApiService.formatDuration(result.processing_time_seconds)}
-              </div>
-            </div>
-          </div>
         </div>
-      </div>
+      )}
 
       {/* Tabs für Sprachversionen (nur wenn Sprachübersetzung vorhanden) */}
       {result.language_translated_text && (
@@ -253,13 +220,13 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
               >
                 {copiedText === (activeTab === 'language' ? 'language' : 'translated') ? (
                   <>
-                    <CheckCircle className="w-4 h-4 text-success-600" />
-                    <span className="text-success-600 ml-2">Kopiert!</span>
+                    <CheckCircle className="w-4 h-4 text-success-600 flex-shrink-0" />
+                    <span className="text-success-600">Kopiert!</span>
                   </>
                 ) : (
                   <>
-                    <Copy className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
-                    <span className="ml-2">Kopieren</span>
+                    <Copy className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                    <span>Kopieren</span>
                   </>
                 )}
               </button>
@@ -268,8 +235,8 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
                 onClick={handleDownload}
                 className="btn-primary group"
               >
-                <Download className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
-                <span className="ml-2">Download</span>
+                <Download className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                <span>Als PDF</span>
               </button>
             </div>
           </div>
@@ -277,7 +244,10 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
           {/* Translation Content */}
           <div className="relative">
             <div className="glass-card p-8 md:p-10">
-              <div className="medical-text-formatted text-primary-800 leading-relaxed markdown-content">
+              <div 
+                id={activeTab === 'language' ? 'translation-content-language' : 'translation-content-simplified'}
+                className="medical-text-formatted text-primary-800 leading-relaxed markdown-content"
+              >
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
                   components={{
@@ -341,26 +311,18 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
             <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-gradient-to-br from-accent-400 to-accent-500 rounded-full opacity-60"></div>
           </div>
 
-          {/* Quality indicator */}
+          {/* Processing time indicator */}
           <div className="mt-6 glass-effect p-4 rounded-xl">
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center justify-center text-sm">
               <div className="flex items-center space-x-3">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${getConfidenceColor(getDisplayedConfidence())}`}>
-                  <Star className="w-4 h-4" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-primary-100">
+                  <Clock className="w-4 h-4 text-primary-600" />
                 </div>
                 <div>
-                  <span className="font-medium text-primary-700">
-                    {activeTab === 'language' ? 'Übersetzungsqualität' : 'Vereinfachungsqualität'}: <span className="font-bold">{getConfidenceText(getDisplayedConfidence())}</span>
+                  <span className="text-xs text-primary-500">Verarbeitet in</span>
+                  <span className="font-semibold text-primary-700 ml-2">
+                    {ApiService.formatDuration(result.processing_time_seconds)}
                   </span>
-                  <div className="text-xs text-primary-500">
-                    Vertrauen: {(getDisplayedConfidence() * 100).toFixed(1)}%
-                  </div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-xs text-primary-500 mb-1">Verarbeitet in</div>
-                <div className="font-semibold text-primary-700">
-                  {ApiService.formatDuration(result.processing_time_seconds)}
                 </div>
               </div>
             </div>
@@ -388,13 +350,13 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
               >
                 {showOriginal ? (
                   <>
-                    <EyeOff className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
-                    <span className="ml-2">Ausblenden</span>
+                    <EyeOff className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                    <span>Ausblenden</span>
                   </>
                 ) : (
                   <>
-                    <Eye className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
-                    <span className="ml-2">Anzeigen</span>
+                    <Eye className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                    <span>Anzeigen</span>
                   </>
                 )}
               </button>
@@ -407,13 +369,13 @@ Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die pro
                 >
                   {copiedText === 'original' ? (
                     <>
-                      <CheckCircle className="w-4 h-4 text-success-600" />
-                      <span className="text-success-600 ml-2">Kopiert!</span>
+                      <CheckCircle className="w-4 h-4 text-success-600 flex-shrink-0" />
+                      <span className="text-success-600">Kopiert!</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-4 h-4 transition-transform duration-200 group-hover:scale-110" />
-                      <span className="ml-2">Kopieren</span>
+                      <Copy className="w-4 h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                      <span>Kopieren</span>
                     </>
                   )}
                 </button>
