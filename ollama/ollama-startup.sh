@@ -48,14 +48,14 @@ else
     echo "✅ Primary model already exists: $MODEL"
 fi
 
-# Llama3.2 model for fast preprocessing - IMPORTANT
-PREPROCESS_MODEL="llama3.2:latest"
+# DeepSeek-R1 model for fast preprocessing - IMPORTANT
+PREPROCESS_MODEL="deepseek-r1:1.5b"
 if ! ollama list 2>/dev/null | grep -q "$PREPROCESS_MODEL"; then
     echo "📥 Pulling preprocessing model: $PREPROCESS_MODEL"
     if ollama pull "$PREPROCESS_MODEL"; then
         echo "✅ Successfully pulled: $PREPROCESS_MODEL"
     else
-        echo "⚠️ Warning: Failed to pull Llama3.2 model for fast preprocessing"
+        echo "⚠️ Warning: Failed to pull DeepSeek-R1 model for fast preprocessing"
         echo "   Preprocessing will fall back to primary model (slower)."
     fi
 else
@@ -94,7 +94,7 @@ ollama list
 echo ""
 echo "🎯 Ollama is ready to serve requests!"
 echo "   Primary model (MANDATORY): gpt-oss:20b"
-echo "   Preprocessing model: llama3.2:latest (fast)"
+echo "   Preprocessing model: deepseek-r1:1.5b (fast)"
 echo "   Translation model: zongwei/gemma3-translator:4b"
 echo "   Secondary models: mistral-nemo:latest, llama3.1, etc."
 echo "   Listening on port 11434"

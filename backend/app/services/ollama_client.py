@@ -215,7 +215,7 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
 ## 📊 Zusammenfassung
 ### Was wurde gemacht?
-• [Untersuchung/Behandlung in einfachen Worten]
+• [Untersuchung/Behandlung in einfacher Sprache]
 • [Zeitraum/Datum wenn vorhanden]
 
 ### Was wurde gefunden?
@@ -237,9 +237,9 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
   → Wichtig: [Besonderheiten/Nebenwirkungen]
 
 ## ✅ Ihre nächsten Schritte
-• [Was Sie tun sollen]
+• [Was Sie tun sollen in einfacher Sprache]
 • [Termine die anstehen]
-• [Worauf Sie achten müssen]
+• [Worauf Sie achten müssen in einfacher Sprache]
 
 ## 📖 Fachbegriffe verstehen
 • **[Begriff 1]**: [Einfache Erklärung]
@@ -321,7 +321,7 @@ ORIGINAL MEDIZINISCHER TEXT:
                 
                 # Fallback-Logik: Only use if gpt-oss:20b is truly unavailable
                 fallback_models = [
-                    "mistral-nemo:latest", "llama3.2:latest", "llama3.1", 
+                    "mistral-nemo:latest", "deepseek-r1:1.5b", "llama3.1", 
                     "mistral:7b", "deepseek-r1:7b", "gemma3:27b"
                 ]
                 
@@ -558,17 +558,17 @@ ORIGINAL TEXT (bereits vereinfacht):
 
 ÜBERSETZUNG IN {language_name.upper()}:""" 
 
-    async def _ai_preprocess_text(self, text: str, model: str = "llama3.2:latest") -> str:
+    async def _ai_preprocess_text(self, text: str, model: str = "deepseek-r1:1.5b") -> str:
         """
         Nutzt KI um nur wirklich irrelevante Formatierungen zu entfernen
-        Verwendet llama3.2:latest für schnelleres Preprocessing
+        Verwendet deepseek-r1:1.5b für schnelleres Preprocessing
         """
         
-        # Überschreibe model für Preprocessing mit llama3.2:latest für bessere Performance
-        preprocessing_model = "llama3.2:latest"
+        # Überschreibe model für Preprocessing mit deepseek-r1:1.5b für bessere Performance
+        preprocessing_model = "deepseek-r1:1.5b"
         
         try:
-            # Versuche mit llama3.2:latest
+            # Versuche mit deepseek-r1:1.5b
             logger.info(f"Starting preprocessing with {preprocessing_model} for better performance")
         except:
             print(f"🚀 Starting preprocessing with {preprocessing_model} for better performance")
@@ -625,13 +625,13 @@ ORIGINALTEXT:
 
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
-        # KEIN FALLBACK - Zwangsweise llama3.2:latest verwenden
+        # KEIN FALLBACK - Zwangsweise deepseek-r1:1.5b verwenden
         print(f"🔧 PREPROCESSING: Verwende Model: {preprocessing_model}")
         cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
         print(f"✅ PREPROCESSING: Erfolgreich mit {preprocessing_model}")
         
         # try:
-        #     # Versuche mit llama3.2:latest für bessere Performance
+        #     # Versuche mit deepseek-r1:1.5b für bessere Performance
         #     cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
         # except Exception as e:
         #     # Fallback auf das ursprüngliche Modell

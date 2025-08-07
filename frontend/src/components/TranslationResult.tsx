@@ -249,51 +249,50 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                       </ol>
                     ),
                     li: ({children}) => {
-                      // Prüfe ob der Text Unterpunkte mit Pfeilen enthält
+                      // Konvertiere children zu String für einfachere Verarbeitung
                       const childrenArray = React.Children.toArray(children);
-                      const hasArrow = childrenArray.some(child => 
-                        typeof child === 'string' && child.includes('→')
-                      );
+                      const textContent = childrenArray.map(child => 
+                        typeof child === 'string' ? child : ''
+                      ).join('');
                       
-                      if (hasArrow) {
-                        // Spezielle Formatierung für Items mit Unterpunkten
+                      // Prüfe ob die Zeile mit einem Pfeil beginnt
+                      const startsWithArrow = textContent.trimStart().startsWith('→');
+                      
+                      if (startsWithArrow) {
+                        // Eingerückter Unterpunkt mit Pfeil
                         return (
-                          <li className="relative pl-8">
-                            <span className="absolute left-0 top-0.5 text-primary-500">•</span>
-                            <div className="space-y-2">
+                          <li className="pl-8 leading-relaxed text-primary-600">
+                            {children}
+                          </li>
+                        );
+                      }
+                      
+                      // Prüfe ob die Zeile Pfeile enthält (für komplexere Strukturen)
+                      const hasArrow = textContent.includes('→');
+                      
+                      if (hasArrow && !startsWithArrow) {
+                        // Zeile mit Pfeil irgendwo drin (nicht am Anfang)
+                        return (
+                          <li className="pl-2 leading-relaxed">
+                            <div className="space-y-1">
                               {childrenArray.map((child, idx) => {
-                                if (typeof child === 'string') {
-                                  // Teile bei Pfeil-Symbol
-                                  if (child.includes('→')) {
-                                    const parts = child.split('→');
-                                    const mainText = parts[0].trim();
-                                    const subText = parts[1]?.trim();
-                                    
-                                    if (mainText && !subText) {
-                                      // Nur Pfeil am Anfang
+                                if (typeof child === 'string' && child.includes('→')) {
+                                  // Teile bei Pfeil und formatiere
+                                  const parts = child.split('→');
+                                  return parts.map((part, partIdx) => {
+                                    if (partIdx === 0) {
+                                      return <span key={`${idx}-${partIdx}`}>{part}</span>;
+                                    } else {
+                                      // Nach dem Pfeil - einrücken
                                       return (
-                                        <div key={idx} className="pl-6 -ml-2">
+                                        <div key={`${idx}-${partIdx}`} className="pl-6 mt-1">
                                           <span className="text-primary-400">→</span>
-                                          <span className="ml-2 text-primary-600">{mainText}</span>
+                                          <span className="ml-2 text-primary-600">{part.trim()}</span>
                                         </div>
                                       );
-                                    } else if (mainText && subText) {
-                                      // Text vor und nach Pfeil
-                                      return (
-                                        <React.Fragment key={idx}>
-                                          <div className="font-medium text-primary-800">{mainText}</div>
-                                          <div className="pl-6">
-                                            <span className="text-primary-400">→</span>
-                                            <span className="ml-2 text-primary-600">{subText}</span>
-                                          </div>
-                                        </React.Fragment>
-                                      );
                                     }
-                                  }
-                                  // Normaler Text ohne Pfeil
-                                  return <span key={idx}>{child}</span>;
+                                  });
                                 }
-                                // Andere React-Elemente
                                 return <React.Fragment key={idx}>{child}</React.Fragment>;
                               })}
                             </div>
@@ -301,7 +300,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         );
                       }
                       
-                      // Standard Listeneintrag ohne zusätzliche Bullets (Text hat bereits •)
+                      // Standard Listeneintrag ohne Pfeile
                       return (
                         <li className="pl-2 leading-relaxed">
                           {children}
