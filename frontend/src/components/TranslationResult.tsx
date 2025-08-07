@@ -17,7 +17,10 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
 }) => {
   const [showOriginal, setShowOriginal] = useState(false);
   const [copiedText, setCopiedText] = useState<'original' | 'translated' | 'language' | null>(null);
-  const [activeTab, setActiveTab] = useState<'simplified' | 'language'>('simplified');
+  // Wenn eine Sprachübersetzung vorhanden ist, zeige direkt den Sprach-Tab
+  const [activeTab, setActiveTab] = useState<'simplified' | 'language'>(
+    result.language_translated_text ? 'language' : 'simplified'
+  );
 
   const handleCopy = async (text: string, type: 'original' | 'translated' | 'language') => {
     try {

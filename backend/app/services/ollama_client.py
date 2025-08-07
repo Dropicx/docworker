@@ -8,12 +8,14 @@ from app.models.document import SupportedLanguage, LANGUAGE_NAMES
 
 class OllamaClient:
     
-    def __init__(self, base_url: Optional[str] = None):
+    def __init__(self, base_url: Optional[str] = None, cpu_url: Optional[str] = None):
         # Container-zu-Container Kommunikation in Production
         if os.getenv("ENVIRONMENT") == "production":
-            self.base_url = base_url or "http://ollama:11434"
+            self.base_url = base_url or "http://ollama-gpu:11434"  # GPU instance
+            self.cpu_url = cpu_url or "http://ollama-cpu:11434"    # CPU instance
         else:
-            self.base_url = base_url or "http://localhost:11434"
+            self.base_url = base_url or "http://localhost:7869"   # GPU instance
+            self.cpu_url = cpu_url or "http://localhost:7870"    # CPU instance
             
         self.timeout = 300  # 5 Minuten Timeout
         
@@ -306,8 +308,44 @@ ORIGINAL MEDIZINISCHER TEXT:
 
 ÜBERSETZUNG IN EINFACHER SPRACHE:"""
     
+    async def _generate_response_cpu(self, prompt: str, model: str) -> str:
+        """
+        Generiert Antwort über CPU-Instanz (für Preprocessing)
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                payload = {
+                    "model": model,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {
+                        "temperature": 0.3,
+                        "top_p": 0.9,
+                        "num_predict": 4000,
+                        "repeat_penalty": 1.1,
+                        "seed": 42
+                    }
+                }
+                
+                print(f"🖥️ CPU: Generiere mit Model: {model}")
+                response = await client.post(
+                    f"{self.cpu_url}/api/generate",
+                    json=payload
+                )
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    return result.get("response", "Keine Antwort erhalten").strip()
+                else:
+                    print(f"❌ Ollama CPU API Error: {response.status_code} - {response.text}")
+                    return f"Fehler bei der Ollama-Anfrage: {response.status_code}"
+                    
+        except Exception as e:
+            print(f"❌ Ollama CPU-Generation Fehler: {e}")
+            return f"Fehler bei der KI-Übersetzung: {str(e)}"
+    
     async def _generate_response(self, prompt: str, model: str) -> str:
-        """Generiert Antwort von Ollama"""
+        """Generiert Antwort von Ollama GPU-Instanz"""
         try:
             # Check if requested model is available
             available_models = await self.list_models()
@@ -321,8 +359,8 @@ ORIGINAL MEDIZINISCHER TEXT:
                 
                 # Fallback-Logik: Only use if gpt-oss:20b is truly unavailable
                 fallback_models = [
-                    "mistral-nemo:latest", "gemma3:4b", "llama3.1", 
-                    "mistral:7b", "deepseek-r1:7b", "gemma3:27b"
+                    "mistral-nemo:latest", "llama3.1", 
+                    "mistral:7b", "deepseek-r1:7b"
                 ]
                 
                 for fallback in fallback_models:
@@ -353,7 +391,7 @@ ORIGINAL MEDIZINISCHER TEXT:
                     }
                 }
                 
-                print(f"🤖 Generiere mit Modell: {model}")
+                print(f"🚀 GPU: Generiere mit Modell: {model}")
                 response = await client.post(
                     f"{self.base_url}/api/generate",
                     json=payload
@@ -511,23 +549,6 @@ ORIGINAL MEDIZINISCHER TEXT:
             print(f"✅ TRANSLATION: Erfolgreich mit {model}")
             confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
             
-            # # Versuche zuerst mit BGE-M3 für neutrale Übersetzung
-            # if model == "bge-m3:latest":
-            #     prompt = self._get_neutral_translation_prompt(simplified_text, target_language, language_name)
-            #     try:
-            #         translated_text = await self._generate_response(prompt, model)
-            #         if translated_text and len(translated_text.strip()) > 0:
-            #             confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
-            #             return translated_text, confidence
-            #     except Exception as bge_error:
-            #         logger.warning(f"BGE-M3 translation failed, falling back to GPT-OSS: {bge_error}")
-            #         model = "gpt-oss:20b"  # Fallback
-            # 
-            # # Fallback oder direkt mit GPT-OSS
-            # prompt = self._get_language_translation_prompt(simplified_text, target_language, language_name)
-            # translated_text = await self._generate_response(prompt, model)
-            # confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
-            
             return translated_text, confidence
             
         except Exception as e:
@@ -558,20 +579,16 @@ ORIGINAL TEXT (bereits vereinfacht):
 
 ÜBERSETZUNG IN {language_name.upper()}:""" 
 
-    async def _ai_preprocess_text(self, text: str, model: str = "gemma3:4b") -> str:
+    async def _ai_preprocess_text(self, text: str, model: str = "gpt-oss:20b") -> str:
         """
         Nutzt KI um nur wirklich irrelevante Formatierungen zu entfernen
-        Verwendet gemma3:4b für schnelleres Preprocessing mit Deutsch-Unterstützung
+        Verwendet gpt-oss:20b auf CPU-Instanz für Preprocessing
         """
         
-        # Überschreibe model für Preprocessing mit gemma3:4b für bessere Performance und Deutsch-Support
-        preprocessing_model = "gemma3:4b"
+        # Verwende gpt-oss:20b auf CPU-Instanz für besseres Preprocessing
+        preprocessing_model = "gpt-oss:20b"
         
-        try:
-            # Versuche mit gemma3:4b
-            logger.info(f"Starting preprocessing with {preprocessing_model} for better performance")
-        except:
-            print(f"🚀 Starting preprocessing with {preprocessing_model} for better performance")
+        logger.info(f"Starting preprocessing with {preprocessing_model} on CPU instance")
         
         preprocess_prompt = f"""Du bist ein medizinischer Dokumentenbereiniger für Datenschutz und Übersichtlichkeit.
 
@@ -625,21 +642,10 @@ ORIGINALTEXT:
 
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
-        # KEIN FALLBACK - Zwangsweise gemma3:4b verwenden
-        print(f"🔧 PREPROCESSING: Verwende Model: {preprocessing_model}")
-        cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
+        # Verwende CPU-Instanz für Preprocessing
+        print(f"🔧 PREPROCESSING: Verwende Model: {preprocessing_model} (CPU-Instanz)")
+        cleaned_text = await self._generate_response_cpu(preprocess_prompt, preprocessing_model)
         print(f"✅ PREPROCESSING: Erfolgreich mit {preprocessing_model}")
-        
-        # try:
-        #     # Versuche mit gemma3:4b für bessere Performance
-        #     cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
-        # except Exception as e:
-        #     # Fallback auf das ursprüngliche Modell
-        #     try:
-        #         logger.warning(f"Llama3.2 preprocessing failed, falling back to {model}: {e}")
-        #     except:
-        #         print(f"⚠️ Llama3.2 preprocessing failed, falling back to {model}")
-        #     cleaned_text = await self._generate_response(preprocess_prompt, model)
         
         # Nachbearbeitung: Entferne nur DOPPELTE Bullet Points und unnötige Nummerierungen
         import re
