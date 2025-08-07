@@ -147,9 +147,16 @@ async def process_document(processing_id: str):
         if not await ollama_client.check_connection():
             raise Exception("Ollama-Dienst nicht verfügbar")
         
-        translated_text, detected_doc_type, translation_confidence = await ollama_client.translate_medical_text(
-            extracted_text
-        )
+        # Jetzt gibt translate_medical_text auch den bereinigten Text zurück
+        result = await ollama_client.translate_medical_text(extracted_text)
+        
+        # Unpack the result - now includes cleaned_text
+        if len(result) == 4:
+            translated_text, detected_doc_type, translation_confidence, cleaned_text = result
+        else:
+            # Fallback für alte Version
+            translated_text, detected_doc_type, translation_confidence = result
+            cleaned_text = extracted_text
         
         # Schritt 3: Optionale Sprachübersetzung
         language_translated_text = None
@@ -178,10 +185,10 @@ async def process_document(processing_id: str):
         if language_confidence_score:
             overall_confidence = (translation_confidence + language_confidence_score) / 2
         
-        # Ergebnis speichern
+        # Ergebnis speichern - verwende cleaned_text statt extracted_text
         result = TranslationResult(
             processing_id=processing_id,
-            original_text=extracted_text,
+            original_text=cleaned_text,  # Zeige den bereinigten Text statt Rohdaten
             translated_text=translated_text,
             language_translated_text=language_translated_text,
             target_language=SupportedLanguage(target_language) if target_language else None,

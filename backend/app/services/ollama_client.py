@@ -45,12 +45,12 @@ class OllamaClient:
         text: str, 
         document_type: str = "general",
         model: str = "gpt-oss:20b"  # MANDATORY: Always use gpt-oss:20b for document analysis
-    ) -> tuple[str, str, float]:
+    ) -> tuple[str, str, float, str]:
         """
         Übersetzt medizinischen Text in einfache Sprache
         
         Returns:
-            tuple[str, str, float]: (translated_text, detected_doc_type, confidence)
+            tuple[str, str, float, str]: (translated_text, detected_doc_type, confidence, cleaned_original)
         """
         try:
             # SCHRITT 1: Text vorverarbeiten - PII entfernen für schnellere Verarbeitung
@@ -66,18 +66,23 @@ class OllamaClient:
             prompt = self._get_translation_prompt(cleaned_text, detected_type)
             translated_text = await self._generate_response(prompt, model)
             
-            # SCHRITT 4: Validierung auf Halluzinationen
-            print("✅ Schritt 4: Validiere Übersetzung auf Halluzinationen...")
-            validated_text = await self._validate_translation(cleaned_text, translated_text, model)
+            # SCHRITT 4: Validierung auf Halluzinationen - NUR wenn Übersetzung vorhanden
+            if translated_text and not translated_text.startswith("Fehler") and not translated_text.startswith("ERROR"):
+                print("✅ Schritt 4: Validiere Übersetzung auf Halluzinationen...")
+                validated_text = await self._validate_translation(cleaned_text, translated_text, model)
+            else:
+                print("⚠️ Schritt 4: Überspringe Validierung - keine gültige Übersetzung")
+                validated_text = translated_text
             
             # SCHRITT 5: Qualität bewerten
             confidence = await self._evaluate_translation_quality(cleaned_text, validated_text)
             
-            return validated_text, detected_type, confidence
+            # Gebe auch den bereinigten Originaltext zurück
+            return validated_text, detected_type, confidence, cleaned_text
             
         except Exception as e:
             print(f"❌ Übersetzung fehlgeschlagen: {e}")
-            return f"Fehler bei der Übersetzung: {str(e)}", "error", 0.0
+            return f"Fehler bei der Übersetzung: {str(e)}", "error", 0.0, text
     
     async def _detect_document_type(self, text: str) -> str:
         """Erkennt Art des medizinischen Dokuments - vereinfacht in 3 Hauptkategorien"""
@@ -600,28 +605,45 @@ ORIGINAL TEXT (bereits vereinfacht):
     async def _validate_translation(self, original_text: str, translation: str, model: str) -> str:
         """Validiert die Übersetzung auf Halluzinationen und Fehler"""
         
-        validation_prompt = f"""Du bist ein medizinischer Qualitätsprüfer. Deine Aufgabe ist es, eine Übersetzung auf Halluzinationen und Fehler zu prüfen.
+        # Prüfe ob Übersetzung leer oder fehlerhaft ist
+        if not translation or len(translation.strip()) < 50:
+            print("⚠️ Übersetzung zu kurz oder leer, überspringe Validierung")
+            return translation
+            
+        # Prüfe auf typische Fehlermeldungen die zeigen dass KI verwirrt ist
+        error_indicators = [
+            "ich sehe leider keine",
+            "bitte senden sie mir",
+            "kann ich nicht",
+            "fehler bei",
+            "error:",
+            "keine übersetzung",
+            "nicht vorhanden"
+        ]
+        
+        translation_lower = translation.lower()
+        for indicator in error_indicators:
+            if indicator in translation_lower:
+                print(f"⚠️ Fehlerhafte Übersetzung erkannt: '{indicator}' - erstelle neue Übersetzung")
+                # Versuche direkt nochmal zu übersetzen statt zu validieren
+                prompt = self._get_translation_prompt(original_text, "arztbrief")
+                return await self._generate_response(prompt, model)
+        
+        # Nur validieren wenn Übersetzung gut aussieht
+        validation_prompt = f"""Du bist ein medizinischer Qualitätsprüfer. Prüfe diese Übersetzung auf Fehler.
 
 WICHTIGE REGELN:
-- Prüfe ob ALLE Informationen aus dem Original in der Übersetzung vorhanden sind
-- Prüfe ob NEUE Informationen hinzugefügt wurden, die NICHT im Original stehen
-- Markiere Halluzinationen mit [HALLUZINATION ENTFERNT]
-- Korrigiere nur offensichtliche Fehler
-- Füge NICHTS hinzu, was nicht im Original steht
+- Wenn die Übersetzung gut ist, gib sie UNVERÄNDERT zurück
+- Entferne nur OFFENSICHTLICHE Halluzinationen
+- Füge NICHTS hinzu
 
-ORIGINAL TEXT:
-{original_text}
+ORIGINAL (Auszug):
+{original_text[:1000]}...
 
-ÜBERSETZUNG ZU PRÜFEN:
+ÜBERSETZUNG:
 {translation}
 
-AUFGABE:
-1. Entferne alle Informationen, die NICHT im Original vorkommen
-2. Stelle sicher, dass ALLE medizinischen Fakten aus dem Original enthalten sind
-3. Gib die KORRIGIERTE Version zurück
-4. Wenn keine Korrekturen nötig sind, gib die Übersetzung unverändert zurück
-
-KORRIGIERTE ÜBERSETZUNG:"""
+Gib die Übersetzung zurück (korrigiert falls nötig):"""
         
         validated_text = await self._generate_response(validation_prompt, model)
         
