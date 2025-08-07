@@ -166,39 +166,48 @@ Einfache Übersetzung:"""
         base_instruction = """Du bist ein hochspezialisierter medizinischer Übersetzer. Deine Aufgabe ist es, medizinische Dokumente vollständig und präzise in patientenfreundliche Sprache zu übersetzen.
 
 KRITISCHE ANTI-HALLUZINATIONS-REGELN:
-- ⛔ FÜGE NICHTS HINZU was nicht explizit im Dokument steht
-- ⛔ KEINE Vermutungen, Annahmen oder "könnte sein" Aussagen
-- ⛔ KEINE allgemeinen medizinischen Ratschläge die nicht im Text stehen
-- ⛔ KEINE zusätzlichen Erklärungen außer direkte Übersetzung von Fachbegriffen
-- ⛔ KEINE Verweise auf Anhänge ("siehe Anhang", "weitere Werte im Anhang") wenn diese nicht explizit im Text erwähnt werden
-- ⛔ ERFINDE KEINE zusätzlichen Informationen die nicht da sind
-- ✅ Übersetze NUR was wörtlich im Dokument steht
-- ✅ Lasse KEINE medizinische Information weg
-- ✅ Erkläre Fachbegriffe kurz in Klammern (nur Definition, keine Zusatzinfos)
-- ✅ Spreche den Patienten DIREKT an (nutze "Sie", "Ihr", "Ihnen")
-- ✅ Bei Unklarheiten: markiere mit [unklar] statt zu interpretieren
-- ✅ KEINE Behandlungsempfehlungen die nicht im Original stehen
-- ✅ ERKLÄRE IMMER medizinische Codes (ICD, OPS, DRG, etc.) - nie nur auflisten!
+⛔ FÜGE NICHTS HINZU was nicht explizit im Dokument steht
+⛔ KEINE Vermutungen, Annahmen oder "könnte sein" Aussagen
+⛔ KEINE allgemeinen medizinischen Ratschläge die nicht im Text stehen
+⛔ KEINE zusätzlichen Erklärungen außer direkte Übersetzung von Fachbegriffen
+⛔ KEINE Verweise auf Anhänge ("siehe Anhang", "weitere Werte im Anhang") wenn diese nicht explizit im Text erwähnt werden
+⛔ ERFINDE KEINE zusätzlichen Informationen die nicht da sind
+⛔ KEINE Meta-Kommentare wie "Alle Angaben entsprechen dem Originaltext" oder "Diese Information stammt aus dem Dokument"
+⛔ KEINE Hinweise darauf, dass du übersetzt oder dass dies eine Übersetzung ist
+✅ Übersetze NUR was wörtlich im Dokument steht
+✅ Lasse KEINE medizinische Information weg
+✅ Erkläre Fachbegriffe kurz in Klammern (nur Definition, keine Zusatzinfos)
+✅ Spreche den Patienten DIREKT an (nutze "Sie", "Ihr", "Ihnen")
+✅ Bei Unklarheiten: markiere mit [unklar] statt zu interpretieren
+✅ KEINE Behandlungsempfehlungen die nicht im Original stehen
+✅ ERKLÄRE IMMER medizinische Codes (ICD, OPS, DRG, etc.) - nie nur auflisten!
+
+WICHTIG: VERWENDE KEINE BULLET POINTS (•, -, *) IN DEINER ANTWORT!
+Schreibe jeden Punkt in einer neuen Zeile ohne Aufzählungszeichen.
 
 SPRACHLICHE RICHTLINIEN:
 
 VERWENDE:
-- Kurze Hauptsätze (maximal 15-20 Wörter)
-- Aktive Formulierungen ("Der Arzt untersucht" statt "Es wird untersucht")
-- Konkrete Begriffe ("Blutdruck messen" statt "Blutdruckkontrolle durchführen")
-- Alltagssprache ("Herz" zusätzlich zu "kardial")
-- Vergleiche aus dem Alltag (z.B. "groß wie eine Walnuss")
-- Zahlen ausschreiben wenn verständlicher ("zwei Mal täglich" statt "2x tägl.")
-- Direkte Ansprache ("Sie waren", "Ihr Blutdruck", "Sie sollen")
+Kurze Hauptsätze (maximal 15-20 Wörter)
+Aktive Formulierungen ("Der Arzt untersucht" statt "Es wird untersucht")
+Konkrete Begriffe ("Blutdruck messen" statt "Blutdruckkontrolle durchführen")
+Alltagssprache ("Herz" zusätzlich zu "kardial")
+Vergleiche aus dem Alltag (z.B. "groß wie eine Walnuss")
+Zahlen ausschreiben wenn verständlicher ("zwei Mal täglich" statt "2x tägl.")
+Direkte Ansprache ("Sie waren", "Ihr Blutdruck", "Sie sollen")
 
 VERMEIDE:
-- Verschachtelte Nebensätze
-- Passive Konstruktionen
-- Abstrakte Formulierungen
-- Unaufgelöste Abkürzungen
-- Fachsprache ohne Erklärung
-- Mehrdeutige Aussagen
-- Unpersönliche Formulierungen wie "Der Patient"
+Verschachtelte Nebensätze
+Passive Konstruktionen
+Abstrakte Formulierungen
+Unaufgelöste Abkürzungen
+Fachsprache ohne Erklärung
+Mehrdeutige Aussagen
+Unpersönliche Formulierungen wie "Der Patient"
+BULLET POINTS oder Aufzählungszeichen jeder Art
+Meta-Kommentare über die Übersetzung selbst
+Sätze wie "Alle Angaben entsprechen dem Originaltext"
+Hinweise wie "Laut Dokument" oder "Gemäß den Unterlagen"
 
 EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
@@ -209,49 +218,49 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
 ## 📊 Zusammenfassung
 ### Was wurde gemacht?
-• [Untersuchung/Behandlung in einfachen Worten]
-• [Zeitraum/Datum wenn vorhanden]
+[Untersuchung/Behandlung in einfachen Worten]
+[Zeitraum/Datum wenn vorhanden]
 
 ### Was wurde gefunden?
-• [Hauptbefund 1 in einfacher Sprache]
+[Hauptbefund 1 in einfacher Sprache]
   → Bedeutung: [Was heißt das für Sie?]
-• [Hauptbefund 2 in einfacher Sprache]
+[Hauptbefund 2 in einfacher Sprache]
   → Bedeutung: [Was heißt das für Sie?]
 
 ## 🏥 Ihre Diagnosen
-• [Diagnose in Alltagssprache]
+[Diagnose in Alltagssprache]
   → Medizinisch: [Fachbegriff]
   → ICD-Code falls vorhanden: [Code mit Erklärung, z.B. "I10.90 - Bluthochdruck ohne bekannte Ursache"]
   → Erklärung: [Was ist das genau?]
 
 ## 💊 Behandlung & Medikamente
-• [Medikament/Behandlung]
+[Medikament/Behandlung]
   → Wofür: [Zweck]
   → Einnahme: [Wie und wann]
   → Wichtig: [Besonderheiten/Nebenwirkungen]
 
 ## ✅ Ihre nächsten Schritte
-• [Was Sie tun sollen]
-• [Termine die anstehen]
-• [Worauf Sie achten müssen]
+[Was Sie tun sollen]
+[Termine die anstehen]
+[Worauf Sie achten müssen]
 
 ## 📖 Fachbegriffe verstehen
-• **[Begriff 1]**: [Einfache Erklärung]
-• **[Begriff 2]**: [Einfache Erklärung]
+**[Begriff 1]**: [Einfache Erklärung]
+**[Begriff 2]**: [Einfache Erklärung]
 
 ## 🔢 Medizinische Codes erklärt (falls vorhanden)
 ### ICD-Codes (Diagnose-Schlüssel):
-• **[ICD-Code]**: [Vollständige Erklärung was diese Diagnose bedeutet]
+**[ICD-Code]**: [Vollständige Erklärung was diese Diagnose bedeutet]
   Beispiel: **I10.90**: Bluthochdruck ohne bekannte Ursache - Ihr Blutdruck ist dauerhaft erhöht
   
 ### OPS-Codes (Behandlungs-Schlüssel):
-• **[OPS-Code]**: [Vollständige Erklärung welche Behandlung durchgeführt wurde]
+**[OPS-Code]**: [Vollständige Erklärung welche Behandlung durchgeführt wurde]
   Beispiel: **5-511.11**: Entfernung der Gallenblase durch Bauchspiegelung (minimal-invasive Operation)
 
 ## ⚠️ Wichtige Hinweise
-• Diese Übersetzung hilft Ihnen, Ihre Unterlagen zu verstehen
-• Besprechen Sie alle Fragen mit Ihrem Arzt
-• Bei Notfällen: 112 anrufen
+Diese Übersetzung hilft Ihnen, Ihre Unterlagen zu verstehen
+Besprechen Sie alle Fragen mit Ihrem Arzt
+Bei Notfällen: 112 anrufen
 
 ---
 """
@@ -303,19 +312,15 @@ ORIGINAL MEDIZINISCHER TEXT:
     async def _generate_response(self, prompt: str, model: str) -> str:
         """Generiert Antwort von Ollama"""
         try:
-            # MANDATORY: Ensure gpt-oss:20b is used for document analysis and translation
-            primary_model = "gpt-oss:20b"
-            
-            # Check if primary model is available
+            # Check if requested model is available
             available_models = await self.list_models()
             
-            # For medical document translation, ALWAYS use gpt-oss:20b if available
-            if primary_model in available_models:
-                model = primary_model
-                print(f"✅ Using mandatory model for document analysis: {model}")
+            # Use the requested model if available
+            if model in available_models:
+                print(f"✅ Generiere mit Modell: {model}")
             elif model not in available_models:
-                print(f"⚠️ CRITICAL: Primary model {primary_model} not available!")
-                print(f"⚠️ Model {model} also not available, trying fallbacks...")
+                print(f"⚠️ CRITICAL: Requested model {model} not available!")
+                print(f"⚠️ Model {model} not found, trying fallbacks...")
                 
                 # Fallback-Logik: Only use if gpt-oss:20b is truly unavailable
                 fallback_models = [
@@ -592,7 +597,7 @@ ORIGINAL TEXT (bereits vereinfacht):
 ENTFERNE NUR (komplett löschen):
 - Patientennamen und Patientenadressen
 - Geburtsdaten von Patienten (ABER: Untersuchungsdaten müssen bleiben!)
-- Arztnamen und Unterschriften
+- Arztnamen und Unterschriften (ABER: Fachabteilungen bleiben!)
 - Versicherungsnummern, Patientennummern
 - Private Telefonnummern und E-Mails
 - Briefköpfe, Logos, reine Formatierungszeichen
@@ -601,11 +606,13 @@ ENTFERNE NUR (komplett löschen):
 - Anreden und Verabschiedungen
 
 ⚠️ MUSS UNBEDINGT BLEIBEN - NIEMALS LÖSCHEN:
-✅ ALLE Laborwerte (auch wenn in Tabellen oder Listen!)
+✅ ALLE Laborwerte (auch in Tabellen, Listen oder ANHÄNGEN!)
 ✅ ALLE Blutwerte, Urinwerte, etc.
 ✅ ALLE Messwerte und Zahlen mit medizinischer Bedeutung
 ✅ ALLE Referenzbereiche und Normwerte
-✅ ALLE Anhänge und deren Inhalte
+✅ ALLE Anhänge und deren KOMPLETTE Inhalte
+✅ ALLE Verweise auf Anhänge (z.B. "siehe Anhang", "Laborwerte im Anhang")
+✅ KOMPLETTE Anhänge mit Laborwerten, auch wenn sie am Ende stehen
 ✅ ALLE Diagnosen und Befunde
 ✅ ALLE Medikamente und Dosierungen  
 ✅ ALLE medizinischen Daten und Termine
@@ -614,12 +621,20 @@ ENTFERNE NUR (komplett löschen):
 ✅ Der KOMPLETTE medizinische Inhalt
 ✅ Medizinische Codes (ICD, OPS, etc.)
 
+🔴 SPEZIALREGEL FÜR ANHÄNGE:
+Wenn "siehe Anhang" oder "Laborwerte im Anhang" erwähnt wird:
+→ BEHALTE den Verweis UND den kompletten Anhang-Inhalt!
+→ Auch wenn der Anhang am Ende steht, BEHALTE IHN KOMPLETT!
+→ Entferne NUR Patientendaten aus dem Anhang, NICHT die Werte!
+
 WICHTIG: Wenn du dir unsicher bist, BEHALTE die Information!
 
 BEISPIELE:
 ❌ LÖSCHEN: "Sehr geehrte Frau Maria Müller, geb. 15.03.1965"
 ✅ BEHALTEN: "Hämoglobin: 12.5 g/dl (Norm: 12-16)"
 ✅ BEHALTEN: "siehe Anhang: Laborwerte vom 15.10.2024"
+✅ BEHALTEN: "Die Laborwerte finden Sie im beigefügten Anhang"
+✅ BEHALTEN: Kompletter Anhang mit allen Laborwerten
 ✅ BEHALTEN: Alle Tabellen mit Messwerten
 
 ORIGINALTEXT:
@@ -643,14 +658,15 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         #         print(f"⚠️ Llama3.2 preprocessing failed, falling back to {model}")
         #     cleaned_text = await self._generate_response(preprocess_prompt, model)
         
-        # Nachbearbeitung: Entferne doppelte Nummerierung und doppelte Bullet-Points
+        # Nachbearbeitung: Entferne ALLE Bullet Points und Nummerierungen am Zeilenanfang
         import re
-        # Entfernt Muster wie "1. •", "2. -", "1) •" etc.
-        cleaned_text = re.sub(r'^\s*\d+[.)]\s*[•\-\*]', '•', cleaned_text, flags=re.MULTILINE)
-        cleaned_text = re.sub(r'^\s*\d+\.\s*[•\-\*]', '•', cleaned_text, flags=re.MULTILINE)
-        # Entfernt auch Nummerierung wenn danach direkt Text kommt (für Listen)
-        cleaned_text = re.sub(r'^\s*\d+[.)]\s+(?=[A-Z])', '• ', cleaned_text, flags=re.MULTILINE)
-        # Entfernt doppelte Bullet-Points (• • oder - -)
+        # Entfernt ALLE Bullet-Points, Striche und Sterne am Zeilenanfang
+        cleaned_text = re.sub(r'^\s*[•\-\*]\s+', '', cleaned_text, flags=re.MULTILINE)
+        # Entfernt Nummerierungen mit Bullet Points
+        cleaned_text = re.sub(r'^\s*\d+[.)]\s*[•\-\*]\s*', '', cleaned_text, flags=re.MULTILINE)
+        # Entfernt reine Nummerierungen 
+        cleaned_text = re.sub(r'^\s*\d+[.)]\s+', '', cleaned_text, flags=re.MULTILINE)
+        # Entfernt mehrfache Bullet-Points hintereinander
         cleaned_text = re.sub(r'^[•\-\*]\s*[•\-\*]\s*', '• ', cleaned_text, flags=re.MULTILINE)
         # Entfernt mehrfache Bullet-Points in einer Zeile
         cleaned_text = re.sub(r'([•\-\*])\s*\1+', r'\1', cleaned_text)

@@ -125,17 +125,40 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
         border-collapse: collapse; 
         margin: 16px 0; 
         page-break-inside: avoid;
+        page-break-before: auto;
+        page-break-after: auto;
+        display: table;
+        table-layout: fixed;
+      }
+      thead {
+        display: table-header-group;
+        page-break-inside: avoid;
+        page-break-after: avoid;
+      }
+      tbody {
+        display: table-row-group;
+      }
+      tr {
+        page-break-inside: avoid;
+        page-break-after: auto;
       }
       th { 
         background-color: #f3f4f6; 
-        padding: 8px; 
+        padding: 10px; 
         text-align: left; 
         font-weight: 600; 
-        border: 1px solid #e5e7eb; 
+        border: 1px solid #d1d5db; 
+        page-break-inside: avoid;
+        page-break-after: avoid;
+        font-size: 13px;
       }
       td { 
-        padding: 8px; 
-        border: 1px solid #e5e7eb; 
+        padding: 10px; 
+        border: 1px solid #d1d5db;
+        page-break-inside: avoid;
+        font-size: 13px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
       }
       .page-break {
         page-break-before: always;
@@ -152,7 +175,7 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
 
     // Konvertiere zu Canvas mit optimierter Qualität (für kleinere Dateigröße)
     const canvas = await html2canvas(tempDiv, {
-      scale: 1.5, // Reduziert von 3 auf 1.5 für kleinere Dateien
+      scale: 2.0, // Erhöht von 1.5 auf 2.0 für bessere Qualität bei Tabellen
       useCORS: true,
       logging: false,
       backgroundColor: '#ffffff',
@@ -222,7 +245,7 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
         );
         
         // Füge zum PDF hinzu mit JPEG Kompression für kleinere Dateien
-        const pageData = pageCanvas.toDataURL('image/jpeg', 0.85); // JPEG mit 85% Qualität
+        const pageData = pageCanvas.toDataURL('image/jpeg', 0.9); // JPEG mit 90% Qualität für bessere Tabellen
         pdf.addImage(
           pageData, 
           'JPEG', // Geändert von PNG zu JPEG
@@ -266,11 +289,12 @@ const exportSimplePDF = async (elementId: string, filename: string, options?: PD
     
     const pdf = new jsPDF('p', 'mm', 'a4');
     
-    // Verwende html2canvas direkt auf dem Element mit reduzierter Qualität
+    // Verwende html2canvas direkt auf dem Element mit verbesserter Qualität
     const canvas = await html2canvas(element, {
-      scale: 1.2, // Reduziert von 2 auf 1.2
+      scale: 1.8, // Erhöht von 1.2 auf 1.8 für bessere Qualität
       useCORS: true,
-      logging: false
+      logging: false,
+      backgroundColor: '#ffffff'
     });
     
     // A4 mit Rändern
@@ -279,7 +303,7 @@ const exportSimplePDF = async (elementId: string, filename: string, options?: PD
     
     // Füge Bild mit Rändern hinzu - JPEG für kleinere Dateien
     pdf.addImage(
-      canvas.toDataURL('image/jpeg', 0.8), // JPEG mit 80% Qualität
+      canvas.toDataURL('image/jpeg', 0.85), // JPEG mit 85% Qualität für bessere Lesbarkeit
       'JPEG',
       20, // 20mm linker Rand
       20, // 20mm oberer Rand
@@ -295,7 +319,7 @@ const exportSimplePDF = async (elementId: string, filename: string, options?: PD
       while (remainingHeight > 0) {
         pdf.addPage();
         pdf.addImage(
-          canvas.toDataURL('image/jpeg', 0.8),
+          canvas.toDataURL('image/jpeg', 0.85),
           'JPEG',
           20,
           position + 20, // Mit oberem Rand auf neuer Seite
