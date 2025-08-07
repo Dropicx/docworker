@@ -485,15 +485,16 @@ ORIGINAL MEDIZINISCHER TEXT:
         self,
         simplified_text: str,
         target_language: SupportedLanguage,
-        model: str = "gpt-oss:20b"  # MANDATORY: Use gpt-oss:20b for all translations
+        model: str = "bge-m3:latest"  # Use BGE-M3 for neutral translation
     ) -> tuple[str, float]:
         """
         Übersetzt vereinfachten Text in eine andere Sprache
+        Verwendet BGE-M3 für neutrale, präzise Übersetzungen
         
         Args:
             simplified_text: Der bereits vereinfachte Text
             target_language: Die Zielsprache
-            model: Das zu verwendende Modell
+            model: Das zu verwendende Modell (Standard: bge-m3:latest)
             
         Returns:
             tuple[str, float]: (translated_text, confidence)
@@ -501,12 +502,21 @@ ORIGINAL MEDIZINISCHER TEXT:
         try:
             language_name = LANGUAGE_NAMES.get(target_language, target_language.value)
             
+            # Versuche zuerst mit BGE-M3 für neutrale Übersetzung
+            if model == "bge-m3:latest":
+                prompt = self._get_neutral_translation_prompt(simplified_text, target_language, language_name)
+                try:
+                    translated_text = await self._generate_response(prompt, model)
+                    if translated_text and len(translated_text.strip()) > 0:
+                        confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
+                        return translated_text, confidence
+                except Exception as bge_error:
+                    logger.warning(f"BGE-M3 translation failed, falling back to GPT-OSS: {bge_error}")
+                    model = "gpt-oss:20b"  # Fallback
+            
+            # Fallback oder direkt mit GPT-OSS
             prompt = self._get_language_translation_prompt(simplified_text, target_language, language_name)
-            
-            # Übersetzung durchführen
             translated_text = await self._generate_response(prompt, model)
-            
-            # Qualität bewerten
             confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
             
             return translated_text, confidence
@@ -514,6 +524,19 @@ ORIGINAL MEDIZINISCHER TEXT:
         except Exception as e:
             print(f"❌ Sprachübersetzung fehlgeschlagen: {e}")
             return f"Fehler bei der Sprachübersetzung: {str(e)}", 0.0
+
+    def _get_neutral_translation_prompt(self, text: str, target_language: SupportedLanguage, language_name: str) -> str:
+        """Erstellt Prompt für neutrale, direkte Übersetzung mit BGE-M3"""
+        
+        return f"""Translate the following medical text directly from German to {language_name}.
+Maintain medical accuracy and terminology.
+Preserve the exact structure and formatting.
+Do not add explanations or simplifications.
+
+Text:
+{text}
+
+Direct translation to {language_name}:"""
 
     def _get_language_translation_prompt(self, text: str, target_language: SupportedLanguage, language_name: str) -> str:
         """Erstellt Prompt für Sprachübersetzung"""
@@ -539,46 +562,73 @@ ORIGINAL TEXT (bereits vereinfacht):
 
 ÜBERSETZUNG IN {language_name.upper()}:""" 
 
-    async def _ai_preprocess_text(self, text: str, model: str) -> str:
-        """Nutzt KI um nur wirklich irrelevante Formatierungen zu entfernen"""
+    async def _ai_preprocess_text(self, text: str, model: str = "llama3.2:latest") -> str:
+        """
+        Nutzt KI um nur wirklich irrelevante Formatierungen zu entfernen
+        Verwendet llama3.2:latest für schnelleres Preprocessing
+        """
+        
+        # Überschreibe model für Preprocessing mit llama3.2:latest für bessere Performance
+        preprocessing_model = "llama3.2:latest"
+        
+        try:
+            # Versuche mit llama3.2:latest
+            logger.info(f"Starting preprocessing with {preprocessing_model} for better performance")
+        except:
+            print(f"🚀 Starting preprocessing with {preprocessing_model} for better performance")
         
         preprocess_prompt = f"""Du bist ein medizinischer Dokumentenbereiniger für Datenschutz und Übersichtlichkeit.
 
-WICHTIGE REGEL: BEHALTE ALLE MEDIZINISCHEN INFORMATIONEN!
+🚨 KRITISCHE REGEL: BEHALTE ABSOLUT ALLE MEDIZINISCHEN INFORMATIONEN!
 
-ENTFERNE KOMPLETT (nicht ersetzen, sondern löschen):
+ENTFERNE NUR (komplett löschen):
 - Patientennamen und Patientenadressen
-- Geburtsdaten von Patienten
+- Geburtsdaten von Patienten (ABER: Untersuchungsdaten müssen bleiben!)
 - Arztnamen und Unterschriften
 - Versicherungsnummern, Patientennummern
-- Telefonnummern und E-Mails
-- Briefköpfe, Logos, Formatierungszeichen
+- Private Telefonnummern und E-Mails
+- Briefköpfe, Logos, reine Formatierungszeichen
 - Seitenzahlen, Kopf-/Fußzeilen
-- Grußformeln (z.B. "Mit freundlichen Grüßen", "Sehr geehrte", "Liebe Patientin")
+- Grußformeln (z.B. "Mit freundlichen Grüßen", "Sehr geehrte")
 - Anreden und Verabschiedungen
-- Unterschriftszeilen
 
-MUSS BLEIBEN:
-✅ ALLE Diagnosen, Befunde, Laborwerte
+⚠️ MUSS UNBEDINGT BLEIBEN - NIEMALS LÖSCHEN:
+✅ ALLE Laborwerte (auch wenn in Tabellen oder Listen!)
+✅ ALLE Blutwerte, Urinwerte, etc.
+✅ ALLE Messwerte und Zahlen mit medizinischer Bedeutung
+✅ ALLE Referenzbereiche und Normwerte
+✅ ALLE Anhänge und deren Inhalte
+✅ ALLE Diagnosen und Befunde
 ✅ ALLE Medikamente und Dosierungen  
-✅ ALLE medizinischen Daten (Untersuchungsdaten, OP-Termine)
-✅ Krankenhaus-/Abteilungsnamen (wichtig für Kontext)
-✅ Der komplette medizinische Inhalt
+✅ ALLE medizinischen Daten und Termine
+✅ ALLE Untersuchungsergebnisse
+✅ Krankenhaus-/Abteilungsnamen
+✅ Der KOMPLETTE medizinische Inhalt
 ✅ Medizinische Codes (ICD, OPS, etc.)
 
-BEISPIEL:
-Original: "Sehr geehrte Frau Maria Müller, geb. 15.03.1965, wohnhaft Hauptstr. 5"
-Bereinigt: "" (komplett entfernt)
+WICHTIG: Wenn du dir unsicher bist, BEHALTE die Information!
 
-Original: "Mit freundlichen Grüßen, Dr. med. Klaus Schmidt"  
-Bereinigt: "" (komplett entfernt)
+BEISPIELE:
+❌ LÖSCHEN: "Sehr geehrte Frau Maria Müller, geb. 15.03.1965"
+✅ BEHALTEN: "Hämoglobin: 12.5 g/dl (Norm: 12-16)"
+✅ BEHALTEN: "siehe Anhang: Laborwerte vom 15.10.2024"
+✅ BEHALTEN: Alle Tabellen mit Messwerten
 
 ORIGINALTEXT:
 {text}
 
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
-        cleaned_text = await self._generate_response(preprocess_prompt, model)
+        try:
+            # Versuche mit llama3.2:latest für bessere Performance
+            cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
+        except Exception as e:
+            # Fallback auf das ursprüngliche Modell
+            try:
+                logger.warning(f"Llama3.2 preprocessing failed, falling back to {model}: {e}")
+            except:
+                print(f"⚠️ Llama3.2 preprocessing failed, falling back to {model}")
+            cleaned_text = await self._generate_response(preprocess_prompt, model)
         
         # Nachbearbeitung: Entferne doppelte Nummerierung und doppelte Bullet-Points
         import re

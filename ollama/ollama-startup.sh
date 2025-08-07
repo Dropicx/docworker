@@ -48,8 +48,36 @@ else
     echo "✅ Primary model already exists: $MODEL"
 fi
 
+# Llama3.2 model for fast preprocessing - IMPORTANT
+PREPROCESS_MODEL="llama3.2:latest"
+if ! ollama list 2>/dev/null | grep -q "$PREPROCESS_MODEL"; then
+    echo "📥 Pulling preprocessing model: $PREPROCESS_MODEL"
+    if ollama pull "$PREPROCESS_MODEL"; then
+        echo "✅ Successfully pulled: $PREPROCESS_MODEL"
+    else
+        echo "⚠️ Warning: Failed to pull Llama3.2 model for fast preprocessing"
+        echo "   Preprocessing will fall back to primary model (slower)."
+    fi
+else
+    echo "✅ Preprocessing model already exists: $PREPROCESS_MODEL"
+fi
+
+# BGE-M3 model for neutral translation - IMPORTANT
+BGE_MODEL="bge-m3:latest"
+if ! ollama list 2>/dev/null | grep -q "$BGE_MODEL"; then
+    echo "📥 Pulling translation model: $BGE_MODEL"
+    if ollama pull "$BGE_MODEL"; then
+        echo "✅ Successfully pulled: $BGE_MODEL"
+    else
+        echo "⚠️ Warning: Failed to pull BGE-M3 model for neutral translation"
+        echo "   Direct language translation features may be limited."
+    fi
+else
+    echo "✅ Translation model already exists: $BGE_MODEL"
+fi
+
 # Secondary/fallback models - optional
-for MODEL in "mistral-nemo:latest" "llama3.2:latest" "llama3.1" "mistral:7b"; do
+for MODEL in "mistral-nemo:latest" "llama3.1" "mistral:7b"; do
     if ! ollama list 2>/dev/null | grep -q "$MODEL"; then
         echo "📥 Pulling secondary model: $MODEL"
         ollama pull "$MODEL" || echo "⚠️ Failed to pull: $MODEL (optional)"
@@ -66,7 +94,9 @@ ollama list
 echo ""
 echo "🎯 Ollama is ready to serve requests!"
 echo "   Primary model (MANDATORY): gpt-oss:20b"
-echo "   Secondary models: mistral-nemo:latest, llama3.2:latest, etc."
+echo "   Preprocessing model: llama3.2:latest (fast)"
+echo "   Translation model: bge-m3:latest"
+echo "   Secondary models: mistral-nemo:latest, llama3.1, etc."
 echo "   Listening on port 11434"
 
 # Keep the Ollama service running in foreground

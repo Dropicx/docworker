@@ -239,12 +239,12 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     h4: ({children}) => <h4 className="text-lg font-semibold text-primary-800 mb-2 mt-3">{children}</h4>,
                     p: ({children}) => <p className="mb-4 text-primary-700 leading-relaxed">{children}</p>,
                     ul: ({children}) => (
-                      <ul className="mb-4 text-primary-700">
+                      <ul className="list-none mb-4 text-primary-700">
                         {children}
                       </ul>
                     ),
                     ol: ({children}) => (
-                      <ol className="mb-4 text-primary-700">
+                      <ol className="list-none mb-4 text-primary-700">
                         {children}
                       </ol>
                     ),
@@ -456,12 +456,12 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     h3: ({children}) => <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">{children}</h3>,
                     p: ({children}) => <p className="mb-3 text-primary-700 leading-relaxed">{children}</p>,
                     ul: ({children}) => (
-                      <ul className="mb-3 space-y-2 text-primary-700">
+                      <ul className="list-none mb-3 space-y-2 text-primary-700">
                         {children}
                       </ul>
                     ),
                     ol: ({children}) => (
-                      <ol className="list-decimal mb-3 space-y-2 text-primary-700 ml-6">
+                      <ol className="list-none mb-3 space-y-2 text-primary-700">
                         {children}
                       </ol>
                     ),
