@@ -138,6 +138,9 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               <p className="text-sm text-primary-600">
                 Ihr Dokument wird analysiert und übersetzt
               </p>
+              <p className="text-xs text-primary-500 mt-1">
+                Dies kann bis zu 3 Minuten dauern
+              </p>
             </div>
           </div>
           

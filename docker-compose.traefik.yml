@@ -1,8 +1,5 @@
-version: '3.8'
-
 # Diese Datei erweitert die Standard docker-compose.yml mit Traefik-Labels
 # Verwendung: docker compose -f docker-compose.yml -f docker-compose.traefik.yml up -d
-
 services:
   # Backend braucht keine Traefik-Labels, da es nur intern erreichbar sein soll
   # Die Frontend-zu-Backend Kommunikation läuft über das interne Docker-Netzwerk

@@ -50,45 +50,48 @@ class OllamaClient:
         Übersetzt medizinischen Text in einfache Sprache
         
         Returns:
-            tuple[str, str, float, str]: (translated_text, detected_doc_type, confidence, cleaned_original)
+            tuple[str, str, float, str]: (translated_text, doc_type, confidence, cleaned_original)
         """
         try:
-            # SCHRITT 1: Text vorverarbeiten - PII entfernen für schnellere Verarbeitung
-            print("📝 Schritt 1: Entferne irrelevante Informationen...")
-            cleaned_text, removed_info = await self._preprocess_and_anonymize(text)
+            # SCHRITT 1: Intelligente KI-basierte Vorverarbeitung
+            print("🧠 Schritt 1: KI extrahiert medizinisch relevante Informationen...")
+            cleaned_text = await self._ai_preprocess_text(text, model)
             
-            # SCHRITT 2: Dokumenttyp erkennen
-            print("🔍 Schritt 2: Erkenne Dokumenttyp...")
-            detected_type = await self._detect_document_type(cleaned_text)
-            
-            # SCHRITT 3: Hauptübersetzung mit konservativen Einstellungen
-            print("🤖 Schritt 3: Übersetze in einfache Sprache...")
-            prompt = self._get_translation_prompt(cleaned_text, detected_type)
+            # SCHRITT 2: Hauptübersetzung - EINE universelle Methode für ALLE Dokumente
+            print("🤖 Schritt 2: Übersetze in einfache Sprache...")
+            prompt = self._get_universal_translation_prompt(cleaned_text)
             translated_text = await self._generate_response(prompt, model)
             
-            # SCHRITT 4: Validierung auf Halluzinationen - NUR wenn Übersetzung vorhanden
-            if translated_text and not translated_text.startswith("Fehler") and not translated_text.startswith("ERROR"):
-                print("✅ Schritt 4: Validiere Übersetzung auf Halluzinationen...")
-                validated_text = await self._validate_translation(cleaned_text, translated_text, model)
-            else:
-                print("⚠️ Schritt 4: Überspringe Validierung - keine gültige Übersetzung")
-                validated_text = translated_text
+            # SCHRITT 3: Qualitätskontrolle - prüfe ob Übersetzung sinnvoll ist
+            if not translated_text or len(translated_text) < 100:
+                print("⚠️ Übersetzung zu kurz - versuche erneut...")
+                # Vereinfachter Prompt für zweiten Versuch
+                simple_prompt = f"""Übersetze diesen medizinischen Text in einfache, verständliche Sprache:
+
+{cleaned_text}
+
+Einfache Übersetzung:"""
+                translated_text = await self._generate_response(simple_prompt, model)
             
-            # SCHRITT 5: Qualität bewerten
-            confidence = await self._evaluate_translation_quality(cleaned_text, validated_text)
+            # SCHRITT 4: Qualität bewerten
+            confidence = await self._evaluate_translation_quality(cleaned_text, translated_text)
             
-            # Gebe auch den bereinigten Originaltext zurück
-            return validated_text, detected_type, confidence, cleaned_text
+            # Gebe zurück - "universal" als einheitlicher Dokumenttyp
+            return translated_text, "universal", confidence, cleaned_text
             
         except Exception as e:
             print(f"❌ Übersetzung fehlgeschlagen: {e}")
             return f"Fehler bei der Übersetzung: {str(e)}", "error", 0.0, text
     
+    async def _detect_document_type_DEPRECATED(self, text: str) -> str:
+        """DEPRECATED - Nicht mehr verwendet, da alle Dokumente gleich behandelt werden"""
+        return "universal"
+    
     async def _detect_document_type(self, text: str) -> str:
-        """Erkennt Art des medizinischen Dokuments - vereinfacht in 3 Hauptkategorien"""
-        text_lower = text.lower()
+        """Gibt immer 'universal' zurück - alle Dokumente werden gleich behandelt"""
+        return "universal"
         
-        # VEREINFACHTE Kategorien für konsistenten Output
+        # ALTE IMPLEMENTIERUNG ENTFERNT
         patterns = {
             # KATEGORIE 1: Arztbriefe (alle Arten von Briefen zwischen Ärzten)
             "arztbrief": [
@@ -156,8 +159,8 @@ class OllamaClient:
         # Fallback auf "arztbrief" statt "allgemein" für konsistenteres Format
         return "arztbrief"  # Standard-Kategorie
     
-    def _get_translation_prompt(self, text: str, doc_type: str) -> str:
-        """Erstellt optimierten Prompt basierend auf Dokumenttyp"""
+    def _get_universal_translation_prompt(self, text: str) -> str:
+        """Erstellt EINEN universellen Prompt für ALLE medizinischen Dokumente"""
         
         base_instruction = """Du bist ein hochspezialisierter medizinischer Übersetzer. Deine Aufgabe ist es, medizinische Dokumente vollständig und präzise in patientenfreundliche Sprache zu übersetzen.
 
@@ -239,39 +242,26 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 ---
 *Übersetzung erstellt am: [Datum]*"""
         
-        # VEREINFACHTE Anweisungen für 3 Hauptkategorien - alle nutzen dasselbe Format!
-        specific_instructions = {
-            "arztbrief": """
-                FOKUS: Diagnosen, Behandlungsplan und nächste Schritte.
-                - Beginne mit: "Ihr Arzt hat Sie untersucht/behandelt..."
-                - Erkläre ALLE Diagnosen in einfachen Worten
-                - Liste ALLE Medikamente mit Dosierung auf
-                - Betone die nächsten Schritte klar
-                - Verwende IMMER das einheitliche Format oben
-            """,
-            
-            "laborbefund": """
-                FOKUS: Messwerte und deren Bedeutung.
-                - Beginne mit: "Ihre Laborwerte wurden untersucht..."
-                - Erkläre JEDEN Wert: Name → Ihr Wert → Normalbereich → Bedeutung
-                - Nutze Ampelsystem: 🟢 Normal, 🟡 Leicht verändert, 🔴 Deutlich verändert
-                - Gruppiere Werte nach Organsystemen (Leber, Niere, Blutbild, etc.)
-                - Verwende IMMER das einheitliche Format oben
-            """,
-            
-            "bildgebung": """
-                FOKUS: Was wurde wie untersucht und was zeigen die Bilder.
-                - Beginne mit: "Bei Ihnen wurde eine [Untersuchung] durchgeführt..."
-                - Erkläre die Untersuchungsmethode kurz
-                - Beschreibe Befunde in Alltagssprache ("Schatten" statt "Verschattung")
-                - Nutze Vergleiche ("groß wie...", "aussehen wie...")
-                - Verwende IMMER das einheitliche Format oben
-            """
-        }
+        # UNIVERSELLE Anleitung für ALLE medizinischen Dokumente
+        universal_instruction = """
+DIESES DOKUMENT KANN ENTHALTEN:
+- Arztbriefe, Entlassungsbriefe, Befundberichte
+- Laborwerte und Blutwerte
+- Bildgebungsbefunde (Röntgen, MRT, CT, Ultraschall)
+- Pathologiebefunde
+- Medikationspläne
+- Kombinationen aus allem oben genannten
+
+BEHANDLE JEDEN INHALT ANGEMESSEN:
+- Bei Laborwerten: Erkläre Wert → Normalbereich → Bedeutung
+- Bei Diagnosen: Übersetze Fachbegriffe in Alltagssprache
+- Bei Medikamenten: Erkläre Zweck und Einnahme
+- Bei Bildgebung: Beschreibe was untersucht wurde und was gefunden wurde
+- Bei Empfehlungen: Mache klar was der Patient tun soll
+
+Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."""
         
-        instruction = base_instruction
-        if doc_type in specific_instructions:
-            instruction += f"\n\nSPEZIELL FÜR DIESEN DOKUMENTTYP: {specific_instructions[doc_type]}"
+        instruction = base_instruction + universal_instruction
         
         return f"""{instruction}
 
@@ -322,11 +312,11 @@ ORIGINAL MEDIZINISCHER TEXT:
                     "prompt": prompt,
                     "stream": False,
                     "options": {
-                        "temperature": 0.1,  # SEHR niedrig gegen Halluzinationen
-                        "top_p": 0.5,  # Konservativ - nur wahrscheinlichste Tokens
-                        "top_k": 10,  # Stark eingeschränkt für Präzision
-                        "num_predict": 3000,  # Längere Antworten für ausführliche Erklärungen
-                        "repeat_penalty": 1.2,  # Verhindert Wiederholungen
+                        "temperature": 0.3,  # Etwas höher für natürlichere Sprache
+                        "top_p": 0.7,  # Ausgewogener
+                        "top_k": 20,  # Mehr Varianz erlaubt
+                        "num_predict": 4000,  # Längere Antworten für vollständige Übersetzung
+                        "repeat_penalty": 1.1,  # Leicht gegen Wiederholungen
                         "seed": 42  # Für reproduzierbare Ergebnisse
                     }
                 }
@@ -520,6 +510,42 @@ ORIGINAL TEXT (bereits vereinfacht):
 
 ÜBERSETZUNG IN {language_name.upper()}:""" 
 
+    async def _ai_preprocess_text(self, text: str, model: str) -> str:
+        """Nutzt KI um medizinisch relevante Informationen zu extrahieren"""
+        
+        preprocess_prompt = f"""Du bist ein medizinischer Dokumentenverarbeiter. Deine Aufgabe ist es, aus dem folgenden Text NUR die medizinisch relevanten Informationen zu extrahieren.
+
+WICHTIGE REGELN:
+- BEHALTE: Alle Diagnosen, Symptome, Behandlungen, Medikamente, Untersuchungsergebnisse, Laborwerte
+- BEHALTE: Medizinisch relevante Daten (OP-Termine, Untersuchungsdaten, Behandlungszeiträume)
+- BEHALTE: Dosierungen, Mengenangaben, medizinische Messwerte
+- BEHALTE: Empfehlungen, Anweisungen, nächste Schritte
+
+- ENTFERNE NUR wenn NICHT medizinisch relevant:
+  • Vollständige Adressen (außer Krankenhaus/Praxis-Name)
+  • Telefonnummern und E-Mails
+  • Patientennummern und Versicherungsnummern
+  • Grußformeln und Unterschriften
+  • Briefkopf-Formatierungen
+
+- WICHTIG: Behalte Namen von Ärzten und medizinischen Einrichtungen
+- WICHTIG: Behalte alle Zahlen die medizinische Bedeutung haben könnten
+
+ORIGINALTEXT:
+{text}
+
+EXTRAHIERTER MEDIZINISCHER INHALT (vollständig, nur ohne irrelevante Formatierung):"""
+        
+        cleaned_text = await self._generate_response(preprocess_prompt, model)
+        
+        # Fallback wenn KI-Preprocessing fehlschlägt
+        if not cleaned_text or cleaned_text.startswith("Fehler") or len(cleaned_text) < 50:
+            print("⚠️ KI-Preprocessing fehlgeschlagen, verwende Originaltext")
+            return text
+        
+        print(f"✅ Text intelligent bereinigt: {len(text)} → {len(cleaned_text)} Zeichen")
+        return cleaned_text
+
     async def _preprocess_and_anonymize(self, text: str) -> Tuple[str, dict]:
         """Entfernt irrelevante persönliche Informationen für schnellere Verarbeitung"""
         removed_info = {
@@ -607,10 +633,16 @@ ORIGINAL TEXT (bereits vereinfacht):
         
         # Prüfe ob Übersetzung leer oder fehlerhaft ist
         if not translation or len(translation.strip()) < 50:
-            print("⚠️ Übersetzung zu kurz oder leer, überspringe Validierung")
-            return translation
+            print("⚠️ Übersetzung zu kurz oder leer, erstelle neue...")
+            # Direkt neue Übersetzung versuchen
+            simple_prompt = f"""Übersetze diesen medizinischen Text in einfache Sprache für Patienten:
+
+{original_text[:2000]}
+
+Verständliche Übersetzung:"""
+            return await self._generate_response(simple_prompt, model)
             
-        # Prüfe auf typische Fehlermeldungen die zeigen dass KI verwirrt ist
+        # Prüfe auf typische Fehlermeldungen
         error_indicators = [
             "ich sehe leider keine",
             "bitte senden sie mir",
@@ -618,32 +650,26 @@ ORIGINAL TEXT (bereits vereinfacht):
             "fehler bei",
             "error:",
             "keine übersetzung",
-            "nicht vorhanden"
+            "nicht vorhanden",
+            "korrigierte übersetzung:",  # Manchmal gibt KI nur diesen Header zurück
+            "gib die übersetzung zurück"
         ]
         
         translation_lower = translation.lower()
         for indicator in error_indicators:
-            if indicator in translation_lower:
-                print(f"⚠️ Fehlerhafte Übersetzung erkannt: '{indicator}' - erstelle neue Übersetzung")
-                # Versuche direkt nochmal zu übersetzen statt zu validieren
-                prompt = self._get_translation_prompt(original_text, "arztbrief")
-                return await self._generate_response(prompt, model)
+            if indicator in translation_lower and len(translation) < 200:
+                print(f"⚠️ Fehlerhafte Antwort erkannt: '{indicator}'")
+                # Neuer vereinfachter Versuch
+                return await self._generate_response(
+                    f"Übersetze in einfache Sprache:\n{original_text[:2000]}", 
+                    model
+                )
         
-        # Nur validieren wenn Übersetzung gut aussieht
-        validation_prompt = f"""Du bist ein medizinischer Qualitätsprüfer. Prüfe diese Übersetzung auf Fehler.
-
-WICHTIGE REGELN:
-- Wenn die Übersetzung gut ist, gib sie UNVERÄNDERT zurück
-- Entferne nur OFFENSICHTLICHE Halluzinationen
-- Füge NICHTS hinzu
-
-ORIGINAL (Auszug):
-{original_text[:1000]}...
-
-ÜBERSETZUNG:
-{translation}
-
-Gib die Übersetzung zurück (korrigiert falls nötig):"""
+        # Wenn Übersetzung gut aussieht, direkt zurückgeben ohne weitere Validierung
+        # (Validierung verursacht oft Probleme)
+        return translation
+        
+        # ALTE VALIDIERUNG ENTFERNT - verursacht leere Outputs
         
         validated_text = await self._generate_response(validation_prompt, model)
         
