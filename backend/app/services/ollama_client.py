@@ -2,9 +2,13 @@ import httpx
 import json
 import asyncio
 import os
+import logging
 from typing import Optional, Dict, Any, AsyncGenerator, Tuple
 import re
 from app.models.document import SupportedLanguage, LANGUAGE_NAMES
+
+# Setup logger
+logger = logging.getLogger(__name__)
 
 class OllamaClient:
     
