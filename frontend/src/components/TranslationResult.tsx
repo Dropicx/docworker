@@ -60,24 +60,6 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
       console.error('PDF Export failed:', error);
       alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
     }
-
-${showOriginal ? `
-ORIGINALTEXT:
-${result.original_text}
-` : ''}
-
-Hinweis: Diese Übersetzung wurde automatisch erstellt und ersetzt nicht die professionelle medizinische Beratung.
-`;
-
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `medizinische-uebersetzung-${Date.now()}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
   };
 
   const getConfidenceColor = (score: number) => {
