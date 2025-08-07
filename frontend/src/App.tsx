@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route } from 'react-router-dom';
 import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap, Globe, ChevronDown, Search } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
+import Footer from './components/Footer';
+import Impressum from './pages/Impressum';
+import Datenschutz from './pages/Datenschutz';
+import Nutzungsbedingungen from './pages/Nutzungsbedingungen';
 import ApiService from './services/api';
 import { UploadResponse, TranslationResult as TranslationData, HealthCheck, ProcessingOptions, SupportedLanguage } from './types/api';
 
@@ -286,8 +291,8 @@ function App() {
     );
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30">
+  const MainApp = () => (
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-50 header-blur">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -475,35 +480,17 @@ function App() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="relative z-10 mt-24 border-t border-primary-100/50 bg-gradient-to-r from-white/80 to-neutral-50/80 backdrop-blur-sm">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="text-center space-y-6">
-            <div className="flex items-center justify-center space-x-3">
-              <div className="hero-gradient p-2 rounded-lg">
-                <Stethoscope className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-bold text-primary-900">
-                HealthLingo
-              </span>
-            </div>
-            
-            <div className="flex justify-center space-x-8 text-sm text-primary-600">
-              <span>© 2025 HealthLingo</span>
-              <span>•</span>
-              <span>DSGVO-konform</span>
-              <span>•</span>
-              <span>Made with ❤️ for better healthcare</span>
-            </div>
-            
-            <p className="text-xs text-primary-500 max-w-2xl mx-auto">
-              Dieses Tool dient der Unterstützung beim Verständnis medizinischer Dokumente 
-              und ersetzt nicht die professionelle medizinische Beratung.
-            </p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
+  );
+
+  return (
+    <Routes>
+      <Route path="/" element={<MainApp />} />
+      <Route path="/impressum" element={<Impressum />} />
+      <Route path="/datenschutz" element={<Datenschutz />} />
+      <Route path="/nutzungsbedingungen" element={<Nutzungsbedingungen />} />
+    </Routes>
   );
 }
 

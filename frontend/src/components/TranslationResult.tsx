@@ -109,7 +109,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
           <h2 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary-900 via-brand-700 to-success-700 bg-clip-text text-transparent">
             Übersetzung abgeschlossen
           </h2>
-          <p className="text-lg text-primary-600 max-w-2xl mx-auto">
+          <p className="text-lg text-primary-600 max-w-3xl mx-auto">
             {result.language_translated_text 
               ? 'Ihr medizinisches Dokument wurde vereinfacht und übersetzt'
               : 'Ihr medizinisches Dokument wurde erfolgreich in verständliche Sprache übersetzt'
@@ -413,22 +413,14 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+      {/* Action Button - Centered */}
+      <div className="flex justify-center pt-6">
         <button
           onClick={onNewTranslation}
-          className="btn-primary group flex-1 sm:flex-none"
+          className="btn-primary group"
         >
-          <RefreshCw className="w-5 h-5 transition-transform duration-200 group-hover:rotate-180" />
-          <span className="ml-2">Neues Dokument übersetzen</span>
-        </button>
-        
-        <button
-          onClick={handleDownload}
-          className="btn-secondary group flex-1 sm:flex-none"
-        >
-          <Download className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
-          <span className="ml-2">Als Textdatei speichern</span>
+          <RefreshCw className="w-5 h-5 transition-transform duration-200 group-hover:rotate-180 flex-shrink-0" />
+          <span>Neues Dokument übersetzen</span>
         </button>
       </div>
 

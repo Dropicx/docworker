@@ -64,26 +64,37 @@ export const exportToPDF = async (elementId: string, filename: string, options?:
     // Entferne temporäres Element
     document.body.removeChild(tempDiv);
 
-    // Erstelle PDF
-    const imgWidth = 210; // A4 width in mm
+    // Erstelle PDF mit besseren Margen
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    
+    // Definiere Seitenmaße und Abstände
+    const pageWidth = 210; // A4 width in mm
     const pageHeight = 297; // A4 height in mm
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+    const marginTop = 15; // Oberer Rand
+    const marginBottom = 20; // Unterer Rand (mehr Platz)
+    const marginLeft = 15; // Linker Rand
+    const marginRight = 15; // Rechter Rand
+    
+    // Berechne verfügbare Breite und Höhe
+    const contentWidth = pageWidth - marginLeft - marginRight;
+    const contentHeight = pageHeight - marginTop - marginBottom;
+    
+    // Berechne Bildhöhe basierend auf Canvas
+    const imgHeight = (canvas.height * contentWidth) / canvas.width;
     let heightLeft = imgHeight;
     
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    let position = 0;
-
-    // Füge Bild zum PDF hinzu
+    // Erste Seite
     const imgData = canvas.toDataURL('image/png');
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+    pdf.addImage(imgData, 'PNG', marginLeft, marginTop, contentWidth, imgHeight);
+    heightLeft -= contentHeight;
 
     // Füge weitere Seiten hinzu wenn nötig
-    while (heightLeft >= 0) {
-      position = heightLeft - imgHeight;
+    while (heightLeft > 0) {
       pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      // Position für neue Seite mit Berücksichtigung des oberen Rands
+      const position = -(imgHeight - heightLeft) + marginTop;
+      pdf.addImage(imgData, 'PNG', marginLeft, position, contentWidth, imgHeight);
+      heightLeft -= contentHeight;
     }
 
     // Speichere PDF
@@ -102,12 +113,15 @@ export const exportToPDF = async (elementId: string, filename: string, options?:
 export const generatePDFFromText = (text: string, filename: string, options?: PDFExportOptions) => {
   const pdf = new jsPDF();
   
-  // PDF Einstellungen
+  // PDF Einstellungen mit besseren Margen
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 20;
-  const maxWidth = pageWidth - (margin * 2);
-  let yPosition = margin;
+  const marginTop = 25;
+  const marginBottom = 30;
+  const marginLeft = 20;
+  const marginRight = 20;
+  const maxWidth = pageWidth - marginLeft - marginRight;
+  let yPosition = marginTop;
   
   // Titel hinzufügen
   if (options?.title) {
@@ -145,10 +159,10 @@ export const generatePDFFromText = (text: string, filename: string, options?: PD
   const lines = pdf.splitTextToSize(text, maxWidth);
   
   lines.forEach((line: string) => {
-    // Prüfe ob neue Seite nötig
-    if (yPosition + 7 > pageHeight - margin) {
+    // Prüfe ob neue Seite nötig (mit Berücksichtigung des unteren Rands)
+    if (yPosition + 10 > pageHeight - marginBottom) {
       pdf.addPage();
-      yPosition = margin;
+      yPosition = marginTop; // Beginne neue Seite mit oberem Rand
     }
     
     // Formatiere spezielle Zeilen
@@ -159,24 +173,24 @@ export const generatePDFFromText = (text: string, filename: string, options?: PD
       
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(20 - (level * 2));
-      pdf.text(headerText, margin, yPosition);
+      pdf.text(headerText, marginLeft, yPosition);
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(11);
       yPosition += 10;
     } else if (line.startsWith('•') || line.startsWith('-')) {
       // Listen
-      pdf.text(line, margin + 5, yPosition);
+      pdf.text(line, marginLeft + 5, yPosition);
       yPosition += 7;
     } else if (line.startsWith('**') && line.endsWith('**')) {
       // Fett
       const boldText = line.replace(/\*\*/g, '');
       pdf.setFont('helvetica', 'bold');
-      pdf.text(boldText, margin, yPosition);
+      pdf.text(boldText, marginLeft, yPosition);
       pdf.setFont('helvetica', 'normal');
       yPosition += 7;
     } else {
       // Normaler Text
-      pdf.text(line, margin, yPosition);
+      pdf.text(line, marginLeft, yPosition);
       yPosition += 7;
     }
   });
@@ -195,7 +209,7 @@ export const generatePDFFromText = (text: string, filename: string, options?: PD
     );
     pdf.text(
       `Erstellt am ${new Date().toLocaleDateString('de-DE')}`,
-      margin,
+      marginLeft,
       pageHeight - 10
     );
   }
