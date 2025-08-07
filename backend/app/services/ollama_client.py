@@ -175,6 +175,7 @@ KRITISCHE ANTI-HALLUZINATIONS-REGELN:
 - ✅ Spreche den Patienten DIREKT an (nutze "Sie", "Ihr", "Ihnen")
 - ✅ Bei Unklarheiten: markiere mit [unklar] statt zu interpretieren
 - ✅ KEINE Behandlungsempfehlungen die nicht im Original stehen
+- ✅ ERKLÄRE IMMER medizinische Codes (ICD, OPS, DRG, etc.) - nie nur auflisten!
 
 SPRACHLICHE RICHTLINIEN:
 
@@ -217,6 +218,7 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 ## 🏥 Ihre Diagnosen
 • [Diagnose in Alltagssprache]
   → Medizinisch: [Fachbegriff]
+  → ICD-Code falls vorhanden: [Code mit Erklärung, z.B. "I10.90 - Bluthochdruck ohne bekannte Ursache"]
   → Erklärung: [Was ist das genau?]
 
 ## 💊 Behandlung & Medikamente
@@ -234,13 +236,22 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 • **[Begriff 1]**: [Einfache Erklärung]
 • **[Begriff 2]**: [Einfache Erklärung]
 
+## 🔢 Medizinische Codes erklärt (falls vorhanden)
+### ICD-Codes (Diagnose-Schlüssel):
+• **[ICD-Code]**: [Vollständige Erklärung was diese Diagnose bedeutet]
+  Beispiel: **I10.90**: Bluthochdruck ohne bekannte Ursache - Ihr Blutdruck ist dauerhaft erhöht
+  
+### OPS-Codes (Behandlungs-Schlüssel):
+• **[OPS-Code]**: [Vollständige Erklärung welche Behandlung durchgeführt wurde]
+  Beispiel: **5-511.11**: Entfernung der Gallenblase durch Bauchspiegelung (minimal-invasive Operation)
+
 ## ⚠️ Wichtige Hinweise
 • Diese Übersetzung hilft Ihnen, Ihre Unterlagen zu verstehen
 • Besprechen Sie alle Fragen mit Ihrem Arzt
 • Bei Notfällen: 112 anrufen
 
 ---
-*Übersetzung erstellt am: [Datum]*"""
+"""
         
         # UNIVERSELLE Anleitung für ALLE medizinischen Dokumente
         universal_instruction = """
@@ -250,6 +261,7 @@ DIESES DOKUMENT KANN ENTHALTEN:
 - Bildgebungsbefunde (Röntgen, MRT, CT, Ultraschall)
 - Pathologiebefunde
 - Medikationspläne
+- Medizinische Codes (ICD-10, OPS, DRG, GOÄ, EBM)
 - Kombinationen aus allem oben genannten
 
 BEHANDLE JEDEN INHALT ANGEMESSEN:
@@ -258,6 +270,21 @@ BEHANDLE JEDEN INHALT ANGEMESSEN:
 - Bei Medikamenten: Erkläre Zweck und Einnahme
 - Bei Bildgebung: Beschreibe was untersucht wurde und was gefunden wurde
 - Bei Empfehlungen: Mache klar was der Patient tun soll
+- Bei medizinischen Codes (ICD, OPS): ERKLÄRE immer was der Code bedeutet! Nicht nur auflisten!
+  
+  ICD-Beispiele (Diagnose-Codes):
+  • "ICD I10.90" → "I10.90 - Bluthochdruck ohne bekannte Ursache (Ihr Blutdruck ist dauerhaft zu hoch)"
+  • "ICD E11.9" → "E11.9 - Diabetes Typ 2 (Zuckerkrankheit, die meist im Erwachsenenalter auftritt)"
+  • "ICD J44.0" → "J44.0 - COPD mit akuter Verschlechterung (chronische Lungenerkrankung mit plötzlicher Verschlimmerung)"
+  • "ICD M54.5" → "M54.5 - Kreuzschmerzen (Schmerzen im unteren Rückenbereich)"
+  
+  OPS-Beispiele (Behandlungs-Codes):
+  • "OPS 5-511.11" → "5-511.11 - Entfernung der Gallenblase durch Bauchspiegelung (minimal-invasive Operation)"
+  • "OPS 3-035" → "3-035 - MRT des Kopfes (Kernspintomographie zur Untersuchung des Gehirns)"
+  • "OPS 1-632.0" → "1-632.0 - Magenspiegelung mit Gewebeentnahme (Untersuchung des Magens mit einer Kamera)"
+  • "OPS 8-931.0" → "8-931.0 - Überwachung auf der Intensivstation (engmaschige medizinische Betreuung)"
+  
+  WICHTIG: Codes IMMER mit verständlicher Erklärung versehen! Der Patient muss verstehen, was gemeint ist!
 
 Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."""
         
@@ -511,32 +538,49 @@ ORIGINAL TEXT (bereits vereinfacht):
 ÜBERSETZUNG IN {language_name.upper()}:""" 
 
     async def _ai_preprocess_text(self, text: str, model: str) -> str:
-        """Nutzt KI um medizinisch relevante Informationen zu extrahieren"""
+        """Nutzt KI um nur wirklich irrelevante Formatierungen zu entfernen"""
         
-        preprocess_prompt = f"""Du bist ein medizinischer Dokumentenverarbeiter. Deine Aufgabe ist es, aus dem folgenden Text NUR die medizinisch relevanten Informationen zu extrahieren.
+        preprocess_prompt = f"""Du bist ein medizinischer Dokumentenbereiniger. Deine Aufgabe ist es, den Text MINIMAL zu bereinigen.
 
-WICHTIGE REGELN:
-- BEHALTE: Alle Diagnosen, Symptome, Behandlungen, Medikamente, Untersuchungsergebnisse, Laborwerte
-- BEHALTE: Medizinisch relevante Daten (OP-Termine, Untersuchungsdaten, Behandlungszeiträume)
-- BEHALTE: Dosierungen, Mengenangaben, medizinische Messwerte
-- BEHALTE: Empfehlungen, Anweisungen, nächste Schritte
+KRITISCHE REGEL: BEHALTE DEN VOLLSTÄNDIGEN MEDIZINISCHEN INHALT!
 
-- ENTFERNE NUR wenn NICHT medizinisch relevant:
-  • Vollständige Adressen (außer Krankenhaus/Praxis-Name)
-  • Telefonnummern und E-Mails
-  • Patientennummern und Versicherungsnummern
-  • Grußformeln und Unterschriften
-  • Briefkopf-Formatierungen
+NUR DIESE DINGE ENTFERNEN:
+- Briefköpfe mit Praxislogo-Beschreibungen
+- Fax- und Telefonnummern in Kopfzeilen
+- E-Mail-Adressen in Kopfzeilen
+- Seitenzahlen (z.B. "Seite 1 von 3")
+- Wiederholte Kopf-/Fußzeilen
+- Formatierungszeichen wie "========" oder "--------"
 
-- WICHTIG: Behalte Namen von Ärzten und medizinischen Einrichtungen
-- WICHTIG: Behalte alle Zahlen die medizinische Bedeutung haben könnten
+ALLES ANDERE MUSS BLEIBEN:
+✅ ALLE medizinischen Informationen
+✅ ALLE Diagnosen, Befunde, Laborwerte
+✅ ALLE Medikamente und Dosierungen
+✅ ALLE Daten und Zeitangaben
+✅ Namen von Ärzten und Patienten
+✅ Krankenhaus-/Praxisnamen
+✅ Versicherungsnummern, Patientennummern (könnten relevant sein)
+✅ Adressen (könnten für Nachsorge relevant sein)
+✅ Der komplette Fließtext
+✅ Grußformeln (zeigen Briefende an)
+
+WICHTIG: Im Zweifel IMMER behalten! Lieber zu viel als zu wenig!
+Gib den Text fast unverändert zurück, nur ohne störende Formatierungen.
 
 ORIGINALTEXT:
 {text}
 
-EXTRAHIERTER MEDIZINISCHER INHALT (vollständig, nur ohne irrelevante Formatierung):"""
+BEREINIGTER TEXT (fast identisch zum Original):"""
         
         cleaned_text = await self._generate_response(preprocess_prompt, model)
+        
+        # Nachbearbeitung: Entferne doppelte Nummerierung vor Stichpunkten
+        import re
+        # Entfernt Muster wie "1. •", "2. -", "1) •" etc.
+        cleaned_text = re.sub(r'^\s*\d+[.)]\s*[•\-\*]', '•', cleaned_text, flags=re.MULTILINE)
+        cleaned_text = re.sub(r'^\s*\d+\.\s*[•\-\*]', '•', cleaned_text, flags=re.MULTILINE)
+        # Entfernt auch Nummerierung wenn danach direkt Text kommt (für Listen)
+        cleaned_text = re.sub(r'^\s*\d+[.)]\s+(?=[A-Z])', '• ', cleaned_text, flags=re.MULTILINE)
         
         # Fallback wenn KI-Preprocessing fehlschlägt
         if not cleaned_text or cleaned_text.startswith("Fehler") or len(cleaned_text) < 50:

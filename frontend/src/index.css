@@ -53,18 +53,48 @@
   }
   
   /* Improved Markdown List Formatting */
-  .markdown-content ul,
+  .markdown-content ul {
+    @apply space-y-3 list-none;
+  }
+  
   .markdown-content ol {
-    @apply space-y-3;
+    @apply space-y-3 list-decimal ml-6;
+  }
+  
+  .markdown-content > ul > li,
+  .markdown-content > ol > li {
+    @apply relative pl-8;
+  }
+  
+  .markdown-content > ul > li::before {
+    @apply absolute left-0 top-2 text-brand-500;
+    content: "•";
+    font-size: 1.2em;
+    font-weight: bold;
   }
   
   .markdown-content li > ul,
   .markdown-content li > ol {
-    @apply mt-3 ml-6;
+    @apply mt-3 ml-4;
+  }
+  
+  .markdown-content li > ul > li::before {
+    @apply text-primary-400;
+    content: "→";
+    font-size: 1em;
   }
   
   .markdown-content li p {
     @apply inline;
+  }
+  
+  /* Special formatting for diagnosis sections */
+  .markdown-content li:has(> ul) {
+    @apply pb-2;
+  }
+  
+  .markdown-content strong + ul {
+    @apply mt-2;
   }
   
   /* Enhanced Card System */
