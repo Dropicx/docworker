@@ -58,9 +58,10 @@ class OllamaClient:
             cleaned_text = await self._ai_preprocess_text(text, model)
             
             # SCHRITT 2: Hauptübersetzung - EINE universelle Methode für ALLE Dokumente
-            print("🤖 Schritt 2: Übersetze in einfache Sprache...")
+            print(f"🤖 Schritt 2: Übersetze in einfache Sprache mit Model: {model}")
             prompt = self._get_universal_translation_prompt(cleaned_text)
             translated_text = await self._generate_response(prompt, model)
+            print(f"✅ Hauptübersetzung erfolgreich mit {model}")
             
             # SCHRITT 3: Qualitätskontrolle - prüfe ob Übersetzung sinnvoll ist
             if not translated_text or len(translated_text) < 100:
@@ -503,8 +504,10 @@ ORIGINAL MEDIZINISCHER TEXT:
             language_name = LANGUAGE_NAMES.get(target_language, target_language.value)
             
             # KEIN FALLBACK - Zwangsweise BGE-M3 verwenden
+            print(f"🌐 TRANSLATION: Verwende Model: {model} für Sprache: {language_name}")
             prompt = self._get_neutral_translation_prompt(simplified_text, target_language, language_name)
             translated_text = await self._generate_response(prompt, model)
+            print(f"✅ TRANSLATION: Erfolgreich mit {model}")
             confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
             
             # # Versuche zuerst mit BGE-M3 für neutrale Übersetzung
@@ -625,7 +628,9 @@ ORIGINALTEXT:
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
         # KEIN FALLBACK - Zwangsweise llama3.2:latest verwenden
+        print(f"🔧 PREPROCESSING: Verwende Model: {preprocessing_model}")
         cleaned_text = await self._generate_response(preprocess_prompt, preprocessing_model)
+        print(f"✅ PREPROCESSING: Erfolgreich mit {preprocessing_model}")
         
         # try:
         #     # Versuche mit llama3.2:latest für bessere Performance
