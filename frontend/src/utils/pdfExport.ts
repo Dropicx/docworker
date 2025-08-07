@@ -120,6 +120,7 @@ export const generatePDFFromText = (text: string, filename: string, options?: PD
   const marginBottom = 30;
   const marginLeft = 20;
   const marginRight = 20;
+  const margin = marginLeft; // Alias für margin
   const maxWidth = pageWidth - marginLeft - marginRight;
   let yPosition = marginTop;
   
