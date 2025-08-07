@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ApiService from '../services/api';
 import { TranslationResult as TranslationData } from '../types/api';
-import { exportToPDF } from '../utils/pdfExport';
+import { exportToPDF } from '../utils/pdfExportAdvanced';
 
 interface TranslationResultProps {
   result: TranslationData;
@@ -238,9 +238,77 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     h3: ({children}) => <h3 className="text-xl font-semibold text-primary-900 mb-3 mt-4">{children}</h3>,
                     h4: ({children}) => <h4 className="text-lg font-semibold text-primary-800 mb-2 mt-3">{children}</h4>,
                     p: ({children}) => <p className="mb-4 text-primary-700 leading-relaxed">{children}</p>,
-                    ul: ({children}) => <ul className="list-disc list-inside mb-4 space-y-2 text-primary-700">{children}</ul>,
-                    ol: ({children}) => <ol className="list-decimal list-inside mb-4 space-y-2 text-primary-700">{children}</ol>,
-                    li: ({children}) => <li className="ml-4">{children}</li>,
+                    ul: ({children}) => (
+                      <ul className="mb-4 space-y-3 text-primary-700">
+                        {children}
+                      </ul>
+                    ),
+                    ol: ({children}) => (
+                      <ol className="list-decimal mb-4 space-y-3 text-primary-700 ml-6">
+                        {children}
+                      </ol>
+                    ),
+                    li: ({children}) => {
+                      // Prüfe ob der Text Unterpunkte mit Pfeilen enthält
+                      const childrenArray = React.Children.toArray(children);
+                      const hasArrow = childrenArray.some(child => 
+                        typeof child === 'string' && child.includes('→')
+                      );
+                      
+                      if (hasArrow) {
+                        // Spezielle Formatierung für Items mit Unterpunkten
+                        return (
+                          <li className="relative pl-8">
+                            <span className="absolute left-0 top-0.5 text-primary-500">•</span>
+                            <div className="space-y-2">
+                              {childrenArray.map((child, idx) => {
+                                if (typeof child === 'string') {
+                                  // Teile bei Pfeil-Symbol
+                                  if (child.includes('→')) {
+                                    const parts = child.split('→');
+                                    const mainText = parts[0].trim();
+                                    const subText = parts[1]?.trim();
+                                    
+                                    if (mainText && !subText) {
+                                      // Nur Pfeil am Anfang
+                                      return (
+                                        <div key={idx} className="pl-6 -ml-2">
+                                          <span className="text-primary-400">→</span>
+                                          <span className="ml-2 text-primary-600">{mainText}</span>
+                                        </div>
+                                      );
+                                    } else if (mainText && subText) {
+                                      // Text vor und nach Pfeil
+                                      return (
+                                        <React.Fragment key={idx}>
+                                          <div className="font-medium text-primary-800">{mainText}</div>
+                                          <div className="pl-6">
+                                            <span className="text-primary-400">→</span>
+                                            <span className="ml-2 text-primary-600">{subText}</span>
+                                          </div>
+                                        </React.Fragment>
+                                      );
+                                    }
+                                  }
+                                  // Normaler Text ohne Pfeil
+                                  return <span key={idx}>{child}</span>;
+                                }
+                                // Andere React-Elemente
+                                return <React.Fragment key={idx}>{child}</React.Fragment>;
+                              })}
+                            </div>
+                          </li>
+                        );
+                      }
+                      
+                      // Standard Listeneintrag mit besserer Einrückung für mehrzeilige Texte
+                      return (
+                        <li className="relative pl-8">
+                          <span className="absolute left-0 top-0.5 text-primary-500">•</span>
+                          <div className="leading-relaxed">{children}</div>
+                        </li>
+                      );
+                    },
                     strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
                     em: ({children}) => <em className="italic text-primary-600">{children}</em>,
                     blockquote: ({children}) => (
@@ -285,6 +353,18 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                 >
                   {getDisplayedText()}
                 </ReactMarkdown>
+                
+                {/* PDF Footer with Date - wird nur im Export angezeigt */}
+                <div className="mt-8 pt-4 border-t border-primary-200 text-center text-sm text-primary-600">
+                  <p>Übersetzung erstellt am: {new Date().toLocaleDateString('de-DE', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}</p>
+                  <p className="text-xs mt-1">HealthLingo - Medizinische Dokumente verstehen</p>
+                </div>
               </div>
             </div>
             
@@ -375,9 +455,22 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     h2: ({children}) => <h2 className="text-xl font-bold text-primary-900 mb-3 mt-4">{children}</h2>,
                     h3: ({children}) => <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">{children}</h3>,
                     p: ({children}) => <p className="mb-3 text-primary-700 leading-relaxed">{children}</p>,
-                    ul: ({children}) => <ul className="list-disc list-inside mb-3 space-y-1 text-primary-700">{children}</ul>,
-                    ol: ({children}) => <ol className="list-decimal list-inside mb-3 space-y-1 text-primary-700">{children}</ol>,
-                    li: ({children}) => <li className="ml-4">{children}</li>,
+                    ul: ({children}) => (
+                      <ul className="mb-3 space-y-2 text-primary-700">
+                        {children}
+                      </ul>
+                    ),
+                    ol: ({children}) => (
+                      <ol className="list-decimal mb-3 space-y-2 text-primary-700 ml-6">
+                        {children}
+                      </ol>
+                    ),
+                    li: ({children}) => (
+                      <li className="relative pl-8">
+                        <span className="absolute left-0 top-0.5 text-primary-500">•</span>
+                        <div className="leading-relaxed">{children}</div>
+                      </li>
+                    ),
                     strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
                     em: ({children}) => <em className="italic text-primary-600">{children}</em>,
                     code: ({children, className}) => {
