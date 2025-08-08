@@ -1,9 +1,13 @@
-# Multi-stage build for Railway deployment
+# Lightweight Dockerfile for Railway deployment with OVH API
+# This version removes OCR tools since text extraction can be done via OVH
+
+# Backend build stage
 FROM python:3.11-slim as backend-builder
 
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
+# Install build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy backend requirements
@@ -21,23 +25,15 @@ RUN npm ci --only=production
 COPY frontend/ ./
 RUN npm run build
 
-# Final stage
+# Final stage - lightweight
 FROM python:3.11-slim
 
-# Install runtime dependencies in smaller chunks to reduce memory usage
+# Install only essential runtime dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     curl \
     nginx \
     supervisor \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install OCR tools separately
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    tesseract-ocr \
-    tesseract-ocr-deu \
-    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python packages from builder

@@ -22,8 +22,14 @@ from app.services.cleanup import (
     update_processing_store,
     remove_from_processing_store
 )
-from app.services.text_extractor import TextExtractor
 from app.services.ollama_client import OllamaClient
+import os
+
+# Use simple text extractor for Railway deployment
+if os.getenv("USE_OVH_ONLY", "false").lower() == "true":
+    from app.services.text_extractor_simple import TextExtractor
+else:
+    from app.services.text_extractor import TextExtractor
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
