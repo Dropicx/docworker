@@ -38,10 +38,12 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 # Copy frontend and build
 COPY frontend/package.json ./frontend/
 WORKDIR /app/frontend
-RUN npm install --production
+# Install all dependencies (including dev) for build
+RUN npm install
 COPY frontend/ ./
 RUN npm run build && \
-    rm -rf node_modules
+    rm -rf node_modules && \
+    rm -rf /root/.npm
 
 # Copy backend code
 WORKDIR /app
