@@ -19,8 +19,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 FROM node:18-alpine as frontend-builder
 
 WORKDIR /frontend
-COPY frontend/package*.json ./
-RUN npm ci --only=production
+COPY frontend/package.json ./
+# Use npm install instead of ci since package-lock.json doesn't exist
+RUN npm install --production
 
 COPY frontend/ ./
 RUN npm run build
