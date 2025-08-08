@@ -5,8 +5,7 @@ dockerfilePath = "Dockerfile.railway"
 [deploy]
 healthcheckPath = "/health"
 healthcheckTimeout = 300
-restartPolicyType = "on-failure"
-restartPolicyMaxRetries = 3
+restartPolicyType = "always"
 
 [[services]]
 name = "doctranslator"
