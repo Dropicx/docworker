@@ -32,7 +32,9 @@ async def test_ovh_connection():
     connected = await ovh_client.check_connection()
     if connected:
         print("✅ OVH API connection successful!")
-        print(f"   Model: {ovh_client.model}")
+        print(f"   Main Model: {ovh_client.main_model}")
+        print(f"   Preprocessing Model: {ovh_client.preprocessing_model}")
+        print(f"   Translation Model: {ovh_client.translation_model}")
         print(f"   Endpoint: {ovh_client.base_url}")
     else:
         print("❌ OVH API connection failed")
@@ -40,49 +42,36 @@ async def test_ovh_connection():
     
     return connected
 
-async def test_ollama_models():
-    """Test local Ollama models"""
-    print("\n🖥️  Testing Local Ollama Models...")
+async def test_ollama_client_with_ovh():
+    """Test OllamaClient with OVH-only mode"""
+    print("\n🖥️  Testing OllamaClient with OVH-only mode...")
     print("-" * 50)
     
-    ollama_client = OllamaClient(use_ovh_for_main=False)  # Test without OVH first
+    # Test with OVH-only mode (default)
+    ollama_client = OllamaClient(use_ovh_only=True)
     
-    # Check connection
+    # Check connection (should use OVH)
     connected = await ollama_client.check_connection()
     if not connected:
-        print("❌ Ollama not connected. Make sure Ollama is running.")
+        print("❌ OVH connection failed through OllamaClient")
         return False
     
-    print("✅ Ollama connected")
+    print("✅ OllamaClient using OVH API successfully")
     
-    # List available models
+    # List available models (should return OVH models)
     models = await ollama_client.list_models()
-    print(f"\n📋 Available models: {len(models)}")
+    print(f"\n📋 Available OVH models: {len(models)}")
     for model in models:
         print(f"   • {model}")
-    
-    # Check required models
-    required_models = [
-        os.getenv("OLLAMA_PREPROCESSING_MODEL", "gpt-oss:20b"),
-        os.getenv("OLLAMA_TRANSLATION_MODEL", "zongwei/gemma3-translator:4b")
-    ]
-    
-    print(f"\n🔍 Checking required models:")
-    for model in required_models:
-        if model in models:
-            print(f"   ✅ {model} - Available")
-        else:
-            print(f"   ❌ {model} - NOT FOUND")
-            print(f"      Please install with: ollama pull {model}")
     
     return True
 
 async def test_preprocessing():
-    """Test preprocessing with local gpt-oss:20b on GPU"""
-    print("\n🔧 Testing Preprocessing with gpt-oss:20b (GPU)...")
+    """Test preprocessing with OVH Mistral-Nemo-Instruct-2407"""
+    print("\n🔧 Testing Preprocessing with OVH Mistral-Nemo...")
     print("-" * 50)
     
-    ollama_client = OllamaClient(use_ovh_for_main=False)
+    ovh_client = OVHClient()
     
     test_text = """
     Sehr geehrte Frau Dr. Müller,
@@ -99,8 +88,8 @@ async def test_preprocessing():
     """
     
     try:
-        # Test preprocessing
-        cleaned_text = await ollama_client._ai_preprocess_text(test_text)
+        # Test preprocessing with OVH
+        cleaned_text = await ovh_client.preprocess_medical_text(test_text)
         
         if cleaned_text and len(cleaned_text) > 10:
             print("✅ Preprocessing successful!")
@@ -155,11 +144,11 @@ async def test_ovh_processing():
         return False
 
 async def test_language_translation():
-    """Test language translation with gemma3-translator"""
-    print("\n🌐 Testing Language Translation with gemma3-translator...")
+    """Test language translation with OVH Meta-Llama-3.3-70B"""
+    print("\n🌐 Testing Language Translation with OVH Meta-Llama...")
     print("-" * 50)
     
-    ollama_client = OllamaClient(use_ovh_for_main=False)
+    ovh_client = OVHClient()
     
     test_text = """
     # 📋 Ihre medizinische Dokumentation
@@ -172,10 +161,10 @@ async def test_language_translation():
     """
     
     try:
-        # Test translation to English
-        result, confidence = await ollama_client.translate_to_language(
+        # Test translation to English with OVH
+        result, confidence = await ovh_client.translate_to_language(
             simplified_text=test_text,
-            target_language=SupportedLanguage.ENGLISH
+            target_language="English"
         )
         
         if result and len(result) > 10:
@@ -194,12 +183,12 @@ async def test_language_translation():
         return False
 
 async def test_full_pipeline():
-    """Test the complete processing pipeline"""
-    print("\n🔄 Testing Complete Pipeline...")
+    """Test the complete processing pipeline with OVH only"""
+    print("\n🔄 Testing Complete Pipeline (OVH Only)...")
     print("-" * 50)
     
-    # Initialize with OVH enabled
-    ollama_client = OllamaClient(use_ovh_for_main=True)
+    # Initialize with OVH-only mode
+    ollama_client = OllamaClient(use_ovh_only=True)
     
     test_document = """
     Entlassungsbrief
@@ -284,9 +273,10 @@ async def main():
     # Display configuration
     print("\n📋 Current Configuration:")
     print("-" * 50)
-    print(f"OLLAMA_PREPROCESSING_MODEL: {os.getenv('OLLAMA_PREPROCESSING_MODEL', 'gpt-oss:20b')}")
-    print(f"OLLAMA_TRANSLATION_MODEL: {os.getenv('OLLAMA_TRANSLATION_MODEL', 'zongwei/gemma3-translator:4b')}")
-    print(f"OVH_AI_MODEL: {os.getenv('OVH_AI_MODEL', 'Meta-Llama-3_3-70B-Instruct')}")
+    print(f"USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'true')}")
+    print(f"OVH_MAIN_MODEL: {os.getenv('OVH_MAIN_MODEL', 'Meta-Llama-3_3-70B-Instruct')}")
+    print(f"OVH_PREPROCESSING_MODEL: {os.getenv('OVH_PREPROCESSING_MODEL', 'Mistral-Nemo-Instruct-2407')}")
+    print(f"OVH_TRANSLATION_MODEL: {os.getenv('OVH_TRANSLATION_MODEL', 'Meta-Llama-3_3-70B-Instruct')}")
     print(f"OVH_AI_BASE_URL: {os.getenv('OVH_AI_BASE_URL', 'https://oai.endpoints.kepler.ai.cloud.ovh.net/v1')}")
     token = os.getenv('OVH_AI_ENDPOINTS_ACCESS_TOKEN', '')
     print(f"OVH_AI_ENDPOINTS_ACCESS_TOKEN: {'***' + token[-4:] if len(token) > 4 else 'NOT SET'}")
@@ -294,11 +284,11 @@ async def main():
     # Run tests
     tests = [
         ("OVH Connection", test_ovh_connection),
-        ("Ollama Models", test_ollama_models),
-        ("Preprocessing", test_preprocessing),
+        ("OllamaClient with OVH", test_ollama_client_with_ovh),
+        ("OVH Preprocessing", test_preprocessing),
         ("OVH Processing", test_ovh_processing),
-        ("Language Translation", test_language_translation),
-        ("Full Pipeline", test_full_pipeline)
+        ("OVH Language Translation", test_language_translation),
+        ("Full Pipeline (OVH Only)", test_full_pipeline)
     ]
     
     results = []

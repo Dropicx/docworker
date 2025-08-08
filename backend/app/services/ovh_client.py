@@ -16,7 +16,11 @@ class OVHClient:
     def __init__(self):
         self.access_token = os.getenv("OVH_AI_ENDPOINTS_ACCESS_TOKEN")
         self.base_url = os.getenv("OVH_AI_BASE_URL", "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1")
-        self.model = os.getenv("OVH_AI_MODEL", "Meta-Llama-3_3-70B-Instruct")
+        
+        # Different models for different tasks
+        self.main_model = os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct")
+        self.preprocessing_model = os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407")
+        self.translation_model = os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
         
         if not self.access_token:
             logger.warning("⚠️ OVH_AI_ENDPOINTS_ACCESS_TOKEN not set in environment")
@@ -39,7 +43,7 @@ class OVHClient:
         try:
             # Try a simple completion to test connection
             response = await self.client.chat.completions.create(
-                model=self.model,
+                model=self.main_model,
                 messages=[{"role": "user", "content": "Hi"}],
                 max_tokens=10,
                 temperature=0
@@ -64,7 +68,7 @@ class OVHClient:
             return "Error: OVH API token not configured. Please set OVH_AI_ENDPOINTS_ACCESS_TOKEN in .env"
         
         try:
-            logger.info(f"🚀 Processing with OVH {self.model}")
+            logger.info(f"🚀 Processing with OVH {self.main_model}")
             
             # Use simple user message with the full prompt (like ollama)
             messages = [
@@ -76,7 +80,7 @@ class OVHClient:
             
             # Make the API call using OpenAI client
             response = await self.client.chat.completions.create(
-                model=self.model,
+                model=self.main_model,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
@@ -115,7 +119,7 @@ class OVHClient:
             return "Error: OVH API token not configured. Please set OVH_AI_ENDPOINTS_ACCESS_TOKEN in .env"
         
         try:
-            logger.info(f"🚀 Processing with OVH {self.model}")
+            logger.info(f"🚀 Processing with OVH {self.main_model}")
             
             # Prepare the message
             messages = [
@@ -131,7 +135,7 @@ class OVHClient:
             
             # Make the API call using OpenAI client
             response = await self.client.chat.completions.create(
-                model=self.model,
+                model=self.main_model,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
@@ -146,63 +150,193 @@ class OVHClient:
             logger.error(f"❌ OVH API error: {e}")
             return f"Error processing with OVH API: {str(e)}"
     
-    async def process_medical_text_direct(
+    async def preprocess_medical_text(
         self,
         text: str,
-        instruction: str = "Process this medical text",
         temperature: float = 0.3,
         max_tokens: int = 4000
     ) -> str:
         """
-        Process medical text using direct HTTP calls (alternative method)
+        Preprocess medical text using Mistral-Nemo-Instruct-2407
         """
         if not self.access_token:
-            return "Error: OVH API token not configured"
+            logger.error("❌ OVH API token not configured")
+            return text  # Return original text if API not configured
         
         try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                payload = {
-                    "model": self.model,
-                    "messages": [
-                        {
-                            "role": "system",
-                            "content": "Du bist ein hochspezialisierter medizinischer Textverarbeiter. Antworte IMMER in der gleichen Sprache wie der Eingabetext."
-                        },
-                        {
-                            "role": "user",
-                            "content": f"{instruction}\n\nText:\n{text}"
-                        }
-                    ],
-                    "temperature": temperature,
-                    "max_tokens": max_tokens,
-                    "top_p": 0.9
+            logger.info(f"🔧 Preprocessing with OVH {self.preprocessing_model}")
+            
+            preprocess_prompt = """Du bist ein medizinischer Dokumentenbereiniger für Datenschutz und Übersichtlichkeit.
+
+🚨 KRITISCHE REGEL: BEHALTE ABSOLUT ALLE MEDIZINISCHEN INFORMATIONEN!
+
+ENTFERNE NUR (komplett löschen):
+- Patientennamen und Patientenadressen
+- Geburtsdaten von Patienten (ABER: Untersuchungsdaten müssen bleiben!)
+- Arztnamen und Unterschriften (ABER: Fachabteilungen bleiben!)
+- Versicherungsnummern, Patientennummern
+- Private Telefonnummern und E-Mails
+- Briefköpfe, Logos, reine Formatierungszeichen
+- Seitenzahlen, Kopf-/Fußzeilen
+- Grußformeln (z.B. "Mit freundlichen Grüßen", "Sehr geehrte")
+- Anreden und Verabschiedungen
+
+⚠️ MUSS UNBEDINGT BLEIBEN - NIEMALS LÖSCHEN:
+✅ ALLE Laborwerte (auch in Tabellen, Listen oder ANHÄNGEN!)
+✅ ALLE Blutwerte, Urinwerte, etc.
+✅ ALLE Messwerte und Zahlen mit medizinischer Bedeutung
+✅ ALLE Referenzbereiche und Normwerte
+✅ ALLE Anhänge und deren KOMPLETTE Inhalte
+✅ ALLE Verweise auf Anhänge (z.B. "siehe Anhang", "Laborwerte im Anhang")
+✅ KOMPLETTE Anhänge mit Laborwerten, auch wenn sie am Ende stehen
+✅ ALLE Diagnosen und Befunde
+✅ ALLE Medikamente und Dosierungen  
+✅ ALLE medizinischen Daten und Termine
+✅ ALLE Untersuchungsergebnisse
+✅ Krankenhaus-/Abteilungsnamen
+✅ Der KOMPLETTE medizinische Inhalt
+✅ Medizinische Codes (ICD, OPS, etc.)
+
+🔴 SPEZIALREGEL FÜR ANHÄNGE:
+Wenn "siehe Anhang" oder "Laborwerte im Anhang" erwähnt wird:
+→ BEHALTE den Verweis UND den kompletten Anhang-Inhalt!
+→ Auch wenn der Anhang am Ende steht, BEHALTE IHN KOMPLETT!
+→ Entferne NUR Patientendaten aus dem Anhang, NICHT die Werte!
+
+WICHTIG: Wenn du dir unsicher bist, BEHALTE die Information!
+
+ORIGINALTEXT:
+{text}
+
+BEREINIGTER TEXT (nur medizinische Inhalte):"""
+            
+            full_prompt = preprocess_prompt.format(text=text)
+            
+            # Use preprocessing model
+            messages = [
+                {
+                    "role": "user",
+                    "content": full_prompt
                 }
-                
-                headers = {
-                    "Content-Type": "application/json",
-                    "Authorization": f"Bearer {self.access_token}"
-                }
-                
-                logger.info(f"🌐 Direct API call to OVH {self.model}")
-                
-                response = await client.post(
-                    f"{self.base_url}/chat/completions",
-                    json=payload,
-                    headers=headers
-                )
-                
-                if response.status_code == 200:
-                    response_data = response.json()
-                    result = response_data["choices"][0]["message"]["content"]
-                    logger.info("✅ Direct OVH API call successful")
-                    return result.strip()
-                else:
-                    logger.error(f"❌ OVH API error: {response.status_code} - {response.text}")
-                    return f"Error: OVH API returned {response.status_code}"
-                    
+            ]
+            
+            response = await self.client.chat.completions.create(
+                model=self.preprocessing_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=0.9
+            )
+            
+            result = response.choices[0].message.content
+            logger.info(f"✅ OVH preprocessing successful with {self.preprocessing_model}")
+            
+            # Clean up formatting
+            import re
+            result = re.sub(r'^\s*\d+[.)]\s*([•\-\*])', r'\1', result, flags=re.MULTILINE)
+            result = re.sub(r'^([•\-\*])\s*[•\-\*]+\s*', r'\1 ', result, flags=re.MULTILINE)
+            result = re.sub(r'([•\-\*])\s*\1+', r'\1', result)
+            
+            return result.strip() if result else text
+            
         except Exception as e:
-            logger.error(f"❌ Direct OVH API call failed: {e}")
-            return f"Error with direct API call: {str(e)}"
+            logger.error(f"❌ OVH preprocessing error: {e}")
+            return text  # Return original text on error
+    
+    async def translate_to_language(
+        self,
+        simplified_text: str,
+        target_language: str,
+        temperature: float = 0.3,
+        max_tokens: int = 4000
+    ) -> tuple[str, float]:
+        """
+        Translate simplified text to another language using Meta-Llama-3.3-70B
+        """
+        if not self.access_token:
+            logger.error("❌ OVH API token not configured")
+            return simplified_text, 0.0
+        
+        try:
+            logger.info(f"🌐 Translating to {target_language} with OVH {self.translation_model}")
+            
+            translation_prompt = f"""Du bist ein professioneller medizinischer Übersetzer, der bereits vereinfachte medizinische Texte in andere Sprachen übersetzt.
+
+AUFGABE:
+- Übersetze den folgenden bereits vereinfachten medizinischen Text in {target_language}
+- Behalte die einfache, verständliche Sprache bei
+- Übersetze alle medizinischen Begriffe korrekt und angemessen
+- Behalte die Struktur mit Emojis und Überschriften bei
+- Stelle sicher, dass der Text für Patienten verständlich bleibt
+
+WICHTIGE REGELN:
+- Verwende einfache, klare Sprache in der Zielsprache
+- Behalte medizinische Genauigkeit bei
+- Übersetze Emojis und Struktur-Elemente nicht - behalte sie bei
+- Falls ein medizinischer Begriff keine direkte Übersetzung hat, erkläre ihn in Klammern
+- Stelle sicher, dass der übersetzte Text genauso verständlich ist wie das Original
+
+ORIGINAL TEXT (bereits vereinfacht):
+{simplified_text}
+
+ÜBERSETZUNG IN {target_language.upper()}:"""
+            
+            messages = [
+                {
+                    "role": "user",
+                    "content": translation_prompt
+                }
+            ]
+            
+            response = await self.client.chat.completions.create(
+                model=self.translation_model,
+                messages=messages,
+                temperature=temperature,
+                max_tokens=max_tokens,
+                top_p=0.9
+            )
+            
+            result = response.choices[0].message.content
+            logger.info(f"✅ OVH language translation successful")
+            
+            # Evaluate quality
+            confidence = self._evaluate_language_translation_quality(simplified_text, result)
+            
+            return result.strip(), confidence
+            
+        except Exception as e:
+            logger.error(f"❌ OVH language translation error: {e}")
+            return simplified_text, 0.0
+    
+    def _evaluate_language_translation_quality(self, original: str, translated: str) -> float:
+        """
+        Evaluate the quality of language translation
+        """
+        if not translated or translated.startswith("Error"):
+            return 0.0
+        
+        confidence = 0.6  # Base confidence for OVH model
+        
+        # Length check
+        if len(translated) > 50:
+            confidence += 0.1
+        
+        # Ratio check
+        length_ratio = len(translated) / max(len(original), 1)
+        if 0.7 <= length_ratio <= 1.5:
+            confidence += 0.1
+        
+        # Structure preservation (emojis)
+        import re
+        emoji_pattern = r'[😀-🿿]|[\U0001F300-\U0001F5FF]|[\U0001F600-\U0001F64F]|[\U0001F680-\U0001F6FF]'
+        original_emojis = len(re.findall(emoji_pattern, original))
+        translated_emojis = len(re.findall(emoji_pattern, translated))
+        
+        if original_emojis > 0:
+            emoji_retention = min(translated_emojis / original_emojis, 1.0)
+            confidence += emoji_retention * 0.1
+        
+        return min(confidence, 1.0)
     
     async def generate_streaming(
         self,
@@ -219,7 +353,7 @@ class OVHClient:
         
         try:
             stream = await self.client.chat.completions.create(
-                model=self.model,
+                model=self.main_model,
                 messages=[
                     {"role": "user", "content": prompt}
                 ],

@@ -13,47 +13,64 @@ logger = logging.getLogger(__name__)
 
 class OllamaClient:
     
-    def __init__(self, base_url: Optional[str] = None, use_ovh_for_main: bool = True):
-        # Container-zu-Container Kommunikation in Production
-        if os.getenv("ENVIRONMENT") == "production":
-            self.base_url = base_url or "http://ollama-gpu:11434"  # GPU instance only
-        else:
-            self.base_url = base_url or "http://localhost:7869"   # GPU instance only
-            
-        self.timeout = 300  # 5 Minuten Timeout
+    def __init__(self, base_url: Optional[str] = None, use_ovh_only: bool = None):
+        # Check if we're using OVH only (no local Ollama)
+        if use_ovh_only is None:
+            use_ovh_only = os.getenv("USE_OVH_ONLY", "true").lower() == "true"
         
-        # Model configuration from environment
-        self.preprocessing_model = os.getenv("OLLAMA_PREPROCESSING_MODEL", "gpt-oss:20b")
-        self.translation_model = os.getenv("OLLAMA_TRANSLATION_MODEL", "zongwei/gemma3-translator:4b")
+        self.use_ovh_only = use_ovh_only
         
-        # OVH client for main processing
-        self.use_ovh_for_main = use_ovh_for_main
-        if self.use_ovh_for_main:
+        if self.use_ovh_only:
+            # OVH-only mode - initialize OVH client
             self.ovh_client = OVHClient()
-            logger.info("✅ OVH API client initialized for main processing")
+            logger.info("✅ Using OVH API for all processing (no local Ollama)")
+            self.base_url = None
+            self.timeout = None
+        else:
+            # Legacy mode with local Ollama (kept for backwards compatibility)
+            if os.getenv("ENVIRONMENT") == "production":
+                self.base_url = base_url or "http://ollama-gpu:11434"
+            else:
+                self.base_url = base_url or "http://localhost:7869"
+            self.timeout = 300
+            # Model configuration from environment
+            self.preprocessing_model = os.getenv("OLLAMA_PREPROCESSING_MODEL", "gpt-oss:20b")
+            self.translation_model = os.getenv("OLLAMA_TRANSLATION_MODEL", "zongwei/gemma3-translator:4b")
+            logger.info("⚠️ Using local Ollama (legacy mode)")
         
     async def check_connection(self) -> bool:
-        """Überprüft Verbindung zu Ollama"""
-        try:
-            async with httpx.AsyncClient(timeout=10.0) as client:
-                response = await client.get(f"{self.base_url}/api/version")
-                return response.status_code == 200
-        except Exception as e:
-            print(f"❌ Ollama Verbindung fehlgeschlagen ({self.base_url}): {e}")
-            return False
+        """Überprüft Verbindung zu OVH oder Ollama"""
+        if self.use_ovh_only:
+            return await self.ovh_client.check_connection()
+        else:
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    response = await client.get(f"{self.base_url}/api/version")
+                    return response.status_code == 200
+            except Exception as e:
+                print(f"❌ Ollama Verbindung fehlgeschlagen ({self.base_url}): {e}")
+                return False
     
     async def list_models(self) -> list:
         """Listet verfügbare Modelle auf"""
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.get(f"{self.base_url}/api/tags")
-                if response.status_code == 200:
-                    data = response.json()
-                    return [model["name"] for model in data.get("models", [])]
+        if self.use_ovh_only:
+            # Return OVH models
+            return [
+                self.ovh_client.main_model,
+                self.ovh_client.preprocessing_model,
+                self.ovh_client.translation_model
+            ]
+        else:
+            try:
+                async with httpx.AsyncClient(timeout=30.0) as client:
+                    response = await client.get(f"{self.base_url}/api/tags")
+                    if response.status_code == 200:
+                        data = response.json()
+                        return [model["name"] for model in data.get("models", [])]
+                    return []
+            except Exception as e:
+                print(f"❌ Modell-Liste Fehler: {e}")
                 return []
-        except Exception as e:
-            print(f"❌ Modell-Liste Fehler: {e}")
-            return []
     
     async def translate_medical_text(
         self, 
@@ -68,17 +85,21 @@ class OllamaClient:
             tuple[str, str, float, str]: (translated_text, doc_type, confidence, cleaned_original)
         """
         try:
-            # SCHRITT 1: Intelligente KI-basierte Vorverarbeitung mit lokalem gpt-oss:20b
-            print(f"🧠 Schritt 1: KI extrahiert medizinisch relevante Informationen mit {self.preprocessing_model}...")
-            cleaned_text = await self._ai_preprocess_text(text, self.preprocessing_model)
+            # SCHRITT 1: Intelligente KI-basierte Vorverarbeitung
+            if self.use_ovh_only:
+                print(f"🧠 Schritt 1: KI extrahiert medizinisch relevante Informationen mit OVH {self.ovh_client.preprocessing_model}...")
+                cleaned_text = await self.ovh_client.preprocess_medical_text(text)
+                print(f"✅ Vorverarbeitung erfolgreich mit OVH API")
+            else:
+                print(f"🧠 Schritt 1: KI extrahiert medizinisch relevante Informationen mit {self.preprocessing_model}...")
+                cleaned_text = await self._ai_preprocess_text(text, self.preprocessing_model)
             
-            # SCHRITT 2: Hauptübersetzung - Verwende OVH API wenn aktiviert
-            if self.use_ovh_for_main and self.ovh_client:
-                print(f"🤖 Schritt 2: Übersetze mit OVH Meta-Llama-3.3-70B-Instruct")
+            # SCHRITT 2: Hauptübersetzung
+            if self.use_ovh_only:
+                print(f"🤖 Schritt 2: Übersetze mit OVH {self.ovh_client.main_model}")
                 translated_text, doc_type, confidence, _ = await self.ovh_client.translate_medical_document(cleaned_text)
                 print(f"✅ Hauptübersetzung erfolgreich mit OVH API")
             else:
-                # Fallback auf lokales Modell wenn OVH nicht verfügbar
                 print(f"🤖 Schritt 2: Übersetze in einfache Sprache mit lokalem Model: {self.preprocessing_model}")
                 prompt = self._get_universal_translation_prompt(cleaned_text)
                 translated_text = await self._generate_response(prompt, self.preprocessing_model)
@@ -94,13 +115,13 @@ class OllamaClient:
 {cleaned_text}
 
 Einfache Übersetzung:"""
-                if self.use_ovh_for_main and self.ovh_client:
+                if self.use_ovh_only:
                     translated_text = await self.ovh_client.process_medical_text(cleaned_text, simple_prompt)
                 else:
                     translated_text = await self._generate_response(simple_prompt, self.preprocessing_model)
             
             # SCHRITT 4: Qualität bewerten wenn nicht bereits von OVH bewertet
-            if not self.use_ovh_for_main or not self.ovh_client:
+            if not self.use_ovh_only:
                 confidence = await self._evaluate_translation_quality(cleaned_text, translated_text)
             
             # Gebe zurück - "universal" als einheitlicher Dokumenttyp
@@ -401,15 +422,15 @@ ORIGINAL MEDIZINISCHER TEXT:
         model: str = None  # Will use configured model
     ) -> AsyncGenerator[str, None]:
         """Streaming-Generation für Live-Updates"""
-        # Use configured model if not specified
-        if model is None:
-            model = self.preprocessing_model
-        
-        # If OVH is enabled for main processing, use OVH streaming
-        if self.use_ovh_for_main and self.ovh_client:
+        # If OVH only mode, use OVH streaming
+        if self.use_ovh_only:
             async for chunk in self.ovh_client.generate_streaming(prompt):
                 yield chunk
             return
+        
+        # Legacy local Ollama streaming
+        if model is None:
+            model = self.preprocessing_model
         
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -453,28 +474,35 @@ ORIGINAL MEDIZINISCHER TEXT:
     ) -> tuple[str, float]:
         """
         Übersetzt vereinfachten Text in eine andere Sprache
-        Verwendet gemma3-translator:4b für präzise Übersetzungen
         
         Args:
             simplified_text: Der bereits vereinfachte Text
             target_language: Die Zielsprache
-            model: Das zu verwendende Modell (Standard: gemma3-translator:4b)
+            model: Das zu verwendende Modell
             
         Returns:
             tuple[str, float]: (translated_text, confidence)
         """
         try:
-            # Use configured translation model
-            if model is None:
-                model = self.translation_model
-            
             language_name = LANGUAGE_NAMES.get(target_language, target_language.value)
             
-            print(f"🌐 TRANSLATION: Verwende Model: {model} für Sprache: {language_name}")
-            prompt = self._get_language_translation_prompt(simplified_text, target_language, language_name)
-            translated_text = await self._generate_response(prompt, model)
-            print(f"✅ TRANSLATION: Erfolgreich mit {model}")
-            confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
+            if self.use_ovh_only:
+                print(f"🌐 TRANSLATION: Verwende OVH {self.ovh_client.translation_model} für Sprache: {language_name}")
+                translated_text, confidence = await self.ovh_client.translate_to_language(
+                    simplified_text=simplified_text,
+                    target_language=language_name
+                )
+                print(f"✅ TRANSLATION: Erfolgreich mit OVH API")
+            else:
+                # Use configured translation model for local Ollama
+                if model is None:
+                    model = self.translation_model
+                
+                print(f"🌐 TRANSLATION: Verwende Model: {model} für Sprache: {language_name}")
+                prompt = self._get_language_translation_prompt(simplified_text, target_language, language_name)
+                translated_text = await self._generate_response(prompt, model)
+                print(f"✅ TRANSLATION: Erfolgreich mit {model}")
+                confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
             
             return translated_text, confidence
             
@@ -509,8 +537,11 @@ ORIGINAL TEXT (bereits vereinfacht):
     async def _ai_preprocess_text(self, text: str, model: str = None) -> str:
         """
         Nutzt KI um nur wirklich irrelevante Formatierungen zu entfernen
-        Verwendet konfiguriertes Preprocessing-Model auf GPU-Instanz
+        (Only used in legacy Ollama mode)
         """
+        if self.use_ovh_only:
+            # Should not be called in OVH-only mode
+            return await self.ovh_client.preprocess_medical_text(text)
         
         # Use configured preprocessing model
         if model is None:
