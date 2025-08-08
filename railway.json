@@ -6,7 +6,9 @@
   },
   "deploy": {
     "numReplicas": 1,
-    "healthcheckPath": "/api/health/simple",
-    "restartPolicyType": "ALWAYS"
+    "healthcheckPath": "/health",
+    "healthcheckTimeout": 300,
+    "restartPolicyType": "ALWAYS",
+    "startCommand": "/usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf"
   }
 }
