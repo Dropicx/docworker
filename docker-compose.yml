@@ -38,7 +38,7 @@ services:
     ports:
       - "9121:9121"  # Direkt erreichbar für lokale Entwicklung
 
-  # GPU Ollama Instance - for main processing
+  # GPU Ollama Instance - for all local processing (preprocessing + translation)
   ollama-gpu:
     volumes:
       - ./ollama/ollama-gpu:/root/.ollama
@@ -63,27 +63,6 @@ services:
             - driver: nvidia
               count: all 
               capabilities: [gpu]
-
-  # CPU Ollama Instance - for preprocessing
-  ollama-cpu:
-    volumes:
-      - ./ollama/ollama-cpu:/root/.ollama
-      - ./ollama/ollama-startup-cpu.sh:/startup.sh:ro
-    container_name: ollama-cpu
-    pull_policy: always
-    tty: true
-    restart: unless-stopped
-    image: docker.io/ollama/ollama:latest
-    entrypoint: ["/bin/sh", "/startup.sh"]
-    ports:
-      - 7870:11434  # Different external port
-    environment:
-      - OLLAMA_KEEP_ALIVE=24h
-      - OLLAMA_HOST=0.0.0.0:11434
-      - CUDA_VISIBLE_DEVICES=""  # Disable GPU completely
-      - OLLAMA_NUM_GPU=0  # Force CPU only
-    networks:
-      - medical-translator
 
 networks:
   medical-translator:

@@ -13,14 +13,12 @@ logger = logging.getLogger(__name__)
 
 class OllamaClient:
     
-    def __init__(self, base_url: Optional[str] = None, cpu_url: Optional[str] = None, use_ovh_for_main: bool = True):
+    def __init__(self, base_url: Optional[str] = None, use_ovh_for_main: bool = True):
         # Container-zu-Container Kommunikation in Production
         if os.getenv("ENVIRONMENT") == "production":
-            self.base_url = base_url or "http://ollama-gpu:11434"  # GPU instance
-            self.cpu_url = cpu_url or "http://ollama-cpu:11434"    # CPU instance
+            self.base_url = base_url or "http://ollama-gpu:11434"  # GPU instance only
         else:
-            self.base_url = base_url or "http://localhost:7869"   # GPU instance
-            self.cpu_url = cpu_url or "http://localhost:7870"    # CPU instance
+            self.base_url = base_url or "http://localhost:7869"   # GPU instance only
             
         self.timeout = 300  # 5 Minuten Timeout
         
@@ -334,41 +332,6 @@ ORIGINAL MEDIZINISCHER TEXT:
 
 ÜBERSETZUNG IN EINFACHER SPRACHE:"""
     
-    async def _generate_response_cpu(self, prompt: str, model: str) -> str:
-        """
-        Generiert Antwort über CPU-Instanz (für Preprocessing)
-        """
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                payload = {
-                    "model": model,
-                    "prompt": prompt,
-                    "stream": False,
-                    "options": {
-                        "temperature": 0.3,
-                        "top_p": 0.9,
-                        "num_predict": 4000,
-                        "repeat_penalty": 1.1,
-                        "seed": 42
-                    }
-                }
-                
-                print(f"🖥️ CPU: Generiere mit Model: {model}")
-                response = await client.post(
-                    f"{self.cpu_url}/api/generate",
-                    json=payload
-                )
-                
-                if response.status_code == 200:
-                    result = response.json()
-                    return result.get("response", "Keine Antwort erhalten").strip()
-                else:
-                    print(f"❌ Ollama CPU API Error: {response.status_code} - {response.text}")
-                    return f"Fehler bei der Ollama-Anfrage: {response.status_code}"
-                    
-        except Exception as e:
-            print(f"❌ Ollama CPU-Generation Fehler: {e}")
-            return f"Fehler bei der KI-Übersetzung: {str(e)}"
     
     async def _generate_response(self, prompt: str, model: str) -> str:
         """Generiert Antwort von Ollama GPU-Instanz"""
@@ -622,14 +585,14 @@ ORIGINAL TEXT (bereits vereinfacht):
     async def _ai_preprocess_text(self, text: str, model: str = None) -> str:
         """
         Nutzt KI um nur wirklich irrelevante Formatierungen zu entfernen
-        Verwendet konfiguriertes Preprocessing-Model auf CPU-Instanz
+        Verwendet konfiguriertes Preprocessing-Model auf GPU-Instanz
         """
         
         # Use configured preprocessing model
         if model is None:
             model = self.preprocessing_model
         
-        logger.info(f"Starting preprocessing with {model} on CPU instance")
+        logger.info(f"Starting preprocessing with {model} on GPU instance")
         
         preprocess_prompt = f"""Du bist ein medizinischer Dokumentenbereiniger für Datenschutz und Übersichtlichkeit.
 
@@ -683,9 +646,9 @@ ORIGINALTEXT:
 
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
-        # Verwende CPU-Instanz für Preprocessing
-        print(f"🔧 PREPROCESSING: Verwende Model: {model} (CPU-Instanz)")
-        cleaned_text = await self._generate_response_cpu(preprocess_prompt, model)
+        # Verwende GPU-Instanz für Preprocessing (schneller!)
+        print(f"🔧 PREPROCESSING: Verwende Model: {model} (GPU-Instanz)")
+        cleaned_text = await self._generate_response(preprocess_prompt, model)
         print(f"✅ PREPROCESSING: Erfolgreich mit {model}")
         
         # Nachbearbeitung: Entferne nur DOPPELTE Bullet Points und unnötige Nummerierungen

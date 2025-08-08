@@ -1,7 +1,10 @@
 #!/bin/sh
 
-# Ollama GPU Instance - Main Processing
-# This instance runs gpt-oss:20b on GPU for main translation
+# Ollama GPU Instance - All Local Processing
+# This instance handles:
+# - Preprocessing with gpt-oss:20b
+# - Language translation with gemma3-translator:4b
+# All models run on GPU for maximum performance
 
 echo "🚀 Starting Ollama GPU service..."
 
@@ -31,7 +34,7 @@ fi
 
 echo "🔍 Setting up GPU models..."
 
-# Primary model for main processing - USES GPU
+# Primary model for preprocessing and fallback main processing - USES GPU
 MODEL="gpt-oss:20b"
 if ! ollama list 2>/dev/null | grep -q "$MODEL"; then
     echo "📥 Pulling primary GPU model: $MODEL"
@@ -65,8 +68,9 @@ ollama list
 
 echo ""
 echo "🎯 Ollama GPU Instance Ready!"
-echo "   Primary model: gpt-oss:20b (GPU)"
-echo "   Translation model: zongwei/gemma3-translator:4b"
+echo "   Preprocessing: gpt-oss:20b (GPU)"
+echo "   Translation: zongwei/gemma3-translator:4b (GPU)"
+echo "   Main processing: OVH Meta-Llama-3.3-70B (remote)"
 echo "   Listening on port 11434"
 
 # Keep service running

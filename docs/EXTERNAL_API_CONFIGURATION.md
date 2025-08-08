@@ -16,11 +16,11 @@ This branch is configured to use a hybrid approach for medical document translat
 └────────┬────────┘
          │
          ▼
-┌─────────────────────────┐
-│ Preprocessing (Local)   │
-│ Model: gpt-oss:20b      │
-│ Purpose: Clean & Extract│
-└────────┬────────────────┘
+┌───────────────────────────┐
+│ Preprocessing (Local GPU)   │
+│ Model: gpt-oss:20b          │
+│ Purpose: Clean & Extract    │
+└────────┬──────────────────┘
          │
          ▼
 ┌─────────────────────────┐
@@ -30,11 +30,11 @@ This branch is configured to use a hybrid approach for medical document translat
 └────────┬────────────────┘
          │
          ▼
-┌─────────────────────────┐
-│ Translation (Local)     │
-│ Model: gemma3-translator│
-│ Purpose: Language Trans │
-└────────┬────────────────┘
+┌───────────────────────────┐
+│ Translation (Local GPU)     │
+│ Model: gemma3-translator    │
+│ Purpose: Language Trans     │
+└────────┬──────────────────┘
          │
          ▼
 ┌─────────────────┐
@@ -128,10 +128,10 @@ curl "http://localhost:9122/api/process/{processing_id}/result"
 
 ## Model Details
 
-### gpt-oss:20b (Local - Preprocessing)
+### gpt-oss:20b (Local GPU - Preprocessing)
 - **Purpose**: Text cleaning, anonymization, format removal
-- **Location**: Local Ollama CPU instance
-- **Benefits**: Fast preprocessing, data privacy
+- **Location**: Local Ollama GPU instance
+- **Benefits**: Fast preprocessing, data privacy, GPU acceleration
 
 ### Meta-Llama-3.3-70B-Instruct (OVH API - Main)
 - **Purpose**: Medical text simplification
@@ -155,14 +155,16 @@ If OVH API is unavailable, the system automatically falls back to local models:
 
 ## Performance Considerations
 
-- **Preprocessing**: ~1-2 seconds (local)
+- **Preprocessing**: ~0.5-1 seconds (local GPU)
 - **Main Processing**: ~3-5 seconds (OVH API)
-- **Translation**: ~1-2 seconds (local)
-- **Total Pipeline**: ~5-9 seconds
+- **Translation**: ~0.5-1 seconds (local GPU)
+- **Total Pipeline**: ~4-7 seconds
+
+> **Note**: GPU acceleration significantly improves preprocessing and translation speed compared to CPU processing.
 
 ## Cost Optimization
 
-The OVH API is only used for the main medical text processing, while preprocessing and translation use local models to minimize API costs.
+The OVH API is only used for the main medical text processing, while preprocessing and translation use local GPU-accelerated models to minimize API costs and maximize performance.
 
 ## Security
 

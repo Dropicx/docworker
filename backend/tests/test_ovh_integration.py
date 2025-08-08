@@ -78,8 +78,8 @@ async def test_ollama_models():
     return True
 
 async def test_preprocessing():
-    """Test preprocessing with local gpt-oss:20b"""
-    print("\n🔧 Testing Preprocessing with gpt-oss:20b...")
+    """Test preprocessing with local gpt-oss:20b on GPU"""
+    print("\n🔧 Testing Preprocessing with gpt-oss:20b (GPU)...")
     print("-" * 50)
     
     ollama_client = OllamaClient(use_ovh_for_main=False)
