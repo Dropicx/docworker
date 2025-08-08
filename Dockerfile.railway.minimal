@@ -16,12 +16,6 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install supervisor separately
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends supervisor && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/*
-
 # Install Node.js for building frontend
 RUN apt-get update && \
     apt-get install -y --no-install-recommends nodejs npm && \
@@ -49,11 +43,10 @@ RUN npm run build && \
 WORKDIR /app
 COPY backend/ ./backend/
 
-# Copy configs
+# Copy configs and startup script
 COPY railway/nginx.conf /etc/nginx/nginx.conf
-COPY railway/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY railway/wait-for-backend.sh /app/wait-for-backend.sh
-RUN chmod +x /app/wait-for-backend.sh
+COPY railway/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
 
 # Create necessary directories
 RUN mkdir -p /app/logs /tmp/medical-translator
@@ -67,9 +60,5 @@ RUN apt-get remove -y nodejs npm && \
 # Expose port
 EXPOSE 8080
 
-# Health check - wait for backend before declaring healthy
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:8080/health || exit 1
-
-# Start services
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+# Start services with our script
+CMD ["/bin/bash", "/app/start.sh"]
