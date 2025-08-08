@@ -72,12 +72,19 @@ app.add_middleware(
     allowed_hosts=["*"]  # In Docker-Umgebung weniger restriktiv
 )
 
-# CORS Middleware
+# CORS Middleware - Railway compatible
+allowed_origins = ["*"] if os.getenv("ENVIRONMENT") == "production" else [
+    "http://localhost:9121", 
+    "http://127.0.0.1:9121",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:9121", "http://127.0.0.1:9121"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -91,13 +98,15 @@ async def add_security_headers(request: Request, call_next):
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    response.headers["Content-Security-Policy"] = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
-        "style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data:; "
-        "connect-src 'self' http://localhost:11434"
-    )
+    # Relaxed CSP for Railway deployment
+    if os.getenv("ENVIRONMENT") != "production":
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self' 'unsafe-inline'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data:; "
+            "connect-src 'self'"
+        )
     
     return response
 
@@ -116,9 +125,13 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
+    
+    # Railway provides PORT env variable
+    port = int(os.getenv("PORT", "9122"))
+    
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
-        port=9122,
+        port=port,
         reload=os.getenv("ENVIRONMENT") == "development"
     ) 

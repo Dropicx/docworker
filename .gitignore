@@ -190,6 +190,12 @@ $RECYCLE.BIN/
 # Project Specific
 # ===========================
 
+# Ollama-related files (removed from Railway deployment)
+ollama/
+ollama-startup-*.sh
+ollama-gpu/
+ollama-cpu/
+
 # Logs
 logs/
 *.log

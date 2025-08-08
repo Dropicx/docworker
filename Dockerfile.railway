@@ -1,0 +1,57 @@
+# Multi-stage build for Railway deployment
+FROM python:3.11-slim as backend-builder
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy backend requirements
+WORKDIR /backend
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Frontend build stage
+FROM node:18-alpine as frontend-builder
+
+WORKDIR /frontend
+COPY frontend/package*.json ./
+RUN npm ci --only=production
+
+COPY frontend/ ./
+RUN npm run build
+
+# Final stage
+FROM python:3.11-slim
+
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y \
+    tesseract-ocr \
+    tesseract-ocr-deu \
+    poppler-utils \
+    curl \
+    nginx \
+    supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy Python packages from builder
+COPY --from=backend-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=backend-builder /usr/local/bin /usr/local/bin
+
+# Copy application code
+WORKDIR /app
+COPY backend/ ./backend/
+COPY --from=frontend-builder /frontend/build ./frontend/build
+
+# Copy nginx and supervisor configs
+COPY railway/nginx.conf /etc/nginx/nginx.conf
+COPY railway/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Create necessary directories
+RUN mkdir -p /app/logs /tmp/medical-translator
+
+# Expose port (Railway will assign PORT env variable)
+EXPOSE 8080
+
+# Use supervisor to run both nginx and uvicorn
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
