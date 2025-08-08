@@ -6,13 +6,14 @@ import logging
 from typing import Optional, Dict, Any, AsyncGenerator, Tuple
 import re
 from app.models.document import SupportedLanguage, LANGUAGE_NAMES
+from app.services.ovh_client import OVHClient
 
 # Setup logger
 logger = logging.getLogger(__name__)
 
 class OllamaClient:
     
-    def __init__(self, base_url: Optional[str] = None, cpu_url: Optional[str] = None):
+    def __init__(self, base_url: Optional[str] = None, cpu_url: Optional[str] = None, use_ovh_for_main: bool = True):
         # Container-zu-Container Kommunikation in Production
         if os.getenv("ENVIRONMENT") == "production":
             self.base_url = base_url or "http://ollama-gpu:11434"  # GPU instance
@@ -22,6 +23,16 @@ class OllamaClient:
             self.cpu_url = cpu_url or "http://localhost:7870"    # CPU instance
             
         self.timeout = 300  # 5 Minuten Timeout
+        
+        # Model configuration from environment
+        self.preprocessing_model = os.getenv("OLLAMA_PREPROCESSING_MODEL", "gpt-oss:20b")
+        self.translation_model = os.getenv("OLLAMA_TRANSLATION_MODEL", "zongwei/gemma3-translator:4b")
+        
+        # OVH client for main processing
+        self.use_ovh_for_main = use_ovh_for_main
+        if self.use_ovh_for_main:
+            self.ovh_client = OVHClient()
+            logger.info("✅ OVH API client initialized for main processing")
         
     async def check_connection(self) -> bool:
         """Überprüft Verbindung zu Ollama"""
@@ -50,7 +61,7 @@ class OllamaClient:
         self, 
         text: str, 
         document_type: str = "general",
-        model: str = "gpt-oss:20b"  # MANDATORY: Always use gpt-oss:20b for document analysis
+        model: str = None  # Will use configured models
     ) -> tuple[str, str, float, str]:
         """
         Übersetzt medizinischen Text in einfache Sprache
@@ -59,15 +70,22 @@ class OllamaClient:
             tuple[str, str, float, str]: (translated_text, doc_type, confidence, cleaned_original)
         """
         try:
-            # SCHRITT 1: Intelligente KI-basierte Vorverarbeitung
-            print("🧠 Schritt 1: KI extrahiert medizinisch relevante Informationen...")
-            cleaned_text = await self._ai_preprocess_text(text, model)
+            # SCHRITT 1: Intelligente KI-basierte Vorverarbeitung mit lokalem gpt-oss:20b
+            print(f"🧠 Schritt 1: KI extrahiert medizinisch relevante Informationen mit {self.preprocessing_model}...")
+            cleaned_text = await self._ai_preprocess_text(text, self.preprocessing_model)
             
-            # SCHRITT 2: Hauptübersetzung - EINE universelle Methode für ALLE Dokumente
-            print(f"🤖 Schritt 2: Übersetze in einfache Sprache mit Model: {model}")
-            prompt = self._get_universal_translation_prompt(cleaned_text)
-            translated_text = await self._generate_response(prompt, model)
-            print(f"✅ Hauptübersetzung erfolgreich mit {model}")
+            # SCHRITT 2: Hauptübersetzung - Verwende OVH API wenn aktiviert
+            if self.use_ovh_for_main and self.ovh_client:
+                print(f"🤖 Schritt 2: Übersetze mit OVH Meta-Llama-3.3-70B-Instruct")
+                translated_text, doc_type, confidence, _ = await self.ovh_client.translate_medical_document(cleaned_text)
+                print(f"✅ Hauptübersetzung erfolgreich mit OVH API")
+            else:
+                # Fallback auf lokales Modell wenn OVH nicht verfügbar
+                print(f"🤖 Schritt 2: Übersetze in einfache Sprache mit lokalem Model: {self.preprocessing_model}")
+                prompt = self._get_universal_translation_prompt(cleaned_text)
+                translated_text = await self._generate_response(prompt, self.preprocessing_model)
+                print(f"✅ Hauptübersetzung erfolgreich mit {self.preprocessing_model}")
+                confidence = await self._evaluate_translation_quality(cleaned_text, translated_text)
             
             # SCHRITT 3: Qualitätskontrolle - prüfe ob Übersetzung sinnvoll ist
             if not translated_text or len(translated_text) < 100:
@@ -78,10 +96,14 @@ class OllamaClient:
 {cleaned_text}
 
 Einfache Übersetzung:"""
-                translated_text = await self._generate_response(simple_prompt, model)
+                if self.use_ovh_for_main and self.ovh_client:
+                    translated_text = await self.ovh_client.process_medical_text(cleaned_text, simple_prompt)
+                else:
+                    translated_text = await self._generate_response(simple_prompt, self.preprocessing_model)
             
-            # SCHRITT 4: Qualität bewerten
-            confidence = await self._evaluate_translation_quality(cleaned_text, translated_text)
+            # SCHRITT 4: Qualität bewerten wenn nicht bereits von OVH bewertet
+            if not self.use_ovh_for_main or not self.ovh_client:
+                confidence = await self._evaluate_translation_quality(cleaned_text, translated_text)
             
             # Gebe zurück - "universal" als einheitlicher Dokumenttyp
             return translated_text, "universal", confidence, cleaned_text
@@ -489,9 +511,19 @@ ORIGINAL MEDIZINISCHER TEXT:
     async def generate_streaming(
         self, 
         prompt: str, 
-        model: str = "gpt-oss:20b"  # MANDATORY: Default to gpt-oss:20b
+        model: str = None  # Will use configured model
     ) -> AsyncGenerator[str, None]:
         """Streaming-Generation für Live-Updates"""
+        # Use configured model if not specified
+        if model is None:
+            model = self.preprocessing_model
+        
+        # If OVH is enabled for main processing, use OVH streaming
+        if self.use_ovh_for_main and self.ovh_client:
+            async for chunk in self.ovh_client.generate_streaming(prompt):
+                yield chunk
+            return
+        
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
                 payload = {
@@ -530,7 +562,7 @@ ORIGINAL MEDIZINISCHER TEXT:
         self,
         simplified_text: str,
         target_language: SupportedLanguage,
-        model: str = "zongwei/gemma3-translator:4b"  # Use gemma3-translator for language translation
+        model: str = None  # Will use configured translation model
     ) -> tuple[str, float]:
         """
         Übersetzt vereinfachten Text in eine andere Sprache
@@ -545,6 +577,10 @@ ORIGINAL MEDIZINISCHER TEXT:
             tuple[str, float]: (translated_text, confidence)
         """
         try:
+            # Use configured translation model
+            if model is None:
+                model = self.translation_model
+            
             language_name = LANGUAGE_NAMES.get(target_language, target_language.value)
             
             print(f"🌐 TRANSLATION: Verwende Model: {model} für Sprache: {language_name}")
@@ -583,16 +619,17 @@ ORIGINAL TEXT (bereits vereinfacht):
 
 ÜBERSETZUNG IN {language_name.upper()}:""" 
 
-    async def _ai_preprocess_text(self, text: str, model: str = "gpt-oss:20b") -> str:
+    async def _ai_preprocess_text(self, text: str, model: str = None) -> str:
         """
         Nutzt KI um nur wirklich irrelevante Formatierungen zu entfernen
-        Verwendet gpt-oss:20b auf CPU-Instanz für Preprocessing
+        Verwendet konfiguriertes Preprocessing-Model auf CPU-Instanz
         """
         
-        # Verwende gpt-oss:20b auf CPU-Instanz für besseres Preprocessing
-        preprocessing_model = "gpt-oss:20b"
+        # Use configured preprocessing model
+        if model is None:
+            model = self.preprocessing_model
         
-        logger.info(f"Starting preprocessing with {preprocessing_model} on CPU instance")
+        logger.info(f"Starting preprocessing with {model} on CPU instance")
         
         preprocess_prompt = f"""Du bist ein medizinischer Dokumentenbereiniger für Datenschutz und Übersichtlichkeit.
 
@@ -647,9 +684,9 @@ ORIGINALTEXT:
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
         # Verwende CPU-Instanz für Preprocessing
-        print(f"🔧 PREPROCESSING: Verwende Model: {preprocessing_model} (CPU-Instanz)")
-        cleaned_text = await self._generate_response_cpu(preprocess_prompt, preprocessing_model)
-        print(f"✅ PREPROCESSING: Erfolgreich mit {preprocessing_model}")
+        print(f"🔧 PREPROCESSING: Verwende Model: {model} (CPU-Instanz)")
+        cleaned_text = await self._generate_response_cpu(preprocess_prompt, model)
+        print(f"✅ PREPROCESSING: Erfolgreich mit {model}")
         
         # Nachbearbeitung: Entferne nur DOPPELTE Bullet Points und unnötige Nummerierungen
         import re

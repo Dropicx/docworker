@@ -30,7 +30,8 @@ limiter = Limiter(key_func=get_remote_address)
 
 # Service-Instanzen
 text_extractor = TextExtractor()
-ollama_client = OllamaClient()
+# Initialize with OVH support enabled
+ollama_client = OllamaClient(use_ovh_for_main=True)
 
 @router.post("/process/{processing_id}")
 @limiter.limit("3/minute")  # Maximal 3 Verarbeitungen pro Minute
