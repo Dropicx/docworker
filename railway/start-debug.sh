@@ -21,13 +21,17 @@ echo "Directory contents:"
 ls -la /app/
 
 echo ""
-echo "Checking for frontend build:"
-if [ -d "/app/frontend/build" ]; then
-    echo "✓ Frontend build directory exists"
+echo "Checking for frontend dist:"
+if [ -d "/app/frontend/dist" ]; then
+    echo "✓ Frontend dist directory exists"
+    echo "Contents:"
+    ls -la /app/frontend/dist/ | head -20
+elif [ -d "/app/frontend/build" ]; then
+    echo "⚠ Found 'build' directory instead of 'dist'"
     echo "Contents:"
     ls -la /app/frontend/build/ | head -20
 else
-    echo "✗ Frontend build directory NOT FOUND!"
+    echo "✗ Frontend dist directory NOT FOUND!"
     echo "Checking /app/frontend:"
     ls -la /app/frontend/ 2>/dev/null || echo "Frontend directory doesn't exist"
 fi
@@ -53,14 +57,17 @@ create_nginx_config() {
     echo "[$(date)] Creating nginx configuration for port $RAILWAY_PORT..."
     
     # Check if frontend files exist and set the correct path
-    if [ -d "/app/frontend/build" ] && [ -f "/app/frontend/build/index.html" ]; then
+    if [ -d "/app/frontend/dist" ] && [ -f "/app/frontend/dist/index.html" ]; then
+        FRONTEND_ROOT="/app/frontend/dist"
+        echo "Using frontend root: $FRONTEND_ROOT (Vite dist)"
+    elif [ -d "/app/frontend/build" ] && [ -f "/app/frontend/build/index.html" ]; then
         FRONTEND_ROOT="/app/frontend/build"
-        echo "Using frontend root: $FRONTEND_ROOT"
+        echo "Using frontend root: $FRONTEND_ROOT (legacy build)"
     elif [ -d "/app/frontend" ] && [ -f "/app/frontend/index.html" ]; then
         FRONTEND_ROOT="/app/frontend"
-        echo "Using frontend root: $FRONTEND_ROOT (no build subdirectory)"
+        echo "Using frontend root: $FRONTEND_ROOT (no subdirectory)"
     else
-        FRONTEND_ROOT="/app/frontend/build"
+        FRONTEND_ROOT="/app/frontend/dist"
         echo "WARNING: Frontend files not found, using default path: $FRONTEND_ROOT"
         # Create a minimal index.html for debugging
         mkdir -p $FRONTEND_ROOT

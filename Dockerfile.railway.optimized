@@ -30,11 +30,11 @@ RUN pip install --no-cache-dir -r backend/requirements.txt
 # Copy backend code
 COPY backend/ ./backend/
 
-# Copy built frontend from builder stage (no Node.js needed!)
-COPY --from=frontend-builder /frontend/build ./frontend/build
+# Copy built frontend from builder stage (Vite outputs to 'dist' not 'build'!)
+COPY --from=frontend-builder /frontend/dist ./frontend/dist
 
 # Verify frontend files were copied
-RUN ls -la /app/frontend/build/ | head -10 || echo "Warning: Frontend build verification failed"
+RUN ls -la /app/frontend/dist/ | head -10 || echo "Warning: Frontend dist verification failed"
 
 # Copy configs and startup script
 COPY railway/nginx-base.conf /etc/nginx/nginx.conf

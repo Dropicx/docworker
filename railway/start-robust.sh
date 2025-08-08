@@ -67,9 +67,9 @@ server {
         add_header Content-Type text/plain;
     }
     
-    # Frontend
+    # Frontend (Vite outputs to 'dist')
     location / {
-        root /app/frontend/build;
+        root /app/frontend/dist;
         try_files \$uri \$uri/ /index.html;
     }
     
