@@ -259,14 +259,27 @@ async def main():
     print("🧪 DOCTRANSLATOR CONFIGURATION TEST")
     print("=" * 60)
     
-    # Load environment variables
+    # Load environment variables - try multiple locations
     from dotenv import load_dotenv
-    env_path = Path(__file__).parent.parent.parent / ".env"
-    if env_path.exists():
-        load_dotenv(env_path)
-        print(f"✅ Loaded .env from: {env_path}")
-    else:
-        print(f"⚠️  No .env file found at: {env_path}")
+    
+    # Try different .env locations depending on environment
+    possible_env_paths = [
+        Path("/app/.env"),  # Inside container
+        Path(__file__).parent.parent / ".env",  # Backend directory
+        Path(__file__).parent.parent.parent / ".env",  # Project root
+    ]
+    
+    env_loaded = False
+    for env_path in possible_env_paths:
+        if env_path.exists():
+            load_dotenv(env_path)
+            print(f"✅ Loaded .env from: {env_path}")
+            env_loaded = True
+            break
+    
+    if not env_loaded:
+        print(f"⚠️  No .env file found. Tried: {', '.join(str(p) for p in possible_env_paths)}")
+        print("   Using environment variables if already set...")
     
     # Display configuration
     print("\n📋 Current Configuration:")

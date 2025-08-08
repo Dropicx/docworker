@@ -8,9 +8,12 @@ services:
     environment:
       - ENVIRONMENT=production
       - PYTHONPATH=/app
+    env_file:
+      - ./.env
     volumes:
       - /tmp/medical-translator:/tmp
       - ./logs:/app/logs
+      - ./.env:/app/.env:ro
     networks:
       - medical-translator
     ports:
