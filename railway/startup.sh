@@ -1,7 +1,26 @@
 #!/bin/bash
 set -e
 
-echo "Starting DocTranslator services..."
+echo "🚀 Starting DocTranslator services on Railway..."
+echo "================================================"
+
+# Debug: Print environment variables (masking sensitive values)
+echo "📊 Environment Variables Check:"
+echo "   USE_OVH_ONLY: ${USE_OVH_ONLY:-not set}"
+echo "   OVH_AI_BASE_URL: ${OVH_AI_BASE_URL:-not set}"
+echo "   OVH_MAIN_MODEL: ${OVH_MAIN_MODEL:-not set}"
+
+# Check if OVH token is set (don't print the actual value)
+if [ -n "$OVH_AI_ENDPOINTS_ACCESS_TOKEN" ]; then
+    echo "   OVH_AI_ENDPOINTS_ACCESS_TOKEN: ✅ Set (${#OVH_AI_ENDPOINTS_ACCESS_TOKEN} chars)"
+else
+    echo "   OVH_AI_ENDPOINTS_ACCESS_TOKEN: ❌ NOT SET - API will fail!"
+fi
+
+echo "   ENVIRONMENT: ${ENVIRONMENT:-not set}"
+echo "   PORT: ${PORT:-not set}"
+echo "   RAILWAY_ENVIRONMENT: ${RAILWAY_ENVIRONMENT:-not set}"
+echo "================================================"
 
 # Create necessary directories
 mkdir -p /app/logs /tmp/medical-translator

@@ -169,6 +169,47 @@ async def detailed_health_check():
             "timestamp": datetime.now()
         }
 
+@router.get("/health/env-debug")
+async def debug_environment():
+    """
+    Debug endpoint to check environment variables (Railway deployment helper)
+    """
+    import os
+    
+    # Get environment variables (mask sensitive values)
+    env_vars = {
+        "USE_OVH_ONLY": os.getenv("USE_OVH_ONLY", "not set"),
+        "OVH_AI_BASE_URL": os.getenv("OVH_AI_BASE_URL", "not set"),
+        "OVH_MAIN_MODEL": os.getenv("OVH_MAIN_MODEL", "not set"),
+        "OVH_PREPROCESSING_MODEL": os.getenv("OVH_PREPROCESSING_MODEL", "not set"),
+        "OVH_TRANSLATION_MODEL": os.getenv("OVH_TRANSLATION_MODEL", "not set"),
+        "OVH_AI_ENDPOINTS_ACCESS_TOKEN_SET": "Yes" if os.getenv("OVH_AI_ENDPOINTS_ACCESS_TOKEN") else "No",
+        "OVH_TOKEN_LENGTH": len(os.getenv("OVH_AI_ENDPOINTS_ACCESS_TOKEN", "")) if os.getenv("OVH_AI_ENDPOINTS_ACCESS_TOKEN") else 0,
+        "ENVIRONMENT": os.getenv("ENVIRONMENT", "not set"),
+        "PORT": os.getenv("PORT", "not set"),
+        "RAILWAY_ENVIRONMENT": os.getenv("RAILWAY_ENVIRONMENT", "not set"),
+        "RAILWAY_PROJECT_ID": os.getenv("RAILWAY_PROJECT_ID", "not set"),
+        "RAILWAY_SERVICE_ID": os.getenv("RAILWAY_SERVICE_ID", "not set"),
+    }
+    
+    # Test OVH connection
+    connection_test = {}
+    try:
+        from app.services.ovh_client import OVHClient
+        ovh_client = OVHClient()
+        connection_test["ovh_connection"] = await ovh_client.check_connection()
+        connection_test["ovh_error"] = None
+    except Exception as e:
+        connection_test["ovh_connection"] = False
+        connection_test["ovh_error"] = str(e)
+    
+    return {
+        "environment_variables": env_vars,
+        "connection_test": connection_test,
+        "timestamp": datetime.now(),
+        "note": "This is a debug endpoint for Railway deployment. Remove in production."
+    }
+
 @router.get("/health/dependencies")
 async def check_dependencies():
     """

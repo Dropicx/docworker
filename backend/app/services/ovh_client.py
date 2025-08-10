@@ -22,8 +22,16 @@ class OVHClient:
         self.preprocessing_model = os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407")
         self.translation_model = os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
         
+        # Debug logging for environment variables
+        logger.info(f"🔍 OVH Client Initialization:")
+        logger.info(f"   - Access Token: {'✅ Set' if self.access_token else '❌ NOT SET'}")
+        logger.info(f"   - Token Length: {len(self.access_token) if self.access_token else 0} chars")
+        logger.info(f"   - Base URL: {self.base_url}")
+        logger.info(f"   - Main Model: {self.main_model}")
+        logger.info(f"   - USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}")
+        
         if not self.access_token:
-            logger.warning("⚠️ OVH_AI_ENDPOINTS_ACCESS_TOKEN not set in environment")
+            logger.error("❌ OVH_AI_ENDPOINTS_ACCESS_TOKEN not set in environment - API calls will fail!")
         
         # Initialize OpenAI client for OVH
         self.client = AsyncOpenAI(
@@ -37,10 +45,14 @@ class OVHClient:
     async def check_connection(self) -> bool:
         """Check connection to OVH AI Endpoints"""
         if not self.access_token:
-            logger.error("❌ OVH API token not configured")
+            logger.error("❌ OVH API token not configured - OVH_AI_ENDPOINTS_ACCESS_TOKEN is empty or not set")
+            logger.error("   Please ensure the environment variable is set in Railway")
             return False
             
         try:
+            logger.info(f"🔄 Testing OVH connection to {self.base_url}")
+            logger.info(f"   Using model: {self.main_model}")
+            
             # Try a simple completion to test connection
             response = await self.client.chat.completions.create(
                 model=self.main_model,
@@ -49,9 +61,22 @@ class OVHClient:
                 temperature=0
             )
             logger.info("✅ OVH AI Endpoints connection successful")
+            logger.info(f"   Response received: {response.choices[0].message.content[:50] if response.choices else 'No response'}")
             return True
         except Exception as e:
-            logger.error(f"❌ OVH AI Endpoints connection failed: {e}")
+            error_msg = str(e)
+            logger.error(f"❌ OVH AI Endpoints connection failed: {error_msg}")
+            
+            # Provide specific guidance based on error
+            if "401" in error_msg or "unauthorized" in error_msg.lower():
+                logger.error("   → Invalid API token. Please check OVH_AI_ENDPOINTS_ACCESS_TOKEN in Railway")
+            elif "404" in error_msg:
+                logger.error(f"   → Model '{self.main_model}' not found. Check OVH_MAIN_MODEL setting")
+            elif "connection" in error_msg.lower() or "timeout" in error_msg.lower():
+                logger.error(f"   → Cannot reach {self.base_url}. Check OVH_AI_BASE_URL setting")
+            else:
+                logger.error(f"   → Unexpected error. Check Railway logs for details")
+            
             return False
     
     async def process_medical_text_with_prompt(
