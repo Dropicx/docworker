@@ -24,7 +24,21 @@ export PYTHONUNBUFFERED=1
 # Function to start backend with retries
 start_backend() {
     echo "[$(date)] Starting backend service..."
+    
+    # Log environment variables for debugging
+    echo "[$(date)] Environment check for backend:"
+    echo "  OVH_AI_ENDPOINTS_ACCESS_TOKEN: ${OVH_AI_ENDPOINTS_ACCESS_TOKEN:+[SET]}"
+    echo "  OVH_AI_BASE_URL: ${OVH_AI_BASE_URL:-not set}"
+    echo "  USE_OVH_ONLY: ${USE_OVH_ONLY:-not set}"
+    echo "  PYTHONPATH: ${PYTHONPATH:-not set}"
+    
     cd /app/backend
+    
+    # Export environment variables explicitly
+    export OVH_AI_ENDPOINTS_ACCESS_TOKEN="${OVH_AI_ENDPOINTS_ACCESS_TOKEN}"
+    export OVH_AI_BASE_URL="${OVH_AI_BASE_URL}"
+    export USE_OVH_ONLY="true"
+    export PYTHONPATH="/app/backend:${PYTHONPATH}"
     
     # Try to start backend
     python -m uvicorn app.main:app \
@@ -43,6 +57,15 @@ start_backend() {
     
     if kill -0 $BACKEND_PID 2>/dev/null; then
         echo "[$(date)] Backend is running"
+        # Test if backend responds
+        sleep 2
+        if curl -s http://127.0.0.1:9122/api/health/simple > /dev/null 2>&1; then
+            echo "[$(date)] Backend health check passed!"
+        else
+            echo "[$(date)] Backend is running but health check failed"
+            echo "[$(date)] Backend logs:"
+            tail -20 /app/logs/backend.log 2>/dev/null || echo "No logs available"
+        fi
         return 0
     else
         echo "[$(date)] Backend failed to start. Logs:"
@@ -74,8 +97,8 @@ server {
     }
     
     # Backend API with error handling
-    location /api {
-        proxy_pass http://127.0.0.1:9122;
+    location /api/ {
+        proxy_pass http://127.0.0.1:9122/api/;
         proxy_http_version 1.1;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
@@ -90,6 +113,22 @@ server {
         # If backend is down, return service unavailable
         proxy_intercept_errors on;
         error_page 502 503 504 = @backend_down;
+    }
+    
+    # Special handling for health endpoints
+    location = /api/health/env-debug {
+        proxy_pass http://127.0.0.1:9122/api/health/env-debug;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        
+        # Return debug info even if backend is down
+        proxy_intercept_errors on;
+        error_page 502 503 504 = @health_fallback;
+    }
+    
+    location @health_fallback {
+        default_type application/json;
+        return 200 '{"status":"backend_down","message":"Backend is not responding","env":{"USE_OVH_ONLY":"${USE_OVH_ONLY}","OVH_AI_BASE_URL":"${OVH_AI_BASE_URL}","OVH_TOKEN_SET":"${OVH_AI_ENDPOINTS_ACCESS_TOKEN:+true}"}}';
     }
     
     location @backend_down {

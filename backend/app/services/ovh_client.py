@@ -31,13 +31,20 @@ class OVHClient:
         logger.info(f"   - USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}")
         
         if not self.access_token:
-            logger.error("❌ OVH_AI_ENDPOINTS_ACCESS_TOKEN not set in environment - API calls will fail!")
+            logger.warning("⚠️ OVH_AI_ENDPOINTS_ACCESS_TOKEN not set - API calls will fail!")
+            logger.warning("   Please set the following environment variables in Railway:")
+            logger.warning("   - OVH_AI_ENDPOINTS_ACCESS_TOKEN=your-token-here")
+            logger.warning("   - OVH_AI_BASE_URL=https://oai.endpoints.kepler.ai.cloud.ovh.net/v1")
         
-        # Initialize OpenAI client for OVH
-        self.client = AsyncOpenAI(
-            base_url=self.base_url,
-            api_key=self.access_token or "dummy-key"  # Use dummy key if not set
-        )
+        # Initialize OpenAI client for OVH (use dummy key to prevent initialization errors)
+        try:
+            self.client = AsyncOpenAI(
+                base_url=self.base_url,
+                api_key=self.access_token or "dummy-key-not-set"  # Use dummy key if not set
+            )
+        except Exception as e:
+            logger.error(f"Failed to initialize OVH client: {e}")
+            self.client = None
         
         # Alternative HTTP client for direct API calls
         self.timeout = 300  # 5 minutes timeout
@@ -47,6 +54,10 @@ class OVHClient:
         if not self.access_token:
             logger.error("❌ OVH API token not configured - OVH_AI_ENDPOINTS_ACCESS_TOKEN is empty or not set")
             logger.error("   Please ensure the environment variable is set in Railway")
+            return False
+        
+        if not self.client:
+            logger.error("❌ OVH client not initialized")
             return False
             
         try:
