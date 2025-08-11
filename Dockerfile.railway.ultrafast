@@ -1,0 +1,55 @@
+# ULTRA-FAST Railway Dockerfile - Absolute minimum build
+# Optimized for OVH-only deployment (no OCR, no PDF processing locally)
+
+# ========================================
+# Stage 1: Frontend Build
+# ========================================
+FROM node:18-alpine AS frontend
+
+WORKDIR /app
+COPY frontend/package*.json ./
+# Use npm ci for faster, more reliable builds
+RUN npm ci --omit=dev --no-audit --no-fund
+COPY frontend/ ./
+RUN npm run build && rm -rf node_modules src
+
+# ========================================
+# Stage 2: Final Image (Ultra Minimal)
+# ========================================
+FROM python:3.11-alpine
+
+# Install only nginx (Alpine packages are much smaller)
+RUN apk add --no-cache nginx bash curl
+
+# Install minimal Python requirements
+WORKDIR /app
+COPY backend/requirements-minimal.txt ./
+RUN pip install --no-cache-dir -r requirements-minimal.txt && \
+    rm requirements-minimal.txt
+
+# Copy application
+COPY backend/ ./backend/
+COPY --from=frontend /app/dist ./frontend/dist
+COPY railway/start-robust.sh ./start.sh
+
+# Setup nginx
+RUN mkdir -p /run/nginx /app/logs /tmp/medical-translator && \
+    chmod +x start.sh && \
+    # Remove Alpine's default nginx config
+    rm -f /etc/nginx/http.d/default.conf /etc/nginx/conf.d/default.conf
+
+# Configure nginx for Alpine
+RUN echo "daemon off;" >> /etc/nginx/nginx.conf && \
+    sed -i 's|include /etc/nginx/conf.d/\*.conf;|include /etc/nginx/http.d/*.conf;|' /etc/nginx/nginx.conf
+
+# Environment
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    USE_OVH_ONLY=true
+
+EXPOSE 8080
+
+# Modify start script for Alpine paths
+RUN sed -i 's|/etc/nginx/conf.d/|/etc/nginx/http.d/|g' start.sh
+
+CMD ["/bin/bash", "./start.sh"]
