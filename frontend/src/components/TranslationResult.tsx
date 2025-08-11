@@ -238,8 +238,8 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     ul: ({children}) => {
                       // Gruppiere aufeinanderfolgende Pfeil-Unterpunkte
                       const items = React.Children.toArray(children);
-                      const groupedItems = [];
-                      let currentArrowGroup = [];
+                      const groupedItems: React.ReactNode[] = [];
+                      let currentArrowGroup: React.ReactNode[] = [];
                       
                       items.forEach((child, index) => {
                         // Check if this is an arrow item
@@ -347,9 +347,14 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                             color: '#4F46E5',
                             flexShrink: 0,
                             fontSize: '1rem',
-                            lineHeight: '1.4'
+                            lineHeight: '1.6',
+                            minWidth: '0.75rem'
                           }}>•</span>
-                          <span style={{flex: 1}}>{children}</span>
+                          <span style={{
+                            flex: 1,
+                            lineHeight: '1.6',
+                            display: 'inline-block'
+                          }}>{children}</span>
                         </li>
                       );
                     },
