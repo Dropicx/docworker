@@ -10,6 +10,25 @@ echo "- OVH_AI_ENDPOINTS_ACCESS_TOKEN: ${OVH_AI_ENDPOINTS_ACCESS_TOKEN:+[SET]}"
 echo "- PORT: ${PORT:-8080}"
 echo "- RAILWAY_ENVIRONMENT: ${RAILWAY_ENVIRONMENT:-not set}"
 
+# Check OCR capabilities
+echo ""
+echo "=== OCR Capability Check ==="
+if command -v tesseract &> /dev/null; then
+    echo "✅ Tesseract OCR is installed:"
+    tesseract --version 2>&1 | head -n 1
+    echo "   Available languages:"
+    tesseract --list-langs 2>&1 | grep -E "deu|eng" | head -5
+else
+    echo "❌ Tesseract OCR is NOT installed"
+fi
+
+if command -v pdftoppm &> /dev/null; then
+    echo "✅ Poppler-utils (PDF to image) is installed"
+else
+    echo "❌ Poppler-utils is NOT installed (PDF OCR will not work)"
+fi
+echo "==="
+
 # Railway provides PORT environment variable that MUST be used
 RAILWAY_PORT=${PORT:-8080}
 

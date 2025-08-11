@@ -25,17 +25,20 @@ from app.services.cleanup import (
 from app.services.ollama_client import OllamaClient
 import os
 
-# Use simple text extractor for Railway deployment
-if os.getenv("USE_OVH_ONLY", "false").lower() == "true":
+# Smart text extractor selection based on OCR availability
+try:
+    # Try to import the OCR-enabled text extractor first
+    from app.services.text_extractor_ocr import TextExtractorWithOCR
+    text_extractor = TextExtractorWithOCR()
+    print("📄 Using OCR-enabled text extractor", flush=True)
+except ImportError as e:
+    # Fallback to simple text extractor if OCR dependencies are missing
+    print(f"⚠️ OCR dependencies missing ({e}), using simple text extractor", flush=True)
     from app.services.text_extractor_simple import TextExtractor
-else:
-    from app.services.text_extractor import TextExtractor
+    text_extractor = TextExtractor()
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
-
-# Service-Instanzen
-text_extractor = TextExtractor()
 # Initialize with OVH-only mode (reads USE_OVH_ONLY from environment)
 ollama_client = OllamaClient()
 

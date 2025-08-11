@@ -7,7 +7,8 @@ GDPR-compliant translation service for medical documents with OVH AI integration
 - 🔒 **GDPR Compliant** - All data processing within EU
 - 🏥 **Medical Specialization** - Optimized for medical terminology
 - 🌍 **Multi-Language** - DE, EN, FR, ES, IT, PT, NL, PL support
-- 📄 **Multiple Formats** - PDF, DOCX, TXT, images (OCR)
+- 📄 **Multiple Formats** - PDF, DOCX, TXT, images
+- 🔍 **Full OCR Support** - Tesseract OCR for scanned documents (DE/EN)
 - 🚀 **OVH AI Powered** - Using Llama 3.3 70B model
 - 🔐 **Secure** - No data retention, encrypted processing
 

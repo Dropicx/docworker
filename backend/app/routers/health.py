@@ -8,6 +8,51 @@ import tempfile
 import os
 import shutil
 
+def check_ocr_capabilities() -> dict:
+    """Check OCR capabilities of the system"""
+    ocr_info = {
+        "tesseract_available": False,
+        "tesseract_version": None,
+        "languages": [],
+        "pdf2image_available": False,
+        "status": "not_available"
+    }
+    
+    try:
+        import pytesseract
+        # Check Tesseract
+        try:
+            version = pytesseract.get_tesseract_version()
+            ocr_info["tesseract_available"] = True
+            ocr_info["tesseract_version"] = str(version)
+            
+            # Get available languages
+            output = pytesseract.get_languages()
+            ocr_info["languages"] = output
+            
+            if "deu" in output and "eng" in output:
+                ocr_info["status"] = "fully_functional"
+            else:
+                ocr_info["status"] = "limited_languages"
+                
+        except Exception as e:
+            ocr_info["tesseract_available"] = False
+            ocr_info["status"] = "tesseract_error"
+            
+        # Check pdf2image
+        try:
+            from pdf2image import convert_from_bytes
+            ocr_info["pdf2image_available"] = True
+        except ImportError:
+            ocr_info["pdf2image_available"] = False
+            if ocr_info["tesseract_available"]:
+                ocr_info["status"] = "pdf_ocr_unavailable"
+                
+    except ImportError:
+        ocr_info["status"] = "dependencies_missing"
+        
+    return ocr_info
+
 router = APIRouter()
 
 @router.get("/health", response_model=HealthCheck)
@@ -115,13 +160,17 @@ async def detailed_health_check():
         # Basis-Gesundheitscheck
         basic_health = await health_check()
         
+        # OCR capability check
+        ocr_status = check_ocr_capabilities()
+        
         # Zusätzliche Details
         details = {
             "active_processes": len(processing_store),
             "temp_directory": tempfile.gettempdir(),
             "temp_space_available": shutil.disk_usage(tempfile.gettempdir()).free,
             "python_version": os.sys.version,
-            "process_id": os.getpid()
+            "process_id": os.getpid(),
+            "ocr_capabilities": ocr_status
         }
         
         # Disk Space Check

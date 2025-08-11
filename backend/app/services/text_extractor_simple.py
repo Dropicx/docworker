@@ -53,7 +53,20 @@ class TextExtractor:
                 return text.strip(), 0.7
             
             # Wenn kein Text gefunden wurde
-            return "PDF enthält keinen extrahierbaren Text. Bitte verwenden Sie ein PDF mit eingebettetem Text.", 0.1
+            return (
+                "⚠️ Dieses PDF enthält keinen extrahierbaren Text.\n\n"
+                "🔍 Mögliche Ursachen:\n"
+                "• Das PDF ist gescannt (enthält nur Bilder)\n"
+                "• Das PDF wurde aus Fotos erstellt\n"
+                "• Der Text ist als Bild eingebettet\n\n"
+                "💡 Lösung:\n"
+                "1. Öffnen Sie das PDF in Adobe Acrobat\n"
+                "2. Nutzen Sie 'OCR Text erkennen'\n"
+                "3. Speichern Sie das PDF neu\n"
+                "4. Laden Sie es erneut hoch\n\n"
+                "Alternative: Konvertieren Sie das Originaldokument (Word, etc.) direkt zu PDF.",
+                0.1
+            )
                 
         except Exception as e:
             print(f"❌ PDF-Extraktion fehlgeschlagen: {e}")
@@ -101,8 +114,15 @@ class TextExtractor:
         In production, this would need to use OVH's vision API or similar
         """
         return (
-            "Bilddateien können in dieser Railway-Deployment nicht direkt verarbeitet werden. "
-            "Bitte verwenden Sie PDF-Dokumente mit eingebettetem Text. "
-            "Für Bildverarbeitung könnte eine Integration mit OVH Vision API implementiert werden.",
+            "⚠️ OCR ist auf Railway derzeit deaktiviert.\n\n"
+            "📄 Bitte verwenden Sie:\n"
+            "• PDF-Dokumente mit eingebettetem Text (nicht gescannt)\n"
+            "• Word-Dokumente die zu PDF konvertiert wurden\n\n"
+            "❌ Nicht unterstützt:\n"
+            "• Gescannte PDFs (Bilder im PDF)\n"
+            "• JPG/PNG Bilder von Dokumenten\n"
+            "• Fotografierte Dokumente\n\n"
+            "💡 Tipp: Verwenden Sie Adobe Acrobat oder ähnliche Tools, um gescannte PDFs "
+            "mit OCR zu verarbeiten, bevor Sie sie hochladen.",
             0.0
         )

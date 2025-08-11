@@ -125,6 +125,9 @@ Einfache Übersetzung:"""
             if not self.use_ovh_only:
                 confidence = await self._evaluate_translation_quality(cleaned_text, translated_text)
             
+            # SCHRITT 5: Formatierung verbessern - Pfeile und Bullet Points
+            translated_text = self._improve_formatting(translated_text)
+            
             # Gebe zurück - "universal" als einheitlicher Dokumenttyp
             return translated_text, "universal", confidence, cleaned_text
             
@@ -503,6 +506,8 @@ ORIGINAL MEDIZINISCHER TEXT:
                 prompt = self._get_language_translation_prompt(simplified_text, target_language, language_name)
                 translated_text = await self._generate_response(prompt, model)
                 print(f"✅ TRANSLATION: Erfolgreich mit {model}")
+                # Improve formatting for bullet points and arrows
+                translated_text = self._improve_formatting(translated_text)
                 confidence = await self._evaluate_language_translation_quality(simplified_text, translated_text)
             
             return translated_text, confidence
@@ -624,4 +629,35 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
             return text
         
         print(f"✅ Text intelligent bereinigt: {len(text)} → {len(cleaned_text)} Zeichen")
-        return cleaned_text 
+        return cleaned_text
+    
+    def _improve_formatting(self, text: str) -> str:
+        """
+        Verbessert die Formatierung von Übersetzungen
+        Fügt korrekte Zeilenumbrüche nach Pfeilen und Bullet Points hinzu
+        """
+        import re
+        
+        # Stelle sicher, dass nach Pfeilen ein Zeilenumbruch kommt
+        # Aber nur wenn danach Text folgt (nicht bei leeren Zeilen)
+        text = re.sub(r'→\s*([^\n])', r'→\n  \1', text)
+        
+        # Füge Zeilenumbrüche nach Bullet Points hinzu, wenn sie fehlen
+        # Aber nur wenn direkt Text folgt ohne Zeilenumbruch
+        text = re.sub(r'^([•\-\*])\s+(.+?)(?=\n[•\-\*]|\n#|\Z)', r'\1 \2\n', text, flags=re.MULTILINE)
+        
+        # Stelle sicher, dass zwischen Hauptpunkten genug Abstand ist
+        # Füge eine Leerzeile nach "Bedeutung:" Zeilen hinzu, wenn keine folgt
+        text = re.sub(r'(→ Bedeutung:.*?)(\n)(?=[•])', r'\1\n\n', text)
+        
+        # Korrigiere doppelte Zeilenumbrüche (mehr als 2 hintereinander)
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        
+        # Stelle sicher, dass Listen richtig formatiert sind
+        # Nach einem Listenpunkt mit Unterpunkt sollte eine Leerzeile kommen
+        text = re.sub(r'(^[•\-\*].+\n  →.+)(\n)(?=[•\-\*])', r'\1\n\n', text, flags=re.MULTILINE)
+        
+        # Korrigiere Einrückungen bei Unterpunkten
+        text = re.sub(r'^(\s*)→', r'  →', text, flags=re.MULTILINE)
+        
+        return text 
