@@ -26,12 +26,17 @@ class TextExtractorWithOCR:
         if self.ocr_available:
             logger.info("✅ Text extractor initialized with Tesseract OCR support")
             print("✅ Text extractor initialized with Tesseract OCR support", flush=True)
-            # Configure Tesseract for German and English
-            # PSM 6: Uniform block of text (better for tables)
-            # PSM 11: Sparse text. Find as much text as possible (alternative)
-            self.tesseract_config = '--oem 3 --psm 6 -l deu+eng'
+            # Configure Tesseract for German and English with BEST quality
+            # OEM 1 = LSTM neural net only (best accuracy)
+            # PSM 3 = Fully automatic page segmentation (default, works best for most documents)
+            # Additional optimizations for German medical documents
+            self.tesseract_config = '--oem 1 --psm 3 -l deu+eng -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜabcdefghijklmnopqrstuvwxyzäöüß0123456789.,;:!?()[]{}/-+= " -c preserve_interword_spaces=1 -c textord_heavy_nr=1'
+            
             # Special config for tables with better structure preservation
-            self.tesseract_table_config = '--oem 3 --psm 6 -l deu+eng -c preserve_interword_spaces=1'
+            self.tesseract_table_config = '--oem 1 --psm 6 -l deu+eng -c preserve_interword_spaces=1 -c textord_tabfind_vertical_text=0 -c textord_tablefind_recognize_tables=1'
+            
+            # Config for sparse text (like forms)
+            self.tesseract_sparse_config = '--oem 1 --psm 11 -l deu+eng -c preserve_interword_spaces=1'
         else:
             logger.warning("⚠️ Tesseract not found - OCR disabled")
             print("⚠️ Tesseract not found - OCR disabled", flush=True)
@@ -185,6 +190,11 @@ class TextExtractorWithOCR:
                         # Normal text extraction
                         page_text = pytesseract.image_to_string(image, config=self.tesseract_config)
                     
+                    # Apply OCR error correction to all text
+                    page_text = self._correct_ocr_errors(page_text)
+                    page_text = self._apply_medical_dictionary_correction(page_text)
+                    page_text = self._enhance_lab_value_formatting(page_text)
+                    
                     # Calculate average confidence for non-empty text
                     confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
                     page_confidence = sum(confidences) / len(confidences) if confidences else 0
@@ -257,6 +267,11 @@ class TextExtractorWithOCR:
             else:
                 # Normal text extraction
                 text = pytesseract.image_to_string(image, config=self.tesseract_config)
+            
+            # Apply OCR error correction
+            text = self._correct_ocr_errors(text)
+            text = self._apply_medical_dictionary_correction(text)
+            text = self._enhance_lab_value_formatting(text)
             
             # Calculate confidence
             confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
@@ -404,3 +419,175 @@ class TextExtractorWithOCR:
         except Exception as e:
             logger.debug(f"Table formatting failed: {e}")
             return text
+    
+    def _correct_ocr_errors(self, text: str) -> str:
+        """Post-process OCR text to correct common errors in German medical documents"""
+        import re
+        
+        # Common OCR character substitutions
+        corrections = {
+            # Number/Letter confusions
+            r'\b0(?=[a-zäöüß])': 'O',  # 0 -> O before lowercase letters
+            r'(?<=[a-zäöüß])0\b': 'o',  # 0 -> o after lowercase letters
+            r'\b1(?=[a-zäöüß]{2,})': 'I',  # 1 -> I at word start
+            r'(?<=[a-zäöüß])1(?=[a-zäöüß])': 'i',  # 1 -> i in middle of word
+            r'(?<=[a-zäöüß])1\b': 'l',  # 1 -> l at word end
+            r'\bI(?=\d)': '1',  # I -> 1 before numbers
+            r'(?<=\d)O(?=\d)': '0',  # O -> 0 between numbers
+            r'(?<=\d)o(?=\d)': '0',  # o -> 0 between numbers
+            
+            # German special characters
+            r'ii': 'ü',  # Common OCR error for ü
+            r'ae': 'ä',  # If OCR misses umlauts
+            r'oe': 'ö',
+            r'ue': 'ü',
+            r'ss': 'ß',  # In certain contexts
+            
+            # Medical terms commonly misread
+            r'\bHamoglobin\b': 'Hämoglobin',
+            r'\bErythrozyten\b': 'Erythrozyten',
+            r'\bLeukozyten\b': 'Leukozyten',
+            r'\bThrombocyten\b': 'Thrombozyten',
+            r'\bKreatinin\b': 'Kreatinin',
+            r'\bBilirubin\b': 'Bilirubin',
+            r'\bCholesterin\b': 'Cholesterin',
+            r'\bGlukose\b': 'Glucose',
+            r'\bNatrium\b': 'Natrium',
+            r'\bKalium\b': 'Kalium',
+            r'\bCalcium\b': 'Calcium',
+            r'\bPhosphat\b': 'Phosphat',
+            
+            # Common German medical abbreviations
+            r'\bmg/d1\b': 'mg/dl',
+            r'\bmmol/1\b': 'mmol/l',
+            r'\bµmol/1\b': 'µmol/l',
+            r'\bg/d1\b': 'g/dl',
+            r'\bU/1\b': 'U/l',
+            r'\bmU/1\b': 'mU/l',
+            r'\bpg/m1\b': 'pg/ml',
+            r'\bng/m1\b': 'ng/ml',
+            r'\bµg/m1\b': 'µg/ml',
+            
+            # Fix spacing around units
+            r'(\d)\s*mg\b': r'\1 mg',
+            r'(\d)\s*ml\b': r'\1 ml',
+            r'(\d)\s*mmol\b': r'\1 mmol',
+            r'(\d)\s*%': r'\1%',
+            
+            # Fix decimal points/commas
+            r'(\d)\.(\d{3})\b': r'\1,\2',  # German uses comma for decimals
+            r'(\d{1,3}),(\d{3})': r'\1.\2',  # But thousand separator is period
+        }
+        
+        # Apply corrections
+        for pattern, replacement in corrections.items():
+            text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+        
+        # Fix common medical value patterns
+        # Pattern: number-unit without space
+        text = re.sub(r'(\d+)([a-zA-Z]+)', r'\1 \2', text)
+        
+        # Fix reference ranges
+        text = re.sub(r'(\d+)\s*-\s*(\d+)', r'\1-\2', text)
+        text = re.sub(r'(\d+,\d+)\s*-\s*(\d+,\d+)', r'\1-\2', text)
+        
+        # Clean up excessive whitespace
+        text = re.sub(r' {2,}', ' ', text)
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        
+        return text
+    
+    def _apply_medical_dictionary_correction(self, text: str) -> str:
+        """Apply medical dictionary-based corrections for German medical terms"""
+        import re
+        
+        # Common medical terms dictionary (correct spelling)
+        medical_terms = {
+            # Organs
+            'Herz', 'Lunge', 'Leber', 'Niere', 'Magen', 'Darm', 'Gehirn',
+            'Pankreas', 'Milz', 'Schilddrüse', 'Nebenniere', 'Hypophyse',
+            
+            # Conditions
+            'Diabetes', 'Hypertonie', 'Hypotonie', 'Anämie', 'Leukämie',
+            'Pneumonie', 'Bronchitis', 'Gastritis', 'Hepatitis', 'Nephritis',
+            'Arthritis', 'Arthrose', 'Osteoporose', 'Thrombose', 'Embolie',
+            'Infarkt', 'Apoplex', 'Epilepsie', 'Migräne', 'Depression',
+            
+            # Lab parameters
+            'Hämoglobin', 'Hämatokrit', 'Erythrozyten', 'Leukozyten',
+            'Thrombozyten', 'Kreatinin', 'Harnstoff', 'Harnsäure',
+            'Bilirubin', 'Albumin', 'Globulin', 'Cholesterin', 'Triglyzeride',
+            'Glucose', 'Lactat', 'Pyruvat', 'Amylase', 'Lipase',
+            
+            # Medications
+            'Aspirin', 'Paracetamol', 'Ibuprofen', 'Diclofenac', 'Metamizol',
+            'Omeprazol', 'Pantoprazol', 'Simvastatin', 'Atorvastatin',
+            'Metformin', 'Insulin', 'Levothyroxin', 'Prednisolon',
+            'Amoxicillin', 'Ciprofloxacin', 'Metoprolol', 'Bisoprolol',
+            'Ramipril', 'Enalapril', 'Amlodipine', 'Hydrochlorothiazid',
+            
+            # Procedures
+            'Endoskopie', 'Koloskopie', 'Gastroskopie', 'Bronchoskopie',
+            'Biopsie', 'Punktion', 'Sonographie', 'Echokardiographie',
+            'Angiographie', 'Szintigraphie', 'Elektrokardiogramm',
+            'Elektroenzephalogramm', 'Spirometrie', 'Ergometrie'
+        }
+        
+        # Create a case-insensitive replacement function
+        def correct_term(match):
+            word = match.group(0)
+            # Find the correct spelling (case-insensitive)
+            for correct_term in medical_terms:
+                if word.lower() == correct_term.lower():
+                    # Preserve original case pattern if possible
+                    if word.isupper():
+                        return correct_term.upper()
+                    elif word[0].isupper():
+                        return correct_term
+                    else:
+                        return correct_term.lower()
+            return word
+        
+        # Apply corrections for each medical term
+        for term in medical_terms:
+            # Create pattern for fuzzy matching (allow 1-2 character differences)
+            # This is simplified - in production, use Levenshtein distance
+            pattern = r'\b' + re.escape(term) + r'\b'
+            text = re.sub(pattern, correct_term, text, flags=re.IGNORECASE)
+        
+        return text
+    
+    def _enhance_lab_value_formatting(self, text: str) -> str:
+        """Enhance formatting of laboratory values for better readability"""
+        import re
+        
+        # Format lab values with proper units
+        # Pattern: Parameter: number unit (reference)
+        lab_patterns = [
+            # Hämoglobin: 14.5 g/dl (12-16)
+            (r'(Hämoglobin|Hb):?\s*(\d+[,.]?\d*)\s*(g/dl)?', r'Hämoglobin: \2 g/dl'),
+            # Leukozyten: 8500 /µl (4000-10000)
+            (r'(Leukozyten|Leukos?):?\s*(\d+)\s*(/µl)?', r'Leukozyten: \2 /µl'),
+            # Glucose: 95 mg/dl (70-110)
+            (r'(Glucose|Glukose|BZ):?\s*(\d+)\s*(mg/dl)?', r'Glucose: \2 mg/dl'),
+            # Kreatinin: 0.9 mg/dl (0.5-1.2)
+            (r'(Kreatinin|Krea):?\s*(\d+[,.]?\d*)\s*(mg/dl)?', r'Kreatinin: \2 mg/dl'),
+            # Cholesterin: 180 mg/dl (<200)
+            (r'(Cholesterin|Chol):?\s*(\d+)\s*(mg/dl)?', r'Cholesterin: \2 mg/dl'),
+            # TSH: 2.5 mU/l (0.4-4.0)
+            (r'(TSH):?\s*(\d+[,.]?\d*)\s*(mU/l)?', r'TSH: \2 mU/l'),
+            # CRP: 0.5 mg/l (<5)
+            (r'(CRP|C-reaktives? Protein):?\s*(\d+[,.]?\d*)\s*(mg/l)?', r'CRP: \2 mg/l'),
+        ]
+        
+        for pattern, replacement in lab_patterns:
+            text = re.sub(pattern, replacement, text, flags=re.IGNORECASE)
+        
+        # Add reference range formatting
+        text = re.sub(
+            r'(\d+[,.]?\d*\s*[a-z/]+)\s*\((\d+[,.]?\d*\s*-\s*\d+[,.]?\d*)\)',
+            r'\1 (Referenz: \2)',
+            text
+        )
+        
+        return text

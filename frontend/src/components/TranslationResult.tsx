@@ -230,72 +230,16 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    h1: ({children}) => <h1 className="text-2xl font-bold text-primary-900 mb-4 mt-4 first:mt-0">{children}</h1>,
-                    h2: ({children}) => <h2 className="text-xl font-bold text-primary-900 mb-3 mt-4 first:mt-0">{children}</h2>,
-                    h3: ({children}) => <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">{children}</h3>,
-                    h4: ({children}) => <h4 className="text-base font-semibold text-primary-800 mb-2 mt-2">{children}</h4>,
-                    p: ({children}) => <p className="mb-3 text-base text-primary-700 leading-relaxed">{children}</p>,
-                    ul: ({children}) => {
-                      // Gruppiere aufeinanderfolgende Pfeil-Unterpunkte
-                      const items = React.Children.toArray(children);
-                      const groupedItems: React.ReactNode[] = [];
-                      let currentArrowGroup: React.ReactNode[] = [];
-                      
-                      items.forEach((child, index) => {
-                        // Check if this is an arrow item
-                        if (React.isValidElement(child)) {
-                          const childText = React.Children.toArray(child.props?.children || [])
-                            .map(c => typeof c === 'string' ? c : '')
-                            .join('');
-                          
-                          if (childText.includes('→')) {
-                            currentArrowGroup.push(child);
-                          } else {
-                            // If we have accumulated arrow items, wrap them in a container
-                            if (currentArrowGroup.length > 0) {
-                              groupedItems.push(
-                                <div key={`arrow-group-${index}`} style={{
-                                  marginLeft: '2rem',
-                                  marginBottom: '0.75rem',
-                                  padding: '0.75rem',
-                                  backgroundColor: '#F9FAFB',
-                                  borderLeft: '3px solid #E5E7EB',
-                                  borderRadius: '0 0.25rem 0.25rem 0'
-                                }}>
-                                  {currentArrowGroup}
-                                </div>
-                              );
-                              currentArrowGroup = [];
-                            }
-                            groupedItems.push(child);
-                          }
-                        } else {
-                          groupedItems.push(child);
-                        }
-                      });
-                      
-                      // Don't forget remaining arrow items
-                      if (currentArrowGroup.length > 0) {
-                        groupedItems.push(
-                          <div key="arrow-group-final" style={{
-                            marginLeft: '2rem',
-                            marginBottom: '0.75rem',
-                            padding: '0.75rem',
-                            backgroundColor: '#F9FAFB',
-                            borderLeft: '3px solid #E5E7EB',
-                            borderRadius: '0 0.25rem 0.25rem 0'
-                          }}>
-                            {currentArrowGroup}
-                          </div>
-                        );
-                      }
-                      
-                      return (
-                        <ul className="mb-4 text-primary-700" style={{listStyle: 'none', paddingLeft: 0}}>
-                          {groupedItems}
-                        </ul>
-                      );
-                    },
+                    h1: ({children}) => <h1 className="text-xl font-bold text-primary-900 mb-3 mt-3 first:mt-0">{children}</h1>,
+                    h2: ({children}) => <h2 className="text-lg font-bold text-primary-900 mb-2 mt-3 first:mt-0">{children}</h2>,
+                    h3: ({children}) => <h3 className="text-base font-semibold text-primary-900 mb-2 mt-2">{children}</h3>,
+                    h4: ({children}) => <h4 className="text-sm font-semibold text-primary-800 mb-1 mt-2">{children}</h4>,
+                    p: ({children}) => <p className="mb-2 text-sm text-primary-700 leading-relaxed">{children}</p>,
+                    ul: ({children}) => (
+                      <ul className="mb-3 space-y-1" style={{listStyle: 'none', paddingLeft: 0}}>
+                        {children}
+                      </ul>
+                    ),
                     ol: ({children}) => (
                       <ol className="list-decimal ml-6 mb-4 text-primary-700 space-y-2">
                         {children}
@@ -315,46 +259,21 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         })
                         .join('');
                       
-                      // Prüfe ob es eine Subliste mit Pfeil ist (Markdown: "  - → Text")
-                      if (text.startsWith('→') || text.includes('→')) {
-                        // Pfeil-Unterpunkt (wird in Gruppe gerendert)
+                      // Prüfe ob es ein Pfeil-Unterpunkt ist
+                      if (text.includes('→')) {
+                        // Eingerückter Pfeil-Unterpunkt
                         return (
-                          <li style={{
-                            listStyle: 'none',
-                            color: '#4B5563',
-                            marginBottom: '0.25rem',
-                            fontSize: '0.95rem',
-                            lineHeight: '1.6',
-                            paddingLeft: 0
-                          }}>
+                          <li className="ml-6 pl-3 border-l-2 border-gray-300 text-gray-600 text-sm bg-gray-50 py-1 rounded-r">
                             {children}
                           </li>
                         );
                       }
                       
-                      // Standard Listeneintrag mit Bullet Point
+                      // Standard Bullet Point
                       return (
-                        <li style={{
-                          listStyle: 'none',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          marginBottom: '0.5rem',
-                          fontSize: '1rem',
-                          lineHeight: '1.6'
-                        }}>
-                          <span style={{
-                            marginRight: '0.75rem',
-                            color: '#4F46E5',
-                            flexShrink: 0,
-                            fontSize: '1rem',
-                            lineHeight: '1.6',
-                            minWidth: '0.75rem'
-                          }}>•</span>
-                          <span style={{
-                            flex: 1,
-                            lineHeight: '1.6',
-                            display: 'inline-block'
-                          }}>{children}</span>
+                        <li className="flex items-start">
+                          <span className="text-blue-600 mr-2">•</span>
+                          <span className="text-gray-800">{children}</span>
                         </li>
                       );
                     },
