@@ -195,6 +195,70 @@ async def detailed_health_check():
 # Debug endpoint removed for production security
 # To enable debugging, set ENVIRONMENT=development
 
+@router.get("/health/test-markdown-format")
+async def test_markdown_format():
+    """
+    Testet verschiedene Markdown-Formatierungen für korrekte Darstellung
+    """
+    
+    # Verschiedene Formatierungsansätze testen
+    formats = {
+        "original_problem": """• Sie haben Atemnot. → Bedeutung: Sie kommen schnell außer Atem.
+• Sie haben Brustschmerzen. → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
+        
+        "with_line_breaks": """• Sie haben Atemnot.
+  → Bedeutung: Sie kommen schnell außer Atem.
+
+• Sie haben Brustschmerzen.
+  → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
+        
+        "markdown_sublist": """• Sie haben Atemnot.
+  - → Bedeutung: Sie kommen schnell außer Atem.
+
+• Sie haben Brustschmerzen.
+  - → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
+        
+        "markdown_nested": """- Sie haben Atemnot.
+  - → Bedeutung: Sie kommen schnell außer Atem.
+
+- Sie haben Brustschmerzen.
+  - → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
+        
+        "with_double_space": """• Sie haben Atemnot.  
+  → Bedeutung: Sie kommen schnell außer Atem.
+
+• Sie haben Brustschmerzen.  
+  → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
+        
+        "blockquote_style": """• Sie haben Atemnot.
+> → Bedeutung: Sie kommen schnell außer Atem.
+
+• Sie haben Brustschmerzen.
+> → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
+        
+        "definition_list": """• Sie haben Atemnot.
+: → Bedeutung: Sie kommen schnell außer Atem.
+
+• Sie haben Brustschmerzen.
+: → Bedeutung: Ihr Herz arbeitet nicht richtig."""
+    }
+    
+    # Teste unsere aktuelle Formatierung
+    from app.services.ovh_client import OVHClient
+    client = OVHClient()
+    
+    formatted_versions = {}
+    for name, text in formats.items():
+        formatted_versions[name] = {
+            "original": text,
+            "after_improve_formatting": client._improve_formatting(text)
+        }
+    
+    return {
+        "formats": formatted_versions,
+        "recommendation": "Check which format renders correctly in ReactMarkdown"
+    }
+
 @router.get("/health/test-formatting-live")
 async def test_formatting_live():
     """

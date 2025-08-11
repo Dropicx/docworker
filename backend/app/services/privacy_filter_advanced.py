@@ -299,8 +299,16 @@ class AdvancedPrivacyFilter:
     def _remove_names_with_ner(self, text: str) -> str:
         """
         Verwendet spaCy NER zur intelligenten Namenerkennung
-        KONSERVATIV: Entfernt nur eindeutige Personennamen
+        Erkennt auch "Name: Nachname, Vorname" Format
         """
+        # ZUERST: Entferne explizite "Name:" Patterns
+        # Pattern für "Name: Nachname, Vorname" oder "Name: Vorname Nachname"
+        name_pattern = re.compile(
+            r'\b(?:Name|Patient(?:in)?|Versicherte[rn]?)[:\s]+([A-ZÄÖÜ][a-zäöüß]+(?:\s*,\s*|\s+)[A-ZÄÖÜ][a-zäöüß]+)',
+            re.IGNORECASE
+        )
+        text = name_pattern.sub('[NAME ENTFERNT]', text)
+        
         # Verarbeite Text mit spaCy
         doc = self.nlp(text)
         
@@ -312,33 +320,28 @@ class AdvancedPrivacyFilter:
             if ent.label_ == "PER":
                 # Prüfe ob es ein medizinischer Begriff ist
                 if ent.text.lower() not in self.medical_terms:
-                    # NUR entfernen wenn es WIRKLICH wie ein Name aussieht
-                    # Mindestens 2 Wörter (Vor- und Nachname) oder bekannter Titel dabei
-                    words = ent.text.split()
-                    if len(words) >= 2 or any(title in ent.text.lower() for title in ['dr.', 'prof.', 'herr', 'frau']):
-                        # Zusätzliche Prüfung: Keine Zahlen im Namen (könnte Laborwert sein)
-                        if not any(char.isdigit() for char in ent.text):
-                            persons_to_remove.add(ent.text)
-                            logger.debug(f"NER erkannt als Person: {ent.text}")
+                    # Keine Zahlen im Namen (könnte Laborwert sein)
+                    if not any(char.isdigit() for char in ent.text):
+                        persons_to_remove.add(ent.text)
+                        logger.debug(f"NER erkannt als Person: {ent.text}")
         
-        # KONSERVATIV: Nur explizite Titel+Name Kombinationen
+        # Zusätzlich: Erkenne Titel+Name Kombinationen
         for i, token in enumerate(doc):
-            if token.text.lower() in ['dr.', 'prof.', 'herr', 'frau']:
-                # Schaue NUR den nächsten Token an
-                if i + 1 < len(doc):
-                    next_token = doc[i + 1]
-                    # Wenn es wie ein Name aussieht (Großbuchstabe, keine Zahlen)
+            if token.text.lower() in ['dr.', 'prof.', 'herr', 'frau', 'dr', 'prof']:
+                # Sammle die nächsten 1-2 Tokens als Namen
+                name_parts = []
+                for j in range(1, min(3, len(doc) - i)):
+                    next_token = doc[i + j]
                     if (next_token.text[0].isupper() and 
                         len(next_token.text) > 2 and 
                         not any(char.isdigit() for char in next_token.text) and
                         next_token.text.lower() not in self.medical_terms):
-                        # Schaue ob noch ein Nachname folgt
-                        if i + 2 < len(doc):
-                            next_next = doc[i + 2]
-                            if (next_next.text[0].isupper() and 
-                                not any(char.isdigit() for char in next_next.text)):
-                                persons_to_remove.add(f"{next_token.text} {next_next.text}")
-                                logger.debug(f"Titel+Name erkannt: {token.text} {next_token.text} {next_next.text}")
+                        name_parts.append(next_token.text)
+                
+                if name_parts:
+                    full_name = ' '.join(name_parts)
+                    persons_to_remove.add(full_name)
+                    logger.debug(f"Titel+Name erkannt: {token.text} {full_name}")
         
         # Entferne nur die sicher erkannten Namen
         result = text
