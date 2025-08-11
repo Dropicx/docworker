@@ -34,8 +34,8 @@ async def health_check(request: Request = None):
         if use_ovh_only:
             # OVH API prüfen
             ovh_client = OVHClient()
-            ovh_connected = await ovh_client.check_connection()
-            services["ovh_api"] = "healthy" if ovh_connected else "error"
+            ovh_connected, error_msg = await ovh_client.check_connection()
+            services["ovh_api"] = "healthy" if ovh_connected else f"error: {error_msg[:100]}"
         else:
             # Ollama-Service prüfen (legacy mode)
             ollama_client = OllamaClient()
@@ -197,11 +197,19 @@ async def debug_environment():
     try:
         from app.services.ovh_client import OVHClient
         ovh_client = OVHClient()
-        connection_test["ovh_connection"] = await ovh_client.check_connection()
-        connection_test["ovh_error"] = None
+        success, error_msg = await ovh_client.check_connection()
+        connection_test["ovh_connection"] = success
+        connection_test["ovh_error"] = None if success else error_msg
+        connection_test["ovh_details"] = {
+            "base_url": ovh_client.base_url,
+            "model": ovh_client.main_model,
+            "token_present": bool(ovh_client.access_token),
+            "token_length": len(ovh_client.access_token) if ovh_client.access_token else 0
+        }
     except Exception as e:
         connection_test["ovh_connection"] = False
         connection_test["ovh_error"] = str(e)
+        connection_test["ovh_details"] = {"exception": str(e)}
     
     return {
         "environment_variables": env_vars,
@@ -252,8 +260,8 @@ async def check_dependencies():
         try:
             from app.services.ovh_client import OVHClient
             ovh_client = OVHClient()
-            ovh_status = await ovh_client.check_connection()
-            dependencies["ovh_api_service"] = "connected" if ovh_status else "disconnected"
+            ovh_status, error_msg = await ovh_client.check_connection()
+            dependencies["ovh_api_service"] = "connected" if ovh_status else f"disconnected: {error_msg[:50]}"
         except Exception as e:
             dependencies["ovh_api_service"] = f"error: {str(e)}"
     else:

@@ -41,7 +41,8 @@ class OllamaClient:
     async def check_connection(self) -> bool:
         """Überprüft Verbindung zu OVH oder Ollama"""
         if self.use_ovh_only:
-            return await self.ovh_client.check_connection()
+            success, _ = await self.ovh_client.check_connection()
+            return success
         else:
             try:
                 async with httpx.AsyncClient(timeout=10.0) as client:

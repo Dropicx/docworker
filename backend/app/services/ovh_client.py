@@ -49,46 +49,62 @@ class OVHClient:
         # Alternative HTTP client for direct API calls
         self.timeout = 300  # 5 minutes timeout
         
-    async def check_connection(self) -> bool:
-        """Check connection to OVH AI Endpoints"""
+    async def check_connection(self) -> tuple[bool, str]:
+        """Check connection to OVH AI Endpoints
+        Returns: (success: bool, error_message: str)
+        """
         if not self.access_token:
-            logger.error("❌ OVH API token not configured - OVH_AI_ENDPOINTS_ACCESS_TOKEN is empty or not set")
+            error = "OVH API token not configured - OVH_AI_ENDPOINTS_ACCESS_TOKEN is empty or not set"
+            logger.error(f"❌ {error}")
             logger.error("   Please ensure the environment variable is set in Railway")
-            return False
+            return False, error
         
         if not self.client:
-            logger.error("❌ OVH client not initialized")
-            return False
+            error = "OVH client not initialized"
+            logger.error(f"❌ {error}")
+            return False, error
             
         try:
             logger.info(f"🔄 Testing OVH connection to {self.base_url}")
             logger.info(f"   Using model: {self.main_model}")
+            logger.info(f"   Token (last 8 chars): ...{self.access_token[-8:] if self.access_token else 'NOT SET'}")
             
             # Try a simple completion to test connection
             response = await self.client.chat.completions.create(
                 model=self.main_model,
-                messages=[{"role": "user", "content": "Hi"}],
+                messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
                 max_tokens=10,
                 temperature=0
             )
-            logger.info("✅ OVH AI Endpoints connection successful")
-            logger.info(f"   Response received: {response.choices[0].message.content[:50] if response.choices else 'No response'}")
-            return True
+            
+            if response and response.choices:
+                logger.info("✅ OVH AI Endpoints connection successful")
+                logger.info(f"   Response: {response.choices[0].message.content[:50]}")
+                return True, "Connection successful"
+            else:
+                error = "Empty response from OVH API"
+                logger.error(f"❌ {error}")
+                return False, error
+                
         except Exception as e:
             error_msg = str(e)
             logger.error(f"❌ OVH AI Endpoints connection failed: {error_msg}")
             
             # Provide specific guidance based on error
             if "401" in error_msg or "unauthorized" in error_msg.lower():
-                logger.error("   → Invalid API token. Please check OVH_AI_ENDPOINTS_ACCESS_TOKEN in Railway")
+                error = f"Invalid API token (401 Unauthorized). Token last 8 chars: ...{self.access_token[-8:] if self.access_token else 'NOT SET'}"
+                logger.error(f"   → {error}")
             elif "404" in error_msg:
-                logger.error(f"   → Model '{self.main_model}' not found. Check OVH_MAIN_MODEL setting")
+                error = f"Model '{self.main_model}' not found (404). Available models may differ."
+                logger.error(f"   → {error}")
             elif "connection" in error_msg.lower() or "timeout" in error_msg.lower():
-                logger.error(f"   → Cannot reach {self.base_url}. Check OVH_AI_BASE_URL setting")
+                error = f"Cannot reach {self.base_url} (Connection/Timeout error)"
+                logger.error(f"   → {error}")
             else:
-                logger.error(f"   → Unexpected error. Check Railway logs for details")
+                error = f"Unexpected error: {error_msg[:200]}"
+                logger.error(f"   → {error}")
             
-            return False
+            return False, error
     
     async def process_medical_text_with_prompt(
         self,
