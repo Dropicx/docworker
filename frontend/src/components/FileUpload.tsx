@@ -108,34 +108,34 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Upload Loading Overlay - Shows during upload */}
+      {/* Upload Loading Overlay - Shows during upload - Mobile Optimized */}
       {isUploading && (
         <div className="fixed inset-0 z-50 bg-white/95 backdrop-blur-sm flex items-center justify-center animate-fade-in">
-          <div className="max-w-md w-full mx-4">
-            <div className="card-elevated p-8 space-y-6">
-              {/* Upload Icon with Animation */}
+          <div className="max-w-md w-full mx-3 sm:mx-4">
+            <div className="card-elevated p-6 sm:p-8 space-y-4 sm:space-y-6">
+              {/* Upload Icon with Animation - Mobile Optimized */}
               <div className="flex justify-center">
                 <div className="relative">
-                  <div className="w-20 h-20 bg-gradient-to-br from-brand-500 to-brand-600 rounded-3xl flex items-center justify-center animate-pulse-soft">
-                    <Upload className="w-10 h-10 text-white" />
+                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl sm:rounded-3xl flex items-center justify-center animate-pulse-soft">
+                    <Upload className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
                   </div>
-                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center animate-spin-slow">
-                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="absolute -bottom-2 -right-2 w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center animate-spin-slow">
+                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   </div>
                 </div>
               </div>
 
-              {/* Upload Status Text */}
+              {/* Upload Status Text - Mobile Optimized */}
               <div className="text-center space-y-2">
-                <h3 className="text-2xl font-bold text-primary-900">
+                <h3 className="text-xl sm:text-2xl font-bold text-primary-900">
                   Datei wird hochgeladen
                 </h3>
-                <p className="text-primary-600">
+                <p className="text-sm sm:text-base text-primary-600">
                   {uploadingFileName && (
-                    <span className="font-medium">{uploadingFileName}</span>
+                    <span className="font-medium truncate block max-w-full px-4">{uploadingFileName}</span>
                   )}
                 </p>
-                <p className="text-sm text-primary-500">
+                <p className="text-xs sm:text-sm text-primary-500">
                   Bitte warten Sie einen Moment...
                 </p>
               </div>
@@ -176,35 +176,35 @@ const FileUpload: React.FC<FileUploadProps> = ({
       >
         <input {...getInputProps()} ref={fileInputRef} />
         
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           <div className="flex justify-center">
-            <div className={`group w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center transition-all duration-300 ${!disabled ? 'group-hover:scale-110 group-hover:shadow-glow' : ''}`}>
-              <Upload className="w-8 h-8 text-white transition-transform duration-300 group-hover:scale-110" />
+            <div className={`group w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 ${!disabled ? 'group-hover:scale-110 group-hover:shadow-glow' : ''}`}>
+              <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-white transition-transform duration-300 group-hover:scale-110" />
             </div>
           </div>
 
-          <div className="text-center space-y-3">
-            <h3 className="text-2xl font-bold text-primary-900">
+          <div className="text-center space-y-2 sm:space-y-3">
+            <h3 className="text-xl sm:text-2xl font-bold text-primary-900">
               {isDragActive
                 ? 'Datei hier ablegen'
                 : 'Dokument hochladen'
               }
             </h3>
             
-            <p className="text-primary-600 text-lg leading-relaxed max-w-md mx-auto">
+            <p className="text-primary-600 text-sm sm:text-base lg:text-lg leading-relaxed max-w-md mx-auto px-4 sm:px-0">
               {isDragActive 
                 ? 'Lassen Sie die Datei los, um sie hochzuladen'
-                : 'Ziehen Sie eine Datei hierher oder klicken Sie zum Auswählen'
+                : 'Ziehen Sie eine Datei hierher oder tippen Sie zum Auswählen'
               }
             </p>
           </div>
 
           {!isUploading && (
             <div className="flex justify-center">
-              <div className="glass-effect px-6 py-3 rounded-xl">
-                <div className="text-sm text-primary-600 space-y-1 text-center">
+              <div className="glass-effect px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl">
+                <div className="text-xs sm:text-sm text-primary-600 space-y-1 text-center">
                   <div className="font-semibold">Unterstützte Formate</div>
-                  <div className="flex items-center justify-center space-x-4 text-xs">
+                  <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 space-y-1 sm:space-y-0 text-xs">
                     <span className="flex items-center space-x-1">
                       <FileText className="w-3 h-3 text-error-500" />
                       <span>PDF</span>
@@ -213,7 +213,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       <Image className="w-3 h-3 text-accent-500" />
                       <span>JPG, PNG</span>
                     </span>
-                    <span className="text-primary-400">• Max. 50 MB</span>
+                    <span className="text-primary-400">Max. 50 MB</span>
                   </div>
                 </div>
               </div>

@@ -16,6 +16,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Download spaCy German model for NER (Named Entity Recognition)
+RUN python -m spacy download de_core_news_sm
+
 # Copy application code
 COPY . .
 

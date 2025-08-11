@@ -121,21 +121,21 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
   return (
     <div className="card-elevated animate-scale-in">
       <div className="card-body">
-        {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        {/* Header - Mobile Optimized */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 space-y-3 sm:space-y-0">
           <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center">
+            <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0">
               {status.status === 'completed' ? (
-                <Sparkles className="w-6 h-6 text-white" />
+                <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               ) : (
-                <Zap className="w-6 h-6 text-white" />
+                <Zap className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
               )}
             </div>
-            <div>
-              <h3 className="text-xl font-bold text-primary-900">
+            <div className="min-w-0">
+              <h3 className="text-lg sm:text-xl font-bold text-primary-900">
                 KI-Verarbeitung
               </h3>
-              <p className="text-sm text-primary-600">
+              <p className="text-xs sm:text-sm text-primary-600">
                 Ihr Dokument wird analysiert und übersetzt
               </p>
               <p className="text-xs text-primary-500 mt-1">
@@ -156,10 +156,10 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
           )}
         </div>
 
-        {/* Status Display */}
-        <div className="space-y-6">
+        {/* Status Display - Mobile Optimized */}
+        <div className="space-y-4 sm:space-y-6">
           {/* Current Status */}
-          <div className="glass-effect p-6 rounded-2xl">
+          <div className="glass-effect p-4 sm:p-6 rounded-xl sm:rounded-2xl">
             <div className="flex items-center space-x-3 mb-4">
               {getStatusIcon(status.status)}
               <span className={`status-badge ${ApiService.getStatusColor(status.status)}`}>
@@ -193,14 +193,14 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
             </div>
           </div>
 
-          {/* Processing Steps */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold text-primary-900 flex items-center">
-              <FileCheck className="w-5 h-5 mr-2 text-brand-600" />
+          {/* Processing Steps - Mobile Optimized */}
+          <div className="space-y-3 sm:space-y-4">
+            <h4 className="text-base sm:text-lg font-semibold text-primary-900 flex items-center">
+              <FileCheck className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-600" />
               Verarbeitungsschritte
             </h4>
             
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {[
                 { 
                   step: 'upload', 
@@ -233,26 +233,26 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               ].map((item, index) => {
                 const IconComponent = item.icon;
                 return (
-                  <div key={index} className={`flex items-center space-x-4 p-4 rounded-xl transition-all duration-300 ${
+                  <div key={index} className={`flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 rounded-lg sm:rounded-xl transition-all duration-300 ${
                     item.completed 
                       ? 'bg-gradient-to-r from-success-50 to-success-50/50 border border-success-200' 
                       : item.active 
                         ? 'bg-gradient-to-r from-brand-50 to-accent-50/50 border border-brand-200' 
                         : 'bg-neutral-50 border border-neutral-200'
                   }`}>
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-300 flex-shrink-0 ${
                       item.completed 
                         ? 'bg-gradient-to-br from-success-500 to-success-600' 
                         : item.active 
                           ? 'bg-gradient-to-br from-brand-500 to-brand-600' 
                           : 'bg-neutral-200'
                     }`}>
-                      <IconComponent className={`w-5 h-5 ${
+                      <IconComponent className={`w-4 h-4 sm:w-5 sm:h-5 ${
                         item.completed || item.active ? 'text-white' : 'text-neutral-500'
                       } ${item.active && !item.completed ? 'animate-pulse-soft' : ''}`} />
                     </div>
-                    <div className="flex-1">
-                      <div className={`font-medium ${
+                    <div className="flex-1 min-w-0">
+                      <div className={`text-sm sm:text-base font-medium truncate ${
                         item.completed 
                           ? 'text-success-900' 
                           : item.active 

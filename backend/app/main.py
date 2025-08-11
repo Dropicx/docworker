@@ -143,10 +143,14 @@ app.add_middleware(
 async def log_requests(request: Request, call_next):
     start_time = datetime.now()
     
+    # Skip logging for status polling endpoints to reduce spam
+    should_log = not request.url.path.endswith("/status")
+    
     # Log incoming request - use print for Railway visibility
-    request_log = f"📥 {request.method} {request.url.path} from {request.client.host}"
-    print(request_log, flush=True)
-    logger.info(request_log)
+    if should_log:
+        request_log = f"📥 {request.method} {request.url.path} from {request.client.host}"
+        print(request_log, flush=True)
+        logger.info(request_log)
     
     # Process request
     response = await call_next(request)
@@ -155,9 +159,10 @@ async def log_requests(request: Request, call_next):
     process_time = (datetime.now() - start_time).total_seconds()
     
     # Log response - use print for Railway visibility
-    response_log = f"📤 {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s"
-    print(response_log, flush=True)
-    logger.info(response_log)
+    if should_log:
+        response_log = f"📤 {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s"
+        print(response_log, flush=True)
+        logger.info(response_log)
     
     # Add processing time header
     response.headers["X-Process-Time"] = str(process_time)

@@ -7,6 +7,13 @@ from typing import Optional, Dict, Any, AsyncGenerator, Tuple
 import re
 from app.models.document import SupportedLanguage, LANGUAGE_NAMES
 from app.services.ovh_client import OVHClient
+# Try to use advanced filter with spaCy, fallback to smart filter
+try:
+    from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
+    ADVANCED_FILTER_AVAILABLE = True
+except ImportError:
+    from app.services.smart_privacy_filter import SmartPrivacyFilter
+    ADVANCED_FILTER_AVAILABLE = False
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -26,6 +33,7 @@ class OllamaClient:
             logger.info("✅ Using OVH API for all processing (no local Ollama)")
             self.base_url = None
             self.timeout = None
+            # OVH client already has privacy filter integrated
         else:
             # Legacy mode with local Ollama (kept for backwards compatibility)
             if os.getenv("ENVIRONMENT") == "production":
@@ -37,6 +45,13 @@ class OllamaClient:
             self.preprocessing_model = os.getenv("OLLAMA_PREPROCESSING_MODEL", "gpt-oss:20b")
             self.translation_model = os.getenv("OLLAMA_TRANSLATION_MODEL", "zongwei/gemma3-translator:4b")
             logger.info("⚠️ Using local Ollama (legacy mode)")
+            # Initialize privacy filter for local mode
+            if ADVANCED_FILTER_AVAILABLE:
+                self.privacy_filter = AdvancedPrivacyFilter()
+                logger.info("🧠 Using AdvancedPrivacyFilter with spaCy NER")
+            else:
+                self.privacy_filter = SmartPrivacyFilter()
+                logger.info("📝 Using SmartPrivacyFilter (heuristic-based)")
         
     async def check_connection(self) -> bool:
         """Überprüft Verbindung zu OVH oder Ollama"""
@@ -86,14 +101,24 @@ class OllamaClient:
             tuple[str, str, float, str]: (translated_text, doc_type, confidence, cleaned_original)
         """
         try:
-            # SCHRITT 1: Intelligente KI-basierte Vorverarbeitung
+            # SCHRITT 1: Intelligente PII-Entfernung
             if self.use_ovh_only:
-                print(f"🧠 Schritt 1: KI extrahiert medizinisch relevante Informationen mit OVH {self.ovh_client.preprocessing_model}...")
+                print(f"🧠 Schritt 1: Entferne sensible Daten mit lokalem Filter + OVH {self.ovh_client.preprocessing_model}...")
                 cleaned_text = await self.ovh_client.preprocess_medical_text(text)
-                print(f"✅ Vorverarbeitung erfolgreich mit OVH API")
+                print(f"✅ Vorverarbeitung erfolgreich mit Privacy Filter + OVH API")
             else:
-                print(f"🧠 Schritt 1: KI extrahiert medizinisch relevante Informationen mit {self.preprocessing_model}...")
-                cleaned_text = await self._ai_preprocess_text(text, self.preprocessing_model)
+                print(f"🧠 Schritt 1: Entferne sensible Daten mit lokalem Privacy Filter...")
+                # Verwende nur lokale Privacy-Filterung, da Ollama nicht existiert
+                try:
+                    cleaned_text = self.privacy_filter.remove_pii(text)
+                    if len(cleaned_text) > 50:
+                        print(f"✅ Lokale PII-Entfernung erfolgreich")
+                    else:
+                        print(f"⚠️ Text zu kurz nach PII-Entfernung, verwende Originaltext")
+                        cleaned_text = text
+                except Exception as e:
+                    print(f"⚠️ PII-Entfernung fehlgeschlagen: {e}, verwende Originaltext")
+                    cleaned_text = text
             
             # SCHRITT 2: Hauptübersetzung
             if self.use_ovh_only:
@@ -101,11 +126,11 @@ class OllamaClient:
                 translated_text, doc_type, confidence, _ = await self.ovh_client.translate_medical_document(cleaned_text)
                 print(f"✅ Hauptübersetzung erfolgreich mit OVH API")
             else:
-                print(f"🤖 Schritt 2: Übersetze in einfache Sprache mit lokalem Model: {self.preprocessing_model}")
-                prompt = self._get_universal_translation_prompt(cleaned_text)
-                translated_text = await self._generate_response(prompt, self.preprocessing_model)
-                print(f"✅ Hauptübersetzung erfolgreich mit {self.preprocessing_model}")
-                confidence = await self._evaluate_translation_quality(cleaned_text, translated_text)
+                # Da Ollama nicht existiert, geben wir den bereinigten Text zurück
+                print(f"⚠️ Lokales Ollama nicht verfügbar - verwende bereinigten Text ohne Übersetzung")
+                translated_text = cleaned_text
+                doc_type = "universal"
+                confidence = 0.5
             
             # SCHRITT 3: Qualitätskontrolle - prüfe ob Übersetzung sinnvoll ist
             if not translated_text or len(translated_text) < 100:
@@ -608,11 +633,9 @@ ORIGINALTEXT:
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
         # Verwende GPU-Instanz für Preprocessing (schneller!)
-        logger.info(f"🔧 PREPROCESSING: Verwende Model: {model} (GPU-Instanz)")
-        print(f"🔧 PREPROCESSING: Verwende Model: {model} (GPU-Instanz)", flush=True)
+        logger.debug(f"🔧 PREPROCESSING: Verwende Model: {model} (GPU-Instanz)")
         cleaned_text = await self._generate_response(preprocess_prompt, model)
-        logger.info(f"✅ PREPROCESSING: Erfolgreich mit {model}")
-        print(f"✅ PREPROCESSING: Erfolgreich mit {model}", flush=True)
+        logger.debug(f"✅ PREPROCESSING: Erfolgreich mit {model}")
         
         # Nachbearbeitung: Entferne nur DOPPELTE Bullet Points und unnötige Nummerierungen
         import re

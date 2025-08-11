@@ -156,16 +156,16 @@ function App() {
     const selectedLanguageInfo = availableLanguages.find(lang => lang.code === selectedLanguage);
 
     return (
-      <div className="space-y-4">
-        <label className="block text-sm font-medium text-neutral-700">
+      <div className="space-y-3 sm:space-y-4">
+        <label className="block text-xs sm:text-sm font-medium text-neutral-700">
           Übersetzung (optional)
         </label>
         
-        {/* Popular language quick buttons */}
-        <div className="flex flex-wrap gap-2">
+        {/* Popular language quick buttons - Mobile Optimized */}
+        <div className="flex flex-wrap gap-1.5 sm:gap-2">
           <button
             onClick={() => setSelectedLanguage(null)}
-            className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+            className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium rounded-md sm:rounded-lg transition-all duration-200 ${
               !selectedLanguage
                 ? 'bg-neutral-100 text-neutral-700 ring-2 ring-neutral-300'
                 : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
@@ -174,11 +174,11 @@ function App() {
             Nur vereinfachen
           </button>
           
-          {popularLanguages.slice(0, 6).map((language) => (
+          {popularLanguages.slice(0, 4).map((language) => (
             <button
               key={language.code}
               onClick={() => setSelectedLanguage(language.code === selectedLanguage ? null : language.code)}
-              className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 ${
+              className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium rounded-md sm:rounded-lg transition-all duration-200 ${
                 selectedLanguage === language.code
                   ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-300'
                   : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
@@ -188,16 +188,17 @@ function App() {
             </button>
           ))}
           
-          {/* "Mehr Sprachen" Button */}
+          {/* "Mehr Sprachen" Button - Mobile Optimized */}
           <button
             onClick={() => setShowAllLanguages(!showAllLanguages)}
-            className={`px-3 py-2 text-xs font-medium rounded-lg transition-all duration-200 flex items-center space-x-1 ${
+            className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium rounded-md sm:rounded-lg transition-all duration-200 flex items-center space-x-1 ${
               showAllLanguages
                 ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-200'
                 : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100 border border-neutral-200'
             }`}
           >
-            <span>Mehr Sprachen</span>
+            <span className="hidden sm:inline">Mehr Sprachen</span>
+            <span className="sm:hidden">Mehr</span>
             <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${
               showAllLanguages ? 'rotate-180' : ''
             }`} />
@@ -280,8 +281,8 @@ function App() {
           </div>
         )}
 
-        {/* Info text */}
-        <p className="text-xs text-neutral-500">
+        {/* Info text - Mobile Optimized */}
+        <p className="text-xs text-neutral-500 px-2 sm:px-0">
           {selectedLanguage 
             ? 'Das Dokument wird zuerst vereinfacht und dann in die gewählte Sprache übersetzt.'
             : 'Optional: Wählen Sie eine Sprache, um das vereinfachte Ergebnis zusätzlich zu übersetzen.'
@@ -293,19 +294,19 @@ function App() {
 
   const MainApp = () => (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
-      {/* Header */}
+      {/* Header - Mobile Optimized */}
       <header className="sticky top-0 z-50 header-blur">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-20">
-            <div className="flex items-center space-x-4">
-              <div className="hero-gradient p-3 rounded-2xl shadow-soft">
-                <Stethoscope className="w-7 h-7 text-white" />
+        <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16 sm:h-20">
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <div className="hero-gradient p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-soft">
+                <Stethoscope className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-primary-900 tracking-tight">
+                <h1 className="text-xl sm:text-2xl font-bold text-primary-900 tracking-tight">
                   HealthLingo
                 </h1>
-                <p className="text-sm text-primary-600 font-medium">
+                <p className="text-xs sm:text-sm text-primary-600 font-medium hidden sm:block">
                   Medizinische Dokumente verstehen
                 </p>
               </div>
@@ -326,7 +327,7 @@ function App() {
           <div className="absolute bottom-0 right-0 w-72 h-72 bg-gradient-to-r from-accent-400/20 to-brand-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse-soft" style={{ animationDelay: '1s' }}></div>
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="relative z-10 max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           {/* Error State */}
           {appState === 'error' && (
             <div className="animate-fade-in">
@@ -357,34 +358,36 @@ function App() {
             </div>
           )}
 
-          {/* Upload State */}
+          {/* Upload State - Mobile Optimized */}
           {appState === 'upload' && (
-            <div className="space-y-16 animate-fade-in">
-              {/* Hero Section */}
-              <div className="text-center space-y-8">
-                <div className="space-y-4">
-                  <h2 className="text-hero bg-gradient-to-r from-primary-900 via-brand-700 to-accent-700 bg-clip-text text-transparent">
+            <div className="space-y-8 sm:space-y-12 lg:space-y-16 animate-fade-in">
+              {/* Hero Section - Mobile Optimized */}
+              <div className="text-center space-y-4 sm:space-y-6 lg:space-y-8">
+                <div className="space-y-3 sm:space-y-4">
+                  <h2 className="text-hero bg-gradient-to-r from-primary-900 via-brand-700 to-accent-700 bg-clip-text text-transparent px-2">
                     Medizinische Dokumente
-                    <br />
+                    <br className="hidden sm:block" />
+                    <span className="sm:hidden"> </span>
                     <span className="bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">
                       einfach verstehen
                     </span>
                   </h2>
-                  <p className="text-lead max-w-3xl mx-auto">
+                  <p className="text-lead max-w-3xl mx-auto px-4 sm:px-0">
                     Verwandeln Sie komplexe Arztbriefe und medizinische Befunde in verständliche Sprache. 
-                    Schnell, sicher und DSGVO-konform.
+                    <span className="hidden sm:inline">Schnell, sicher und DSGVO-konform.</span>
+                    <span className="sm:hidden block mt-2">Schnell, sicher und DSGVO-konform.</span>
                   </p>
                 </div>
                 
-                {/* Quick Stats */}
-                <div className="flex justify-center space-x-8 text-sm">
+                {/* Quick Stats - Mobile Optimized */}
+                <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-6 lg:space-x-8 text-xs sm:text-sm">
                   <div className="flex items-center space-x-2 text-primary-600">
                     <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                    <span className="font-medium">100% DSGVO-konform</span>
+                    <span className="font-medium">100% DSGVO</span>
                   </div>
                   <div className="flex items-center space-x-2 text-primary-600">
                     <div className="w-2 h-2 bg-accent-500 rounded-full"></div>
-                    <span className="font-medium">Sofortige Verarbeitung</span>
+                    <span className="font-medium">Sofort bereit</span>
                   </div>
                   <div className="flex items-center space-x-2 text-primary-600">
                     <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
@@ -410,16 +413,16 @@ function App() {
                 />
               </div>
 
-              {/* Features */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {/* Features - Mobile Optimized */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 <div className="feature-card animate-slide-up" style={{ animationDelay: '0.1s' }}>
                   <div className="feature-icon">
-                    <Shield className="w-7 h-7" />
+                    <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                   </div>
-                  <h3 className="text-xl font-bold text-primary-900 mb-3">
+                  <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
                     Datenschutz first
                   </h3>
-                  <p className="text-primary-600 leading-relaxed">
+                  <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
                     Keine Speicherung Ihrer Daten. Alle Informationen werden nach der 
                     Übersetzung automatisch gelöscht.
                   </p>
@@ -427,25 +430,25 @@ function App() {
                 
                 <div className="feature-card animate-slide-up" style={{ animationDelay: '0.2s' }}>
                   <div className="feature-icon">
-                    <FileText className="w-7 h-7" />
+                    <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                   </div>
-                  <h3 className="text-xl font-bold text-primary-900 mb-3">
+                  <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
                     Medizinisch präzise
                   </h3>
-                  <p className="text-primary-600 leading-relaxed">
+                  <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
                     Speziell für medizinische Fachbegriffe und Dokumente entwickelt. 
                     Präzise Übersetzungen ohne Informationsverlust.
                   </p>
                 </div>
                 
-                <div className="feature-card animate-slide-up" style={{ animationDelay: '0.3s' }}>
+                <div className="feature-card animate-slide-up sm:col-span-2 lg:col-span-1" style={{ animationDelay: '0.3s' }}>
                   <div className="feature-icon">
-                    <Zap className="w-7 h-7" />
+                    <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                   </div>
-                  <h3 className="text-xl font-bold text-primary-900 mb-3">
+                  <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
                     Blitzschnell
                   </h3>
-                  <p className="text-primary-600 leading-relaxed">
+                  <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
                     Erhalten Sie in wenigen Sekunden eine verständliche Übersetzung 
                     Ihrer medizinischen Dokumente.
                   </p>

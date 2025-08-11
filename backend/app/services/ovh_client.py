@@ -4,6 +4,13 @@ import logging
 from typing import Optional, Dict, Any, AsyncGenerator
 from openai import AsyncOpenAI
 import json
+# Try to use advanced filter with spaCy, fallback to smart filter
+try:
+    from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
+    ADVANCED_FILTER_AVAILABLE = True
+except ImportError:
+    from app.services.smart_privacy_filter import SmartPrivacyFilter
+    ADVANCED_FILTER_AVAILABLE = False
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -21,6 +28,14 @@ class OVHClient:
         self.main_model = os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct")
         self.preprocessing_model = os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407")
         self.translation_model = os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
+        
+        # Initialize privacy filter for local PII removal
+        if ADVANCED_FILTER_AVAILABLE:
+            self.privacy_filter = AdvancedPrivacyFilter()
+            logger.info("🧠 Using AdvancedPrivacyFilter with spaCy NER")
+        else:
+            self.privacy_filter = SmartPrivacyFilter()
+            logger.info("📝 Using SmartPrivacyFilter (heuristic-based)")
         
         # Debug logging for environment variables
         logger.info(f"🔍 OVH Client Initialization:")
@@ -209,14 +224,31 @@ class OVHClient:
         max_tokens: int = 4000
     ) -> str:
         """
-        Preprocess medical text using Mistral-Nemo-Instruct-2407
+        Preprocess medical text - first removes PII locally, then optionally uses OVH
         """
+        # SCHRITT 1: Lokale PII-Entfernung mit Python (schnell und datenschutzfreundlich)
+        try:
+            logger.info("🔒 Removing PII locally with Python privacy filter...")
+            cleaned_text = self.privacy_filter.remove_pii(text)
+            
+            # Grundlegende Validierung
+            if len(cleaned_text) > 50:  # Mindestens etwas Text sollte übrig bleiben
+                logger.info("✅ Local PII removal successful")
+            else:
+                logger.warning("⚠️ Text too short after PII removal, using original text")
+                cleaned_text = text
+        except Exception as e:
+            logger.warning(f"⚠️ Local PII removal failed: {e}, using original text")
+            cleaned_text = text
+        
+        # SCHRITT 2: Optional zusätzliche Bereinigung mit OVH (wenn API verfügbar)
+        # Dies ist jetzt optional - wenn OVH nicht verfügbar, verwenden wir nur lokale Bereinigung
         if not self.access_token:
-            logger.error("❌ OVH API token not configured")
-            return text  # Return original text if API not configured
+            logger.info("ℹ️ OVH API not configured, using local PII removal only")
+            return cleaned_text  # Return locally cleaned text
         
         try:
-            logger.info(f"🔧 Preprocessing with OVH {self.preprocessing_model}")
+            logger.info(f"🔧 Additional preprocessing with OVH {self.preprocessing_model}")
             
             preprocess_prompt = """Du bist ein medizinischer Dokumentenbereiniger für Datenschutz und Übersichtlichkeit.
 
@@ -262,7 +294,7 @@ ORIGINALTEXT:
 
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
             
-            full_prompt = preprocess_prompt.format(text=text)
+            full_prompt = preprocess_prompt.format(text=cleaned_text)
             
             # Use preprocessing model
             messages = [
