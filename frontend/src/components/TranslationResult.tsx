@@ -35,8 +35,8 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
 
   const handleDownload = async () => {
     try {
-      // Bestimme welcher Text exportiert werden soll - MIT PDF-only Content
-      const textToExport = getDisplayedText(true); // true = für PDF Export
+      // Bestimme welcher Text exportiert werden soll
+      const textToExport = getDisplayedText();
       const isLanguageExport = activeTab === 'language' && result.language_translated_text;
       
       // Generiere Dateinamen
@@ -114,27 +114,11 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
   };
 
   // Bestimme die anzuzeigende Übersetzung basierend auf dem aktiven Tab
-  const getDisplayedText = (forPDF: boolean = false) => {
-    let text = '';
+  const getDisplayedText = () => {
     if (activeTab === 'language' && result.language_translated_text) {
-      text = result.language_translated_text;
-    } else {
-      text = result.translated_text;
+      return result.language_translated_text;
     }
-    
-    // Für Display: Entferne PDF-only Sektionen
-    if (!forPDF) {
-      // Entferne alles zwischen PDF_ONLY_START und PDF_ONLY_END tags
-      text = text.replace(/<!-- PDF_ONLY_START -->[\s\S]*?<!-- PDF_ONLY_END -->/g, '');
-      // Entferne eventuelle doppelte Leerzeilen
-      text = text.replace(/\n{3,}/g, '\n\n');
-    } else {
-      // Für PDF: Entferne nur die Marker-Tags selbst, behalte den Inhalt
-      text = text.replace(/<!-- PDF_ONLY_START -->/g, '');
-      text = text.replace(/<!-- PDF_ONLY_END -->/g, '');
-    }
-    
-    return text.trim();
+    return result.translated_text;
   };
 
   const getDisplayedConfidence = () => {
@@ -245,7 +229,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
             
             <div className="flex flex-row space-x-2 sm:space-x-3 w-full lg:w-auto">
               <button
-                onClick={() => handleCopy(getDisplayedText(false), activeTab === 'language' ? 'language' : 'translated')}
+                onClick={() => handleCopy(getDisplayedText(), activeTab === 'language' ? 'language' : 'translated')}
                 className="btn-secondary group flex-1 lg:flex-initial"
                 disabled={copiedText === (activeTab === 'language' ? 'language' : 'translated')}
               >
@@ -396,7 +380,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     ),
                   }}
                 >
-                  {getDisplayedText(false)}
+                  {getDisplayedText()}
                 </ReactMarkdown>
                 
                 {/* PDF Footer with Date - wird nur im Export angezeigt */}

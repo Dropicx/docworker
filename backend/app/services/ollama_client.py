@@ -254,9 +254,7 @@ Hinweise wie "Laut Dokument" oder "Gemäß den Unterlagen"
 
 EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
-<!-- PDF_ONLY_START -->
 # 📋 Ihre medizinische Dokumentation - Einfach erklärt
-<!-- PDF_ONLY_END -->
 
 ## 🎯 Das Wichtigste zuerst
 [Die zentrale Information in einem klaren Satz]
@@ -702,26 +700,11 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         print(f"✅ Text intelligent bereinigt: {len(text)} → {len(cleaned_text)} Zeichen")
         return cleaned_text
     
-    def _remove_pdf_only_sections(self, text: str) -> str:
-        """
-        Entfernt PDF-only Sektionen aus dem Display-Output
-        Diese Sektionen bleiben nur im PDF Export erhalten
-        """
-        import re
-        # Entferne alles zwischen PDF_ONLY_START und PDF_ONLY_END tags
-        text = re.sub(r'<!-- PDF_ONLY_START -->.*?<!-- PDF_ONLY_END -->', '', text, flags=re.DOTALL)
-        # Entferne eventuelle doppelte Leerzeilen die entstanden sind
-        text = re.sub(r'\n{3,}', '\n\n', text)
-        return text.strip()
     
-    def _improve_formatting(self, text: str, for_pdf: bool = False) -> str:
+    def _improve_formatting(self, text: str) -> str:
         """
         Verbessert die Formatierung von Übersetzungen
         Fügt korrekte Zeilenumbrüche nach Pfeilen und Bullet Points hinzu
-        
-        Args:
-            text: Der zu formatierende Text
-            for_pdf: True wenn für PDF Export, False für Display
         """
         import re
         
@@ -779,10 +762,6 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         # Nachbearbeitung: Konsistente Abstände
         result = re.sub(r'\n{3,}', '\n\n', result)  # Max 2 Leerzeilen
         result = re.sub(r'[ \t]+$', '', result, flags=re.MULTILINE)  # Trailing spaces
-        
-        # Für Display-Output: Entferne PDF-only Sektionen
-        if not for_pdf:
-            result = self._remove_pdf_only_sections(result)
         
         print(f"[FORMATTING] Output text (first 200 chars): {result[:200]}")
         

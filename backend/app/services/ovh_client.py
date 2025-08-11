@@ -739,6 +739,10 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         # Egal ob sie Pfeile haben oder nicht
         text = re.sub(r'([^•\n])(\s*•)', r'\1\n•', text)
         
+        # SCHRITT 1b: ALLE Pfeile auf neue Zeilen bringen
+        # Dies trennt Pfeile die direkt nach einem Punkt kommen (z.B. "ASS 100mg. → Wichtig: ...")
+        text = re.sub(r'([^→\n])(\s*→)', r'\1\n→', text)
+        
         # SCHRITT 2: Jetzt Zeile für Zeile verarbeiten
         lines = text.split('\n')
         formatted_lines = []
