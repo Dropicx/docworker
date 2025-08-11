@@ -598,6 +598,20 @@ Meta-Kommentare über die Übersetzung selbst
 Sätze wie "Alle Angaben entsprechen dem Originaltext"
 Hinweise wie "Laut Dokument" oder "Gemäß den Unterlagen"
 
+MARKDOWN-FORMATIERUNG - SEHR WICHTIG:
+• Bullet Points (•) IMMER am Zeilenanfang
+• Pfeile (→) IMMER auf neue Zeile mit "  - → " (zwei Leerzeichen, Bindestrich, Leerzeichen, Pfeil)
+• NIE mehrere Bullet Points in einer Zeile
+• NIE Pfeile direkt nach Punkten ohne Zeilenumbruch
+
+RICHTIG:
+• Medikament XY
+  - → Wofür: Senkt den Blutdruck
+  - → Einnahme: 1x täglich morgens
+
+FALSCH:
+• Medikament XY. → Wofür: Senkt den Blutdruck → Einnahme: 1x täglich
+
 EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
 # 📋 Ihre medizinische Dokumentation - Einfach erklärt
@@ -612,21 +626,21 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
 ### Was wurde gefunden?
 • [Hauptbefund 1 in einfacher Sprache]
-  → Bedeutung: [Was heißt das für Sie?]
+  - → Bedeutung: [Was heißt das für Sie?]
 • [Hauptbefund 2 in einfacher Sprache]
-  → Bedeutung: [Was heißt das für Sie?]
+  - → Bedeutung: [Was heißt das für Sie?]
 
 ## 🏥 Ihre Diagnosen
 • [Diagnose in Alltagssprache]
-  → Medizinisch: [Fachbegriff]
-  → ICD-Code falls vorhanden: [Code mit Erklärung, z.B. "I10.90 - Bluthochdruck ohne bekannte Ursache"]
-  → Erklärung: [Was ist das genau?]
+  - → Medizinisch: [Fachbegriff]
+  - → ICD-Code falls vorhanden: [Code mit Erklärung, z.B. "I10.90 - Bluthochdruck ohne bekannte Ursache"]
+  - → Erklärung: [Was ist das genau?]
 
 ## 💊 Behandlung & Medikamente
 • [Medikament/Behandlung]
-  → Wofür: [Zweck]
-  → Einnahme: [Wie und wann]
-  → Wichtig: [Besonderheiten/Nebenwirkungen]
+  - → Wofür: [Zweck]
+  - → Einnahme: [Wie und wann]
+  - → Wichtig: [Besonderheiten/Nebenwirkungen]
 
 ## ✅ Ihre nächsten Schritte
 • [Was Sie tun sollen in einfacher Sprache]
@@ -639,12 +653,12 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
 ## 🔢 Medizinische Codes erklärt (falls vorhanden)
 ### ICD-Codes (Diagnose-Schlüssel):
-**[ICD-Code]**: [Vollständige Erklärung was diese Diagnose bedeutet]
-  Beispiel: **I10.90**: Bluthochdruck ohne bekannte Ursache - Ihr Blutdruck ist dauerhaft erhöht
+• **[ICD-Code]**: [Vollständige Erklärung was diese Diagnose bedeutet]
+  - → Beispiel: **I10.90**: Bluthochdruck ohne bekannte Ursache - Ihr Blutdruck ist dauerhaft erhöht
   
 ### OPS-Codes (Behandlungs-Schlüssel):
-**[OPS-Code]**: [Vollständige Erklärung welche Behandlung durchgeführt wurde]
-  Beispiel: **5-511.11**: Entfernung der Gallenblase durch Bauchspiegelung (minimal-invasive Operation)
+• **[OPS-Code]**: [Vollständige Erklärung welche Behandlung durchgeführt wurde]
+  - → Beispiel: **5-511.11**: Entfernung der Gallenblase durch Bauchspiegelung (minimal-invasive Operation)
 
 ## ⚠️ Wichtige Hinweise
 Diese Übersetzung hilft Ihnen, Ihre Unterlagen zu verstehen
@@ -725,7 +739,7 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
     def _improve_formatting(self, text: str) -> str:
         """
         Verbessert die Formatierung von Übersetzungen für ReactMarkdown
-        Trennt ALLE Bullet Points in eigene Zeilen und macht Pfeile zu Unterpunkten
+        Hauptsächlich Cleanup, da die KI jetzt korrekt formatiert
         """
         import re
         
@@ -735,109 +749,31 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         logger.info("=== FORMATTING START ===")
         logger.info(f"Input text (first 200 chars): {text[:200]}")
         
-        # SCHRITT 1: Erst mal ALLE Bullet Points auf neue Zeilen bringen
-        # Egal ob sie Pfeile haben oder nicht
+        # SCHRITT 1: Falls die KI doch mal Fehler macht - Bullet Points trennen
         text = re.sub(r'([^•\n])(\s*•)', r'\1\n•', text)
         
-        # SCHRITT 1b: ALLE Pfeile auf neue Zeilen bringen
-        # Dies trennt Pfeile die direkt nach einem Punkt kommen (z.B. "ASS 100mg. → Wichtig: ...")
-        text = re.sub(r'([^→\n])(\s*→)', r'\1\n→', text)
+        # SCHRITT 2: Falls Pfeile nicht korrekt formatiert sind
+        # Ersetze "  → " durch "  - → " (füge Bindestrich hinzu falls fehlt)
+        text = re.sub(r'^  →', '  - →', text, flags=re.MULTILINE)
         
-        # SCHRITT 2: Jetzt Zeile für Zeile verarbeiten
-        lines = text.split('\n')
-        formatted_lines = []
+        # Falls Pfeile noch direkt nach Punkten stehen
+        text = re.sub(r'([^→\n])(\s*→)', r'\1\n  - →', text)
         
-        for line in lines:
-            # Leere Zeilen beibehalten
-            if not line.strip():
-                formatted_lines.append(line)
-                continue
-            
-            # Überschriften unverändert lassen
-            if line.strip().startswith('#'):
-                formatted_lines.append(line)
-                continue
-            
-            # Zeile mit Bullet Point und möglicherweise Pfeilen
-            if line.strip().startswith('•'):
-                # Prüfe ob Pfeile in der Zeile sind
-                if '→' in line:
-                    # Teile die Zeile bei JEDEM Pfeil
-                    # Aber behalte den Pfeil im Text
-                    parts = re.split(r'(?=→)', line)
-                    
-                    # Der erste Teil ist der Hauptpunkt (mit •)
-                    main_point = parts[0].strip()
-                    if main_point:
-                        formatted_lines.append(main_point)
-                    
-                    # Alle weiteren Teile sind Unterpunkte (mit →)
-                    for i in range(1, len(parts)):
-                        if parts[i].strip():
-                            # Füge als Markdown-Subliste hinzu
-                            formatted_lines.append('  - ' + parts[i].strip())
-                else:
-                    # Nur Bullet Point, keine Pfeile
-                    formatted_lines.append(line.strip())
-            
-            # Zeile beginnt mit Pfeil (sollte Unterpunkt werden)
-            elif line.strip().startswith('→'):
-                formatted_lines.append('  - ' + line.strip())
-            
-            # Normale Zeile (keine Bullets oder Pfeile)
-            else:
-                # Prüfe ob versteckte Bullet Points in der Zeile sind
-                if '•' in line:
-                    # Teile bei Bullet Points
-                    parts = re.split(r'(?=•)', line)
-                    for part in parts:
-                        if part.strip():
-                            # Verarbeite wie oben
-                            if '→' in part:
-                                subparts = re.split(r'(?=→)', part)
-                                main = subparts[0].strip()
-                                if main:
-                                    formatted_lines.append(main)
-                                for j in range(1, len(subparts)):
-                                    if subparts[j].strip():
-                                        formatted_lines.append('  - ' + subparts[j].strip())
-                            else:
-                                formatted_lines.append(part.strip())
-                else:
-                    formatted_lines.append(line)
+        # SCHRITT 3: Cleanup - Nur noch minimale Korrekturen nötig
+        # Da die KI jetzt korrekt formatiert, brauchen wir weniger komplexe Logik
         
-        result = '\n'.join(formatted_lines)
+        # Stelle sicher dass alle "  - → " korrekt sind
+        text = re.sub(r'^  - →', '  - →', text, flags=re.MULTILINE)  # Normalisierung
         
-        # SCHRITT 3: Nachbearbeitung
-        # Stelle sicher, dass keine doppelten Bullet Points entstehen
+        result = text
+        
+        # SCHRITT 4: Finale Bereinigung
+        # Doppelte Bullet Points entfernen
         result = re.sub(r'•\s*•', '•', result)
         
         # Konsistente Abstände
         result = re.sub(r'\n{3,}', '\n\n', result)  # Max 2 Leerzeilen
         result = re.sub(r'[ \t]+$', '', result, flags=re.MULTILINE)  # Trailing spaces entfernen
-        
-        # Stelle sicher, dass zwischen Hauptpunkten und Unterpunkten kein extra Abstand ist
-        # aber zwischen verschiedenen Hauptpunkten schon
-        lines = result.split('\n')
-        final_lines = []
-        prev_was_bullet = False
-        
-        for i, line in enumerate(lines):
-            # Wenn aktuelle Zeile ein Hauptpunkt ist und die vorherige auch, füge Leerzeile ein
-            if line.strip().startswith('•'):
-                if prev_was_bullet and i > 0 and not lines[i-1].strip().startswith('  -'):
-                    final_lines.append('')  # Leerzeile zwischen Hauptpunkten
-                final_lines.append(line)
-                prev_was_bullet = True
-            # Unterpunkt direkt nach Hauptpunkt (kein extra Abstand)
-            elif line.strip().startswith('  -'):
-                final_lines.append(line)
-                prev_was_bullet = False
-            else:
-                final_lines.append(line)
-                prev_was_bullet = False
-        
-        result = '\n'.join(final_lines)
         
         logger.info(f"Output text (first 200 chars): {result[:200]}")
         logger.info("=== FORMATTING END ===")
