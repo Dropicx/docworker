@@ -54,7 +54,22 @@ class AdvancedPrivacyFilter:
             
             # Abteilungen
             'innere', 'medizin', 'chirurgie', 'neurologie', 'kardiologie',
-            'gastroenterologie', 'pneumologie', 'nephrologie', 'onkologie'
+            'gastroenterologie', 'pneumologie', 'nephrologie', 'onkologie',
+            
+            # Vitamine und Nährstoffe (auch Kleinschreibung)
+            'vitamin', 'vitamine', 'd3', 'b12', 'b6', 'b1', 'b2', 'b9', 'k2', 'k1',
+            'folsäure', 'folat', 'cobalamin', 'thiamin', 'riboflavin', 'niacin',
+            'pantothensäure', 'pyridoxin', 'biotin', 'ascorbinsäure', 'tocopherol',
+            'retinol', 'calciferol', 'cholecalciferol', 'ergocalciferol',
+            'calcium', 'magnesium', 'kalium', 'natrium', 'phosphor', 'eisen',
+            'zink', 'kupfer', 'mangan', 'selen', 'jod', 'fluor', 'chrom',
+            
+            # Laborwerte und Einheiten
+            'wert', 'werte', 'labor', 'laborwert', 'laborwerte', 'blutbild',
+            'parameter', 'referenz', 'referenzbereich', 'normbereich', 'normwert',
+            'erhöht', 'erniedrigt', 'grenzwertig', 'positiv', 'negativ',
+            'mg', 'dl', 'ml', 'mmol', 'µmol', 'nmol', 'pmol', 'ng', 'pg', 'iu',
+            'einheit', 'einheiten', 'prozent', 'promille'
         }
         
         # Titel und Anreden, die auf Namen hinweisen
@@ -68,7 +83,15 @@ class AdvancedPrivacyFilter:
             'BMI', 'EKG', 'MRT', 'CT', 'ICD', 'OPS', 'DRG', 'GOÄ', 'EBM',
             'EF', 'LAD', 'RCA', 'RCX', 'RIVA', 'CK', 'CK-MB', 'HDL', 'LDL',
             'TSH', 'fT3', 'fT4', 'HbA1c', 'INR', 'PTT', 'AT3', 'CRP', 'PCT',
-            'AFP', 'CEA', 'CA', 'PSA', 'BNP', 'NT-proBNP'
+            'AFP', 'CEA', 'CA', 'PSA', 'BNP', 'NT-proBNP',
+            # Vitamine und Nährstoffe
+            'D3', 'B12', 'B6', 'B1', 'B2', 'B9', 'K2', 'K1', 'E', 'C', 'A',
+            '25-OH', '1,25-OH2', 'OH-D3', 'OH-D', 'D2',
+            # Weitere Laborwerte
+            'GFR', 'eGFR', 'GPT', 'GOT', 'GGT', 'AP', 'LDH', 'MCH', 'MCV', 'MCHC',
+            'RDW', 'MPV', 'PDW', 'PLT', 'WBC', 'RBC', 'HGB', 'HCT', 'NEUT', 'LYMPH',
+            'MONO', 'EOS', 'BASO', 'IG', 'RETI', 'ESR', 'BSG', 'IL-6', 'TNF',
+            'IgG', 'IgM', 'IgA', 'IgE', 'C3', 'C4', 'ANA', 'ANCA', 'RF', 'CCP'
         }
         
         # Compile regex patterns
@@ -194,16 +217,38 @@ class AdvancedPrivacyFilter:
     
     def _protect_medical_terms(self, text: str) -> str:
         """Schützt medizinische Begriffe vor Entfernung"""
+        import re
+        
+        # Schütze Vitamin-Kombinationen (z.B. "Vitamin D3", "Vitamin B12")
+        vitamin_pattern = r'\b(Vitamin|Vit\.?)\s*([A-Z][0-9]*|[0-9]+[-,]?[0-9]*[-]?OH[-]?[A-Z]?[0-9]*)\b'
+        text = re.sub(vitamin_pattern, r'§VITAMIN_\2§', text, flags=re.IGNORECASE)
+        
+        # Schütze Laborwert-Kombinationen mit Zahlen (z.B. "25-OH-D3", "1,25-OH2-D3")
+        lab_pattern = r'\b([0-9]+[,.]?[0-9]*[-]?OH[0-9]*[-]?[A-Z]?[0-9]*)\b'
+        text = re.sub(lab_pattern, r'§LAB_\1§', text, flags=re.IGNORECASE)
+        
         # Ersetze medizinische Abkürzungen temporär
         for abbr in self.protected_abbreviations:
-            text = text.replace(abbr, f"§{abbr}§")
-            text = text.replace(abbr.lower(), f"§{abbr}§")
+            # Case-insensitive replacement mit Wortgrenzen
+            pattern = r'\b' + re.escape(abbr) + r'\b'
+            text = re.sub(pattern, f"§{abbr}§", text, flags=re.IGNORECASE)
+        
         return text
     
     def _restore_medical_terms(self, text: str) -> str:
         """Stellt geschützte medizinische Begriffe wieder her"""
+        import re
+        
+        # Stelle Vitamin-Kombinationen wieder her
+        text = re.sub(r'§VITAMIN_([^§]+)§', r'Vitamin \1', text)
+        
+        # Stelle Laborwert-Kombinationen wieder her
+        text = re.sub(r'§LAB_([^§]+)§', r'\1', text)
+        
+        # Stelle normale Abkürzungen wieder her
         for abbr in self.protected_abbreviations:
             text = text.replace(f"§{abbr}§", abbr)
+        
         return text
     
     def _remove_explicit_patterns(self, text: str) -> str:

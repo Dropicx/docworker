@@ -101,7 +101,23 @@ class SmartPrivacyFilter:
             'AP', 'LAP', 'GGT', 'GOT', 'GPT', 'LDH',
             'CK', 'CKMB', 'BNP', 'NT-proBNP',
             'Hb', 'Hkt', 'MCV', 'MCH', 'MCHC',
-            'INR', 'PTT', 'PTZ', 'Quick', 'AT3'
+            'INR', 'PTT', 'PTZ', 'Quick', 'AT3',
+            # Vitamine und Nährstoffe
+            'D3', 'B12', 'B6', 'B1', 'B2', 'B9', 'K2', 'K1', 'E', 'C', 'A',
+            '25-OH', '1,25-OH2', 'OH-D3', 'OH-D', 'D2',
+            # Weitere Laborwerte
+            'GFR', 'eGFR', 'HDL', 'LDL', 'VLDL',
+            'IgG', 'IgM', 'IgA', 'IgE', 'RF', 'CCP', 'ANA', 'ANCA'
+        }
+        
+        # Vitamine und Nährstoffe als geschützte Begriffe
+        self.vitamins_nutrients = {
+            'vitamin', 'vitamine', 'd3', 'b12', 'b6', 'b1', 'b2', 'b9', 'k2', 'k1',
+            'folsäure', 'folat', 'cobalamin', 'thiamin', 'riboflavin', 'niacin',
+            'pantothensäure', 'pyridoxin', 'biotin', 'ascorbinsäure', 'tocopherol',
+            'retinol', 'calciferol', 'cholecalciferol', 'ergocalciferol',
+            'calcium', 'magnesium', 'kalium', 'natrium', 'phosphor', 'eisen',
+            'zink', 'kupfer', 'mangan', 'selen', 'jod', 'fluor', 'chrom'
         }
         
         self.patterns = self._compile_patterns()
@@ -177,10 +193,19 @@ class SmartPrivacyFilter:
     
     def _protect_medical_terms(self, text: str) -> str:
         """Schützt medizinische Begriffe vor Entfernung"""
+        # Schütze Vitamin-Kombinationen (z.B. "Vitamin D3", "Vitamin B12")
+        vitamin_pattern = r'\b(Vitamin|Vit\.?)\s*([A-Z][0-9]*|[0-9]+[-,]?[0-9]*[-]?OH[-]?[A-Z]?[0-9]*)\b'
+        text = re.sub(vitamin_pattern, r'«VITAMIN_\2»', text, flags=re.IGNORECASE)
+        
+        # Schütze Laborwert-Kombinationen mit Zahlen (z.B. "25-OH-D3", "1,25-OH2-D3")
+        lab_pattern = r'\b([0-9]+[,.]?[0-9]*[-]?OH[0-9]*[-]?[A-Z]?[0-9]*)\b'
+        text = re.sub(lab_pattern, r'«LAB_\1»', text, flags=re.IGNORECASE)
+        
         # Schütze Abkürzungen
         for abbr in self.medical_abbreviations:
-            text = text.replace(abbr, f"«{abbr}»")
-            text = text.replace(abbr.lower(), f"«{abbr}»")
+            # Case-insensitive replacement mit Wortgrenzen
+            pattern = r'\b' + re.escape(abbr) + r'\b'
+            text = re.sub(pattern, f"«{abbr}»", text, flags=re.IGNORECASE)
         
         # Schütze medizinische Eponyme im Kontext
         # z.B. "Morbus Crohn" -> "«Morbus_Crohn»"
@@ -203,8 +228,14 @@ class SmartPrivacyFilter:
     
     def _restore_medical_terms(self, text: str) -> str:
         """Stellt geschützte Begriffe wieder her"""
-        # Entferne Schutzzeichen
-        text = re.sub(r'«([^»]+)»', lambda m: m.group(1).replace('_', ' ').replace('_', '-'), text)
+        # Stelle Vitamin-Kombinationen wieder her
+        text = re.sub(r'«VITAMIN_([^»]+)»', r'Vitamin \1', text)
+        
+        # Stelle Laborwert-Kombinationen wieder her
+        text = re.sub(r'«LAB_([^»]+)»', r'\1', text)
+        
+        # Entferne restliche Schutzzeichen
+        text = re.sub(r'«([^»]+)»', lambda m: m.group(1).replace('_', ' '), text)
         return text
     
     def _remove_explicit_patterns(self, text: str) -> str:
@@ -366,6 +397,14 @@ class SmartPrivacyFilter:
         # Ist es eine medizinische Abkürzung?
         if token.upper() in self.medical_abbreviations:
             return True
+        
+        # Ist es ein Vitamin oder Nährstoff?
+        if token_lower in self.vitamins_nutrients:
+            return True
+        
+        # Spezialfall: Vitamin-Kombinationen (z.B. "D3" nach "Vitamin")
+        if re.match(r'^[A-Z]\d+$', token) or re.match(r'^\d+[A-Z]+$', token):
+            return True  # Könnte ein Vitamin sein
         
         return False
     
