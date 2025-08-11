@@ -32,8 +32,8 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 COPY backend/requirements.txt ./backend/
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# Download spaCy model if using advanced PII filter (optional)
-# RUN python -m spacy download de_core_news_sm || true
+# Download spaCy model for advanced PII filter with improved NER capabilities
+RUN python -m spacy download de_core_news_sm || true
 
 # Copy backend code
 COPY backend/ ./backend/

@@ -100,7 +100,7 @@ class AdvancedPrivacyFilter:
     def _initialize_spacy(self):
         """Initialisiert spaCy mit deutschem Modell"""
         if not SPACY_AVAILABLE:
-            logger.warning("⚠️ spaCy nicht installiert, verwende reine Heuristik")
+            logger.info("ℹ️ spaCy ist optional - verwende Heuristik-basierte Erkennung")
             self.nlp = None
             self.has_ner = False
             return
@@ -111,14 +111,15 @@ class AdvancedPrivacyFilter:
             logger.info("✅ spaCy deutsches Modell (de_core_news_sm) geladen")
             self.has_ner = True
         except (OSError, ImportError) as e:
-            logger.warning(f"⚠️ spaCy Modell nicht verfügbar: {e}")
+            logger.warning(f"⚠️ spaCy Modell nicht verfügbar - verwende eingeschränkten Heuristik-Modus: {e}")
+            logger.info("💡 Für bessere Namenerkennung: python -m spacy download de_core_news_sm")
             try:
                 # Fallback: Versuche ein leeres deutsches Modell
                 self.nlp = spacy.blank("de")
-                logger.info("📦 Verwende spaCy blank model als Fallback")
+                logger.info("📦 Verwende spaCy blank model als Fallback (ohne NER)")
                 self.has_ner = False
             except Exception as e2:
-                logger.warning(f"⚠️ spaCy Initialisierung fehlgeschlagen: {e2}")
+                logger.warning(f"⚠️ spaCy Initialisierung fehlgeschlagen - verwende reine Heuristik: {e2}")
                 self.nlp = None
                 self.has_ner = False
     

@@ -729,24 +729,50 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         """
         import re
         
-        # WICHTIG: Ersetze alle Pfeile die NICHT am Zeilenanfang stehen mit Zeilenumbruch + Einrückung
-        # Dies betrifft Pfeile mitten in Zeilen nach Bullet Points
+        # KRITISCH: Stelle sicher dass ALLE Bullet Points und Pfeile auf neuen Zeilen stehen
+        
+        # 1. Ersetze alle Bullet Points die nicht am Zeilenanfang stehen mit Zeilenumbruch
+        text = re.sub(r'([^\n])(•)', r'\1\n•', text)
+        
+        # 2. Ersetze alle Pfeile die nicht am Zeilenanfang stehen mit Zeilenumbruch + Einrückung
+        # Pfeile nach Bullet Points bekommen eine neue Zeile mit Einrückung
         text = re.sub(r'([^^\n])(\s*→\s*)', r'\1\n  → ', text)
         
-        # Stelle sicher, dass Pfeile am Zeilenanfang richtig eingerückt sind
+        # 3. Stelle sicher, dass Pfeile am Zeilenanfang richtig eingerückt sind
         text = re.sub(r'^(\s*)→', r'  →', text, flags=re.MULTILINE)
         
-        # Füge Leerzeilen zwischen Hauptpunkten ein für bessere Lesbarkeit
+        # 4. Korrigiere doppelte Bullet Points auf derselben Zeile
+        text = re.sub(r'•\s*•', '•', text)
+        
+        # 5. Füge Leerzeilen zwischen Hauptpunkten ein für bessere Lesbarkeit
         # Nach einem Unterpunkt (→) vor einem neuen Hauptpunkt (•)
         text = re.sub(r'(→[^\n]+)\n([•])', r'\1\n\n\2', text)
         
-        # Korrigiere mehrfache Leerzeilen (max 2)
-        text = re.sub(r'\n{3,}', '\n\n', text)
-        
-        # Stelle sicher, dass nach Überschriften (##) eine Leerzeile kommt
+        # 6. Stelle sicher, dass nach Überschriften (##) eine Leerzeile kommt
         text = re.sub(r'(##[^\n]+)\n([^#\n])', r'\1\n\n\2', text)
         
-        # Entferne Leerzeichen am Zeilenende
+        # 7. Korrigiere mehrfache Leerzeilen (max 2)
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        
+        # 8. Entferne Leerzeichen am Zeilenende
         text = re.sub(r'[ \t]+$', '', text, flags=re.MULTILINE)
+        
+        # 9. Stelle sicher, dass jeder Punkt mit • am Zeilenanfang beginnt
+        lines = text.split('\n')
+        formatted_lines = []
+        for line in lines:
+            # Wenn eine Zeile mehrere Bullet Points enthält, teile sie auf
+            if line.count('•') > 1:
+                parts = line.split('•')
+                for i, part in enumerate(parts):
+                    if part.strip():
+                        if i == 0:
+                            formatted_lines.append(part.strip())
+                        else:
+                            formatted_lines.append('• ' + part.strip())
+            else:
+                formatted_lines.append(line)
+        
+        text = '\n'.join(formatted_lines)
         
         return text
