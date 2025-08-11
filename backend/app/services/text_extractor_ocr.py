@@ -14,7 +14,7 @@ import pdfplumber
 import pytesseract
 from PIL import Image
 from pdf2image import convert_from_bytes
-from .table_processor import TableProcessor
+from .improved_table_processor import ImprovedTableProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -23,8 +23,8 @@ class TextExtractorWithOCR:
     def __init__(self):
         # Check if Tesseract is available
         self.ocr_available = self._check_tesseract()
-        # Initialize table processor
-        self.table_processor = TableProcessor()
+        # Initialize improved table processor for better medical OCR
+        self.table_processor = ImprovedTableProcessor()
         
         if self.ocr_available:
             logger.info("✅ Text extractor initialized with Tesseract OCR support")
@@ -186,15 +186,18 @@ class TextExtractorWithOCR:
                     # Detect if page contains tables using enhanced detection
                     has_table_structure = self.table_processor.detect_table_structure(data)
                     
+                    # Always use improved processing for better results
+                    logger.info(f"🔍 Processing page {i} with improved OCR...")
+                    
+                    # Extract text - use table config if table detected, normal otherwise
                     if has_table_structure:
-                        logger.info(f"📊 Page {i}: Table structure detected - using enhanced table processing")
-                        # Extract text with table preservation
+                        logger.info(f"📊 Page {i}: Medical table/form detected - optimizing extraction")
                         page_text = pytesseract.image_to_string(image, config=self.tesseract_table_config)
-                        # Use advanced table processor
-                        page_text = self.table_processor.process_ocr_output(page_text, data)
                     else:
-                        # Normal text extraction
                         page_text = pytesseract.image_to_string(image, config=self.tesseract_config)
+                    
+                    # Always apply improved processing for cleaner output
+                    page_text = self.table_processor.process_ocr_output(page_text, data)
                     
                     # Apply OCR error correction to all text
                     page_text = self._correct_ocr_errors(page_text)
@@ -267,16 +270,18 @@ class TextExtractorWithOCR:
             # Detect if there might be table structures using enhanced detection
             has_table_structure = self.table_processor.detect_table_structure(data)
             
+            # Always use improved processing for better results
+            logger.info("🔍 Processing image with improved OCR...")
+            
             if has_table_structure:
-                logger.info("📊 Table structure detected - using enhanced table processing")
-                print("📊 Table structure detected - optimizing for table extraction", flush=True)
-                # Use table config with preserved spacing
+                logger.info("📊 Medical table/form detected - optimizing extraction")
+                print("📊 Medical table/form detected - optimizing extraction", flush=True)
                 text = pytesseract.image_to_string(image, config=self.tesseract_table_config)
-                # Use advanced table processor with position data
-                text = self.table_processor.process_ocr_output(text, data)
             else:
-                # Normal text extraction
                 text = pytesseract.image_to_string(image, config=self.tesseract_config)
+            
+            # Always apply improved processing for cleaner output
+            text = self.table_processor.process_ocr_output(text, data)
             
             # Apply OCR error correction
             text = self._correct_ocr_errors(text)

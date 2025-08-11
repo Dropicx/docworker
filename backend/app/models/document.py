@@ -17,213 +17,53 @@ class ProcessingStatus(str, Enum):
     ERROR = "error"
 
 class SupportedLanguage(str, Enum):
-    AFRIKAANS = "af"
-    AMHARIC = "am"
-    ARABIC = "ar"
-    ARMENIAN = "hy"
-    ASSAMESE = "as"
-    ASTURIAN = "ast"
-    AZERBAIJANI = "az"
-    BELARUSIAN = "be"
-    BENGALI = "bn"
-    BOSNIAN = "bs"
-    BULGARIAN = "bg"
-    BURMESE = "my"
-    CATALAN = "ca"
-    CEBUANO = "ceb"
-    CHINESE_SIMPLIFIED = "zho"
-    CHINESE_TRADITIONAL = "zho"
-    CROATIAN = "hr"
-    CZECH = "cs"
-    DANISH = "da"
-    DUTCH = "nl"
+    # Sehr gut unterstützte Sprachen (beste Performance mit Llama 3.3)
     ENGLISH = "en"
-    ESTONIAN = "et"
-    FILIPINO = "tl"
-    FINNISH = "fi"
+    GERMAN = "de"  # Deutsch  
     FRENCH = "fr"
-    FULAH = "ff"
-    GALICIAN = "gl"
-    GANDA = "lg"
-    GEORGIAN = "ka"
-    GERMAN = "de"
-    GREEK = "el"
-    GUJARATI = "gu"
-    HAUSA = "ha"
-    HEBREW = "he"
-    HINDI = "hi"
-    HUNGARIAN = "hu"
-    ICELANDIC = "is"
-    IGBO = "ig"
-    INDONESIAN = "id"
-    IRISH = "ga"
-    ITALIAN = "it"
-    JAPANESE = "ja"
-    JAVANESE = "jv"
-    KABUVERDIANU = "kea"
-    KAMBA = "kam"
-    KANNADA = "kn"
-    KAZAKH = "kk"
-    KHMER = "km"
-    KOREAN = "ko"
-    KYRGYZ = "ky"
-    LAO = "lo"
-    LATVIAN = "lv"
-    LINGALA = "ln"
-    LITHUANIAN = "lt"
-    LUO = "luo"
-    LUXEMBOURGISH = "lb"
-    MACEDONIAN = "mk"
-    MALAY = "ms"
-    MALAYALAM = "ml"
-    MALTESE = "mt"
-    MAORI = "mi"
-    MARATHI = "mr"
-    MONGOLIAN = "mn"
-    NEPALI = "ne"
-    NORTHERN_SOTHO = "ns"
-    NORWEGIAN = "no"
-    NYANJA = "ny"
-    OCCITAN = "oc"
-    ORIYA = "or"
-    OROMO = "om"
-    PASHTO = "ps"
-    PERSIAN = "fa"
-    POLISH = "pl"
-    PORTUGUESE = "pt"
-    PUNJABI = "pa"
-    ROMANIAN = "ro"
-    RUSSIAN = "ru"
-    SERBIAN = "sr"
-    SHONA = "sn"
-    SINDHI = "sd"
-    SLOVAK = "sk"
-    SLOVENIAN = "sl"
-    SOMALI = "so"
-    SORANI_KURDISH = "ku"
     SPANISH = "es"
-    SWAHILI = "sw"
+    ITALIAN = "it"
+    PORTUGUESE = "pt"
+    DUTCH = "nl"
+    
+    # Gut unterstützte Sprachen
+    RUSSIAN = "ru"
+    CHINESE_SIMPLIFIED = "zh-CN"
+    CHINESE_TRADITIONAL = "zh-TW"
+    JAPANESE = "ja"
+    KOREAN = "ko"
+    ARABIC = "ar"
+    HINDI = "hi"
+    POLISH = "pl"
+    CZECH = "cs"
     SWEDISH = "sv"
-    TAJIK = "tg"
-    TAMIL = "ta"
-    TELUGU = "te"
-    THAI = "th"
-    TURKISH = "tr"
-    UKRAINIAN = "uk"
-    UMBUNDU = "umb"
-    URDU = "ur"
-    UZBEK = "uz"
-    VIETNAMESE = "vi"
-    WELSH = "cy"
-    WOLOF = "wo"
-    XHOSA = "xh"
-    YORUBA = "yo"
-    ZULU = "zu"
+    NORWEGIAN = "no"
+    DANISH = "da"
 
 # Sprachname-Mapping für die UI
 LANGUAGE_NAMES = {
-    SupportedLanguage.AFRIKAANS: "Afrikaans",
-    SupportedLanguage.AMHARIC: "Amharic",
-    SupportedLanguage.ARABIC: "Arabic",
-    SupportedLanguage.ARMENIAN: "Armenian",
-    SupportedLanguage.ASSAMESE: "Assamese",
-    SupportedLanguage.ASTURIAN: "Asturian",
-    SupportedLanguage.AZERBAIJANI: "Azerbaijani",
-    SupportedLanguage.BELARUSIAN: "Belarusian",
-    SupportedLanguage.BENGALI: "Bengali",
-    SupportedLanguage.BOSNIAN: "Bosnian",
-    SupportedLanguage.BULGARIAN: "Bulgarian",
-    SupportedLanguage.BURMESE: "Burmese",
-    SupportedLanguage.CATALAN: "Catalan",
-    SupportedLanguage.CEBUANO: "Cebuano",
-    SupportedLanguage.CHINESE_SIMPLIFIED: "Chinese (Simplified)",
-    SupportedLanguage.CHINESE_TRADITIONAL: "Chinese (Traditional)",
-    SupportedLanguage.CROATIAN: "Croatian",
-    SupportedLanguage.CZECH: "Czech",
-    SupportedLanguage.DANISH: "Danish",
-    SupportedLanguage.DUTCH: "Dutch",
-    SupportedLanguage.ENGLISH: "English",
-    SupportedLanguage.ESTONIAN: "Estonian",
-    SupportedLanguage.FILIPINO: "Filipino",
-    SupportedLanguage.FINNISH: "Finnish",
-    SupportedLanguage.FRENCH: "French",
-    SupportedLanguage.FULAH: "Fulah",
-    SupportedLanguage.GALICIAN: "Galician",
-    SupportedLanguage.GANDA: "Ganda",
-    SupportedLanguage.GEORGIAN: "Georgian",
-    SupportedLanguage.GERMAN: "German",
-    SupportedLanguage.GREEK: "Greek",
-    SupportedLanguage.GUJARATI: "Gujarati",
-    SupportedLanguage.HAUSA: "Hausa",
-    SupportedLanguage.HEBREW: "Hebrew",
+    # Sehr gut unterstützte Sprachen
+    SupportedLanguage.ENGLISH: "Englisch",
+    SupportedLanguage.GERMAN: "Deutsch",
+    SupportedLanguage.FRENCH: "Französisch",
+    SupportedLanguage.SPANISH: "Spanisch",
+    SupportedLanguage.ITALIAN: "Italienisch",
+    SupportedLanguage.PORTUGUESE: "Portugiesisch",
+    SupportedLanguage.DUTCH: "Niederländisch",
+    
+    # Gut unterstützte Sprachen
+    SupportedLanguage.RUSSIAN: "Russisch",
+    SupportedLanguage.CHINESE_SIMPLIFIED: "Chinesisch (Vereinfacht)",
+    SupportedLanguage.CHINESE_TRADITIONAL: "Chinesisch (Traditionell)",
+    SupportedLanguage.JAPANESE: "Japanisch",
+    SupportedLanguage.KOREAN: "Koreanisch",
+    SupportedLanguage.ARABIC: "Arabisch",
     SupportedLanguage.HINDI: "Hindi",
-    SupportedLanguage.HUNGARIAN: "Hungarian",
-    SupportedLanguage.ICELANDIC: "Icelandic",
-    SupportedLanguage.IGBO: "Igbo",
-    SupportedLanguage.INDONESIAN: "Indonesian",
-    SupportedLanguage.IRISH: "Irish",
-    SupportedLanguage.ITALIAN: "Italian",
-    SupportedLanguage.JAPANESE: "Japanese",
-    SupportedLanguage.JAVANESE: "Javanese",
-    SupportedLanguage.KABUVERDIANU: "Kabuverdianu",
-    SupportedLanguage.KAMBA: "Kamba",
-    SupportedLanguage.KANNADA: "Kannada",
-    SupportedLanguage.KAZAKH: "Kazakh",
-    SupportedLanguage.KHMER: "Khmer",
-    SupportedLanguage.KOREAN: "Korean",
-    SupportedLanguage.KYRGYZ: "Kyrgyz",
-    SupportedLanguage.LAO: "Lao",
-    SupportedLanguage.LATVIAN: "Latvian",
-    SupportedLanguage.LINGALA: "Lingala",
-    SupportedLanguage.LITHUANIAN: "Lithuanian",
-    SupportedLanguage.LUO: "Luo",
-    SupportedLanguage.LUXEMBOURGISH: "Luxembourgish",
-    SupportedLanguage.MACEDONIAN: "Macedonian",
-    SupportedLanguage.MALAY: "Malay",
-    SupportedLanguage.MALAYALAM: "Malayalam",
-    SupportedLanguage.MALTESE: "Maltese",
-    SupportedLanguage.MAORI: "Maori",
-    SupportedLanguage.MARATHI: "Marathi",
-    SupportedLanguage.MONGOLIAN: "Mongolian",
-    SupportedLanguage.NEPALI: "Nepali",
-    SupportedLanguage.NORTHERN_SOTHO: "Northern Sotho",
-    SupportedLanguage.NORWEGIAN: "Norwegian",
-    SupportedLanguage.NYANJA: "Nyanja",
-    SupportedLanguage.OCCITAN: "Occitan",
-    SupportedLanguage.ORIYA: "Oriya",
-    SupportedLanguage.OROMO: "Oromo",
-    SupportedLanguage.PASHTO: "Pashto",
-    SupportedLanguage.PERSIAN: "Persian",
-    SupportedLanguage.POLISH: "Polish",
-    SupportedLanguage.PORTUGUESE: "Portuguese",
-    SupportedLanguage.PUNJABI: "Punjabi",
-    SupportedLanguage.ROMANIAN: "Romanian",
-    SupportedLanguage.RUSSIAN: "Russian",
-    SupportedLanguage.SERBIAN: "Serbian",
-    SupportedLanguage.SHONA: "Shona",
-    SupportedLanguage.SINDHI: "Sindhi",
-    SupportedLanguage.SLOVAK: "Slovak",
-    SupportedLanguage.SLOVENIAN: "Slovenian",
-    SupportedLanguage.SOMALI: "Somali",
-    SupportedLanguage.SORANI_KURDISH: "Sorani Kurdish",
-    SupportedLanguage.SPANISH: "Spanish",
-    SupportedLanguage.SWAHILI: "Swahili",
-    SupportedLanguage.SWEDISH: "Swedish",
-    SupportedLanguage.TAJIK: "Tajik",
-    SupportedLanguage.TAMIL: "Tamil",
-    SupportedLanguage.TELUGU: "Telugu",
-    SupportedLanguage.THAI: "Thai",
-    SupportedLanguage.TURKISH: "Turkish",
-    SupportedLanguage.UKRAINIAN: "Ukrainian",
-    SupportedLanguage.UMBUNDU: "Umbundu",
-    SupportedLanguage.URDU: "Urdu",
-    SupportedLanguage.UZBEK: "Uzbek",
-    SupportedLanguage.VIETNAMESE: "Vietnamese",
-    SupportedLanguage.WELSH: "Welsh",
-    SupportedLanguage.WOLOF: "Wolof",
-    SupportedLanguage.XHOSA: "Xhosa",
-    SupportedLanguage.YORUBA: "Yoruba",
-    SupportedLanguage.ZULU: "Zulu"
+    SupportedLanguage.POLISH: "Polnisch",
+    SupportedLanguage.CZECH: "Tschechisch",
+    SupportedLanguage.SWEDISH: "Schwedisch",
+    SupportedLanguage.NORWEGIAN: "Norwegisch",
+    SupportedLanguage.DANISH: "Dänisch"
 }
 
 class ProcessingOptions(BaseModel):

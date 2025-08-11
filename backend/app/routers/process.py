@@ -385,52 +385,59 @@ async def get_available_languages():
     """
     
     try:
-        # Beliebte Sprachen zuerst
-        popular_languages = [
+        # Sehr gut unterstützte Sprachen (beste Llama 3.3 Performance)
+        best_supported = [
             SupportedLanguage.ENGLISH,
-            SupportedLanguage.SPANISH,
+            SupportedLanguage.GERMAN,
             SupportedLanguage.FRENCH,
+            SupportedLanguage.SPANISH,
             SupportedLanguage.ITALIAN,
             SupportedLanguage.PORTUGUESE,
-            SupportedLanguage.DUTCH,
-            SupportedLanguage.POLISH,
-            SupportedLanguage.TURKISH,
+            SupportedLanguage.DUTCH
+        ]
+        
+        # Gut unterstützte Sprachen
+        well_supported = [
             SupportedLanguage.RUSSIAN,
-            SupportedLanguage.ARABIC,
             SupportedLanguage.CHINESE_SIMPLIFIED,
+            SupportedLanguage.CHINESE_TRADITIONAL,
             SupportedLanguage.JAPANESE,
-            SupportedLanguage.KOREAN
+            SupportedLanguage.KOREAN,
+            SupportedLanguage.ARABIC,
+            SupportedLanguage.HINDI,
+            SupportedLanguage.POLISH,
+            SupportedLanguage.CZECH,
+            SupportedLanguage.SWEDISH,
+            SupportedLanguage.NORWEGIAN,
+            SupportedLanguage.DANISH
         ]
         
         # Alle verfügbaren Sprachen
         all_languages = []
         
-        # Zuerst beliebte Sprachen
-        for lang in popular_languages:
+        # Zuerst sehr gut unterstützte Sprachen
+        for lang in best_supported:
             all_languages.append({
                 "code": lang.value,
                 "name": LANGUAGE_NAMES[lang],
-                "popular": True
+                "popular": True,
+                "quality": "excellent"
             })
         
-        # Dann andere Sprachen alphabetisch
-        remaining_languages = []
-        for lang in SupportedLanguage:
-            if lang not in popular_languages:
-                remaining_languages.append({
-                    "code": lang.value,
-                    "name": LANGUAGE_NAMES[lang],
-                    "popular": False
-                })
-        
-        # Alphabetisch sortieren
-        remaining_languages.sort(key=lambda x: x["name"])
-        all_languages.extend(remaining_languages)
+        # Dann gut unterstützte Sprachen
+        for lang in well_supported:
+            all_languages.append({
+                "code": lang.value,
+                "name": LANGUAGE_NAMES[lang],
+                "popular": False,
+                "quality": "good"
+            })
         
         return {
             "languages": all_languages,
             "total_count": len(all_languages),
-            "popular_count": len(popular_languages),
+            "best_supported_count": len(best_supported),
+            "well_supported_count": len(well_supported),
             "timestamp": datetime.now()
         }
         

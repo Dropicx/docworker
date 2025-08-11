@@ -374,26 +374,19 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         try:
             logger.info(f"🌐 Translating to {target_language} with OVH {self.translation_model}")
             
-            translation_prompt = f"""Du bist ein professioneller medizinischer Übersetzer, der bereits vereinfachte medizinische Texte in andere Sprachen übersetzt.
+            translation_prompt = f"""Übersetze den folgenden Text EXAKT in {target_language}.
 
-AUFGABE:
-- Übersetze den folgenden bereits vereinfachten medizinischen Text in {target_language}
-- Behalte die einfache, verständliche Sprache bei
-- Übersetze alle medizinischen Begriffe korrekt und angemessen
-- Behalte die Struktur mit Emojis und Überschriften bei
-- Stelle sicher, dass der Text für Patienten verständlich bleibt
+STRIKTE REGELN:
+1. NUR übersetzen - KEINE Zusätze, Erklärungen oder Kommentare
+2. EXAKTE Formatierung beibehalten - jede Zeile, jeder Absatz, jedes Symbol
+3. Alle Symbole (•, →, ##, 📊, etc.) UNVERÄNDERT lassen
+4. Zahlen und Einheiten (mg, ml, mmHg) NICHT ändern
+5. Bei unübersetzbaren Begriffen das Original verwenden
 
-WICHTIGE REGELN:
-- Verwende einfache, klare Sprache in der Zielsprache
-- Behalte medizinische Genauigkeit bei
-- Übersetze Emojis und Struktur-Elemente nicht - behalte sie bei
-- Falls ein medizinischer Begriff keine direkte Übersetzung hat, erkläre ihn in Klammern
-- Stelle sicher, dass der übersetzte Text genauso verständlich ist wie das Original
-
-ORIGINAL TEXT (bereits vereinfacht):
+TEXT ZUM ÜBERSETZEN:
 {simplified_text}
 
-ÜBERSETZUNG IN {target_language.upper()}:"""
+ÜBERSETZUNG:"""
             
             messages = [
                 {

@@ -333,7 +333,10 @@ function App() {
       <header className="sticky top-0 z-50 header-blur">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
-            <div className="flex items-center space-x-2 sm:space-x-4">
+            <button 
+              onClick={handleNewTranslation}
+              className="flex items-center space-x-2 sm:space-x-4 hover:opacity-80 transition-opacity"
+            >
               <div className="hero-gradient p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-soft">
                 <Stethoscope className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
@@ -345,7 +348,7 @@ function App() {
                   Medizinische Dokumente verstehen
                 </p>
               </div>
-            </div>
+            </button>
             
             <div className="flex items-center space-x-6">
               {renderHealthIndicator()}
