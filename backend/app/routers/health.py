@@ -198,65 +198,53 @@ async def detailed_health_check():
 @router.get("/health/test-markdown-format")
 async def test_markdown_format():
     """
-    Testet verschiedene Markdown-Formatierungen für korrekte Darstellung
+    Testet die neue Markdown-Formatierung mit Sublisten
     """
     
-    # Verschiedene Formatierungsansätze testen
-    formats = {
-        "original_problem": """• Sie haben Atemnot. → Bedeutung: Sie kommen schnell außer Atem.
+    # Test mit problematischem Text
+    test_cases = {
+        "simple_bullet_arrow": """• Sie haben Atemnot. → Bedeutung: Sie kommen schnell außer Atem.
 • Sie haben Brustschmerzen. → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
         
-        "with_line_breaks": """• Sie haben Atemnot.
-  → Bedeutung: Sie kommen schnell außer Atem.
-
-• Sie haben Brustschmerzen.
-  → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
+        "multiple_arrows": """• Ramipril 5mg. → Wofür: Senkt Ihren Blutdruck. → Einnahme: 1x morgens.
+• Metformin 1000mg. → Wofür: Hilft bei der Zuckerverarbeitung. → Einnahme: 2x täglich zum Essen.""",
         
-        "markdown_sublist": """• Sie haben Atemnot.
-  - → Bedeutung: Sie kommen schnell außer Atem.
+        "mixed_content": """## 💊 Behandlung & Medikamente
 
-• Sie haben Brustschmerzen.
-  - → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
-        
-        "markdown_nested": """- Sie haben Atemnot.
-  - → Bedeutung: Sie kommen schnell außer Atem.
+• Ramipril 5mg. → Wofür: Senkt Ihren Blutdruck. → Einnahme: 1x morgens.
+• Metformin 1000mg. → Wofür: Hilft bei der Zuckerverarbeitung. → Einnahme: 2x täglich zum Essen.
 
-- Sie haben Brustschmerzen.
-  - → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
-        
-        "with_double_space": """• Sie haben Atemnot.  
-  → Bedeutung: Sie kommen schnell außer Atem.
+## 📊 Ihre Werte
 
-• Sie haben Brustschmerzen.  
-  → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
-        
-        "blockquote_style": """• Sie haben Atemnot.
-> → Bedeutung: Sie kommen schnell außer Atem.
-
-• Sie haben Brustschmerzen.
-> → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
-        
-        "definition_list": """• Sie haben Atemnot.
-: → Bedeutung: Sie kommen schnell außer Atem.
-
-• Sie haben Brustschmerzen.
-: → Bedeutung: Ihr Herz arbeitet nicht richtig."""
+• Blutdruck: 140/90 mmHg → Bedeutung: Leicht erhöht, sollte gesenkt werden.
+• Blutzucker: 7.8% HbA1c → Bedeutung: Über dem Zielwert, besser kontrollieren."""
     }
     
-    # Teste unsere aktuelle Formatierung
+    # Teste unsere neue Formatierung
     from app.services.ovh_client import OVHClient
     client = OVHClient()
     
-    formatted_versions = {}
-    for name, text in formats.items():
-        formatted_versions[name] = {
+    formatted_results = {}
+    for name, text in test_cases.items():
+        formatted = client._improve_formatting(text)
+        formatted_results[name] = {
             "original": text,
-            "after_improve_formatting": client._improve_formatting(text)
+            "formatted": formatted,
+            "lines_original": text.split('\n'),
+            "lines_formatted": formatted.split('\n'),
+            "contains_sublists": '  - ' in formatted,
+            "arrow_count": formatted.count('→'),
+            "bullet_count": formatted.count('•'),
+            "sublist_count": formatted.count('  - ')
         }
     
     return {
-        "formats": formatted_versions,
-        "recommendation": "Check which format renders correctly in ReactMarkdown"
+        "test_results": formatted_results,
+        "formatting_info": {
+            "method": "Markdown sublists with '  - ' prefix",
+            "expected_rendering": "Indented arrows with gray background",
+            "reactmarkdown_compatible": True
+        }
     }
 
 @router.get("/health/test-formatting-live")

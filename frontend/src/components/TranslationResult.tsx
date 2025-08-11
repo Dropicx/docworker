@@ -300,7 +300,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         {children}
                       </ol>
                     ),
-                    li: ({children}) => {
+                    li: ({children, ordered}) => {
                       // Konvertiere children zu String für Analyse
                       const text = React.Children.toArray(children)
                         .map(child => {
@@ -314,38 +314,50 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         })
                         .join('');
                       
-                      // Prüfe ob Text mit Pfeil beginnt (eingerückt)
-                      if (text.match(/^\s+→/) || text.startsWith('→')) {
-                        // Eingerückter Pfeil-Unterpunkt
+                      // Prüfe ob es eine Subliste mit Pfeil ist (Markdown: "  - → Text")
+                      if (text.startsWith('→') || text.includes('→')) {
+                        // Eingerückter Pfeil-Unterpunkt mit besserem Styling
                         return (
                           <li style={{
                             listStyle: 'none',
                             marginLeft: '2rem',
                             paddingLeft: '1rem',
-                            borderLeft: '2px solid #ddd',
-                            color: '#666'
+                            borderLeft: '3px solid #E5E7EB',
+                            color: '#4B5563',
+                            marginBottom: '0.75rem',
+                            paddingTop: '0.25rem',
+                            paddingBottom: '0.25rem',
+                            backgroundColor: '#F9FAFB',
+                            borderRadius: '0 0.25rem 0.25rem 0'
                           }}>
                             {children}
                           </li>
                         );
                       }
                       
-                      // Standard Listeneintrag mit Bullet Point
-                      return (
-                        <li style={{
-                          listStyle: 'none',
-                          display: 'flex',
-                          alignItems: 'flex-start',
-                          marginBottom: '0.5rem'
-                        }}>
-                          <span style={{
-                            marginRight: '0.5rem',
-                            color: '#4F46E5',
-                            flexShrink: 0
-                          }}>•</span>
-                          <span style={{flex: 1}}>{children}</span>
-                        </li>
-                      );
+                      // Standard Listeneintrag mit Bullet Point (nur für Hauptpunkte)
+                      if (!ordered) {
+                        return (
+                          <li style={{
+                            listStyle: 'none',
+                            display: 'flex',
+                            alignItems: 'flex-start',
+                            marginBottom: '0.75rem'
+                          }}>
+                            <span style={{
+                              marginRight: '0.75rem',
+                              color: '#4F46E5',
+                              flexShrink: 0,
+                              fontSize: '1.2em',
+                              lineHeight: '1.2'
+                            }}>•</span>
+                            <span style={{flex: 1, lineHeight: '1.6'}}>{children}</span>
+                          </li>
+                        );
+                      }
+                      
+                      // Geordnete Listen (falls vorhanden)
+                      return <li className="mb-2">{children}</li>;
                     },
                     strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
                     em: ({children}) => <em className="italic text-primary-600">{children}</em>,

@@ -724,8 +724,8 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
     
     def _improve_formatting(self, text: str) -> str:
         """
-        Verbessert die Formatierung von Übersetzungen
-        Fügt korrekte Zeilenumbrüche nach Pfeilen und Bullet Points hinzu
+        Verbessert die Formatierung von Übersetzungen für ReactMarkdown
+        Verwendet echte Markdown-Sublisten für korrekte Darstellung
         """
         import re
         
@@ -735,7 +735,9 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         logger.info("=== FORMATTING START ===")
         logger.info(f"Input text (first 200 chars): {text[:200]}")
         
-        # NEUER ANSATZ: Zeile für Zeile verarbeiten
+        # WICHTIG: Für ReactMarkdown müssen wir echte Markdown-Sublisten verwenden
+        # Statt "  → Text" verwenden wir "  - → Text" für korrekte Einrückung
+        
         lines = text.split('\n')
         formatted_lines = []
         
@@ -752,18 +754,29 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             
             # Zeile enthält sowohl Bullet Point als auch Pfeil
             if '•' in line and '→' in line:
-                # Teile bei Pfeil
-                parts = line.split('→')
-                if len(parts) >= 2:
-                    # Erster Teil (mit Bullet Point)
-                    formatted_lines.append(parts[0].rstrip())
-                    # Zweiter Teil (Pfeil und Rest) - eingerückt
-                    formatted_lines.append('  → ' + '→'.join(parts[1:]).lstrip())
-                else:
-                    formatted_lines.append(line)
+                # Teile bei ALLEN Pfeilen in der Zeile
+                # Beispiel: "• Text → Bedeutung: ... → Einnahme: ..."
+                parts = re.split(r'(→)', line)
+                
+                # Ersten Teil mit Bullet Point
+                if len(parts) > 0:
+                    first_part = parts[0].rstrip()
+                    if first_part:
+                        formatted_lines.append(first_part)
+                
+                # Alle Pfeil-Teile als Markdown-Sublisten
+                i = 1
+                while i < len(parts):
+                    if parts[i] == '→' and i + 1 < len(parts):
+                        # Verwende Markdown-Subliste mit "-" für ReactMarkdown
+                        arrow_text = '→' + parts[i + 1].lstrip()
+                        formatted_lines.append('  - ' + arrow_text)
+                        i += 2
+                    else:
+                        i += 1
             
-            # Zeile enthält mehrere Bullet Points
-            elif line.count('•') > 1:
+            # Zeile enthält mehrere Bullet Points (ohne Pfeile)
+            elif line.count('•') > 1 and '→' not in line:
                 # Teile bei jedem Bullet Point
                 parts = line.split('•')
                 for i, part in enumerate(parts):
@@ -773,11 +786,12 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                             continue
                         formatted_lines.append('• ' + part.strip())
             
-            # Zeile enthält nur Pfeil (Einrückung sicherstellen)
+            # Zeile beginnt nur mit Pfeil (bereits eingerückte Zeile)
             elif line.strip().startswith('→'):
-                formatted_lines.append('  ' + line.strip())
+                # Verwende Markdown-Subliste für korrekte Einrückung
+                formatted_lines.append('  - ' + line.strip())
             
-            # Normale Zeile
+            # Normale Zeile oder einzelner Bullet Point
             else:
                 formatted_lines.append(line)
         
@@ -785,7 +799,11 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         
         # Nachbearbeitung: Konsistente Abstände
         result = re.sub(r'\n{3,}', '\n\n', result)  # Max 2 Leerzeilen
-        result = re.sub(r'[ \t]+$', '', result, flags=re.MULTILINE)  # Trailing spaces
+        result = re.sub(r'[ \t]+$', '', result, flags=re.MULTILINE)  # Trailing spaces entfernen
+        
+        # Stelle sicher, dass Sublisten korrekt formatiert sind
+        # ReactMarkdown benötigt Leerzeile vor Sublisten in manchen Fällen
+        result = re.sub(r'(^[^-\s].*)\n(  - )', r'\1\n\2', result, flags=re.MULTILINE)
         
         logger.info(f"Output text (first 200 chars): {result[:200]}")
         logger.info("=== FORMATTING END ===")
