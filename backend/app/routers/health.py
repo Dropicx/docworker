@@ -2,7 +2,6 @@ from datetime import datetime
 from fastapi import APIRouter, Request
 from app.models.document import HealthCheck
 from app.services.cleanup import get_memory_usage
-from app.services.ollama_client import OllamaClient
 from app.services.ovh_client import OVHClient
 import tempfile
 import os
@@ -73,19 +72,10 @@ async def health_check(request: Request = None):
     try:
         services = {}
         
-        # Check if we're using OVH API or Ollama
-        use_ovh_only = os.getenv("USE_OVH_ONLY", "true").lower() == "true"
-        
-        if use_ovh_only:
-            # OVH API prüfen
-            ovh_client = OVHClient()
-            ovh_connected, error_msg = await ovh_client.check_connection()
-            services["ovh_api"] = "healthy" if ovh_connected else f"error: {error_msg[:100]}"
-        else:
-            # Ollama-Service prüfen (legacy mode)
-            ollama_client = OllamaClient()
-            ollama_connected = await ollama_client.check_connection()
-            services["ollama"] = "healthy" if ollama_connected else "error"
+        # OVH API prüfen
+        ovh_client = OVHClient()
+        ovh_connected, error_msg = await ovh_client.check_connection()
+        services["ovh_api"] = "healthy" if ovh_connected else f"error: {error_msg[:100]}"
         
         # Tesseract prüfen
         try:
@@ -180,31 +170,15 @@ async def detailed_health_check():
         else:
             basic_health.services["disk_space"] = "healthy"
         
-        # Model availability prüfen
-        use_ovh_only = os.getenv("USE_OVH_ONLY", "true").lower() == "true"
-        
-        if use_ovh_only:
-            # OVH models are configured via environment
-            ovh_models = [
-                os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct"),
-                os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407"),
-                os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
-            ]
-            details["available_models"] = list(set(ovh_models))  # Remove duplicates
-            details["model_count"] = len(details["available_models"])
-            details["api_mode"] = "OVH AI Endpoints"
-        else:
-            # Ollama-Modelle prüfen (legacy mode)
-            try:
-                ollama_client = OllamaClient()
-                models = await ollama_client.list_models()
-                details["available_models"] = models
-                details["model_count"] = len(models)
-                details["api_mode"] = "Local Ollama"
-            except Exception:
-                details["available_models"] = []
-                details["model_count"] = 0
-                details["api_mode"] = "Local Ollama (disconnected)"
+        # Model availability prüfen - OVH models are configured via environment
+        ovh_models = [
+            os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct"),
+            os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407"),
+            os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
+        ]
+        details["available_models"] = list(set(ovh_models))  # Remove duplicates
+        details["model_count"] = len(details["available_models"])
+        details["api_mode"] = "OVH AI Endpoints"
         
         return {
             **basic_health.dict(),
@@ -237,14 +211,8 @@ async def test_formatting_live():
 • Ramipril 5mg. → Wofür: Senkt Ihren Blutdruck. → Einnahme: 1x morgens.
 • Metformin 1000mg. → Wofür: Hilft bei der Zuckerverarbeitung. → Einnahme: 2x täglich zum Essen."""
     
-    use_ovh_only = os.getenv("USE_OVH_ONLY", "true").lower() == "true"
-    
-    if use_ovh_only:
-        from app.services.ovh_client import OVHClient
-        client = OVHClient()
-    else:
-        from app.services.ollama_client import OllamaClient
-        client = OllamaClient()
+    from app.services.ovh_client import OVHClient
+    client = OVHClient()
     
     # Formatierung anwenden
     formatted = client._improve_formatting(problem_text)
@@ -285,32 +253,25 @@ async def test_formatting():
 • Sie haben gelegentliche retrosternale Druckgefühle in der Brust. → Bedeutung: Das bedeutet, dass Sie manchmal ein Druckgefühl in der Brust verspüren.
 • Ihr Blutdruck ist normal. → Bedeutung: Das bedeutet, dass Ihr Blutdruck im normalen Bereich liegt."""
     
-    formatted_text = None
-    steps = []
+    from app.services.ovh_client import OVHClient
+    client = OVHClient()
     
-    if use_ovh_only:
-        from app.services.ovh_client import OVHClient
-        client = OVHClient()
-        
-        # Schritt für Schritt debuggen
-        import re
-        
-        step1 = test_text
-        steps.append({"step": "original", "text": step1})
-        
-        # Schritt 1: Bullet Points auf neue Zeilen
-        step2 = re.sub(r'([^\n])(•)', r'\1\n•', step1)
-        steps.append({"step": "bullets_on_newlines", "text": step2})
-        
-        # Schritt 2: Pfeile auf neue Zeilen
-        step3 = re.sub(r'([^^\n])(\s*→\s*)', r'\1\n  → ', step2)
-        steps.append({"step": "arrows_on_newlines", "text": step3})
-        
-        formatted_text = client._improve_formatting(test_text)
-    else:
-        from app.services.ollama_client import OllamaClient
-        client = OllamaClient()
-        formatted_text = client._improve_formatting(test_text)
+    # Schritt für Schritt debuggen
+    import re
+    
+    steps = []
+    step1 = test_text
+    steps.append({"step": "original", "text": step1})
+    
+    # Schritt 1: Bullet Points auf neue Zeilen
+    step2 = re.sub(r'([^\n])(•)', r'\1\n•', step1)
+    steps.append({"step": "bullets_on_newlines", "text": step2})
+    
+    # Schritt 2: Pfeile auf neue Zeilen
+    step3 = re.sub(r'([^^\n])(\s*→\s*)', r'\1\n  → ', step2)
+    steps.append({"step": "arrows_on_newlines", "text": step3})
+    
+    formatted_text = client._improve_formatting(test_text)
     
     # Zeige auch die Zeilen einzeln für besseres Debugging
     lines_original = test_text.split('\n')
@@ -326,7 +287,7 @@ async def test_formatting():
             "line_count_original": len(lines_original),
             "line_count_formatted": len(lines_formatted)
         },
-        "api_mode": "OVH" if use_ovh_only else "Ollama"
+        "api_mode": "OVH"
     }
 
 @router.get("/health/dependencies")
@@ -363,26 +324,14 @@ async def check_dependencies():
         except Exception:
             dependencies[f"system_{cmd}"] = "missing"
     
-    # Externe Services
-    use_ovh_only = os.getenv("USE_OVH_ONLY", "true").lower() == "true"
-    
-    if use_ovh_only:
-        # OVH API Service
-        try:
-            from app.services.ovh_client import OVHClient
-            ovh_client = OVHClient()
-            ovh_status, error_msg = await ovh_client.check_connection()
-            dependencies["ovh_api_service"] = "connected" if ovh_status else f"disconnected: {error_msg[:50]}"
-        except Exception as e:
-            dependencies["ovh_api_service"] = f"error: {str(e)}"
-    else:
-        # Ollama Service (legacy mode)
-        try:
-            ollama_client = OllamaClient()
-            ollama_status = await ollama_client.check_connection()
-            dependencies["ollama_service"] = "connected" if ollama_status else "disconnected"
-        except Exception:
-            dependencies["ollama_service"] = "error"
+    # Externe Services - OVH API Service
+    try:
+        from app.services.ovh_client import OVHClient
+        ovh_client = OVHClient()
+        ovh_status, error_msg = await ovh_client.check_connection()
+        dependencies["ovh_api_service"] = "connected" if ovh_status else f"disconnected: {error_msg[:50]}"
+    except Exception as e:
+        dependencies["ovh_api_service"] = f"error: {str(e)}"
     
     # Zusammenfassung
     missing_deps = [name for name, status in dependencies.items() 

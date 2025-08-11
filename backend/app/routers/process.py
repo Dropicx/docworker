@@ -22,7 +22,7 @@ from app.services.cleanup import (
     update_processing_store,
     remove_from_processing_store
 )
-from app.services.ollama_client import OllamaClient
+from app.services.ovh_client import OVHClient
 import os
 
 # Smart text extractor selection based on OCR availability
@@ -39,8 +39,6 @@ except ImportError as e:
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
-# Initialize with OVH-only mode (reads USE_OVH_ONLY from environment)
-ollama_client = OllamaClient()
 
 @router.post("/process/{processing_id}")
 @limiter.limit("3/minute")  # Maximal 3 Verarbeitungen pro Minute
@@ -153,20 +151,22 @@ async def process_document(processing_id: str):
             "current_step": "Text wird in einfache Sprache übersetzt..."
         })
         
-        # Ollama-Verbindung prüfen
-        if not await ollama_client.check_connection():
-            raise Exception("Ollama-Dienst nicht verfügbar")
+        # OVH API verwenden für Übersetzung
+        from app.services.ovh_client import OVHClient
+        ovh_client = OVHClient()
         
-        # Jetzt gibt translate_medical_text auch den bereinigten Text zurück
-        result = await ollama_client.translate_medical_text(extracted_text)
+        # Prüfe OVH-Verbindung
+        ovh_connected, error_msg = await ovh_client.check_connection()
+        if not ovh_connected:
+            raise Exception(f"OVH API nicht verfügbar: {error_msg}")
         
-        # Unpack the result - now includes cleaned_text
-        if len(result) == 4:
-            translated_text, detected_doc_type, translation_confidence, cleaned_text = result
-        else:
-            # Fallback für alte Version
-            translated_text, detected_doc_type, translation_confidence = result
-            cleaned_text = extracted_text
+        # Erst Text vorverarbeiten (PII-Entfernung)
+        cleaned_text = await ovh_client.preprocess_medical_text(extracted_text)
+        
+        # Dann übersetzen
+        translated_text, detected_doc_type, translation_confidence, _ = await ovh_client.translate_medical_document(
+            cleaned_text
+        )
         
         # Schritt 3: Optionale Sprachübersetzung
         language_translated_text = None
@@ -179,7 +179,7 @@ async def process_document(processing_id: str):
                 "current_step": f"Übersetzung in {target_language.value}..."
             })
             
-            language_translated_text, language_confidence_score = await ollama_client.translate_to_language(
+            language_translated_text, language_confidence_score = await ovh_client.translate_to_language(
                 translated_text, target_language
             )
         
@@ -198,18 +198,11 @@ async def process_document(processing_id: str):
         # WICHTIG: Formatierung IMMER direkt vor der Rückgabe anwenden
         # Dies stellt sicher, dass die Formatierung wirklich angewendet wird
         print(f"[FORMATTING] Applying final formatting to translated text...")
-        if use_ovh_only:
-            from app.services.ovh_client import OVHClient
-            ovh_client = OVHClient()
-            translated_text = ovh_client._improve_formatting(translated_text)
-            if language_translated_text:
-                language_translated_text = ovh_client._improve_formatting(language_translated_text)
-        else:
-            from app.services.ollama_client import OllamaClient
-            ollama_client = OllamaClient()
-            translated_text = ollama_client._improve_formatting(translated_text)
-            if language_translated_text:
-                language_translated_text = ollama_client._improve_formatting(language_translated_text)
+        from app.services.ovh_client import OVHClient
+        ovh_client = OVHClient()
+        translated_text = ovh_client._improve_formatting(translated_text)
+        if language_translated_text:
+            language_translated_text = ovh_client._improve_formatting(language_translated_text)
         
         # Debug-Logging um zu sehen was passiert
         print(f"[FORMATTING] Complete:")
@@ -369,27 +362,21 @@ async def get_active_processes(request: Request):
 @router.get("/process/models")
 async def get_available_models():
     """
-    Gibt verfügbare Ollama-Modelle zurück
+    Gibt verfügbare OVH-Modelle zurück
     """
     
-    try:
-        models = await ollama_client.list_models()
-        connection_status = await ollama_client.check_connection()
-        
-        return {
-            "connected": connection_status,
-            "models": models,
-            "recommended": "mistral-nemo:latest" if "mistral-nemo:latest" in models else models[0] if models else None,
-            "timestamp": datetime.now()
-        }
-        
-    except Exception as e:
-        return {
-            "connected": False,
-            "error": str(e),
-            "models": [],
-            "timestamp": datetime.now()
-        }
+    # OVH verwendet feste Modelle die in den Umgebungsvariablen konfiguriert sind
+    return {
+        "connected": True,
+        "models": [
+            os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct"),
+            os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407"),
+            os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
+        ],
+        "recommended": os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct"),
+        "api_mode": "OVH AI Endpoints",
+        "timestamp": datetime.now()
+    }
 
 @router.get("/process/languages")
 async def get_available_languages():

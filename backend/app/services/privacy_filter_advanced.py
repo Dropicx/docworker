@@ -21,17 +21,17 @@ logger = logging.getLogger(__name__)
 
 class AdvancedPrivacyFilter:
     """
-    MINIMALER Privacy Filter mit spaCy NER.
-    Entfernt NUR Personennamen und Adressen.
-    Alle anderen Daten (Geburtsdaten, Telefon, E-Mail, Versicherungsnummern etc.) bleiben ERHALTEN.
+    Privacy Filter mit spaCy NER.
+    Entfernt: Namen, Adressen, Geburtsdaten, Telefon, E-Mail, Versicherungsnummern, Anreden.
+    ERHÄLT: Alle medizinischen Informationen, Laborwerte, Diagnosen, Behandlungen.
     """
     
     def __init__(self):
-        """Initialisiert den Filter mit spaCy NER Model - NUR für Namen und Adressen"""
+        """Initialisiert den Filter mit spaCy NER Model"""
         self.nlp = None
         self._initialize_spacy()
         
-        logger.info("🎯 Privacy Filter: Entfernt NUR Namen und Adressen - alle anderen Daten bleiben erhalten")
+        logger.info("🎯 Privacy Filter: Entfernt persönliche Daten, erhält medizinische Informationen")
         
         # Medizinische Begriffe, die NICHT als Namen erkannt werden sollen
         self.medical_terms = {
@@ -194,26 +194,26 @@ class AdvancedPrivacyFilter:
     
     def remove_pii(self, text: str) -> str:
         """
-        MINIMALE PII-Entfernung: NUR Namen und Adressen
+        PII-Entfernung: Namen, Adressen, Geburtsdaten, Kontaktdaten, Versicherungsnummern
         
         Args:
             text: Der zu bereinigende Text
             
         Returns:
-            Bereinigter Text nur ohne Namen und Adressen
+            Bereinigter Text ohne persönliche Daten, aber mit allen medizinischen Informationen
         """
         if not text:
             return text
         
-        logger.info("🔍 Entferne NUR Namen und Adressen mit spaCy")
+        logger.info("🔍 Entferne persönliche Daten, behalte medizinische Informationen")
         
         # Schütze medizinische Begriffe vor Entfernung
         text = self._protect_medical_terms(text)
         
-        # 1. NUR Adressen entfernen (Straße und PLZ/Ort)
-        text = self._remove_only_addresses(text)
+        # 1. Entferne alle persönlichen Daten (außer medizinische)
+        text = self._remove_personal_data(text)
         
-        # 2. NUR Namen mit spaCy entfernen
+        # 2. Entferne Namen mit spaCy
         if self.nlp and self.has_ner:
             text = self._remove_names_with_ner(text)
         else:
@@ -223,10 +223,11 @@ class AdvancedPrivacyFilter:
         # 3. Stelle medizinische Begriffe wieder her
         text = self._restore_medical_terms(text)
         
-        # 4. Minimale Formatierung (nur große Lücken entfernen)
-        text = re.sub(r'\n{4,}', '\n\n\n', text)
+        # 4. Formatierung bereinigen
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        text = re.sub(r'[ \t]+', ' ', text)
         
-        logger.info("✅ Namen und Adressen entfernt - alle anderen Daten erhalten")
+        logger.info("✅ Persönliche Daten entfernt - medizinische Informationen erhalten")
         return text.strip()
     
     def _protect_medical_terms(self, text: str) -> str:
@@ -265,21 +266,33 @@ class AdvancedPrivacyFilter:
         
         return text
     
-    def _remove_only_addresses(self, text: str) -> str:
-        """Entfernt NUR Adressen - behält alle anderen Daten"""
-        # NUR Straßenadressen entfernen
-        text = self.patterns['street_address'].sub('[ADRESSE ENTFERNT]', text)
+    def _remove_personal_data(self, text: str) -> str:
+        """Entfernt persönliche Daten aber ERHÄLT medizinische Informationen"""
         
-        # NUR PLZ + Stadt entfernen  
+        # Adressen entfernen
+        text = self.patterns['street_address'].sub('[ADRESSE ENTFERNT]', text)
         text = self.patterns['plz_city'].sub('[PLZ/ORT ENTFERNT]', text)
         
-        # ALLES ANDERE BLEIBT ERHALTEN:
-        # - Telefonnummern bleiben
-        # - E-Mails bleiben
-        # - Versicherungsnummern bleiben
-        # - Geburtsdaten bleiben
-        # - Geschlecht bleibt
-        # - Anreden bleiben
+        # Kontaktdaten entfernen
+        text = self.patterns['phone'].sub('[TELEFON ENTFERNT]', text)
+        text = self.patterns['email'].sub('[EMAIL ENTFERNT]', text)
+        
+        # Versicherungsnummern entfernen
+        text = self.patterns['insurance'].sub('[NUMMER ENTFERNT]', text)
+        
+        # Anreden und Grußformeln entfernen
+        text = self.patterns['salutation'].sub('', text)
+        
+        # Geburtsdaten entfernen (aber NICHT aktuelle Untersuchungsdaten!)
+        text = self.patterns['birthdate'].sub('[GEBURTSDATUM ENTFERNT]', text)
+        
+        # Geschlecht entfernen (wenn explizit als "Geschlecht:" angegeben)
+        text = re.sub(
+            r'\b(?:geschlecht)[:\s]*(?:männlich|weiblich|divers|m|w|d)\b',
+            '[GESCHLECHT ENTFERNT]',
+            text,
+            flags=re.IGNORECASE
+        )
         
         return text
     
