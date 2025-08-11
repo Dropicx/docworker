@@ -300,7 +300,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         {children}
                       </ol>
                     ),
-                    li: ({children, ordered}) => {
+                    li: ({children}) => {
                       // Konvertiere children zu String für Analyse
                       const text = React.Children.toArray(children)
                         .map(child => {
@@ -335,29 +335,24 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         );
                       }
                       
-                      // Standard Listeneintrag mit Bullet Point (nur für Hauptpunkte)
-                      if (!ordered) {
-                        return (
-                          <li style={{
-                            listStyle: 'none',
-                            display: 'flex',
-                            alignItems: 'flex-start',
-                            marginBottom: '0.75rem'
-                          }}>
-                            <span style={{
-                              marginRight: '0.75rem',
-                              color: '#4F46E5',
-                              flexShrink: 0,
-                              fontSize: '1.2em',
-                              lineHeight: '1.2'
-                            }}>•</span>
-                            <span style={{flex: 1, lineHeight: '1.6'}}>{children}</span>
-                          </li>
-                        );
-                      }
-                      
-                      // Geordnete Listen (falls vorhanden)
-                      return <li className="mb-2">{children}</li>;
+                      // Standard Listeneintrag mit Bullet Point
+                      return (
+                        <li style={{
+                          listStyle: 'none',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          marginBottom: '0.75rem'
+                        }}>
+                          <span style={{
+                            marginRight: '0.75rem',
+                            color: '#4F46E5',
+                            flexShrink: 0,
+                            fontSize: '1.2em',
+                            lineHeight: '1.2'
+                          }}>•</span>
+                          <span style={{flex: 1, lineHeight: '1.6'}}>{children}</span>
+                        </li>
+                      );
                     },
                     strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
                     em: ({children}) => <em className="italic text-primary-600">{children}</em>,
