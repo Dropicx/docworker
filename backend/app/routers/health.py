@@ -239,18 +239,46 @@ async def test_formatting():
 • Ihr Blutdruck ist normal. → Bedeutung: Das bedeutet, dass Ihr Blutdruck im normalen Bereich liegt."""
     
     formatted_text = None
+    steps = []
+    
     if use_ovh_only:
         from app.services.ovh_client import OVHClient
         client = OVHClient()
+        
+        # Schritt für Schritt debuggen
+        import re
+        
+        step1 = test_text
+        steps.append({"step": "original", "text": step1})
+        
+        # Schritt 1: Bullet Points auf neue Zeilen
+        step2 = re.sub(r'([^\n])(•)', r'\1\n•', step1)
+        steps.append({"step": "bullets_on_newlines", "text": step2})
+        
+        # Schritt 2: Pfeile auf neue Zeilen
+        step3 = re.sub(r'([^^\n])(\s*→\s*)', r'\1\n  → ', step2)
+        steps.append({"step": "arrows_on_newlines", "text": step3})
+        
         formatted_text = client._improve_formatting(test_text)
     else:
         from app.services.ollama_client import OllamaClient
         client = OllamaClient()
         formatted_text = client._improve_formatting(test_text)
     
+    # Zeige auch die Zeilen einzeln für besseres Debugging
+    lines_original = test_text.split('\n')
+    lines_formatted = formatted_text.split('\n')
+    
     return {
         "original": test_text,
         "formatted": formatted_text,
+        "steps": steps,
+        "lines_comparison": {
+            "original_lines": lines_original,
+            "formatted_lines": lines_formatted,
+            "line_count_original": len(lines_original),
+            "line_count_formatted": len(lines_formatted)
+        },
         "api_mode": "OVH" if use_ovh_only else "Ollama"
     }
 

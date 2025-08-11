@@ -725,54 +725,65 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         """
         import re
         
-        # KRITISCH: Stelle sicher dass ALLE Bullet Points und Pfeile auf neuen Zeilen stehen
+        # Debug Logging
+        print(f"[FORMATTING] Input text (first 200 chars): {text[:200]}")
         
-        # 1. Ersetze alle Bullet Points die nicht am Zeilenanfang stehen mit Zeilenumbruch
-        text = re.sub(r'([^\n])(•)', r'\1\n•', text)
-        
-        # 2. Ersetze alle Pfeile die nicht am Zeilenanfang stehen mit Zeilenumbruch + Einrückung
-        # Pfeile nach Bullet Points bekommen eine neue Zeile mit Einrückung
-        text = re.sub(r'([^^\n])(\s*→\s*)', r'\1\n  → ', text)
-        
-        # 3. Stelle sicher, dass Pfeile am Zeilenanfang richtig eingerückt sind
-        text = re.sub(r'^(\s*)→', r'  →', text, flags=re.MULTILINE)
-        
-        # 4. Korrigiere doppelte Bullet Points auf derselben Zeile
-        text = re.sub(r'•\s*•', '•', text)
-        
-        # 5. Füge Leerzeilen zwischen Hauptpunkten ein für bessere Lesbarkeit
-        # Nach einem Unterpunkt (→) vor einem neuen Hauptpunkt (•)
-        text = re.sub(r'(→[^\n]+)\n([•])', r'\1\n\n\2', text)
-        
-        # 6. Stelle sicher, dass nach Überschriften (##) eine Leerzeile kommt
-        text = re.sub(r'(##[^\n]+)\n([^#\n])', r'\1\n\n\2', text)
-        
-        # 7. Korrigiere mehrfache Leerzeilen (max 2)
-        text = re.sub(r'\n{3,}', '\n\n', text)
-        
-        # 8. Entferne Leerzeichen am Zeilenende
-        text = re.sub(r'[ \t]+$', '', text, flags=re.MULTILINE)
-        
-        # 9. Stelle sicher, dass jeder Punkt mit • am Zeilenanfang beginnt
+        # NEUER ANSATZ: Zeile für Zeile verarbeiten
         lines = text.split('\n')
         formatted_lines = []
+        
         for line in lines:
-            # Wenn eine Zeile mehrere Bullet Points enthält, teile sie auf
-            if line.count('•') > 1:
+            # Leere Zeilen beibehalten
+            if not line.strip():
+                formatted_lines.append(line)
+                continue
+            
+            # Überschriften unverändert lassen
+            if line.strip().startswith('#'):
+                formatted_lines.append(line)
+                continue
+            
+            # Zeile enthält sowohl Bullet Point als auch Pfeil
+            if '•' in line and '→' in line:
+                # Teile bei Pfeil
+                parts = line.split('→')
+                if len(parts) >= 2:
+                    # Erster Teil (mit Bullet Point)
+                    formatted_lines.append(parts[0].rstrip())
+                    # Zweiter Teil (Pfeil und Rest) - eingerückt
+                    formatted_lines.append('  → ' + '→'.join(parts[1:]).lstrip())
+                else:
+                    formatted_lines.append(line)
+            
+            # Zeile enthält mehrere Bullet Points
+            elif line.count('•') > 1:
+                # Teile bei jedem Bullet Point
                 parts = line.split('•')
                 for i, part in enumerate(parts):
                     if part.strip():
-                        if i == 0:
-                            formatted_lines.append(part.strip())
-                        else:
-                            formatted_lines.append('• ' + part.strip())
+                        if i == 0 and not parts[0].strip():
+                            # Wenn die Zeile mit • beginnt
+                            continue
+                        formatted_lines.append('• ' + part.strip())
+            
+            # Zeile enthält nur Pfeil (Einrückung sicherstellen)
+            elif line.strip().startswith('→'):
+                formatted_lines.append('  ' + line.strip())
+            
+            # Normale Zeile
             else:
                 formatted_lines.append(line)
         
-        text = '\n'.join(formatted_lines)
+        result = '\n'.join(formatted_lines)
+        
+        # Nachbearbeitung: Konsistente Abstände
+        result = re.sub(r'\n{3,}', '\n\n', result)  # Max 2 Leerzeilen
+        result = re.sub(r'[ \t]+$', '', result, flags=re.MULTILINE)  # Trailing spaces
         
         # Für Display-Output: Entferne PDF-only Sektionen
         if not for_pdf:
-            text = self._remove_pdf_only_sections(text)
+            result = self._remove_pdf_only_sections(result)
         
-        return text 
+        print(f"[FORMATTING] Output text (first 200 chars): {result[:200]}")
+        
+        return result 

@@ -291,7 +291,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     h4: ({children}) => <h4 className="text-lg font-semibold text-primary-800 mb-2 mt-3">{children}</h4>,
                     p: ({children}) => <p className="mb-4 text-primary-700 leading-relaxed">{children}</p>,
                     ul: ({children}) => (
-                      <ul className="mb-4 text-primary-700 space-y-2">
+                      <ul className="mb-4 text-primary-700 space-y-2" style={{listStyle: 'none', paddingLeft: 0}}>
                         {children}
                       </ul>
                     ),
@@ -306,7 +306,6 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         .map(child => {
                           if (typeof child === 'string') return child;
                           if (React.isValidElement(child) && child.props?.children) {
-                            // Rekursiv Text aus verschachtelten Elementen extrahieren
                             if (typeof child.props.children === 'string') {
                               return child.props.children;
                             }
@@ -315,29 +314,36 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         })
                         .join('');
                       
-                      // Prüfe ob Text mit Pfeil beginnt (mit oder ohne Leerzeichen)
-                      if (text.match(/^\s*→/) || text.includes('→ Bedeutung:')) {
-                        // Eingerückter Pfeil-Unterpunkt mit besserem Styling
+                      // Prüfe ob Text mit Pfeil beginnt (eingerückt)
+                      if (text.match(/^\s+→/) || text.startsWith('→')) {
+                        // Eingerückter Pfeil-Unterpunkt
                         return (
-                          <li className="ml-6 text-primary-600 leading-relaxed list-none">
-                            <span className="block pl-2">{children}</span>
+                          <li style={{
+                            listStyle: 'none',
+                            marginLeft: '2rem',
+                            paddingLeft: '1rem',
+                            borderLeft: '2px solid #ddd',
+                            color: '#666'
+                          }}>
+                            {children}
                           </li>
                         );
                       }
                       
-                      // Standard Listeneintrag ohne Bullet Point wenn er mit • beginnt
-                      const cleanedChildren = React.Children.map(children, child => {
-                        if (typeof child === 'string') {
-                          // Entferne führende • wenn vorhanden (wird durch CSS ersetzt)
-                          return child.replace(/^•\s*/, '');
-                        }
-                        return child;
-                      });
-                      
+                      // Standard Listeneintrag mit Bullet Point
                       return (
-                        <li className="leading-relaxed mb-2">
-                          <span className="inline-block mr-2 text-brand-500">•</span>
-                          {cleanedChildren}
+                        <li style={{
+                          listStyle: 'none',
+                          display: 'flex',
+                          alignItems: 'flex-start',
+                          marginBottom: '0.5rem'
+                        }}>
+                          <span style={{
+                            marginRight: '0.5rem',
+                            color: '#4F46E5',
+                            flexShrink: 0
+                          }}>•</span>
+                          <span style={{flex: 1}}>{children}</span>
                         </li>
                       );
                     },
