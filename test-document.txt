@@ -1,0 +1,31 @@
+Arztbrief
+
+Sehr geehrte Kollegen,
+
+wir berichten über Herrn Max Mustermann, geboren am 01.01.1970, der sich vom 15.01.2024 bis 20.01.2024 in unserer kardiologischen Abteilung befand.
+
+Diagnosen:
+- Arterielle Hypertonie (I10.90)
+- Diabetes mellitus Typ 2 (E11.9)
+- Hyperlipidämie (E78.5)
+
+Anamnese:
+Der Patient stellte sich mit zunehmender Belastungsdyspnoe (NYHA II-III) und retrosternalen Beschwerden vor. Die Symptomatik besteht seit etwa 3 Monaten mit progredienter Tendenz.
+
+Befunde:
+Labor: HbA1c 7.8%, LDL 145 mg/dl, HDL 38 mg/dl
+EKG: Sinusrhythmus, 72/min, keine ST-Streckenveränderungen
+Echokardiographie: EF 45%, geringe Mitralklappeninsuffizienz
+
+Therapie:
+Ramipril 5mg 1-0-0
+Metformin 1000mg 1-0-1
+Atorvastatin 20mg 0-0-1
+ASS 100mg 1-0-0
+
+Procedere:
+Wir empfehlen eine Koronarangiographie zur weiteren Abklärung. Bitte Fortführung der medikamentösen Therapie.
+
+Mit freundlichen kollegialen Grüßen
+Dr. med. Schmidt
+Oberarzt Kardiologie

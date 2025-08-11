@@ -221,6 +221,53 @@ async def detailed_health_check():
 # Debug endpoint removed for production security
 # To enable debugging, set ENVIRONMENT=development
 
+@router.get("/health/test-formatting-live")
+async def test_formatting_live():
+    """
+    Live-Test der Formatierung mit sichtbarem Output
+    """
+    # Beispiel-Text der häufig problematisch ist
+    problem_text = """## 🏥 Ihre Diagnosen
+
+• Arterielle Hypertonie (Bluthochdruck). → Bedeutung: Ihr Blutdruck ist dauerhaft erhöht.
+• Diabetes mellitus Typ 2 (Zuckerkrankheit). → Bedeutung: Ihr Körper kann Zucker nicht richtig verarbeiten.
+
+## 💊 Behandlung & Medikamente
+
+• Ramipril 5mg. → Wofür: Senkt Ihren Blutdruck. → Einnahme: 1x morgens.
+• Metformin 1000mg. → Wofür: Hilft bei der Zuckerverarbeitung. → Einnahme: 2x täglich zum Essen."""
+    
+    use_ovh_only = os.getenv("USE_OVH_ONLY", "true").lower() == "true"
+    
+    if use_ovh_only:
+        from app.services.ovh_client import OVHClient
+        client = OVHClient()
+    else:
+        from app.services.ollama_client import OllamaClient
+        client = OllamaClient()
+    
+    # Formatierung anwenden
+    formatted = client._improve_formatting(problem_text)
+    
+    # HTML-Version für Browser-Anzeige erstellen
+    html_display = formatted.replace('\n', '<br>').replace('  ', '&nbsp;&nbsp;')
+    
+    return {
+        "original": problem_text,
+        "formatted": formatted,
+        "html_preview": f"<pre style='font-family: monospace; white-space: pre-wrap;'>{html_display}</pre>",
+        "line_by_line": {
+            "original": problem_text.split('\n'),
+            "formatted": formatted.split('\n')
+        },
+        "stats": {
+            "original_lines": len(problem_text.split('\n')),
+            "formatted_lines": len(formatted.split('\n')),
+            "arrows_found": problem_text.count('→'),
+            "bullets_found": problem_text.count('•')
+        }
+    }
+
 @router.get("/health/test-formatting")
 async def test_formatting():
     """
