@@ -5,6 +5,7 @@ import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
 import Footer from './components/Footer';
+import FAQ from './components/FAQ';
 import Impressum from './pages/Impressum';
 import Datenschutz from './pages/Datenschutz';
 import Nutzungsbedingungen from './pages/Nutzungsbedingungen';
@@ -489,7 +490,10 @@ function App() {
                 </div>
               </div>
 
-
+              {/* FAQ Section */}
+              <div className="mt-12 sm:mt-16 lg:mt-20">
+                <FAQ />
+              </div>
             </div>
           )}
 

@@ -599,18 +599,20 @@ Sätze wie "Alle Angaben entsprechen dem Originaltext"
 Hinweise wie "Laut Dokument" oder "Gemäß den Unterlagen"
 
 MARKDOWN-FORMATIERUNG - SEHR WICHTIG:
-• Bullet Points (•) IMMER am Zeilenanfang
-• Pfeile (→) IMMER auf neue Zeile mit "  - → " (zwei Leerzeichen, Bindestrich, Leerzeichen, Pfeil)
-• NIE mehrere Bullet Points in einer Zeile
-• NIE Pfeile direkt nach Punkten ohne Zeilenumbruch
+• Verwende STANDARD Markdown-Listen
+• Hauptpunkte: "- " (Bindestrich und Leerzeichen)
+• Unterpunkte: "  - " (zwei Leerzeichen, Bindestrich, Leerzeichen)
+• KEINE Bullet-Symbole (•) verwenden
+• Pfeile NUR in Unterpunkten: "  - → Text"
 
 RICHTIG:
-• Medikament XY
+- Medikament XY
   - → Wofür: Senkt den Blutdruck
   - → Einnahme: 1x täglich morgens
 
 FALSCH:
-• Medikament XY. → Wofür: Senkt den Blutdruck → Einnahme: 1x täglich
+• Medikament XY. → Wofür: Senkt den Blutdruck
+- Medikament XY → Einnahme: täglich
 
 EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
@@ -621,44 +623,42 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
 ## 📊 Zusammenfassung
 ### Was wurde gemacht?
-• [Untersuchung/Behandlung in einfacher Sprache]
-• [Zeitraum/Datum wenn vorhanden]
+- [Untersuchung/Behandlung in einfacher Sprache]
+- [Zeitraum/Datum wenn vorhanden]
 
 ### Was wurde gefunden?
-• [Hauptbefund 1 in einfacher Sprache]
+- [Hauptbefund 1 in einfacher Sprache]
   - → Bedeutung: [Was heißt das für Sie?]
-• [Hauptbefund 2 in einfacher Sprache]
+- [Hauptbefund 2 in einfacher Sprache]
   - → Bedeutung: [Was heißt das für Sie?]
 
 ## 🏥 Ihre Diagnosen
-• [Diagnose in Alltagssprache]
+- [Diagnose in Alltagssprache]
   - → Medizinisch: [Fachbegriff]
-  - → ICD-Code falls vorhanden: [Code mit Erklärung, z.B. "I10.90 - Bluthochdruck ohne bekannte Ursache"]
+  - → ICD-Code: [Code mit Erklärung]
   - → Erklärung: [Was ist das genau?]
 
 ## 💊 Behandlung & Medikamente
-• [Medikament/Behandlung]
+- [Medikament/Behandlung]
   - → Wofür: [Zweck]
   - → Einnahme: [Wie und wann]
   - → Wichtig: [Besonderheiten/Nebenwirkungen]
 
 ## ✅ Ihre nächsten Schritte
-• [Was Sie tun sollen in einfacher Sprache]
-• [Termine die anstehen]
-• [Worauf Sie achten müssen in einfacher Sprache]
+- [Was Sie tun sollen in einfacher Sprache]
+- [Termine die anstehen]
+- [Worauf Sie achten müssen in einfacher Sprache]
 
 ## 📖 Fachbegriffe verstehen
-• **[Begriff 1]**: [Einfache Erklärung]
-• **[Begriff 2]**: [Einfache Erklärung]
+- **[Begriff 1]**: [Einfache Erklärung]
+- **[Begriff 2]**: [Einfache Erklärung]
 
 ## 🔢 Medizinische Codes erklärt (falls vorhanden)
 ### ICD-Codes (Diagnose-Schlüssel):
-• **[ICD-Code]**: [Vollständige Erklärung was diese Diagnose bedeutet]
-  - → Beispiel: **I10.90**: Bluthochdruck ohne bekannte Ursache - Ihr Blutdruck ist dauerhaft erhöht
+- **[ICD-Code]**: [Vollständige Erklärung was diese Diagnose bedeutet]
   
 ### OPS-Codes (Behandlungs-Schlüssel):
-• **[OPS-Code]**: [Vollständige Erklärung welche Behandlung durchgeführt wurde]
-  - → Beispiel: **5-511.11**: Entfernung der Gallenblase durch Bauchspiegelung (minimal-invasive Operation)
+- **[OPS-Code]**: [Vollständige Erklärung welche Behandlung durchgeführt wurde]
 
 ## ⚠️ Wichtige Hinweise
 Diese Übersetzung hilft Ihnen, Ihre Unterlagen zu verstehen
@@ -738,44 +738,18 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
     
     def _improve_formatting(self, text: str) -> str:
         """
-        Verbessert die Formatierung von Übersetzungen für ReactMarkdown
-        Hauptsächlich Cleanup, da die KI jetzt korrekt formatiert
+        Minimale Formatierung - konvertiert Bullet Points zu Standard Markdown
         """
         import re
         
-        # Debug Logging
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info("=== FORMATTING START ===")
-        logger.info(f"Input text (first 200 chars): {text[:200]}")
+        # Ersetze alle Bullet-Symbole (•) durch Standard Markdown (-)
+        text = re.sub(r'^•', '-', text, flags=re.MULTILINE)
+        text = re.sub(r'\n•', '\n-', text)
         
-        # SCHRITT 1: Falls die KI doch mal Fehler macht - Bullet Points trennen
-        text = re.sub(r'([^•\n])(\s*•)', r'\1\n•', text)
-        
-        # SCHRITT 2: Falls Pfeile nicht korrekt formatiert sind
-        # Ersetze "  → " durch "  - → " (füge Bindestrich hinzu falls fehlt)
+        # Stelle sicher dass Unterpunkte korrekt formatiert sind
         text = re.sub(r'^  →', '  - →', text, flags=re.MULTILINE)
         
-        # Falls Pfeile noch direkt nach Punkten stehen
-        text = re.sub(r'([^→\n])(\s*→)', r'\1\n  - →', text)
+        # Entferne mehrfache Leerzeilen
+        text = re.sub(r'\n{3,}', '\n\n', text)
         
-        # SCHRITT 3: Cleanup - Nur noch minimale Korrekturen nötig
-        # Da die KI jetzt korrekt formatiert, brauchen wir weniger komplexe Logik
-        
-        # Stelle sicher dass alle "  - → " korrekt sind
-        text = re.sub(r'^  - →', '  - →', text, flags=re.MULTILINE)  # Normalisierung
-        
-        result = text
-        
-        # SCHRITT 4: Finale Bereinigung
-        # Doppelte Bullet Points entfernen
-        result = re.sub(r'•\s*•', '•', result)
-        
-        # Konsistente Abstände
-        result = re.sub(r'\n{3,}', '\n\n', result)  # Max 2 Leerzeilen
-        result = re.sub(r'[ \t]+$', '', result, flags=re.MULTILINE)  # Trailing spaces entfernen
-        
-        logger.info(f"Output text (first 200 chars): {result[:200]}")
-        logger.info("=== FORMATTING END ===")
-        
-        return result
+        return text.strip()
