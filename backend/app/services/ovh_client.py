@@ -725,7 +725,7 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
     def _improve_formatting(self, text: str) -> str:
         """
         Verbessert die Formatierung von Übersetzungen für ReactMarkdown
-        Verwendet echte Markdown-Sublisten für korrekte Darstellung
+        Trennt ALLE Bullet Points in eigene Zeilen und macht Pfeile zu Unterpunkten
         """
         import re
         
@@ -735,9 +735,11 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         logger.info("=== FORMATTING START ===")
         logger.info(f"Input text (first 200 chars): {text[:200]}")
         
-        # WICHTIG: Für ReactMarkdown müssen wir echte Markdown-Sublisten verwenden
-        # Statt "  → Text" verwenden wir "  - → Text" für korrekte Einrückung
+        # SCHRITT 1: Erst mal ALLE Bullet Points auf neue Zeilen bringen
+        # Egal ob sie Pfeile haben oder nicht
+        text = re.sub(r'([^•\n])(\s*•)', r'\1\n•', text)
         
+        # SCHRITT 2: Jetzt Zeile für Zeile verarbeiten
         lines = text.split('\n')
         formatted_lines = []
         
@@ -752,79 +754,86 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                 formatted_lines.append(line)
                 continue
             
-            # ZUERST: Prüfe ob die Zeile mehrere Bullet Points enthält (mit oder ohne Pfeile)
-            # Diese müssen IMMER getrennt werden
-            if line.count('•') > 1:
-                # Teile die Zeile bei jedem Bullet Point
-                parts = line.split('•')
-                for i, part in enumerate(parts):
-                    if not part.strip():
-                        continue
+            # Zeile mit Bullet Point und möglicherweise Pfeilen
+            if line.strip().startswith('•'):
+                # Prüfe ob Pfeile in der Zeile sind
+                if '→' in line:
+                    # Teile die Zeile bei JEDEM Pfeil
+                    # Aber behalte den Pfeil im Text
+                    parts = re.split(r'(?=→)', line)
                     
-                    # Füge den Bullet Point wieder hinzu
-                    bullet_line = '• ' + part.strip()
+                    # Der erste Teil ist der Hauptpunkt (mit •)
+                    main_point = parts[0].strip()
+                    if main_point:
+                        formatted_lines.append(main_point)
                     
-                    # Prüfe ob dieser Teil Pfeile enthält
-                    if '→' in bullet_line:
-                        # Teile bei Pfeilen
-                        arrow_parts = re.split(r'(→)', bullet_line)
-                        
-                        # Ersten Teil (mit Bullet)
-                        if arrow_parts[0].strip():
-                            formatted_lines.append(arrow_parts[0].rstrip())
-                        
-                        # Alle Pfeil-Teile als Sublisten
-                        j = 1
-                        while j < len(arrow_parts):
-                            if arrow_parts[j] == '→' and j + 1 < len(arrow_parts):
-                                arrow_text = '→' + arrow_parts[j + 1].lstrip()
-                                formatted_lines.append('  - ' + arrow_text)
-                                j += 2
-                            else:
-                                j += 1
-                    else:
-                        # Keine Pfeile, nur Bullet Point
-                        formatted_lines.append(bullet_line)
+                    # Alle weiteren Teile sind Unterpunkte (mit →)
+                    for i in range(1, len(parts)):
+                        if parts[i].strip():
+                            # Füge als Markdown-Subliste hinzu
+                            formatted_lines.append('  - ' + parts[i].strip())
+                else:
+                    # Nur Bullet Point, keine Pfeile
+                    formatted_lines.append(line.strip())
             
-            # Einzelner Bullet Point mit Pfeilen
-            elif '•' in line and '→' in line:
-                # Teile bei ALLEN Pfeilen in der Zeile
-                parts = re.split(r'(→)', line)
-                
-                # Ersten Teil mit Bullet Point
-                if len(parts) > 0:
-                    first_part = parts[0].rstrip()
-                    if first_part:
-                        formatted_lines.append(first_part)
-                
-                # Alle Pfeil-Teile als Markdown-Sublisten
-                i = 1
-                while i < len(parts):
-                    if parts[i] == '→' and i + 1 < len(parts):
-                        arrow_text = '→' + parts[i + 1].lstrip()
-                        formatted_lines.append('  - ' + arrow_text)
-                        i += 2
-                    else:
-                        i += 1
-            
-            # Zeile beginnt nur mit Pfeil (bereits eingerückte Zeile)
+            # Zeile beginnt mit Pfeil (sollte Unterpunkt werden)
             elif line.strip().startswith('→'):
-                # Verwende Markdown-Subliste für korrekte Einrückung
                 formatted_lines.append('  - ' + line.strip())
             
-            # Normale Zeile oder einzelner Bullet Point ohne Pfeil
+            # Normale Zeile (keine Bullets oder Pfeile)
             else:
-                formatted_lines.append(line)
+                # Prüfe ob versteckte Bullet Points in der Zeile sind
+                if '•' in line:
+                    # Teile bei Bullet Points
+                    parts = re.split(r'(?=•)', line)
+                    for part in parts:
+                        if part.strip():
+                            # Verarbeite wie oben
+                            if '→' in part:
+                                subparts = re.split(r'(?=→)', part)
+                                main = subparts[0].strip()
+                                if main:
+                                    formatted_lines.append(main)
+                                for j in range(1, len(subparts)):
+                                    if subparts[j].strip():
+                                        formatted_lines.append('  - ' + subparts[j].strip())
+                            else:
+                                formatted_lines.append(part.strip())
+                else:
+                    formatted_lines.append(line)
         
         result = '\n'.join(formatted_lines)
         
-        # Nachbearbeitung: Konsistente Abstände
+        # SCHRITT 3: Nachbearbeitung
+        # Stelle sicher, dass keine doppelten Bullet Points entstehen
+        result = re.sub(r'•\s*•', '•', result)
+        
+        # Konsistente Abstände
         result = re.sub(r'\n{3,}', '\n\n', result)  # Max 2 Leerzeilen
         result = re.sub(r'[ \t]+$', '', result, flags=re.MULTILINE)  # Trailing spaces entfernen
         
-        # Stelle sicher, dass Sublisten korrekt formatiert sind
-        # ReactMarkdown benötigt Leerzeile vor Sublisten in manchen Fällen
-        result = re.sub(r'(^[^-\s].*)\n(  - )', r'\1\n\2', result, flags=re.MULTILINE)
+        # Stelle sicher, dass zwischen Hauptpunkten und Unterpunkten kein extra Abstand ist
+        # aber zwischen verschiedenen Hauptpunkten schon
+        lines = result.split('\n')
+        final_lines = []
+        prev_was_bullet = False
+        
+        for i, line in enumerate(lines):
+            # Wenn aktuelle Zeile ein Hauptpunkt ist und die vorherige auch, füge Leerzeile ein
+            if line.strip().startswith('•'):
+                if prev_was_bullet and i > 0 and not lines[i-1].strip().startswith('  -'):
+                    final_lines.append('')  # Leerzeile zwischen Hauptpunkten
+                final_lines.append(line)
+                prev_was_bullet = True
+            # Unterpunkt direkt nach Hauptpunkt (kein extra Abstand)
+            elif line.strip().startswith('  -'):
+                final_lines.append(line)
+                prev_was_bullet = False
+            else:
+                final_lines.append(line)
+                prev_was_bullet = False
+        
+        result = '\n'.join(final_lines)
         
         logger.info(f"Output text (first 200 chars): {result[:200]}")
         logger.info("=== FORMATTING END ===")

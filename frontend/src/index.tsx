@@ -7,10 +7,19 @@ import App from './App';
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+// Disable StrictMode in production to avoid double-mounting
+const isDevelopment = process.env.NODE_ENV === 'development';
+
 root.render(
-  <React.StrictMode>
+  isDevelopment ? (
+    <React.StrictMode>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </React.StrictMode>
+  ) : (
     <BrowserRouter>
       <App />
     </BrowserRouter>
-  </React.StrictMode>
+  )
 ); 

@@ -27,28 +27,48 @@ function App() {
 
   // Health check beim Start
   useEffect(() => {
+    let mounted = true;
+    let healthCheckDone = false;
+    let languagesCheckDone = false;
+
     const checkHealth = async () => {
+      if (healthCheckDone) return;
+      healthCheckDone = true;
+      
       try {
         const healthResponse = await ApiService.getHealth();
-        setHealth(healthResponse);
+        if (mounted) {
+          setHealth(healthResponse);
+        }
       } catch (error) {
         console.error('Health check failed:', error);
       }
     };
 
     const loadLanguages = async () => {
+      if (languagesCheckDone) return;
+      languagesCheckDone = true;
+      
       try {
         const languagesResponse = await ApiService.getAvailableLanguages();
-        setAvailableLanguages(languagesResponse.languages);
-        setLanguagesLoaded(true);
+        if (mounted) {
+          setAvailableLanguages(languagesResponse.languages);
+          setLanguagesLoaded(true);
+        }
       } catch (error) {
         console.error('Language loading failed:', error);
-        setLanguagesLoaded(true); // Set true even on error to show UI
+        if (mounted) {
+          setLanguagesLoaded(true); // Set true even on error to show UI
+        }
       }
     };
 
     checkHealth();
     loadLanguages();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleUploadSuccess = async (response: UploadResponse) => {
