@@ -195,6 +195,28 @@ async def process_document(processing_id: str):
         if language_confidence_score:
             overall_confidence = (translation_confidence + language_confidence_score) / 2
         
+        # WICHTIG: Formatierung IMMER direkt vor der Rückgabe anwenden
+        # Dies stellt sicher, dass die Formatierung wirklich angewendet wird
+        print(f"[FORMATTING] Applying final formatting to translated text...")
+        if use_ovh_only:
+            from app.services.ovh_client import OVHClient
+            ovh_client = OVHClient()
+            translated_text = ovh_client._improve_formatting(translated_text)
+            if language_translated_text:
+                language_translated_text = ovh_client._improve_formatting(language_translated_text)
+        else:
+            from app.services.ollama_client import OllamaClient
+            ollama_client = OllamaClient()
+            translated_text = ollama_client._improve_formatting(translated_text)
+            if language_translated_text:
+                language_translated_text = ollama_client._improve_formatting(language_translated_text)
+        
+        # Debug-Logging um zu sehen was passiert
+        print(f"[FORMATTING] Complete:")
+        print(f"  - Arrows in text: {translated_text.count('→')}")
+        print(f"  - Bullets in text: {translated_text.count('•')}")
+        print(f"  - Lines in text: {len(translated_text.split(chr(10)))}")
+        
         # Ergebnis speichern - verwende cleaned_text statt extracted_text
         result = TranslationResult(
             processing_id=processing_id,
