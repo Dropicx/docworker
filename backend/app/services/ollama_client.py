@@ -101,36 +101,82 @@ class OllamaClient:
             tuple[str, str, float, str]: (translated_text, doc_type, confidence, cleaned_original)
         """
         try:
+            # Initial logging - removed duplicate since we log in detail during processing
+            
             # SCHRITT 1: Intelligente PII-Entfernung
             if self.use_ovh_only:
+                logger.info(f"🧠 Processing with OVH {self.ovh_client.preprocessing_model}...")
                 print(f"🧠 Schritt 1: Entferne sensible Daten mit lokalem Filter + OVH {self.ovh_client.preprocessing_model}...")
+                # OVH client already logs all three stages internally
                 cleaned_text = await self.ovh_client.preprocess_medical_text(text)
                 print(f"✅ Vorverarbeitung erfolgreich mit Privacy Filter + OVH API")
             else:
+                logger.info(f"🧠 Using local Privacy Filter only...")
                 print(f"🧠 Schritt 1: Entferne sensible Daten mit lokalem Privacy Filter...")
                 # Verwende nur lokale Privacy-Filterung, da Ollama nicht existiert
                 try:
+                    logger.info("=" * 80)
+                    logger.info("📄 PREPROCESSING PIPELINE STARTED (Local Mode)")
+                    logger.info("=" * 80)
+                    
+                    # Log the original text (same as input)
+                    logger.info(f"📥 [1/2] ORIGINAL EXTRACTED TEXT (first 500 chars):")
+                    logger.info("-" * 40)
+                    logger.info(text[:500] + "..." if len(text) > 500 else text)
+                    logger.info(f"   Length: {len(text)} characters")
+                    logger.info("-" * 40)
+                    
+                    # Apply privacy filter
+                    logger.info("🔒 [2/2] APPLYING PRIVACY FILTER...")
                     cleaned_text = self.privacy_filter.remove_pii(text)
+                    
+                    # Log privacy-filtered text
+                    logger.info(f"🔐 [2/2] PRIVACY-FILTERED TEXT (first 500 chars):")
+                    logger.info("-" * 40)
+                    logger.info(cleaned_text[:500] + "..." if len(cleaned_text) > 500 else cleaned_text)
+                    logger.info(f"   Length: {len(cleaned_text)} characters")
+                    logger.info(f"   Reduction: {len(text) - len(cleaned_text)} characters removed")
+                    logger.info("-" * 40)
+                    
                     if len(cleaned_text) > 50:
+                        logger.info(f"✅ Lokale PII-Entfernung erfolgreich")
+                        logger.info("=" * 80)
+                        logger.info("📄 PREPROCESSING PIPELINE COMPLETED (Local Mode)")
+                        logger.info("=" * 80)
                         print(f"✅ Lokale PII-Entfernung erfolgreich")
                     else:
+                        logger.warning(f"⚠️ Text zu kurz nach PII-Entfernung, verwende Originaltext")
                         print(f"⚠️ Text zu kurz nach PII-Entfernung, verwende Originaltext")
                         cleaned_text = text
                 except Exception as e:
+                    logger.warning(f"⚠️ PII-Entfernung fehlgeschlagen: {e}, verwende Originaltext")
                     print(f"⚠️ PII-Entfernung fehlgeschlagen: {e}, verwende Originaltext")
                     cleaned_text = text
             
             # SCHRITT 2: Hauptübersetzung
             if self.use_ovh_only:
+                logger.info("🌍 Starting translation with OVH...")
                 print(f"🤖 Schritt 2: Übersetze mit OVH {self.ovh_client.main_model}")
+                # OVH client already logs translation stages internally
                 translated_text, doc_type, confidence, _ = await self.ovh_client.translate_medical_document(cleaned_text)
                 print(f"✅ Hauptübersetzung erfolgreich mit OVH API")
             else:
                 # Da Ollama nicht existiert, geben wir den bereinigten Text zurück
+                logger.info("⚠️ Local Ollama not available - using cleaned text without translation")
                 print(f"⚠️ Lokales Ollama nicht verfügbar - verwende bereinigten Text ohne Übersetzung")
                 translated_text = cleaned_text
                 doc_type = "universal"
                 confidence = 0.5
+                
+                # Log final state in local mode
+                logger.info("=" * 80)
+                logger.info("📄 TRANSLATION SKIPPED (No Ollama available)")
+                logger.info(f"📤 FINAL OUTPUT TEXT (first 500 chars):")
+                logger.info("-" * 40)
+                logger.info(translated_text[:500] + "..." if len(translated_text) > 500 else translated_text)
+                logger.info(f"   Length: {len(translated_text)} characters")
+                logger.info("-" * 40)
+                logger.info("=" * 80)
             
             # SCHRITT 3: Qualitätskontrolle - prüfe ob Übersetzung sinnvoll ist
             if not translated_text or len(translated_text) < 100:

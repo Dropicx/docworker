@@ -226,10 +226,28 @@ class OVHClient:
         """
         Preprocess medical text - first removes PII locally, then optionally uses OVH
         """
+        # Log the original text (truncated for readability)
+        logger.info("=" * 80)
+        logger.info("📄 PREPROCESSING PIPELINE STARTED")
+        logger.info("=" * 80)
+        logger.info(f"📥 [1/3] ORIGINAL EXTRACTED TEXT (first 500 chars):")
+        logger.info("-" * 40)
+        logger.info(text[:500] + "..." if len(text) > 500 else text)
+        logger.info(f"   Length: {len(text)} characters")
+        logger.info("-" * 40)
+        
         # SCHRITT 1: Lokale PII-Entfernung mit Python (schnell und datenschutzfreundlich)
         try:
-            logger.info("🔒 Removing PII locally with Python privacy filter...")
+            logger.info("🔒 [2/3] APPLYING PRIVACY FILTER...")
             cleaned_text = self.privacy_filter.remove_pii(text)
+            
+            # Log the privacy-filtered text
+            logger.info(f"🔐 [2/3] PRIVACY-FILTERED TEXT (first 500 chars):")
+            logger.info("-" * 40)
+            logger.info(cleaned_text[:500] + "..." if len(cleaned_text) > 500 else cleaned_text)
+            logger.info(f"   Length: {len(cleaned_text)} characters")
+            logger.info(f"   Reduction: {len(text) - len(cleaned_text)} characters removed")
+            logger.info("-" * 40)
             
             # Grundlegende Validierung
             if len(cleaned_text) > 50:  # Mindestens etwas Text sollte übrig bleiben
@@ -313,7 +331,19 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
             )
             
             result = response.choices[0].message.content
+            
+            # Log the OVH-preprocessed text
+            logger.info(f"🤖 [3/3] OVH-PREPROCESSED TEXT (first 500 chars):")
+            logger.info("-" * 40)
+            logger.info(result[:500] + "..." if len(result) > 500 else result)
+            logger.info(f"   Length: {len(result)} characters")
+            logger.info(f"   Total reduction from original: {len(text) - len(result)} characters")
+            logger.info("-" * 40)
+            
             logger.info(f"✅ OVH preprocessing successful with {self.preprocessing_model}")
+            logger.info("=" * 80)
+            logger.info("📄 PREPROCESSING PIPELINE COMPLETED")
+            logger.info("=" * 80)
             
             # Clean up formatting
             import re
@@ -469,6 +499,15 @@ ORIGINAL TEXT (bereits vereinfacht):
             tuple[str, str, float, str]: (translated_text, doc_type, confidence, cleaned_original)
         """
         try:
+            logger.info("=" * 80)
+            logger.info("🌍 TRANSLATION PIPELINE STARTED")
+            logger.info("=" * 80)
+            logger.info(f"📥 INPUT TEXT FOR TRANSLATION (first 500 chars):")
+            logger.info("-" * 40)
+            logger.info(text[:500] + "..." if len(text) > 500 else text)
+            logger.info(f"   Length: {len(text)} characters")
+            logger.info("-" * 40)
+            
             logger.info("🏥 Starting medical document processing with OVH AI")
             
             # Create the comprehensive instruction for medical translation (in German)
@@ -489,11 +528,23 @@ ORIGINAL MEDIZINISCHER TEXT:
                 max_tokens=4000
             )
             
+            # Log the translated text
+            logger.info(f"📤 TRANSLATED TEXT (first 500 chars):")
+            logger.info("-" * 40)
+            logger.info(translated_text[:500] + "..." if len(translated_text) > 500 else translated_text)
+            logger.info(f"   Length: {len(translated_text)} characters")
+            logger.info("-" * 40)
+            
             # Improve formatting for bullet points and arrows
             translated_text = self._improve_formatting(translated_text)
             
             # Evaluate quality
             confidence = self._evaluate_translation_quality(text, translated_text)
+            
+            logger.info(f"📊 Translation confidence: {confidence:.2%}")
+            logger.info("=" * 80)
+            logger.info("🌍 TRANSLATION PIPELINE COMPLETED")
+            logger.info("=" * 80)
             
             return translated_text, document_type, confidence, text
             
