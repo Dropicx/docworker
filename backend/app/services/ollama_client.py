@@ -254,7 +254,9 @@ Hinweise wie "Laut Dokument" oder "Gemäß den Unterlagen"
 
 EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 
+<!-- PDF_ONLY_START -->
 # 📋 Ihre medizinische Dokumentation - Einfach erklärt
+<!-- PDF_ONLY_END -->
 
 ## 🎯 Das Wichtigste zuerst
 [Die zentrale Information in einem klaren Satz]
@@ -700,10 +702,26 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         print(f"✅ Text intelligent bereinigt: {len(text)} → {len(cleaned_text)} Zeichen")
         return cleaned_text
     
-    def _improve_formatting(self, text: str) -> str:
+    def _remove_pdf_only_sections(self, text: str) -> str:
+        """
+        Entfernt PDF-only Sektionen aus dem Display-Output
+        Diese Sektionen bleiben nur im PDF Export erhalten
+        """
+        import re
+        # Entferne alles zwischen PDF_ONLY_START und PDF_ONLY_END tags
+        text = re.sub(r'<!-- PDF_ONLY_START -->.*?<!-- PDF_ONLY_END -->', '', text, flags=re.DOTALL)
+        # Entferne eventuelle doppelte Leerzeilen die entstanden sind
+        text = re.sub(r'\n{3,}', '\n\n', text)
+        return text.strip()
+    
+    def _improve_formatting(self, text: str, for_pdf: bool = False) -> str:
         """
         Verbessert die Formatierung von Übersetzungen
         Fügt korrekte Zeilenumbrüche nach Pfeilen und Bullet Points hinzu
+        
+        Args:
+            text: Der zu formatierende Text
+            for_pdf: True wenn für PDF Export, False für Display
         """
         import re
         
@@ -752,5 +770,9 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
                 formatted_lines.append(line)
         
         text = '\n'.join(formatted_lines)
+        
+        # Für Display-Output: Entferne PDF-only Sektionen
+        if not for_pdf:
+            text = self._remove_pdf_only_sections(text)
         
         return text 

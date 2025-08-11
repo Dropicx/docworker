@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { Copy, Download, Eye, EyeOff, CheckCircle, FileText, Clock, Star, Sparkles, RefreshCw, ArrowLeft, Globe } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import ReactDOM from 'react-dom/client';
 import ApiService from '../services/api';
 import { TranslationResult as TranslationData } from '../types/api';
 import { exportToPDF } from '../utils/pdfExportAdvanced';
@@ -34,8 +35,8 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
 
   const handleDownload = async () => {
     try {
-      // Bestimme welcher Text exportiert werden soll
-      const textToExport = getDisplayedText();
+      // Bestimme welcher Text exportiert werden soll - MIT PDF-only Content
+      const textToExport = getDisplayedText(true); // true = für PDF Export
       const isLanguageExport = activeTab === 'language' && result.language_translated_text;
       
       // Generiere Dateinamen
@@ -43,12 +44,37 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
       const languageSuffix = isLanguageExport ? `_${result.target_language}` : '_DE';
       const filename = `medizinische_uebersetzung_${timestamp}${languageSuffix}.pdf`;
       
-      // Exportiere als PDF mit der aktuellen Markdown-Formatierung
-      const elementId = isLanguageExport ? 'translation-content-language' : 'translation-content-simplified';
+      // Erstelle temporäres Element mit PDF-Version des Texts
+      const tempDiv = document.createElement('div');
+      tempDiv.id = 'pdf-export-content-temp';
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.className = 'markdown-content';
+      document.body.appendChild(tempDiv);
       
-      // Warte kurz, damit das Element sicher gerendert ist
+      // Rendere ReactMarkdown in das temporäre Element
+      const root = ReactDOM.createRoot(tempDiv);
+      root.render(
+        <ReactMarkdown 
+          remarkPlugins={[remarkGfm]}
+          components={{
+            h1: ({children}) => <h1 className="text-3xl font-bold text-primary-900 mb-6 mt-4 first:mt-0">{children}</h1>,
+            h2: ({children}) => <h2 className="text-2xl font-bold text-primary-900 mb-4 mt-6 first:mt-0">{children}</h2>,
+            h3: ({children}) => <h3 className="text-xl font-semibold text-primary-900 mb-3 mt-4">{children}</h3>,
+            p: ({children}) => <p className="mb-4 text-primary-700 leading-relaxed">{children}</p>,
+            ul: ({children}) => <ul className="mb-4 text-primary-700 space-y-2">{children}</ul>,
+            li: ({children}) => <li className="leading-relaxed mb-2">{children}</li>,
+            strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
+          }}
+        >
+          {textToExport}
+        </ReactMarkdown>
+      );
+      
+      // Warte kurz auf das Rendering
       setTimeout(async () => {
-        await exportToPDF(elementId, filename, {
+        // Exportiere als PDF
+        await exportToPDF('pdf-export-content-temp', filename, {
           title: isLanguageExport 
             ? `Übersetzung (${result.target_language?.toUpperCase()})` 
             : 'Verständliche Übersetzung',
@@ -58,7 +84,11 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
           processingTime: result.processing_time_seconds,
           documentType: result.document_type_detected
         });
-      }, 100);
+        
+        // Cleanup
+        root.unmount();
+        document.body.removeChild(tempDiv);
+      }, 200);
     } catch (error) {
       console.error('PDF Export failed:', error);
       alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
@@ -84,11 +114,27 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
   };
 
   // Bestimme die anzuzeigende Übersetzung basierend auf dem aktiven Tab
-  const getDisplayedText = () => {
+  const getDisplayedText = (forPDF: boolean = false) => {
+    let text = '';
     if (activeTab === 'language' && result.language_translated_text) {
-      return result.language_translated_text;
+      text = result.language_translated_text;
+    } else {
+      text = result.translated_text;
     }
-    return result.translated_text;
+    
+    // Für Display: Entferne PDF-only Sektionen
+    if (!forPDF) {
+      // Entferne alles zwischen PDF_ONLY_START und PDF_ONLY_END tags
+      text = text.replace(/<!-- PDF_ONLY_START -->[\s\S]*?<!-- PDF_ONLY_END -->/g, '');
+      // Entferne eventuelle doppelte Leerzeilen
+      text = text.replace(/\n{3,}/g, '\n\n');
+    } else {
+      // Für PDF: Entferne nur die Marker-Tags selbst, behalte den Inhalt
+      text = text.replace(/<!-- PDF_ONLY_START -->/g, '');
+      text = text.replace(/<!-- PDF_ONLY_END -->/g, '');
+    }
+    
+    return text.trim();
   };
 
   const getDisplayedConfidence = () => {
@@ -199,7 +245,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
             
             <div className="flex flex-row space-x-2 sm:space-x-3 w-full lg:w-auto">
               <button
-                onClick={() => handleCopy(getDisplayedText(), activeTab === 'language' ? 'language' : 'translated')}
+                onClick={() => handleCopy(getDisplayedText(false), activeTab === 'language' ? 'language' : 'translated')}
                 className="btn-secondary group flex-1 lg:flex-initial"
                 disabled={copiedText === (activeTab === 'language' ? 'language' : 'translated')}
               >
@@ -255,29 +301,43 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                       </ol>
                     ),
                     li: ({children}) => {
-                      // Einfache Prüfung: Konvertiere zu String
+                      // Konvertiere children zu String für Analyse
                       const text = React.Children.toArray(children)
                         .map(child => {
                           if (typeof child === 'string') return child;
+                          if (React.isValidElement(child) && child.props?.children) {
+                            // Rekursiv Text aus verschachtelten Elementen extrahieren
+                            if (typeof child.props.children === 'string') {
+                              return child.props.children;
+                            }
+                          }
                           return '';
                         })
                         .join('');
                       
-                      // Prüfe ob Text mit Leerzeichen und Pfeil beginnt
-                      // Template hat "  → Bedeutung:" Format
-                      if (text.match(/^\s+→/)) {
-                        // Eingerückter Pfeil-Unterpunkt
+                      // Prüfe ob Text mit Pfeil beginnt (mit oder ohne Leerzeichen)
+                      if (text.match(/^\s*→/) || text.includes('→ Bedeutung:')) {
+                        // Eingerückter Pfeil-Unterpunkt mit besserem Styling
                         return (
-                          <li className="ml-8 text-primary-600 leading-relaxed">
-                            {children}
+                          <li className="ml-6 text-primary-600 leading-relaxed list-none">
+                            <span className="block pl-2">{children}</span>
                           </li>
                         );
                       }
                       
-                      // Standard Listeneintrag
+                      // Standard Listeneintrag ohne Bullet Point wenn er mit • beginnt
+                      const cleanedChildren = React.Children.map(children, child => {
+                        if (typeof child === 'string') {
+                          // Entferne führende • wenn vorhanden (wird durch CSS ersetzt)
+                          return child.replace(/^•\s*/, '');
+                        }
+                        return child;
+                      });
+                      
                       return (
-                        <li className="leading-relaxed">
-                          {children}
+                        <li className="leading-relaxed mb-2">
+                          <span className="inline-block mr-2 text-brand-500">•</span>
+                          {cleanedChildren}
                         </li>
                       );
                     },
@@ -323,7 +383,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     ),
                   }}
                 >
-                  {getDisplayedText()}
+                  {getDisplayedText(false)}
                 </ReactMarkdown>
                 
                 {/* PDF Footer with Date - wird nur im Export angezeigt */}

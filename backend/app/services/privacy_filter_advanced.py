@@ -35,18 +35,32 @@ class AdvancedPrivacyFilter:
             # Körperteile und Organe
             'herz', 'lunge', 'leber', 'niere', 'magen', 'darm', 'kopf', 'hals',
             'brust', 'bauch', 'rücken', 'schulter', 'knie', 'hüfte', 'hand', 'fuß',
+            'hirn', 'gehirn', 'muskel', 'knochen', 'gelenk', 'sehne', 'nerv',
+            'gefäß', 'arterie', 'vene', 'lymphe', 'milz', 'pankreas', 'schilddrüse',
             
             # Medizinische Fachbegriffe
             'patient', 'patientin', 'diagnose', 'befund', 'therapie', 'behandlung',
             'untersuchung', 'operation', 'medikament', 'dosierung', 'anamnese',
             'kardial', 'kardiale', 'pulmonal', 'hepatisch', 'renal', 'gastral',
-            'neural', 'muskulär', 'vaskulär', 'arterial', 'venös',
+            'neural', 'muskulär', 'vaskulär', 'arterial', 'venös', 'symptom',
+            'syndrom', 'erkrankung', 'krankheit', 'störung', 'insuffizienz',
+            'stenose', 'thrombose', 'embolie', 'infarkt', 'ischämie', 'nekrose',
+            'inflammation', 'infektion', 'sepsis', 'abszeß', 'tumor', 'karzinom',
             
             # Häufige medizinische Adjektive
             'akut', 'akute', 'akuter', 'akutes', 'chronisch', 'chronische',
             'primär', 'sekundär', 'maligne', 'benigne', 'bilateral', 'unilateral',
             'proximal', 'distal', 'lateral', 'medial', 'anterior', 'posterior',
-            'superior', 'inferior', 'links', 'rechts', 'beidseits',
+            'superior', 'inferior', 'links', 'rechts', 'beidseits', 'normal',
+            'pathologisch', 'physiologisch', 'regelrecht', 'unauffällig',
+            
+            # Medikamente und Substanzen (häufige)
+            'aspirin', 'insulin', 'cortison', 'antibiotika', 'penicillin',
+            'morphin', 'ibuprofen', 'paracetamol', 'metformin', 'simvastatin',
+            
+            # Untersuchungen
+            'mrt', 'ct', 'röntgen', 'ultraschall', 'ekg', 'echo', 'szintigraphie',
+            'biopsie', 'punktion', 'endoskopie', 'koloskopie', 'gastroskopie',
             
             # Wichtige Wörter
             'aktuell', 'aktuelle', 'aktueller', 'aktuelles', 'vorhanden',
@@ -284,6 +298,7 @@ class AdvancedPrivacyFilter:
     def _remove_names_with_ner(self, text: str) -> str:
         """
         Verwendet spaCy NER zur intelligenten Namenerkennung
+        KONSERVATIV: Entfernt nur eindeutige Personennamen
         """
         # Verarbeite Text mit spaCy
         doc = self.nlp(text)
@@ -292,34 +307,46 @@ class AdvancedPrivacyFilter:
         persons_to_remove = set()
         
         for ent in doc.ents:
-            # PER = Person, ORG kann auch Arztpraxen sein
+            # NUR PER = Person, ignoriere ORG, LOC etc.
             if ent.label_ == "PER":
                 # Prüfe ob es ein medizinischer Begriff ist
                 if ent.text.lower() not in self.medical_terms:
-                    persons_to_remove.add(ent.text)
-                    logger.debug(f"NER erkannt als Person: {ent.text}")
+                    # NUR entfernen wenn es WIRKLICH wie ein Name aussieht
+                    # Mindestens 2 Wörter (Vor- und Nachname) oder bekannter Titel dabei
+                    words = ent.text.split()
+                    if len(words) >= 2 or any(title in ent.text.lower() for title in ['dr.', 'prof.', 'herr', 'frau']):
+                        # Zusätzliche Prüfung: Keine Zahlen im Namen (könnte Laborwert sein)
+                        if not any(char.isdigit() for char in ent.text):
+                            persons_to_remove.add(ent.text)
+                            logger.debug(f"NER erkannt als Person: {ent.text}")
         
-        # Zusätzlich: Erkenne Namen mit Titeln
+        # KONSERVATIV: Nur explizite Titel+Name Kombinationen
         for i, token in enumerate(doc):
-            if token.text.lower() in self.name_indicators:
-                # Schaue die nächsten 1-3 Tokens an
-                for j in range(1, min(4, len(doc) - i)):
-                    next_token = doc[i + j]
-                    # Wenn es wie ein Name aussieht (Großbuchstabe am Anfang)
-                    if next_token.text[0].isupper() and len(next_token.text) > 2:
-                        # Prüfe ob es kein medizinischer Begriff ist
-                        if next_token.text.lower() not in self.medical_terms:
-                            persons_to_remove.add(next_token.text)
-                            logger.debug(f"Titel+Name erkannt: {token.text} {next_token.text}")
+            if token.text.lower() in ['dr.', 'prof.', 'herr', 'frau']:
+                # Schaue NUR den nächsten Token an
+                if i + 1 < len(doc):
+                    next_token = doc[i + 1]
+                    # Wenn es wie ein Name aussieht (Großbuchstabe, keine Zahlen)
+                    if (next_token.text[0].isupper() and 
+                        len(next_token.text) > 2 and 
+                        not any(char.isdigit() for char in next_token.text) and
+                        next_token.text.lower() not in self.medical_terms):
+                        # Schaue ob noch ein Nachname folgt
+                        if i + 2 < len(doc):
+                            next_next = doc[i + 2]
+                            if (next_next.text[0].isupper() and 
+                                not any(char.isdigit() for char in next_next.text)):
+                                persons_to_remove.add(f"{next_token.text} {next_next.text}")
+                                logger.debug(f"Titel+Name erkannt: {token.text} {next_token.text} {next_next.text}")
         
-        # Entferne alle gefundenen Namen
+        # Entferne nur die sicher erkannten Namen
         result = text
         for person in persons_to_remove:
             # Ersetze den Namen überall im Text
-            result = re.sub(r'\b' + re.escape(person) + r'\b', '', result, flags=re.IGNORECASE)
+            result = re.sub(r'\b' + re.escape(person) + r'\b', '[NAME ENTFERNT]', result, flags=re.IGNORECASE)
         
-        # Entferne Titel die alleine stehen
-        result = re.sub(r'\b(?:Dr\.?|Prof\.?|Herr|Frau)\s*(?:\n|$)', '', result, flags=re.IGNORECASE)
+        # Entferne Titel die alleine stehen (aber nur am Zeilenanfang)
+        result = re.sub(r'^(?:Dr\.?|Prof\.?|Herr|Frau)\s*(?:\n|$)', '', result, flags=re.IGNORECASE | re.MULTILINE)
         
         return result
     

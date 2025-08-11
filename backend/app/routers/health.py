@@ -221,6 +221,39 @@ async def detailed_health_check():
 # Debug endpoint removed for production security
 # To enable debugging, set ENVIRONMENT=development
 
+@router.get("/health/test-formatting")
+async def test_formatting():
+    """
+    Testet die Formatierungsfunktion
+    """
+    use_ovh_only = os.getenv("USE_OVH_ONLY", "true").lower() == "true"
+    
+    # Test text mit problematischen Formatierungen
+    test_text = """## 📊 Zusammenfassung
+### Was wurde gemacht?
+• Sie wurden von einem Facharzt für Innere Medizin und Kardiologie untersucht. • Es wurde eine Anamnese (Krankengeschichte) aufgenommen. • Es wurden verschiedene Untersuchungen durchgeführt, wie ein EKG, eine Echokardiographie und eine Ergometrie.
+
+### Was wurde gefunden?
+• Sie haben Atemnot bereits bei geringer körperlicher Anstrengung (NYHA II-III). → Bedeutung: Das bedeutet, dass Sie schnell außer Atem kommen, wenn Sie sich anstrengen.
+• Sie haben gelegentliche retrosternale Druckgefühle in der Brust. → Bedeutung: Das bedeutet, dass Sie manchmal ein Druckgefühl in der Brust verspüren.
+• Ihr Blutdruck ist normal. → Bedeutung: Das bedeutet, dass Ihr Blutdruck im normalen Bereich liegt."""
+    
+    formatted_text = None
+    if use_ovh_only:
+        from app.services.ovh_client import OVHClient
+        client = OVHClient()
+        formatted_text = client._improve_formatting(test_text)
+    else:
+        from app.services.ollama_client import OllamaClient
+        client = OllamaClient()
+        formatted_text = client._improve_formatting(test_text)
+    
+    return {
+        "original": test_text,
+        "formatted": formatted_text,
+        "api_mode": "OVH" if use_ovh_only else "Ollama"
+    }
+
 @router.get("/health/dependencies")
 async def check_dependencies():
     """

@@ -54,9 +54,9 @@
            inline-flex items-center justify-center gap-2 text-sm sm:text-base;
   }
   
-  /* Improved Markdown List Formatting - No extra bullets */
+  /* Improved Markdown List Formatting - Clean structure */
   .markdown-content ul {
-    @apply space-y-3;
+    @apply space-y-3 list-none;
   }
   
   .markdown-content ol {
@@ -65,20 +65,30 @@
   
   .markdown-content li > ul,
   .markdown-content li > ol {
-    @apply mt-3 ml-4;
+    @apply mt-2 ml-4;
   }
   
   .markdown-content li p {
     @apply inline;
   }
   
-  /* Special formatting for diagnosis sections */
+  /* Special formatting for nested items with arrows */
   .markdown-content li:has(> ul) {
     @apply pb-2;
   }
   
   .markdown-content strong + ul {
     @apply mt-2;
+  }
+  
+  /* Ensure proper line breaks for arrows */
+  .markdown-content li span {
+    @apply break-words;
+  }
+  
+  /* Arrow items get special formatting */
+  .markdown-content li.list-none {
+    @apply pl-4 border-l-2 border-brand-200;
   }
   
   /* Enhanced Card System - Mobile Optimized */
