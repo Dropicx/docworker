@@ -202,8 +202,8 @@ export class ApiService {
   }
 
   static validateFile(file: File): { valid: boolean; error?: string } {
-    // File size check (10MB)
-    const maxSize = 10 * 1024 * 1024;
+    // File size check (50MB - optimized for phone photos)
+    const maxSize = 50 * 1024 * 1024;
     if (file.size > maxSize) {
       return {
         valid: false,

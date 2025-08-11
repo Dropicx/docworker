@@ -16,6 +16,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
   disabled = false
 }) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadingFileName, setUploadingFileName] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -31,16 +33,37 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
 
     setIsUploading(true);
+    setUploadingFileName(file.name);
+    setUploadProgress(0);
 
     try {
+      // Simulate upload progress for better UX
+      const progressInterval = setInterval(() => {
+        setUploadProgress(prev => {
+          if (prev >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return prev + Math.random() * 15;
+        });
+      }, 300);
+
       const response = await ApiService.uploadDocument(file);
-      onUploadSuccess(response);
+      
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+      
+      // Keep the loading state visible a bit longer for smooth transition
+      setTimeout(() => {
+        onUploadSuccess(response);
+      }, 500);
     } catch (error: any) {
       const errorMessage = error.message || 'Upload fehlgeschlagen';
       setValidationError(errorMessage);
       onUploadError(errorMessage);
-    } finally {
       setIsUploading(false);
+      setUploadProgress(0);
+      setUploadingFileName('');
     }
   }, [onUploadSuccess, onUploadError]);
 
@@ -85,50 +108,95 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* Upload Area */}
+      {/* Upload Loading Overlay - Shows during upload */}
+      {isUploading && (
+        <div className="fixed inset-0 z-50 bg-white/95 backdrop-blur-sm flex items-center justify-center animate-fade-in">
+          <div className="max-w-md w-full mx-4">
+            <div className="card-elevated p-8 space-y-6">
+              {/* Upload Icon with Animation */}
+              <div className="flex justify-center">
+                <div className="relative">
+                  <div className="w-20 h-20 bg-gradient-to-br from-brand-500 to-brand-600 rounded-3xl flex items-center justify-center animate-pulse-soft">
+                    <Upload className="w-10 h-10 text-white" />
+                  </div>
+                  <div className="absolute -bottom-2 -right-2 w-8 h-8 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center animate-spin-slow">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  </div>
+                </div>
+              </div>
+
+              {/* Upload Status Text */}
+              <div className="text-center space-y-2">
+                <h3 className="text-2xl font-bold text-primary-900">
+                  Datei wird hochgeladen
+                </h3>
+                <p className="text-primary-600">
+                  {uploadingFileName && (
+                    <span className="font-medium">{uploadingFileName}</span>
+                  )}
+                </p>
+                <p className="text-sm text-primary-500">
+                  Bitte warten Sie einen Moment...
+                </p>
+              </div>
+
+              {/* Progress Bar */}
+              <div className="space-y-2">
+                <div className="w-full bg-neutral-100 rounded-full h-2 overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-brand-500 to-accent-500 rounded-full transition-all duration-300 ease-out"
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+                <p className="text-center text-xs text-primary-500">
+                  {Math.round(uploadProgress)}% hochgeladen
+                </p>
+              </div>
+
+              {/* Info Text */}
+              <div className="text-center">
+                <p className="text-xs text-primary-500">
+                  {uploadProgress < 30 && "Verbindung wird hergestellt..."}
+                  {uploadProgress >= 30 && uploadProgress < 60 && "Datei wird übertragen..."}
+                  {uploadProgress >= 60 && uploadProgress < 90 && "Fast fertig..."}
+                  {uploadProgress >= 90 && "Verarbeitung wird vorbereitet..."}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Regular Upload Area - Hidden during upload */}
       <div
         {...getRootProps()}
         onClick={handleClick}
-        className={`upload-area ${isDragActive ? 'dragover' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${isUploading ? 'pointer-events-none' : ''}`}
+        className={`upload-area ${isDragActive ? 'dragover' : ''} ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${isUploading ? 'pointer-events-none' : ''}`}
+        style={{ display: isUploading ? 'none' : 'block' }}
       >
         <input {...getInputProps()} ref={fileInputRef} />
         
         <div className="space-y-6">
           <div className="flex justify-center">
-            {isUploading ? (
-              <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center animate-pulse-soft">
-                  <Upload className="w-8 h-8 text-white" />
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-6 h-6 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center">
-                  <div className="loading-spinner w-3 h-3 text-white" />
-                </div>
-              </div>
-            ) : (
-              <div className={`group w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center transition-all duration-300 ${!disabled ? 'group-hover:scale-110 group-hover:shadow-glow' : ''}`}>
-                <Upload className="w-8 h-8 text-white transition-transform duration-300 group-hover:scale-110" />
-              </div>
-            )}
+            <div className={`group w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center transition-all duration-300 ${!disabled ? 'group-hover:scale-110 group-hover:shadow-glow' : ''}`}>
+              <Upload className="w-8 h-8 text-white transition-transform duration-300 group-hover:scale-110" />
+            </div>
           </div>
 
           <div className="text-center space-y-3">
             <h3 className="text-2xl font-bold text-primary-900">
-              {isUploading
-                ? 'Datei wird hochgeladen...'
-                : isDragActive
+              {isDragActive
                 ? 'Datei hier ablegen'
                 : 'Dokument hochladen'
               }
             </h3>
             
-            {!isUploading && (
-              <p className="text-primary-600 text-lg leading-relaxed max-w-md mx-auto">
-                {isDragActive 
-                  ? 'Lassen Sie die Datei los, um sie hochzuladen'
-                  : 'Ziehen Sie eine Datei hierher oder klicken Sie zum Auswählen'
-                }
-              </p>
-            )}
+            <p className="text-primary-600 text-lg leading-relaxed max-w-md mx-auto">
+              {isDragActive 
+                ? 'Lassen Sie die Datei los, um sie hochzuladen'
+                : 'Ziehen Sie eine Datei hierher oder klicken Sie zum Auswählen'
+              }
+            </p>
           </div>
 
           {!isUploading && (
@@ -145,7 +213,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       <Image className="w-3 h-3 text-accent-500" />
                       <span>JPG, PNG</span>
                     </span>
-                    <span className="text-primary-400">• Max. 10 MB</span>
+                    <span className="text-primary-400">• Max. 50 MB</span>
                   </div>
                 </div>
               </div>
