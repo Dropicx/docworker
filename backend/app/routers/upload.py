@@ -1,5 +1,6 @@
 import uuid
 import time
+import logging
 from datetime import datetime
 from typing import Optional
 
@@ -12,6 +13,8 @@ from app.models.document import UploadResponse, ProcessingStatus, DocumentType, 
 from app.services.file_validator import FileValidator
 from app.services.cleanup import add_to_processing_store
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
 # Rate limiting für Upload
@@ -23,16 +26,10 @@ async def upload_document(
     request: Request,
     file: UploadFile = File(..., description="Medizinisches Dokument (PDF, JPG, PNG)")
 ):
-    # Debug: Log incoming request details
-    print(f"🔍 === UPLOAD REQUEST DEBUG ===")
-    print(f"🔍 Method: {request.method}")
-    print(f"🔍 URL: {request.url}")
-    print(f"🔍 Headers: {dict(request.headers)}")
-    print(f"🔍 Client: {request.client}")
-    print(f"🔍 Content-Type: {request.headers.get('content-type', 'NOT SET')}")
-    print(f"🔍 Content-Length: {request.headers.get('content-length', 'NOT SET')}")
-    print(f"🔍 File object: {file}")
-    print(f"🔍 === END DEBUG ===")
+    # Log upload request
+    upload_log = f"📤 Upload request: {file.filename} ({file.content_type})"
+    print(upload_log, flush=True)
+    logger.info(upload_log)
     """
     Lädt ein medizinisches Dokument hoch und startet die Verarbeitung
     
@@ -42,21 +39,21 @@ async def upload_document(
     """
     
     try:
-        print(f"🔍 Upload-Request erhalten: {file.filename}, Content-Type: {file.content_type}, Size: {file.size if hasattr(file, 'size') else 'unknown'}")
+        logger.debug(f"🔍 Upload-Request erhalten: {file.filename}, Content-Type: {file.content_type}")
         
         # Grundlegende Validierung
         if not file.filename:
-            print(f"❌ Dateiname fehlt!")
+            logger.error(f"❌ Dateiname fehlt!")
             raise HTTPException(
                 status_code=400,
                 detail="Dateiname fehlt"
             )
         
         # Dateivalidierung
-        print(f"🔍 Validiere Datei: {file.filename}")
+        logger.debug(f"🔍 Validiere Datei: {file.filename}")
         is_valid, error_message = await FileValidator.validate_file(file)
         if not is_valid:
-            print(f"❌ Dateivalidierung fehlgeschlagen: {error_message}")
+            logger.error(f"❌ Dateivalidierung fehlgeschlagen: {error_message}")
             raise HTTPException(
                 status_code=400,
                 detail=f"Dateivalidierung fehlgeschlagen: {error_message}"
@@ -98,14 +95,18 @@ async def upload_document(
             message="Datei erfolgreich hochgeladen und zur Verarbeitung bereit"
         )
         
-        print(f"📄 Datei hochgeladen: {file.filename} ({file_size} bytes) - ID: {processing_id[:8]}")
+        success_log = f"📄 Datei hochgeladen: {file.filename} ({file_size} bytes) - ID: {processing_id[:8]}"
+        print(success_log, flush=True)
+        logger.info(success_log)
         
         return response
         
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Upload-Fehler: {e}")
+        error_log = f"❌ Upload-Fehler: {e}"
+        print(error_log, flush=True)
+        logger.error(error_log)
         raise HTTPException(
             status_code=500,
             detail=f"Interner Server-Fehler beim Upload: {str(e)}"
@@ -138,7 +139,9 @@ async def cancel_processing(
         # Verarbeitung stoppen und Daten löschen
         remove_from_processing_store(processing_id)
         
-        print(f"🚫 Verarbeitung abgebrochen: {processing_id[:8]}")
+        cancel_log = f"🚫 Verarbeitung abgebrochen: {processing_id[:8]}"
+        print(cancel_log, flush=True)
+        logger.info(cancel_log)
         
         return {
             "message": "Verarbeitung erfolgreich abgebrochen",
@@ -148,7 +151,7 @@ async def cancel_processing(
     except HTTPException:
         raise
     except Exception as e:
-        print(f"❌ Abbruch-Fehler: {e}")
+        logger.error(f"❌ Abbruch-Fehler: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Fehler beim Abbrechen der Verarbeitung: {str(e)}"

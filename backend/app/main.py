@@ -18,36 +18,49 @@ from slowapi.errors import RateLimitExceeded
 from app.routers import upload, process, health
 from app.services.cleanup import cleanup_temp_files
 
-# Configure logging for Railway
+# Configure logging for Railway - FORCE stdout output
+import sys
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-    datefmt='%Y-%m-%d %H:%M:%S'
+    format='%(asctime)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[
+        logging.StreamHandler(sys.stdout)  # Force output to stdout for Railway
+    ],
+    force=True  # Override any existing configuration
 )
 logger = logging.getLogger(__name__)
+
+# Also ensure print statements work
+print("🔧 Logging configured for Railway deployment", flush=True)
 
 # Rate limiting
 limiter = Limiter(key_func=get_remote_address)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
+    # Startup - use both print and logger for Railway visibility
+    print("🚀 Medical Document Translator starting up...", flush=True)
     logger.info("🚀 Medical Document Translator starting up...")
-    logger.info(f"Environment: {os.getenv('ENVIRONMENT', 'development')}")
-    logger.info(f"Railway Environment: {os.getenv('RAILWAY_ENVIRONMENT', 'not set')}")
-    logger.info(f"Port: {os.getenv('PORT', '9122')}")
-    logger.info(f"USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}")
+    
+    print(f"Environment: {os.getenv('ENVIRONMENT', 'development')}", flush=True)
+    print(f"Railway Environment: {os.getenv('RAILWAY_ENVIRONMENT', 'not set')}", flush=True)
+    print(f"Port: {os.getenv('PORT', '9122')}", flush=True)
+    print(f"USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}", flush=True)
     
     # Log OVH configuration (without sensitive data)
     if os.getenv('OVH_AI_ENDPOINTS_ACCESS_TOKEN'):
+        print("✅ OVH API Token is configured", flush=True)
         logger.info("✅ OVH API Token is configured")
     else:
+        print("⚠️ OVH API Token is NOT configured", flush=True)
         logger.warning("⚠️ OVH API Token is NOT configured")
     
-    logger.info(f"OVH Base URL: {os.getenv('OVH_AI_BASE_URL', 'not set')}")
+    print(f"OVH Base URL: {os.getenv('OVH_AI_BASE_URL', 'not set')}", flush=True)
     
     # Cleanup task - runs every 30 seconds
     cleanup_task = asyncio.create_task(periodic_cleanup())
+    print("Started periodic cleanup task (30s interval)", flush=True)
     logger.info("Started periodic cleanup task (30s interval)")
     
     yield
@@ -73,11 +86,21 @@ async def periodic_cleanup():
             files_removed = await cleanup_temp_files()
             cleanup_count += 1
             if files_removed > 0:
-                logger.info(f"🧹 Cleanup #{cleanup_count}: Removed {files_removed} temporary files")
+                cleanup_log = f"🧹 Cleanup #{cleanup_count}: Removed {files_removed} temporary files"
+                print(cleanup_log, flush=True)
+                logger.info(cleanup_log)
+            else:
+                # Log auch wenn keine Dateien entfernt wurden (alle 5 Cleanups)
+                if cleanup_count % 5 == 0:
+                    status_log = f"✅ Cleanup #{cleanup_count}: System clean, no files to remove"
+                    print(status_log, flush=True)
+                    logger.debug(status_log)
         except asyncio.CancelledError:
             break
         except Exception as e:
-            logger.error(f"❌ Cleanup error: {e}")
+            error_log = f"❌ Cleanup error: {e}"
+            print(error_log, flush=True)
+            logger.error(error_log)
 
 # FastAPI App
 app = FastAPI(
@@ -120,8 +143,10 @@ app.add_middleware(
 async def log_requests(request: Request, call_next):
     start_time = datetime.now()
     
-    # Log incoming request
-    logger.info(f"📥 {request.method} {request.url.path} from {request.client.host}")
+    # Log incoming request - use print for Railway visibility
+    request_log = f"📥 {request.method} {request.url.path} from {request.client.host}"
+    print(request_log, flush=True)
+    logger.info(request_log)
     
     # Process request
     response = await call_next(request)
@@ -129,8 +154,10 @@ async def log_requests(request: Request, call_next):
     # Calculate processing time
     process_time = (datetime.now() - start_time).total_seconds()
     
-    # Log response
-    logger.info(f"📤 {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s")
+    # Log response - use print for Railway visibility
+    response_log = f"📤 {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s"
+    print(response_log, flush=True)
+    logger.info(response_log)
     
     # Add processing time header
     response.headers["X-Process-Time"] = str(process_time)

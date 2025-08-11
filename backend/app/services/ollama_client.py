@@ -603,9 +603,11 @@ ORIGINALTEXT:
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
         
         # Verwende GPU-Instanz für Preprocessing (schneller!)
-        print(f"🔧 PREPROCESSING: Verwende Model: {model} (GPU-Instanz)")
+        logger.info(f"🔧 PREPROCESSING: Verwende Model: {model} (GPU-Instanz)")
+        print(f"🔧 PREPROCESSING: Verwende Model: {model} (GPU-Instanz)", flush=True)
         cleaned_text = await self._generate_response(preprocess_prompt, model)
-        print(f"✅ PREPROCESSING: Erfolgreich mit {model}")
+        logger.info(f"✅ PREPROCESSING: Erfolgreich mit {model}")
+        print(f"✅ PREPROCESSING: Erfolgreich mit {model}", flush=True)
         
         # Nachbearbeitung: Entferne nur DOPPELTE Bullet Points und unnötige Nummerierungen
         import re

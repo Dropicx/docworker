@@ -40,14 +40,14 @@ start_backend() {
     export USE_OVH_ONLY="true"
     export PYTHONPATH="/app/backend:${PYTHONPATH}"
     
-    # Try to start backend
+    # Try to start backend - log to stdout for Railway
     python -m uvicorn app.main:app \
         --host 127.0.0.1 \
         --port 9122 \
         --workers 1 \
         --log-level info \
         --access-log \
-        > /app/logs/backend.log 2>&1 &
+        2>&1 | tee /app/logs/backend.log &
     
     BACKEND_PID=$!
     echo "[$(date)] Backend started with PID: $BACKEND_PID"
