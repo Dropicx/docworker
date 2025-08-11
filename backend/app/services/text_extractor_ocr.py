@@ -27,7 +27,11 @@ class TextExtractorWithOCR:
             logger.info("✅ Text extractor initialized with Tesseract OCR support")
             print("✅ Text extractor initialized with Tesseract OCR support", flush=True)
             # Configure Tesseract for German and English
-            self.tesseract_config = '--oem 3 --psm 3 -l deu+eng'
+            # PSM 6: Uniform block of text (better for tables)
+            # PSM 11: Sparse text. Find as much text as possible (alternative)
+            self.tesseract_config = '--oem 3 --psm 6 -l deu+eng'
+            # Special config for tables with better structure preservation
+            self.tesseract_table_config = '--oem 3 --psm 6 -l deu+eng -c preserve_interword_spaces=1'
         else:
             logger.warning("⚠️ Tesseract not found - OCR disabled")
             print("⚠️ Tesseract not found - OCR disabled", flush=True)
@@ -166,11 +170,20 @@ class TextExtractorWithOCR:
                 
                 # Perform OCR with Tesseract
                 try:
-                    # Get text with confidence scores
-                    data = pytesseract.image_to_data(image, config=self.tesseract_config, output_type=pytesseract.Output.DICT)
+                    # Get text with confidence scores and structure data
+                    data = pytesseract.image_to_data(image, config=self.tesseract_table_config, output_type=pytesseract.Output.DICT)
                     
-                    # Extract text
-                    page_text = pytesseract.image_to_string(image, config=self.tesseract_config)
+                    # Detect if page contains tables
+                    has_table_structure = self._detect_table_structure(data)
+                    
+                    if has_table_structure:
+                        logger.info(f"📊 Page {i}: Table structure detected")
+                        # Extract text with table preservation
+                        page_text = pytesseract.image_to_string(image, config=self.tesseract_table_config)
+                        page_text = self._format_table_text(page_text)
+                    else:
+                        # Normal text extraction
+                        page_text = pytesseract.image_to_string(image, config=self.tesseract_config)
                     
                     # Calculate average confidence for non-empty text
                     confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
@@ -227,9 +240,23 @@ class TextExtractorWithOCR:
             # Preprocess for better OCR
             image = self._preprocess_image_for_ocr(image)
             
-            # Perform OCR with confidence data
-            data = pytesseract.image_to_data(image, config=self.tesseract_config, output_type=pytesseract.Output.DICT)
-            text = pytesseract.image_to_string(image, config=self.tesseract_config)
+            # Check if image might contain tables (based on structure detection)
+            # Try with table-optimized config first
+            data = pytesseract.image_to_data(image, config=self.tesseract_table_config, output_type=pytesseract.Output.DICT)
+            
+            # Detect if there might be table structures
+            has_table_structure = self._detect_table_structure(data)
+            
+            if has_table_structure:
+                logger.info("📊 Table structure detected - using table-optimized OCR")
+                print("📊 Table structure detected - optimizing for table extraction", flush=True)
+                # Use table config with preserved spacing
+                text = pytesseract.image_to_string(image, config=self.tesseract_table_config)
+                # Post-process to improve table formatting
+                text = self._format_table_text(text)
+            else:
+                # Normal text extraction
+                text = pytesseract.image_to_string(image, config=self.tesseract_config)
             
             # Calculate confidence
             confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
@@ -294,3 +321,86 @@ class TextExtractorWithOCR:
         except Exception as e:
             logger.warning(f"Image preprocessing failed: {e}")
             return image
+    
+    def _detect_table_structure(self, ocr_data: dict) -> bool:
+        """Detect if the OCR data suggests a table structure"""
+        try:
+            # Analyze word positions to detect columnar structure
+            if not ocr_data or 'text' not in ocr_data:
+                return False
+            
+            # Get words with positions
+            words = []
+            for i in range(len(ocr_data['text'])):
+                if ocr_data['text'][i].strip():
+                    words.append({
+                        'text': ocr_data['text'][i],
+                        'left': ocr_data['left'][i],
+                        'top': ocr_data['top'][i],
+                        'width': ocr_data['width'][i],
+                        'height': ocr_data['height'][i]
+                    })
+            
+            if len(words) < 10:
+                return False
+            
+            # Check for aligned columns (words with similar x-positions)
+            x_positions = [w['left'] for w in words]
+            x_clusters = []
+            tolerance = 20  # pixels tolerance for column alignment
+            
+            for x in x_positions:
+                found_cluster = False
+                for cluster in x_clusters:
+                    if abs(cluster[0] - x) < tolerance:
+                        cluster.append(x)
+                        found_cluster = True
+                        break
+                if not found_cluster:
+                    x_clusters.append([x])
+            
+            # If we have 3+ columns with 3+ items each, likely a table
+            significant_columns = [c for c in x_clusters if len(c) >= 3]
+            
+            return len(significant_columns) >= 3
+            
+        except Exception as e:
+            logger.debug(f"Table detection failed: {e}")
+            return False
+    
+    def _format_table_text(self, text: str) -> str:
+        """Format text to better preserve table structure"""
+        try:
+            lines = text.split('\n')
+            formatted_lines = []
+            
+            for line in lines:
+                # Preserve multiple spaces (likely column separators)
+                # But collapse single spaces
+                import re
+                
+                # Replace multiple spaces with a tab-like separator
+                line = re.sub(r'  +', ' | ', line)
+                
+                # Clean up line
+                line = line.strip()
+                
+                if line:
+                    formatted_lines.append(line)
+            
+            # Join lines and add table markers for common patterns
+            result = '\n'.join(formatted_lines)
+            
+            # Detect common lab value patterns and format them
+            # Pattern: Parameter Name    Value    Unit    Reference
+            result = re.sub(
+                r'([A-Za-zÄÖÜäöüß\-]+)\s*\|\s*([\d,\.]+)\s*\|\s*([A-Za-z/%]+)\s*\|\s*([\d,\.\-\s]+)',
+                r'\1: \2 \3 (Referenz: \4)',
+                result
+            )
+            
+            return result
+            
+        except Exception as e:
+            logger.debug(f"Table formatting failed: {e}")
+            return text
