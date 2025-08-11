@@ -4,8 +4,8 @@ set -e
 echo "=== Starting DocTranslator on Railway ==="
 echo "Environment variables:"
 echo "USE_OVH_ONLY: ${USE_OVH_ONLY:-not set}"
-echo "OVH_API_ENDPOINT: ${OVH_API_ENDPOINT:-not set}"
-echo "OVH_API_KEY: ${OVH_API_KEY:0:10}..." # Show only first 10 chars for security
+echo "OVH_AI_BASE_URL: ${OVH_AI_BASE_URL:-not set}"
+echo "OVH_AI_ENDPOINTS_ACCESS_TOKEN: ${OVH_AI_ENDPOINTS_ACCESS_TOKEN:+[SET]}" # Show [SET] if configured
 echo "PORT: ${PORT:-8080}"
 
 # Railway provides PORT environment variable that MUST be used
