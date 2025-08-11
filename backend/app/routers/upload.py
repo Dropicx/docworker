@@ -34,8 +34,9 @@ async def upload_document(
     Lädt ein medizinisches Dokument hoch und startet die Verarbeitung
     
     - **file**: Medizinisches Dokument (PDF, JPG, PNG)
-    - **max_size**: 10MB
+    - **max_size**: 50MB (für Handyfotos optimiert)
     - **formats**: PDF, JPEG, PNG
+    - **OCR**: Automatische Texterkennung für gescannte Dokumente
     """
     
     try:
@@ -164,13 +165,15 @@ async def get_upload_limits():
     """
     
     return {
-        "max_file_size_mb": 10,
+        "max_file_size_mb": 50,
         "allowed_formats": ["PDF", "JPG", "JPEG", "PNG"],
         "rate_limit": "5 uploads per minute",
         "max_pages_pdf": 50,
         "min_image_size": "100x100 pixels",
         "max_image_size": "8000x8000 pixels",
-        "processing_timeout_minutes": 30
+        "processing_timeout_minutes": 30,
+        "ocr_supported": True,
+        "ocr_languages": ["German", "English"]
     }
 
 @router.get("/upload/health")

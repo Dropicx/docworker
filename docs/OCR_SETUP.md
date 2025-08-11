@@ -203,6 +203,19 @@ The `/api/health/detailed` endpoint now includes OCR status:
 }
 ```
 
+## File Size Limits
+
+- **Maximum file size**: 50MB (optimized for phone photos)
+- **Recommended image size**: 2-10MB for best performance
+- **Large images**: Automatically resized to max 4000x4000 pixels for processing
+
+### Phone Photo Optimization
+
+The system automatically handles large phone photos:
+1. **Auto-resize**: Images larger than 4000px are scaled down
+2. **Enhancement**: Contrast and sharpness are optimized for OCR
+3. **Compression**: Processed efficiently to reduce memory usage
+
 ## Limitations
 
 1. **Handwritten Text**: Limited support, accuracy varies
@@ -210,6 +223,7 @@ The `/api/health/detailed` endpoint now includes OCR status:
 3. **Image Quality**: Poor quality scans result in lower accuracy
 4. **Languages**: Currently optimized for German and English only
 5. **Processing Time**: Large documents can take several minutes
+6. **File Size**: Maximum 50MB per upload
 
 ## Future Improvements
 

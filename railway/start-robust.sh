@@ -60,12 +60,15 @@ start_backend() {
     export PYTHONPATH="/app/backend:${PYTHONPATH}"
     
     # Try to start backend - log to stdout for Railway
+    # Increased limits for large file uploads (50MB)
     python -m uvicorn app.main:app \
         --host 127.0.0.1 \
         --port 9122 \
         --workers 1 \
         --log-level info \
         --access-log \
+        --limit-max-requests 1000 \
+        --h11-max-incomplete-event-size 52428800 \
         2>&1 | tee /app/logs/backend.log &
     
     BACKEND_PID=$!
@@ -101,6 +104,10 @@ create_nginx_config() {
 server {
     listen ${RAILWAY_PORT};
     server_name _;
+    
+    # Increase client max body size for large image uploads (50MB)
+    client_max_body_size 50M;
+    client_body_buffer_size 10M;
     
     # Simple health check that always works
     location /health {

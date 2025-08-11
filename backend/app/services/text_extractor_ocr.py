@@ -249,20 +249,45 @@ class TextExtractorWithOCR:
             return f"Bildverarbeitung fehlgeschlagen: {str(e)}", 0.0
     
     def _preprocess_image_for_ocr(self, image: Image.Image) -> Image.Image:
-        """Preprocess image to improve OCR accuracy"""
+        """Preprocess image to improve OCR accuracy and handle large phone photos"""
         try:
+            # First, handle very large images (phone photos)
+            width, height = image.size
+            max_dimension = 4000  # Maximum dimension for processing
+            
+            if width > max_dimension or height > max_dimension:
+                # Calculate scaling factor to fit within max dimensions
+                scale = min(max_dimension / width, max_dimension / height)
+                new_width = int(width * scale)
+                new_height = int(height * scale)
+                logger.info(f"📱 Resizing large image from {width}x{height} to {new_width}x{new_height}")
+                print(f"📱 Resizing large phone photo: {width}x{height} → {new_width}x{new_height}", flush=True)
+                image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+                width, height = new_width, new_height
+            
             # Convert to grayscale if not already
             if image.mode != 'L':
                 image = image.convert('L')
             
-            # Resize if too small (OCR works better with larger images)
-            width, height = image.size
-            if width < 1000:
-                scale = 1000 / width
+            # Ensure minimum size for OCR (but not if already large enough)
+            min_width = 1000
+            if width < min_width:
+                scale = min_width / width
                 new_width = int(width * scale)
                 new_height = int(height * scale)
                 image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
-                logger.debug(f"Resized image to {new_width}x{new_height} for better OCR")
+                logger.debug(f"Upscaled image to {new_width}x{new_height} for better OCR")
+            
+            # Optional: Apply image enhancement for better OCR
+            from PIL import ImageEnhance
+            
+            # Increase contrast slightly
+            enhancer = ImageEnhance.Contrast(image)
+            image = enhancer.enhance(1.2)
+            
+            # Increase sharpness slightly
+            enhancer = ImageEnhance.Sharpness(image)
+            image = enhancer.enhance(1.1)
             
             return image
             

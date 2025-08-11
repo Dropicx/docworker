@@ -209,5 +209,10 @@ if __name__ == "__main__":
         "main:app",
         host="0.0.0.0",
         port=port,
-        reload=os.getenv("ENVIRONMENT") == "development"
+        reload=os.getenv("ENVIRONMENT") == "development",
+        # Increase limits for large file uploads
+        limit_max_requests=1000,
+        limit_concurrency=100,
+        # Set to 50MB for large image uploads
+        h11_max_incomplete_event_size=52428800  # 50MB in bytes
     ) 

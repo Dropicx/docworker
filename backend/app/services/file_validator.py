@@ -20,7 +20,7 @@ FALLBACK_MIME_TYPES = {
     "image/pjpeg": [".jpg", ".jpeg"]  # Alternative JPEG-Erkennung
 }
 
-MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB für Handyfotos
 MIN_FILE_SIZE = 1024  # 1KB
 
 class FileValidator:
