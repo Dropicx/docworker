@@ -90,7 +90,13 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
       p:first-child {
         margin-top: 0;
       }
-      ul, ol { 
+      ul { 
+        list-style: none;
+        padding-left: 0;
+        margin-bottom: 12px; 
+        page-break-inside: avoid;
+      }
+      ol { 
         margin-left: 20px; 
         margin-bottom: 12px; 
         page-break-inside: avoid;
@@ -98,9 +104,35 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
       li { 
         font-size: 14px; 
         line-height: 1.8; 
-        margin-bottom: 6px; 
+        margin-bottom: 4px; 
         color: #4b5563; 
         page-break-inside: avoid;
+        display: flex;
+        align-items: flex-start;
+      }
+      /* Hauptpunkte mit Bullet */
+      li:not(.sub-item) {
+        position: relative;
+        padding-left: 20px;
+      }
+      li:not(.sub-item)::before {
+        content: "•";
+        position: absolute;
+        left: 0;
+        color: #3b82f6;
+        font-weight: bold;
+      }
+      /* Unterpunkte mit Pfeil */
+      li.sub-item {
+        margin-left: 30px;
+        padding-left: 15px;
+        border-left: 2px solid #d1d5db;
+        background-color: #f9fafb;
+        font-size: 13px;
+        color: #6b7280;
+        margin-bottom: 3px;
+        padding-top: 3px;
+        padding-bottom: 3px;
       }
       strong { 
         font-weight: 600; 

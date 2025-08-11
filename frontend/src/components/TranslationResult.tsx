@@ -58,13 +58,22 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
         <ReactMarkdown 
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({children}) => <h1 className="text-3xl font-bold text-primary-900 mb-6 mt-4 first:mt-0">{children}</h1>,
-            h2: ({children}) => <h2 className="text-2xl font-bold text-primary-900 mb-4 mt-6 first:mt-0">{children}</h2>,
-            h3: ({children}) => <h3 className="text-xl font-semibold text-primary-900 mb-3 mt-4">{children}</h3>,
-            p: ({children}) => <p className="mb-4 text-primary-700 leading-relaxed">{children}</p>,
-            ul: ({children}) => <ul className="mb-4 text-primary-700 space-y-2">{children}</ul>,
-            li: ({children}) => <li className="leading-relaxed mb-2">{children}</li>,
-            strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
+            h1: ({children}) => <h1>{children}</h1>,
+            h2: ({children}) => <h2>{children}</h2>,
+            h3: ({children}) => <h3>{children}</h3>,
+            p: ({children}) => <p>{children}</p>,
+            ul: ({children}) => <ul>{children}</ul>,
+            li: ({children}) => {
+              const text = String(children);
+              const isSubItem = text.includes('→');
+              
+              if (isSubItem) {
+                return <li className="sub-item">{children}</li>;
+              }
+              
+              return <li>{children}</li>;
+            },
+            strong: ({children}) => <strong>{children}</strong>,
           }}
         >
           {textToExport}
