@@ -157,12 +157,12 @@ function App() {
 
     return (
       <div className="space-y-3 sm:space-y-4">
-        <label className="block text-xs sm:text-sm font-medium text-neutral-700">
+        <label className="block text-xs sm:text-sm font-medium text-neutral-700 text-center">
           Übersetzung (optional)
         </label>
         
         {/* Popular language quick buttons - Mobile Optimized */}
-        <div className="flex flex-wrap gap-1.5 sm:gap-2">
+        <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
           <button
             onClick={() => setSelectedLanguage(null)}
             className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium rounded-md sm:rounded-lg transition-all duration-200 ${
@@ -282,7 +282,7 @@ function App() {
         )}
 
         {/* Info text - Mobile Optimized */}
-        <p className="text-xs text-neutral-500 px-2 sm:px-0">
+        <p className="text-xs text-neutral-500 px-2 sm:px-0 text-center">
           {selectedLanguage 
             ? 'Das Dokument wird zuerst vereinfacht und dann in die gewählte Sprache übersetzt.'
             : 'Optional: Wählen Sie eine Sprache, um das vereinfachte Ergebnis zusätzlich zu übersetzen.'

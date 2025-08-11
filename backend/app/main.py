@@ -143,14 +143,17 @@ app.add_middleware(
 async def log_requests(request: Request, call_next):
     start_time = datetime.now()
     
-    # Skip logging for status polling endpoints to reduce spam
-    should_log = not request.url.path.endswith("/status")
+    # Skip logging for status polling and health check endpoints to reduce spam
+    skip_paths = ["/status", "/health", "/health/simple"]
+    should_log = not any(request.url.path.endswith(path) for path in skip_paths)
     
-    # Log incoming request - use print for Railway visibility
-    if should_log:
-        request_log = f"📥 {request.method} {request.url.path} from {request.client.host}"
-        print(request_log, flush=True)
-        logger.info(request_log)
+    # Only log important requests (uploads, processing, errors)
+    if should_log and request.method != "OPTIONS":
+        # Only log non-GET requests or important GET requests
+        if request.method != "GET" or "/process/" in request.url.path:
+            request_log = f"📥 {request.method} {request.url.path}"
+            print(request_log, flush=True)
+            logger.info(request_log)
     
     # Process request
     response = await call_next(request)
@@ -158,8 +161,8 @@ async def log_requests(request: Request, call_next):
     # Calculate processing time
     process_time = (datetime.now() - start_time).total_seconds()
     
-    # Log response - use print for Railway visibility
-    if should_log:
+    # Only log errors or slow requests
+    if should_log and (response.status_code >= 400 or process_time > 1.0):
         response_log = f"📤 {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s"
         print(response_log, flush=True)
         logger.info(response_log)

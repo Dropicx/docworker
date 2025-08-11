@@ -61,12 +61,12 @@ start_backend() {
     
     # Try to start backend - log to stdout for Railway
     # Increased limits for large file uploads (50MB)
+    # Removed --access-log to disable HTTP request logging for cleaner output
     python -m uvicorn app.main:app \
         --host 127.0.0.1 \
         --port 9122 \
         --workers 1 \
         --log-level info \
-        --access-log \
         --limit-max-requests 1000 \
         --h11-max-incomplete-event-size 52428800 \
         2>&1 | tee /app/logs/backend.log &
