@@ -729,26 +729,24 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         """
         import re
         
-        # Stelle sicher, dass nach Pfeilen ein Zeilenumbruch kommt
-        # Aber nur wenn danach Text folgt (nicht bei leeren Zeilen)
-        text = re.sub(r'→\s*([^\n])', r'→\n  \1', text)
+        # WICHTIG: Ersetze alle Pfeile die NICHT am Zeilenanfang stehen mit Zeilenumbruch + Einrückung
+        # Dies betrifft Pfeile mitten in Zeilen nach Bullet Points
+        text = re.sub(r'([^^\n])(\s*→\s*)', r'\1\n  → ', text)
         
-        # Füge Zeilenumbrüche nach Bullet Points hinzu, wenn sie fehlen
-        # Aber nur wenn direkt Text folgt ohne Zeilenumbruch
-        text = re.sub(r'^([•\-\*])\s+(.+?)(?=\n[•\-\*]|\n#|\Z)', r'\1 \2\n', text, flags=re.MULTILINE)
+        # Stelle sicher, dass Pfeile am Zeilenanfang richtig eingerückt sind
+        text = re.sub(r'^(\s*)→', r'  →', text, flags=re.MULTILINE)
         
-        # Stelle sicher, dass zwischen Hauptpunkten genug Abstand ist
-        # Füge eine Leerzeile nach "Bedeutung:" Zeilen hinzu, wenn keine folgt
-        text = re.sub(r'(→ Bedeutung:.*?)(\n)(?=[•])', r'\1\n\n', text)
+        # Füge Leerzeilen zwischen Hauptpunkten ein für bessere Lesbarkeit
+        # Nach einem Unterpunkt (→) vor einem neuen Hauptpunkt (•)
+        text = re.sub(r'(→[^\n]+)\n([•])', r'\1\n\n\2', text)
         
-        # Korrigiere doppelte Zeilenumbrüche (mehr als 2 hintereinander)
+        # Korrigiere mehrfache Leerzeilen (max 2)
         text = re.sub(r'\n{3,}', '\n\n', text)
         
-        # Stelle sicher, dass Listen richtig formatiert sind
-        # Nach einem Listenpunkt mit Unterpunkt sollte eine Leerzeile kommen
-        text = re.sub(r'(^[•\-\*].+\n  →.+)(\n)(?=[•\-\*])', r'\1\n\n', text, flags=re.MULTILINE)
+        # Stelle sicher, dass nach Überschriften (##) eine Leerzeile kommt
+        text = re.sub(r'(##[^\n]+)\n([^#\n])', r'\1\n\n\2', text)
         
-        # Korrigiere Einrückungen bei Unterpunkten
-        text = re.sub(r'^(\s*)→', r'  →', text, flags=re.MULTILINE)
+        # Entferne Leerzeichen am Zeilenende
+        text = re.sub(r'[ \t]+$', '', text, flags=re.MULTILINE)
         
         return text
