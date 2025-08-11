@@ -202,12 +202,13 @@
     @apply relative overflow-hidden bg-white rounded-xl sm:rounded-2xl 
            p-4 sm:p-6 lg:p-8 shadow-soft 
            border border-primary-100/50 transition-all duration-300
-           hover:shadow-medium hover:-translate-y-1 hover:border-brand-200;
+           hover:shadow-medium hover:-translate-y-1 hover:border-brand-200
+           text-center sm:text-left;
   }
   
   .feature-icon {
     @apply w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center 
-           mb-4 sm:mb-6
+           mb-4 sm:mb-6 mx-auto
            bg-gradient-to-br from-brand-500 to-brand-600 text-white
            transition-transform duration-300 shadow-soft;
   }
