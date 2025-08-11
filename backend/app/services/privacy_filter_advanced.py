@@ -81,12 +81,68 @@ class AdvancedPrivacyFilter:
             'calcium', 'magnesium', 'kalium', 'natrium', 'phosphor', 'eisen',
             'zink', 'kupfer', 'mangan', 'selen', 'jod', 'fluor', 'chrom',
             
+            # ERWEITERTE BLUTWERTE - Hämatologie
+            'hämoglobin', 'haemoglobin', 'erythrozyten', 'leukozyten', 'thrombozyten',
+            'hämatokrit', 'haematokrit', 'mcv', 'mch', 'mchc', 'rdw', 'retikulozyten',
+            'neutrophile', 'lymphozyten', 'monozyten', 'eosinophile', 'basophile',
+            'stabkernige', 'segmentkernige', 'blasten', 'metamyelozyten',
+            
+            # Gerinnung
+            'quick', 'inr', 'ptt', 'aptt', 'thrombinzeit', 'fibrinogen', 'antithrombin',
+            'd-dimere', 'd-dimer', 'faktor', 'protein', 'plasminogen', 'thromboplastin',
+            
+            # Leber
+            'got', 'gpt', 'ast', 'alt', 'ggt', 'gamma-gt', 'ldh', 'alkalische', 'phosphatase',
+            'bilirubin', 'direktes', 'indirektes', 'albumin', 'globulin', 'cholinesterase',
+            'ammoniak', 'alpha-fetoprotein', 'afp',
+            
+            # Niere
+            'kreatinin', 'harnstoff', 'harnsäure', 'cystatin', 'egfr', 'gfr',
+            'mikroalbumin', 'proteinurie', 'clearance', 'osmolalität',
+            
+            # Elektrolyte
+            'natrium', 'kalium', 'chlorid', 'calcium', 'phosphat', 'magnesium',
+            'bikarbonat', 'anionenlücke',
+            
+            # Stoffwechsel
+            'glucose', 'glukose', 'hba1c', 'fruktosamin', 'laktat', 'lactat',
+            'cholesterin', 'hdl', 'ldl', 'vldl', 'triglyzeride', 'triglyceride',
+            'lipoprotein', 'apolipoprotein',
+            
+            # Hormone
+            'tsh', 'ft3', 'ft4', 't3', 't4', 'thyreoglobulin', 'calcitonin',
+            'cortisol', 'acth', 'aldosteron', 'renin', 'testosteron', 'östrogen',
+            'oestrogen', 'progesteron', 'prolaktin', 'fsh', 'lh', 'hcg', 'dhea',
+            'somatotropin', 'igf', 'parathormon', 'pth',
+            
+            # Entzündung/Infektion
+            'crp', 'c-reaktives', 'procalcitonin', 'pct', 'bsg', 'blutsenkung',
+            'interleukin', 'il-6', 'tnf', 'ferritin', 'transferrin', 'haptoglobin',
+            
+            # Tumormarker
+            'cea', 'ca19-9', 'ca125', 'ca15-3', 'ca72-4', 'psa', 'fpsa', 'nse',
+            'cyfra', 'scc', 'chromogranin', 'calcitonin', 's100',
+            
+            # Immunologie
+            'igg', 'iga', 'igm', 'ige', 'igd', 'immunglobulin', 'komplement',
+            'c3', 'c4', 'ch50', 'ana', 'anca', 'anca', 'rheumafaktor', 'rf',
+            'ccp', 'anti-ccp', 'dsdna', 'ena', 'tpo', 'trak', 'gad',
+            
+            # Vitalstoffe (erweitert)
+            'folsäure', 'folat', 'vitamin', 'vitamine', 'holotranscobalamin',
+            'methylmalonsäure', 'homocystein', 'biotin', 'pantothensäure',
+            
             # Laborwerte und Einheiten
             'wert', 'werte', 'labor', 'laborwert', 'laborwerte', 'blutbild',
             'parameter', 'referenz', 'referenzbereich', 'normbereich', 'normwert',
             'erhöht', 'erniedrigt', 'grenzwertig', 'positiv', 'negativ',
             'mg', 'dl', 'ml', 'mmol', 'µmol', 'nmol', 'pmol', 'ng', 'pg', 'iu',
-            'einheit', 'einheiten', 'prozent', 'promille'
+            'einheit', 'einheiten', 'prozent', 'promille', 'titer', 'ratio',
+            
+            # Zusätzliche Begriffe aus Tabellen
+            'messwert', 'messung', 'analyse', 'bestimmung', 'nachweis', 'screening',
+            'differentialblutbild', 'gerinnungsstatus', 'leberwerte', 'nierenwerte',
+            'schilddrüsenwerte', 'elektrolytstatus', 'blutgasanalyse', 'urinstatus'
         }
         
         # Titel und Anreden, die auf Namen hinweisen
@@ -95,20 +151,62 @@ class AdvancedPrivacyFilter:
             'herrn', 'frau', 'familie'
         }
         
-        # Medizinische Abkürzungen, die geschützt werden müssen
+        # Medizinische Abkürzungen, die geschützt werden müssen (ERWEITERT)
         self.protected_abbreviations = {
-            'BMI', 'EKG', 'MRT', 'CT', 'ICD', 'OPS', 'DRG', 'GOÄ', 'EBM',
-            'EF', 'LAD', 'RCA', 'RCX', 'RIVA', 'CK', 'CK-MB', 'HDL', 'LDL',
-            'TSH', 'fT3', 'fT4', 'HbA1c', 'INR', 'PTT', 'AT3', 'CRP', 'PCT',
-            'AFP', 'CEA', 'CA', 'PSA', 'BNP', 'NT-proBNP',
+            # Diagnostik
+            'BMI', 'EKG', 'MRT', 'CT', 'ICD', 'OPS', 'DRG', 'GOÄ', 'EBM', 'PET', 'SPECT',
+            
+            # Kardio
+            'EF', 'LAD', 'RCA', 'RCX', 'RIVA', 'CK', 'CK-MB', 'HDL', 'LDL', 'VLDL',
+            'BNP', 'NT-proBNP', 'ANP', 'AVK', 'KHK', 'NYHA', 'TAVI', 'PCI', 'CABG',
+            
+            # Hormone & Schilddrüse
+            'TSH', 'fT3', 'fT4', 'T3', 'T4', 'TPO', 'TRAK', 'TG', 'TAK', 'MAK',
+            'ACTH', 'ADH', 'FSH', 'LH', 'HCG', 'PTH', 'STH', 'GH', 'IGF-1', 'DHEA-S',
+            
+            # Diabetes & Stoffwechsel
+            'HbA1c', 'HOMA', 'OGTT', 'BZ', 'BE', 'HBA1C', 'C-Peptid',
+            
+            # Gerinnung
+            'INR', 'PTT', 'aPTT', 'AT3', 'AT', 'Quick', 'TZ', 'PTZ', 'ACT', 'TEG',
+            'vWF', 'ADAMTS13', 'TAT', 'F1+2',
+            
+            # Entzündung & Infektion  
+            'CRP', 'PCT', 'BSG', 'ESR', 'IL-1', 'IL-2', 'IL-6', 'IL-8', 'IL-10',
+            'TNF', 'TNF-α', 'IFN', 'SAA', 'ESR', 'SR',
+            
+            # Tumormarker
+            'AFP', 'CEA', 'CA', 'CA19-9', 'CA125', 'CA15-3', 'CA72-4', 'PSA', 'fPSA',
+            'NSE', 'SCC', 'CYFRA', 'ProGRP', 'S100', 'HE4', 'M2-PK',
+            
             # Vitamine und Nährstoffe
-            'D3', 'B12', 'B6', 'B1', 'B2', 'B9', 'K2', 'K1', 'E', 'C', 'A',
-            '25-OH', '1,25-OH2', 'OH-D3', 'OH-D', 'D2',
-            # Weitere Laborwerte
-            'GFR', 'eGFR', 'GPT', 'GOT', 'GGT', 'AP', 'LDH', 'MCH', 'MCV', 'MCHC',
-            'RDW', 'MPV', 'PDW', 'PLT', 'WBC', 'RBC', 'HGB', 'HCT', 'NEUT', 'LYMPH',
-            'MONO', 'EOS', 'BASO', 'IG', 'RETI', 'ESR', 'BSG', 'IL-6', 'TNF',
-            'IgG', 'IgM', 'IgA', 'IgE', 'C3', 'C4', 'ANA', 'ANCA', 'RF', 'CCP'
+            'D3', 'D2', 'B12', 'B6', 'B1', 'B2', 'B9', 'K2', 'K1', 'E', 'C', 'A',
+            '25-OH', '25-OH-D', '25-OH-D3', '1,25-OH2', 'OH-D3', 'OH-D',
+            
+            # Hämatologie
+            'GFR', 'eGFR', 'GPT', 'GOT', 'GGT', 'AP', 'ALP', 'LDH', 'LDHL', 
+            'MCH', 'MCV', 'MCHC', 'RDW', 'RDW-CV', 'RDW-SD', 'MPV', 'PDW', 
+            'PLT', 'WBC', 'RBC', 'HGB', 'HCT', 'HKT', 'NEUT', 'LYMPH', 'LYM',
+            'MONO', 'EOS', 'BASO', 'IG', 'RETI', 'IRF', 'LUC', 'NRBC',
+            
+            # Immunologie
+            'IgG', 'IgM', 'IgA', 'IgE', 'IgD', 'C3', 'C4', 'CH50', 'C1q',
+            'ANA', 'ANCA', 'c-ANCA', 'p-ANCA', 'RF', 'CCP', 'ACPA', 'ENA',
+            'dsDNA', 'Anti-dsDNA', 'SSA', 'SSB', 'Scl-70', 'Jo-1', 'RNP',
+            
+            # Leber
+            'AST', 'ALT', 'γ-GT', 'GLDH', 'CHE', 'PCHE', 'NH3', 'NH4',
+            
+            # Niere
+            'GFR', 'eGFR', 'CKD-EPI', 'MDRD', 'ACR', 'PCR', 'BUN',
+            
+            # Elektrolyte & Blutgase
+            'Na', 'K', 'Cl', 'Ca', 'P', 'Mg', 'Fe', 'Zn', 'Cu', 'Se',
+            'pO2', 'pCO2', 'pH', 'HCO3', 'BE', 'AG', 'SaO2', 'SpO2',
+            
+            # Weitere wichtige Abkürzungen
+            'diff', 'BB', 'KBB', 'GBB', 'DiffBB', 'SSS', 'AK', 'AG', 'HWI', 'UTI',
+            'COPD', 'ARDS', 'SIRS', 'MOF', 'MOV', 'DIC', 'HIT', 'TTP', 'HUS'
         }
         
         # Compile regex patterns
@@ -150,9 +248,16 @@ class AdvancedPrivacyFilter:
                 re.IGNORECASE
             ),
             
-            # Explizite Patienteninfo
+            # Explizite Patienteninfo - VERBESSERT für "Patient: Nachname, Vorname"
             'patient_info': re.compile(
-                r'\b(?:patient(?:in)?|name|versicherte[rn]?)[:\s]+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*)',
+                r'\b(?:patient(?:in)?|name|versicherte[rn]?|nachname|vorname)[:\s]*'
+                r'([A-ZÄÖÜ][a-zäöüß]+(?:[\s,]+[A-ZÄÖÜ][a-zäöüß]+)*)',
+                re.IGNORECASE
+            ),
+            
+            # Spezielles Pattern für "Nachname, Vorname" Format
+            'name_format': re.compile(
+                r'\b(?:patient|name)[:\s]+([A-ZÄÖÜ][a-zäöüß]+)\s*,\s*([A-ZÄÖÜ][a-zäöüß]+)',
                 re.IGNORECASE
             ),
             
@@ -242,6 +347,13 @@ class AdvancedPrivacyFilter:
         lab_pattern = r'\b([0-9]+[,.]?[0-9]*[-]?OH[0-9]*[-]?[A-Z]?[0-9]*)\b'
         text = re.sub(lab_pattern, r'§LAB_\1§', text, flags=re.IGNORECASE)
         
+        # Schütze Laborwert-Zahlen-Kombinationen in Tabellen (z.B. "Hämoglobin 12.5")
+        # Pattern: Laborwert gefolgt von Zahl und Einheit
+        for term in self.medical_terms:
+            if len(term) > 3:  # Nur längere Begriffe
+                pattern = r'\b(' + re.escape(term) + r')\s*:?\s*([0-9]+[,.]?[0-9]*)\s*([a-zA-Z/%]*)\b'
+                text = re.sub(pattern, r'§LABVAL_\1_\2_\3§', text, flags=re.IGNORECASE)
+        
         # Ersetze medizinische Abkürzungen temporär
         for abbr in self.protected_abbreviations:
             # Case-insensitive replacement mit Wortgrenzen
@@ -260,6 +372,9 @@ class AdvancedPrivacyFilter:
         # Stelle Laborwert-Kombinationen wieder her
         text = re.sub(r'§LAB_([^§]+)§', r'\1', text)
         
+        # Stelle Laborwert-Zahlen-Kombinationen wieder her
+        text = re.sub(r'§LABVAL_([^_§]+)_([^_§]+)_([^§]*)§', r'\1 \2 \3', text)
+        
         # Stelle normale Abkürzungen wieder her
         for abbr in self.protected_abbreviations:
             text = text.replace(f"§{abbr}§", abbr)
@@ -268,6 +383,10 @@ class AdvancedPrivacyFilter:
     
     def _remove_personal_data(self, text: str) -> str:
         """Entfernt persönliche Daten aber ERHÄLT medizinische Informationen"""
+        
+        # ZUERST: Entferne explizite Patientennamen-Muster
+        text = self.patterns['patient_info'].sub('[NAME ENTFERNT]', text)
+        text = self.patterns['name_format'].sub('[NAME ENTFERNT]', text)
         
         # Adressen entfernen
         text = self.patterns['street_address'].sub('[ADRESSE ENTFERNT]', text)
@@ -301,13 +420,8 @@ class AdvancedPrivacyFilter:
         Verwendet spaCy NER zur intelligenten Namenerkennung
         Erkennt auch "Name: Nachname, Vorname" Format
         """
-        # ZUERST: Entferne explizite "Name:" Patterns
-        # Pattern für "Name: Nachname, Vorname" oder "Name: Vorname Nachname"
-        name_pattern = re.compile(
-            r'\b(?:Name|Patient(?:in)?|Versicherte[rn]?)[:\s]+([A-ZÄÖÜ][a-zäöüß]+(?:\s*,\s*|\s+)[A-ZÄÖÜ][a-zäöüß]+)',
-            re.IGNORECASE
-        )
-        text = name_pattern.sub('[NAME ENTFERNT]', text)
+        # HINWEIS: Explizite Patterns wurden bereits in _remove_personal_data entfernt
+        # Hier nur noch spaCy NER für nicht-explizite Namen
         
         # Verarbeite Text mit spaCy
         doc = self.nlp(text)
@@ -372,8 +486,7 @@ class AdvancedPrivacyFilter:
                 if not contains_medical:
                     continue  # Skip diese Zeile
             
-            # Entferne Namen nach "Patient:", "Name:" etc.
-            line = self.patterns['patient_info'].sub('[NAME ENTFERNT]', line)
+            # HINWEIS: Patient-Info Patterns wurden bereits in _remove_personal_data entfernt
             
             # Erkenne potenzielle Namen (2-3 aufeinanderfolgende kapitalisierte Wörter)
             # aber nur wenn sie nicht medizinisch sind
