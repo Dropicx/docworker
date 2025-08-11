@@ -2,9 +2,12 @@ import os
 import tempfile
 import asyncio
 import shutil
+import logging
 from datetime import datetime, timedelta
 from typing import Dict, Any
 import gc
+
+logger = logging.getLogger(__name__)
 
 # Globaler In-Memory Store für Verarbeitungsdaten
 processing_store: Dict[str, Dict[str, Any]] = {}
@@ -16,21 +19,26 @@ async def cleanup_temp_files():
     """Bereinigt alle temporären Dateien und Daten"""
     try:
         # Cleanup temporäre Dateien im System temp
-        await cleanup_system_temp_files()
+        files_removed = await cleanup_system_temp_files()
         
         # Cleanup In-Memory Store
-        await cleanup_memory_store()
+        items_removed = await cleanup_memory_store()
         
         # Garbage Collection
         gc.collect()
         
-        print(f"🧹 Cleanup durchgeführt um {datetime.now().strftime('%H:%M:%S')}")
+        if files_removed > 0 or items_removed > 0:
+            logger.info(f"🧹 Cleanup: {files_removed} files, {items_removed} memory items removed")
+        
+        return files_removed
         
     except Exception as e:
-        print(f"❌ Cleanup-Fehler: {e}")
+        logger.error(f"❌ Cleanup-Fehler: {e}")
+        return 0
 
 async def cleanup_system_temp_files():
     """Bereinigt temporäre Dateien im Systemverzeichnis"""
+    files_removed = 0
     try:
         temp_dir = tempfile.gettempdir()
         current_time = datetime.now()
@@ -45,16 +53,21 @@ async def cleanup_system_temp_files():
                         file_time = datetime.fromtimestamp(os.path.getctime(file_path))
                         if current_time - file_time > timedelta(hours=1):
                             os.remove(file_path)
-                            print(f"🗑️ Temporäre Datei gelöscht: {file}")
+                            files_removed += 1
+                            logger.debug(f"🗑️ Temporäre Datei gelöscht: {file}")
                     except (OSError, FileNotFoundError):
                         # Datei bereits gelöscht oder nicht zugreifbar
                         continue
+        
+        return files_removed
                         
     except Exception as e:
-        print(f"❌ System-Temp-Cleanup Fehler: {e}")
+        logger.error(f"❌ System-Temp-Cleanup Fehler: {e}")
+        return files_removed
 
 async def cleanup_memory_store():
     """Bereinigt den In-Memory Store von alten Daten"""
+    items_removed = 0
     try:
         current_time = datetime.now()
         expired_keys = []
@@ -69,12 +82,17 @@ async def cleanup_memory_store():
         # Abgelaufene Daten löschen
         for key in expired_keys:
             del processing_store[key]
-            print(f"🗑️ Abgelaufene Verarbeitungsdaten gelöscht: {key}")
-            
-        print(f"📊 Aktive Verarbeitungen: {len(processing_store)}")
+            items_removed += 1
+            logger.debug(f"🗑️ Abgelaufene Verarbeitungsdaten gelöscht: {key}")
+        
+        if len(processing_store) > 0:
+            logger.debug(f"📊 Aktive Verarbeitungen: {len(processing_store)}")
+        
+        return items_removed
         
     except Exception as e:
-        print(f"❌ Memory-Store-Cleanup Fehler: {e}")
+        logger.error(f"❌ Memory-Store-Cleanup Fehler: {e}")
+        return items_removed
 
 def add_to_processing_store(processing_id: str, data: Dict[str, Any]):
     """Fügt Daten zum Processing Store hinzu"""
@@ -94,7 +112,7 @@ def remove_from_processing_store(processing_id: str):
     """Entfernt Daten aus dem Processing Store"""
     if processing_id in processing_store:
         del processing_store[processing_id]
-        print(f"🗑️ Verarbeitungsdaten manuell gelöscht: {processing_id}")
+        logger.debug(f"🗑️ Verarbeitungsdaten manuell gelöscht: {processing_id}")
 
 async def create_secure_temp_file(prefix: str = "medical_", suffix: str = "") -> str:
     """Erstellt eine sichere temporäre Datei"""
@@ -108,7 +126,7 @@ async def create_secure_temp_file(prefix: str = "medical_", suffix: str = "") ->
         return temp_path
         
     except Exception as e:
-        print(f"❌ Temp-Datei-Erstellung Fehler: {e}")
+        logger.error(f"❌ Temp-Datei-Erstellung Fehler: {e}")
         raise
 
 async def secure_delete_file(file_path: str):
@@ -121,10 +139,10 @@ async def secure_delete_file(file_path: str):
             
             # Datei löschen
             os.remove(file_path)
-            print(f"🔒 Datei sicher gelöscht: {os.path.basename(file_path)}")
+            logger.debug(f"🔒 Datei sicher gelöscht: {os.path.basename(file_path)}")
             
     except Exception as e:
-        print(f"❌ Sicheres Löschen fehlgeschlagen: {e}")
+        logger.error(f"❌ Sicheres Löschen fehlgeschlagen: {e}")
 
 def get_memory_usage() -> Dict[str, Any]:
     """Gibt Speichernutzung zurück"""
@@ -148,7 +166,7 @@ def get_memory_usage() -> Dict[str, Any]:
 async def emergency_cleanup():
     """Notfall-Bereinigung bei hoher Speichernutzung"""
     try:
-        print("🚨 Notfall-Bereinigung gestartet...")
+        logger.warning("🚨 Notfall-Bereinigung gestartet...")
         
         # Alle Verarbeitungsdaten löschen
         processing_store.clear()
@@ -160,7 +178,7 @@ async def emergency_cleanup():
         for _ in range(3):
             gc.collect()
         
-        print("✅ Notfall-Bereinigung abgeschlossen")
+        logger.info("✅ Notfall-Bereinigung abgeschlossen")
         
     except Exception as e:
-        print(f"❌ Notfall-Bereinigung Fehler: {e}") 
+        logger.error(f"❌ Notfall-Bereinigung Fehler: {e}") 

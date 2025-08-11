@@ -1,8 +1,10 @@
 import os
 import tempfile
 import asyncio
+import logging
 from typing import Optional
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,21 +18,42 @@ from slowapi.errors import RateLimitExceeded
 from app.routers import upload, process, health
 from app.services.cleanup import cleanup_temp_files
 
+# Configure logging for Railway
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
+
 # Rate limiting
 limiter = Limiter(key_func=get_remote_address)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    print("🚀 Medical Document Translator starting up...")
+    logger.info("🚀 Medical Document Translator starting up...")
+    logger.info(f"Environment: {os.getenv('ENVIRONMENT', 'development')}")
+    logger.info(f"Railway Environment: {os.getenv('RAILWAY_ENVIRONMENT', 'not set')}")
+    logger.info(f"Port: {os.getenv('PORT', '9122')}")
+    logger.info(f"USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}")
+    
+    # Log OVH configuration (without sensitive data)
+    if os.getenv('OVH_AI_ENDPOINTS_ACCESS_TOKEN'):
+        logger.info("✅ OVH API Token is configured")
+    else:
+        logger.warning("⚠️ OVH API Token is NOT configured")
+    
+    logger.info(f"OVH Base URL: {os.getenv('OVH_AI_BASE_URL', 'not set')}")
     
     # Cleanup task - runs every 30 seconds
     cleanup_task = asyncio.create_task(periodic_cleanup())
+    logger.info("Started periodic cleanup task (30s interval)")
     
     yield
     
     # Shutdown
-    print("🔄 Shutting down...")
+    logger.info("🔄 Shutting down...")
     cleanup_task.cancel()
     try:
         await cleanup_task
@@ -39,18 +62,22 @@ async def lifespan(app: FastAPI):
     
     # Final cleanup
     await cleanup_temp_files()
-    print("✅ Shutdown complete")
+    logger.info("✅ Shutdown complete")
 
 async def periodic_cleanup():
     """Periodische Bereinigung temporärer Dateien"""
+    cleanup_count = 0
     while True:
         try:
             await asyncio.sleep(30)  # Alle 30 Sekunden
-            await cleanup_temp_files()
+            files_removed = await cleanup_temp_files()
+            cleanup_count += 1
+            if files_removed > 0:
+                logger.info(f"🧹 Cleanup #{cleanup_count}: Removed {files_removed} temporary files")
         except asyncio.CancelledError:
             break
         except Exception as e:
-            print(f"❌ Cleanup error: {e}")
+            logger.error(f"❌ Cleanup error: {e}")
 
 # FastAPI App
 app = FastAPI(
@@ -87,6 +114,28 @@ app.add_middleware(
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
+# Request Logging Middleware
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    start_time = datetime.now()
+    
+    # Log incoming request
+    logger.info(f"📥 {request.method} {request.url.path} from {request.client.host}")
+    
+    # Process request
+    response = await call_next(request)
+    
+    # Calculate processing time
+    process_time = (datetime.now() - start_time).total_seconds()
+    
+    # Log response
+    logger.info(f"📤 {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s")
+    
+    # Add processing time header
+    response.headers["X-Process-Time"] = str(process_time)
+    
+    return response
 
 # Security Headers Middleware
 @app.middleware("http")
