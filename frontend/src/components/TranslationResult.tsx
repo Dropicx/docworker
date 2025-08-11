@@ -230,11 +230,11 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                 <ReactMarkdown 
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    h1: ({children}) => <h1 className="text-3xl font-bold text-primary-900 mb-6 mt-4 first:mt-0">{children}</h1>,
-                    h2: ({children}) => <h2 className="text-2xl font-bold text-primary-900 mb-4 mt-6 first:mt-0">{children}</h2>,
-                    h3: ({children}) => <h3 className="text-xl font-semibold text-primary-900 mb-3 mt-4">{children}</h3>,
-                    h4: ({children}) => <h4 className="text-lg font-semibold text-primary-800 mb-2 mt-3">{children}</h4>,
-                    p: ({children}) => <p className="mb-4 text-primary-700 leading-relaxed">{children}</p>,
+                    h1: ({children}) => <h1 className="text-2xl font-bold text-primary-900 mb-4 mt-4 first:mt-0">{children}</h1>,
+                    h2: ({children}) => <h2 className="text-xl font-bold text-primary-900 mb-3 mt-4 first:mt-0">{children}</h2>,
+                    h3: ({children}) => <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">{children}</h3>,
+                    h4: ({children}) => <h4 className="text-base font-semibold text-primary-800 mb-2 mt-2">{children}</h4>,
+                    p: ({children}) => <p className="mb-3 text-base text-primary-700 leading-relaxed">{children}</p>,
                     ul: ({children}) => (
                       <ul className="mb-4 text-primary-700 space-y-2" style={{listStyle: 'none', paddingLeft: 0}}>
                         {children}
@@ -269,11 +269,13 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                             paddingLeft: '1rem',
                             borderLeft: '3px solid #E5E7EB',
                             color: '#4B5563',
-                            marginBottom: '0.75rem',
+                            marginBottom: '0.5rem',
                             paddingTop: '0.25rem',
                             paddingBottom: '0.25rem',
                             backgroundColor: '#F9FAFB',
-                            borderRadius: '0 0.25rem 0.25rem 0'
+                            borderRadius: '0 0.25rem 0.25rem 0',
+                            fontSize: '0.95rem',
+                            lineHeight: '1.6'
                           }}>
                             {children}
                           </li>
@@ -286,16 +288,18 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                           listStyle: 'none',
                           display: 'flex',
                           alignItems: 'flex-start',
-                          marginBottom: '0.75rem'
+                          marginBottom: '0.5rem',
+                          fontSize: '1rem',
+                          lineHeight: '1.6'
                         }}>
                           <span style={{
                             marginRight: '0.75rem',
                             color: '#4F46E5',
                             flexShrink: 0,
-                            fontSize: '1.2em',
-                            lineHeight: '1.2'
+                            fontSize: '1rem',
+                            lineHeight: '1.4'
                           }}>•</span>
-                          <span style={{flex: 1, lineHeight: '1.6'}}>{children}</span>
+                          <span style={{flex: 1}}>{children}</span>
                         </li>
                       );
                     },
