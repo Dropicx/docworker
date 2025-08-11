@@ -752,10 +752,43 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                 formatted_lines.append(line)
                 continue
             
-            # Zeile enthält sowohl Bullet Point als auch Pfeil
-            if '•' in line and '→' in line:
+            # ZUERST: Prüfe ob die Zeile mehrere Bullet Points enthält (mit oder ohne Pfeile)
+            # Diese müssen IMMER getrennt werden
+            if line.count('•') > 1:
+                # Teile die Zeile bei jedem Bullet Point
+                parts = line.split('•')
+                for i, part in enumerate(parts):
+                    if not part.strip():
+                        continue
+                    
+                    # Füge den Bullet Point wieder hinzu
+                    bullet_line = '• ' + part.strip()
+                    
+                    # Prüfe ob dieser Teil Pfeile enthält
+                    if '→' in bullet_line:
+                        # Teile bei Pfeilen
+                        arrow_parts = re.split(r'(→)', bullet_line)
+                        
+                        # Ersten Teil (mit Bullet)
+                        if arrow_parts[0].strip():
+                            formatted_lines.append(arrow_parts[0].rstrip())
+                        
+                        # Alle Pfeil-Teile als Sublisten
+                        j = 1
+                        while j < len(arrow_parts):
+                            if arrow_parts[j] == '→' and j + 1 < len(arrow_parts):
+                                arrow_text = '→' + arrow_parts[j + 1].lstrip()
+                                formatted_lines.append('  - ' + arrow_text)
+                                j += 2
+                            else:
+                                j += 1
+                    else:
+                        # Keine Pfeile, nur Bullet Point
+                        formatted_lines.append(bullet_line)
+            
+            # Einzelner Bullet Point mit Pfeilen
+            elif '•' in line and '→' in line:
                 # Teile bei ALLEN Pfeilen in der Zeile
-                # Beispiel: "• Text → Bedeutung: ... → Einnahme: ..."
                 parts = re.split(r'(→)', line)
                 
                 # Ersten Teil mit Bullet Point
@@ -768,30 +801,18 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                 i = 1
                 while i < len(parts):
                     if parts[i] == '→' and i + 1 < len(parts):
-                        # Verwende Markdown-Subliste mit "-" für ReactMarkdown
                         arrow_text = '→' + parts[i + 1].lstrip()
                         formatted_lines.append('  - ' + arrow_text)
                         i += 2
                     else:
                         i += 1
             
-            # Zeile enthält mehrere Bullet Points (ohne Pfeile)
-            elif line.count('•') > 1 and '→' not in line:
-                # Teile bei jedem Bullet Point
-                parts = line.split('•')
-                for i, part in enumerate(parts):
-                    if part.strip():
-                        if i == 0 and not parts[0].strip():
-                            # Wenn die Zeile mit • beginnt
-                            continue
-                        formatted_lines.append('• ' + part.strip())
-            
             # Zeile beginnt nur mit Pfeil (bereits eingerückte Zeile)
             elif line.strip().startswith('→'):
                 # Verwende Markdown-Subliste für korrekte Einrückung
                 formatted_lines.append('  - ' + line.strip())
             
-            # Normale Zeile oder einzelner Bullet Point
+            # Normale Zeile oder einzelner Bullet Point ohne Pfeil
             else:
                 formatted_lines.append(line)
         
