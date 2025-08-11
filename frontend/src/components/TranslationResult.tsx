@@ -235,11 +235,67 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     h3: ({children}) => <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">{children}</h3>,
                     h4: ({children}) => <h4 className="text-base font-semibold text-primary-800 mb-2 mt-2">{children}</h4>,
                     p: ({children}) => <p className="mb-3 text-base text-primary-700 leading-relaxed">{children}</p>,
-                    ul: ({children}) => (
-                      <ul className="mb-4 text-primary-700 space-y-2" style={{listStyle: 'none', paddingLeft: 0}}>
-                        {children}
-                      </ul>
-                    ),
+                    ul: ({children}) => {
+                      // Gruppiere aufeinanderfolgende Pfeil-Unterpunkte
+                      const items = React.Children.toArray(children);
+                      const groupedItems = [];
+                      let currentArrowGroup = [];
+                      
+                      items.forEach((child, index) => {
+                        // Check if this is an arrow item
+                        if (React.isValidElement(child)) {
+                          const childText = React.Children.toArray(child.props?.children || [])
+                            .map(c => typeof c === 'string' ? c : '')
+                            .join('');
+                          
+                          if (childText.includes('→')) {
+                            currentArrowGroup.push(child);
+                          } else {
+                            // If we have accumulated arrow items, wrap them in a container
+                            if (currentArrowGroup.length > 0) {
+                              groupedItems.push(
+                                <div key={`arrow-group-${index}`} style={{
+                                  marginLeft: '2rem',
+                                  marginBottom: '0.75rem',
+                                  padding: '0.75rem',
+                                  backgroundColor: '#F9FAFB',
+                                  borderLeft: '3px solid #E5E7EB',
+                                  borderRadius: '0 0.25rem 0.25rem 0'
+                                }}>
+                                  {currentArrowGroup}
+                                </div>
+                              );
+                              currentArrowGroup = [];
+                            }
+                            groupedItems.push(child);
+                          }
+                        } else {
+                          groupedItems.push(child);
+                        }
+                      });
+                      
+                      // Don't forget remaining arrow items
+                      if (currentArrowGroup.length > 0) {
+                        groupedItems.push(
+                          <div key="arrow-group-final" style={{
+                            marginLeft: '2rem',
+                            marginBottom: '0.75rem',
+                            padding: '0.75rem',
+                            backgroundColor: '#F9FAFB',
+                            borderLeft: '3px solid #E5E7EB',
+                            borderRadius: '0 0.25rem 0.25rem 0'
+                          }}>
+                            {currentArrowGroup}
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <ul className="mb-4 text-primary-700" style={{listStyle: 'none', paddingLeft: 0}}>
+                          {groupedItems}
+                        </ul>
+                      );
+                    },
                     ol: ({children}) => (
                       <ol className="list-decimal ml-6 mb-4 text-primary-700 space-y-2">
                         {children}
@@ -261,21 +317,15 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                       
                       // Prüfe ob es eine Subliste mit Pfeil ist (Markdown: "  - → Text")
                       if (text.startsWith('→') || text.includes('→')) {
-                        // Eingerückter Pfeil-Unterpunkt mit besserem Styling
+                        // Pfeil-Unterpunkt (wird in Gruppe gerendert)
                         return (
                           <li style={{
                             listStyle: 'none',
-                            marginLeft: '2rem',
-                            paddingLeft: '1rem',
-                            borderLeft: '3px solid #E5E7EB',
                             color: '#4B5563',
-                            marginBottom: '0.5rem',
-                            paddingTop: '0.25rem',
-                            paddingBottom: '0.25rem',
-                            backgroundColor: '#F9FAFB',
-                            borderRadius: '0 0.25rem 0.25rem 0',
+                            marginBottom: '0.25rem',
                             fontSize: '0.95rem',
-                            lineHeight: '1.6'
+                            lineHeight: '1.6',
+                            paddingLeft: 0
                           }}>
                             {children}
                           </li>

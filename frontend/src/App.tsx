@@ -11,7 +11,7 @@ import Nutzungsbedingungen from './pages/Nutzungsbedingungen';
 import ApiService from './services/api';
 import { UploadResponse, TranslationResult as TranslationData, HealthCheck, ProcessingOptions, SupportedLanguage } from './types/api';
 
-type AppState = 'upload' | 'processing' | 'result' | 'error';
+type AppState = 'upload' | 'initializing' | 'processing' | 'result' | 'error';
 
 function App() {
   const [appState, setAppState] = useState<AppState>('upload');
@@ -74,8 +74,13 @@ function App() {
   const handleUploadSuccess = async (response: UploadResponse) => {
     setUploadResponse(response);
     setError(null);
+    // Show initializing screen immediately
+    setAppState('initializing');
     
     try {
+      // Small delay to show the initializing screen
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Verarbeitung automatisch starten mit Sprachoptionen
       const options: ProcessingOptions = {};
       if (selectedLanguage) {
@@ -485,6 +490,42 @@ function App() {
               </div>
 
 
+            </div>
+          )}
+
+          {/* Initializing State - Temporary screen */}
+          {appState === 'initializing' && (
+            <div className="animate-fade-in">
+              <div className="card-elevated">
+                <div className="card-body">
+                  <div className="flex flex-col items-center justify-center space-y-6 py-8">
+                    {/* Animated icon */}
+                    <div className="relative">
+                      <div className="w-20 h-20 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center animate-pulse">
+                        <Stethoscope className="w-10 h-10 text-white" />
+                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl opacity-30 animate-ping" />
+                    </div>
+                    
+                    {/* German text */}
+                    <div className="text-center space-y-2">
+                      <h3 className="text-2xl font-bold text-primary-900">
+                        Analyse wird gestartet
+                      </h3>
+                      <p className="text-primary-600">
+                        Ihr Dokument wird vorbereitet...
+                      </p>
+                    </div>
+                    
+                    {/* Loading dots */}
+                    <div className="flex space-x-2">
+                      <div className="w-2 h-2 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                      <div className="w-2 h-2 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                      <div className="w-2 h-2 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
