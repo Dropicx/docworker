@@ -14,6 +14,7 @@ import pdfplumber
 import pytesseract
 from PIL import Image
 from pdf2image import convert_from_bytes
+from .table_processor import TableProcessor
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,8 @@ class TextExtractorWithOCR:
     def __init__(self):
         # Check if Tesseract is available
         self.ocr_available = self._check_tesseract()
+        # Initialize table processor
+        self.table_processor = TableProcessor()
         
         if self.ocr_available:
             logger.info("✅ Text extractor initialized with Tesseract OCR support")
@@ -33,7 +36,9 @@ class TextExtractorWithOCR:
             self.tesseract_config = '--oem 1 --psm 3 -l deu+eng -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜabcdefghijklmnopqrstuvwxyzäöüß0123456789.,;:!?()[]{}/-+= " -c preserve_interword_spaces=1 -c textord_heavy_nr=1'
             
             # Special config for tables with better structure preservation
-            self.tesseract_table_config = '--oem 1 --psm 6 -l deu+eng -c preserve_interword_spaces=1 -c textord_tabfind_vertical_text=0 -c textord_tablefind_recognize_tables=1'
+            # PSM 6 = Uniform block of text - better for tables
+            # Added more table-specific parameters for better row/column detection
+            self.tesseract_table_config = '--oem 1 --psm 6 -l deu+eng -c preserve_interword_spaces=1 -c textord_tabfind_vertical_text=0 -c textord_tablefind_recognize_tables=1 -c textord_tabfind_force_vertical_text=0 -c textord_tabfind_vertical_horizontal_mix=1'
             
             # Config for sparse text (like forms)
             self.tesseract_sparse_config = '--oem 1 --psm 11 -l deu+eng -c preserve_interword_spaces=1'
@@ -178,14 +183,15 @@ class TextExtractorWithOCR:
                     # Get text with confidence scores and structure data
                     data = pytesseract.image_to_data(image, config=self.tesseract_table_config, output_type=pytesseract.Output.DICT)
                     
-                    # Detect if page contains tables
-                    has_table_structure = self._detect_table_structure(data)
+                    # Detect if page contains tables using enhanced detection
+                    has_table_structure = self.table_processor.detect_table_structure(data)
                     
                     if has_table_structure:
-                        logger.info(f"📊 Page {i}: Table structure detected")
+                        logger.info(f"📊 Page {i}: Table structure detected - using enhanced table processing")
                         # Extract text with table preservation
                         page_text = pytesseract.image_to_string(image, config=self.tesseract_table_config)
-                        page_text = self._format_table_text(page_text)
+                        # Use advanced table processor
+                        page_text = self.table_processor.process_ocr_output(page_text, data)
                     else:
                         # Normal text extraction
                         page_text = pytesseract.image_to_string(image, config=self.tesseract_config)
@@ -203,6 +209,10 @@ class TextExtractorWithOCR:
                     if page_text.strip():
                         text_parts.append(f"--- Seite {i} (OCR) ---\n{page_text}")
                         logger.info(f"✅ Page {i} OCR complete: {len(page_text)} chars, confidence: {page_confidence:.1f}%")
+                        # Log first 1500 chars for debugging
+                        preview = page_text[:1500] if len(page_text) > 1500 else page_text
+                        logger.info(f"📄 Page {i} content preview (first 1500 chars):\n{preview}")
+                        print(f"📄 Page {i} extracted text preview:\n{preview[:500]}...", flush=True)
                     else:
                         logger.warning(f"⚠️ Page {i}: No text detected")
                         
@@ -254,16 +264,16 @@ class TextExtractorWithOCR:
             # Try with table-optimized config first
             data = pytesseract.image_to_data(image, config=self.tesseract_table_config, output_type=pytesseract.Output.DICT)
             
-            # Detect if there might be table structures
-            has_table_structure = self._detect_table_structure(data)
+            # Detect if there might be table structures using enhanced detection
+            has_table_structure = self.table_processor.detect_table_structure(data)
             
             if has_table_structure:
-                logger.info("📊 Table structure detected - using table-optimized OCR")
+                logger.info("📊 Table structure detected - using enhanced table processing")
                 print("📊 Table structure detected - optimizing for table extraction", flush=True)
                 # Use table config with preserved spacing
                 text = pytesseract.image_to_string(image, config=self.tesseract_table_config)
-                # Post-process to improve table formatting
-                text = self._format_table_text(text)
+                # Use advanced table processor with position data
+                text = self.table_processor.process_ocr_output(text, data)
             else:
                 # Normal text extraction
                 text = pytesseract.image_to_string(image, config=self.tesseract_config)
@@ -279,7 +289,11 @@ class TextExtractorWithOCR:
             
             if text and len(text.strip()) > 10:
                 logger.info(f"✅ OCR successful: {len(text)} characters, confidence: {avg_confidence:.1f}%")
+                # Log first 1500 chars for debugging
+                preview = text[:1500] if len(text) > 1500 else text
+                logger.info(f"📄 Image OCR content preview (first 1500 chars):\n{preview}")
                 print(f"✅ Image OCR completed: {len(text)} characters extracted", flush=True)
+                print(f"📄 Extracted text preview:\n{preview[:500]}...", flush=True)
                 return text.strip(), max(0.5, min(0.95, avg_confidence / 100.0))
             else:
                 logger.warning("⚠️ OCR found no text in image")
