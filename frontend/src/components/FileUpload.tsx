@@ -37,26 +37,25 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setUploadProgress(0);
 
     try {
-      // Simulate upload progress for better UX
+      // Simulate upload progress for better UX - faster for mobile
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return 90;
           }
-          return prev + Math.random() * 15;
+          // Faster progress updates for mobile
+          return prev + Math.random() * 25;
         });
-      }, 300);
+      }, 150); // Reduced from 300ms to 150ms
 
       const response = await ApiService.uploadDocument(file);
       
       clearInterval(progressInterval);
       setUploadProgress(100);
       
-      // Keep the loading state visible a bit longer for smooth transition
-      setTimeout(() => {
-        onUploadSuccess(response);
-      }, 500);
+      // Immediately proceed on mobile for better UX
+      onUploadSuccess(response);
     } catch (error: any) {
       const errorMessage = error.message || 'Upload fehlgeschlagen';
       setValidationError(errorMessage);

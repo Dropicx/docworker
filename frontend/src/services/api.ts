@@ -17,7 +17,7 @@ const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 300000, // 5 minutes timeout
+  timeout: 300000, // 5 minutes timeout for processing
   headers: {
     'Content-Type': 'application/json',
   },
@@ -57,10 +57,12 @@ export class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
+    // Use shorter timeout for upload (30 seconds should be enough even for 50MB on mobile)
     const response: AxiosResponse<UploadResponse> = await api.post('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
+      timeout: 30000, // 30 seconds timeout for upload specifically
     });
 
     return response.data;
