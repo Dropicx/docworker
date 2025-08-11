@@ -154,16 +154,25 @@ function App() {
   const renderLanguageSelector = () => {
     if (!languagesLoaded) {
       return (
-        <div className="space-y-2">
-          <label className="block text-sm font-medium text-neutral-700">
+        <div className="space-y-3 sm:space-y-4">
+          <label className="block text-xs sm:text-sm font-medium text-neutral-700 text-center">
             Übersetzung (optional)
           </label>
-          <div className="w-full px-4 py-3 border border-neutral-300 rounded-xl bg-neutral-50 flex items-center justify-center">
-            <div className="animate-pulse flex items-center space-x-2">
-              <Globe className="w-4 h-4 text-neutral-400" />
-              <span className="text-sm text-neutral-500">Sprachen werden geladen...</span>
-            </div>
+          {/* Skeleton that matches the final button layout */}
+          <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center min-h-[40px]">
+            {/* Skeleton buttons to prevent layout shift */}
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div 
+                key={i} 
+                className="px-2 sm:px-3 py-1.5 sm:py-2 bg-neutral-100 rounded-md sm:rounded-lg animate-pulse"
+                style={{ width: i === 1 ? '100px' : '60px', height: '32px' }}
+              />
+            ))}
           </div>
+          <p className="text-xs text-neutral-500 px-2 sm:px-0 text-center opacity-0">
+            {/* Invisible placeholder to maintain height */}
+            Optional: Wählen Sie eine Sprache
+          </p>
         </div>
       );
     }
@@ -380,7 +389,7 @@ function App() {
 
           {/* Upload State - Mobile Optimized */}
           {appState === 'upload' && (
-            <div className="space-y-8 sm:space-y-12 lg:space-y-16 animate-fade-in">
+            <div className="space-y-8 sm:space-y-12 lg:space-y-16">
               {/* Hero Section - Mobile Optimized */}
               <div className="text-center space-y-4 sm:space-y-6 lg:space-y-8">
                 <div className="space-y-3 sm:space-y-4">
@@ -417,7 +426,7 @@ function App() {
               </div>
               
               {/* Language Selection */}
-              <div className="animate-slide-up">
+              <div>
                 <div className="card-elevated">
                   <div className="card-body">
                     {renderLanguageSelector()}
@@ -426,7 +435,7 @@ function App() {
               </div>
               
               {/* Upload Component */}
-              <div className="animate-slide-up">
+              <div>
                 <FileUpload
                   onUploadSuccess={handleUploadSuccess}
                   onUploadError={handleUploadError}
@@ -435,7 +444,7 @@ function App() {
 
               {/* Features - Mobile Optimized */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                <div className="feature-card animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                <div className="feature-card">
                   <div className="feature-icon">
                     <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                   </div>
@@ -448,7 +457,7 @@ function App() {
                   </p>
                 </div>
                 
-                <div className="feature-card animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                <div className="feature-card">
                   <div className="feature-icon">
                     <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                   </div>
@@ -461,7 +470,7 @@ function App() {
                   </p>
                 </div>
                 
-                <div className="feature-card animate-slide-up sm:col-span-2 lg:col-span-1" style={{ animationDelay: '0.3s' }}>
+                <div className="feature-card sm:col-span-2 lg:col-span-1">
                   <div className="feature-icon">
                     <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                   </div>

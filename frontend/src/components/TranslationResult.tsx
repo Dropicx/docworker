@@ -202,61 +202,22 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
       {/* Main Translation Card - Mobile Optimized */}
       <div className="card-elevated border-brand-200/50 bg-gradient-to-br from-brand-50/30 to-accent-50/30">
         <div className="card-body">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6 sm:mb-8 space-y-4 lg:space-y-0">
-            <div className="flex items-center space-x-3 sm:space-x-4">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-brand-500 via-brand-600 to-accent-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-soft flex-shrink-0">
-                {activeTab === 'language' ? (
+          <div className="mb-6 sm:mb-8">
+            {activeTab === 'language' && (
+              <div className="flex items-center space-x-3 sm:space-x-4 mb-4">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-brand-500 via-brand-600 to-accent-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-soft flex-shrink-0">
                   <Globe className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
-                ) : (
-                  <span className="text-xl sm:text-2xl">📄</span>
-                )}
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-primary-900">
+                    Übersetzung ({result.target_language?.toUpperCase()})
+                  </h3>
+                  <p className="text-xs sm:text-sm lg:text-base text-primary-600">
+                    Ihr Dokument in {result.target_language}
+                  </p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-primary-900">
-                  {activeTab === 'language' 
-                    ? `Übersetzung (${result.target_language?.toUpperCase()})`
-                    : 'Verständliche Übersetzung'
-                  }
-                </h3>
-                <p className="text-xs sm:text-sm lg:text-base text-primary-600">
-                  {activeTab === 'language'
-                    ? `Ihr Dokument in ${result.target_language}`
-                    : 'Ihr Dokument in einfacher Sprache erklärt'
-                  }
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex flex-row space-x-2 sm:space-x-3 w-full lg:w-auto">
-              <button
-                onClick={() => handleCopy(getDisplayedText(), activeTab === 'language' ? 'language' : 'translated')}
-                className="btn-secondary group flex-1 lg:flex-initial"
-                disabled={copiedText === (activeTab === 'language' ? 'language' : 'translated')}
-              >
-                {copiedText === (activeTab === 'language' ? 'language' : 'translated') ? (
-                  <>
-                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-success-600 flex-shrink-0" />
-                    <span className="text-success-600 hidden sm:inline">Kopiert!</span>
-                    <span className="text-success-600 sm:hidden">✓</span>
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                    <span className="hidden sm:inline">Kopieren</span>
-                    <span className="sm:hidden">Copy</span>
-                  </>
-                )}
-              </button>
-              
-              <button
-                onClick={handleDownload}
-                className="btn-primary group flex-1 lg:flex-initial"
-              >
-                <Download className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                <span className="hidden sm:inline">Als PDF</span>
-                <span className="sm:hidden">PDF</span>
-              </button>
-            </div>
+            )}
           </div>
 
           {/* Translation Content - Mobile Optimized */}
@@ -402,9 +363,9 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
             <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-gradient-to-br from-accent-400 to-accent-500 rounded-full opacity-60"></div>
           </div>
 
-          {/* Processing time indicator - Mobile Optimized */}
+          {/* Processing time indicator with action buttons - Mobile Optimized */}
           <div className="mt-4 sm:mt-6 glass-effect p-3 sm:p-4 rounded-lg sm:rounded-xl">
-            <div className="flex items-center justify-center text-xs sm:text-sm">
+            <div className="flex flex-col sm:flex-row items-center justify-between space-y-3 sm:space-y-0">
               <div className="flex items-center space-x-2 sm:space-x-3">
                 <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg flex items-center justify-center bg-primary-100">
                   <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-primary-600" />
@@ -415,6 +376,37 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     {ApiService.formatDuration(result.processing_time_seconds)}
                   </span>
                 </div>
+              </div>
+              
+              <div className="flex flex-row space-x-2 sm:space-x-3 w-full sm:w-auto">
+                <button
+                  onClick={() => handleCopy(getDisplayedText(), activeTab === 'language' ? 'language' : 'translated')}
+                  className="btn-secondary group flex-1 sm:flex-initial"
+                  disabled={copiedText === (activeTab === 'language' ? 'language' : 'translated')}
+                >
+                  {copiedText === (activeTab === 'language' ? 'language' : 'translated') ? (
+                    <>
+                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-success-600 flex-shrink-0" />
+                      <span className="text-success-600 hidden sm:inline">Kopiert!</span>
+                      <span className="text-success-600 sm:hidden">✓</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                      <span className="hidden sm:inline">Kopieren</span>
+                      <span className="sm:hidden">Copy</span>
+                    </>
+                  )}
+                </button>
+                
+                <button
+                  onClick={handleDownload}
+                  className="btn-primary group flex-1 sm:flex-initial"
+                >
+                  <Download className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                  <span className="hidden sm:inline">Als PDF</span>
+                  <span className="sm:hidden">PDF</span>
+                </button>
               </div>
             </div>
           </div>
