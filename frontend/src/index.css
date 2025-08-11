@@ -56,7 +56,8 @@
   
   /* Improved Markdown List Formatting - Clean structure */
   .markdown-content ul {
-    @apply space-y-3 list-none;
+    @apply space-y-3;
+    list-style: none;
   }
   
   .markdown-content ol {
@@ -89,6 +90,7 @@
   /* Arrow items get special formatting */
   .markdown-content li.list-none {
     @apply pl-4 border-l-2 border-brand-200;
+    list-style: none;
   }
   
   /* Enhanced Card System - Mobile Optimized */
