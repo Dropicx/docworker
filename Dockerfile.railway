@@ -42,8 +42,8 @@ COPY backend/ ./backend/
 COPY frontend/ ./frontend/
 WORKDIR /app/frontend
 
-# Clean install with package-lock.json update
-RUN npm ci --no-audit || npm install --no-audit
+# Install dependencies (no package-lock.json present)
+RUN npm install --no-audit
 RUN npm run build
 
 # Go back to app root
