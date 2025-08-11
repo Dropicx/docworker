@@ -120,9 +120,9 @@ class OllamaClient:
                     logger.info("=" * 80)
                     
                     # Log the original text (same as input)
-                    logger.info(f"📥 [1/2] ORIGINAL EXTRACTED TEXT (first 500 chars):")
+                    logger.info(f"📥 [1/2] ORIGINAL EXTRACTED TEXT (first 1000 chars):")
                     logger.info("-" * 40)
-                    logger.info(text[:500] + "..." if len(text) > 500 else text)
+                    logger.info(text[:1000] + "..." if len(text) > 1000 else text)
                     logger.info(f"   Length: {len(text)} characters")
                     logger.info("-" * 40)
                     
@@ -131,9 +131,9 @@ class OllamaClient:
                     cleaned_text = self.privacy_filter.remove_pii(text)
                     
                     # Log privacy-filtered text
-                    logger.info(f"🔐 [2/2] PRIVACY-FILTERED TEXT (first 500 chars):")
+                    logger.info(f"🔐 [2/2] PRIVACY-FILTERED TEXT (first 1000 chars):")
                     logger.info("-" * 40)
-                    logger.info(cleaned_text[:500] + "..." if len(cleaned_text) > 500 else cleaned_text)
+                    logger.info(cleaned_text[:1000] + "..." if len(cleaned_text) > 1000 else cleaned_text)
                     logger.info(f"   Length: {len(cleaned_text)} characters")
                     logger.info(f"   Reduction: {len(text) - len(cleaned_text)} characters removed")
                     logger.info("-" * 40)
@@ -171,9 +171,9 @@ class OllamaClient:
                 # Log final state in local mode
                 logger.info("=" * 80)
                 logger.info("📄 TRANSLATION SKIPPED (No Ollama available)")
-                logger.info(f"📤 FINAL OUTPUT TEXT (first 500 chars):")
+                logger.info(f"📤 FINAL OUTPUT TEXT (first 1000 chars):")
                 logger.info("-" * 40)
-                logger.info(translated_text[:500] + "..." if len(translated_text) > 500 else translated_text)
+                logger.info(translated_text[:1000] + "..." if len(translated_text) > 1000 else translated_text)
                 logger.info(f"   Length: {len(translated_text)} characters")
                 logger.info("-" * 40)
                 logger.info("=" * 80)
@@ -709,7 +709,7 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         import re
         
         # Debug Logging
-        print(f"[FORMATTING] Input text (first 200 chars): {text[:200]}")
+        print(f"[FORMATTING] Input text (first 1000 chars): {text[:1000]}")
         
         # NEUER ANSATZ: Zeile für Zeile verarbeiten
         lines = text.split('\n')
@@ -763,6 +763,6 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         result = re.sub(r'\n{3,}', '\n\n', result)  # Max 2 Leerzeilen
         result = re.sub(r'[ \t]+$', '', result, flags=re.MULTILINE)  # Trailing spaces
         
-        print(f"[FORMATTING] Output text (first 200 chars): {result[:200]}")
+        print(f"[FORMATTING] Output text (first 1000 chars): {result[:1000]}")
         
         return result 

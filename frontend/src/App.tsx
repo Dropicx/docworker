@@ -335,16 +335,16 @@ function App() {
           <div className="flex items-center justify-between h-16 sm:h-20">
             <button 
               onClick={handleNewTranslation}
-              className="flex items-center space-x-2 sm:space-x-4 hover:opacity-80 transition-opacity"
+              className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity"
             >
               <div className="hero-gradient p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-soft">
                 <Stethoscope className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
               </div>
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-primary-900 tracking-tight">
+              <div className="text-left">
+                <h1 className="text-lg sm:text-2xl font-bold text-primary-900 tracking-tight">
                   HealthLingo
                 </h1>
-                <p className="text-xs sm:text-sm text-primary-600 font-medium hidden sm:block">
+                <p className="text-xs sm:text-sm text-primary-600 font-medium">
                   Medizinische Dokumente verstehen
                 </p>
               </div>

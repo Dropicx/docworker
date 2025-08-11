@@ -22,13 +22,13 @@ const FAQ: React.FC = () => {
 
   const faqItems: FAQItem[] = [
     {
-      question: "Wie werden meine Daten verarbeitet?",
-      answer: "Ihre Dokumente werden ausschließlich für die Übersetzung verarbeitet und sofort nach Abschluss vollständig gelöscht. Es findet keine dauerhafte Speicherung statt. Die Verarbeitung erfolgt verschlüsselt auf deutschen Servern und entspricht vollständig der DSGVO. Ihre Daten verlassen niemals die EU.",
+      question: "Wo werden meine Daten verarbeitet und wie sicher ist das?",
+      answer: "HealthLingo wird auf Railway.app gehostet, einem SOC 2 Type I zertifizierten Provider mit vollständiger DSGVO-Konformität. Die Server befinden sich in der EU und Railway bietet einen Data Processing Agreement (DPA) gemäß DSGVO Artikel 28. Die KI-Verarbeitung erfolgt über OVH AI Endpoints in europäischen Rechenzentren (ISO 27001, 27017, 27018, 27701 zertifiziert). OVH garantiert, dass Ihre Daten NIEMALS für das Training von KI-Modellen verwendet werden - alle Anfragen sind anonymisiert und werden nach der Verarbeitung sofort gelöscht.",
       icon: Shield
     },
     {
-      question: "Werden meine medizinischen Daten gespeichert?",
-      answer: "Nein, absolut nicht. HealthLingo speichert keinerlei Daten. Nach der Übersetzung werden alle Dokumente, Texte und persönlichen Informationen automatisch und unwiderruflich von unseren Servern gelöscht. Es gibt keine Datenbank mit Ihren medizinischen Informationen.",
+      question: "Werden meine medizinischen Daten gespeichert oder für KI-Training verwendet?",
+      answer: "Nein, absolut nicht. HealthLingo speichert keinerlei Daten dauerhaft. OVH AI Endpoints hat eine strikte No-Training-Policy: Kundendaten werden niemals gespeichert oder für Modelltraining verwendet. Nach der Übersetzung werden alle Dokumente, Texte und persönlichen Informationen automatisch und unwiderruflich gelöscht. Die KI-Modelle lernen NICHT aus Ihren Daten - jede Anfrage ist isoliert und hinterlässt keine Spuren.",
       icon: Database
     },
     {
@@ -43,13 +43,18 @@ const FAQ: React.FC = () => {
     },
     {
       question: "In welche Sprachen kann übersetzt werden?",
-      answer: "Neben der Vereinfachung ins verständliche Deutsch unterstützen wir Übersetzungen in über 30 Sprachen, darunter Englisch, Französisch, Türkisch, Arabisch, Russisch, Polnisch, Spanisch und viele mehr. Die Übersetzung erfolgt dabei immer zweistufig: erst Vereinfachung, dann Übersetzung.",
+      answer: "Neben der Vereinfachung ins verständliche Deutsch unterstützen wir Übersetzungen in 19 sorgfältig ausgewählte Sprachen, die von Llama 3.3 optimal unterstützt werden: Englisch, Französisch, Spanisch, Italienisch, Portugiesisch, Niederländisch, Russisch, Chinesisch, Japanisch, Koreanisch, Arabisch, Hindi, Polnisch, Tschechisch, Schwedisch, Norwegisch und Dänisch. Die Übersetzung erfolgt dabei immer zweistufig: erst Vereinfachung, dann präzise Übersetzung.",
       icon: Globe
     },
     {
       question: "Was passiert mit persönlichen Daten im Dokument?",
-      answer: "Persönliche Daten wie Namen, Adressen, Geburtsdaten und Versicherungsnummern werden automatisch erkannt und durch Platzhalter ersetzt (z.B. [NAME ENTFERNT]). Dies schützt Ihre Privatsphäre, während alle medizinischen Informationen vollständig erhalten bleiben.",
+      answer: "Persönliche Daten wie Namen, Adressen, Geburtsdaten und Versicherungsnummern werden automatisch erkannt und durch Platzhalter ersetzt (z.B. [NAME ENTFERNT]). Dies schützt Ihre Privatsphäre, während alle medizinischen Informationen vollständig erhalten bleiben. Die Anonymisierung erfolgt lokal, bevor Daten an die KI-Endpoints gesendet werden.",
       icon: Lock
+    },
+    {
+      question: "Welche Sicherheitszertifizierungen haben die verwendeten Dienste?",
+      answer: "Railway.app ist SOC 2 Type I zertifiziert (Type II folgt 2025) und bietet DSGVO-konforme Data Processing Agreements. OVH Cloud besitzt umfassende Zertifizierungen: ISO/IEC 27001 (Informationssicherheit), ISO/IEC 27017 (Cloud-Sicherheit), ISO/IEC 27018 (Datenschutz in der Cloud) und ISO/IEC 27701 (Datenschutz-Management). Beide Provider unterliegen europäischem Recht und garantieren, dass Ihre Daten die EU nicht verlassen.",
+      icon: Shield
     },
     {
       question: "Ist die Übersetzung medizinisch korrekt?",

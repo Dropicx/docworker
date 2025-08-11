@@ -215,7 +215,7 @@ class TextExtractorWithOCR:
                         # Log first 1500 chars for debugging
                         preview = page_text[:1500] if len(page_text) > 1500 else page_text
                         logger.info(f"📄 Page {i} content preview (first 1500 chars):\n{preview}")
-                        print(f"📄 Page {i} extracted text preview:\n{preview[:500]}...", flush=True)
+                        print(f"📄 Page {i} extracted text preview:\n{preview[:1000]}...", flush=True)
                     else:
                         logger.warning(f"⚠️ Page {i}: No text detected")
                         
@@ -298,7 +298,7 @@ class TextExtractorWithOCR:
                 preview = text[:1500] if len(text) > 1500 else text
                 logger.info(f"📄 Image OCR content preview (first 1500 chars):\n{preview}")
                 print(f"✅ Image OCR completed: {len(text)} characters extracted", flush=True)
-                print(f"📄 Extracted text preview:\n{preview[:500]}...", flush=True)
+                print(f"📄 Extracted text preview:\n{preview[:1000]}...", flush=True)
                 return text.strip(), max(0.5, min(0.95, avg_confidence / 100.0))
             else:
                 logger.warning("⚠️ OCR found no text in image")

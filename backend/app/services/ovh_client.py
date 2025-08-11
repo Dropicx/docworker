@@ -230,9 +230,9 @@ class OVHClient:
         logger.info("=" * 80)
         logger.info("📄 PREPROCESSING PIPELINE STARTED")
         logger.info("=" * 80)
-        logger.info(f"📥 [1/3] ORIGINAL EXTRACTED TEXT (first 500 chars):")
+        logger.info(f"📥 [1/3] ORIGINAL EXTRACTED TEXT (first 1000 chars):")
         logger.info("-" * 40)
-        logger.info(text[:500] + "..." if len(text) > 500 else text)
+        logger.info(text[:1000] + "..." if len(text) > 1000 else text)
         logger.info(f"   Length: {len(text)} characters")
         logger.info("-" * 40)
         
@@ -242,9 +242,9 @@ class OVHClient:
             cleaned_text = self.privacy_filter.remove_pii(text)
             
             # Log the privacy-filtered text
-            logger.info(f"🔐 [2/3] PRIVACY-FILTERED TEXT (first 500 chars):")
+            logger.info(f"🔐 [2/3] PRIVACY-FILTERED TEXT (first 1000 chars):")
             logger.info("-" * 40)
-            logger.info(cleaned_text[:500] + "..." if len(cleaned_text) > 500 else cleaned_text)
+            logger.info(cleaned_text[:1000] + "..." if len(cleaned_text) > 1000 else cleaned_text)
             logger.info(f"   Length: {len(cleaned_text)} characters")
             logger.info(f"   Reduction: {len(text) - len(cleaned_text)} characters removed")
             logger.info("-" * 40)
@@ -333,9 +333,9 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
             result = response.choices[0].message.content
             
             # Log the OVH-preprocessed text
-            logger.info(f"🤖 [3/3] OVH-PREPROCESSED TEXT (first 500 chars):")
+            logger.info(f"🤖 [3/3] OVH-PREPROCESSED TEXT (first 1000 chars):")
             logger.info("-" * 40)
-            logger.info(result[:500] + "..." if len(result) > 500 else result)
+            logger.info(result[:1000] + "..." if len(result) > 1000 else result)
             logger.info(f"   Length: {len(result)} characters")
             logger.info(f"   Total reduction from original: {len(text) - len(result)} characters")
             logger.info("-" * 40)
@@ -495,9 +495,9 @@ TEXT ZUM ÜBERSETZEN:
             logger.info("=" * 80)
             logger.info("🌍 TRANSLATION PIPELINE STARTED")
             logger.info("=" * 80)
-            logger.info(f"📥 INPUT TEXT FOR TRANSLATION (first 500 chars):")
+            logger.info(f"📥 INPUT TEXT FOR TRANSLATION (first 1000 chars):")
             logger.info("-" * 40)
-            logger.info(text[:500] + "..." if len(text) > 500 else text)
+            logger.info(text[:1000] + "..." if len(text) > 1000 else text)
             logger.info(f"   Length: {len(text)} characters")
             logger.info("-" * 40)
             
@@ -522,9 +522,9 @@ ORIGINAL MEDIZINISCHER TEXT:
             )
             
             # Log the translated text
-            logger.info(f"📤 TRANSLATED TEXT (first 500 chars):")
+            logger.info(f"📤 TRANSLATED TEXT (first 1000 chars):")
             logger.info("-" * 40)
-            logger.info(translated_text[:500] + "..." if len(translated_text) > 500 else translated_text)
+            logger.info(translated_text[:1000] + "..." if len(translated_text) > 1000 else translated_text)
             logger.info(f"   Length: {len(translated_text)} characters")
             logger.info("-" * 40)
             
