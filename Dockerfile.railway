@@ -1,63 +1,52 @@
-# Multi-stage build for Railway deployment
-FROM python:3.11-slim as backend-builder
-
-# Install system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
-
-# Copy backend requirements
-WORKDIR /backend
-COPY backend/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Frontend build stage
-FROM node:18-alpine as frontend-builder
-
-WORKDIR /frontend
-COPY frontend/package*.json ./
-RUN npm ci --only=production
-
-COPY frontend/ ./
-RUN npm run build
-
-# Final stage
+# Complete Railway Dockerfile with ALL features
 FROM python:3.11-slim
 
-# Install runtime dependencies in smaller chunks to reduce memory usage
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    curl \
+# Install ALL necessary system dependencies
+RUN apt-get update && apt-get install -y \
     nginx \
-    supervisor \
-    && rm -rf /var/lib/apt/lists/*
-
-# Install OCR tools separately
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+    curl \
+    build-essential \
     tesseract-ocr \
     tesseract-ocr-deu \
+    tesseract-ocr-eng \
     poppler-utils \
+    libmagic1 \
+    nodejs \
+    npm \
+    && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy Python packages from builder
-COPY --from=backend-builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
-COPY --from=backend-builder /usr/local/bin /usr/local/bin
-
-# Copy application code
 WORKDIR /app
-COPY backend/ ./backend/
-COPY --from=frontend-builder /frontend/build ./frontend/build
 
-# Copy nginx and supervisor configs
-COPY railway/nginx.conf /etc/nginx/nginx.conf
-COPY railway/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+# Install Python dependencies with ALL packages
+COPY backend/requirements.txt ./backend/
+RUN pip install --no-cache-dir -r backend/requirements.txt
+
+# Copy backend code
+COPY backend/ ./backend/
+
+# Build frontend
+COPY frontend/ ./frontend/
+WORKDIR /app/frontend
+RUN npm install && npm run build
+
+# Go back to app root
+WORKDIR /app
+
+# Copy startup script
+COPY railway/start-robust.sh ./start.sh
+RUN chmod +x ./start.sh
 
 # Create necessary directories
-RUN mkdir -p /app/logs /tmp/medical-translator
+RUN mkdir -p /app/logs /tmp/medical-translator /etc/nginx/conf.d && \
+    rm -f /etc/nginx/sites-enabled/default /etc/nginx/conf.d/default.conf
 
-# Expose port (Railway will assign PORT env variable)
+# Set environment variables
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONPATH=/app/backend:$PYTHONPATH \
+    USE_OVH_ONLY=true
+
 EXPOSE 8080
 
-# Use supervisor to run both nginx and uvicorn
-CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
+CMD ["/bin/bash", "./start.sh"]
