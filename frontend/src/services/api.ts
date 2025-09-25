@@ -177,6 +177,8 @@ export class ApiService {
         return 'status-completed';
       case 'error':
         return 'status-error';
+      case 'non_medical_content':
+        return 'status-error';
       default:
         return 'status-pending';
     }
@@ -198,6 +200,8 @@ export class ApiService {
         return 'Abgeschlossen';
       case 'error':
         return 'Fehler';
+      case 'non_medical_content':
+        return 'Nicht-medizinischer Inhalt';
       default:
         return status;
     }

@@ -76,7 +76,8 @@ export type ProcessingStatus =
   | 'translating'
   | 'language_translating'
   | 'completed'
-  | 'error';
+  | 'error'
+  | 'non_medical_content';
 
 // File Types
 export type FileType = 'pdf' | 'image';

@@ -160,10 +160,7 @@ async def process_document(processing_id: str):
         if not ovh_connected:
             raise Exception(f"OVH API nicht verfügbar: {error_msg}")
         
-        # Erst Text vorverarbeiten (PII-Entfernung)
-        cleaned_text = await ovh_client.preprocess_medical_text(extracted_text)
-        
-        # Custom Prompts laden (für Klassifizierung)
+        # Custom Prompts laden (für Validierung)
         from app.services.prompt_manager import PromptManager
         from app.models.document_types import DocumentClass
         prompt_manager = PromptManager()
@@ -171,6 +168,40 @@ async def process_document(processing_id: str):
         # Erstmal mit "universal" laden, dann nach Klassifizierung aktualisieren
         document_class = DocumentClass.ARZTBRIEF  # Default
         custom_prompts = prompt_manager.load_prompts(document_class)
+        
+        # Medizinische Inhaltsvalidierung (nur wenn aktiviert)
+        if custom_prompts.pipeline_steps.get("medical_validation", {}).enabled:
+            from app.services.medical_content_validator import MedicalContentValidator
+            validator = MedicalContentValidator(ovh_client)
+            is_medical, validation_confidence, validation_method = await validator.validate_medical_content(extracted_text)
+            
+            if not is_medical:
+                print(f"❌ Medical validation: FAILED (confidence: {validation_confidence:.2%}, method: {validation_method})")
+                print(f"📄 Document does not contain medical content - stopping pipeline")
+                
+                # Update status to non-medical content
+                update_processing_store(processing_id, {
+                    "status": ProcessingStatus.NON_MEDICAL_CONTENT,
+                    "progress_percent": 100,
+                    "current_step": "Document does not contain medical content",
+                    "error": "This document does not appear to contain medical content. Please upload a medical document (doctor's letter, lab results, medical report, etc.).",
+                    "validation_details": {
+                        "is_medical": False,
+                        "confidence": validation_confidence,
+                        "method": validation_method
+                    },
+                    "completed_at": datetime.now()
+                })
+                
+                print(f"🛑 Processing stopped: Non-medical content detected")
+                return
+            else:
+                print(f"✅ Medical validation: PASSED (confidence: {validation_confidence:.2%}, method: {validation_method})")
+        else:
+            print(f"⏭️ Medical validation: SKIPPED (disabled)")
+        
+        # Erst Text vorverarbeiten (PII-Entfernung)
+        cleaned_text = await ovh_client.preprocess_medical_text(extracted_text)
         
         # Dokumenttyp klassifizieren (nur wenn aktiviert)
         detected_doc_type = "arztbrief"  # Default

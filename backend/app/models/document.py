@@ -15,6 +15,7 @@ class ProcessingStatus(str, Enum):
     LANGUAGE_TRANSLATING = "language_translating"
     COMPLETED = "completed"
     ERROR = "error"
+    NON_MEDICAL_CONTENT = "non_medical_content"
 
 class SupportedLanguage(str, Enum):
     # Sehr gut unterstützte Sprachen (beste Performance mit Llama 3.3)

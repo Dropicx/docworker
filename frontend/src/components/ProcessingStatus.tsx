@@ -35,6 +35,10 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
           setIsPolling(false);
           setError(statusResponse.error || 'Unbekannter Fehler');
           onError(statusResponse.error || 'Verarbeitung fehlgeschlagen');
+        } else if (statusResponse.status === 'non_medical_content') {
+          setIsPolling(false);
+          setError(statusResponse.error || 'Dokument enthält keinen medizinischen Inhalt');
+          onError(statusResponse.error || 'Bitte laden Sie ein medizinisches Dokument hoch');
         }
       } catch (err: any) {
         console.error('Status polling error:', err);
@@ -79,6 +83,8 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
         return <CheckCircle className="w-5 h-5 text-success-600" />;
       case 'error':
         return <AlertCircle className="w-5 h-5 text-error-600" />;
+      case 'non_medical_content':
+        return <FileCheck className="w-5 h-5 text-error-600" />;
       default:
         return <RefreshCw className="w-5 h-5 text-primary-600" />;
     }
@@ -169,6 +175,12 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                 <div className="flex items-center text-xs text-success-600">
                   <div className="w-2 h-2 bg-success-500 rounded-full mr-2 animate-pulse-soft"></div>
                   Abgeschlossen
+                </div>
+              )}
+              {status.status === 'non_medical_content' && (
+                <div className="flex items-center text-xs text-error-600">
+                  <div className="w-2 h-2 bg-error-500 rounded-full mr-2"></div>
+                  Nicht-medizinisch
                 </div>
               )}
             </div>
@@ -308,6 +320,34 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                     <p className="text-success-700 text-sm leading-relaxed">
                       Ihr Dokument wurde erfolgreich in verständliche Sprache übersetzt. Das Ergebnis wird geladen...
                     </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {status.status === 'non_medical_content' && (
+            <div className="card-elevated border-error-200/50 bg-gradient-to-br from-error-50/50 to-white">
+              <div className="card-compact">
+                <div className="flex items-center space-x-3">
+                  <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-error-500 to-error-600 rounded-xl flex items-center justify-center">
+                    <FileCheck className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-error-900 mb-1">Nicht-medizinischer Inhalt erkannt</h4>
+                    <p className="text-error-700 text-sm leading-relaxed mb-3">
+                      {status.error || 'Dieses Dokument scheint keinen medizinischen Inhalt zu enthalten.'}
+                    </p>
+                    <div className="bg-error-100 border border-error-200 rounded-lg p-3">
+                      <p className="text-error-800 text-xs font-medium mb-1">Bitte laden Sie eines der folgenden Dokumente hoch:</p>
+                      <ul className="text-error-700 text-xs space-y-1">
+                        <li>• Arztbriefe und Entlassungsbriefe</li>
+                        <li>• Laborwerte und Blutbefunde</li>
+                        <li>• Medizinische Befunde und Berichte</li>
+                        <li>• Überweisungen und Konsiliarbriefe</li>
+                        <li>• Röntgen- und MRT-Befunde</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
