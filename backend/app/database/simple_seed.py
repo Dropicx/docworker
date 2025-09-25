@@ -52,15 +52,15 @@ def simple_seed_database():
             
             # Insert pipeline steps for ARZTBRIEF
             pipeline_steps = [
-                ('medical_validation', True, 1, 'Medical Content Validation', 'Validate if document contains medical content'),
-                ('classification', True, 2, 'Document Classification', 'Classify document type (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)'),
-                ('preprocessing', True, 3, 'Preprocessing', 'Remove PII and clean text'),
-                ('translation', True, 4, 'Translation', 'Translate to simple language'),
-                ('fact_check', True, 5, 'Fact Check', 'Verify medical accuracy'),
-                ('grammar_check', True, 6, 'Grammar Check', 'Correct German grammar'),
-                ('language_translation', True, 7, 'Language Translation', 'Translate to target language'),
-                ('final_check', True, 8, 'Final Check', 'Final quality assurance'),
-                ('formatting', True, 9, 'Formatting', 'Apply text formatting')
+                ('MEDICAL_VALIDATION', True, 1, 'Medical Content Validation', 'Validate if document contains medical content'),
+                ('CLASSIFICATION', True, 2, 'Document Classification', 'Classify document type (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)'),
+                ('PREPROCESSING', True, 3, 'Preprocessing', 'Remove PII and clean text'),
+                ('TRANSLATION', True, 4, 'Translation', 'Translate to simple language'),
+                ('FACT_CHECK', True, 5, 'Fact Check', 'Verify medical accuracy'),
+                ('GRAMMAR_CHECK', True, 6, 'Grammar Check', 'Correct German grammar'),
+                ('LANGUAGE_TRANSLATION', True, 7, 'Language Translation', 'Translate to target language'),
+                ('FINAL_CHECK', True, 8, 'Final Check', 'Final quality assurance'),
+                ('FORMATTING', True, 9, 'Formatting', 'Apply text formatting')
             ]
             
             for step_name, enabled, order, name, description in pipeline_steps:
