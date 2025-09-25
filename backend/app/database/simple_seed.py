@@ -32,7 +32,7 @@ def simple_seed_database():
                     language_translation_prompt, final_check_prompt, version, 
                     last_modified, modified_by
                 ) VALUES (
-                    'arztbrief',
+                    'ARZTBRIEF',
                     'Analysiere diesen medizinischen Text und bestimme, ob es sich um einen Arztbrief handelt.\n\nKRITERIEN FÜR ARZTBRIEF:\n- Briefe zwischen Ärzten\n- Entlassungsbriefe\n- Überweisungsschreiben\n- Konsiliarberichte\n- Therapieberichte\n- Arzt-zu-Arzt Kommunikation\n\nAntworte NUR mit: ARZTBRIEF oder NICHT_ARZTBRIEF',
                     'Entferne alle persönlichen Daten aus diesem medizinischen Text, aber behalte alle medizinischen Informationen.\n\nZU ENTFERNENDE DATEN:\n- Namen von Patienten und Ärzten\n- Adressen und Telefonnummern\n- Geburtsdaten und Alter\n- Versicherungsnummern\n- Patientennummern\n- E-Mail-Adressen\n\nZU BEHALTENDE DATEN:\n- Alle medizinischen Informationen\n- Diagnosen und Symptome\n- Behandlungen und Therapien\n- Medikamente und Dosierungen\n- Laborwerte und Messwerte\n- Medizinische Abkürzungen\n\nErsetze persönliche Daten durch [ENTFERNT] oder [ANONYMISIERT].',
                     'Übersetze diesen Arztbrief in einfache, verständliche Sprache für Patienten.\n\nZIELE:\n- Verständliche Sprache verwenden\n- Medizinische Fachbegriffe erklären\n- Strukturierte Darstellung\n- Wichtige Informationen hervorheben\n- Patientenfreundliche Formulierung\n\nSTRUKTUR:\n- Klare Überschriften\n- Bullet Points für Listen\n- Kurze, verständliche Sätze\n- Wichtige Informationen am Anfang',
@@ -41,13 +41,13 @@ def simple_seed_database():
                     'Übersetze diesen Text in {language}.\n\nÜBERSETZUNGSREGELN:\n- Verständliche Sprache verwenden\n- Medizinische Begriffe korrekt übersetzen\n- Struktur beibehalten\n- Wichtige Informationen hervorheben\n- Patientenfreundliche Formulierung\n\nSTRUKTUR:\n- Klare Überschriften\n- Bullet Points für Listen\n- Kurze, verständliche Sätze\n- Wichtige Informationen am Anfang\n\nAntworte mit dem übersetzten Text.',
                     'Führe eine finale Qualitätskontrolle dieses medizinischen Textes durch.\n\nPRÜFPUNKTE:\n- Vollständigkeit der Informationen\n- Verständlichkeit der Sprache\n- Korrekte Grammatik und Rechtschreibung\n- Konsistenz der Darstellung\n- Patientenfreundliche Formulierung\n- Strukturierte Darstellung\n\nOPTIMIERUNGEN:\n- Verbessere die Verständlichkeit\n- Korrigiere verbleibende Fehler\n- Optimiere die Struktur\n- Stelle Konsistenz her\n\nAntworte mit dem optimierten Text.',
                     1,
-                    NOW(),
+                    CURRENT_TIMESTAMP,
                     'system_seed'
                 ) RETURNING id
             """))
             
             # Get the ID for pipeline steps
-            result = conn.execute(text("SELECT id FROM document_prompts WHERE document_type = 'arztbrief'"))
+            result = conn.execute(text("SELECT id FROM document_prompts WHERE document_type = 'ARZTBRIEF'"))
             arztbrief_id = result.scalar()
             
             # Insert pipeline steps for ARZTBRIEF
@@ -85,7 +85,7 @@ def simple_seed_database():
                     language_translation_prompt, final_check_prompt, version, 
                     last_modified, modified_by
                 ) VALUES (
-                    'befundbericht',
+                    'BEFUNDBERICHT',
                     'Analysiere diesen medizinischen Text und bestimme, ob es sich um einen Befundbericht handelt.\n\nKRITERIEN FÜR BEFUNDBERICHT:\n- Medizinische Befunde\n- Untersuchungsergebnisse\n- Bildgebungsbefunde (MRT, CT, Röntgen)\n- Laborbefunde\n- Pathologiebefunde\n- Diagnostische Berichte\n\nAntworte NUR mit: BEFUNDBERICHT oder NICHT_BEFUNDBERICHT',
                     'Entferne alle persönlichen Daten aus diesem medizinischen Text, aber behalte alle medizinischen Informationen.\n\nZU ENTFERNENDE DATEN:\n- Namen von Patienten und Ärzten\n- Adressen und Telefonnummern\n- Geburtsdaten und Alter\n- Versicherungsnummern\n- Patientennummern\n- E-Mail-Adressen\n\nZU BEHALTENDE DATEN:\n- Alle medizinischen Informationen\n- Diagnosen und Symptome\n- Behandlungen und Therapien\n- Medikamente und Dosierungen\n- Laborwerte und Messwerte\n- Medizinische Abkürzungen\n\nErsetze persönliche Daten durch [ENTFERNT] oder [ANONYMISIERT].',
                     'Übersetze diesen Befundbericht in einfache, verständliche Sprache für Patienten.\n\nZIELE:\n- Verständliche Sprache verwenden\n- Medizinische Fachbegriffe erklären\n- Befunde klar strukturieren\n- Wichtige Ergebnisse hervorheben\n- Patientenfreundliche Formulierung\n\nSTRUKTUR:\n- Klare Überschriften\n- Bullet Points für Listen\n- Kurze, verständliche Sätze\n- Wichtige Befunde am Anfang',
@@ -94,13 +94,13 @@ def simple_seed_database():
                     'Übersetze diesen Text in {language}.\n\nÜBERSETZUNGSREGELN:\n- Verständliche Sprache verwenden\n- Medizinische Begriffe korrekt übersetzen\n- Struktur beibehalten\n- Wichtige Informationen hervorheben\n- Patientenfreundliche Formulierung\n\nSTRUKTUR:\n- Klare Überschriften\n- Bullet Points für Listen\n- Kurze, verständliche Sätze\n- Wichtige Informationen am Anfang\n\nAntworte mit dem übersetzten Text.',
                     'Führe eine finale Qualitätskontrolle dieses medizinischen Textes durch.\n\nPRÜFPUNKTE:\n- Vollständigkeit der Informationen\n- Verständlichkeit der Sprache\n- Korrekte Grammatik und Rechtschreibung\n- Konsistenz der Darstellung\n- Patientenfreundliche Formulierung\n- Strukturierte Darstellung\n\nOPTIMIERUNGEN:\n- Verbessere die Verständlichkeit\n- Korrigiere verbleibende Fehler\n- Optimiere die Struktur\n- Stelle Konsistenz her\n\nAntworte mit dem optimierten Text.',
                     1,
-                    NOW(),
+                    CURRENT_TIMESTAMP,
                     'system_seed'
                 ) RETURNING id
             """))
             
             # Get the ID for pipeline steps
-            result = conn.execute(text("SELECT id FROM document_prompts WHERE document_type = 'befundbericht'"))
+            result = conn.execute(text("SELECT id FROM document_prompts WHERE document_type = 'BEFUNDBERICHT'"))
             befundbericht_id = result.scalar()
             
             # Insert pipeline steps for BEFUNDBERICHT
@@ -126,7 +126,7 @@ def simple_seed_database():
                     language_translation_prompt, final_check_prompt, version, 
                     last_modified, modified_by
                 ) VALUES (
-                    'laborwerte',
+                    'LABORWERTE',
                     'Analysiere diesen medizinischen Text und bestimme, ob es sich um Laborwerte handelt.\n\nKRITERIEN FÜR LABORWERTE:\n- Blutwerte und Messwerte\n- Referenzbereiche\n- Laborparameter\n- Messwerte mit Einheiten\n- Laborergebnisse\n- Biochemische Werte\n\nAntworte NUR mit: LABORWERTE oder NICHT_LABORWERTE',
                     'Entferne alle persönlichen Daten aus diesem medizinischen Text, aber behalte alle medizinischen Informationen.\n\nZU ENTFERNENDE DATEN:\n- Namen von Patienten und Ärzten\n- Adressen und Telefonnummern\n- Geburtsdaten und Alter\n- Versicherungsnummern\n- Patientennummern\n- E-Mail-Adressen\n\nZU BEHALTENDE DATEN:\n- Alle medizinischen Informationen\n- Diagnosen und Symptome\n- Behandlungen und Therapien\n- Medikamente und Dosierungen\n- Laborwerte und Messwerte\n- Medizinische Abkürzungen\n\nErsetze persönliche Daten durch [ENTFERNT] oder [ANONYMISIERT].',
                     'Übersetze diese Laborwerte in einfache, verständliche Sprache für Patienten.\n\nZIELE:\n- Verständliche Sprache verwenden\n- Laborwerte erklären\n- Referenzbereiche verständlich machen\n- Wichtige Abweichungen hervorheben\n- Patientenfreundliche Formulierung\n\nSTRUKTUR:\n- Klare Überschriften\n- Tabellarische Darstellung\n- Kurze, verständliche Sätze\n- Wichtige Werte am Anfang',
@@ -135,13 +135,13 @@ def simple_seed_database():
                     'Übersetze diesen Text in {language}.\n\nÜBERSETZUNGSREGELN:\n- Verständliche Sprache verwenden\n- Medizinische Begriffe korrekt übersetzen\n- Struktur beibehalten\n- Wichtige Informationen hervorheben\n- Patientenfreundliche Formulierung\n\nSTRUKTUR:\n- Klare Überschriften\n- Bullet Points für Listen\n- Kurze, verständliche Sätze\n- Wichtige Informationen am Anfang\n\nAntworte mit dem übersetzten Text.',
                     'Führe eine finale Qualitätskontrolle dieses medizinischen Textes durch.\n\nPRÜFPUNKTE:\n- Vollständigkeit der Informationen\n- Verständlichkeit der Sprache\n- Korrekte Grammatik und Rechtschreibung\n- Konsistenz der Darstellung\n- Patientenfreundliche Formulierung\n- Strukturierte Darstellung\n\nOPTIMIERUNGEN:\n- Verbessere die Verständlichkeit\n- Korrigiere verbleibende Fehler\n- Optimiere die Struktur\n- Stelle Konsistenz her\n\nAntworte mit dem optimierten Text.',
                     1,
-                    NOW(),
+                    CURRENT_TIMESTAMP,
                     'system_seed'
                 ) RETURNING id
             """))
             
             # Get the ID for pipeline steps
-            result = conn.execute(text("SELECT id FROM document_prompts WHERE document_type = 'laborwerte'"))
+            result = conn.execute(text("SELECT id FROM document_prompts WHERE document_type = 'LABORWERTE'"))
             laborwerte_id = result.scalar()
             
             # Insert pipeline steps for LABORWERTE
