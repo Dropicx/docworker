@@ -182,8 +182,8 @@ async def process_document(processing_id: str):
             print(f"Database prompt loading failed, using file-based: {e}")
             custom_prompts = prompt_manager.load_prompts(document_class)
         
-                # Medizinische Inhaltsvalidierung (nur wenn aktiviert)
-                if custom_prompts.pipeline_steps.get("MEDICAL_VALIDATION", {}).enabled:
+        # Medizinische Inhaltsvalidierung (nur wenn aktiviert)
+        if custom_prompts.pipeline_steps.get("MEDICAL_VALIDATION", {}).enabled:
             from app.services.medical_content_validator import MedicalContentValidator
             validator = MedicalContentValidator(ovh_client)
             is_medical, validation_confidence, validation_method = await validator.validate_medical_content(extracted_text)
