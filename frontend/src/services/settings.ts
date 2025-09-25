@@ -83,6 +83,11 @@ class SettingsService {
    * Check if current session is authenticated
    */
   async checkAuth(): Promise<boolean> {
+    // If no token, don't make the request
+    if (!this.token) {
+      return false;
+    }
+    
     try {
       const response = await axios.get(
         `${SETTINGS_BASE_URL}/check-auth`,

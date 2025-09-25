@@ -38,9 +38,9 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   // Show/hide passwords
   const [showPasswords, setShowPasswords] = useState(false);
 
-  // Check authentication on mount
+  // Check authentication on mount only if we have a token
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && settingsService.isAuthenticated()) {
       checkAuth();
     }
   }, [isOpen]);
