@@ -15,7 +15,7 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
-from app.routers import upload, process, health
+from app.routers import upload, process, health, settings
 from app.services.cleanup import cleanup_temp_files
 
 # Configure logging for Railway - FORCE stdout output
@@ -198,6 +198,7 @@ async def add_security_headers(request: Request, call_next):
 app.include_router(upload.router, prefix="/api", tags=["upload"])
 app.include_router(process.router, prefix="/api", tags=["process"])
 app.include_router(health.router, prefix="/api", tags=["health"])
+app.include_router(settings.router, tags=["settings"])  # Settings has its own prefix
 
 @app.get("/")
 async def root():

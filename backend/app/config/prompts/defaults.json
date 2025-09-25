@@ -1,0 +1,20 @@
+{
+  "info": "This file contains default prompts as backup. These are loaded when custom prompts are corrupted or during initial setup.",
+  "version": 1,
+  "created": "2024-01-15",
+  "universal_prompts": {
+    "classification_prompt": "Analysiere diesen medizinischen Text und klassifiziere ihn als: ARZTBRIEF (Kommunikation zwischen Ärzten), BEFUNDBERICHT (Untersuchungsergebnisse), oder LABORWERTE (Messwerte mit Referenzbereichen). Antworte mit der Kategorie.",
+
+    "preprocessing_prompt": "Entferne alle persönlichen Daten aus diesem medizinischen Text, behalte aber ALLE medizinischen Informationen. Entferne: Namen, Adressen, Geburtsdaten, IDs. Behalte: Alle Diagnosen, Werte, Behandlungen, Medikamente.",
+
+    "translation_prompt": "Übersetze diesen medizinischen Text in einfache, patientenfreundliche Sprache. Erkläre Fachbegriffe, verwende kurze Sätze, sprich den Patienten direkt an.",
+
+    "fact_check_prompt": "Prüfe diesen Text auf medizinische Korrektheit. Korrigiere faktische Fehler, aber ändere nichts an der Verständlichkeit.",
+
+    "grammar_check_prompt": "Korrigiere Grammatik und Rechtschreibung in diesem deutschen Text. Ändere keine medizinischen Informationen.",
+
+    "language_translation_prompt": "Übersetze diesen Text in {language}. Behalte alle Formatierungen und medizinischen Informationen exakt bei.",
+
+    "final_check_prompt": "Finale Qualitätskontrolle: Prüfe Verständlichkeit, Vollständigkeit und Korrektheit. Optimiere wenn nötig."
+  }
+}

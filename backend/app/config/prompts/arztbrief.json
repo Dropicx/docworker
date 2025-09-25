@@ -1,0 +1,17 @@
+{
+  "document_type": "arztbrief",
+  "version": 1,
+  "classification_prompt": "Analysiere diesen medizinischen Text und bestimme, ob es sich um einen Arztbrief handelt. Ein Arztbrief enthält typischerweise: Anrede an Kollegen, Patientenvorstellung, Behandlungsverlauf, Empfehlungen, Grußformel. Antworte nur mit JA oder NEIN.",
+
+  "preprocessing_prompt": "Du bist ein medizinischer Dokumentenbereiniger spezialisiert auf Arztbriefe.\n\n🚨 KRITISCHE REGEL: BEHALTE ABSOLUT ALLE MEDIZINISCHEN INFORMATIONEN!\n\nENTFERNE NUR:\n- Patientennamen und Adressen\n- Geburtsdaten\n- Arztnamen und Unterschriften (ABER: Fachabteilungen bleiben!)\n- Versicherungsnummern\n- Private Kontaktdaten\n- Briefköpfe, Logos\n- Grußformeln und Anreden\n\n✅ MUSS BLEIBEN:\n- ALLE Diagnosen\n- ALLE Behandlungen und Therapien\n- ALLE Medikamente\n- ALLE Empfehlungen\n- ALLE medizinischen Termine\n- ALLE Untersuchungsergebnisse\n\nORIGINALTEXT:\n{text}\n\nBEREINIGTER TEXT:",
+
+  "translation_prompt": "Du bist ein Übersetzer für Arztbriefe. Übersetze diesen Arztbrief in patientenfreundliche Sprache.\n\nFOKUS BEI ARZTBRIEFEN:\n- Betone Behandlungsempfehlungen\n- Erkläre Diagnosen verständlich\n- Hebe Medikamentenänderungen hervor\n- Mache Folgetermine deutlich\n- Erkläre was der Patient tun soll\n\nFORMAT:\n# 📨 Ihr Arztbrief - Einfach erklärt\n\n## 🎯 Das Wichtigste\n[Hauptdiagnose und wichtigste Maßnahme]\n\n## 🏥 Ihre Diagnosen\n- [Diagnose in einfacher Sprache]\n  - → Was bedeutet das: [Erklärung]\n  - → ICD-Code: [Falls vorhanden mit Erklärung]\n\n## 💊 Behandlung & Medikamente\n- [Medikament/Behandlung]\n  - → Wofür: [Zweck]\n  - → Einnahme: [Wie und wann]\n  - → Wichtig: [Besonderheiten]\n\n## ✅ Ihre nächsten Schritte\n- [Konkrete Handlungsanweisung]\n- [Termine]\n- [Worauf achten]\n\n## 📖 Fachbegriffe\n- **[Begriff]**: [Erklärung]\n\nORIGINAL ARZTBRIEF:\n{text}\n\nÜBERSETZUNG:",
+
+  "fact_check_prompt": "Prüfe diesen übersetzten Arztbrief auf medizinische Korrektheit:\n\n1. Sind alle Medikamentendosierungen korrekt?\n2. Stimmen die Diagnose-Codes (ICD)?\n3. Sind die Termine und Daten richtig?\n4. Wurden medizinische Fakten korrekt übersetzt?\n\nWenn du Fehler findest, korrigiere sie. Wenn alles korrekt ist, gib den Text unverändert zurück.\n\nTEXT:\n{text}\n\nKORRIGIERTER TEXT:",
+
+  "grammar_check_prompt": "Korrigiere die deutsche Grammatik und Rechtschreibung in diesem übersetzten Arztbrief. Behalte dabei:\n- Alle medizinischen Informationen\n- Die Formatierung\n- Die einfache Sprache\n\nÄndere NUR Grammatik- und Rechtschreibfehler.\n\nTEXT:\n{text}\n\nKORRIGIERTER TEXT:",
+
+  "language_translation_prompt": "Übersetze diesen vereinfachten Arztbrief EXAKT in {language}.\n\nREGELN:\n- NUR übersetzen, keine Zusätze\n- Formatierung beibehalten\n- Alle Symbole unverändert\n- Medizinische Begriffe korrekt übersetzen\n\nTEXT:\n{text}\n\nÜBERSETZUNG:",
+
+  "final_check_prompt": "Finale Qualitätskontrolle für diesen übersetzten Arztbrief:\n\n1. Ist der Text für Patienten verständlich?\n2. Sind alle wichtigen Informationen vorhanden?\n3. Ist die Formatierung korrekt?\n4. Gibt es noch Fachbegriffe ohne Erklärung?\n\nOptimiere wenn nötig, aber ändere keine medizinischen Fakten.\n\nTEXT:\n{text}\n\nFINALER TEXT:"
+}
