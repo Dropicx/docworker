@@ -7,6 +7,12 @@ export default defineConfig({
   server: {
     port: 9121,
     host: true,
+    hmr: {
+      overlay: false
+    },
+    fs: {
+      strict: false
+    },
     proxy: {
       '/api': {
         target: 'http://localhost:9122',
@@ -19,8 +25,28 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
     minify: 'esbuild',
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom'],
+          router: ['react-router-dom'],
+          icons: ['lucide-react']
+        }
+      }
+    }
   },
   define: {
     global: 'globalThis',
   },
+  optimizeDeps: {
+    include: ['react', 'react-dom', 'react-router-dom', 'lucide-react']
+  },
+  esbuild: {
+    logOverride: { 'this-is-undefined-in-esm': 'silent' }
+  },
+  resolve: {
+    alias: {
+      '@': '/src'
+    }
+  }
 }) 
