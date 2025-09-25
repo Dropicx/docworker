@@ -171,10 +171,38 @@ async def process_document(processing_id: str):
         
         print(f"📋 Document classification: {detected_doc_type} (confidence: {classification_result.confidence:.2%}, method: {classification_result.method})")
         
-        # Dann übersetzen mit erkanntem Dokumenttyp
+        # Custom Prompts laden basierend auf Dokumenttyp
+        from app.services.prompt_manager import PromptManager
+        from app.models.document_types import DocumentClass
+        prompt_manager = PromptManager()
+        document_class = DocumentClass(detected_doc_type)
+        custom_prompts = prompt_manager.load_prompts(document_class)
+        
+        print(f"📝 Using custom prompts for {detected_doc_type} (version: {custom_prompts.version})")
+        
+        # Dann übersetzen mit erkanntem Dokumenttyp und custom prompts
         translated_text, _, translation_confidence, _ = await ovh_client.translate_medical_document(
-            cleaned_text, document_type=detected_doc_type
+            cleaned_text, document_type=detected_doc_type, custom_prompts=custom_prompts
         )
+        
+        # Qualitätsprüfung (Fact Check + Grammar Check)
+        from app.services.quality_checker import QualityChecker
+        quality_checker = QualityChecker(ovh_client)
+        
+        # Fact Check
+        fact_checked_text, fact_check_results = await quality_checker.fact_check(
+            translated_text, document_class, custom_prompts.fact_check_prompt
+        )
+        print(f"🔍 Fact check completed: {fact_check_results.get('status', 'unknown')}")
+        
+        # Grammar Check
+        grammar_checked_text, grammar_check_results = await quality_checker.grammar_check(
+            fact_checked_text, "de", custom_prompts.grammar_check_prompt
+        )
+        print(f"✏️ Grammar check completed: {grammar_check_results.get('status', 'unknown')}")
+        
+        # Use the quality-checked text
+        translated_text = grammar_checked_text
         
         # Schritt 3: Optionale Sprachübersetzung
         language_translated_text = None
@@ -187,8 +215,10 @@ async def process_document(processing_id: str):
                 "current_step": f"Übersetzung in {target_language.value}..."
             })
             
+            # Use custom language translation prompt if available
+            language_prompt = custom_prompts.language_translation_prompt if custom_prompts else None
             language_translated_text, language_confidence_score = await ovh_client.translate_to_language(
-                translated_text, target_language
+                translated_text, target_language, custom_prompt=language_prompt
             )
         
         # Schritt 4: Ergebnis finalisieren
@@ -203,12 +233,18 @@ async def process_document(processing_id: str):
         if language_confidence_score:
             overall_confidence = (translation_confidence + language_confidence_score) / 2
         
+        # Final Quality Check
+        final_checked_text, final_check_results = await quality_checker.final_check(
+            translated_text, custom_prompts.final_check_prompt
+        )
+        print(f"✅ Final quality check completed: {final_check_results.get('status', 'unknown')}")
+        
         # WICHTIG: Formatierung IMMER direkt vor der Rückgabe anwenden
         # Dies stellt sicher, dass die Formatierung wirklich angewendet wird
         print(f"[FORMATTING] Applying final formatting to translated text...")
         from app.services.ovh_client import OVHClient
         ovh_client = OVHClient()
-        translated_text = ovh_client._improve_formatting(translated_text)
+        translated_text = ovh_client._improve_formatting(final_checked_text)
         if language_translated_text:
             language_translated_text = ovh_client._improve_formatting(language_translated_text)
         

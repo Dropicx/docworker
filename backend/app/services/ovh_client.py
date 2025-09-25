@@ -362,7 +362,8 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         simplified_text: str,
         target_language: str,
         temperature: float = 0.3,
-        max_tokens: int = 4000
+        max_tokens: int = 4000,
+        custom_prompt: Optional[str] = None
     ) -> tuple[str, float]:
         """
         Translate simplified text to another language using Meta-Llama-3.3-70B
@@ -374,7 +375,12 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         try:
             logger.info(f"🌐 Translating to {target_language} with OVH {self.translation_model}")
             
-            translation_prompt = f"""Übersetze den folgenden Text EXAKT in {target_language}.
+            if custom_prompt:
+                # Use custom prompt and replace placeholders
+                translation_prompt = custom_prompt.replace("{language}", target_language).replace("{text}", simplified_text)
+                logger.info(f"📝 Using custom language translation prompt")
+            else:
+                translation_prompt = f"""Übersetze den folgenden Text EXAKT in {target_language}.
 
 STRIKTE REGELN:
 1. NUR übersetzen - KEINE Zusätze, Erklärungen oder Kommentare
@@ -387,6 +393,7 @@ TEXT ZUM ÜBERSETZEN:
 {simplified_text}
 
 ÜBERSETZUNG:"""
+                logger.info(f"📝 Using default language translation prompt")
             
             messages = [
                 {
@@ -483,7 +490,8 @@ TEXT ZUM ÜBERSETZEN:
     async def translate_medical_document(
         self,
         text: str,
-        document_type: str = "universal"
+        document_type: str = "universal",
+        custom_prompts: Optional[Any] = None
     ) -> tuple[str, str, float, str]:
         """
         Main processing using OVH Meta-Llama-3.3-70B for medical document translation
@@ -504,7 +512,12 @@ TEXT ZUM ÜBERSETZEN:
             logger.info("🏥 Starting medical document processing with OVH AI")
             
             # Create the comprehensive instruction for medical translation (in German)
-            instruction = self._get_medical_translation_instruction()
+            if custom_prompts and hasattr(custom_prompts, 'translation_prompt'):
+                instruction = custom_prompts.translation_prompt
+                logger.info(f"📝 Using custom translation prompt for {document_type}")
+            else:
+                instruction = self._get_medical_translation_instruction()
+                logger.info(f"📝 Using default translation prompt for {document_type}")
             
             # Format the complete prompt exactly like ollama_client.py
             full_prompt = f"""{instruction}
