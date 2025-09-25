@@ -10,7 +10,7 @@ from app.database.connection import get_database_url
 logger = logging.getLogger(__name__)
 
 def init_database():
-    """Initialize database tables"""
+    """Initialize database tables and seed initial data"""
     try:
         database_url = get_database_url()
         engine = create_engine(database_url)
@@ -18,6 +18,13 @@ def init_database():
         # Create all tables
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully")
+        
+        # Seed initial data
+        from app.database.seed_data import seed_database
+        if seed_database():
+            logger.info("Database seeded with initial data successfully")
+        else:
+            logger.warning("Failed to seed database with initial data")
         
         return True
     except Exception as e:
