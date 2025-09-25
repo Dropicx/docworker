@@ -234,7 +234,8 @@ async def update_prompts(
 @router.post("/prompts/{document_type}/reset")
 async def reset_prompts(
     document_type: DocumentClass,
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_db_session)
 ):
     """
     Reset prompts to defaults for a specific document type.
@@ -242,7 +243,13 @@ async def reset_prompts(
     Requires authentication.
     """
     try:
-        success = prompt_manager.reset_to_defaults(document_type)
+        # Try database first, fallback to file-based
+        db_prompt_manager = DatabasePromptManager(db)
+        success = db_prompt_manager.reset_prompts(document_type)
+        
+        if not success:
+            # Fallback to file-based system
+            success = prompt_manager.reset_to_defaults(document_type)
 
         if success:
             logger.info(f"Reset prompts to defaults for {document_type.value}")
@@ -320,7 +327,8 @@ async def test_prompt(
 @router.get("/export")
 async def export_prompts(
     document_type: Optional[DocumentClass] = None,
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_db_session)
 ):
     """
     Export prompts for backup or sharing.
@@ -331,7 +339,33 @@ async def export_prompts(
     Requires authentication.
     """
     try:
-        export_data = prompt_manager.export_prompts(document_type)
+        # Try database first, fallback to file-based
+        db_prompt_manager = DatabasePromptManager(db)
+        
+        if document_type:
+            # Export specific document type
+            prompts = db_prompt_manager.load_prompts(document_type)
+            export_data = {
+                "export_date": datetime.now().isoformat(),
+                "version": prompts.version,
+                "prompts": {
+                    document_type.value: prompts.dict()
+                }
+            }
+        else:
+            # Export all document types
+            export_data = {
+                "export_date": datetime.now().isoformat(),
+                "version": 1,
+                "prompts": {}
+            }
+            
+            for doc_type in DocumentClass:
+                try:
+                    prompts = db_prompt_manager.load_prompts(doc_type)
+                    export_data["prompts"][doc_type.value] = prompts.dict()
+                except Exception as e:
+                    logger.warning(f"Failed to export {doc_type.value}: {e}")
 
         return export_data
 
@@ -345,7 +379,8 @@ async def export_prompts(
 @router.post("/import")
 async def import_prompts(
     import_request: ImportRequest,
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_db_session)
 ):
     """
     Import prompts from exported data.
@@ -353,10 +388,27 @@ async def import_prompts(
     Requires authentication.
     """
     try:
-        results = prompt_manager.import_prompts(
-            import_data=import_request.data,
-            user="import"
-        )
+        # Try database first, fallback to file-based
+        db_prompt_manager = DatabasePromptManager(db)
+        results = {}
+        
+        # Import each document type
+        for doc_type_str, prompts_data in import_request.data.prompts.items():
+            try:
+                doc_type = DocumentClass(doc_type_str)
+                # Convert dict to DocumentPrompts object
+                prompts = DocumentPrompts(**prompts_data)
+                prompts.modified_by = "import"
+                
+                success = db_prompt_manager.save_prompts(doc_type, prompts)
+                if not success:
+                    # Fallback to file-based system
+                    success = prompt_manager.save_prompts(doc_type, prompts, user="import")
+                
+                results[doc_type_str] = success
+            except Exception as e:
+                logger.error(f"Failed to import {doc_type_str}: {e}")
+                results[doc_type_str] = False
 
         # Count successes and failures
         success_count = sum(1 for success in results.values() if success)
@@ -412,7 +464,8 @@ class PipelineStepUpdateRequest(BaseModel):
 async def update_pipeline_step(
     document_type: DocumentClass,
     update_request: PipelineStepUpdateRequest,
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_db_session)
 ):
     """
     Enable or disable a specific pipeline step for a document type.
@@ -431,8 +484,9 @@ async def update_pipeline_step(
         )
     
     try:
-        prompt_manager = PromptManager()
-        prompts = prompt_manager.load_prompts(document_type)
+        # Try database first, fallback to file-based
+        db_prompt_manager = DatabasePromptManager(db)
+        prompts = db_prompt_manager.load_prompts(document_type)
         
         # Update the specific step
         if update_request.step_name in prompts.pipeline_steps:
@@ -441,7 +495,11 @@ async def update_pipeline_step(
             prompts.modified_by = "admin"
             
             # Save the updated prompts
-            prompt_manager.save_prompts(document_type, prompts)
+            success = db_prompt_manager.save_prompts(document_type, prompts)
+            if not success:
+                # Fallback to file-based system
+                prompt_manager = PromptManager()
+                prompt_manager.save_prompts(document_type, prompts)
             
             logger.info(f"Updated pipeline step {update_request.step_name} for {document_type.value}: enabled={update_request.enabled}")
             
@@ -474,7 +532,8 @@ async def update_pipeline_step(
 @router.get("/pipeline-steps/{document_type}")
 async def get_pipeline_steps(
     document_type: DocumentClass,
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_db_session)
 ):
     """
     Get pipeline step configuration for a document type.
@@ -492,8 +551,9 @@ async def get_pipeline_steps(
         )
     
     try:
-        prompt_manager = PromptManager()
-        prompts = prompt_manager.load_prompts(document_type)
+        # Try database first, fallback to file-based
+        db_prompt_manager = DatabasePromptManager(db)
+        prompts = db_prompt_manager.load_prompts(document_type)
         
         return {
             "document_type": document_type.value,
@@ -518,7 +578,8 @@ async def get_pipeline_steps(
 @router.post("/pipeline-steps/{document_type}/reset")
 async def reset_pipeline_steps(
     document_type: DocumentClass,
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_db_session)
 ):
     """
     Reset all pipeline steps to default (enabled) state for a document type.
@@ -536,8 +597,9 @@ async def reset_pipeline_steps(
         )
     
     try:
-        prompt_manager = PromptManager()
-        prompts = prompt_manager.load_prompts(document_type)
+        # Try database first, fallback to file-based
+        db_prompt_manager = DatabasePromptManager(db)
+        prompts = db_prompt_manager.load_prompts(document_type)
         
         # Reset all steps to enabled
         for step_config in prompts.pipeline_steps.values():
@@ -547,7 +609,11 @@ async def reset_pipeline_steps(
         prompts.modified_by = "admin"
         
         # Save the updated prompts
-        prompt_manager.save_prompts(document_type, prompts)
+        success = db_prompt_manager.save_prompts(document_type, prompts)
+        if not success:
+            # Fallback to file-based system
+            prompt_manager = PromptManager()
+            prompt_manager.save_prompts(document_type, prompts)
         
         logger.info(f"Reset all pipeline steps for {document_type.value}")
         
