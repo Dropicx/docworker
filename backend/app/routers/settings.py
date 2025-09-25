@@ -7,7 +7,7 @@ import secrets
 
 from fastapi import APIRouter, HTTPException, Depends, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 
 from app.models.document_types import (
     DocumentClass,
@@ -201,6 +201,12 @@ async def update_prompts(
                 detail="Failed to save prompts"
             )
 
+    except ValidationError as e:
+        logger.error(f"Validation error updating prompts for {document_type.value}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Validation error: {str(e)}"
+        )
     except Exception as e:
         logger.error(f"Failed to update prompts for {document_type.value}: {e}")
         raise HTTPException(

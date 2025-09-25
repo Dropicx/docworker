@@ -117,7 +117,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     if (editedPrompts) {
       setEditedPrompts({
         ...editedPrompts,
-        [field]: value
+        [field]: value,
+        // Preserve metadata fields
+        document_type: selectedDocumentType,
+        version: editedPrompts.version || 1,
+        last_modified: editedPrompts.last_modified || new Date().toISOString(),
+        modified_by: editedPrompts.modified_by || 'admin'
       });
     }
   };
@@ -130,8 +135,18 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     setSaveSuccess(false);
     
     try {
-      await settingsService.updatePrompts(selectedDocumentType, editedPrompts, 'admin');
-      setPrompts(editedPrompts);
+      // Ensure we include all required fields for the backend
+      const promptsToSave: DocumentPrompts = {
+        ...editedPrompts,
+        document_type: selectedDocumentType,
+        version: editedPrompts.version || 1,
+        last_modified: new Date().toISOString(),
+        modified_by: 'admin'
+      };
+      
+      await settingsService.updatePrompts(selectedDocumentType, promptsToSave, 'admin');
+      setPrompts(promptsToSave);
+      setEditedPrompts(promptsToSave);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
@@ -165,6 +180,13 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
       return;
     }
     
+    // Only test string prompt fields, not metadata fields
+    const promptFields = ['classification_prompt', 'preprocessing_prompt', 'translation_prompt', 'fact_check_prompt', 'grammar_check_prompt', 'language_translation_prompt', 'final_check_prompt'];
+    if (!promptFields.includes(field)) {
+      setTestError('Dieses Feld kann nicht getestet werden');
+      return;
+    }
+    
     setTestingPrompt(field);
     setTestLoading(true);
     setTestError('');
@@ -172,7 +194,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     
     try {
       const response = await settingsService.testPrompt({
-        prompt: editedPrompts[field],
+        prompt: (editedPrompts[field] as string) || '',
         sample_text: testSample,
         temperature: 0.3,
         max_tokens: 1000

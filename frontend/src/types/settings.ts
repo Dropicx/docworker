@@ -15,6 +15,9 @@ export interface DocumentPrompts {
   grammar_check_prompt: string;
   language_translation_prompt: string;
   final_check_prompt: string;
+  version?: number;
+  last_modified?: string;
+  modified_by?: string;
 }
 
 export interface PromptsMetadata {
