@@ -516,7 +516,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
                   {/* Prompts Editor */}
                   <div className="space-y-6">
-                    {Object.entries(PROMPT_STEPS).map(([key, step]) => (
+                    {Object.entries(PROMPT_STEPS).map(([key, step]) => {
+                      // Only process string prompt fields
+                      const promptKey = key as keyof Pick<DocumentPrompts, 
+                        'classification_prompt' | 'preprocessing_prompt' | 'translation_prompt' | 
+                        'fact_check_prompt' | 'grammar_check_prompt' | 'language_translation_prompt' | 'final_check_prompt'
+                      >;
+                      
+                      return (
                       <div key={key} className="border border-primary-200 rounded-xl p-6 bg-white">
                         <div className="flex items-center justify-between mb-4">
                           <div>
@@ -524,7 +531,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                             <p className="text-sm text-primary-600">{step.description}</p>
                           </div>
                           <button
-                            onClick={() => handleTestPrompt(key as keyof DocumentPrompts)}
+                            onClick={() => handleTestPrompt(promptKey)}
                             disabled={testLoading || !testSample.trim()}
                             className="btn-ghost disabled:opacity-50"
                           >
@@ -534,13 +541,14 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                         </div>
                         
                         <textarea
-                          value={editedPrompts[key as keyof DocumentPrompts] || ''}
-                          onChange={(e) => handlePromptChange(key as keyof DocumentPrompts, e.target.value)}
+                          value={editedPrompts[promptKey] || ''}
+                          onChange={(e) => handlePromptChange(promptKey, e.target.value)}
                           className="w-full h-32 p-3 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none resize-none font-mono text-sm"
                           placeholder={step.placeholder}
                         />
                       </div>
-                    ))}
+                      );
+                    })}
                   </div>
 
                   {/* Test Section */}
