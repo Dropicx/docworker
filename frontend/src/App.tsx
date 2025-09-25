@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap, Globe, ChevronDown, Search } from 'lucide-react';
+import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap, Globe, ChevronDown, Search, Settings } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
+import SettingsModal from './components/SettingsModal';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
 import Impressum from './pages/Impressum';
@@ -25,6 +26,7 @@ function App() {
   const [languagesLoaded, setLanguagesLoaded] = useState(false);
   const [showAllLanguages, setShowAllLanguages] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
+  const [showSettings, setShowSettings] = useState(false);
 
   // Health check beim Start
   useEffect(() => {
@@ -350,8 +352,15 @@ function App() {
               </div>
             </button>
             
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-4">
               {renderHealthIndicator()}
+              <button
+                onClick={() => setShowSettings(true)}
+                className="p-2 text-primary-600 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200 group"
+                title="Prompt-Einstellungen"
+              >
+                <Settings className="w-5 h-5 group-hover:scale-110 transition-transform" />
+              </button>
             </div>
           </div>
         </div>
@@ -561,6 +570,12 @@ function App() {
       </main>
 
       <Footer />
+      
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={showSettings} 
+        onClose={() => setShowSettings(false)} 
+      />
     </div>
   );
 
