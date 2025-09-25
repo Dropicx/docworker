@@ -20,11 +20,15 @@ def init_database():
         logger.info("Database tables created successfully")
         
         # Seed initial data
-        from app.database.seed_data import seed_database
-        if seed_database():
-            logger.info("Database seeded with initial data successfully")
-        else:
-            logger.warning("Failed to seed database with initial data")
+        try:
+            from app.database.simple_seed import simple_seed_database
+            if simple_seed_database():
+                logger.info("Database seeded with initial data successfully")
+            else:
+                logger.warning("Failed to seed database with initial data")
+        except Exception as e:
+            logger.error(f"Error during database seeding: {e}")
+            logger.warning("Continuing without seeding - database tables created but empty")
         
         return True
     except Exception as e:

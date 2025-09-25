@@ -4,7 +4,7 @@ Database seeding script to populate initial data
 
 import logging
 from datetime import datetime
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, sessionmaker
 
 from app.database.connection import get_engine
 from app.database.models import (
