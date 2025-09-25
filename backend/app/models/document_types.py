@@ -7,9 +7,9 @@ class DocumentClass(str, Enum):
     """
     Three main document types for medical document classification
     """
-    ARZTBRIEF = "arztbrief"  # Doctor's letters, discharge summaries, referrals
-    BEFUNDBERICHT = "befundbericht"  # Medical reports, examination findings, imaging results
-    LABORWERTE = "laborwerte"  # Lab results, blood tests, measurements
+    ARZTBRIEF = "ARZTBRIEF"  # Doctor's letters, discharge summaries, referrals
+    BEFUNDBERICHT = "BEFUNDBERICHT"  # Medical reports, examination findings, imaging results
+    LABORWERTE = "LABORWERTE"  # Lab results, blood tests, measurements
 
 class PipelineStepConfig(BaseModel):
     """
@@ -39,15 +39,15 @@ class DocumentPrompts(BaseModel):
     # Pipeline step configuration
     pipeline_steps: Dict[str, PipelineStepConfig] = Field(
         default_factory=lambda: {
-            "medical_validation": PipelineStepConfig(enabled=True, order=1, name="Medical Content Validation", description="Validate if document contains medical content"),
-            "classification": PipelineStepConfig(enabled=True, order=2, name="Document Classification", description="Classify document type (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)"),
-            "preprocessing": PipelineStepConfig(enabled=True, order=3, name="Preprocessing", description="Remove PII and clean text"),
-            "translation": PipelineStepConfig(enabled=True, order=4, name="Translation", description="Translate to simple language"),
-            "fact_check": PipelineStepConfig(enabled=True, order=5, name="Fact Check", description="Verify medical accuracy"),
-            "grammar_check": PipelineStepConfig(enabled=True, order=6, name="Grammar Check", description="Correct German grammar"),
-            "language_translation": PipelineStepConfig(enabled=True, order=7, name="Language Translation", description="Translate to target language"),
-            "final_check": PipelineStepConfig(enabled=True, order=8, name="Final Check", description="Final quality assurance"),
-            "formatting": PipelineStepConfig(enabled=True, order=9, name="Formatting", description="Apply text formatting")
+            "MEDICAL_VALIDATION": PipelineStepConfig(enabled=True, order=1, name="Medical Content Validation", description="Validate if document contains medical content"),
+            "CLASSIFICATION": PipelineStepConfig(enabled=True, order=2, name="Document Classification", description="Classify document type (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)"),
+            "PREPROCESSING": PipelineStepConfig(enabled=True, order=3, name="Preprocessing", description="Remove PII and clean text"),
+            "TRANSLATION": PipelineStepConfig(enabled=True, order=4, name="Translation", description="Translate to simple language"),
+            "FACT_CHECK": PipelineStepConfig(enabled=True, order=5, name="Fact Check", description="Verify medical accuracy"),
+            "GRAMMAR_CHECK": PipelineStepConfig(enabled=True, order=6, name="Grammar Check", description="Correct German grammar"),
+            "LANGUAGE_TRANSLATION": PipelineStepConfig(enabled=True, order=7, name="Language Translation", description="Translate to target language"),
+            "FINAL_CHECK": PipelineStepConfig(enabled=True, order=8, name="Final Check", description="Final quality assurance"),
+            "FORMATTING": PipelineStepConfig(enabled=True, order=9, name="Formatting", description="Apply text formatting")
         },
         description="Configuration for each pipeline step"
     )

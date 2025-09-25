@@ -14,21 +14,21 @@ Base = declarative_base()
 
 class DocumentClassEnum(str, Enum):
     """Document class enumeration for database"""
-    ARZTBRIEF = "arztbrief"
-    BEFUNDBERICHT = "befundbericht"
-    LABORWERTE = "laborwerte"
+    ARZTBRIEF = "ARZTBRIEF"
+    BEFUNDBERICHT = "BEFUNDBERICHT"
+    LABORWERTE = "LABORWERTE"
 
 class ProcessingStepEnum(str, Enum):
     """Processing step enumeration for database"""
-    MEDICAL_VALIDATION = "medical_validation"
-    CLASSIFICATION = "classification"
-    PREPROCESSING = "preprocessing"
-    TRANSLATION = "translation"
-    FACT_CHECK = "fact_check"
-    GRAMMAR_CHECK = "grammar_check"
-    LANGUAGE_TRANSLATION = "language_translation"
-    FINAL_CHECK = "final_check"
-    FORMATTING = "formatting"
+    MEDICAL_VALIDATION = "MEDICAL_VALIDATION"
+    CLASSIFICATION = "CLASSIFICATION"
+    PREPROCESSING = "PREPROCESSING"
+    TRANSLATION = "TRANSLATION"
+    FACT_CHECK = "FACT_CHECK"
+    GRAMMAR_CHECK = "GRAMMAR_CHECK"
+    LANGUAGE_TRANSLATION = "LANGUAGE_TRANSLATION"
+    FINAL_CHECK = "FINAL_CHECK"
+    FORMATTING = "FORMATTING"
 
 class DocumentPromptsDB(Base):
     """Database model for document prompts"""
