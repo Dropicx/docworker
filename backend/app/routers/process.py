@@ -163,9 +163,17 @@ async def process_document(processing_id: str):
         # Erst Text vorverarbeiten (PII-Entfernung)
         cleaned_text = await ovh_client.preprocess_medical_text(extracted_text)
         
-        # Dann übersetzen
-        translated_text, detected_doc_type, translation_confidence, _ = await ovh_client.translate_medical_document(
-            cleaned_text
+        # Dokumenttyp klassifizieren
+        from app.services.document_classifier import DocumentClassifier
+        classifier = DocumentClassifier(ovh_client)
+        classification_result = await classifier.classify_document(cleaned_text)
+        detected_doc_type = classification_result.document_class.value
+        
+        print(f"📋 Document classification: {detected_doc_type} (confidence: {classification_result.confidence:.2%}, method: {classification_result.method})")
+        
+        # Dann übersetzen mit erkanntem Dokumenttyp
+        translated_text, _, translation_confidence, _ = await ovh_client.translate_medical_document(
+            cleaned_text, document_type=detected_doc_type
         )
         
         # Schritt 3: Optionale Sprachübersetzung
