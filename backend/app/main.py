@@ -17,6 +17,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.routers import upload, process, health, settings
 from app.services.cleanup import cleanup_temp_files
+from app.database.init_db import init_database
 
 # Configure logging for Railway - FORCE stdout output
 import sys
@@ -47,6 +48,19 @@ async def lifespan(app: FastAPI):
     print(f"Railway Environment: {os.getenv('RAILWAY_ENVIRONMENT', 'not set')}", flush=True)
     print(f"Port: {os.getenv('PORT', '9122')}", flush=True)
     print(f"USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}", flush=True)
+    
+    # Initialize database
+    print("🗄️ Initializing database...", flush=True)
+    try:
+        if init_database():
+            print("✅ Database initialized successfully", flush=True)
+            logger.info("Database initialized successfully")
+        else:
+            print("❌ Database initialization failed", flush=True)
+            logger.error("Database initialization failed")
+    except Exception as e:
+        print(f"❌ Database initialization error: {e}", flush=True)
+        logger.error(f"Database initialization error: {e}")
     
     # Log OVH configuration (without sensitive data)
     if os.getenv('OVH_AI_ENDPOINTS_ACCESS_TOKEN'):

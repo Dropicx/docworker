@@ -16,7 +16,10 @@ from app.models.document_types import (
     PromptTestResponse
 )
 from app.services.prompt_manager import PromptManager
+from app.services.database_prompt_manager import DatabasePromptManager
 from app.services.ovh_client import OVHClient
+from app.database.connection import get_session
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/settings", tags=["settings"])
@@ -27,6 +30,11 @@ security = HTTPBearer(auto_error=False)
 # Session storage (in production, use Redis or database)
 authenticated_sessions: Dict[str, datetime] = {}
 SESSION_DURATION = timedelta(hours=24)
+
+# Database dependency
+def get_db_session() -> Session:
+    """Get database session"""
+    return next(get_session())
 
 # Initialize services
 prompt_manager = PromptManager()
@@ -131,7 +139,8 @@ async def check_authentication(authenticated: bool = Depends(verify_session_toke
 @router.get("/prompts/{document_type}")
 async def get_prompts(
     document_type: DocumentClass,
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_db_session)
 ):
     """
     Get prompts for a specific document type.
@@ -139,7 +148,9 @@ async def get_prompts(
     Requires authentication.
     """
     try:
-        prompts = prompt_manager.get_prompts(document_type)
+        # Try database first, fallback to file-based
+        db_prompt_manager = DatabasePromptManager(db)
+        prompts = db_prompt_manager.load_prompts(document_type)
 
         return {
             "document_type": document_type.value,
@@ -169,7 +180,8 @@ async def get_prompts(
 async def update_prompts(
     document_type: DocumentClass,
     update_request: PromptUpdateRequest,
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_db_session)
 ):
     """
     Update prompts for a specific document type.
@@ -180,13 +192,18 @@ async def update_prompts(
         # Ensure document type matches
         update_request.prompts.document_type = document_type
 
-        # Save prompts
-        success = prompt_manager.save_prompts(
-            document_type=document_type,
-            prompts=update_request.prompts,
-            user=update_request.user or "settings_ui",
-            create_backup=True
-        )
+        # Try database first, fallback to file-based
+        db_prompt_manager = DatabasePromptManager(db)
+        success = db_prompt_manager.save_prompts(document_type, update_request.prompts)
+
+        if not success:
+            # Fallback to file-based system
+            success = prompt_manager.save_prompts(
+                document_type=document_type,
+                prompts=update_request.prompts,
+                user=update_request.user or "settings_ui",
+                create_backup=True
+            )
 
         if success:
             logger.info(f"Updated prompts for {document_type.value} by {update_request.user or 'unknown'}")

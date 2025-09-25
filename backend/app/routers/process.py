@@ -23,6 +23,10 @@ from app.services.cleanup import (
     remove_from_processing_store
 )
 from app.services.ovh_client import OVHClient
+from app.services.database_prompt_manager import DatabasePromptManager
+from app.services.ai_logging_service import AILoggingService
+from app.database.connection import get_session
+from sqlalchemy.orm import Session
 import os
 
 # Smart text extractor selection based on OCR availability
@@ -160,20 +164,39 @@ async def process_document(processing_id: str):
         if not ovh_connected:
             raise Exception(f"OVH API nicht verfügbar: {error_msg}")
         
+        # Get database session for logging and prompts
+        db_session = next(get_session())
+        ai_logger = AILoggingService(db_session)
+        
         # Custom Prompts laden (für Validierung)
         from app.services.prompt_manager import PromptManager
         from app.models.document_types import DocumentClass
         prompt_manager = PromptManager()
+        db_prompt_manager = DatabasePromptManager(db_session)
         
         # Erstmal mit "universal" laden, dann nach Klassifizierung aktualisieren
         document_class = DocumentClass.ARZTBRIEF  # Default
-        custom_prompts = prompt_manager.load_prompts(document_class)
+        try:
+            custom_prompts = db_prompt_manager.load_prompts(document_class)
+        except Exception as e:
+            print(f"Database prompt loading failed, using file-based: {e}")
+            custom_prompts = prompt_manager.load_prompts(document_class)
         
         # Medizinische Inhaltsvalidierung (nur wenn aktiviert)
         if custom_prompts.pipeline_steps.get("medical_validation", {}).enabled:
             from app.services.medical_content_validator import MedicalContentValidator
             validator = MedicalContentValidator(ovh_client)
             is_medical, validation_confidence, validation_method = await validator.validate_medical_content(extracted_text)
+            
+            # Log medical validation
+            ai_logger.log_medical_validation(
+                processing_id=processing_id,
+                input_text=extracted_text[:1000],  # Log first 1000 chars
+                is_medical=is_medical,
+                confidence=validation_confidence,
+                method=validation_method,
+                document_type=document_class.value
+            )
             
             if not is_medical:
                 print(f"❌ Medical validation: FAILED (confidence: {validation_confidence:.2%}, method: {validation_method})")
@@ -211,7 +234,22 @@ async def process_document(processing_id: str):
             classification_result = await classifier.classify_document(cleaned_text)
             detected_doc_type = classification_result.document_class.value
             document_class = DocumentClass(detected_doc_type)
-            custom_prompts = prompt_manager.load_prompts(document_class)  # Reload with correct type
+            
+            # Log classification
+            ai_logger.log_classification(
+                processing_id=processing_id,
+                input_text=cleaned_text[:1000],  # Log first 1000 chars
+                document_type=detected_doc_type,
+                confidence=classification_result.confidence,
+                method=classification_result.method
+            )
+            
+            # Reload prompts with correct type
+            try:
+                custom_prompts = db_prompt_manager.load_prompts(document_class)
+            except Exception as e:
+                print(f"Database prompt loading failed, using file-based: {e}")
+                custom_prompts = prompt_manager.load_prompts(document_class)
             
             print(f"📋 Document classification: {detected_doc_type} (confidence: {classification_result.confidence:.2%}, method: {classification_result.method})")
         else:
@@ -227,6 +265,17 @@ async def process_document(processing_id: str):
             translated_text, _, translation_confidence, _ = await ovh_client.translate_medical_document(
                 cleaned_text, document_type=detected_doc_type, custom_prompts=custom_prompts
             )
+            
+            # Log translation
+            ai_logger.log_translation(
+                processing_id=processing_id,
+                input_text=cleaned_text[:1000],  # Log first 1000 chars
+                output_text=translated_text[:1000],  # Log first 1000 chars
+                confidence=translation_confidence,
+                model_used="OVH-Llama-3.3-70B",
+                document_type=detected_doc_type
+            )
+            
             print(f"🌍 Translation: COMPLETED (confidence: {translation_confidence:.2%})")
         else:
             print(f"⏭️ Translation: SKIPPED (disabled)")
@@ -240,6 +289,18 @@ async def process_document(processing_id: str):
             fact_checked_text, fact_check_results = await quality_checker.fact_check(
                 translated_text, document_class, custom_prompts.fact_check_prompt
             )
+            
+            # Log fact check
+            changes_made = fact_check_results.get('changes_made', 0)
+            ai_logger.log_quality_check(
+                processing_id=processing_id,
+                step_name="fact_check",
+                input_text=translated_text[:1000],
+                output_text=fact_checked_text[:1000],
+                changes_made=changes_made,
+                document_type=detected_doc_type
+            )
+            
             translated_text = fact_checked_text
             print(f"🔍 Fact check: COMPLETED ({fact_check_results.get('status', 'unknown')})")
         else:
@@ -250,6 +311,18 @@ async def process_document(processing_id: str):
             grammar_checked_text, grammar_check_results = await quality_checker.grammar_check(
                 translated_text, "de", custom_prompts.grammar_check_prompt
             )
+            
+            # Log grammar check
+            changes_made = grammar_check_results.get('changes_made', 0)
+            ai_logger.log_quality_check(
+                processing_id=processing_id,
+                step_name="grammar_check",
+                input_text=translated_text[:1000],
+                output_text=grammar_checked_text[:1000],
+                changes_made=changes_made,
+                document_type=detected_doc_type
+            )
+            
             translated_text = grammar_checked_text
             print(f"✏️ Grammar check: COMPLETED ({grammar_check_results.get('status', 'unknown')})")
         else:
