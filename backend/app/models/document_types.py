@@ -11,6 +11,15 @@ class DocumentClass(str, Enum):
     BEFUNDBERICHT = "befundbericht"  # Medical reports, examination findings, imaging results
     LABORWERTE = "laborwerte"  # Lab results, blood tests, measurements
 
+class PipelineStepConfig(BaseModel):
+    """
+    Configuration for individual pipeline steps
+    """
+    enabled: bool = Field(default=True, description="Whether this step is enabled")
+    order: int = Field(..., description="Order of execution in the pipeline")
+    name: str = Field(..., description="Human-readable name of the step")
+    description: str = Field(..., description="Description of what this step does")
+
 class DocumentPrompts(BaseModel):
     """
     Complete set of prompts for each document type
@@ -26,6 +35,21 @@ class DocumentPrompts(BaseModel):
     grammar_check_prompt: str = Field(..., description="Prompt for German grammar correction")
     language_translation_prompt: str = Field(..., description="Prompt for target language translation")
     final_check_prompt: str = Field(..., description="Prompt for final quality assurance")
+
+    # Pipeline step configuration
+    pipeline_steps: Dict[str, PipelineStepConfig] = Field(
+        default_factory=lambda: {
+            "classification": PipelineStepConfig(enabled=True, order=1, name="Document Classification", description="Classify document type (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)"),
+            "preprocessing": PipelineStepConfig(enabled=True, order=2, name="Preprocessing", description="Remove PII and clean text"),
+            "translation": PipelineStepConfig(enabled=True, order=3, name="Translation", description="Translate to simple language"),
+            "fact_check": PipelineStepConfig(enabled=True, order=4, name="Fact Check", description="Verify medical accuracy"),
+            "grammar_check": PipelineStepConfig(enabled=True, order=5, name="Grammar Check", description="Correct German grammar"),
+            "language_translation": PipelineStepConfig(enabled=True, order=6, name="Language Translation", description="Translate to target language"),
+            "final_check": PipelineStepConfig(enabled=True, order=7, name="Final Check", description="Final quality assurance"),
+            "formatting": PipelineStepConfig(enabled=True, order=8, name="Formatting", description="Apply text formatting")
+        },
+        description="Configuration for each pipeline step"
+    )
 
     # Metadata
     version: int = Field(default=1, description="Version number of the prompt set")

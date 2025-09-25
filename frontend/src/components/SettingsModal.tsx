@@ -37,6 +37,12 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
   
   // Show/hide passwords
   const [showPasswords, setShowPasswords] = useState(false);
+  
+  // Pipeline steps
+  const [pipelineSteps, setPipelineSteps] = useState<Record<string, any>>({});
+  const [pipelineStepsLoading, setPipelineStepsLoading] = useState(false);
+  const [pipelineStepsError, setPipelineStepsError] = useState('');
+  const [updatingStep, setUpdatingStep] = useState<string | null>(null);
 
   // Check authentication on mount only if we have a token
   useEffect(() => {
@@ -239,6 +245,60 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
     // Reset file input
     event.target.value = '';
   };
+
+  // Pipeline Step Functions
+  const loadPipelineSteps = async () => {
+    setPipelineStepsLoading(true);
+    setPipelineStepsError('');
+    
+    try {
+      const steps = await settingsService.getPipelineSteps(selectedDocumentType);
+      setPipelineSteps(steps);
+    } catch (error: any) {
+      setPipelineStepsError(error.message);
+    } finally {
+      setPipelineStepsLoading(false);
+    }
+  };
+
+  const handleStepToggle = async (stepName: string, enabled: boolean) => {
+    setUpdatingStep(stepName);
+    
+    try {
+      const updatedSteps = await settingsService.updatePipelineStep(
+        selectedDocumentType,
+        stepName,
+        enabled
+      );
+      setPipelineSteps(updatedSteps);
+    } catch (error: any) {
+      console.error('Failed to update pipeline step:', error);
+      alert(`Failed to update step: ${error.message}`);
+    } finally {
+      setUpdatingStep(null);
+    }
+  };
+
+  const handleResetSteps = async () => {
+    if (!confirm('Reset all pipeline steps to enabled? This will enable all steps.')) {
+      return;
+    }
+    
+    try {
+      const updatedSteps = await settingsService.resetPipelineSteps(selectedDocumentType);
+      setPipelineSteps(updatedSteps);
+    } catch (error: any) {
+      console.error('Failed to reset pipeline steps:', error);
+      alert(`Failed to reset steps: ${error.message}`);
+    }
+  };
+
+  // Load pipeline steps when document type changes
+  useEffect(() => {
+    if (isAuthenticated && selectedDocumentType) {
+      loadPipelineSteps();
+    }
+  }, [isAuthenticated, selectedDocumentType]);
 
   if (!isOpen) return null;
 
@@ -520,6 +580,86 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
               ) : null}
+              
+              {/* Pipeline Steps Section */}
+              {isAuthenticated && (
+                <div className="mt-8 p-6 bg-primary-50 rounded-xl border border-primary-200">
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-primary-900">Pipeline Steps</h3>
+                      <p className="text-sm text-primary-600">
+                        Enable/disable processing steps for {documentTypes.find(t => t.id === selectedDocumentType)?.name}
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleResetSteps}
+                      className="btn-secondary text-sm"
+                    >
+                      <RotateCcw className="w-4 h-4 mr-2" />
+                      Reset All
+                    </button>
+                  </div>
+                  
+                  {pipelineStepsLoading ? (
+                    <div className="text-center py-8">
+                      <Loader2 className="w-6 h-6 animate-spin text-brand-600 mx-auto mb-2" />
+                      <p className="text-primary-600">Loading pipeline steps...</p>
+                    </div>
+                  ) : pipelineStepsError ? (
+                    <div className="text-center py-8">
+                      <AlertCircle className="w-6 h-6 text-error-600 mx-auto mb-2" />
+                      <p className="text-error-600 mb-4">{pipelineStepsError}</p>
+                      <button
+                        onClick={loadPipelineSteps}
+                        className="btn-primary"
+                      >
+                        Retry
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {Object.entries(pipelineSteps)
+                        .sort(([, a], [, b]) => a.order - b.order)
+                        .map(([stepName, step]) => (
+                          <div
+                            key={stepName}
+                            className="flex items-center justify-between p-4 bg-white rounded-lg border border-primary-200 hover:border-primary-300 transition-colors"
+                          >
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-3">
+                                <h4 className="font-medium text-primary-900">{step.name}</h4>
+                                <span className="text-xs text-primary-500 bg-primary-100 px-2 py-1 rounded">
+                                  Step {step.order}
+                                </span>
+                              </div>
+                              <p className="text-sm text-primary-600 mt-1">{step.description}</p>
+                            </div>
+                            <div className="flex items-center space-x-3">
+                              <span className={`text-sm font-medium ${
+                                step.enabled ? 'text-success-600' : 'text-error-600'
+                              }`}>
+                                {step.enabled ? 'Enabled' : 'Disabled'}
+                              </span>
+                              <button
+                                onClick={() => handleStepToggle(stepName, !step.enabled)}
+                                disabled={updatingStep === stepName}
+                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
+                                  step.enabled ? 'bg-brand-600' : 'bg-primary-200'
+                                } ${updatingStep === stepName ? 'opacity-50' : ''}`}
+                              >
+                                <span
+                                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                                    step.enabled ? 'translate-x-6' : 'translate-x-1'
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

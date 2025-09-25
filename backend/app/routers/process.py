@@ -163,52 +163,72 @@ async def process_document(processing_id: str):
         # Erst Text vorverarbeiten (PII-Entfernung)
         cleaned_text = await ovh_client.preprocess_medical_text(extracted_text)
         
-        # Dokumenttyp klassifizieren
-        from app.services.document_classifier import DocumentClassifier
-        classifier = DocumentClassifier(ovh_client)
-        classification_result = await classifier.classify_document(cleaned_text)
-        detected_doc_type = classification_result.document_class.value
-        
-        print(f"📋 Document classification: {detected_doc_type} (confidence: {classification_result.confidence:.2%}, method: {classification_result.method})")
-        
-        # Custom Prompts laden basierend auf Dokumenttyp
+        # Custom Prompts laden (für Klassifizierung)
         from app.services.prompt_manager import PromptManager
         from app.models.document_types import DocumentClass
         prompt_manager = PromptManager()
-        document_class = DocumentClass(detected_doc_type)
+        
+        # Erstmal mit "universal" laden, dann nach Klassifizierung aktualisieren
+        document_class = DocumentClass.ARZTBRIEF  # Default
         custom_prompts = prompt_manager.load_prompts(document_class)
+        
+        # Dokumenttyp klassifizieren (nur wenn aktiviert)
+        detected_doc_type = "arztbrief"  # Default
+        if custom_prompts.pipeline_steps.get("classification", {}).enabled:
+            from app.services.document_classifier import DocumentClassifier
+            classifier = DocumentClassifier(ovh_client)
+            classification_result = await classifier.classify_document(cleaned_text)
+            detected_doc_type = classification_result.document_class.value
+            document_class = DocumentClass(detected_doc_type)
+            custom_prompts = prompt_manager.load_prompts(document_class)  # Reload with correct type
+            
+            print(f"📋 Document classification: {detected_doc_type} (confidence: {classification_result.confidence:.2%}, method: {classification_result.method})")
+        else:
+            print(f"⏭️ Document classification: SKIPPED (disabled)")
         
         print(f"📝 Using custom prompts for {detected_doc_type} (version: {custom_prompts.version})")
         
-        # Dann übersetzen mit erkanntem Dokumenttyp und custom prompts
-        translated_text, _, translation_confidence, _ = await ovh_client.translate_medical_document(
-            cleaned_text, document_type=detected_doc_type, custom_prompts=custom_prompts
-        )
+        # Übersetzung (nur wenn aktiviert)
+        translated_text = cleaned_text  # Start with cleaned text
+        translation_confidence = 1.0  # Default confidence
+        
+        if custom_prompts.pipeline_steps.get("translation", {}).enabled:
+            translated_text, _, translation_confidence, _ = await ovh_client.translate_medical_document(
+                cleaned_text, document_type=detected_doc_type, custom_prompts=custom_prompts
+            )
+            print(f"🌍 Translation: COMPLETED (confidence: {translation_confidence:.2%})")
+        else:
+            print(f"⏭️ Translation: SKIPPED (disabled)")
         
         # Qualitätsprüfung (Fact Check + Grammar Check)
         from app.services.quality_checker import QualityChecker
         quality_checker = QualityChecker(ovh_client)
         
-        # Fact Check
-        fact_checked_text, fact_check_results = await quality_checker.fact_check(
-            translated_text, document_class, custom_prompts.fact_check_prompt
-        )
-        print(f"🔍 Fact check completed: {fact_check_results.get('status', 'unknown')}")
+        # Fact Check (nur wenn aktiviert)
+        if custom_prompts.pipeline_steps.get("fact_check", {}).enabled:
+            fact_checked_text, fact_check_results = await quality_checker.fact_check(
+                translated_text, document_class, custom_prompts.fact_check_prompt
+            )
+            translated_text = fact_checked_text
+            print(f"🔍 Fact check: COMPLETED ({fact_check_results.get('status', 'unknown')})")
+        else:
+            print(f"⏭️ Fact check: SKIPPED (disabled)")
         
-        # Grammar Check
-        grammar_checked_text, grammar_check_results = await quality_checker.grammar_check(
-            fact_checked_text, "de", custom_prompts.grammar_check_prompt
-        )
-        print(f"✏️ Grammar check completed: {grammar_check_results.get('status', 'unknown')}")
-        
-        # Use the quality-checked text
-        translated_text = grammar_checked_text
+        # Grammar Check (nur wenn aktiviert)
+        if custom_prompts.pipeline_steps.get("grammar_check", {}).enabled:
+            grammar_checked_text, grammar_check_results = await quality_checker.grammar_check(
+                translated_text, "de", custom_prompts.grammar_check_prompt
+            )
+            translated_text = grammar_checked_text
+            print(f"✏️ Grammar check: COMPLETED ({grammar_check_results.get('status', 'unknown')})")
+        else:
+            print(f"⏭️ Grammar check: SKIPPED (disabled)")
         
         # Schritt 3: Optionale Sprachübersetzung
         language_translated_text = None
         language_confidence_score = None
         
-        if target_language:
+        if target_language and custom_prompts.pipeline_steps.get("language_translation", {}).enabled:
             update_processing_store(processing_id, {
                 "status": ProcessingStatus.LANGUAGE_TRANSLATING,
                 "progress_percent": 70,
@@ -220,6 +240,11 @@ async def process_document(processing_id: str):
             language_translated_text, language_confidence_score = await ovh_client.translate_to_language(
                 translated_text, target_language, custom_prompt=language_prompt
             )
+            print(f"🌐 Language translation: COMPLETED (confidence: {language_confidence_score:.2%})")
+        elif target_language:
+            print(f"⏭️ Language translation: SKIPPED (disabled)")
+            language_translated_text = None
+            language_confidence_score = None
         
         # Schritt 4: Ergebnis finalisieren
         progress_percent = 90
@@ -233,20 +258,27 @@ async def process_document(processing_id: str):
         if language_confidence_score:
             overall_confidence = (translation_confidence + language_confidence_score) / 2
         
-        # Final Quality Check
-        final_checked_text, final_check_results = await quality_checker.final_check(
-            translated_text, custom_prompts.final_check_prompt
-        )
-        print(f"✅ Final quality check completed: {final_check_results.get('status', 'unknown')}")
+        # Final Quality Check (nur wenn aktiviert)
+        if custom_prompts.pipeline_steps.get("final_check", {}).enabled:
+            final_checked_text, final_check_results = await quality_checker.final_check(
+                translated_text, custom_prompts.final_check_prompt
+            )
+            translated_text = final_checked_text
+            print(f"✅ Final quality check: COMPLETED ({final_check_results.get('status', 'unknown')})")
+        else:
+            print(f"⏭️ Final quality check: SKIPPED (disabled)")
         
-        # WICHTIG: Formatierung IMMER direkt vor der Rückgabe anwenden
-        # Dies stellt sicher, dass die Formatierung wirklich angewendet wird
-        print(f"[FORMATTING] Applying final formatting to translated text...")
-        from app.services.ovh_client import OVHClient
-        ovh_client = OVHClient()
-        translated_text = ovh_client._improve_formatting(final_checked_text)
-        if language_translated_text:
-            language_translated_text = ovh_client._improve_formatting(language_translated_text)
+        # Formatierung (nur wenn aktiviert)
+        if custom_prompts.pipeline_steps.get("formatting", {}).enabled:
+            print(f"[FORMATTING] Applying final formatting to translated text...")
+            from app.services.ovh_client import OVHClient
+            ovh_client = OVHClient()
+            translated_text = ovh_client._improve_formatting(translated_text)
+            if language_translated_text:
+                language_translated_text = ovh_client._improve_formatting(language_translated_text)
+            print(f"🎨 Formatting: COMPLETED")
+        else:
+            print(f"⏭️ Formatting: SKIPPED (disabled)")
         
         # Debug-Logging um zu sehen was passiert
         print(f"[FORMATTING] Complete:")

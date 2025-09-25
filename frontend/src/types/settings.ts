@@ -6,6 +6,13 @@ export enum DocumentClass {
   LABORWERTE = 'laborwerte'
 }
 
+export interface PipelineStepConfig {
+  enabled: boolean;
+  order: number;
+  name: string;
+  description: string;
+}
+
 export interface DocumentPrompts {
   document_type: DocumentClass;
   classification_prompt: string;
@@ -15,6 +22,7 @@ export interface DocumentPrompts {
   grammar_check_prompt: string;
   language_translation_prompt: string;
   final_check_prompt: string;
+  pipeline_steps: Record<string, PipelineStepConfig>;
   version?: number;
   last_modified?: string;
   modified_by?: string;

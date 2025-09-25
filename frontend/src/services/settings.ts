@@ -282,6 +282,56 @@ class SettingsService {
       reader.readAsText(file);
     });
   }
+
+  // Pipeline Step Management Methods
+
+  async getPipelineSteps(documentType: DocumentClass): Promise<Record<string, any>> {
+    try {
+      const response = await axios.get(
+        `${SETTINGS_BASE_URL}/pipeline-steps/${documentType}`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data.pipeline_steps;
+    } catch (error) {
+      console.error('Failed to get pipeline steps:', error);
+      throw new Error('Failed to get pipeline steps');
+    }
+  }
+
+  async updatePipelineStep(
+    documentType: DocumentClass,
+    stepName: string,
+    enabled: boolean
+  ): Promise<Record<string, any>> {
+    try {
+      const response = await axios.put(
+        `${SETTINGS_BASE_URL}/pipeline-steps/${documentType}`,
+        {
+          step_name: stepName,
+          enabled: enabled
+        },
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data.pipeline_steps;
+    } catch (error) {
+      console.error('Failed to update pipeline step:', error);
+      throw new Error('Failed to update pipeline step');
+    }
+  }
+
+  async resetPipelineSteps(documentType: DocumentClass): Promise<Record<string, any>> {
+    try {
+      const response = await axios.post(
+        `${SETTINGS_BASE_URL}/pipeline-steps/${documentType}/reset`,
+        {},
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data.pipeline_steps;
+    } catch (error) {
+      console.error('Failed to reset pipeline steps:', error);
+      throw new Error('Failed to reset pipeline steps');
+    }
+  }
 }
 
 // Export singleton instance

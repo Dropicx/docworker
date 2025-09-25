@@ -383,3 +383,174 @@ async def get_document_types(
             for doc_class in DocumentClass
         ]
     }
+
+# Pipeline Step Management Endpoints
+
+class PipelineStepUpdateRequest(BaseModel):
+    """Request to update pipeline step configuration"""
+    step_name: str = Field(..., description="Name of the pipeline step")
+    enabled: bool = Field(..., description="Whether to enable or disable the step")
+
+@router.put("/pipeline-steps/{document_type}")
+async def update_pipeline_step(
+    document_type: DocumentClass,
+    update_request: PipelineStepUpdateRequest,
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Enable or disable a specific pipeline step for a document type.
+    
+    Args:
+        document_type: The document type to update
+        update_request: Step name and enabled status
+        
+    Returns:
+        Updated pipeline configuration
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    try:
+        prompt_manager = PromptManager()
+        prompts = prompt_manager.load_prompts(document_type)
+        
+        # Update the specific step
+        if update_request.step_name in prompts.pipeline_steps:
+            prompts.pipeline_steps[update_request.step_name].enabled = update_request.enabled
+            prompts.last_modified = datetime.now()
+            prompts.modified_by = "admin"
+            
+            # Save the updated prompts
+            prompt_manager.save_prompts(document_type, prompts)
+            
+            logger.info(f"Updated pipeline step {update_request.step_name} for {document_type.value}: enabled={update_request.enabled}")
+            
+            return {
+                "success": True,
+                "message": f"Pipeline step '{update_request.step_name}' {'enabled' if update_request.enabled else 'disabled'} for {document_type.value}",
+                "pipeline_steps": {
+                    name: {
+                        "enabled": config.enabled,
+                        "order": config.order,
+                        "name": config.name,
+                        "description": config.description
+                    }
+                    for name, config in prompts.pipeline_steps.items()
+                }
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Pipeline step '{update_request.step_name}' not found"
+            )
+            
+    except Exception as e:
+        logger.error(f"Failed to update pipeline step: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update pipeline step: {str(e)}"
+        )
+
+@router.get("/pipeline-steps/{document_type}")
+async def get_pipeline_steps(
+    document_type: DocumentClass,
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Get pipeline step configuration for a document type.
+    
+    Args:
+        document_type: The document type to get configuration for
+        
+    Returns:
+        Pipeline step configuration
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    try:
+        prompt_manager = PromptManager()
+        prompts = prompt_manager.load_prompts(document_type)
+        
+        return {
+            "document_type": document_type.value,
+            "pipeline_steps": {
+                name: {
+                    "enabled": config.enabled,
+                    "order": config.order,
+                    "name": config.name,
+                    "description": config.description
+                }
+                for name, config in prompts.pipeline_steps.items()
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to get pipeline steps: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get pipeline steps: {str(e)}"
+        )
+
+@router.post("/pipeline-steps/{document_type}/reset")
+async def reset_pipeline_steps(
+    document_type: DocumentClass,
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Reset all pipeline steps to default (enabled) state for a document type.
+    
+    Args:
+        document_type: The document type to reset
+        
+    Returns:
+        Reset pipeline configuration
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    try:
+        prompt_manager = PromptManager()
+        prompts = prompt_manager.load_prompts(document_type)
+        
+        # Reset all steps to enabled
+        for step_config in prompts.pipeline_steps.values():
+            step_config.enabled = True
+        
+        prompts.last_modified = datetime.now()
+        prompts.modified_by = "admin"
+        
+        # Save the updated prompts
+        prompt_manager.save_prompts(document_type, prompts)
+        
+        logger.info(f"Reset all pipeline steps for {document_type.value}")
+        
+        return {
+            "success": True,
+            "message": f"All pipeline steps reset to enabled for {document_type.value}",
+            "pipeline_steps": {
+                name: {
+                    "enabled": config.enabled,
+                    "order": config.order,
+                    "name": config.name,
+                    "description": config.description
+                }
+                for name, config in prompts.pipeline_steps.items()
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to reset pipeline steps: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to reset pipeline steps: {str(e)}"
+        )
