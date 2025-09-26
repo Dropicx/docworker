@@ -19,7 +19,7 @@ from app.services.unified_prompt_manager import UnifiedPromptManager
 from app.services.ai_logging_service import AILoggingService
 from app.database.connection import get_session
 from app.models.document import TranslationResult
-from app.services.processing_store import (
+from app.services.cleanup import (
     get_from_processing_store, 
     update_processing_store,
     remove_from_processing_store
