@@ -38,6 +38,7 @@ class DocumentPromptsDB(Base):
     document_type = Column(SQLEnum(DocumentClassEnum), nullable=False, index=True)
     
     # Prompt fields
+    medical_validation_prompt = Column(Text, nullable=False)
     classification_prompt = Column(Text, nullable=False)
     preprocessing_prompt = Column(Text, nullable=False)
     translation_prompt = Column(Text, nullable=False)
@@ -45,6 +46,7 @@ class DocumentPromptsDB(Base):
     grammar_check_prompt = Column(Text, nullable=False)
     language_translation_prompt = Column(Text, nullable=False)
     final_check_prompt = Column(Text, nullable=False)
+    formatting_prompt = Column(Text, nullable=False)
     
     # Metadata
     version = Column(Integer, default=1, nullable=False)

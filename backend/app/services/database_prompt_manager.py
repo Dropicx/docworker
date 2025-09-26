@@ -112,6 +112,7 @@ class DatabasePromptManager:
         if document_type == DocumentClass.ARZTBRIEF:
             return DocumentPrompts(
                 document_type=document_type,
+                medical_validation_prompt="Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält. Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH",
                 classification_prompt="Analysiere diesen medizinischen Text und bestimme, ob es sich um einen Arztbrief handelt.",
                 preprocessing_prompt="Entferne persönliche Daten aber behalte alle medizinischen Informationen.",
                 translation_prompt="Übersetze diesen Arztbrief in einfache, verständliche Sprache für Patienten.",
@@ -119,6 +120,7 @@ class DatabasePromptManager:
                 grammar_check_prompt="Korrigiere die deutsche Grammatik und Rechtschreibung.",
                 language_translation_prompt="Übersetze diesen Text in {language}.",
                 final_check_prompt="Führe eine finale Qualitätskontrolle durch.",
+                formatting_prompt="Formatiere diesen Text für optimale Lesbarkeit mit klaren Überschriften und Bullet Points.",
                 pipeline_steps=default_steps,
                 version=1,
                 modified_by="system"
@@ -126,6 +128,7 @@ class DatabasePromptManager:
         elif document_type == DocumentClass.BEFUNDBERICHT:
             return DocumentPrompts(
                 document_type=document_type,
+                medical_validation_prompt="Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält. Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH",
                 classification_prompt="Analysiere diesen medizinischen Text und bestimme, ob es sich um einen Befundbericht handelt.",
                 preprocessing_prompt="Entferne persönliche Daten aber behalte alle medizinischen Informationen.",
                 translation_prompt="Übersetze diesen Befundbericht in einfache, verständliche Sprache für Patienten.",
@@ -133,6 +136,7 @@ class DatabasePromptManager:
                 grammar_check_prompt="Korrigiere die deutsche Grammatik und Rechtschreibung.",
                 language_translation_prompt="Übersetze diesen Text in {language}.",
                 final_check_prompt="Führe eine finale Qualitätskontrolle durch.",
+                formatting_prompt="Formatiere diesen Text für optimale Lesbarkeit mit klaren Überschriften und Bullet Points.",
                 pipeline_steps=default_steps,
                 version=1,
                 modified_by="system"
@@ -140,6 +144,7 @@ class DatabasePromptManager:
         else:  # LABORWERTE
             return DocumentPrompts(
                 document_type=document_type,
+                medical_validation_prompt="Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält. Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH",
                 classification_prompt="Analysiere diesen medizinischen Text und bestimme, ob es sich um Laborwerte handelt.",
                 preprocessing_prompt="Entferne persönliche Daten aber behalte alle medizinischen Informationen.",
                 translation_prompt="Übersetze diese Laborwerte in einfache, verständliche Sprache für Patienten.",
@@ -147,6 +152,7 @@ class DatabasePromptManager:
                 grammar_check_prompt="Korrigiere die deutsche Grammatik und Rechtschreibung.",
                 language_translation_prompt="Übersetze diesen Text in {language}.",
                 final_check_prompt="Führe eine finale Qualitätskontrolle durch.",
+                formatting_prompt="Formatiere diesen Text für optimale Lesbarkeit mit klaren Überschriften und Bullet Points.",
                 pipeline_steps=default_steps,
                 version=1,
                 modified_by="system"

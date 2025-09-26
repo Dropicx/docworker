@@ -28,6 +28,7 @@ class DocumentPrompts(BaseModel):
     document_type: DocumentClass = Field(..., description="Type of medical document")
 
     # Processing pipeline prompts
+    medical_validation_prompt: str = Field(..., description="Prompt for validating medical content")
     classification_prompt: str = Field(..., description="Prompt for AI-based document classification")
     preprocessing_prompt: str = Field(..., description="Prompt for data cleaning and PII removal")
     translation_prompt: str = Field(..., description="Main prompt for medical text simplification")
@@ -35,6 +36,7 @@ class DocumentPrompts(BaseModel):
     grammar_check_prompt: str = Field(..., description="Prompt for German grammar correction")
     language_translation_prompt: str = Field(..., description="Prompt for target language translation")
     final_check_prompt: str = Field(..., description="Prompt for final quality assurance")
+    formatting_prompt: str = Field(..., description="Prompt for text formatting and structure")
 
     # Pipeline step configuration
     pipeline_steps: Dict[str, PipelineStepConfig] = Field(

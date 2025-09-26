@@ -51,6 +51,7 @@ class DatabaseService:
             
             return DocumentPrompts(
                 document_type=document_type,
+                medical_validation_prompt=getattr(db_prompts, 'medical_validation_prompt', 'Default medical validation prompt'),
                 classification_prompt=db_prompts.classification_prompt,
                 preprocessing_prompt=db_prompts.preprocessing_prompt,
                 translation_prompt=db_prompts.translation_prompt,
@@ -58,6 +59,7 @@ class DatabaseService:
                 grammar_check_prompt=db_prompts.grammar_check_prompt,
                 language_translation_prompt=db_prompts.language_translation_prompt,
                 final_check_prompt=db_prompts.final_check_prompt,
+                formatting_prompt=getattr(db_prompts, 'formatting_prompt', 'Default formatting prompt'),
                 pipeline_steps=pipeline_steps,
                 version=db_prompts.version,
                 last_modified=db_prompts.last_modified,
@@ -82,6 +84,7 @@ class DatabaseService:
                 self.session.add(db_prompts)
             
             # Update prompt fields
+            db_prompts.medical_validation_prompt = prompts.medical_validation_prompt
             db_prompts.classification_prompt = prompts.classification_prompt
             db_prompts.preprocessing_prompt = prompts.preprocessing_prompt
             db_prompts.translation_prompt = prompts.translation_prompt
@@ -89,6 +92,7 @@ class DatabaseService:
             db_prompts.grammar_check_prompt = prompts.grammar_check_prompt
             db_prompts.language_translation_prompt = prompts.language_translation_prompt
             db_prompts.final_check_prompt = prompts.final_check_prompt
+            db_prompts.formatting_prompt = prompts.formatting_prompt
             db_prompts.version = prompts.version or 1
             db_prompts.last_modified = datetime.now()
             db_prompts.modified_by = prompts.modified_by or "admin"
