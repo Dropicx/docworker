@@ -250,13 +250,29 @@ class UnifiedPromptManager:
             logger.error(f"Failed to get combined prompts for {document_type.value}: {e}")
             return {}
     
-    def is_pipeline_step_enabled(self, step_name: str) -> bool:
+    def is_pipeline_step_enabled(self, step_name: str, document_type: DocumentClass = None) -> bool:
         """Check if a pipeline step is enabled."""
         try:
-            step = self.session.query(UniversalPipelineStepConfigDB).filter_by(
+            # First check universal pipeline steps
+            universal_step = self.session.query(UniversalPipelineStepConfigDB).filter_by(
                 step_name=step_name.upper()
             ).first()
-            return step.enabled if step else True
+            
+            if universal_step:
+                return universal_step.enabled
+            
+            # If not found in universal steps, check document-specific steps
+            if document_type:
+                from app.database.models import PipelineStepConfigDB
+                doc_specific_step = self.session.query(PipelineStepConfigDB).join(
+                    self.session.query(DocumentPromptsDB).filter_by(document_type=document_type)
+                ).filter_by(step_name=step_name.upper()).first()
+                
+                if doc_specific_step:
+                    return doc_specific_step.enabled
+            
+            # Default to enabled if not found
+            return True
         except Exception as e:
             logger.error(f"Failed to check pipeline step {step_name}: {e}")
             return True

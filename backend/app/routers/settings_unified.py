@@ -616,6 +616,16 @@ async def get_pipeline_settings(
             if step.step_name in step_mapping:
                 settings[step_mapping[step.step_name]] = step.enabled
         
+        # Check document-specific pipeline steps for FORMATTING
+        from app.database.models import PipelineStepConfigDB, DocumentPromptsDB
+        doc_specific_steps = db.query(PipelineStepConfigDB).join(
+            DocumentPromptsDB, PipelineStepConfigDB.document_prompts_id == DocumentPromptsDB.id
+        ).filter_by(step_name="FORMATTING").all()
+        
+        # If any document-specific FORMATTING step is enabled, enable it in settings
+        if doc_specific_steps and any(step.enabled for step in doc_specific_steps):
+            settings["enable_formatting"] = True
+        
         return {"settings": settings}
         
     except Exception as e:
@@ -657,20 +667,33 @@ async def update_pipeline_settings(
         # Update each step configuration based on frontend flags
         for frontend_key, step_name in step_mapping.items():
             if frontend_key in settings:
-                step_db = db.query(UniversalPipelineStepConfigDB).filter_by(step_name=step_name).first()
-                if step_db:
-                    step_db.enabled = settings[frontend_key]
-                    step_db.last_modified = datetime.now()
-                    step_db.modified_by = "frontend_update"
+                if step_name == "FORMATTING":
+                    # Handle FORMATTING as document-specific step
+                    from app.database.models import PipelineStepConfigDB, DocumentPromptsDB
+                    doc_specific_steps = db.query(PipelineStepConfigDB).join(
+                        DocumentPromptsDB, PipelineStepConfigDB.document_prompts_id == DocumentPromptsDB.id
+                    ).filter_by(step_name="FORMATTING").all()
+                    
+                    for step in doc_specific_steps:
+                        step.enabled = settings[frontend_key]
+                        step.last_modified = datetime.now()
+                        step.modified_by = "frontend_update"
                 else:
-                    # Create new step configuration if it doesn't exist
-                    new_step = UniversalPipelineStepConfigDB(
-                        step_name=step_name,
-                        enabled=settings[frontend_key],
-                        description=f"Step {step_name}",
-                        order=0
-                    )
-                    db.add(new_step)
+                    # Handle universal steps
+                    step_db = db.query(UniversalPipelineStepConfigDB).filter_by(step_name=step_name).first()
+                    if step_db:
+                        step_db.enabled = settings[frontend_key]
+                        step_db.last_modified = datetime.now()
+                        step_db.modified_by = "frontend_update"
+                    else:
+                        # Create new step configuration if it doesn't exist
+                        new_step = UniversalPipelineStepConfigDB(
+                            step_name=step_name,
+                            enabled=settings[frontend_key],
+                            description=f"Step {step_name}",
+                            order=0
+                        )
+                        db.add(new_step)
         
         db.commit()
         

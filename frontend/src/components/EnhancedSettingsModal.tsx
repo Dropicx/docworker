@@ -1100,8 +1100,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                             { key: 'enable_preprocessing', name: '2. Vorverarbeitung', desc: 'Entfernt persönliche Daten (PII)', order: 2 },
                             { key: 'enable_classification', name: '3. Klassifizierung', desc: 'Erkennt Dokumenttyp (Arztbrief, Befund, etc.)', order: 3 },
                             { key: 'enable_language_translation', name: '7. Sprachübersetzung', desc: 'Übersetzt in Zielsprache', order: 7 },
-                            { key: 'enable_final_check', name: '8. Finale Kontrolle', desc: 'Qualitätssicherung und Validierung', order: 8 },
-                            { key: 'enable_formatting', name: '9. Formatierung', desc: 'Strukturiert und formatiert den Text', order: 9 }
+                            { key: 'enable_final_check', name: '8. Finale Kontrolle', desc: 'Qualitätssicherung und Validierung', order: 8 }
                           ].map(({ key, name, desc, order }) => (
                             <div key={key} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
                               <div>
@@ -1129,13 +1128,14 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       {/* Document-Specific Steps */}
                       <div>
                         <h5 className="text-md font-semibold text-green-900 mb-3 flex items-center">
-                          📄 Dokument-spezifische Schritte (4-6)
+                          📄 Dokument-spezifische Schritte (4-6, 9)
                         </h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {[
                             { key: 'enable_translation', name: '4. Übersetzung', desc: 'Übersetzt in verständliche Sprache (je Dokumenttyp unterschiedlich)', order: 4 },
                             { key: 'enable_fact_check', name: '5. Faktenprüfung', desc: 'Prüft medizinische Korrektheit (je Dokumenttyp unterschiedlich)', order: 5 },
-                            { key: 'enable_grammar_check', name: '6. Grammatikprüfung', desc: 'Korrigiert Grammatik und Rechtschreibung', order: 6 }
+                            { key: 'enable_grammar_check', name: '6. Grammatikprüfung', desc: 'Korrigiert Grammatik und Rechtschreibung', order: 6 },
+                            { key: 'enable_formatting', name: '9. Formatierung', desc: 'Strukturiert und formatiert den Text (je Dokumenttyp unterschiedlich)', order: 9 }
                           ].map(({ key, name, desc, order }) => (
                             <div key={key} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
                               <div>

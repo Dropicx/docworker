@@ -311,8 +311,8 @@ async def process_document_unified(processing_id: str):
             else:
                 print(f"⏭️ Final check: SKIPPED (disabled)")
             
-            # Step 9: Formatting
-            if unified_manager.is_pipeline_step_enabled("FORMATTING"):
+            # Step 9: Formatting (Document-specific)
+            if unified_manager.is_pipeline_step_enabled("FORMATTING", document_class):
                 print(f"🎨 Formatting: STARTING")
                 update_processing_store(processing_id, {
                     "status": ProcessingStatus.PROCESSING,
@@ -320,6 +320,7 @@ async def process_document_unified(processing_id: str):
                     "current_step": "Formatting text..."
                 })
                 
+                # Get document-specific formatting prompt
                 formatting_prompt = combined_prompts.get("formatting_prompt", "")
                 if formatting_prompt:
                     # Apply formatting using OVH client

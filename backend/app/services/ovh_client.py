@@ -759,3 +759,29 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         text = re.sub(r'\n{3,}', '\n\n', text)
         
         return text.strip()
+    
+    async def format_text(self, text: str, formatting_prompt: str) -> str:
+        """
+        Format text using AI with a specific formatting prompt.
+        This method applies document-specific formatting rules.
+        """
+        try:
+            if not text or not formatting_prompt:
+                return text
+            
+            # Use the medical text processing with the formatting prompt
+            formatted_text = await self.process_medical_text_with_prompt(
+                text=text,
+                prompt=formatting_prompt,
+                model_name="llama-3.3-70b-instruct"
+            )
+            
+            # Apply additional formatting improvements
+            formatted_text = self._improve_formatting(formatted_text)
+            
+            return formatted_text
+            
+        except Exception as e:
+            logger.error(f"Error formatting text: {e}")
+            # Return original text with basic formatting if AI formatting fails
+            return self._improve_formatting(text)
