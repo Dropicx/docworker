@@ -7,7 +7,7 @@ import secrets
 
 from fastapi import APIRouter, HTTPException, Depends, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from pydantic import BaseModel, Field, ValidationError
+from pydantic import BaseModel, Field, ValidationError, validator
 
 from app.models.document_types import (
     DocumentClass,
@@ -64,6 +64,21 @@ class AuthResponse(BaseModel):
 class PromptUpdateRequest(BaseModel):
     prompts: DocumentPrompts
     user: Optional[str] = Field(None, description="Username making the change")
+    
+    @validator('prompts', pre=True)
+    def convert_document_type(cls, v):
+        if isinstance(v, dict) and 'document_type' in v:
+            # Convert frontend lowercase to database uppercase
+            frontend_type = v['document_type']
+            if isinstance(frontend_type, str):
+                conversion_map = {
+                    "arztbrief": "ARZTBRIEF",
+                    "befundbericht": "BEFUNDBERICHT", 
+                    "laborwerte": "LABORWERTE"
+                }
+                if frontend_type.lower() in conversion_map:
+                    v['document_type'] = conversion_map[frontend_type.lower()]
+        return v
 
 class ImportRequest(BaseModel):
     data: Dict[str, Any] = Field(..., description="Prompt data to import")
