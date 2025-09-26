@@ -15,6 +15,20 @@ from app.models.document_types import (
     PromptTestRequest,
     PromptTestResponse
 )
+
+def convert_frontend_to_db_document_type(frontend_type: str) -> DocumentClass:
+    """Convert frontend document type (lowercase) to database enum (uppercase)"""
+    conversion_map = {
+        "arztbrief": DocumentClass.ARZTBRIEF,
+        "befundbericht": DocumentClass.BEFUNDBERICHT,
+        "laborwerte": DocumentClass.LABORWERTE
+    }
+    if frontend_type.lower() not in conversion_map:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid document type: {frontend_type}. Must be one of: arztbrief, befundbericht, laborwerte"
+        )
+    return conversion_map[frontend_type.lower()]
 from app.services.prompt_manager import PromptManager
 from app.services.database_prompt_manager import DatabasePromptManager
 from app.services.ovh_client import OVHClient
@@ -138,7 +152,7 @@ async def check_authentication(authenticated: bool = Depends(verify_session_toke
 
 @router.get("/prompts/{document_type}")
 async def get_prompts(
-    document_type: DocumentClass,
+    document_type: str,
     authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_db_session)
 ):
@@ -148,12 +162,15 @@ async def get_prompts(
     Requires authentication.
     """
     try:
+        # Convert frontend document type to database enum
+        db_document_type = convert_frontend_to_db_document_type(document_type)
+        
         # Try database first, fallback to file-based
         db_prompt_manager = DatabasePromptManager(db)
-        prompts = db_prompt_manager.load_prompts(document_type)
+        prompts = db_prompt_manager.load_prompts(db_document_type)
 
         return {
-            "document_type": document_type.value,
+            "document_type": document_type,
             "prompts": {
                 "classification_prompt": prompts.classification_prompt,
                 "preprocessing_prompt": prompts.preprocessing_prompt,
@@ -462,7 +479,7 @@ class PipelineStepUpdateRequest(BaseModel):
 
 @router.put("/pipeline-steps/{document_type}")
 async def update_pipeline_step(
-    document_type: DocumentClass,
+    document_type: str,
     update_request: PipelineStepUpdateRequest,
     authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_db_session)
@@ -484,9 +501,12 @@ async def update_pipeline_step(
         )
     
     try:
+        # Convert frontend document type to database enum
+        db_document_type = convert_frontend_to_db_document_type(document_type)
+        
         # Try database first, fallback to file-based
         db_prompt_manager = DatabasePromptManager(db)
-        prompts = db_prompt_manager.load_prompts(document_type)
+        prompts = db_prompt_manager.load_prompts(db_document_type)
         
         # Update the specific step
         if update_request.step_name in prompts.pipeline_steps:
@@ -495,17 +515,17 @@ async def update_pipeline_step(
             prompts.modified_by = "admin"
             
             # Save the updated prompts
-            success = db_prompt_manager.save_prompts(document_type, prompts)
+            success = db_prompt_manager.save_prompts(db_document_type, prompts)
             if not success:
                 # Fallback to file-based system
                 prompt_manager = PromptManager()
-                prompt_manager.save_prompts(document_type, prompts)
+                prompt_manager.save_prompts(db_document_type, prompts)
             
-            logger.info(f"Updated pipeline step {update_request.step_name} for {document_type.value}: enabled={update_request.enabled}")
+            logger.info(f"Updated pipeline step {update_request.step_name} for {document_type}: enabled={update_request.enabled}")
             
             return {
                 "success": True,
-                "message": f"Pipeline step '{update_request.step_name}' {'enabled' if update_request.enabled else 'disabled'} for {document_type.value}",
+                "message": f"Pipeline step '{update_request.step_name}' {'enabled' if update_request.enabled else 'disabled'} for {document_type}",
                 "pipeline_steps": {
                     name: {
                         "enabled": config.enabled,
@@ -531,7 +551,7 @@ async def update_pipeline_step(
 
 @router.get("/pipeline-steps/{document_type}")
 async def get_pipeline_steps(
-    document_type: DocumentClass,
+    document_type: str,
     authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_db_session)
 ):
@@ -551,12 +571,15 @@ async def get_pipeline_steps(
         )
     
     try:
+        # Convert frontend document type to database enum
+        db_document_type = convert_frontend_to_db_document_type(document_type)
+        
         # Try database first, fallback to file-based
         db_prompt_manager = DatabasePromptManager(db)
-        prompts = db_prompt_manager.load_prompts(document_type)
+        prompts = db_prompt_manager.load_prompts(db_document_type)
         
         return {
-            "document_type": document_type.value,
+            "document_type": document_type,
             "pipeline_steps": {
                 name: {
                     "enabled": config.enabled,
@@ -577,7 +600,7 @@ async def get_pipeline_steps(
 
 @router.post("/pipeline-steps/{document_type}/reset")
 async def reset_pipeline_steps(
-    document_type: DocumentClass,
+    document_type: str,
     authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_db_session)
 ):
@@ -597,9 +620,12 @@ async def reset_pipeline_steps(
         )
     
     try:
+        # Convert frontend document type to database enum
+        db_document_type = convert_frontend_to_db_document_type(document_type)
+        
         # Try database first, fallback to file-based
         db_prompt_manager = DatabasePromptManager(db)
-        prompts = db_prompt_manager.load_prompts(document_type)
+        prompts = db_prompt_manager.load_prompts(db_document_type)
         
         # Reset all steps to enabled
         for step_config in prompts.pipeline_steps.values():
@@ -609,17 +635,17 @@ async def reset_pipeline_steps(
         prompts.modified_by = "admin"
         
         # Save the updated prompts
-        success = db_prompt_manager.save_prompts(document_type, prompts)
+        success = db_prompt_manager.save_prompts(db_document_type, prompts)
         if not success:
             # Fallback to file-based system
             prompt_manager = PromptManager()
-            prompt_manager.save_prompts(document_type, prompts)
+            prompt_manager.save_prompts(db_document_type, prompts)
         
-        logger.info(f"Reset all pipeline steps for {document_type.value}")
+        logger.info(f"Reset all pipeline steps for {document_type}")
         
         return {
             "success": True,
-            "message": f"All pipeline steps reset to enabled for {document_type.value}",
+            "message": f"All pipeline steps reset to enabled for {document_type}",
             "pipeline_steps": {
                 name: {
                     "enabled": config.enabled,
