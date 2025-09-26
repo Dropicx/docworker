@@ -11,7 +11,11 @@ import {
   DocumentTypeInfo,
   ExportData,
   ImportRequest,
-  ImportResponse
+  ImportResponse,
+  PipelineSettings,
+  PipelineSettingsUpdateRequest,
+  PipelineSettingsResponse,
+  PipelineStatsResponse
 } from '../types/settings';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
@@ -330,6 +334,82 @@ class SettingsService {
     } catch (error) {
       console.error('Failed to reset pipeline steps:', error);
       throw new Error('Failed to reset pipeline steps');
+    }
+  }
+
+  // Pipeline optimization settings methods
+
+  /**
+   * Get current pipeline settings
+   */
+  async getPipelineSettings(): Promise<PipelineSettings> {
+    try {
+      const response = await axios.get<{ settings: PipelineSettings }>(
+        `${SETTINGS_BASE_URL}/pipeline-settings`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data.settings;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to get pipeline settings'
+      );
+    }
+  }
+
+  /**
+   * Update pipeline settings
+   */
+  async updatePipelineSettings(settings: Partial<PipelineSettings>): Promise<PipelineSettingsResponse> {
+    try {
+      const response = await axios.put<PipelineSettingsResponse>(
+        `${SETTINGS_BASE_URL}/pipeline-settings`,
+        { settings } as PipelineSettingsUpdateRequest,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to update pipeline settings'
+      );
+    }
+  }
+
+  /**
+   * Get pipeline statistics
+   */
+  async getPipelineStats(): Promise<PipelineStatsResponse> {
+    try {
+      const response = await axios.get<PipelineStatsResponse>(
+        `${API_BASE_URL}/process/pipeline-stats`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to get pipeline statistics'
+      );
+    }
+  }
+
+  /**
+   * Clear pipeline cache
+   */
+  async clearPipelineCache(): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await axios.post(
+        `${API_BASE_URL}/process/clear-cache`,
+        {},
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to clear pipeline cache'
+      );
     }
   }
 }

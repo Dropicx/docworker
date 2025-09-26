@@ -15,6 +15,7 @@ export interface PipelineStepConfig {
 
 export interface DocumentPrompts {
   document_type: DocumentClass;
+  medical_validation_prompt: string;
   classification_prompt: string;
   preprocessing_prompt: string;
   translation_prompt: string;
@@ -22,6 +23,7 @@ export interface DocumentPrompts {
   grammar_check_prompt: string;
   language_translation_prompt: string;
   final_check_prompt: string;
+  formatting_prompt: string;
   pipeline_steps: Record<string, PipelineStepConfig>;
   version?: number;
   last_modified?: string;
@@ -94,6 +96,17 @@ export interface ImportResponse {
   results: Record<string, boolean>;
 }
 
+// Pipeline optimization request/response types
+export interface PipelineSettingsUpdateRequest {
+  settings: Partial<PipelineSettings>;
+}
+
+export interface PipelineSettingsResponse {
+  settings: PipelineSettings;
+  success: boolean;
+  message: string;
+}
+
 // Document type descriptions for UI
 export const DOCUMENT_TYPE_INFO: Record<DocumentClass, DocumentTypeInfo> = {
   [DocumentClass.ARZTBRIEF]: {
@@ -119,8 +132,39 @@ export const DOCUMENT_TYPE_INFO: Record<DocumentClass, DocumentTypeInfo> = {
   }
 };
 
+// Pipeline optimization settings
+export interface PipelineSettings {
+  use_optimized_pipeline: boolean;
+  pipeline_cache_timeout: number;
+  enable_medical_validation: boolean;
+  enable_classification: boolean;
+  enable_preprocessing: boolean;
+  enable_translation: boolean;
+  enable_fact_check: boolean;
+  enable_grammar_check: boolean;
+  enable_language_translation: boolean;
+  enable_final_check: boolean;
+  enable_formatting: boolean;
+}
+
+export interface PipelineStatsResponse {
+  pipeline_mode: string;
+  cache_statistics: {
+    total_entries: number;
+    active_entries: number;
+    expired_entries: number;
+    cache_timeout_seconds: number;
+  };
+  performance_improvements: Record<string, string>;
+}
+
 // Prompt step descriptions for UI
 export const PROMPT_STEPS = {
+  medical_validation_prompt: {
+    name: 'Medizinische Validierung',
+    description: 'KI-gestützte Erkennung medizinischer Inhalte',
+    placeholder: 'Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält...'
+  },
   classification_prompt: {
     name: 'Klassifizierung',
     description: 'Prompt zur automatischen Dokumenttyp-Erkennung',
@@ -155,5 +199,10 @@ export const PROMPT_STEPS = {
     name: 'Finale Kontrolle',
     description: 'Abschließende Qualitätsprüfung',
     placeholder: 'Führe eine finale Qualitätskontrolle durch...'
+  },
+  formatting_prompt: {
+    name: 'Textformatierung',
+    description: 'Optimierung der Textstruktur und Lesbarkeit',
+    placeholder: 'Formatiere diesen Text für optimale Lesbarkeit mit Überschriften und Listen...'
   }
 };

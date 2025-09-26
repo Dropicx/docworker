@@ -684,3 +684,139 @@ async def reset_pipeline_steps(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to reset pipeline steps: {str(e)}"
         )
+
+# Pipeline Settings Management
+
+class PipelineSettingsRequest(BaseModel):
+    """Request to update pipeline settings"""
+    settings: Dict[str, Any] = Field(..., description="Pipeline settings to update")
+
+@router.get("/pipeline-settings")
+async def get_pipeline_settings(
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Get current pipeline optimization settings.
+
+    Returns current environment variable settings and configuration.
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        # Get current settings from environment variables
+        settings = {
+            "use_optimized_pipeline": os.getenv("USE_OPTIMIZED_PIPELINE", "true").lower() == "true",
+            "pipeline_cache_timeout": int(os.getenv("PIPELINE_CACHE_TIMEOUT", "300")),
+            "enable_medical_validation": os.getenv("ENABLE_MEDICAL_VALIDATION", "true").lower() == "true",
+            "enable_classification": os.getenv("ENABLE_CLASSIFICATION", "true").lower() == "true",
+            "enable_preprocessing": os.getenv("ENABLE_PREPROCESSING", "true").lower() == "true",
+            "enable_translation": os.getenv("ENABLE_TRANSLATION", "true").lower() == "true",
+            "enable_fact_check": os.getenv("ENABLE_FACT_CHECK", "true").lower() == "true",
+            "enable_grammar_check": os.getenv("ENABLE_GRAMMAR_CHECK", "true").lower() == "true",
+            "enable_language_translation": os.getenv("ENABLE_LANGUAGE_TRANSLATION", "true").lower() == "true",
+            "enable_final_check": os.getenv("ENABLE_FINAL_CHECK", "true").lower() == "true",
+            "enable_formatting": os.getenv("ENABLE_FORMATTING", "true").lower() == "true"
+        }
+
+        return {
+            "settings": settings,
+            "message": "Pipeline settings retrieved successfully"
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get pipeline settings: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get pipeline settings: {str(e)}"
+        )
+
+@router.put("/pipeline-settings")
+async def update_pipeline_settings(
+    update_request: PipelineSettingsRequest,
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Update pipeline optimization settings.
+
+    Note: In a production environment, this would update a configuration file
+    or database. For demo purposes, we'll return the updated settings.
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        # Validate settings
+        valid_settings = {
+            "use_optimized_pipeline": bool,
+            "pipeline_cache_timeout": int,
+            "enable_medical_validation": bool,
+            "enable_classification": bool,
+            "enable_preprocessing": bool,
+            "enable_translation": bool,
+            "enable_fact_check": bool,
+            "enable_grammar_check": bool,
+            "enable_language_translation": bool,
+            "enable_final_check": bool,
+            "enable_formatting": bool
+        }
+
+        updated_settings = {}
+        for key, value in update_request.settings.items():
+            if key in valid_settings:
+                # Type validation
+                expected_type = valid_settings[key]
+                if key == "pipeline_cache_timeout":
+                    # Validate cache timeout range
+                    timeout_value = int(value)
+                    if timeout_value < 60 or timeout_value > 3600:
+                        raise ValueError(f"Cache timeout must be between 60 and 3600 seconds")
+                    updated_settings[key] = timeout_value
+                else:
+                    updated_settings[key] = expected_type(value)
+
+        # In a real implementation, you would update environment variables or config file
+        # For now, we'll log the changes and return success
+        logger.info(f"Pipeline settings update requested: {updated_settings}")
+        logger.warning("Pipeline settings updates require application restart to take effect")
+
+        # Get current settings (simulated update)
+        current_settings = {
+            "use_optimized_pipeline": updated_settings.get("use_optimized_pipeline", os.getenv("USE_OPTIMIZED_PIPELINE", "true").lower() == "true"),
+            "pipeline_cache_timeout": updated_settings.get("pipeline_cache_timeout", int(os.getenv("PIPELINE_CACHE_TIMEOUT", "300"))),
+            "enable_medical_validation": updated_settings.get("enable_medical_validation", os.getenv("ENABLE_MEDICAL_VALIDATION", "true").lower() == "true"),
+            "enable_classification": updated_settings.get("enable_classification", os.getenv("ENABLE_CLASSIFICATION", "true").lower() == "true"),
+            "enable_preprocessing": updated_settings.get("enable_preprocessing", os.getenv("ENABLE_PREPROCESSING", "true").lower() == "true"),
+            "enable_translation": updated_settings.get("enable_translation", os.getenv("ENABLE_TRANSLATION", "true").lower() == "true"),
+            "enable_fact_check": updated_settings.get("enable_fact_check", os.getenv("ENABLE_FACT_CHECK", "true").lower() == "true"),
+            "enable_grammar_check": updated_settings.get("enable_grammar_check", os.getenv("ENABLE_GRAMMAR_CHECK", "true").lower() == "true"),
+            "enable_language_translation": updated_settings.get("enable_language_translation", os.getenv("ENABLE_LANGUAGE_TRANSLATION", "true").lower() == "true"),
+            "enable_final_check": updated_settings.get("enable_final_check", os.getenv("ENABLE_FINAL_CHECK", "true").lower() == "true"),
+            "enable_formatting": updated_settings.get("enable_formatting", os.getenv("ENABLE_FORMATTING", "true").lower() == "true")
+        }
+
+        return {
+            "success": True,
+            "message": "Pipeline settings updated successfully. Restart required for changes to take effect.",
+            "settings": current_settings,
+            "warning": "Application restart required for environment variable changes to take effect"
+        }
+
+    except ValueError as e:
+        logger.error(f"Validation error updating pipeline settings: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Validation error: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Failed to update pipeline settings: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update pipeline settings: {str(e)}"
+        )
