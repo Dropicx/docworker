@@ -66,6 +66,7 @@ class DocumentSpecificPromptsDB(Base):
     # Document-specific prompts - tailored to each document type
     translation_prompt = Column(Text, nullable=False)  # Different complexity levels per doc type
     fact_check_prompt = Column(Text, nullable=False)   # Domain-specific medical validation
+    grammar_check_prompt = Column(Text, nullable=False)  # Grammar and spelling correction
     final_check_prompt = Column(Text, nullable=False)  # Type-specific quality criteria
     formatting_prompt = Column(Text, nullable=False)   # Type-specific formatting rules
 
