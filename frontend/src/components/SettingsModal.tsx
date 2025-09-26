@@ -304,7 +304,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex min-h-screen items-center justify-center p-4">
+      <div className="flex min-h-screen items-start justify-start p-2">
         {/* Backdrop */}
         <div 
           className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
@@ -312,7 +312,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
         />
         
         {/* Modal */}
-        <div className="relative w-full max-w-6xl bg-white rounded-2xl shadow-2xl border border-primary-200 max-h-[90vh] overflow-hidden">
+        <div className="relative w-full max-w-none bg-white rounded-2xl shadow-2xl border border-primary-200 max-h-[95vh] overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-primary-200 bg-gradient-to-r from-brand-50 to-accent-50">
             <div className="flex items-center space-x-3">
