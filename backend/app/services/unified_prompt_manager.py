@@ -265,8 +265,11 @@ class UnifiedPromptManager:
             if document_type:
                 from app.database.models import PipelineStepConfigDB
                 doc_specific_step = self.session.query(PipelineStepConfigDB).join(
-                    self.session.query(DocumentPromptsDB).filter_by(document_type=document_type)
-                ).filter_by(step_name=step_name.upper()).first()
+                    DocumentPromptsDB, PipelineStepConfigDB.document_prompts_id == DocumentPromptsDB.id
+                ).filter(
+                    DocumentPromptsDB.document_type == document_type,
+                    PipelineStepConfigDB.step_name == step_name.upper()
+                ).first()
                 
                 if doc_specific_step:
                     return doc_specific_step.enabled

@@ -620,7 +620,7 @@ async def get_pipeline_settings(
         from app.database.models import PipelineStepConfigDB, DocumentPromptsDB
         doc_specific_steps = db.query(PipelineStepConfigDB).join(
             DocumentPromptsDB, PipelineStepConfigDB.document_prompts_id == DocumentPromptsDB.id
-        ).filter_by(step_name="FORMATTING").all()
+        ).filter(PipelineStepConfigDB.step_name == "FORMATTING").all()
         
         # If any document-specific FORMATTING step is enabled, enable it in settings
         if doc_specific_steps and any(step.enabled for step in doc_specific_steps):
@@ -672,7 +672,7 @@ async def update_pipeline_settings(
                     from app.database.models import PipelineStepConfigDB, DocumentPromptsDB
                     doc_specific_steps = db.query(PipelineStepConfigDB).join(
                         DocumentPromptsDB, PipelineStepConfigDB.document_prompts_id == DocumentPromptsDB.id
-                    ).filter_by(step_name="FORMATTING").all()
+                    ).filter(PipelineStepConfigDB.step_name == "FORMATTING").all()
                     
                     for step in doc_specific_steps:
                         step.enabled = settings[frontend_key]
