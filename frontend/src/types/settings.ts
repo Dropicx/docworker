@@ -43,12 +43,12 @@ export interface PromptsResponse {
 }
 
 export interface AuthRequest {
-  code: string;
+  password: string;
 }
 
 export interface AuthResponse {
   success: boolean;
-  token?: string;
+  session_token?: string;
   message: string;
 }
 

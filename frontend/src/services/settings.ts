@@ -70,11 +70,11 @@ class SettingsService {
     try {
       const response = await axios.post<AuthResponse>(
         `${SETTINGS_BASE_URL}/auth`,
-        { code } as AuthRequest
+        { password: code } as AuthRequest
       );
 
-      if (response.data.success && response.data.token) {
-        this.saveToken(response.data.token);
+      if (response.data.success && response.data.session_token) {
+        this.saveToken(response.data.session_token);
       }
 
       return response.data;
