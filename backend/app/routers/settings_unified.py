@@ -49,9 +49,12 @@ async def authenticate(auth_request: AuthRequest):
     """
     try:
         # Get correct password from database
-        with get_session() as db:
+        db = next(get_session())
+        try:
             password_setting = db.query(SystemSettingsDB).filter_by(key="settings_access_code").first()
             correct_password = password_setting.value if password_setting else "milan"
+        finally:
+            db.close()
         
         if auth_request.password == correct_password:
             # Generate session token
