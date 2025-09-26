@@ -616,15 +616,19 @@ async def get_pipeline_settings(
             if step.step_name in step_mapping:
                 settings[step_mapping[step.step_name]] = step.enabled
         
-        # Check document-specific pipeline steps for FORMATTING
+        # Check document-specific pipeline steps
         from app.database.models import PipelineStepConfigDB, DocumentPromptsDB
-        doc_specific_steps = db.query(PipelineStepConfigDB).join(
-            DocumentPromptsDB, PipelineStepConfigDB.document_prompts_id == DocumentPromptsDB.id
-        ).filter(PipelineStepConfigDB.step_name == "FORMATTING").all()
+        document_specific_step_names = ["TRANSLATION", "FACT_CHECK", "GRAMMAR_CHECK", "FORMATTING"]
         
-        # If any document-specific FORMATTING step is enabled, enable it in settings
-        if doc_specific_steps and any(step.enabled for step in doc_specific_steps):
-            settings["enable_formatting"] = True
+        for step_name in document_specific_step_names:
+            doc_specific_steps = db.query(PipelineStepConfigDB).join(
+                DocumentPromptsDB, PipelineStepConfigDB.document_prompts_id == DocumentPromptsDB.id
+            ).filter(PipelineStepConfigDB.step_name == step_name).all()
+            
+            # If any document-specific step is enabled, enable it in settings
+            if doc_specific_steps and any(step.enabled for step in doc_specific_steps):
+                frontend_key = step_mapping[step_name]
+                settings[frontend_key] = True
         
         return {"settings": settings}
         
@@ -667,12 +671,15 @@ async def update_pipeline_settings(
         # Update each step configuration based on frontend flags
         for frontend_key, step_name in step_mapping.items():
             if frontend_key in settings:
-                if step_name == "FORMATTING":
-                    # Handle FORMATTING as document-specific step
+                # Check if this is a document-specific step
+                document_specific_steps = ["TRANSLATION", "FACT_CHECK", "GRAMMAR_CHECK", "FORMATTING"]
+                
+                if step_name in document_specific_steps:
+                    # Handle document-specific steps
                     from app.database.models import PipelineStepConfigDB, DocumentPromptsDB
                     doc_specific_steps = db.query(PipelineStepConfigDB).join(
                         DocumentPromptsDB, PipelineStepConfigDB.document_prompts_id == DocumentPromptsDB.id
-                    ).filter(PipelineStepConfigDB.step_name == "FORMATTING").all()
+                    ).filter(PipelineStepConfigDB.step_name == step_name).all()
                     
                     for step in doc_specific_steps:
                         step.enabled = settings[frontend_key]
