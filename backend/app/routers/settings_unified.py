@@ -584,30 +584,32 @@ async def get_pipeline_settings(
         # Get pipeline step configurations
         pipeline_steps = db.query(UniversalPipelineStepConfigDB).all()
         
-        # Convert to frontend format - map to individual boolean flags
+        # Convert to frontend format - organized by type and order
         settings = {
             "use_optimized_pipeline": True,  # Always true for unified system
             "pipeline_cache_timeout": 1800,  # 30 minutes default
             "enable_medical_validation": False,
-            "enable_classification": False,
             "enable_preprocessing": False,
+            "enable_classification": False,
             "enable_translation": False,
             "enable_fact_check": False,
             "enable_grammar_check": False,
             "enable_language_translation": False,
-            "enable_final_check": False
+            "enable_final_check": False,
+            "enable_formatting": False
         }
         
-        # Map step names to frontend flags
+        # Map step names to frontend flags (in processing order)
         step_mapping = {
             "MEDICAL_VALIDATION": "enable_medical_validation",
-            "CLASSIFICATION": "enable_classification", 
             "PREPROCESSING": "enable_preprocessing",
+            "CLASSIFICATION": "enable_classification", 
             "TRANSLATION": "enable_translation",
             "FACT_CHECK": "enable_fact_check",
             "GRAMMAR_CHECK": "enable_grammar_check",
             "LANGUAGE_TRANSLATION": "enable_language_translation",
-            "FINAL_CHECK": "enable_final_check"
+            "FINAL_CHECK": "enable_final_check",
+            "FORMATTING": "enable_formatting"
         }
         
         for step in pipeline_steps:
@@ -639,16 +641,17 @@ async def update_pipeline_settings(
     try:
         settings = request.get("settings", {})
         
-        # Map frontend flags back to step names
+        # Map frontend flags back to step names (in processing order)
         step_mapping = {
             "enable_medical_validation": "MEDICAL_VALIDATION",
-            "enable_classification": "CLASSIFICATION", 
             "enable_preprocessing": "PREPROCESSING",
+            "enable_classification": "CLASSIFICATION", 
             "enable_translation": "TRANSLATION",
             "enable_fact_check": "FACT_CHECK",
             "enable_grammar_check": "GRAMMAR_CHECK",
             "enable_language_translation": "LANGUAGE_TRANSLATION",
-            "enable_final_check": "FINAL_CHECK"
+            "enable_final_check": "FINAL_CHECK",
+            "enable_formatting": "FORMATTING"
         }
         
         # Update each step configuration based on frontend flags

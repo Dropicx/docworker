@@ -1073,46 +1073,91 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
 
                     {/* Individual Step Controls */}
                     <div className="bg-white border border-primary-200 rounded-xl p-6">
-                      <div className="mb-4">
-                        <h4 className="text-lg font-semibold text-primary-900 mb-2">⚙️ Pipeline-Schritte</h4>
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                          <p className="text-sm text-blue-800">
-                            <strong>🌐 Universelle Einstellungen:</strong> Diese Schritte werden für <strong>alle</strong> Dokumenttypen (Arztbrief, Befundbericht, Laborwerte) gleichzeitig aktiviert oder deaktiviert.
-                          </p>
+                      <div className="mb-6">
+                        <h4 className="text-lg font-semibold text-primary-900 mb-4">⚙️ Pipeline-Schritte</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                            <p className="text-sm text-blue-800">
+                              <strong>🌐 Universelle Schritte:</strong> Gelten für alle Dokumenttypen gleichzeitig
+                            </p>
+                          </div>
+                          <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                            <p className="text-sm text-green-800">
+                              <strong>📄 Dokument-spezifische Schritte:</strong> Verwenden unterschiedliche Prompts je Dokumenttyp
+                            </p>
+                          </div>
                         </div>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {[
-                          { key: 'enable_medical_validation', name: 'Medizinische Validierung', desc: 'KI-gestützte Inhaltserkennung' },
-                          { key: 'enable_classification', name: 'Klassifizierung', desc: 'Dokumenttyp-Erkennung' },
-                          { key: 'enable_preprocessing', name: 'Vorverarbeitung', desc: 'Datenbereinigung' },
-                          { key: 'enable_translation', name: 'Übersetzung', desc: 'Patientenfreundliche Sprache' },
-                          { key: 'enable_fact_check', name: 'Faktenprüfung', desc: 'Medizinische Korrektheit' },
-                          { key: 'enable_grammar_check', name: 'Grammatikprüfung', desc: 'Sprachliche Korrektheit' },
-                          { key: 'enable_language_translation', name: 'Sprachübersetzung', desc: 'Übersetzung in andere Sprachen' },
-                          { key: 'enable_final_check', name: 'Finale Kontrolle', desc: 'Qualitätssicherung' },
-                          { key: 'enable_formatting', name: 'Formatierung', desc: 'Text-Strukturierung' }
-                        ].map(({ key, name, desc }) => (
-                          <div key={key} className="flex items-center justify-between p-3 bg-primary-50 rounded-lg">
-                            <div>
-                              <h6 className="text-sm font-medium text-primary-900">{name}</h6>
-                              <p className="text-xs text-primary-600">{desc}</p>
+
+                      {/* Universal Steps */}
+                      <div className="mb-6">
+                        <h5 className="text-md font-semibold text-blue-900 mb-3 flex items-center">
+                          🌐 Universelle Schritte (1-3, 7-9)
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {[
+                            { key: 'enable_medical_validation', name: '1. Medizinische Validierung', desc: 'Prüft ob Text medizinischen Inhalt enthält', order: 1 },
+                            { key: 'enable_preprocessing', name: '2. Vorverarbeitung', desc: 'Entfernt persönliche Daten (PII)', order: 2 },
+                            { key: 'enable_classification', name: '3. Klassifizierung', desc: 'Erkennt Dokumenttyp (Arztbrief, Befund, etc.)', order: 3 },
+                            { key: 'enable_language_translation', name: '7. Sprachübersetzung', desc: 'Übersetzt in Zielsprache', order: 7 },
+                            { key: 'enable_final_check', name: '8. Finale Kontrolle', desc: 'Qualitätssicherung und Validierung', order: 8 },
+                            { key: 'enable_formatting', name: '9. Formatierung', desc: 'Strukturiert und formatiert den Text', order: 9 }
+                          ].map(({ key, name, desc, order }) => (
+                            <div key={key} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                              <div>
+                                <h6 className="text-sm font-medium text-blue-900">{name}</h6>
+                                <p className="text-xs text-blue-600">{desc}</p>
+                              </div>
+                              <button
+                                onClick={() => handleSettingsUpdate(key as keyof PipelineSettings, !(pipelineSettings as any)[key])}
+                                disabled={updatingSettings}
+                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                  (pipelineSettings as any)[key] ? 'bg-blue-600' : 'bg-blue-300'
+                                } ${updatingSettings ? 'opacity-50' : ''}`}
+                              >
+                                <span
+                                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                                    (pipelineSettings as any)[key] ? 'translate-x-5' : 'translate-x-1'
+                                  }`}
+                                />
+                              </button>
                             </div>
-                            <button
-                              onClick={() => handleSettingsUpdate(key as keyof PipelineSettings, !(pipelineSettings as any)[key])}
-                              disabled={updatingSettings}
-                              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
-                                (pipelineSettings as any)[key] ? 'bg-brand-600' : 'bg-primary-300'
-                              } ${updatingSettings ? 'opacity-50' : ''}`}
-                            >
-                              <span
-                                className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
-                                  (pipelineSettings as any)[key] ? 'translate-x-5' : 'translate-x-1'
-                                }`}
-                              />
-                            </button>
-                          </div>
-                        ))}
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Document-Specific Steps */}
+                      <div>
+                        <h5 className="text-md font-semibold text-green-900 mb-3 flex items-center">
+                          📄 Dokument-spezifische Schritte (4-6)
+                        </h5>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {[
+                            { key: 'enable_translation', name: '4. Übersetzung', desc: 'Übersetzt in verständliche Sprache (je Dokumenttyp unterschiedlich)', order: 4 },
+                            { key: 'enable_fact_check', name: '5. Faktenprüfung', desc: 'Prüft medizinische Korrektheit (je Dokumenttyp unterschiedlich)', order: 5 },
+                            { key: 'enable_grammar_check', name: '6. Grammatikprüfung', desc: 'Korrigiert Grammatik und Rechtschreibung', order: 6 }
+                          ].map(({ key, name, desc, order }) => (
+                            <div key={key} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
+                              <div>
+                                <h6 className="text-sm font-medium text-green-900">{name}</h6>
+                                <p className="text-xs text-green-600">{desc}</p>
+                              </div>
+                              <button
+                                onClick={() => handleSettingsUpdate(key as keyof PipelineSettings, !(pipelineSettings as any)[key])}
+                                disabled={updatingSettings}
+                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 ${
+                                  (pipelineSettings as any)[key] ? 'bg-green-600' : 'bg-green-300'
+                                } ${updatingSettings ? 'opacity-50' : ''}`}
+                              >
+                                <span
+                                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform ${
+                                    (pipelineSettings as any)[key] ? 'translate-x-5' : 'translate-x-1'
+                                  }`}
+                                />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
                       </div>
                     </div>
 
