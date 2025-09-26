@@ -154,7 +154,7 @@ async def process_document_unified(processing_id: str):
             translated_text = cleaned_text
             translation_confidence = 1.0
             
-            if unified_manager.is_pipeline_step_enabled("TRANSLATION"):
+            if unified_manager.is_pipeline_step_enabled("TRANSLATION", document_class):
                 print(f"🔄 Translation: STARTING")
                 update_processing_store(processing_id, {
                     "status": ProcessingStatus.PROCESSING,
@@ -190,7 +190,7 @@ async def process_document_unified(processing_id: str):
             quality_checker = QualityChecker(ovh_client)
             
             # Fact Check
-            if unified_manager.is_pipeline_step_enabled("FACT_CHECK"):
+            if unified_manager.is_pipeline_step_enabled("FACT_CHECK", document_class):
                 print(f"🔍 Fact check: STARTING")
                 update_processing_store(processing_id, {
                     "status": ProcessingStatus.PROCESSING,
@@ -219,7 +219,7 @@ async def process_document_unified(processing_id: str):
                 print(f"⏭️ Fact check: SKIPPED (disabled)")
             
             # Grammar Check
-            if unified_manager.is_pipeline_step_enabled("GRAMMAR_CHECK"):
+            if unified_manager.is_pipeline_step_enabled("GRAMMAR_CHECK", document_class):
                 print(f"📝 Grammar check: STARTING")
                 update_processing_store(processing_id, {
                     "status": ProcessingStatus.PROCESSING,

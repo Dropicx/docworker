@@ -122,6 +122,7 @@ class UnifiedPromptManager:
             return DocumentSpecificPromptsDB(
                 translation_prompt="Übersetze diesen Arztbrief in einfache, patientenfreundliche Sprache. Verwende kurze Sätze und vermeide medizinische Fachbegriffe. Strukturiere den Text mit klaren Abschnitten.",
                 fact_check_prompt="Überprüfe diesen Arztbrief auf medizinische Korrektheit und Vollständigkeit. Achte besonders auf Diagnosen, Behandlungsempfehlungen und Medikamentennamen.",
+                grammar_check_prompt="Korrigiere Grammatik und Rechtschreibung in diesem Arztbrief. Achte auf korrekte medizinische Terminologie und professionelle Formulierung.",
                 final_check_prompt="Führe eine finale Qualitätskontrolle dieses Arztbriefes durch. Prüfe auf Verständlichkeit, Vollständigkeit und patientenfreundliche Formulierung.",
                 formatting_prompt="Formatiere diesen Arztbrief mit klaren Überschriften, Abschnitten und einer logischen Struktur. Verwende Bullet Points für Listen und Medikamente."
             )
@@ -129,6 +130,7 @@ class UnifiedPromptManager:
             return DocumentSpecificPromptsDB(
                 translation_prompt="Übersetze diesen Befundbericht in verständliche Sprache. Erkläre medizinische Befunde in einfachen Worten und strukturiere die Informationen übersichtlich.",
                 fact_check_prompt="Überprüfe diesen Befundbericht auf medizinische Genauigkeit. Achte besonders auf Laborwerte, Messungen und diagnostische Befunde.",
+                grammar_check_prompt="Korrigiere Grammatik und Rechtschreibung in diesem Befundbericht. Achte auf präzise medizinische Formulierungen und korrekte Fachbegriffe.",
                 final_check_prompt="Führe eine finale Qualitätskontrolle dieses Befundberichtes durch. Prüfe auf Vollständigkeit der Befunde und Verständlichkeit der Erklärungen.",
                 formatting_prompt="Formatiere diesen Befundbericht mit klaren Abschnitten für verschiedene Befunde. Verwende Tabellen für Laborwerte und strukturierte Listen."
             )
@@ -136,6 +138,7 @@ class UnifiedPromptManager:
             return DocumentSpecificPromptsDB(
                 translation_prompt="Übersetze diese Laborwerte in verständliche Sprache. Erkläre was jeder Wert bedeutet und ob er normal, erhöht oder erniedrigt ist.",
                 fact_check_prompt="Überprüfe diese Laborwerte auf Plausibilität und Vollständigkeit. Achte auf Referenzbereiche und Einheiten.",
+                grammar_check_prompt="Korrigiere Grammatik und Rechtschreibung in diesen Laborwerten. Achte auf korrekte Einheiten und präzise Formulierungen.",
                 final_check_prompt="Führe eine finale Qualitätskontrolle dieser Laborwerte durch. Prüfe auf Vollständigkeit und Verständlichkeit der Erklärungen.",
                 formatting_prompt="Formatiere diese Laborwerte in einer übersichtlichen Tabelle mit Werten, Referenzbereichen und Erklärungen."
             )
@@ -235,12 +238,12 @@ class UnifiedPromptManager:
                 "medical_validation_prompt": universal.medical_validation_prompt,
                 "classification_prompt": universal.classification_prompt,
                 "preprocessing_prompt": universal.preprocessing_prompt,
-                "grammar_check_prompt": universal.grammar_check_prompt,
                 "language_translation_prompt": universal.language_translation_prompt,
                 
                 # Document-specific prompts
                 "translation_prompt": specific.translation_prompt,
                 "fact_check_prompt": specific.fact_check_prompt,
+                "grammar_check_prompt": specific.grammar_check_prompt,
                 "final_check_prompt": specific.final_check_prompt,
                 "formatting_prompt": specific.formatting_prompt
             }
