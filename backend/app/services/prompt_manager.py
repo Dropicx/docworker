@@ -68,6 +68,7 @@ class PromptManager:
             # Create DocumentPrompts object
             prompts = DocumentPrompts(
                 document_type=document_type,
+                medical_validation_prompt=data.get("medical_validation_prompt", "Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält. Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH"),
                 classification_prompt=data.get("classification_prompt", ""),
                 preprocessing_prompt=data.get("preprocessing_prompt", ""),
                 translation_prompt=data.get("translation_prompt", ""),
@@ -75,6 +76,7 @@ class PromptManager:
                 grammar_check_prompt=data.get("grammar_check_prompt", ""),
                 language_translation_prompt=data.get("language_translation_prompt", ""),
                 final_check_prompt=data.get("final_check_prompt", ""),
+                formatting_prompt=data.get("formatting_prompt", "Formatiere diesen Text für optimale Lesbarkeit mit klaren Überschriften und Bullet Points."),
                 version=data.get("version", 1),
                 last_modified=datetime.fromisoformat(data["last_modified"]) if "last_modified" in data else datetime.now(),
                 modified_by=data.get("modified_by")
@@ -126,13 +128,15 @@ class PromptManager:
                 "version": prompts.version,
                 "last_modified": prompts.last_modified.isoformat(),
                 "modified_by": prompts.modified_by,
+                "medical_validation_prompt": prompts.medical_validation_prompt,
                 "classification_prompt": prompts.classification_prompt,
                 "preprocessing_prompt": prompts.preprocessing_prompt,
                 "translation_prompt": prompts.translation_prompt,
                 "fact_check_prompt": prompts.fact_check_prompt,
                 "grammar_check_prompt": prompts.grammar_check_prompt,
                 "language_translation_prompt": prompts.language_translation_prompt,
-                "final_check_prompt": prompts.final_check_prompt
+                "final_check_prompt": prompts.final_check_prompt,
+                "formatting_prompt": prompts.formatting_prompt
             }
 
             # Save to file
@@ -285,6 +289,7 @@ class PromptManager:
 
                     return DocumentPrompts(
                         document_type=document_type,
+                        medical_validation_prompt=universal.get("medical_validation_prompt", "Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält. Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH"),
                         classification_prompt=universal.get("classification_prompt", "Classify this medical document."),
                         preprocessing_prompt=universal.get("preprocessing_prompt", "Remove personal data but keep medical information."),
                         translation_prompt=universal.get("translation_prompt", "Translate to patient-friendly language."),
@@ -292,6 +297,7 @@ class PromptManager:
                         grammar_check_prompt=universal.get("grammar_check_prompt", "Correct grammar and spelling."),
                         language_translation_prompt=universal.get("language_translation_prompt", "Translate to {language}."),
                         final_check_prompt=universal.get("final_check_prompt", "Final quality check."),
+                        formatting_prompt=universal.get("formatting_prompt", "Formatiere diesen Text für optimale Lesbarkeit mit klaren Überschriften und Bullet Points."),
                         version=1,
                         modified_by="system"
                     )
@@ -301,6 +307,7 @@ class PromptManager:
         # Ultimate fallback - hardcoded defaults
         return DocumentPrompts(
             document_type=document_type,
+            medical_validation_prompt="Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält. Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH",
             classification_prompt="Classify this medical document as ARZTBRIEF, BEFUNDBERICHT, or LABORWERTE.",
             preprocessing_prompt="Remove personal data but keep all medical information.",
             translation_prompt="Translate this medical text to patient-friendly language.",
@@ -308,6 +315,7 @@ class PromptManager:
             grammar_check_prompt="Correct German grammar and spelling.",
             language_translation_prompt="Translate this text to {language}.",
             final_check_prompt="Perform final quality check.",
+            formatting_prompt="Formatiere diesen Text für optimale Lesbarkeit mit klaren Überschriften und Bullet Points.",
             version=1,
             modified_by="system"
         )
@@ -331,6 +339,7 @@ class PromptManager:
         if document_type:
             prompts = self.get_prompts(document_type)
             export_data["prompts"][document_type.value] = {
+                "medical_validation_prompt": prompts.medical_validation_prompt,
                 "classification_prompt": prompts.classification_prompt,
                 "preprocessing_prompt": prompts.preprocessing_prompt,
                 "translation_prompt": prompts.translation_prompt,
@@ -338,6 +347,7 @@ class PromptManager:
                 "grammar_check_prompt": prompts.grammar_check_prompt,
                 "language_translation_prompt": prompts.language_translation_prompt,
                 "final_check_prompt": prompts.final_check_prompt,
+                "formatting_prompt": prompts.formatting_prompt,
                 "version": prompts.version
             }
         else:
@@ -345,6 +355,7 @@ class PromptManager:
             for doc_class in DocumentClass:
                 prompts = self.get_prompts(doc_class)
                 export_data["prompts"][doc_class.value] = {
+                    "medical_validation_prompt": prompts.medical_validation_prompt,
                     "classification_prompt": prompts.classification_prompt,
                     "preprocessing_prompt": prompts.preprocessing_prompt,
                     "translation_prompt": prompts.translation_prompt,
@@ -352,6 +363,7 @@ class PromptManager:
                     "grammar_check_prompt": prompts.grammar_check_prompt,
                     "language_translation_prompt": prompts.language_translation_prompt,
                     "final_check_prompt": prompts.final_check_prompt,
+                    "formatting_prompt": prompts.formatting_prompt,
                     "version": prompts.version
                 }
 
@@ -386,6 +398,7 @@ class PromptManager:
                 # Create DocumentPrompts object
                 prompts = DocumentPrompts(
                     document_type=doc_class,
+                    medical_validation_prompt=prompt_data.get("medical_validation_prompt", "Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält. Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH"),
                     classification_prompt=prompt_data.get("classification_prompt", ""),
                     preprocessing_prompt=prompt_data.get("preprocessing_prompt", ""),
                     translation_prompt=prompt_data.get("translation_prompt", ""),
@@ -393,6 +406,7 @@ class PromptManager:
                     grammar_check_prompt=prompt_data.get("grammar_check_prompt", ""),
                     language_translation_prompt=prompt_data.get("language_translation_prompt", ""),
                     final_check_prompt=prompt_data.get("final_check_prompt", ""),
+                    formatting_prompt=prompt_data.get("formatting_prompt", "Formatiere diesen Text für optimale Lesbarkeit mit klaren Überschriften und Bullet Points."),
                     version=prompt_data.get("version", 1),
                     modified_by=user
                 )

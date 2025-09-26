@@ -3,6 +3,8 @@
   "version": 1,
   "created": "2024-01-15",
   "universal_prompts": {
+    "medical_validation_prompt": "Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält.\n\nKRITERIEN FÜR MEDIZINISCHEN INHALT:\n- Diagnosen oder Symptome\n- Medizinische Fachbegriffe\n- Behandlungen oder Therapien\n- Medikamente oder Dosierungen\n- Laborwerte oder Messwerte\n- Medizinische Abkürzungen\n- Anatomische Begriffe\n\nAntworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH",
+
     "classification_prompt": "Analysiere diesen medizinischen Text und klassifiziere ihn als: ARZTBRIEF (Kommunikation zwischen Ärzten), BEFUNDBERICHT (Untersuchungsergebnisse), oder LABORWERTE (Messwerte mit Referenzbereichen). Antworte mit der Kategorie.",
 
     "preprocessing_prompt": "Entferne alle persönlichen Daten aus diesem medizinischen Text, behalte aber ALLE medizinischen Informationen. Entferne: Namen, Adressen, Geburtsdaten, IDs. Behalte: Alle Diagnosen, Werte, Behandlungen, Medikamente.",
@@ -15,6 +17,8 @@
 
     "language_translation_prompt": "Übersetze diesen Text in {language}. Behalte alle Formatierungen und medizinischen Informationen exakt bei.",
 
-    "final_check_prompt": "Finale Qualitätskontrolle: Prüfe Verständlichkeit, Vollständigkeit und Korrektheit. Optimiere wenn nötig."
+    "final_check_prompt": "Finale Qualitätskontrolle: Prüfe Verständlichkeit, Vollständigkeit und Korrektheit. Optimiere wenn nötig.",
+
+    "formatting_prompt": "Formatiere diesen medizinischen Text für optimale Lesbarkeit.\n\nFORMATIERUNG:\n- Verwende klare Überschriften mit Emojis\n- Erstelle Bullet Points für Listen (→)\n- Hebe wichtige Informationen hervor\n- Strukturiere den Text logisch\n- Füge Leerzeilen zwischen Abschnitten ein\n- Verwende einheitliche Formatierung\n\nBEHALTE:\n- Alle medizinischen Informationen\n- Die Verständlichkeit\n- Alle wichtigen Details\n\nAntworte mit dem formatierten Text."
   }
 }
