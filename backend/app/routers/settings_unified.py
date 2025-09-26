@@ -128,7 +128,6 @@ async def get_universal_prompts(
                 "medical_validation_prompt": universal_prompts.medical_validation_prompt,
                 "classification_prompt": universal_prompts.classification_prompt,
                 "preprocessing_prompt": universal_prompts.preprocessing_prompt,
-                "grammar_check_prompt": universal_prompts.grammar_check_prompt,
                 "language_translation_prompt": universal_prompts.language_translation_prompt
             },
             "version": universal_prompts.version,
@@ -222,15 +221,25 @@ async def get_document_prompts(
             specific_prompts = unified_manager.create_default_document_specific_prompts(doc_class)
             unified_manager.save_document_specific_prompts(doc_class, specific_prompts)
         
+        # Get combined prompts (universal + document-specific)
+        combined_prompts = unified_manager.get_combined_prompts(doc_class)
+        
         return {
             "success": True,
             "document_type": document_type,
             "prompts": {
-                "translation_prompt": specific_prompts.translation_prompt,
-                "fact_check_prompt": specific_prompts.fact_check_prompt,
-                "grammar_check_prompt": specific_prompts.grammar_check_prompt,
-                "final_check_prompt": specific_prompts.final_check_prompt,
-                "formatting_prompt": specific_prompts.formatting_prompt
+                # Universal prompts
+                "medical_validation_prompt": combined_prompts.get("medical_validation_prompt", ""),
+                "classification_prompt": combined_prompts.get("classification_prompt", ""),
+                "preprocessing_prompt": combined_prompts.get("preprocessing_prompt", ""),
+                "language_translation_prompt": combined_prompts.get("language_translation_prompt", ""),
+                
+                # Document-specific prompts
+                "translation_prompt": combined_prompts.get("translation_prompt", ""),
+                "fact_check_prompt": combined_prompts.get("fact_check_prompt", ""),
+                "grammar_check_prompt": combined_prompts.get("grammar_check_prompt", ""),
+                "final_check_prompt": combined_prompts.get("final_check_prompt", ""),
+                "formatting_prompt": combined_prompts.get("formatting_prompt", "")
             },
             "version": specific_prompts.version,
             "last_modified": specific_prompts.last_modified.isoformat(),
@@ -276,15 +285,39 @@ async def update_document_prompts(
         if not specific_prompts:
             specific_prompts = unified_manager.create_default_document_specific_prompts(doc_class)
         
-        # Update prompts
+        # Separate universal and document-specific prompts
+        universal_prompt_fields = [
+            "medical_validation_prompt", "classification_prompt", "preprocessing_prompt", 
+            "language_translation_prompt"
+        ]
+        document_specific_prompt_fields = [
+            "translation_prompt", "fact_check_prompt", "grammar_check_prompt", 
+            "final_check_prompt", "formatting_prompt"
+        ]
+        
+        # Update document-specific prompts
         for key, value in update_request.prompts.items():
-            if hasattr(specific_prompts, key):
+            if key in document_specific_prompt_fields and hasattr(specific_prompts, key):
                 setattr(specific_prompts, key, value)
         
         specific_prompts.last_modified = datetime.now()
         specific_prompts.modified_by = update_request.user or "settings_ui"
         
         success = unified_manager.save_document_specific_prompts(doc_class, specific_prompts)
+        
+        # Update universal prompts if any were provided
+        universal_prompts = unified_manager.get_universal_prompts()
+        if universal_prompts:
+            universal_updated = False
+            for key, value in update_request.prompts.items():
+                if key in universal_prompt_fields and hasattr(universal_prompts, key):
+                    setattr(universal_prompts, key, value)
+                    universal_updated = True
+            
+            if universal_updated:
+                universal_prompts.last_modified = datetime.now()
+                universal_prompts.modified_by = update_request.user or "settings_ui"
+                unified_manager.save_universal_prompts(universal_prompts)
         
         if success:
             logger.info(f"Updated document prompts for {document_type} by {update_request.user or 'unknown'}")

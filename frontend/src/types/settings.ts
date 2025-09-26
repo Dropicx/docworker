@@ -113,7 +113,6 @@ export interface GlobalPrompts {
   medical_validation_prompt: string;
   classification_prompt: string;
   preprocessing_prompt: string;
-  grammar_check_prompt: string;
   language_translation_prompt: string;
 }
 
@@ -133,7 +132,6 @@ export interface GlobalPromptUpdateRequest {
   medical_validation_prompt: string;
   classification_prompt: string;
   preprocessing_prompt: string;
-  grammar_check_prompt: string;
   language_translation_prompt: string;
   user?: string;
 }
