@@ -23,8 +23,9 @@ from app.services.cleanup import (
     remove_from_processing_store
 )
 from app.services.ovh_client import OVHClient
-from app.services.database_prompt_manager import DatabasePromptManager
+from app.services.unified_prompt_manager import UnifiedPromptManager
 from app.services.ai_logging_service import AILoggingService
+from app.routers.process_unified import process_document_unified
 from app.database.connection import get_session
 from sqlalchemy.orm import Session
 from app.services.optimized_pipeline import OptimizedPipelineProcessor
@@ -120,15 +121,10 @@ async def start_processing(
 
 async def process_document(processing_id: str):
     """
-    Verarbeitet Dokument im Hintergrund
+    Verarbeitet Dokument im Hintergrund mit dem neuen unified System
     """
-    # Check if optimized pipeline is enabled
-    use_optimized_pipeline = os.getenv("USE_OPTIMIZED_PIPELINE", "true").lower() == "true"
-
-    if use_optimized_pipeline:
-        await process_document_optimized(processing_id)
-    else:
-        await process_document_legacy(processing_id)
+    # Use unified system (always)
+    await process_document_unified(processing_id)
 
 async def process_document_optimized(processing_id: str):
     """
@@ -279,7 +275,11 @@ async def process_document_legacy(processing_id: str):
             custom_prompts = prompt_manager.load_prompts(document_class)
         
         # Medizinische Inhaltsvalidierung (nur wenn aktiviert)
-        if custom_prompts.pipeline_steps.get("MEDICAL_VALIDATION", {}).enabled:
+        global_pipeline = get_global_pipeline_service()
+        global_pipeline.db_session = db  # Pass database session
+        document_specific_enabled = custom_prompts.pipeline_steps.get("MEDICAL_VALIDATION", {}).enabled
+        
+        if not global_pipeline.should_skip_step("MEDICAL_VALIDATION", document_specific_enabled):
             from app.services.medical_content_validator import MedicalContentValidator
             validator = MedicalContentValidator(ovh_client)
             is_medical, validation_confidence, validation_method = await validator.validate_medical_content(extracted_text)
@@ -324,7 +324,9 @@ async def process_document_legacy(processing_id: str):
         
         # Dokumenttyp klassifizieren (nur wenn aktiviert)
         detected_doc_type = "arztbrief"  # Default
-        if custom_prompts.pipeline_steps.get("CLASSIFICATION", {}).enabled:
+        document_specific_enabled = custom_prompts.pipeline_steps.get("CLASSIFICATION", {}).enabled
+        
+        if not global_pipeline.should_skip_step("CLASSIFICATION", document_specific_enabled):
             from app.services.document_classifier import DocumentClassifier
             classifier = DocumentClassifier(ovh_client)
             classification_result = await classifier.classify_document(cleaned_text)
@@ -357,7 +359,9 @@ async def process_document_legacy(processing_id: str):
         translated_text = cleaned_text  # Start with cleaned text
         translation_confidence = 1.0  # Default confidence
         
-        if custom_prompts.pipeline_steps.get("TRANSLATION", {}).enabled:
+        document_specific_enabled = custom_prompts.pipeline_steps.get("TRANSLATION", {}).enabled
+        
+        if not global_pipeline.should_skip_step("TRANSLATION", document_specific_enabled):
             translated_text, _, translation_confidence, _ = await ovh_client.translate_medical_document(
                 cleaned_text, document_type=detected_doc_type, custom_prompts=custom_prompts
             )
@@ -381,7 +385,9 @@ async def process_document_legacy(processing_id: str):
         quality_checker = QualityChecker(ovh_client)
         
         # Fact Check (nur wenn aktiviert)
-        if custom_prompts.pipeline_steps.get("FACT_CHECK", {}).enabled:
+        document_specific_enabled = custom_prompts.pipeline_steps.get("FACT_CHECK", {}).enabled
+        
+        if not global_pipeline.should_skip_step("FACT_CHECK", document_specific_enabled):
             fact_checked_text, fact_check_results = await quality_checker.fact_check(
                 translated_text, document_class, custom_prompts.fact_check_prompt
             )
@@ -403,7 +409,9 @@ async def process_document_legacy(processing_id: str):
             print(f"⏭️ Fact check: SKIPPED (disabled)")
         
         # Grammar Check (nur wenn aktiviert)
-        if custom_prompts.pipeline_steps.get("GRAMMAR_CHECK", {}).enabled:
+        document_specific_enabled = custom_prompts.pipeline_steps.get("GRAMMAR_CHECK", {}).enabled
+        
+        if not global_pipeline.should_skip_step("GRAMMAR_CHECK", document_specific_enabled):
             grammar_checked_text, grammar_check_results = await quality_checker.grammar_check(
                 translated_text, "de", custom_prompts.grammar_check_prompt
             )
@@ -428,7 +436,9 @@ async def process_document_legacy(processing_id: str):
         language_translated_text = None
         language_confidence_score = None
         
-        if target_language and custom_prompts.pipeline_steps.get("LANGUAGE_TRANSLATION", {}).enabled:
+        document_specific_enabled = custom_prompts.pipeline_steps.get("LANGUAGE_TRANSLATION", {}).enabled
+        
+        if target_language and not global_pipeline.should_skip_step("LANGUAGE_TRANSLATION", document_specific_enabled):
             update_processing_store(processing_id, {
                 "status": ProcessingStatus.LANGUAGE_TRANSLATING,
                 "progress_percent": 70,
@@ -459,7 +469,9 @@ async def process_document_legacy(processing_id: str):
             overall_confidence = (translation_confidence + language_confidence_score) / 2
         
         # Final Quality Check (nur wenn aktiviert)
-        if custom_prompts.pipeline_steps.get("FINAL_CHECK", {}).enabled:
+        document_specific_enabled = custom_prompts.pipeline_steps.get("FINAL_CHECK", {}).enabled
+        
+        if not global_pipeline.should_skip_step("FINAL_CHECK", document_specific_enabled):
             final_checked_text, final_check_results = await quality_checker.final_check(
                 translated_text, custom_prompts.final_check_prompt
             )
@@ -469,7 +481,9 @@ async def process_document_legacy(processing_id: str):
             print(f"⏭️ Final quality check: SKIPPED (disabled)")
         
         # Formatierung (nur wenn aktiviert)
-        if custom_prompts.pipeline_steps.get("FORMATTING", {}).enabled:
+        document_specific_enabled = custom_prompts.pipeline_steps.get("FORMATTING", {}).enabled
+        
+        if not global_pipeline.should_skip_step("FORMATTING", document_specific_enabled):
             print(f"[FORMATTING] Applying final formatting to translated text...")
             from app.services.ovh_client import OVHClient
             ovh_client = OVHClient()

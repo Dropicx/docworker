@@ -4,7 +4,7 @@ Database initialization script
 
 import logging
 from sqlalchemy import create_engine
-from app.database.models import Base
+from app.database.unified_models import Base
 from app.database.connection import get_database_url
 
 logger = logging.getLogger(__name__)
@@ -21,8 +21,8 @@ def init_database():
         
         # Seed initial data
         try:
-            from app.database.simple_seed import simple_seed_database
-            if simple_seed_database():
+            from app.database.unified_seed import unified_seed_database
+            if unified_seed_database():
                 logger.info("Database seeded with initial data successfully")
             else:
                 logger.warning("Failed to seed database with initial data")

@@ -1073,7 +1073,14 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
 
                     {/* Individual Step Controls */}
                     <div className="bg-white border border-primary-200 rounded-xl p-6">
-                      <h4 className="text-lg font-semibold text-primary-900 mb-4">⚙️ Pipeline-Schritte</h4>
+                      <div className="mb-4">
+                        <h4 className="text-lg font-semibold text-primary-900 mb-2">⚙️ Pipeline-Schritte</h4>
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                          <p className="text-sm text-blue-800">
+                            <strong>🌐 Universelle Einstellungen:</strong> Diese Schritte werden für <strong>alle</strong> Dokumenttypen (Arztbrief, Befundbericht, Laborwerte) gleichzeitig aktiviert oder deaktiviert.
+                          </p>
+                        </div>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         {[
                           { key: 'enable_medical_validation', name: 'Medizinische Validierung', desc: 'KI-gestützte Inhaltserkennung' },
