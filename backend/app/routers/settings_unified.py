@@ -228,6 +228,7 @@ async def get_document_prompts(
             "prompts": {
                 "translation_prompt": specific_prompts.translation_prompt,
                 "fact_check_prompt": specific_prompts.fact_check_prompt,
+                "grammar_check_prompt": specific_prompts.grammar_check_prompt,
                 "final_check_prompt": specific_prompts.final_check_prompt,
                 "formatting_prompt": specific_prompts.formatting_prompt
             },
@@ -574,10 +575,25 @@ async def get_pipeline_settings_internal(db: Session) -> dict:
         # Get pipeline step configurations
         pipeline_steps = db.query(UniversalPipelineStepConfigDB).all()
         
+        # Get system settings for pipeline configuration
+        from app.database.models import SystemSettingsDB
+        
+        # Get system settings
+        system_settings = db.query(SystemSettingsDB).filter(
+            SystemSettingsDB.key.in_(["use_optimized_pipeline", "pipeline_cache_timeout"])
+        ).all()
+        
+        system_config = {}
+        for setting in system_settings:
+            if setting.key == "pipeline_cache_timeout":
+                system_config["pipeline_cache_timeout"] = int(setting.value) if setting.value.isdigit() else 1800
+            elif setting.key == "use_optimized_pipeline":
+                system_config["use_optimized_pipeline"] = setting.value.lower() == "true"
+        
         # Convert to frontend format - organized by type and order
         settings = {
-            "use_optimized_pipeline": True,  # Always true for unified system
-            "pipeline_cache_timeout": 1800,  # 30 minutes default
+            "use_optimized_pipeline": system_config.get("use_optimized_pipeline", True),  # Default to true
+            "pipeline_cache_timeout": system_config.get("pipeline_cache_timeout", 1800),  # Default to 30 minutes
             "enable_medical_validation": False,
             "enable_preprocessing": False,
             "enable_classification": False,
@@ -675,6 +691,41 @@ async def update_pipeline_settings(
             "enable_final_check": "FINAL_CHECK",
             "enable_formatting": "FORMATTING"
         }
+        
+        # Handle system settings (pipeline_cache_timeout, use_optimized_pipeline)
+        from app.database.models import SystemSettingsDB
+        
+        if "pipeline_cache_timeout" in settings:
+            cache_timeout_setting = db.query(SystemSettingsDB).filter_by(key="pipeline_cache_timeout").first()
+            if cache_timeout_setting:
+                cache_timeout_setting.value = str(settings["pipeline_cache_timeout"])
+                cache_timeout_setting.last_modified = datetime.now()
+                cache_timeout_setting.modified_by = "frontend_update"
+            else:
+                new_setting = SystemSettingsDB(
+                    key="pipeline_cache_timeout",
+                    value=str(settings["pipeline_cache_timeout"]),
+                    description="Pipeline cache timeout in seconds",
+                    last_modified=datetime.now(),
+                    modified_by="frontend_update"
+                )
+                db.add(new_setting)
+        
+        if "use_optimized_pipeline" in settings:
+            optimized_setting = db.query(SystemSettingsDB).filter_by(key="use_optimized_pipeline").first()
+            if optimized_setting:
+                optimized_setting.value = str(settings["use_optimized_pipeline"]).lower()
+                optimized_setting.last_modified = datetime.now()
+                optimized_setting.modified_by = "frontend_update"
+            else:
+                new_setting = SystemSettingsDB(
+                    key="use_optimized_pipeline",
+                    value=str(settings["use_optimized_pipeline"]).lower(),
+                    description="Whether to use optimized pipeline",
+                    last_modified=datetime.now(),
+                    modified_by="frontend_update"
+                )
+                db.add(new_setting)
         
         # Update each step configuration based on frontend flags
         for frontend_key, step_name in step_mapping.items():
