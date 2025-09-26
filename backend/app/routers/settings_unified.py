@@ -568,18 +568,8 @@ async def get_document_types(
 
 # ==================== PIPELINE SETTINGS ====================
 
-@router.get("/pipeline-settings")
-async def get_pipeline_settings(
-    authenticated: bool = Depends(verify_session_token),
-    db: Session = Depends(get_session)
-):
-    """Get pipeline settings."""
-    if not authenticated:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authentication required"
-        )
-    
+async def get_pipeline_settings_internal(db: Session) -> dict:
+    """Internal function to get pipeline settings (used by both GET and PUT endpoints)."""
     try:
         # Get pipeline step configurations
         pipeline_steps = db.query(UniversalPipelineStepConfigDB).all()
@@ -632,6 +622,24 @@ async def get_pipeline_settings(
         
         return {"settings": settings}
         
+    except Exception as e:
+        logger.error(f"Failed to get pipeline settings: {e}")
+        raise e
+
+@router.get("/pipeline-settings")
+async def get_pipeline_settings(
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_session)
+):
+    """Get pipeline settings."""
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    try:
+        return await get_pipeline_settings_internal(db)
     except Exception as e:
         logger.error(f"Failed to get pipeline settings: {e}")
         raise HTTPException(
@@ -704,9 +712,13 @@ async def update_pipeline_settings(
         
         db.commit()
         
+        # Get updated settings to return to frontend
+        updated_settings = await get_pipeline_settings_internal(db)
+        
         return {
             "success": True,
-            "message": "Pipeline settings updated successfully"
+            "message": "Pipeline settings updated successfully",
+            "settings": updated_settings["settings"]
         }
         
     except Exception as e:
