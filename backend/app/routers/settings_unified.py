@@ -20,7 +20,7 @@ from app.models.document_types import DocumentClass, PromptTestRequest, PromptTe
 from app.services.unified_prompt_manager import UnifiedPromptManager
 from app.services.ovh_client import OVHClient
 from app.database.connection import get_session
-from app.database.unified_models import SystemSettingsDB
+from app.database.unified_models import SystemSettingsDB, UniversalPipelineStepConfigDB
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
@@ -124,7 +124,7 @@ async def get_universal_prompts(
         
         return {
             "success": True,
-            "prompts": {
+            "global_prompts": {
                 "medical_validation_prompt": universal_prompts.medical_validation_prompt,
                 "classification_prompt": universal_prompts.classification_prompt,
                 "preprocessing_prompt": universal_prompts.preprocessing_prompt,
@@ -564,4 +564,92 @@ async def get_document_types(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to get document types: {str(e)}"
+        )
+
+# ==================== PIPELINE SETTINGS ====================
+
+@router.get("/pipeline-settings")
+async def get_pipeline_settings(
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_session)
+):
+    """Get pipeline settings."""
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    try:
+        # Get pipeline step configurations
+        pipeline_steps = db.query(UniversalPipelineStepConfigDB).all()
+        
+        # Convert to frontend format
+        settings = {
+            "steps": {}
+        }
+        
+        for step in pipeline_steps:
+            settings["steps"][step.step_name] = {
+                "enabled": step.enabled,
+                "description": step.description or "",
+                "order": step.order or 0
+            }
+        
+        return {"settings": settings}
+        
+    except Exception as e:
+        logger.error(f"Failed to get pipeline settings: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get pipeline settings: {str(e)}"
+        )
+
+@router.put("/pipeline-settings")
+async def update_pipeline_settings(
+    request: dict,
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_session)
+):
+    """Update pipeline settings."""
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    try:
+        settings = request.get("settings", {})
+        steps = settings.get("steps", {})
+        
+        # Update each step configuration
+        for step_name, step_config in steps.items():
+            step_db = db.query(UniversalPipelineStepConfigDB).filter_by(step_name=step_name).first()
+            if step_db:
+                step_db.enabled = step_config.get("enabled", True)
+                step_db.description = step_config.get("description", "")
+                step_db.order = step_config.get("order", 0)
+            else:
+                # Create new step configuration
+                new_step = UniversalPipelineStepConfigDB(
+                    step_name=step_name,
+                    enabled=step_config.get("enabled", True),
+                    description=step_config.get("description", ""),
+                    order=step_config.get("order", 0)
+                )
+                db.add(new_step)
+        
+        db.commit()
+        
+        return {
+            "success": True,
+            "message": "Pipeline settings updated successfully"
+        }
+        
+    except Exception as e:
+        logger.error(f"Failed to update pipeline settings: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update pipeline settings: {str(e)}"
         )
