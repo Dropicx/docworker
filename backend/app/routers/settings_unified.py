@@ -653,3 +653,39 @@ async def update_pipeline_settings(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update pipeline settings: {str(e)}"
         )
+
+# ==================== DATABASE MANAGEMENT ====================
+
+@router.post("/seed-database")
+async def seed_database(
+    authenticated: bool = Depends(verify_session_token)
+):
+    """Trigger database seeding (for development/production setup)."""
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    try:
+        from app.database.unified_seed import unified_seed_database
+        
+        result = unified_seed_database()
+        
+        if result:
+            return {
+                "success": True,
+                "message": "Database seeded successfully"
+            }
+        else:
+            return {
+                "success": False,
+                "message": "Database seeding failed"
+            }
+            
+    except Exception as e:
+        logger.error(f"Failed to seed database: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to seed database: {str(e)}"
+        )
