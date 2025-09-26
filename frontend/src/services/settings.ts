@@ -113,7 +113,7 @@ class SettingsService {
   async getPrompts(documentType: DocumentClass): Promise<PromptsResponse> {
     try {
       const response = await axios.get<PromptsResponse>(
-        `${SETTINGS_BASE_URL}/prompts/${documentType}`,
+        `${SETTINGS_BASE_URL}/document-prompts/${documentType}`,
         { headers: this.getAuthHeaders() }
       );
       return response.data;
@@ -135,7 +135,7 @@ class SettingsService {
   ): Promise<{ success: boolean; message: string; version: number }> {
     try {
       const response = await axios.put(
-        `${SETTINGS_BASE_URL}/prompts/${documentType}`,
+        `${SETTINGS_BASE_URL}/document-prompts/${documentType}`,
         { prompts, user } as PromptUpdateRequest,
         { headers: this.getAuthHeaders() }
       );
@@ -295,7 +295,7 @@ class SettingsService {
   async getPipelineSteps(documentType: DocumentClass): Promise<Record<string, any>> {
     try {
       const response = await axios.get(
-        `${SETTINGS_BASE_URL}/pipeline-steps/${documentType}`,
+        `${SETTINGS_BASE_URL}/pipeline-steps`,
         { headers: this.getAuthHeaders() }
       );
       return response.data.pipeline_steps;
@@ -312,7 +312,7 @@ class SettingsService {
   ): Promise<Record<string, any>> {
     try {
       const response = await axios.put(
-        `${SETTINGS_BASE_URL}/pipeline-steps/${documentType}`,
+        `${SETTINGS_BASE_URL}/pipeline-steps`,
         {
           step_name: stepName,
           enabled: enabled
@@ -327,17 +327,9 @@ class SettingsService {
   }
 
   async resetPipelineSteps(documentType: DocumentClass): Promise<Record<string, any>> {
-    try {
-      const response = await axios.post(
-        `${SETTINGS_BASE_URL}/pipeline-steps/${documentType}/reset`,
-        {},
-        { headers: this.getAuthHeaders() }
-      );
-      return response.data.pipeline_steps;
-    } catch (error) {
-      console.error('Failed to reset pipeline steps:', error);
-      throw new Error('Failed to reset pipeline steps');
-    }
+    // Pipeline steps reset is not implemented in unified system
+    // Return current pipeline steps instead
+    return this.getPipelineSteps(documentType);
   }
 
   // Pipeline optimization settings methods
@@ -424,7 +416,7 @@ class SettingsService {
   async getGlobalPrompts(): Promise<GlobalPromptsResponse> {
     try {
       const response = await axios.get<GlobalPromptsResponse>(
-        `${SETTINGS_BASE_URL}/global-prompts`,
+        `${SETTINGS_BASE_URL}/universal-prompts`,
         { headers: this.getAuthHeaders() }
       );
       return response.data;
@@ -442,7 +434,7 @@ class SettingsService {
   async updateGlobalPrompts(prompts: GlobalPromptUpdateRequest): Promise<{ success: boolean; message: string; version: number }> {
     try {
       const response = await axios.put(
-        `${SETTINGS_BASE_URL}/global-prompts`,
+        `${SETTINGS_BASE_URL}/universal-prompts`,
         prompts,
         { headers: this.getAuthHeaders() }
       );

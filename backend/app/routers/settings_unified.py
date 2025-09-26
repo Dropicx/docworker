@@ -524,3 +524,44 @@ async def update_system_settings(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update system settings: {str(e)}"
         )
+
+# ==================== DOCUMENT TYPES ====================
+
+@router.get("/document-types")
+async def get_document_types(
+    authenticated: bool = Depends(verify_session_token)
+):
+    """Get list of supported document types."""
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+    
+    try:
+        document_types = [
+            {
+                "type": "arztbrief",
+                "name": "Arztbrief",
+                "description": "Medical letter from doctor to patient or other healthcare providers"
+            },
+            {
+                "type": "befundbericht", 
+                "name": "Befundbericht",
+                "description": "Medical findings report with test results and diagnoses"
+            },
+            {
+                "type": "laborwerte",
+                "name": "Laborwerte", 
+                "description": "Laboratory values and test results"
+            }
+        ]
+        
+        return {"document_types": document_types}
+        
+    except Exception as e:
+        logger.error(f"Failed to get document types: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get document types: {str(e)}"
+        )
