@@ -1,6 +1,6 @@
 import asyncio
 import time
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
@@ -577,11 +577,45 @@ async def get_pipeline_stats():
     Get pipeline performance statistics
     """
     try:
+        # Get real statistics from database
+        from app.database.connection import get_session
+        from app.database.unified_models import AILogInteractionDB
+        from app.database.models import DocumentPromptsDB
+        
+        with get_session() as db:
+            # Count AI interactions
+            total_interactions = db.query(AILogInteractionDB).count()
+            recent_interactions = db.query(AILogInteractionDB).filter(
+                AILogInteractionDB.created_at >= datetime.now() - timedelta(hours=24)
+            ).count()
+            
+            # Count document prompts
+            total_prompts = db.query(DocumentPromptsDB).count()
+            
+            return {
+                "pipeline_mode": "unified",
+                "cache_statistics": {
+                    "total_entries": total_prompts,
+                    "active_entries": recent_interactions,
+                    "expired_entries": max(0, total_interactions - recent_interactions),
+                    "cache_timeout_seconds": 1800  # 30 minutes
+                },
+                "performance_improvements": {
+                    "unified_system": "Single source of truth for all prompts",
+                    "database_storage": "Persistent prompt and configuration storage",
+                    "universal_pipeline": "Global pipeline step control",
+                    "ai_logging": "Complete interaction traceability",
+                    "async_operations": "Non-blocking AI API calls"
+                }
+            }
+    except Exception as e:
         return {
             "pipeline_mode": "unified",
             "cache_statistics": {
-                "prompt_cache": "Database-based prompt storage",
-                "ai_logging": "Comprehensive interaction tracking"
+                "total_entries": 0,
+                "active_entries": 0,
+                "expired_entries": 0,
+                "cache_timeout_seconds": 1800
             },
             "performance_improvements": {
                 "unified_system": "Single source of truth for all prompts",
@@ -590,12 +624,7 @@ async def get_pipeline_stats():
                 "ai_logging": "Complete interaction traceability",
                 "async_operations": "Non-blocking AI API calls"
             },
-            "timestamp": datetime.now()
-        }
-    except Exception as e:
-        return {
-            "error": str(e),
-            "timestamp": datetime.now()
+            "error": str(e)
         }
 
 @router.post("/process/clear-cache")
