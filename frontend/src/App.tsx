@@ -4,7 +4,7 @@ import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap, Globe, Che
 import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
-import SettingsModal from './components/SettingsModal';
+import EnhancedSettingsModal from './components/EnhancedSettingsModal';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
 import Impressum from './pages/Impressum';
@@ -572,7 +572,7 @@ function App() {
       <Footer />
       
       {/* Settings Modal */}
-      <SettingsModal 
+      <EnhancedSettingsModal 
         isOpen={showSettings} 
         onClose={() => setShowSettings(false)} 
       />
