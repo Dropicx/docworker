@@ -68,6 +68,11 @@ def simple_seed_database():
                     INSERT INTO pipeline_step_configs (
                         document_prompts_id, step_name, enabled, "order", name, description
                     ) VALUES (:doc_id, :step_name, :enabled, :order, :name, :description)
+                    ON CONFLICT (document_prompts_id, step_name) DO UPDATE SET
+                        enabled = EXCLUDED.enabled,
+                        "order" = EXCLUDED.order,
+                        name = EXCLUDED.name,
+                        description = EXCLUDED.description
                 """), {
                     'doc_id': arztbrief_id,
                     'step_name': step_name,
@@ -109,6 +114,11 @@ def simple_seed_database():
                     INSERT INTO pipeline_step_configs (
                         document_prompts_id, step_name, enabled, "order", name, description
                     ) VALUES (:doc_id, :step_name, :enabled, :order, :name, :description)
+                    ON CONFLICT (document_prompts_id, step_name) DO UPDATE SET
+                        enabled = EXCLUDED.enabled,
+                        "order" = EXCLUDED.order,
+                        name = EXCLUDED.name,
+                        description = EXCLUDED.description
                 """), {
                     'doc_id': befundbericht_id,
                     'step_name': step_name,
@@ -150,6 +160,11 @@ def simple_seed_database():
                     INSERT INTO pipeline_step_configs (
                         document_prompts_id, step_name, enabled, "order", name, description
                     ) VALUES (:doc_id, :step_name, :enabled, :order, :name, :description)
+                    ON CONFLICT (document_prompts_id, step_name) DO UPDATE SET
+                        enabled = EXCLUDED.enabled,
+                        "order" = EXCLUDED.order,
+                        name = EXCLUDED.name,
+                        description = EXCLUDED.description
                 """), {
                     'doc_id': laborwerte_id,
                     'step_name': step_name,
