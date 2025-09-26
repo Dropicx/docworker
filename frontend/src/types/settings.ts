@@ -223,52 +223,31 @@ export const GLOBAL_PROMPT_STEPS = {
   }
 };
 
-// Document-specific prompt step descriptions for UI
+// Document-specific prompt step descriptions for UI (universal prompts moved to GLOBAL_PROMPT_STEPS)
 export const PROMPT_STEPS = {
-  medical_validation_prompt: {
-    name: 'Medizinische Validierung',
-    description: 'KI-gestützte Erkennung medizinischer Inhalte',
-    placeholder: 'Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält...'
-  },
-  classification_prompt: {
-    name: 'Klassifizierung',
-    description: 'Prompt zur automatischen Dokumenttyp-Erkennung',
-    placeholder: 'Analysiere diesen medizinischen Text und bestimme...'
-  },
-  preprocessing_prompt: {
-    name: 'Vorverarbeitung',
-    description: 'Entfernung persönlicher Daten und Bereinigung',
-    placeholder: 'Entferne persönliche Daten aber behalte alle medizinischen Informationen...'
-  },
   translation_prompt: {
     name: 'Hauptübersetzung',
-    description: 'Übersetzung in patientenfreundliche Sprache',
-    placeholder: 'Übersetze diesen medizinischen Text in einfache Sprache...'
+    description: 'Übersetzung in patientenfreundliche Sprache (dokumentspezifisch)',
+    placeholder: 'Übersetze diesen medizinischen Text in einfache Sprache...',
+    category: 'translation'
   },
   fact_check_prompt: {
     name: 'Faktenprüfung',
-    description: 'Überprüfung der medizinischen Korrektheit',
-    placeholder: 'Prüfe diesen Text auf medizinische Korrektheit...'
-  },
-  grammar_check_prompt: {
-    name: 'Grammatikprüfung',
-    description: 'Korrektur von Grammatik und Rechtschreibung',
-    placeholder: 'Korrigiere die deutsche Grammatik und Rechtschreibung...'
-  },
-  language_translation_prompt: {
-    name: 'Sprachübersetzung',
-    description: 'Übersetzung in andere Sprachen',
-    placeholder: 'Übersetze diesen Text in {language}...'
+    description: 'Überprüfung der medizinischen Korrektheit (dokumentspezifisch)',
+    placeholder: 'Prüfe diesen Text auf medizinische Korrektheit...',
+    category: 'quality'
   },
   final_check_prompt: {
     name: 'Finale Kontrolle',
-    description: 'Abschließende Qualitätsprüfung',
-    placeholder: 'Führe eine finale Qualitätskontrolle durch...'
+    description: 'Abschließende Qualitätsprüfung (dokumentspezifisch)',
+    placeholder: 'Führe eine finale Qualitätskontrolle durch...',
+    category: 'quality'
   },
   formatting_prompt: {
     name: 'Textformatierung',
     description: 'Optimierung der Textstruktur und Lesbarkeit (dokumentspezifisch)',
-    placeholder: 'Formatiere diesen Text für optimale Lesbarkeit mit Überschriften und Listen...'
+    placeholder: 'Formatiere diesen Text für optimale Lesbarkeit mit Überschriften und Listen...',
+    category: 'formatting'
   }
 };
 
