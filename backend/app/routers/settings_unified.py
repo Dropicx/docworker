@@ -699,15 +699,16 @@ async def update_pipeline_settings(
             cache_timeout_setting = db.query(SystemSettingsDB).filter_by(key="pipeline_cache_timeout").first()
             if cache_timeout_setting:
                 cache_timeout_setting.value = str(settings["pipeline_cache_timeout"])
-                cache_timeout_setting.last_modified = datetime.now()
-                cache_timeout_setting.modified_by = "frontend_update"
+                cache_timeout_setting.updated_at = datetime.now()
+                cache_timeout_setting.updated_by = "frontend_update"
             else:
                 new_setting = SystemSettingsDB(
                     key="pipeline_cache_timeout",
                     value=str(settings["pipeline_cache_timeout"]),
+                    value_type="int",
                     description="Pipeline cache timeout in seconds",
-                    last_modified=datetime.now(),
-                    modified_by="frontend_update"
+                    is_encrypted=False,
+                    updated_by="frontend_update"
                 )
                 db.add(new_setting)
         
@@ -715,15 +716,16 @@ async def update_pipeline_settings(
             optimized_setting = db.query(SystemSettingsDB).filter_by(key="use_optimized_pipeline").first()
             if optimized_setting:
                 optimized_setting.value = str(settings["use_optimized_pipeline"]).lower()
-                optimized_setting.last_modified = datetime.now()
-                optimized_setting.modified_by = "frontend_update"
+                optimized_setting.updated_at = datetime.now()
+                optimized_setting.updated_by = "frontend_update"
             else:
                 new_setting = SystemSettingsDB(
                     key="use_optimized_pipeline",
                     value=str(settings["use_optimized_pipeline"]).lower(),
+                    value_type="bool",
                     description="Whether to use optimized pipeline",
-                    last_modified=datetime.now(),
-                    modified_by="frontend_update"
+                    is_encrypted=False,
+                    updated_by="frontend_update"
                 )
                 db.add(new_setting)
         
