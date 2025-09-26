@@ -28,7 +28,6 @@ from app.services.ai_logging_service import AILoggingService
 from app.routers.process_unified import process_document_unified
 from app.database.connection import get_session
 from sqlalchemy.orm import Session
-from app.services.optimized_pipeline import OptimizedPipelineProcessor
 import os
 
 # Smart text extractor selection based on OCR availability
@@ -128,89 +127,10 @@ async def process_document(processing_id: str):
 
 async def process_document_optimized(processing_id: str):
     """
-    Optimized document processing with improved performance
+    Optimized document processing - now uses unified system
     """
-    try:
-        processing_data = get_from_processing_store(processing_id)
-        if not processing_data:
-            return
-
-        start_time = time.time()
-        options = processing_data.get("options", {})
-
-        # Update callback function
-        def update_progress(message: str, progress: int):
-            update_processing_store(processing_id, {
-                "progress_percent": progress,
-                "current_step": message
-            })
-
-        # Initialize optimized pipeline
-        pipeline = OptimizedPipelineProcessor()
-
-        # Process document with optimized pipeline
-        result = await pipeline.process_document_optimized(
-            processing_id=processing_id,
-            file_content=processing_data["file_content"],
-            file_type=processing_data["file_type"],
-            filename=processing_data["filename"],
-            options=options,
-            update_callback=update_progress
-        )
-
-        if result["status"] == "completed":
-            from app.models.document import TranslationResult, SupportedLanguage
-
-            # Create translation result
-            translation_result = TranslationResult(
-                processing_id=processing_id,
-                original_text=result["original_text"],
-                translated_text=result["translated_text"],
-                language_translated_text=result.get("language_translated_text"),
-                target_language=SupportedLanguage(result["target_language"]) if result.get("target_language") else None,
-                document_type_detected=result["document_type_detected"],
-                confidence_score=result["confidence_score"],
-                language_confidence_score=result.get("language_confidence_score"),
-                processing_time_seconds=result["processing_time_seconds"]
-            )
-
-            update_processing_store(processing_id, {
-                "status": ProcessingStatus.COMPLETED,
-                "progress_percent": 100,
-                "current_step": "Processing completed (Optimized)",
-                "result": translation_result.dict(),
-                "completed_at": datetime.now(),
-                "optimized": True
-            })
-
-            print(f"✅ Optimized processing completed: {processing_id[:8]} ({result['processing_time_seconds']:.2f}s)")
-
-        elif result["status"] == "non_medical":
-            update_processing_store(processing_id, {
-                "status": ProcessingStatus.NON_MEDICAL_CONTENT,
-                "progress_percent": 100,
-                "current_step": "Document does not contain medical content",
-                "error": result["error"],
-                "completed_at": datetime.now()
-            })
-        else:
-            # Error case
-            update_processing_store(processing_id, {
-                "status": ProcessingStatus.ERROR,
-                "current_step": "Error in optimized processing",
-                "error": result.get("error", "Unknown error"),
-                "error_at": datetime.now()
-            })
-
-    except Exception as e:
-        print(f"❌ Optimized processing error {processing_id[:8]}: {e}")
-
-        update_processing_store(processing_id, {
-            "status": ProcessingStatus.ERROR,
-            "current_step": "Error in optimized processing",
-            "error": str(e),
-            "error_at": datetime.now()
-        })
+    # Use unified system (same as regular processing)
+    await process_document_unified(processing_id)
 
 async def process_document_legacy(processing_id: str):
     try:
@@ -649,8 +569,7 @@ async def get_active_processes(request: Request):
             "timestamp": datetime.now()
         }
 
-# Initialize global optimized pipeline instance for cache persistence
-_optimized_pipeline = OptimizedPipelineProcessor()
+# Global optimized pipeline instance removed - now using unified system
 
 @router.get("/process/pipeline-stats")
 async def get_pipeline_stats():
@@ -658,18 +577,18 @@ async def get_pipeline_stats():
     Get pipeline performance statistics
     """
     try:
-        use_optimized = os.getenv("USE_OPTIMIZED_PIPELINE", "true").lower() == "true"
-        cache_stats = _optimized_pipeline.get_cache_stats()
-
         return {
-            "pipeline_mode": "optimized" if use_optimized else "legacy",
-            "cache_statistics": cache_stats,
+            "pipeline_mode": "unified",
+            "cache_statistics": {
+                "prompt_cache": "Database-based prompt storage",
+                "ai_logging": "Comprehensive interaction tracking"
+            },
             "performance_improvements": {
-                "prompt_caching": "Avoids repeated database calls",
-                "parallel_processing": "Classification + Preprocessing in parallel",
-                "quality_checks_parallel": "Fact check + Grammar check in parallel",
-                "async_operations": "Non-blocking AI API calls",
-                "smart_fallbacks": "Graceful degradation on errors"
+                "unified_system": "Single source of truth for all prompts",
+                "database_storage": "Persistent prompt and configuration storage",
+                "universal_pipeline": "Global pipeline step control",
+                "ai_logging": "Complete interaction traceability",
+                "async_operations": "Non-blocking AI API calls"
             },
             "timestamp": datetime.now()
         }
@@ -682,13 +601,14 @@ async def get_pipeline_stats():
 @router.post("/process/clear-cache")
 async def clear_pipeline_cache():
     """
-    Clear the pipeline prompt cache
+    Clear the pipeline prompt cache (unified system)
     """
     try:
-        _optimized_pipeline.clear_prompt_cache()
+        # In the unified system, prompts are stored in the database
+        # This endpoint is kept for compatibility but doesn't need to do anything
         return {
             "success": True,
-            "message": "Pipeline cache cleared successfully",
+            "message": "Unified system uses database storage - no cache to clear",
             "timestamp": datetime.now()
         }
     except Exception as e:
