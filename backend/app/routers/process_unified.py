@@ -12,7 +12,8 @@ from typing import Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends, BackgroundTasks
 from sqlalchemy.orm import Session
 
-from app.models.document_types import DocumentClass, SupportedLanguage, ProcessingStatus
+from app.models.document_types import DocumentClass
+from app.models.document import SupportedLanguage, ProcessingStatus
 from app.services.ovh_client import OVHClient
 from app.services.unified_prompt_manager import UnifiedPromptManager
 from app.services.ai_logging_service import AILoggingService
