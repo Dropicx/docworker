@@ -105,6 +105,7 @@ export interface PipelineSettingsResponse {
   settings: PipelineSettings;
   success: boolean;
   message: string;
+  warning?: string;
 }
 
 // Document type descriptions for UI
