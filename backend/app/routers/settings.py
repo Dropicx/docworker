@@ -31,6 +31,7 @@ def convert_frontend_to_db_document_type(frontend_type: str) -> DocumentClass:
     return conversion_map[frontend_type.lower()]
 from app.services.prompt_manager import PromptManager
 from app.services.database_prompt_manager import DatabasePromptManager
+from app.services.global_prompts_manager import GlobalPromptsManager
 from app.services.ovh_client import OVHClient
 from app.database.connection import get_session
 from sqlalchemy.orm import Session
@@ -52,6 +53,7 @@ def get_db_session() -> Session:
 
 # Initialize services
 prompt_manager = PromptManager()
+global_prompts_manager = GlobalPromptsManager()
 
 class AuthRequest(BaseModel):
     code: str = Field(..., description="Access code for settings")
@@ -819,4 +821,286 @@ async def update_pipeline_settings(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update pipeline settings: {str(e)}"
+        )
+
+# Global Prompts Management
+
+class GlobalPromptUpdateRequest(BaseModel):
+    """Request to update global prompts"""
+    medical_validation_prompt: str = Field(..., description="Universal medical validation prompt")
+    classification_prompt: str = Field(..., description="Universal document classification prompt")
+    preprocessing_prompt: str = Field(..., description="Universal preprocessing prompt")
+    grammar_check_prompt: str = Field(..., description="Universal grammar check prompt")
+    language_translation_prompt: str = Field(..., description="Universal language translation prompt")
+    user: Optional[str] = Field(None, description="Username making the change")
+
+@router.get("/global-prompts")
+async def get_global_prompts(
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Get current global/universal prompts used across all document types.
+
+    These prompts handle preprocessing steps that should be consistent
+    regardless of document type:
+    - Medical validation
+    - Document classification
+    - Personal data removal
+    - Grammar checking
+    - Language translation
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        prompts = global_prompts_manager.get_global_prompts()
+
+        return {
+            "global_prompts": {
+                "medical_validation_prompt": prompts.medical_validation_prompt,
+                "classification_prompt": prompts.classification_prompt,
+                "preprocessing_prompt": prompts.preprocessing_prompt,
+                "grammar_check_prompt": prompts.grammar_check_prompt,
+                "language_translation_prompt": prompts.language_translation_prompt
+            },
+            "metadata": {
+                "version": prompts.version,
+                "last_modified": prompts.last_modified,
+                "modified_by": prompts.modified_by
+            },
+            "statistics": global_prompts_manager.get_statistics()
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get global prompts: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get global prompts: {str(e)}"
+        )
+
+@router.put("/global-prompts")
+async def update_global_prompts(
+    update_request: GlobalPromptUpdateRequest,
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Update global/universal prompts.
+
+    These prompts affect all document types and should be carefully tested
+    before updating in production.
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        # Get current prompts
+        current_prompts = global_prompts_manager.get_global_prompts()
+
+        # Create updated prompts object
+        from app.services.global_prompts_manager import GlobalPrompts
+        updated_prompts = GlobalPrompts(
+            medical_validation_prompt=update_request.medical_validation_prompt,
+            classification_prompt=update_request.classification_prompt,
+            preprocessing_prompt=update_request.preprocessing_prompt,
+            grammar_check_prompt=update_request.grammar_check_prompt,
+            language_translation_prompt=update_request.language_translation_prompt,
+            version=current_prompts.version,  # Will be incremented by manager
+            last_modified=current_prompts.last_modified,  # Will be updated by manager
+            modified_by=current_prompts.modified_by  # Will be updated by manager
+        )
+
+        # Update prompts
+        success = global_prompts_manager.update_global_prompts(
+            updated_prompts,
+            update_request.user or "admin"
+        )
+
+        if success:
+            logger.info(f"Global prompts updated by {update_request.user or 'unknown'}")
+            return {
+                "success": True,
+                "message": "Global prompts updated successfully",
+                "version": updated_prompts.version
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to save global prompts"
+            )
+
+    except ValidationError as e:
+        logger.error(f"Validation error updating global prompts: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=f"Validation error: {str(e)}"
+        )
+    except Exception as e:
+        logger.error(f"Failed to update global prompts: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update global prompts: {str(e)}"
+        )
+
+@router.post("/global-prompts/reset")
+async def reset_global_prompts(
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Reset global prompts to default values.
+
+    This will create a backup of current prompts before resetting.
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        success = global_prompts_manager.reset_to_defaults()
+
+        if success:
+            logger.info("Global prompts reset to defaults")
+            return {
+                "success": True,
+                "message": "Global prompts reset to default values"
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to reset global prompts"
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to reset global prompts: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to reset global prompts: {str(e)}"
+        )
+
+@router.get("/global-prompts/export")
+async def export_global_prompts(
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Export global prompts for backup or sharing.
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        export_data = global_prompts_manager.export_global_prompts()
+        return export_data
+
+    except Exception as e:
+        logger.error(f"Failed to export global prompts: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to export global prompts: {str(e)}"
+        )
+
+@router.post("/global-prompts/import")
+async def import_global_prompts(
+    import_request: ImportRequest,
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Import global prompts from exported data.
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        success = global_prompts_manager.import_global_prompts(
+            import_request.data,
+            user="import_admin"
+        )
+
+        if success:
+            logger.info("Global prompts imported successfully")
+            return {
+                "success": True,
+                "message": "Global prompts imported successfully"
+            }
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to import global prompts"
+            )
+
+    except Exception as e:
+        logger.error(f"Failed to import global prompts: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to import global prompts: {str(e)}"
+        )
+
+@router.post("/global-prompts/test")
+async def test_global_prompt(
+    test_request: PromptTestRequest,
+    authenticated: bool = Depends(verify_session_token)
+):
+    """
+    Test a global prompt with sample text using OVH API.
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        start_time = time.time()
+
+        # Initialize OVH client
+        ovh_client = OVHClient()
+
+        # Check OVH connection
+        connected, error = await ovh_client.check_connection()
+        if not connected:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"OVH API not available: {error}"
+            )
+
+        # Replace placeholders in prompt
+        prompt = test_request.prompt.replace("{text}", test_request.sample_text)
+        prompt = prompt.replace("{language}", "Deutsch")  # Default for testing
+
+        # Process with OVH
+        result = await ovh_client.process_medical_text(
+            text=test_request.sample_text,
+            instruction=prompt,
+            temperature=test_request.temperature,
+            max_tokens=test_request.max_tokens
+        )
+
+        processing_time = time.time() - start_time
+
+        return PromptTestResponse(
+            result=result,
+            processing_time=processing_time,
+            model_used=test_request.model or ovh_client.main_model,
+            tokens_used=None  # OVH doesn't provide token count easily
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Global prompt test failed: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Global prompt test failed: {str(e)}"
         )

@@ -15,7 +15,10 @@ import {
   PipelineSettings,
   PipelineSettingsUpdateRequest,
   PipelineSettingsResponse,
-  PipelineStatsResponse
+  PipelineStatsResponse,
+  GlobalPrompts,
+  GlobalPromptsResponse,
+  GlobalPromptUpdateRequest
 } from '../types/settings';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
@@ -409,6 +412,120 @@ class SettingsService {
       const axiosError = error as AxiosError<any>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to clear pipeline cache'
+      );
+    }
+  }
+
+  // Global Prompts management methods
+
+  /**
+   * Get global/universal prompts
+   */
+  async getGlobalPrompts(): Promise<GlobalPromptsResponse> {
+    try {
+      const response = await axios.get<GlobalPromptsResponse>(
+        `${SETTINGS_BASE_URL}/global-prompts`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to get global prompts'
+      );
+    }
+  }
+
+  /**
+   * Update global/universal prompts
+   */
+  async updateGlobalPrompts(prompts: GlobalPromptUpdateRequest): Promise<{ success: boolean; message: string; version: number }> {
+    try {
+      const response = await axios.put(
+        `${SETTINGS_BASE_URL}/global-prompts`,
+        prompts,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to update global prompts'
+      );
+    }
+  }
+
+  /**
+   * Reset global prompts to defaults
+   */
+  async resetGlobalPrompts(): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await axios.post(
+        `${SETTINGS_BASE_URL}/global-prompts/reset`,
+        {},
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to reset global prompts'
+      );
+    }
+  }
+
+  /**
+   * Export global prompts
+   */
+  async exportGlobalPrompts(): Promise<any> {
+    try {
+      const response = await axios.get(
+        `${SETTINGS_BASE_URL}/global-prompts/export`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to export global prompts'
+      );
+    }
+  }
+
+  /**
+   * Import global prompts
+   */
+  async importGlobalPrompts(data: any): Promise<{ success: boolean; message: string }> {
+    try {
+      const response = await axios.post(
+        `${SETTINGS_BASE_URL}/global-prompts/import`,
+        { data },
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to import global prompts'
+      );
+    }
+  }
+
+  /**
+   * Test a global prompt
+   */
+  async testGlobalPrompt(request: PromptTestRequest): Promise<PromptTestResponse> {
+    try {
+      const response = await axios.post<PromptTestResponse>(
+        `${SETTINGS_BASE_URL}/global-prompts/test`,
+        request,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Global prompt test failed'
       );
     }
   }

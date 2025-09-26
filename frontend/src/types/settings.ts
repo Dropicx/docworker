@@ -108,6 +108,36 @@ export interface PipelineSettingsResponse {
   warning?: string;
 }
 
+// Global prompts interfaces
+export interface GlobalPrompts {
+  medical_validation_prompt: string;
+  classification_prompt: string;
+  preprocessing_prompt: string;
+  grammar_check_prompt: string;
+  language_translation_prompt: string;
+}
+
+export interface GlobalPromptsMetadata {
+  version: number;
+  last_modified: string | null;
+  modified_by: string | null;
+}
+
+export interface GlobalPromptsResponse {
+  global_prompts: GlobalPrompts;
+  metadata: GlobalPromptsMetadata;
+  statistics: Record<string, any>;
+}
+
+export interface GlobalPromptUpdateRequest {
+  medical_validation_prompt: string;
+  classification_prompt: string;
+  preprocessing_prompt: string;
+  grammar_check_prompt: string;
+  language_translation_prompt: string;
+  user?: string;
+}
+
 // Document type descriptions for UI
 export const DOCUMENT_TYPE_INFO: Record<DocumentClass, DocumentTypeInfo> = {
   [DocumentClass.ARZTBRIEF]: {
@@ -159,7 +189,41 @@ export interface PipelineStatsResponse {
   performance_improvements: Record<string, string>;
 }
 
-// Prompt step descriptions for UI
+// Global prompt step descriptions for UI
+export const GLOBAL_PROMPT_STEPS = {
+  medical_validation_prompt: {
+    name: '🔍 Medizinische Validierung (Universal)',
+    description: 'Erkennt medizinische Inhalte - gilt für alle Dokumenttypen',
+    placeholder: 'Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält...',
+    category: 'preprocessing'
+  },
+  classification_prompt: {
+    name: '📋 Dokumentklassifizierung (Universal)',
+    description: 'Bestimmt den Dokumenttyp - gilt für alle Eingänge',
+    placeholder: 'Analysiere diesen medizinischen Text und klassifiziere ihn als...',
+    category: 'preprocessing'
+  },
+  preprocessing_prompt: {
+    name: '🔒 Datenbereinigung (Universal)',
+    description: 'Entfernt persönliche Daten - gilt für alle Dokumenttypen',
+    placeholder: 'Entferne alle persönlichen Daten aus diesem Text...',
+    category: 'preprocessing'
+  },
+  grammar_check_prompt: {
+    name: '✏️ Grammatikprüfung (Universal)',
+    description: 'Korrigiert Sprache - gilt für alle Dokumenttypen',
+    placeholder: 'Korrigiere Grammatik und Rechtschreibung in diesem Text...',
+    category: 'quality'
+  },
+  language_translation_prompt: {
+    name: '🌍 Sprachübersetzung (Universal)',
+    description: 'Template für Übersetzungen - gilt für alle Sprachen',
+    placeholder: 'Übersetze diesen Text in {language}...',
+    category: 'translation'
+  }
+};
+
+// Document-specific prompt step descriptions for UI
 export const PROMPT_STEPS = {
   medical_validation_prompt: {
     name: 'Medizinische Validierung',
@@ -203,7 +267,31 @@ export const PROMPT_STEPS = {
   },
   formatting_prompt: {
     name: 'Textformatierung',
-    description: 'Optimierung der Textstruktur und Lesbarkeit',
+    description: 'Optimierung der Textstruktur und Lesbarkeit (dokumentspezifisch)',
     placeholder: 'Formatiere diesen Text für optimale Lesbarkeit mit Überschriften und Listen...'
+  }
+};
+
+// Combined prompt categories
+export const PROMPT_CATEGORIES = {
+  preprocessing: {
+    name: 'Vorverarbeitung',
+    description: 'Universal für alle Dokumenttypen',
+    color: 'blue'
+  },
+  quality: {
+    name: 'Qualitätskontrolle',
+    description: 'Universal für alle Dokumenttypen',
+    color: 'green'
+  },
+  translation: {
+    name: 'Übersetzung',
+    description: 'Universal für alle Sprachen',
+    color: 'purple'
+  },
+  document_specific: {
+    name: 'Dokumentspezifisch',
+    description: 'Angepasst für jeden Dokumenttyp',
+    color: 'orange'
   }
 };

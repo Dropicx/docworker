@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Settings, Save, RotateCcw, TestTube, Download, Upload, Eye, EyeOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import settingsService from '../services/settings';
-import { DocumentClass, DocumentPrompts, DocumentTypeInfo, PROMPT_STEPS, PipelineSettings, PipelineStatsResponse } from '../types/settings';
+import { DocumentClass, DocumentPrompts, DocumentTypeInfo, PROMPT_STEPS, GLOBAL_PROMPT_STEPS, PipelineSettings, PipelineStatsResponse, GlobalPrompts, GlobalPromptsResponse } from '../types/settings';
 
 interface EnhancedSettingsModalProps {
   isOpen: boolean;
@@ -46,7 +46,16 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   const [updatingSettings, setUpdatingSettings] = useState(false);
 
   // Active tab for settings
-  const [activeTab, setActiveTab] = useState<'prompts' | 'optimization'>('prompts');
+  const [activeTab, setActiveTab] = useState<'prompts' | 'global' | 'optimization'>('prompts');
+
+  // Global prompts state
+  const [globalPrompts, setGlobalPrompts] = useState<GlobalPrompts | null>(null);
+  const [editedGlobalPrompts, setEditedGlobalPrompts] = useState<GlobalPrompts | null>(null);
+  const [globalPromptsLoading, setGlobalPromptsLoading] = useState(false);
+  const [globalPromptsError, setGlobalPromptsError] = useState('');
+  const [savingGlobal, setSavingGlobal] = useState(false);
+  const [globalSaveError, setGlobalSaveError] = useState('');
+  const [globalSaveSuccess, setGlobalSaveSuccess] = useState(false);
 
   // Check authentication on mount only if we have a token
   useEffect(() => {
@@ -74,6 +83,13 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
     if (isAuthenticated && activeTab === 'optimization') {
       loadPipelineSettings();
       loadPipelineStats();
+    }
+  }, [isAuthenticated, activeTab]);
+
+  // Load global prompts when authenticated
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'global') {
+      loadGlobalPrompts();
     }
   }, [isAuthenticated, activeTab]);
 
@@ -313,6 +329,131 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
     }
   };
 
+  // Global prompts methods
+  const loadGlobalPrompts = async () => {
+    setGlobalPromptsLoading(true);
+    setGlobalPromptsError('');
+
+    try {
+      const response = await settingsService.getGlobalPrompts();
+      setGlobalPrompts(response.global_prompts);
+      setEditedGlobalPrompts(response.global_prompts);
+    } catch (error: any) {
+      setGlobalPromptsError(error.message);
+    } finally {
+      setGlobalPromptsLoading(false);
+    }
+  };
+
+  const handleGlobalPromptChange = (field: keyof GlobalPrompts, value: string) => {
+    if (editedGlobalPrompts) {
+      setEditedGlobalPrompts({
+        ...editedGlobalPrompts,
+        [field]: value
+      });
+    }
+  };
+
+  const handleSaveGlobalPrompts = async () => {
+    if (!editedGlobalPrompts) return;
+
+    setSavingGlobal(true);
+    setGlobalSaveError('');
+    setGlobalSaveSuccess(false);
+
+    try {
+      await settingsService.updateGlobalPrompts({
+        ...editedGlobalPrompts,
+        user: 'admin'
+      });
+
+      setGlobalPrompts(editedGlobalPrompts);
+      setGlobalSaveSuccess(true);
+      setTimeout(() => setGlobalSaveSuccess(false), 3000);
+    } catch (error: any) {
+      setGlobalSaveError(error.message);
+    } finally {
+      setSavingGlobal(false);
+    }
+  };
+
+  const handleResetGlobalPrompts = async () => {
+    if (!window.confirm('Möchten Sie die globalen Prompts wirklich auf die Standardwerte zurücksetzen?')) {
+      return;
+    }
+
+    setSavingGlobal(true);
+    setGlobalSaveError('');
+
+    try {
+      await settingsService.resetGlobalPrompts();
+      await loadGlobalPrompts(); // Reload prompts
+    } catch (error: any) {
+      setGlobalSaveError(error.message);
+    } finally {
+      setSavingGlobal(false);
+    }
+  };
+
+  const handleTestGlobalPrompt = async (field: keyof GlobalPrompts) => {
+    if (!editedGlobalPrompts || !testSample.trim()) {
+      setTestError('Bitte geben Sie einen Testtext ein');
+      return;
+    }
+
+    setTestingPrompt(field);
+    setTestLoading(true);
+    setTestError('');
+    setTestResult('');
+
+    try {
+      const response = await settingsService.testGlobalPrompt({
+        prompt: editedGlobalPrompts[field] || '',
+        sample_text: testSample,
+        temperature: 0.3,
+        max_tokens: 1000
+      });
+
+      setTestResult(response.result);
+    } catch (error: any) {
+      setTestError(error.message);
+    } finally {
+      setTestLoading(false);
+      setTestingPrompt(null);
+    }
+  };
+
+  const handleExportGlobal = async () => {
+    try {
+      const exportData = await settingsService.exportGlobalPrompts();
+      settingsService.downloadExport(exportData, `global_prompts_export_${new Date().toISOString().split('T')[0]}.json`);
+    } catch (error: any) {
+      console.error('Global prompts export failed:', error);
+    }
+  };
+
+  const handleImportGlobal = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    settingsService.readImportFile(file)
+      .then(async (data) => {
+        try {
+          await settingsService.importGlobalPrompts(data);
+          await loadGlobalPrompts(); // Reload prompts
+          alert('Globale Prompts erfolgreich importiert!');
+        } catch (error: any) {
+          alert(`Import fehlgeschlagen: ${error.message}`);
+        }
+      })
+      .catch((error) => {
+        alert(`Datei konnte nicht gelesen werden: ${error.message}`);
+      });
+
+    // Reset file input
+    event.target.value = '';
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -411,6 +552,16 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         }`}
                       >
                         📝 Prompt-Verwaltung
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('global')}
+                        className={`w-full text-left p-3 rounded-lg transition-all ${
+                          activeTab === 'global'
+                            ? 'bg-brand-100 text-brand-900 border border-brand-300'
+                            : 'hover:bg-primary-100 text-primary-700'
+                        }`}
+                      >
+                        🌐 Globale Prompts
                       </button>
                       <button
                         onClick={() => setActiveTab('optimization')}
@@ -631,6 +782,191 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                             onChange={(e) => setTestSample(e.target.value)}
                             className="w-full h-24 p-3 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none resize-none"
                             placeholder="Geben Sie hier einen medizinischen Text ein, um die Prompts zu testen..."
+                          />
+                        </div>
+
+                        {testResult && (
+                          <div>
+                            <label className="block text-sm font-medium text-primary-700 mb-2">
+                              Testergebnis
+                            </label>
+                            <div className="p-4 bg-white border border-primary-200 rounded-lg">
+                              <pre className="whitespace-pre-wrap text-sm text-primary-800">{testResult}</pre>
+                            </div>
+                          </div>
+                        )}
+
+                        {testError && (
+                          <div className="flex items-center space-x-2 p-3 bg-error-50 border border-error-200 rounded-lg">
+                            <AlertCircle className="w-4 h-4 text-error-600" />
+                            <span className="text-error-700">{testError}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : null
+              ) : activeTab === 'global' ? (
+                globalPromptsLoading ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-600 mx-auto mb-4" />
+                    <p className="text-primary-600">Globale Prompts werden geladen...</p>
+                  </div>
+                ) : globalPromptsError ? (
+                  <div className="text-center py-12">
+                    <AlertCircle className="w-16 h-16 text-error-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-error-700 mb-2">Fehler beim Laden</h3>
+                    <p className="text-error-600 mb-4">{globalPromptsError}</p>
+                    <button
+                      onClick={loadGlobalPrompts}
+                      className="btn-primary"
+                    >
+                      Erneut versuchen
+                    </button>
+                  </div>
+                ) : editedGlobalPrompts ? (
+                  <div className="space-y-6">
+                    {/* Header with Save/Reset */}
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="text-xl font-bold text-primary-900">🌐 Globale Prompts</h3>
+                        <p className="text-sm text-primary-600">
+                          Diese Prompts werden für alle Dokumenttypen verwendet und steuern die Vorverarbeitung
+                        </p>
+                      </div>
+                      <div className="flex items-center space-x-3">
+                        <button
+                          onClick={handleExportGlobal}
+                          className="btn-ghost"
+                          title="Globale Prompts exportieren"
+                        >
+                          <Download className="w-4 h-4" />
+                        </button>
+                        <label className="btn-ghost cursor-pointer" title="Globale Prompts importieren">
+                          <Upload className="w-4 h-4" />
+                          <input
+                            type="file"
+                            accept=".json"
+                            onChange={handleImportGlobal}
+                            className="hidden"
+                          />
+                        </label>
+                        <button
+                          onClick={handleResetGlobalPrompts}
+                          disabled={savingGlobal}
+                          className="btn-secondary disabled:opacity-50"
+                        >
+                          <RotateCcw className="w-4 h-4" />
+                          Zurücksetzen
+                        </button>
+                        <button
+                          onClick={handleSaveGlobalPrompts}
+                          disabled={savingGlobal}
+                          className="btn-primary disabled:opacity-50"
+                        >
+                          {savingGlobal ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Save className="w-4 h-4" />
+                          )}
+                          Speichern
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Status Messages */}
+                    {globalSaveSuccess && (
+                      <div className="flex items-center space-x-2 p-3 bg-success-50 border border-success-200 rounded-lg">
+                        <CheckCircle className="w-5 h-5 text-success-600" />
+                        <span className="text-success-700">Globale Prompts erfolgreich gespeichert!</span>
+                      </div>
+                    )}
+
+                    {globalSaveError && (
+                      <div className="flex items-center space-x-2 p-3 bg-error-50 border border-error-200 rounded-lg">
+                        <AlertCircle className="w-5 h-5 text-error-600" />
+                        <span className="text-error-700">{globalSaveError}</span>
+                      </div>
+                    )}
+
+                    {/* Info Box */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <span className="text-blue-600 text-sm">ℹ️</span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-blue-900 mb-1">Globale Prompts</h4>
+                          <p className="text-sm text-blue-800">
+                            Diese Prompts werden für <strong>alle</strong> Dokumenttypen verwendet. Änderungen wirken sich auf die gesamte Pipeline aus:
+                          </p>
+                          <ul className="text-sm text-blue-700 mt-2 space-y-1">
+                            <li>• <strong>Medizinische Validierung:</strong> Erkennt medizinische Inhalte</li>
+                            <li>• <strong>Dokumentklassifizierung:</strong> Bestimmt den Dokumenttyp</li>
+                            <li>• <strong>Datenbereinigung:</strong> Entfernt persönliche Informationen</li>
+                            <li>• <strong>Grammatikprüfung:</strong> Korrigiert Sprache und Stil</li>
+                            <li>• <strong>Sprachübersetzung:</strong> Template für Übersetzungen</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Global Prompts Editor */}
+                    <div className="space-y-6">
+                      {Object.entries(GLOBAL_PROMPT_STEPS).map(([key, step]) => {
+                        const promptKey = key as keyof GlobalPrompts;
+
+                        return (
+                          <div key={key} className="border border-primary-200 rounded-xl p-6 bg-white">
+                            <div className="flex items-center justify-between mb-4">
+                              <div>
+                                <h4 className="text-lg font-semibold text-primary-900">{step.name}</h4>
+                                <p className="text-sm text-primary-600">{step.description}</p>
+                                <span className={`inline-block mt-2 px-2 py-1 rounded-full text-xs font-medium ${
+                                  step.category === 'preprocessing' ? 'bg-blue-100 text-blue-800' :
+                                  step.category === 'quality' ? 'bg-green-100 text-green-800' :
+                                  step.category === 'translation' ? 'bg-purple-100 text-purple-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {step.category === 'preprocessing' ? 'Vorverarbeitung' :
+                                   step.category === 'quality' ? 'Qualitätskontrolle' :
+                                   step.category === 'translation' ? 'Übersetzung' : 'Sonstige'}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => handleTestGlobalPrompt(promptKey)}
+                                disabled={testLoading || !testSample.trim()}
+                                className="btn-ghost disabled:opacity-50"
+                              >
+                                <TestTube className="w-4 h-4" />
+                                Testen
+                              </button>
+                            </div>
+
+                            <textarea
+                              value={editedGlobalPrompts[promptKey] || ''}
+                              onChange={(e) => handleGlobalPromptChange(promptKey, e.target.value)}
+                              className="w-full h-32 p-3 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none resize-none font-mono text-sm"
+                              placeholder={step.placeholder}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Test Section for Global Prompts */}
+                    <div className="border border-primary-200 rounded-xl p-6 bg-gradient-to-br from-accent-50 to-brand-50">
+                      <h4 className="text-lg font-semibold text-primary-900 mb-4">🧪 Globale Prompt-Tests</h4>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-primary-700 mb-2">
+                            Testtext eingeben
+                          </label>
+                          <textarea
+                            value={testSample}
+                            onChange={(e) => setTestSample(e.target.value)}
+                            className="w-full h-24 p-3 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none resize-none"
+                            placeholder="Geben Sie hier einen Text ein, um die globalen Prompts zu testen..."
                           />
                         </div>
 
