@@ -195,7 +195,7 @@ async def get_prompts(
 
 @router.put("/prompts/{document_type}")
 async def update_prompts(
-    document_type: DocumentClass,
+    document_type: str,
     update_request: PromptUpdateRequest,
     authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_db_session)
@@ -206,27 +206,30 @@ async def update_prompts(
     Requires authentication.
     """
     try:
+        # Convert frontend document type to database enum
+        db_document_type = convert_frontend_to_db_document_type(document_type)
+        
         # Ensure document type matches
-        update_request.prompts.document_type = document_type
+        update_request.prompts.document_type = db_document_type
 
         # Try database first, fallback to file-based
         db_prompt_manager = DatabasePromptManager(db)
-        success = db_prompt_manager.save_prompts(document_type, update_request.prompts)
+        success = db_prompt_manager.save_prompts(db_document_type, update_request.prompts)
 
         if not success:
             # Fallback to file-based system
             success = prompt_manager.save_prompts(
-                document_type=document_type,
+                document_type=db_document_type,
                 prompts=update_request.prompts,
                 user=update_request.user or "settings_ui",
                 create_backup=True
             )
 
         if success:
-            logger.info(f"Updated prompts for {document_type.value} by {update_request.user or 'unknown'}")
+            logger.info(f"Updated prompts for {document_type} by {update_request.user or 'unknown'}")
             return {
                 "success": True,
-                "message": f"Prompts updated successfully for {document_type.value}",
+                "message": f"Prompts updated successfully for {document_type}",
                 "version": update_request.prompts.version
             }
         else:
@@ -236,13 +239,13 @@ async def update_prompts(
             )
 
     except ValidationError as e:
-        logger.error(f"Validation error updating prompts for {document_type.value}: {e}")
+        logger.error(f"Validation error updating prompts for {document_type}: {e}")
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=f"Validation error: {str(e)}"
         )
     except Exception as e:
-        logger.error(f"Failed to update prompts for {document_type.value}: {e}")
+        logger.error(f"Failed to update prompts for {document_type}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update prompts: {str(e)}"
@@ -250,7 +253,7 @@ async def update_prompts(
 
 @router.post("/prompts/{document_type}/reset")
 async def reset_prompts(
-    document_type: DocumentClass,
+    document_type: str,
     authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_db_session)
 ):
@@ -260,19 +263,22 @@ async def reset_prompts(
     Requires authentication.
     """
     try:
+        # Convert frontend document type to database enum
+        db_document_type = convert_frontend_to_db_document_type(document_type)
+        
         # Try database first, fallback to file-based
         db_prompt_manager = DatabasePromptManager(db)
-        success = db_prompt_manager.reset_prompts(document_type)
+        success = db_prompt_manager.reset_prompts(db_document_type)
         
         if not success:
             # Fallback to file-based system
-            success = prompt_manager.reset_to_defaults(document_type)
+            success = prompt_manager.reset_to_defaults(db_document_type)
 
         if success:
-            logger.info(f"Reset prompts to defaults for {document_type.value}")
+            logger.info(f"Reset prompts to defaults for {document_type}")
             return {
                 "success": True,
-                "message": f"Prompts reset to defaults for {document_type.value}"
+                "message": f"Prompts reset to defaults for {document_type}"
             }
         else:
             raise HTTPException(
@@ -281,7 +287,7 @@ async def reset_prompts(
             )
 
     except Exception as e:
-        logger.error(f"Failed to reset prompts for {document_type.value}: {e}")
+        logger.error(f"Failed to reset prompts for {document_type}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to reset prompts: {str(e)}"
