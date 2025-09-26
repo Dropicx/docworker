@@ -173,13 +173,14 @@ def simple_seed_database():
             
             for key, value, value_type, description in system_settings:
                 conn.execute(text("""
-                    INSERT INTO system_settings (key, value, value_type, description, created_at, updated_at, updated_by)
-                    VALUES (:key, :value, :value_type, :description, NOW(), NOW(), 'system_seed')
+                    INSERT INTO system_settings (key, value, value_type, description, is_encrypted, created_at, updated_at, updated_by)
+                    VALUES (:key, :value, :value_type, :description, :is_encrypted, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 'system_seed')
                 """), {
                     'key': key,
                     'value': value,
                     'value_type': value_type,
-                    'description': description
+                    'description': description,
+                    'is_encrypted': False
                 })
             
             conn.commit()
