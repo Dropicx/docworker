@@ -584,17 +584,35 @@ async def get_pipeline_settings(
         # Get pipeline step configurations
         pipeline_steps = db.query(UniversalPipelineStepConfigDB).all()
         
-        # Convert to frontend format
+        # Convert to frontend format - map to individual boolean flags
         settings = {
-            "steps": {}
+            "use_optimized_pipeline": True,  # Always true for unified system
+            "pipeline_cache_timeout": 1800,  # 30 minutes default
+            "enable_medical_validation": False,
+            "enable_classification": False,
+            "enable_preprocessing": False,
+            "enable_translation": False,
+            "enable_fact_check": False,
+            "enable_grammar_check": False,
+            "enable_language_translation": False,
+            "enable_final_check": False
+        }
+        
+        # Map step names to frontend flags
+        step_mapping = {
+            "MEDICAL_VALIDATION": "enable_medical_validation",
+            "CLASSIFICATION": "enable_classification", 
+            "PREPROCESSING": "enable_preprocessing",
+            "TRANSLATION": "enable_translation",
+            "FACT_CHECK": "enable_fact_check",
+            "GRAMMAR_CHECK": "enable_grammar_check",
+            "LANGUAGE_TRANSLATION": "enable_language_translation",
+            "FINAL_CHECK": "enable_final_check"
         }
         
         for step in pipeline_steps:
-            settings["steps"][step.step_name] = {
-                "enabled": step.enabled,
-                "description": step.description or "",
-                "order": step.order or 0
-            }
+            if step.step_name in step_mapping:
+                settings[step_mapping[step.step_name]] = step.enabled
         
         return {"settings": settings}
         
@@ -620,24 +638,36 @@ async def update_pipeline_settings(
     
     try:
         settings = request.get("settings", {})
-        steps = settings.get("steps", {})
         
-        # Update each step configuration
-        for step_name, step_config in steps.items():
-            step_db = db.query(UniversalPipelineStepConfigDB).filter_by(step_name=step_name).first()
-            if step_db:
-                step_db.enabled = step_config.get("enabled", True)
-                step_db.description = step_config.get("description", "")
-                step_db.order = step_config.get("order", 0)
-            else:
-                # Create new step configuration
-                new_step = UniversalPipelineStepConfigDB(
-                    step_name=step_name,
-                    enabled=step_config.get("enabled", True),
-                    description=step_config.get("description", ""),
-                    order=step_config.get("order", 0)
-                )
-                db.add(new_step)
+        # Map frontend flags back to step names
+        step_mapping = {
+            "enable_medical_validation": "MEDICAL_VALIDATION",
+            "enable_classification": "CLASSIFICATION", 
+            "enable_preprocessing": "PREPROCESSING",
+            "enable_translation": "TRANSLATION",
+            "enable_fact_check": "FACT_CHECK",
+            "enable_grammar_check": "GRAMMAR_CHECK",
+            "enable_language_translation": "LANGUAGE_TRANSLATION",
+            "enable_final_check": "FINAL_CHECK"
+        }
+        
+        # Update each step configuration based on frontend flags
+        for frontend_key, step_name in step_mapping.items():
+            if frontend_key in settings:
+                step_db = db.query(UniversalPipelineStepConfigDB).filter_by(step_name=step_name).first()
+                if step_db:
+                    step_db.enabled = settings[frontend_key]
+                    step_db.last_modified = datetime.now()
+                    step_db.modified_by = "frontend_update"
+                else:
+                    # Create new step configuration if it doesn't exist
+                    new_step = UniversalPipelineStepConfigDB(
+                        step_name=step_name,
+                        enabled=settings[frontend_key],
+                        description=f"Step {step_name}",
+                        order=0
+                    )
+                    db.add(new_step)
         
         db.commit()
         
