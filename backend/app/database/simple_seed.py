@@ -174,6 +174,37 @@ def simple_seed_database():
                     'description': description
                 })
             
+            # Insert universal pipeline step configurations
+            universal_pipeline_steps = [
+                ('medical_validation', True, 1, 'Medizinische Validierung', 'Überprüft, ob der Text medizinischen Inhalt enthält'),
+                ('classification', True, 2, 'Dokumentklassifizierung', 'Klassifiziert das Dokument nach Typ (Arztbrief, Befundbericht, etc.)'),
+                ('preprocessing', True, 3, 'Vorverarbeitung', 'Entfernt persönliche Daten und bereitet den Text vor'),
+                ('translation', True, 4, 'Übersetzung', 'Übersetzt medizinische Texte in verständliche Sprache'),
+                ('fact_check', True, 5, 'Faktenprüfung', 'Überprüft medizinische Fakten auf Korrektheit'),
+                ('grammar_check', True, 6, 'Grammatikprüfung', 'Korrigiert Grammatik und Rechtschreibung'),
+                ('language_translation', True, 7, 'Sprachübersetzung', 'Übersetzt in andere Sprachen'),
+                ('final_check', True, 8, 'Finale Prüfung', 'Führt eine finale Qualitätskontrolle durch')
+            ]
+            
+            for step_name, enabled, order, name, description in universal_pipeline_steps:
+                conn.execute(text("""
+                    INSERT INTO universal_pipeline_steps (step_name, enabled, "order", name, description, last_modified, modified_by)
+                    VALUES (:step_name, :enabled, :order, :name, :description, CURRENT_TIMESTAMP, 'system_seed')
+                    ON CONFLICT (step_name) DO UPDATE SET
+                        enabled = EXCLUDED.enabled,
+                        "order" = EXCLUDED."order",
+                        name = EXCLUDED.name,
+                        description = EXCLUDED.description,
+                        last_modified = CURRENT_TIMESTAMP,
+                        modified_by = 'system_seed'
+                """), {
+                    'step_name': step_name,
+                    'enabled': enabled,
+                    'order': order,
+                    'name': name,
+                    'description': description
+                })
+            
             # Insert system settings
             system_settings = [
                 ('app_version', '1.0.0', 'string', 'Current application version'),
