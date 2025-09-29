@@ -693,9 +693,21 @@ async def get_pipeline_stats(
         performance_metrics["configuration_completeness"] = f"{total_universal_prompts} universal + {total_document_prompts} document-specific prompts configured"
         performance_metrics["feature_adoption"] = f"{enabled_features}/{total_features} features enabled"
 
+        # ==================== CACHE STATISTICS (for frontend compatibility) ====================
+
+        # For now, create mock cache statistics based on AI interactions
+        # This matches the frontend expectation structure
+        cache_statistics = {
+            "total_entries": total_interactions,
+            "active_entries": recent_interactions,  # Recent interactions as "active"
+            "expired_entries": max(0, total_interactions - recent_interactions),  # Older entries as "expired"
+            "cache_timeout_seconds": 3600  # Default 1 hour timeout
+        }
+
         return {
             "pipeline_mode": "unified",
             "timestamp": now.isoformat(),
+            "cache_statistics": cache_statistics,
             "ai_interaction_statistics": {
                 "total_interactions": total_interactions,
                 "last_24h_interactions": recent_interactions,
@@ -731,6 +743,12 @@ async def get_pipeline_stats(
             "pipeline_mode": "unified",
             "timestamp": datetime.now().isoformat(),
             "error": str(e),
+            "cache_statistics": {
+                "total_entries": 0,
+                "active_entries": 0,
+                "expired_entries": 0,
+                "cache_timeout_seconds": 3600
+            },
             "ai_interaction_statistics": {
                 "total_interactions": 0,
                 "last_24h_interactions": 0,

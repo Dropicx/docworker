@@ -654,15 +654,15 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
                           <span>Modus:</span>
-                          <span className="font-medium capitalize">{pipelineStats.pipeline_mode}</span>
+                          <span className="font-medium capitalize">{pipelineStats.pipeline_mode || 'Unbekannt'}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Cache Einträge:</span>
-                          <span className="font-medium">{pipelineStats.cache_statistics.active_entries}</span>
+                          <span className="font-medium">{pipelineStats.cache_statistics?.active_entries || 0}</span>
                         </div>
                         <div className="flex justify-between">
                           <span>Cache Timeout:</span>
-                          <span className="font-medium">{pipelineStats.cache_statistics.cache_timeout_seconds}s</span>
+                          <span className="font-medium">{pipelineStats.cache_statistics?.cache_timeout_seconds || 0}s</span>
                         </div>
                       </div>
                     </div>
@@ -1191,21 +1191,21 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                           <div className="space-y-3">
                             <div>
                               <span className="text-sm font-medium text-primary-700">Pipeline-Modus:</span>
-                              <p className="text-lg font-bold text-brand-600 capitalize">{pipelineStats.pipeline_mode}</p>
+                              <p className="text-lg font-bold text-brand-600 capitalize">{pipelineStats.pipeline_mode || 'Unbekannt'}</p>
                             </div>
                             <div>
                               <span className="text-sm font-medium text-primary-700">Cache Einträge:</span>
-                              <p className="text-lg font-bold text-success-600">{pipelineStats.cache_statistics.active_entries} / {pipelineStats.cache_statistics.total_entries}</p>
+                              <p className="text-lg font-bold text-success-600">{pipelineStats.cache_statistics?.active_entries || 0} / {pipelineStats.cache_statistics?.total_entries || 0}</p>
                             </div>
                           </div>
                           <div className="space-y-3">
                             <div>
                               <span className="text-sm font-medium text-primary-700">Cache Timeout:</span>
-                              <p className="text-lg font-bold text-primary-600">{pipelineStats.cache_statistics.cache_timeout_seconds}s</p>
+                              <p className="text-lg font-bold text-primary-600">{pipelineStats.cache_statistics?.cache_timeout_seconds || 0}s</p>
                             </div>
                             <div>
                               <span className="text-sm font-medium text-primary-700">Abgelaufene Einträge:</span>
-                              <p className="text-lg font-bold text-warning-600">{pipelineStats.cache_statistics.expired_entries}</p>
+                              <p className="text-lg font-bold text-warning-600">{pipelineStats.cache_statistics?.expired_entries || 0}</p>
                             </div>
                           </div>
                         </div>
