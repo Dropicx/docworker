@@ -84,7 +84,7 @@ function App() {
       // Small delay to show the initializing screen
       await new Promise(resolve => setTimeout(resolve, 500));
       
-      // Verarbeitung automatisch starten mit Sprachoptionen
+      // Start processing with language options
       const options: ProcessingOptions = {};
       if (selectedLanguage) {
         options.target_language = selectedLanguage;

@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, FileText, Image, AlertCircle, CheckCircle, Sparkles } from 'lucide-react';
+import { Upload, X, FileText, Image, AlertCircle, CheckCircle, Sparkles, Play, Shield } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import ApiService from '../services/api';
 import { UploadResponse } from '../types/api';
 
@@ -19,24 +20,40 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingFileName, setUploadingFileName] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = useCallback(async (file: File) => {
+  const handleFileUpload = useCallback(async (files: File[]) => {
     setValidationError(null);
     
-    // Validate file
-    const validation = ApiService.validateFile(file);
-    if (!validation.valid) {
-      setValidationError(validation.error!);
-      onUploadError(validation.error!);
-      return;
+    // Validate all files
+    for (const file of files) {
+      const validation = ApiService.validateFile(file);
+      if (!validation.valid) {
+        setValidationError(validation.error!);
+        onUploadError(validation.error!);
+        return;
+      }
     }
 
+    // Add files to selected files
+    setSelectedFiles(prev => [...prev, ...files]);
+  }, [onUploadError]);
+
+  const handleStartProcessing = useCallback(async () => {
+    if (selectedFiles.length === 0 || !privacyAccepted) return;
+
+    setValidationError(null);
     setIsUploading(true);
-    setUploadingFileName(file.name);
+    setUploadingFileName(`${selectedFiles.length} Datei${selectedFiles.length > 1 ? 'en' : ''}`);
     setUploadProgress(0);
 
     try {
+      // For now, process only the first file (backend doesn't support multiple files yet)
+      // TODO: Update backend to support multiple files
+      const file = selectedFiles[0];
+      
       // Simulate upload progress for better UX - faster for mobile
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
@@ -54,6 +71,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
       clearInterval(progressInterval);
       setUploadProgress(100);
       
+      // Reset state
+      setSelectedFiles([]);
+      setPrivacyAccepted(false);
+      
       // Immediately proceed on mobile for better UX
       onUploadSuccess(response);
     } catch (error: any) {
@@ -64,18 +85,27 @@ const FileUpload: React.FC<FileUploadProps> = ({
       setUploadProgress(0);
       setUploadingFileName('');
     }
-  }, [onUploadSuccess, onUploadError]);
+  }, [selectedFiles, privacyAccepted, onUploadSuccess, onUploadError]);
+
+  const removeFile = useCallback((index: number) => {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  }, []);
+
+  const clearAllFiles = useCallback(() => {
+    setSelectedFiles([]);
+    setPrivacyAccepted(false);
+  }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
-      handleFileUpload(acceptedFiles[0]);
+      handleFileUpload(acceptedFiles);
     }
   }, [handleFileUpload]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     disabled: disabled || isUploading,
-    maxFiles: 1,
+    maxFiles: 10, // Allow up to 10 files
     accept: {
       'application/pdf': ['.pdf'],
       'image/jpeg': ['.jpg', '.jpeg'],
@@ -185,15 +215,19 @@ const FileUpload: React.FC<FileUploadProps> = ({
           <div className="text-center space-y-2 sm:space-y-3">
             <h3 className="text-xl sm:text-2xl font-bold text-primary-900">
               {isDragActive
-                ? 'Datei hier ablegen'
-                : 'Dokument hochladen'
+                ? 'Dateien hier ablegen'
+                : selectedFiles.length > 0
+                ? 'Weitere Dateien hinzufügen'
+                : 'Dokumente hochladen'
               }
             </h3>
             
             <p className="text-primary-600 text-sm sm:text-base lg:text-lg leading-relaxed max-w-md mx-auto px-4 sm:px-0">
               {isDragActive 
-                ? 'Lassen Sie die Datei los, um sie hochzuladen'
-                : 'Ziehen Sie eine Datei hierher oder tippen Sie zum Auswählen'
+                ? 'Lassen Sie die Dateien los, um sie hinzuzufügen'
+                : selectedFiles.length > 0
+                ? 'Ziehen Sie weitere Dateien hierher oder tippen Sie zum Auswählen'
+                : 'Ziehen Sie Dateien hierher oder tippen Sie zum Auswählen'
               }
             </p>
           </div>
@@ -218,10 +252,112 @@ const FileUpload: React.FC<FileUploadProps> = ({
               </div>
             </div>
           )}
-
-
         </div>
       </div>
+
+      {/* Selected Files List */}
+      {selectedFiles.length > 0 && !isUploading && (
+        <div className="space-y-4">
+          <div className="card-elevated">
+            <div className="card-body">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-semibold text-primary-900">
+                  Ausgewählte Dateien ({selectedFiles.length})
+                </h4>
+                <button
+                  onClick={clearAllFiles}
+                  className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+                >
+                  Alle entfernen
+                </button>
+              </div>
+              
+              <div className="space-y-2">
+                {selectedFiles.map((file, index) => (
+                  <div
+                    key={`${file.name}-${index}`}
+                    className="flex items-center space-x-3 p-3 bg-neutral-50 rounded-lg border border-neutral-200"
+                  >
+                    <div className="flex-shrink-0">
+                      {getFileIcon(file.name)}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-primary-900 truncate">
+                        {file.name}
+                      </p>
+                      <p className="text-xs text-primary-500">
+                        {ApiService.formatFileSize(file.size)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => removeFile(index)}
+                      className="flex-shrink-0 p-1 text-primary-400 hover:text-primary-600 transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Privacy Policy Checkbox */}
+          <div className="card-elevated">
+            <div className="card-body">
+              <div className="flex items-start space-x-3">
+                <div className="flex-shrink-0 pt-0.5">
+                  <input
+                    type="checkbox"
+                    id="privacy-checkbox"
+                    checked={privacyAccepted}
+                    onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                    className="w-4 h-4 text-brand-600 bg-neutral-100 border-neutral-300 rounded focus:ring-brand-500 focus:ring-2"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="privacy-checkbox" className="text-sm text-primary-700 cursor-pointer">
+                    Ich habe die{' '}
+                    <Link
+                      to="/datenschutz"
+                      target="_blank"
+                      className="text-brand-600 hover:text-brand-700 underline font-medium"
+                    >
+                      Datenschutzerklärung
+                    </Link>{' '}
+                    gelesen und stimme der Verarbeitung meiner Dokumente zu. Ich verstehe, dass meine Daten 
+                    DSGVO-konform verarbeitet und nach der Übersetzung automatisch gelöscht werden.
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Start Processing Button */}
+          <div className="flex justify-center">
+            <button
+              onClick={handleStartProcessing}
+              disabled={!privacyAccepted}
+              className={`btn-primary flex items-center space-x-2 px-8 py-3 text-base font-semibold ${
+                !privacyAccepted
+                  ? 'opacity-50 cursor-not-allowed'
+                  : 'hover:scale-105 transform transition-all duration-200'
+              }`}
+            >
+              <Play className="w-5 h-5" />
+              <span>Verarbeitung starten</span>
+            </button>
+          </div>
+
+          {!privacyAccepted && (
+            <div className="text-center">
+              <p className="text-sm text-primary-500 flex items-center justify-center space-x-2">
+                <Shield className="w-4 h-4" />
+                <span>Bitte akzeptieren Sie die Datenschutzerklärung, um fortzufahren</span>
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Validation Error */}
       {validationError && (
@@ -241,7 +377,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       )}
 
       {/* Success State (if needed) */}
-      {!validationError && !isUploading && (
+      {!validationError && !isUploading && selectedFiles.length === 0 && (
         <div className="text-center">
           <p className="text-xs text-primary-500">
             Ihre Daten werden DSGVO-konform verarbeitet und nicht gespeichert
