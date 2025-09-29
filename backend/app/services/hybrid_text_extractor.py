@@ -19,6 +19,8 @@ from app.services.file_quality_detector import (
 )
 from app.services.ovh_client import OVHClient
 from app.services.file_sequence_detector import FileSequenceDetector
+from app.services.unified_prompt_manager import UnifiedPromptManager
+from app.database.database import get_db_session
 
 # Optional imports for local OCR (fallback gracefully if not available)
 try:
@@ -41,6 +43,15 @@ class HybridTextExtractor:
         self.ovh_client = OVHClient()
         self.sequence_detector = FileSequenceDetector()
 
+        # Initialize unified prompt manager for OCR prompts
+        try:
+            session = get_db_session()
+            self.prompt_manager = UnifiedPromptManager(session)
+            logger.info("✅ Unified Prompt Manager connected")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not connect to Unified Prompt Manager: {e}")
+            self.prompt_manager = None
+
         # Initialize local OCR if available
         if LOCAL_OCR_AVAILABLE:
             try:
@@ -57,8 +68,42 @@ class HybridTextExtractor:
         logger.info("🚀 Hybrid Text Extractor initialized")
         logger.info(f"   - Quality Detector: ✅")
         logger.info(f"   - Sequence Detector: ✅")
+        logger.info(f"   - Prompt Manager: {'✅' if self.prompt_manager else '❌'}")
         logger.info(f"   - OVH Vision: {'✅' if self.ovh_client.vision_client else '❌'}")
         logger.info(f"   - Local OCR: {'✅' if LOCAL_OCR_AVAILABLE else '❌'}")
+
+    async def _apply_ocr_preprocessing(self, raw_text: str) -> str:
+        """
+        Apply OCR preprocessing using unified prompt system
+        """
+        if not self.prompt_manager:
+            logger.warning("⚠️ No prompt manager available, returning raw text")
+            return raw_text
+
+        try:
+            # Get OCR preprocessing prompt from unified system
+            universal_prompts = self.prompt_manager.get_universal_prompts()
+            if not universal_prompts or not hasattr(universal_prompts, 'ocr_preprocessing_prompt'):
+                logger.warning("⚠️ No OCR preprocessing prompt found, returning raw text")
+                return raw_text
+
+            ocr_prompt = universal_prompts.ocr_preprocessing_prompt
+            if not ocr_prompt:
+                return raw_text
+
+            # Apply OCR preprocessing using OVH client
+            logger.info("🔧 Applying OCR preprocessing with unified prompt")
+            processed_text = await self.ovh_client.generate_response(
+                ocr_prompt,
+                raw_text,
+                model_type='preprocessing'  # Use fast model for preprocessing
+            )
+
+            return processed_text if processed_text else raw_text
+
+        except Exception as e:
+            logger.error(f"❌ OCR preprocessing failed: {e}")
+            return raw_text
 
     async def extract_text(
         self,
@@ -292,7 +337,9 @@ class HybridTextExtractor:
 
             if text and len(text.strip()) > 20 and not text.startswith("Error"):
                 logger.info(f"✅ Local OCR successful: {len(text)} characters, confidence: {confidence:.2%}")
-                return text, confidence
+                # Apply OCR preprocessing using unified prompt system
+                processed_text = await self._apply_ocr_preprocessing(text)
+                return processed_text, confidence
             else:
                 logger.warning("⚠️ Local OCR failed or returned poor results, falling back to vision LLM")
                 return await self._extract_with_vision_llm(content, file_type, analysis)
@@ -330,7 +377,9 @@ class HybridTextExtractor:
 
                         if text and len(text.strip()) > 20 and not text.startswith("Error"):
                             logger.info(f"✅ Vision LLM PDF processing successful: {len(text)} characters")
-                            return text, confidence
+                            # Apply OCR preprocessing using unified prompt system
+                            processed_text = await self._apply_ocr_preprocessing(text)
+                            return processed_text, confidence
                         else:
                             return "Vision LLM konnte keinen Text aus dem PDF extrahieren.", 0.1
 
@@ -345,7 +394,9 @@ class HybridTextExtractor:
 
                 if text and len(text.strip()) > 10 and not text.startswith("Error"):
                     logger.info(f"✅ Vision LLM image processing successful: {len(text)} characters")
-                    return text, confidence
+                    # Apply OCR preprocessing using unified prompt system
+                    processed_text = await self._apply_ocr_preprocessing(text)
+                    return processed_text, confidence
                 else:
                     return "Vision LLM konnte keinen Text aus dem Bild extrahieren.", 0.1
 

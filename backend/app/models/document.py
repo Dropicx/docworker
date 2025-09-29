@@ -126,11 +126,20 @@ class ProcessingResponse(BaseModel):
     timestamp: datetime = Field(default_factory=datetime.now)
 
 class CustomPrompts(BaseModel):
-    """Custom prompts for document processing"""
-    medical_analysis_prompt: Optional[str] = Field(None, description="Custom prompt for medical document analysis")
-    translation_prompt: Optional[str] = Field(None, description="Custom prompt for translation")
-    preprocessing_prompt: Optional[str] = Field(None, description="Custom prompt for text preprocessing")
-    ocr_prompt: Optional[str] = Field(None, description="Custom prompt for OCR processing")
+    """Custom prompts for document processing - aligned with unified system"""
+    # Universal prompts (same for all document types)
+    medical_validation_prompt: Optional[str] = Field(None, description="Prompt for medical content validation")
+    classification_prompt: Optional[str] = Field(None, description="Prompt for document classification")
+    preprocessing_prompt: Optional[str] = Field(None, description="Prompt for text preprocessing")
+    language_translation_prompt: Optional[str] = Field(None, description="Prompt for language translation")
+    ocr_preprocessing_prompt: Optional[str] = Field(None, description="Prompt for OCR text cleaning and preprocessing")
+
+    # Document-specific prompts (vary by document type)
+    translation_prompt: Optional[str] = Field(None, description="Document-specific translation prompt")
+    fact_check_prompt: Optional[str] = Field(None, description="Medical fact checking prompt")
+    grammar_check_prompt: Optional[str] = Field(None, description="Grammar and spelling correction prompt")
+    final_check_prompt: Optional[str] = Field(None, description="Final quality check prompt")
+    formatting_prompt: Optional[str] = Field(None, description="Document formatting prompt")
 
     class Config:
         extra = "allow"  # Allow additional prompt fields 
