@@ -144,7 +144,10 @@ async def get_universal_prompts(
         )
 
 class UniversalPromptUpdateRequest(BaseModel):
-    prompts: Dict[str, str] = Field(..., description="Universal prompts to update")
+    medical_validation_prompt: Optional[str] = Field(None, description="Medical validation prompt")
+    classification_prompt: Optional[str] = Field(None, description="Classification prompt")
+    preprocessing_prompt: Optional[str] = Field(None, description="Preprocessing prompt")
+    language_translation_prompt: Optional[str] = Field(None, description="Language translation prompt")
     user: Optional[str] = Field(None, description="Username making the change")
 
     class Config:
@@ -165,8 +168,8 @@ async def update_universal_prompts(
         )
 
     # Add validation logging
-    logger.info(f"Universal prompts update request: {update_request.prompts.keys()}")
-    
+    logger.info(f"Universal prompts update request received")
+
     try:
         unified_manager = UnifiedPromptManager(db)
         universal_prompts = unified_manager.get_universal_prompts()
@@ -177,27 +180,30 @@ async def update_universal_prompts(
             db.add(universal_prompts)
             db.flush()  # Ensure it gets an ID
 
-        # Valid universal prompt fields
-        valid_universal_fields = {
-            "medical_validation_prompt",
-            "classification_prompt",
-            "preprocessing_prompt",
-            "language_translation_prompt"
-        }
-
-        # Update prompts directly - only valid fields
+        # Update prompts directly - only valid fields with actual values
         updated_fields = []
-        for key, value in update_request.prompts.items():
-            if key in valid_universal_fields and hasattr(universal_prompts, key):
-                setattr(universal_prompts, key, value)
-                updated_fields.append(key)
-            elif key not in valid_universal_fields:
-                logger.warning(f"Skipping invalid universal prompt field: {key}")
+
+        # Check each field individually
+        if update_request.medical_validation_prompt is not None:
+            universal_prompts.medical_validation_prompt = update_request.medical_validation_prompt
+            updated_fields.append("medical_validation_prompt")
+
+        if update_request.classification_prompt is not None:
+            universal_prompts.classification_prompt = update_request.classification_prompt
+            updated_fields.append("classification_prompt")
+
+        if update_request.preprocessing_prompt is not None:
+            universal_prompts.preprocessing_prompt = update_request.preprocessing_prompt
+            updated_fields.append("preprocessing_prompt")
+
+        if update_request.language_translation_prompt is not None:
+            universal_prompts.language_translation_prompt = update_request.language_translation_prompt
+            updated_fields.append("language_translation_prompt")
 
         if not updated_fields:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"No valid universal prompt fields found. Valid fields: {list(valid_universal_fields)}"
+                detail="No universal prompt fields provided to update. Valid fields: medical_validation_prompt, classification_prompt, preprocessing_prompt, language_translation_prompt"
             )
 
         logger.info(f"Updated universal prompt fields: {updated_fields}")
@@ -813,9 +819,12 @@ async def get_pipeline_settings(
             detail=f"Failed to get pipeline settings: {str(e)}"
         )
 
+class PipelineSettingsUpdateRequest(BaseModel):
+    settings: Dict[str, Any] = Field(..., description="Pipeline settings to update")
+
 @router.put("/pipeline-settings")
 async def update_pipeline_settings(
-    request: dict,
+    update_request: PipelineSettingsUpdateRequest,
     authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_session)
 ):
@@ -827,7 +836,7 @@ async def update_pipeline_settings(
         )
     
     try:
-        settings = request.get("settings", {})
+        settings = update_request.settings
         
         # Map frontend flags back to step names (in processing order)
         step_mapping = {
