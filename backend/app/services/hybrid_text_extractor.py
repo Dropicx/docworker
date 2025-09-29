@@ -52,6 +52,7 @@ class HybridTextExtractor:
 
         # Initialize unified prompt manager for OCR prompts
         self.prompt_manager = None  # Initialize later when needed to avoid startup issues
+        self.session_generator = None  # Keep reference to session generator
 
         # Initialize local OCR if available
         self.local_ocr_available = LOCAL_OCR_AVAILABLE
@@ -82,16 +83,29 @@ class HybridTextExtractor:
 
         if self.prompt_manager is None:
             try:
-                session_gen = get_session()
-                session = next(session_gen)
+                # Create a session using the dependency function
+                # Keep the session generator alive for the lifetime of the prompt manager
+                self.session_generator = get_session()
+                session = next(self.session_generator)
+
+                # Initialize the prompt manager with the session
                 self.prompt_manager = UnifiedPromptManager(session)
                 logger.info("✅ Unified Prompt Manager connected on demand")
-                # Close the session generator
-                session_gen.close()
+
             except Exception as e:
                 logger.warning(f"⚠️ Could not connect to Unified Prompt Manager: {e}")
                 return None
         return self.prompt_manager
+
+    def __del__(self):
+        """Cleanup session generator on destruction"""
+        if hasattr(self, 'session_generator') and self.session_generator is not None:
+            try:
+                next(self.session_generator)  # This triggers the finally block in get_session()
+            except StopIteration:
+                pass  # Generator is exhausted, session is closed
+            except Exception:
+                pass  # Ignore cleanup errors
 
     async def _apply_ocr_preprocessing(self, raw_text: str) -> str:
         """
