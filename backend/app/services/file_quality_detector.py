@@ -168,73 +168,204 @@ class FileQualityDetector:
             return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX, analysis
 
     def _detect_table_structure_in_page(self, page) -> bool:
-        """Detect if a PDF page contains actual table structures (improved algorithm)"""
+        """Detect if a PDF page contains actual table structures with high precision to minimize false positives"""
         try:
-            # Method 1: Use pdfplumber's built-in table detection
+            # Method 1: Use pdfplumber's built-in table detection with validation
             tables = page.find_tables()
             if tables and len(tables) > 0:
-                # Found actual table structures
-                logger.debug(f"📊 Found {len(tables)} table structures using pdfplumber")
-                return True
+                # Validate that detected tables are actually meaningful
+                valid_tables = 0
+                for table in tables:
+                    if self._validate_pdfplumber_table(table):
+                        valid_tables += 1
 
-            # Method 2: Look for table-like character alignment patterns
+                if valid_tables > 0:
+                    logger.debug(f"📊 Found {valid_tables}/{len(tables)} valid table structures using pdfplumber")
+                    return True
+
+            # Method 2: Enhanced character alignment analysis with stricter criteria
             chars = page.chars
-            if not chars:
+            if not chars or len(chars) < 50:  # Need sufficient content to detect tables
                 return False
 
-            # Count characters aligned vertically (potential columns)
-            x_positions = [char['x0'] for char in chars]
-            y_positions = [char['y0'] for char in chars]
-
-            from collections import Counter
-
-            # Group x-positions (columns) with tighter grouping
-            x_counter = Counter([round(x/8)*8 for x in x_positions])  # Group by ~8px
-            # Group y-positions (rows)
-            y_counter = Counter([round(y/5)*5 for y in y_positions])  # Group by ~5px
-
-            # Must have multiple distinct columns AND rows for a table
-            significant_columns = [count for count in x_counter.values() if count >= 8]
-            significant_rows = [count for count in y_counter.values() if count >= 4]
-
-            has_column_structure = len(significant_columns) >= 4  # At least 4 columns
-            has_row_structure = len(significant_rows) >= 3        # At least 3 rows
-
-            # Method 3: Look for table indicators in text
+            # Get text for additional validation
             page_text = page.extract_text() or ""
-            table_indicators = [
-                # Common table separators
-                '\t', '|',
-                # Multiple spaces (column separation)
-                '   ',
-                # Common medical table terms
-                'wert', 'normal', 'bereich', 'referenz',
-                'labor', 'befund', 'ergebnis',
-                # Table-like number patterns
-            ]
 
-            has_table_text_patterns = any(indicator in page_text.lower() for indicator in table_indicators)
+            # Pre-filter: Skip pages that are clearly narrative text
+            if self._is_narrative_text(page_text):
+                logger.debug("📄 Page appears to be narrative text, skipping table detection")
+                return False
 
-            # Also check for number-heavy content (likely lab values in tables)
-            import re
-            numbers = re.findall(r'\d+[.,]\d+|\d+\s*(mg|ml|mmol|µg|ng|u/l|iu/l|%)', page_text)
-            has_many_numbers = len(numbers) >= 5
+            # Analyze character positioning with improved precision
+            table_score = self._analyze_character_alignment(chars, page_text)
 
-            # Decision logic: must have strong evidence of table structure
+            # Method 3: Medical table content analysis
+            medical_table_score = self._analyze_medical_table_content(page_text)
+
+            # Combined decision with higher thresholds to reduce false positives
             is_table = (
-                (has_column_structure and has_row_structure) or  # Strong structural evidence
-                (has_column_structure and has_many_numbers) or   # Columns + lab values
-                (has_table_text_patterns and has_many_numbers and len(significant_columns) >= 2)  # Text indicators + numbers + some structure
+                table_score >= 0.7 or  # Strong structural evidence (raised from mixed criteria)
+                (table_score >= 0.4 and medical_table_score >= 0.6)  # Moderate structure + strong medical indicators
             )
 
             if is_table:
-                logger.debug(f"📊 Table detected - Columns: {len(significant_columns)}, Rows: {len(significant_rows)}, Numbers: {len(numbers)}")
+                logger.debug(f"📊 Table detected - Structure Score: {table_score:.2f}, Medical Score: {medical_table_score:.2f}")
 
             return is_table
 
         except Exception as e:
             logger.debug(f"Table detection error: {e}")
             return False
+
+    def _validate_pdfplumber_table(self, table) -> bool:
+        """Validate that a pdfplumber-detected table is actually meaningful"""
+        try:
+            # Extract table data
+            table_data = table.extract()
+            if not table_data or len(table_data) < 2:  # Need at least 2 rows
+                return False
+
+            # Check for meaningful content
+            non_empty_cells = 0
+            total_cells = 0
+
+            for row in table_data:
+                if row:  # Row is not None
+                    for cell in row:
+                        total_cells += 1
+                        if cell and str(cell).strip():  # Non-empty cell
+                            non_empty_cells += 1
+
+            # Table should have at least 30% filled cells and minimum dimensions
+            fill_ratio = non_empty_cells / total_cells if total_cells > 0 else 0
+            has_minimum_size = len(table_data) >= 2 and len(table_data[0] or []) >= 2
+
+            return fill_ratio >= 0.3 and has_minimum_size
+
+        except Exception:
+            return False
+
+    def _is_narrative_text(self, text: str) -> bool:
+        """Check if text appears to be narrative (not tabular)"""
+        if not text or len(text.strip()) < 100:
+            return False
+
+        # Count sentences vs. short fragments
+        import re
+        sentences = re.split(r'[.!?]+\s+', text)
+        long_sentences = [s for s in sentences if len(s.strip()) > 30]
+
+        # Count paragraph indicators
+        paragraphs = text.count('\n\n')
+
+        # Narrative text typically has longer sentences and paragraph breaks
+        narrative_indicators = len(long_sentences) >= 3 or paragraphs >= 2
+
+        # Check for absence of table-like patterns
+        has_few_numbers = len(re.findall(r'\d+[.,]\d+', text)) < 5
+        has_few_separators = text.count('|') < 3 and text.count('\t') < 5
+
+        return narrative_indicators and has_few_numbers and has_few_separators
+
+    def _analyze_character_alignment(self, chars, page_text: str) -> float:
+        """Analyze character alignment patterns with improved precision"""
+        from collections import Counter, defaultdict
+
+        # Group characters by vertical position (rows) with tighter clustering
+        y_positions = [char['y0'] for char in chars]
+        x_positions = [char['x0'] for char in chars]
+
+        # More precise grouping for row detection
+        y_groups = defaultdict(list)
+        for i, char in enumerate(chars):
+            y_key = round(char['y0'] / 3) * 3  # Group by 3px for rows
+            y_groups[y_key].append(char)
+
+        # Analyze each row for column structure
+        consistent_rows = 0
+        total_rows = len(y_groups)
+
+        if total_rows < 3:  # Need at least 3 rows for a table
+            return 0.0
+
+        # Check each row for consistent column structure
+        column_positions = set()
+        for y_key, row_chars in y_groups.items():
+            if len(row_chars) < 4:  # Skip rows with too few characters
+                continue
+
+            # Extract x-positions for this row
+            row_x_positions = [char['x0'] for char in row_chars]
+            row_x_positions.sort()
+
+            # Group x-positions into columns (more precise grouping)
+            row_columns = []
+            current_column = [row_x_positions[0]]
+
+            for x in row_x_positions[1:]:
+                if x - current_column[-1] < 15:  # Characters within 15px are same column
+                    current_column.append(x)
+                else:
+                    if len(current_column) >= 2:  # Valid column needs multiple chars
+                        row_columns.append(sum(current_column) / len(current_column))
+                    current_column = [x]
+
+            # Don't forget the last column
+            if len(current_column) >= 2:
+                row_columns.append(sum(current_column) / len(current_column))
+
+            # Check if this row has consistent column structure
+            if len(row_columns) >= 3:  # At least 3 columns for a table
+                column_positions.update(row_columns)
+                consistent_rows += 1
+
+        # Calculate structure score
+        row_consistency = consistent_rows / max(total_rows, 1)
+        column_count = len(column_positions)
+
+        # Bonus for medical lab value patterns
+        import re
+        lab_patterns = len(re.findall(r'\d+[.,]\d+\s*(mg|ml|mmol|µg|ng|u/l|iu/l|%)', page_text))
+        lab_bonus = min(lab_patterns * 0.1, 0.3)  # Up to 0.3 bonus
+
+        structure_score = (row_consistency * 0.7) + (min(column_count / 5, 1.0) * 0.3) + lab_bonus
+
+        return min(structure_score, 1.0)
+
+    def _analyze_medical_table_content(self, text: str) -> float:
+        """Analyze text for medical table-specific content"""
+        if not text:
+            return 0.0
+
+        text_lower = text.lower()
+        score = 0.0
+
+        # Medical lab terms (strong indicators)
+        lab_terms = [
+            'laborwerte', 'blutwerte', 'laborergebnisse', 'befund',
+            'referenzbereich', 'normalwert', 'grenzwert',
+            'hämoglobin', 'leukozyten', 'thrombozyten', 'erythrozyten',
+            'glukose', 'cholesterin', 'kreatinin', 'harnstoff',
+            'bilirubin', 'albumin', 'protein', 'calcium'
+        ]
+
+        lab_term_matches = sum(1 for term in lab_terms if term in text_lower)
+        score += min(lab_term_matches * 0.15, 0.6)  # Max 0.6 for lab terms
+
+        # Medical units (very strong indicators for lab tables)
+        import re
+        medical_units = re.findall(r'\d+[.,]\d*\s*(mg/dl|mmol/l|µg/l|ng/ml|u/l|iu/l|g/l|%|/µl)', text_lower)
+        score += min(len(medical_units) * 0.1, 0.4)  # Max 0.4 for units
+
+        # Table structure indicators
+        separators = text.count('|') + text.count('\t') + len(re.findall(r'\s{3,}', text))
+        score += min(separators * 0.02, 0.2)  # Max 0.2 for separators
+
+        # Reference ranges (typical in lab tables)
+        reference_patterns = len(re.findall(r'\d+[.,]\d*\s*[-–]\s*\d+[.,]\d*', text))
+        score += min(reference_patterns * 0.05, 0.2)  # Max 0.2 for ranges
+
+        return min(score, 1.0)
 
     def _evaluate_text_quality(self, text: str) -> float:
         """Evaluate the quality of extracted text"""
