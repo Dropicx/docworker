@@ -265,8 +265,7 @@ class DocumentPromptUpdateRequest(BaseModel):
 async def update_document_prompts(
     document_type: str,
     update_request: DocumentPromptUpdateRequest,
-    authenticated: bool = Depends(verify_session_token),
-    db: Session = Depends(get_session)
+    authenticated: bool = Depends(verify_session_token)
 ):
     """Update document-specific prompts."""
     if not authenticated:
@@ -279,58 +278,63 @@ async def update_document_prompts(
         # Convert document type
         doc_class = DocumentClass(document_type.upper())
         
-        unified_manager = UnifiedPromptManager(db)
-        specific_prompts = unified_manager.get_document_specific_prompts(doc_class)
-        
-        if not specific_prompts:
-            specific_prompts = unified_manager.create_default_document_specific_prompts(doc_class)
-        
-        # Separate universal and document-specific prompts
-        universal_prompt_fields = [
-            "medical_validation_prompt", "classification_prompt", "preprocessing_prompt", 
-            "language_translation_prompt"
-        ]
-        document_specific_prompt_fields = [
-            "translation_prompt", "fact_check_prompt", "grammar_check_prompt", 
-            "final_check_prompt", "formatting_prompt"
-        ]
-        
-        # Update document-specific prompts
-        for key, value in update_request.prompts.items():
-            if key in document_specific_prompt_fields and hasattr(specific_prompts, key):
-                setattr(specific_prompts, key, value)
-        
-        specific_prompts.last_modified = datetime.now()
-        specific_prompts.modified_by = update_request.user or "settings_ui"
-        
-        success = unified_manager.save_document_specific_prompts(doc_class, specific_prompts)
-        
-        # Update universal prompts if any were provided
-        universal_prompts = unified_manager.get_universal_prompts()
-        if universal_prompts:
-            universal_updated = False
-            for key, value in update_request.prompts.items():
-                if key in universal_prompt_fields and hasattr(universal_prompts, key):
-                    setattr(universal_prompts, key, value)
-                    universal_updated = True
+        # Get database session
+        db = next(get_session())
+        try:
+            unified_manager = UnifiedPromptManager(db)
+            specific_prompts = unified_manager.get_document_specific_prompts(doc_class)
             
-            if universal_updated:
-                universal_prompts.last_modified = datetime.now()
-                universal_prompts.modified_by = update_request.user or "settings_ui"
-                unified_manager.save_universal_prompts(universal_prompts)
-        
-        if success:
-            logger.info(f"Updated document prompts for {document_type} by {update_request.user or 'unknown'}")
-            return {
-                "success": True,
-                "message": f"Document prompts updated successfully for {document_type}",
-                "version": specific_prompts.version
-            }
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to save document prompts"
-            )
+            if not specific_prompts:
+                specific_prompts = unified_manager.create_default_document_specific_prompts(doc_class)
+            
+            # Separate universal and document-specific prompts
+            universal_prompt_fields = [
+                "medical_validation_prompt", "classification_prompt", "preprocessing_prompt", 
+                "language_translation_prompt"
+            ]
+            document_specific_prompt_fields = [
+                "translation_prompt", "fact_check_prompt", "grammar_check_prompt", 
+                "final_check_prompt", "formatting_prompt"
+            ]
+            
+            # Update document-specific prompts
+            for key, value in update_request.prompts.items():
+                if key in document_specific_prompt_fields and hasattr(specific_prompts, key):
+                    setattr(specific_prompts, key, value)
+            
+            specific_prompts.last_modified = datetime.now()
+            specific_prompts.modified_by = update_request.user or "settings_ui"
+            
+            success = unified_manager.save_document_specific_prompts(doc_class, specific_prompts)
+            
+            # Update universal prompts if any were provided
+            universal_prompts = unified_manager.get_universal_prompts()
+            if universal_prompts:
+                universal_updated = False
+                for key, value in update_request.prompts.items():
+                    if key in universal_prompt_fields and hasattr(universal_prompts, key):
+                        setattr(universal_prompts, key, value)
+                        universal_updated = True
+                
+                if universal_updated:
+                    universal_prompts.last_modified = datetime.now()
+                    universal_prompts.modified_by = update_request.user or "settings_ui"
+                    unified_manager.save_universal_prompts(universal_prompts)
+            
+            if success:
+                logger.info(f"Updated document prompts for {document_type} by {update_request.user or 'unknown'}")
+                return {
+                    "success": True,
+                    "message": f"Document prompts updated successfully for {document_type}",
+                    "version": specific_prompts.version
+                }
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Failed to save document prompts"
+                )
+        finally:
+            db.close()
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

@@ -134,9 +134,22 @@ class SettingsService {
     user?: string
   ): Promise<{ success: boolean; message: string; version: number }> {
     try {
+      // Extract only the prompt fields, excluding metadata and pipeline_steps
+      const promptFields = {
+        medical_validation_prompt: prompts.medical_validation_prompt,
+        classification_prompt: prompts.classification_prompt,
+        preprocessing_prompt: prompts.preprocessing_prompt,
+        translation_prompt: prompts.translation_prompt,
+        fact_check_prompt: prompts.fact_check_prompt,
+        grammar_check_prompt: prompts.grammar_check_prompt,
+        language_translation_prompt: prompts.language_translation_prompt,
+        final_check_prompt: prompts.final_check_prompt,
+        formatting_prompt: prompts.formatting_prompt
+      };
+
       const response = await axios.put(
         `${SETTINGS_BASE_URL}/document-prompts/${documentType}`,
-        { prompts, user } as PromptUpdateRequest,
+        { prompts: promptFields, user } as PromptUpdateRequest,
         { headers: this.getAuthHeaders() }
       );
       return response.data;
