@@ -66,6 +66,16 @@ async def process_document_unified(processing_id: str):
                     needs_ocr = file_type.lower() in ['pdf', 'jpg', 'jpeg', 'png', 'tiff', 'bmp', 'gif']
 
                     if needs_ocr:
+                        # Check if TEXT_EXTRACTION step is enabled
+                        if not unified_manager.is_pipeline_step_enabled("TEXT_EXTRACTION"):
+                            print(f"⚠️ TEXT_EXTRACTION step is disabled - skipping OCR")
+                            update_processing_store(processing_id, {
+                                "status": ProcessingStatus.ERROR,
+                                "error": "TEXT_EXTRACTION step is disabled in pipeline settings",
+                                "error_at": datetime.now()
+                            })
+                            return
+
                         print(f"🔍 File type '{file_type}' requires OCR - starting text extraction")
                         update_processing_store(processing_id, {
                             "status": ProcessingStatus.PROCESSING,

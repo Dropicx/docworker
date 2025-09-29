@@ -19,16 +19,16 @@ class DocumentClassEnum(str, Enum):
     LABORWERTE = "LABORWERTE"
 
 class ProcessingStepEnum(str, Enum):
-    MEDICAL_VALIDATION = "MEDICAL_VALIDATION"
-    CLASSIFICATION = "CLASSIFICATION"
-    TEXT_EXTRACTION = "TEXT_EXTRACTION"  # Enhanced OCR with conditional routing
-    PREPROCESSING = "PREPROCESSING"
-    TRANSLATION = "TRANSLATION"
-    FACT_CHECK = "FACT_CHECK"
-    GRAMMAR_CHECK = "GRAMMAR_CHECK"
-    LANGUAGE_TRANSLATION = "LANGUAGE_TRANSLATION"
-    FINAL_CHECK = "FINAL_CHECK"
-    FORMATTING = "FORMATTING"
+    TEXT_EXTRACTION = "TEXT_EXTRACTION"  # Enhanced OCR with conditional routing - STEP 0
+    MEDICAL_VALIDATION = "MEDICAL_VALIDATION"  # STEP 1
+    CLASSIFICATION = "CLASSIFICATION"  # STEP 2
+    PREPROCESSING = "PREPROCESSING"  # STEP 3
+    TRANSLATION = "TRANSLATION"  # STEP 4
+    FACT_CHECK = "FACT_CHECK"  # STEP 5
+    GRAMMAR_CHECK = "GRAMMAR_CHECK"  # STEP 6
+    LANGUAGE_TRANSLATION = "LANGUAGE_TRANSLATION"  # STEP 7
+    FINAL_CHECK = "FINAL_CHECK"  # STEP 8
+    FORMATTING = "FORMATTING"  # STEP 9
 
 Base = declarative_base()
 
@@ -44,6 +44,7 @@ class UniversalPromptsDB(Base):
     # Universal prompts - same for all document types
     medical_validation_prompt = Column(Text, nullable=False)
     classification_prompt = Column(Text, nullable=False)
+    ocr_preprocessing_prompt = Column(Text, nullable=True)  # OCR text cleaning and preprocessing
     preprocessing_prompt = Column(Text, nullable=False)
     language_translation_prompt = Column(Text, nullable=False)
 

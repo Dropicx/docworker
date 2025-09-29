@@ -203,8 +203,12 @@ async def update_universal_prompts(
             updated_fields.append("language_translation_prompt")
 
         if update_request.ocr_preprocessing_prompt is not None:
-            universal_prompts.ocr_preprocessing_prompt = update_request.ocr_preprocessing_prompt
-            updated_fields.append("ocr_preprocessing_prompt")
+            # Handle case where ocr_preprocessing_prompt column might not exist yet
+            if hasattr(universal_prompts, 'ocr_preprocessing_prompt'):
+                universal_prompts.ocr_preprocessing_prompt = update_request.ocr_preprocessing_prompt
+                updated_fields.append("ocr_preprocessing_prompt")
+            else:
+                logger.warning("ocr_preprocessing_prompt column not found in database - skipping update")
 
         if not updated_fields:
             raise HTTPException(
@@ -774,8 +778,9 @@ async def get_pipeline_settings_internal(db: Session) -> dict:
             "use_optimized_pipeline": system_config.get("use_optimized_pipeline", True),  # Default to true
             "pipeline_cache_timeout": system_config.get("pipeline_cache_timeout", 1800),  # Default to 30 minutes
             "enable_medical_validation": False,
-            "enable_preprocessing": False,
             "enable_classification": False,
+            "enable_text_extraction": False,  # OCR/Text extraction step
+            "enable_preprocessing": False,
             "enable_translation": False,
             "enable_fact_check": False,
             "enable_grammar_check": False,
@@ -787,8 +792,9 @@ async def get_pipeline_settings_internal(db: Session) -> dict:
         # Map step names to frontend flags (in processing order)
         step_mapping = {
             "MEDICAL_VALIDATION": "enable_medical_validation",
+            "CLASSIFICATION": "enable_classification",
+            "TEXT_EXTRACTION": "enable_text_extraction",  # OCR/Text extraction step
             "PREPROCESSING": "enable_preprocessing",
-            "CLASSIFICATION": "enable_classification", 
             "TRANSLATION": "enable_translation",
             "FACT_CHECK": "enable_fact_check",
             "GRAMMAR_CHECK": "enable_grammar_check",
@@ -853,8 +859,9 @@ async def update_pipeline_settings(
         # Map frontend flags back to step names (in processing order)
         step_mapping = {
             "enable_medical_validation": "MEDICAL_VALIDATION",
+            "enable_classification": "CLASSIFICATION",
+            "enable_text_extraction": "TEXT_EXTRACTION",  # OCR/Text extraction step
             "enable_preprocessing": "PREPROCESSING",
-            "enable_classification": "CLASSIFICATION", 
             "enable_translation": "TRANSLATION",
             "enable_fact_check": "FACT_CHECK",
             "enable_grammar_check": "GRAMMAR_CHECK",
@@ -989,7 +996,7 @@ class OCRSettingsResponse(BaseModel):
     file_sequence_detection: bool = Field(description="Enable intelligent file sequence detection")
     medical_text_merging: str = Field(description="Text merging strategy: simple, smart, medical_aware")
 
-@router.get("/ocr-settings", response_model=OCRSettingsResponse)
+@router.get("/ocr-settings")
 async def get_ocr_settings(
     authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_session)
@@ -1020,19 +1027,19 @@ async def get_ocr_settings(
             else:
                 settings_dict[setting.key] = setting.value
 
-        # Return with defaults if not set
-        return OCRSettingsResponse(
-            strategy=settings_dict.get('ocr_strategy', 'conditional'),
-            vision_model=settings_dict.get('ocr_vision_model', 'Qwen2.5-VL-72B-Instruct'),
-            vision_base_url=settings_dict.get('ocr_vision_base_url', 'https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net'),
-            confidence_threshold=settings_dict.get('ocr_confidence_threshold', 0.7),
-            opencv_enabled=settings_dict.get('ocr_opencv_enabled', False),
-            fallback_enabled=settings_dict.get('ocr_fallback_enabled', True),
-            multi_file_enabled=settings_dict.get('multi_file_enabled', True),
-            multi_file_max_count=settings_dict.get('multi_file_max_count', 10),
-            file_sequence_detection=settings_dict.get('file_sequence_detection', True),
-            medical_text_merging=settings_dict.get('medical_text_merging', 'smart')
-        )
+        # Return with defaults if not set - matching frontend OCRSettings interface
+        return {
+            "strategy": settings_dict.get('ocr_strategy', 'conditional'),
+            "vision_model": settings_dict.get('ocr_vision_model', 'Qwen2.5-VL-72B-Instruct'),
+            "vision_base_url": settings_dict.get('ocr_vision_base_url', 'https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net'),
+            "confidence_threshold": settings_dict.get('ocr_confidence_threshold', 0.7),
+            "opencv_enabled": settings_dict.get('ocr_opencv_enabled', False),
+            "fallback_enabled": settings_dict.get('ocr_fallback_enabled', True),
+            "multi_file_enabled": settings_dict.get('multi_file_enabled', True),
+            "multi_file_max_count": settings_dict.get('multi_file_max_count', 10),
+            "file_sequence_detection": settings_dict.get('file_sequence_detection', True),
+            "medical_text_merging": settings_dict.get('medical_text_merging', 'smart')
+        }
     except Exception as e:
         logger.error(f"Failed to get OCR settings: {e}")
         raise HTTPException(
