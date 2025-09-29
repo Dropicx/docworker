@@ -32,16 +32,15 @@ def unified_seed_database():
             conn.execute(text("""
                 INSERT INTO universal_prompts (
                     medical_validation_prompt, classification_prompt, preprocessing_prompt,
-                    grammar_check_prompt, language_translation_prompt, version, last_modified, modified_by, is_active
+                    language_translation_prompt, version, last_modified, modified_by, is_active
                 ) VALUES (
                     :medical_validation_prompt, :classification_prompt, :preprocessing_prompt,
-                    :grammar_check_prompt, :language_translation_prompt, :version, CURRENT_TIMESTAMP, :modified_by, :is_active
+                    :language_translation_prompt, :version, CURRENT_TIMESTAMP, :modified_by, :is_active
                 )
             """), {
                 'medical_validation_prompt': 'Analysiere den folgenden Text und bestimme, ob er medizinische Inhalte enthält. Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH',
                 'classification_prompt': 'Analysiere diesen medizinischen Text und bestimme, ob es sich um einen Arztbrief, einen Befundbericht oder Laborwerte handelt. Antworte NUR mit dem erkannten Typ (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE).',
                 'preprocessing_prompt': 'Entferne aus dem folgenden medizinischen Text alle persönlichen Identifikatoren (Namen, Adressen, Geburtsdaten, Telefonnummern, E-Mail-Adressen, Patientennummern), aber behalte alle medizinischen Informationen und den Kontext bei. Ersetze entfernte PII durch \'[ENTFERNT]\'.',
-                'grammar_check_prompt': 'Korrigiere die deutsche Grammatik, Rechtschreibung und Zeichensetzung im folgenden Text. Achte auf einen flüssigen und professionellen Stil. Gib nur den korrigierten Text zurück.',
                 'language_translation_prompt': 'Übersetze den folgenden Text EXAKT in {language}. Achte auf präzise medizinische Terminologie, wo angebracht, aber halte den Ton patientenfreundlich. Gib nur die Übersetzung zurück.',
                 'version': 1,
                 'modified_by': 'system_seed',

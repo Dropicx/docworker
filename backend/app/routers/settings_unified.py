@@ -294,7 +294,7 @@ async def update_document_prompts(
         # Separate universal and document-specific prompts
         universal_prompt_fields = [
             "medical_validation_prompt", "classification_prompt", "preprocessing_prompt",
-            "language_translation_prompt", "grammar_check_prompt"  # Added missing field!
+            "language_translation_prompt"
         ]
         document_specific_prompt_fields = [
             "translation_prompt", "fact_check_prompt", "grammar_check_prompt",

@@ -44,7 +44,6 @@ class UniversalPromptsDB(Base):
     medical_validation_prompt = Column(Text, nullable=False)
     classification_prompt = Column(Text, nullable=False)
     preprocessing_prompt = Column(Text, nullable=False)
-    grammar_check_prompt = Column(Text, nullable=False)
     language_translation_prompt = Column(Text, nullable=False)
 
     # Metadata
