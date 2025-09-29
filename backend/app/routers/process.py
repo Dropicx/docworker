@@ -27,6 +27,7 @@ from app.services.cleanup import (
 from app.services.ovh_client import OVHClient
 from app.services.unified_prompt_manager import UnifiedPromptManager
 from app.services.ai_logging_service import AILoggingService
+from app.services.hybrid_text_extractor import HybridTextExtractor
 from app.routers.process_unified import process_document_unified
 from app.database.connection import get_session
 from sqlalchemy.orm import Session

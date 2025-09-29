@@ -1,9 +1,12 @@
 import os
 import httpx
 import logging
-from typing import Optional, Dict, Any, AsyncGenerator
+import base64
+from typing import Optional, Dict, Any, AsyncGenerator, Union, List
 from openai import AsyncOpenAI
 import json
+from PIL import Image
+from io import BytesIO
 # Try to use advanced filter with spaCy, fallback to smart filter
 try:
     from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
@@ -29,6 +32,10 @@ class OVHClient:
         self.preprocessing_model = os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407")
         self.translation_model = os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
 
+        # Vision model for OCR tasks
+        self.vision_model = os.getenv("OVH_VISION_MODEL", "Qwen2.5-VL-72B-Instruct")
+        self.vision_base_url = os.getenv("OVH_VISION_BASE_URL", "https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net")
+
         # Define which prompt types should use fast model for speed optimization
         self.fast_model_prompt_types = {
             'preprocessing_prompt',
@@ -52,6 +59,8 @@ class OVHClient:
         logger.info(f"   - Token Length: {len(self.access_token) if self.access_token else 0} chars")
         logger.info(f"   - Base URL: {self.base_url}")
         logger.info(f"   - Main Model: {self.main_model}")
+        logger.info(f"   - Vision Model: {self.vision_model}")
+        logger.info(f"   - Vision URL: {self.vision_base_url}")
         logger.info(f"   - USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}")
         
         if not self.access_token:
@@ -66,9 +75,16 @@ class OVHClient:
                 base_url=self.base_url,
                 api_key=self.access_token or "dummy-key-not-set"  # Use dummy key if not set
             )
+
+            # Initialize separate client for vision model
+            self.vision_client = AsyncOpenAI(
+                base_url=self.vision_base_url,
+                api_key=self.access_token or "dummy-key-not-set"
+            )
         except Exception as e:
-            logger.error(f"Failed to initialize OVH client: {e}")
+            logger.error(f"Failed to initialize OVH clients: {e}")
             self.client = None
+            self.vision_client = None
         
         # Alternative HTTP client for direct API calls
         self.timeout = 300  # 5 minutes timeout
@@ -846,3 +862,272 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             logger.error(f"Error formatting text: {e}")
             # Return original text with basic formatting if AI formatting fails
             return self._improve_formatting(text)
+
+    async def extract_text_with_vision(
+        self,
+        image_data: Union[bytes, Image.Image],
+        file_type: str = "image",
+        confidence_threshold: float = 0.7
+    ) -> tuple[str, float]:
+        """
+        Extract text from image using Qwen 2.5 VL vision model
+
+        Args:
+            image_data: Image as bytes or PIL Image
+            file_type: Type of file being processed
+            confidence_threshold: Minimum confidence for success
+
+        Returns:
+            tuple[str, float]: (extracted_text, confidence_score)
+        """
+        if not self.access_token or not self.vision_client:
+            logger.error("❌ OVH vision client not configured")
+            return "Error: OVH vision client not configured", 0.0
+
+        try:
+            logger.info(f"🔍 Starting vision OCR with Qwen 2.5 VL for {file_type}")
+
+            # Convert image to base64
+            if isinstance(image_data, Image.Image):
+                # Convert PIL Image to bytes
+                buffered = BytesIO()
+                # Save as PNG for best quality
+                image_data.save(buffered, format="PNG")
+                image_bytes = buffered.getvalue()
+            else:
+                image_bytes = image_data
+
+            # Encode to base64
+            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
+            image_url = f"data:image/png;base64,{image_base64}"
+
+            # Create medical OCR prompt
+            ocr_prompt = self._get_medical_ocr_prompt()
+
+            # Prepare messages for vision model
+            messages = [
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "text",
+                            "text": ocr_prompt
+                        },
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": image_url
+                            }
+                        }
+                    ]
+                }
+            ]
+
+            # Make API call to Qwen 2.5 VL
+            logger.info(f"🚀 Calling Qwen 2.5 VL vision API at {self.vision_base_url}")
+            response = await self.vision_client.chat.completions.create(
+                model=self.vision_model,
+                messages=messages,
+                max_tokens=4000,
+                temperature=0.1  # Very low for precise OCR
+            )
+
+            extracted_text = response.choices[0].message.content
+
+            if not extracted_text or len(extracted_text.strip()) < 10:
+                logger.warning("⚠️ Vision OCR returned very short text")
+                return "Kein Text im Bild erkannt.", 0.1
+
+            # Calculate confidence based on text quality
+            confidence = self._calculate_vision_ocr_confidence(extracted_text)
+
+            logger.info(f"✅ Vision OCR successful: {len(extracted_text)} characters, confidence: {confidence:.2%}")
+            logger.info(f"📄 Extracted text preview: {extracted_text[:500]}...")
+
+            return extracted_text.strip(), confidence
+
+        except Exception as e:
+            logger.error(f"❌ Vision OCR failed: {e}")
+            return f"Vision OCR error: {str(e)}", 0.0
+
+    def _get_medical_ocr_prompt(self) -> str:
+        """
+        Get specialized OCR prompt for medical documents
+        """
+        return """Du bist ein hochpräziser OCR-Scanner, spezialisiert auf medizinische Dokumente.
+
+🎯 AUFGABE:
+Extrahiere ALLEN sichtbaren Text aus diesem medizinischen Dokument mit höchster Präzision.
+
+⚡ KRITISCHE REGELN:
+1. EXTRAHIERE JEDEN sichtbaren Text - auch kleine Details
+2. BEHALTE die originale Struktur und Formatierung bei
+3. ERKENNE Tabellen, Listen, Formulare und ihre Struktur
+4. ACHTE besonders auf:
+   - Laborwerte und Messergebnisse
+   - Medizinische Begriffe und Abkürzungen
+   - Datum- und Zeitangaben
+   - Dosierungen und Einheiten
+   - Unterschriften und Stempel (transkribiere sie)
+5. Bei unleserlichen Stellen: markiere mit [unleserlich]
+6. KEINE Interpretation oder Korrektur - nur exakte Extraktion
+7. BEWAHRE alle Zahlen, Symbole und Sonderzeichen
+
+📋 FORMATIERUNG:
+- Nutze Markdown für Struktur
+- Tabellen als Markdown-Tabellen
+- Listen mit Bindestrichen (-)
+- Überschriften mit ##
+- Behalte Zeilenumbrüche bei
+
+🏥 MEDIZINISCHE PRÄZISION:
+- Alle Laborwerte mit exakten Zahlen
+- Alle Einheiten (mg/dl, mmol/l, etc.)
+- Alle Referenzbereiche
+- Alle Medikamentennamen und Dosierungen
+- Alle Diagnosecodes (ICD, OPS)
+
+Beginne sofort mit der Textextraktion:"""
+
+    def _calculate_vision_ocr_confidence(self, text: str) -> float:
+        """
+        Calculate confidence score for vision OCR results
+        """
+        if not text or len(text.strip()) < 10:
+            return 0.0
+
+        confidence = 0.7  # Base confidence for Qwen 2.5 VL
+
+        # Length indicators
+        if len(text) > 100:
+            confidence += 0.05
+        if len(text) > 500:
+            confidence += 0.05
+        if len(text) > 1000:
+            confidence += 0.05
+
+        # Medical content indicators
+        medical_terms = [
+            'laborwerte', 'befund', 'diagnose', 'patient', 'arzt',
+            'blutbild', 'urin', 'röntgen', 'mrt', 'ct', 'ultraschall',
+            'mg/dl', 'mmol/l', 'µg/ml', 'ng/ml', 'u/l', 'iu/l',
+            'normal', 'pathologisch', 'auffällig', 'unauffällig'
+        ]
+
+        text_lower = text.lower()
+        found_terms = sum(1 for term in medical_terms if term in text_lower)
+        confidence += min(found_terms * 0.01, 0.1)
+
+        # Structure indicators (tables, lists)
+        if '|' in text or '- ' in text or '## ' in text:
+            confidence += 0.05
+
+        # Number indicators (likely measurements)
+        import re
+        numbers_with_units = len(re.findall(r'\d+[.,]?\d*\s*(mg|ml|mmol|µg|ng|u/l|iu/l|%)', text, re.IGNORECASE))
+        confidence += min(numbers_with_units * 0.005, 0.05)
+
+        return min(confidence, 0.95)  # Cap at 95%
+
+    async def process_multiple_images_ocr(
+        self,
+        images: List[Union[bytes, Image.Image]],
+        merge_strategy: str = "sequential"
+    ) -> tuple[str, float]:
+        """
+        Process multiple images with OCR and merge results intelligently
+
+        Args:
+            images: List of images to process
+            merge_strategy: How to merge results ("sequential", "smart")
+
+        Returns:
+            tuple[str, float]: (merged_text, average_confidence)
+        """
+        if not images:
+            return "No images provided", 0.0
+
+        logger.info(f"🔄 Processing {len(images)} images with vision OCR")
+
+        ocr_results = []
+        total_confidence = 0.0
+
+        for i, image in enumerate(images, 1):
+            logger.info(f"📄 Processing image {i}/{len(images)}")
+
+            text, confidence = await self.extract_text_with_vision(image, f"image_{i}")
+
+            if text and not text.startswith("Error"):
+                ocr_results.append({
+                    'page': i,
+                    'text': text,
+                    'confidence': confidence
+                })
+                total_confidence += confidence
+                logger.info(f"✅ Image {i} processed: {len(text)} chars, confidence: {confidence:.2%}")
+            else:
+                logger.warning(f"⚠️ Image {i} failed: {text}")
+
+        if not ocr_results:
+            return "Failed to extract text from any image", 0.0
+
+        # Merge results based on strategy
+        if merge_strategy == "sequential":
+            merged_text = self._merge_sequential(ocr_results)
+        elif merge_strategy == "smart":
+            merged_text = self._merge_smart(ocr_results)
+        else:
+            merged_text = self._merge_sequential(ocr_results)
+
+        avg_confidence = total_confidence / len(ocr_results)
+
+        logger.info(f"🎯 Multi-image OCR complete: {len(merged_text)} total chars, avg confidence: {avg_confidence:.2%}")
+
+        return merged_text, avg_confidence
+
+    def _merge_sequential(self, ocr_results: List[Dict]) -> str:
+        """
+        Merge OCR results in sequential order with page separators
+        """
+        merged_parts = []
+
+        for result in sorted(ocr_results, key=lambda x: x['page']):
+            page_text = result['text']
+            page_num = result['page']
+
+            # Add page header
+            merged_parts.append(f"--- Seite {page_num} ---")
+            merged_parts.append(page_text)
+            merged_parts.append("")  # Empty line between pages
+
+        return "\n".join(merged_parts)
+
+    def _merge_smart(self, ocr_results: List[Dict]) -> str:
+        """
+        Intelligently merge OCR results with context awareness
+        """
+        if len(ocr_results) == 1:
+            return ocr_results[0]['text']
+
+        merged_parts = []
+
+        for i, result in enumerate(sorted(ocr_results, key=lambda x: x['page'])):
+            page_text = result['text'].strip()
+
+            if i == 0:
+                # First page - add as is
+                merged_parts.append(page_text)
+            else:
+                # Subsequent pages - check for continuation
+                prev_text = merged_parts[-1] if merged_parts else ""
+
+                # Simple heuristic: if previous page ends mid-sentence, continue
+                if prev_text.rstrip().endswith((',', '-', 'und', 'oder', 'sowie')):
+                    # Likely continuation - merge without page break
+                    merged_parts.append(page_text)
+                else:
+                    # New section - add page separator
+                    merged_parts.append(f"\n--- Seite {result['page']} ---\n")
+                    merged_parts.append(page_text)
+
+        return "\n".join(merged_parts)

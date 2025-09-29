@@ -17,6 +17,7 @@ from slowapi.errors import RateLimitExceeded
 
 from app.routers import upload, process, health
 from app.routers.settings_unified import router as settings_router
+from app.routers.process_multi_file import router as multi_file_router
 from app.services.cleanup import cleanup_temp_files
 from app.database.init_db import init_database
 
@@ -212,6 +213,7 @@ async def add_security_headers(request: Request, call_next):
 # Router einbinden
 app.include_router(upload.router, prefix="/api", tags=["upload"])
 app.include_router(process.router, prefix="/api", tags=["process"])
+app.include_router(multi_file_router, prefix="/api", tags=["multi-file"])
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(settings_router, tags=["settings"])  # Settings has its own prefix
 
