@@ -934,7 +934,7 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             logger.info(f"🚀 Calling Qwen 2.5 VL vision API at {self.vision_base_url}")
 
             # Try direct HTTP call with reasonable timeout for vision processing
-            vision_timeout = 90.0  # Longer timeout for complex vision processing
+            vision_timeout = 180.0  # 3 minutes timeout for complex multi-page vision processing
             async with httpx.AsyncClient(timeout=vision_timeout) as client:
                 headers = {
                     "Authorization": f"Bearer {self.access_token}",
@@ -983,20 +983,27 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             return extracted_text.strip(), confidence
 
         except Exception as e:
-            error_msg = str(e)
+            error_msg = str(e) if str(e) else "Unknown error occurred"
             logger.error(f"❌ Vision OCR failed: {error_msg}")
+            logger.error(f"❌ Exception type: {type(e).__name__}")
 
-            # Provide specific error messages
-            if "timeout" in error_msg.lower():
-                return "Vision OCR timeout - document may be too complex or server overloaded", 0.0
-            elif "404" in error_msg:
-                return "Vision API endpoint not found - service may be temporarily unavailable", 0.0
+            # Provide specific error messages based on common failure patterns
+            if "timeout" in error_msg.lower() or "TimeoutError" in str(type(e)):
+                error_text = "Vision OCR timeout - document may be too complex or server overloaded"
+            elif "404" in error_msg or "Not Found" in error_msg:
+                error_text = "Vision API endpoint not found - service may be temporarily unavailable"
             elif "401" in error_msg or "unauthorized" in error_msg.lower():
-                return "Vision API authentication failed - token may be invalid", 0.0
+                error_text = "Vision API authentication failed - token may be invalid"
             elif "429" in error_msg or "rate" in error_msg.lower():
-                return "Vision API rate limit exceeded - too many concurrent requests", 0.0
+                error_text = "Vision API rate limit exceeded - too many concurrent requests"
+            elif "500" in error_msg or "Internal Server Error" in error_msg:
+                error_text = "Vision API internal server error - temporary service issue"
+            elif not error_msg or error_msg.strip() == "":
+                error_text = "Vision API call failed with empty response - network or server issue"
             else:
-                return f"Vision OCR error: {error_msg}", 0.0
+                error_text = f"Vision OCR error: {error_msg}"
+
+            return error_text, 0.0
 
     def _get_medical_ocr_prompt(self) -> str:
         """
@@ -1114,28 +1121,55 @@ Begin text extraction with perfect structure preservation:"""
         semaphore = asyncio.Semaphore(2)  # Max 2 concurrent vision API calls for stability
 
         async def process_single_image(i: int, image: Union[bytes, Image.Image]) -> dict:
-            """Process a single image and return result with concurrency control"""
+            """Process a single image with retry logic and concurrency control"""
             async with semaphore:  # Limit concurrent API calls
                 logger.info(f"📄 Processing image {i}/{len(images)} in parallel")
 
-                text, confidence = await self.extract_text_with_vision(image, f"image_{i}")
+                # Retry logic for failed OCR calls
+                max_retries = 2
+                retry_delay = 2  # seconds
 
-            if text and not text.startswith("Error"):
-                logger.info(f"✅ Image {i} processed: {len(text)} chars, confidence: {confidence:.2%}")
-                return {
-                    'page': i,
-                    'text': text,
-                    'confidence': confidence,
-                    'success': True
-                }
-            else:
-                logger.warning(f"⚠️ Image {i} failed: {text}")
-                return {
-                    'page': i,
-                    'text': text,
-                    'confidence': 0.0,
-                    'success': False
-                }
+                for attempt in range(max_retries + 1):
+                    try:
+                        text, confidence = await self.extract_text_with_vision(image, f"image_{i}")
+
+                        # Check for successful extraction
+                        if text and len(text.strip()) > 20 and not text.startswith("Vision OCR error"):
+                            logger.info(f"✅ Image {i} processed: {len(text)} chars, confidence: {confidence:.2%}")
+                            return {
+                                'page': i,
+                                'text': text,
+                                'confidence': confidence,
+                                'success': True
+                            }
+                        elif attempt < max_retries:
+                            # Failed but can retry
+                            logger.warning(f"⚠️ Image {i} attempt {attempt + 1} failed: {text[:100]}... - retrying in {retry_delay}s")
+                            await asyncio.sleep(retry_delay)
+                            retry_delay *= 1.5  # Exponential backoff
+                        else:
+                            # Final attempt failed
+                            logger.error(f"❌ Image {i} failed after {max_retries + 1} attempts: {text}")
+                            return {
+                                'page': i,
+                                'text': text or f"Vision OCR failed after {max_retries + 1} attempts",
+                                'confidence': 0.0,
+                                'success': False
+                            }
+
+                    except Exception as e:
+                        if attempt < max_retries:
+                            logger.warning(f"⚠️ Image {i} attempt {attempt + 1} exception: {e} - retrying in {retry_delay}s")
+                            await asyncio.sleep(retry_delay)
+                            retry_delay *= 1.5
+                        else:
+                            logger.error(f"❌ Image {i} failed after {max_retries + 1} attempts with exception: {e}")
+                            return {
+                                'page': i,
+                                'text': f"Vision OCR exception after {max_retries + 1} attempts: {e}",
+                                'confidence': 0.0,
+                                'success': False
+                            }
 
         # Create tasks for all images
         tasks = [
@@ -1146,7 +1180,8 @@ Begin text extraction with perfect structure preservation:"""
         # Process all images concurrently
         parallel_results = await asyncio.gather(*tasks, return_exceptions=True)
 
-        # Process results
+        # Process results - include both successful and failed pages for complete coverage
+        failed_pages = []
         for result in parallel_results:
             if isinstance(result, Exception):
                 logger.error(f"❌ Parallel OCR task failed: {result}")
@@ -1159,9 +1194,23 @@ Begin text extraction with perfect structure preservation:"""
                     'confidence': result['confidence']
                 })
                 total_confidence += result['confidence']
+            else:
+                # Keep track of failed pages for reporting
+                failed_pages.append(result['page'])
+                # Add placeholder text for failed pages to maintain page order
+                ocr_results.append({
+                    'page': result['page'],
+                    'text': f"[ERROR: Page {result['page']} extraction failed - {result['text']}]",
+                    'confidence': 0.0
+                })
 
         if not ocr_results:
             return "Failed to extract text from any image", 0.0
+
+        # Log partial failures
+        if failed_pages:
+            logger.warning(f"⚠️ Failed to extract from {len(failed_pages)} pages: {failed_pages}")
+            logger.warning(f"✅ Successfully extracted from {len(ocr_results) - len(failed_pages)} pages")
 
         # Merge results based on strategy
         if merge_strategy == "sequential":
