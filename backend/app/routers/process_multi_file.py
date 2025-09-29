@@ -22,10 +22,31 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Initialize services
-hybrid_extractor = HybridTextExtractor()
-ovh_client = OVHClient()
-file_validator = FileValidator()
+# Initialize services lazily to avoid startup issues
+hybrid_extractor = None
+ovh_client = None
+file_validator = None
+
+def get_hybrid_extractor():
+    """Get or initialize hybrid text extractor"""
+    global hybrid_extractor
+    if hybrid_extractor is None:
+        hybrid_extractor = HybridTextExtractor()
+    return hybrid_extractor
+
+def get_ovh_client():
+    """Get or initialize OVH client"""
+    global ovh_client
+    if ovh_client is None:
+        ovh_client = OVHClient()
+    return ovh_client
+
+def get_file_validator():
+    """Get or initialize file validator"""
+    global file_validator
+    if file_validator is None:
+        file_validator = FileValidator()
+    return file_validator
 
 # Configuration
 MAX_FILES = int(os.getenv("MAX_FILES_PER_BATCH", "10"))

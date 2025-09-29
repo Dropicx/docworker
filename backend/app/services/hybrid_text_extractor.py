@@ -19,8 +19,15 @@ from app.services.file_quality_detector import (
 )
 from app.services.ovh_client import OVHClient
 from app.services.file_sequence_detector import FileSequenceDetector
-from app.services.unified_prompt_manager import UnifiedPromptManager
-from app.database.database import get_db_session
+# Optional imports for prompt management (fallback gracefully if not available)
+try:
+    from app.services.unified_prompt_manager import UnifiedPromptManager
+    from app.database.connection import get_session
+    PROMPT_MANAGER_AVAILABLE = True
+except ImportError:
+    UnifiedPromptManager = None
+    get_session = None
+    PROMPT_MANAGER_AVAILABLE = False
 
 # Optional imports for local OCR (fallback gracefully if not available)
 try:
@@ -44,13 +51,7 @@ class HybridTextExtractor:
         self.sequence_detector = FileSequenceDetector()
 
         # Initialize unified prompt manager for OCR prompts
-        try:
-            session = get_db_session()
-            self.prompt_manager = UnifiedPromptManager(session)
-            logger.info("✅ Unified Prompt Manager connected")
-        except Exception as e:
-            logger.warning(f"⚠️ Could not connect to Unified Prompt Manager: {e}")
-            self.prompt_manager = None
+        self.prompt_manager = None  # Initialize later when needed to avoid startup issues
 
         # Initialize local OCR if available
         self.local_ocr_available = LOCAL_OCR_AVAILABLE
@@ -69,21 +70,41 @@ class HybridTextExtractor:
         logger.info("🚀 Hybrid Text Extractor initialized")
         logger.info(f"   - Quality Detector: ✅")
         logger.info(f"   - Sequence Detector: ✅")
-        logger.info(f"   - Prompt Manager: {'✅' if self.prompt_manager else '❌'}")
+        logger.info(f"   - Prompt Manager: {'⏳' if self.prompt_manager is None else '✅'}")
         logger.info(f"   - OVH Vision: {'✅' if self.ovh_client.vision_client else '❌'}")
         logger.info(f"   - Local OCR: {'✅' if self.local_ocr_available else '❌'}")
+
+    def _get_prompt_manager(self):
+        """Get or initialize prompt manager when needed"""
+        if not PROMPT_MANAGER_AVAILABLE:
+            logger.warning("⚠️ Prompt manager not available due to import issues")
+            return None
+
+        if self.prompt_manager is None:
+            try:
+                session_gen = get_session()
+                session = next(session_gen)
+                self.prompt_manager = UnifiedPromptManager(session)
+                logger.info("✅ Unified Prompt Manager connected on demand")
+                # Close the session generator
+                session_gen.close()
+            except Exception as e:
+                logger.warning(f"⚠️ Could not connect to Unified Prompt Manager: {e}")
+                return None
+        return self.prompt_manager
 
     async def _apply_ocr_preprocessing(self, raw_text: str) -> str:
         """
         Apply OCR preprocessing using unified prompt system
         """
-        if not self.prompt_manager:
+        prompt_manager = self._get_prompt_manager()
+        if not prompt_manager:
             logger.warning("⚠️ No prompt manager available, returning raw text")
             return raw_text
 
         try:
             # Get OCR preprocessing prompt from unified system
-            universal_prompts = self.prompt_manager.get_universal_prompts()
+            universal_prompts = prompt_manager.get_universal_prompts()
             if not universal_prompts or not hasattr(universal_prompts, 'ocr_preprocessing_prompt'):
                 logger.warning("⚠️ No OCR preprocessing prompt found, returning raw text")
                 return raw_text
