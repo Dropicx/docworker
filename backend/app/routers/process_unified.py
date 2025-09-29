@@ -456,7 +456,7 @@ async def process_document_unified(processing_id: str):
             })
             
             print(f"✅ Unified processing completed: {processing_id[:8]} ({processing_time:.2f}s)")
-            
+
         except Exception as e:
             print(f"❌ Unified processing error {processing_id[:8]}: {e}")
             logger.error(f"Unified processing error: {e}")
@@ -476,3 +476,18 @@ async def process_document_unified(processing_id: str):
                 pass  # Generator is exhausted, session is closed
             except Exception:
                 pass  # Ignore cleanup errors
+
+    except Exception as outer_e:
+        # Handle outer function exceptions
+        print(f"❌ Critical processing error {processing_id[:8]}: {outer_e}")
+        logger.error(f"Critical processing error: {outer_e}")
+
+        try:
+            update_processing_store(processing_id, {
+                "status": ProcessingStatus.ERROR,
+                "current_step": "Critical error in processing pipeline",
+                "error": str(outer_e),
+                "error_at": datetime.now()
+            })
+        except Exception:
+            pass  # Ignore errors when updating store fails
