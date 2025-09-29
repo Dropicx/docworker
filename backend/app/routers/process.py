@@ -580,17 +580,17 @@ async def get_pipeline_stats():
         # Get real statistics from database
         from app.database.connection import get_session
         from app.database.unified_models import AILogInteractionDB
-        from app.database.models import DocumentPromptsDB
-        
+        from app.database.unified_models import DocumentSpecificPromptsDB
+
         with get_session() as db:
             # Count AI interactions
             total_interactions = db.query(AILogInteractionDB).count()
             recent_interactions = db.query(AILogInteractionDB).filter(
                 AILogInteractionDB.created_at >= datetime.now() - timedelta(hours=24)
             ).count()
-            
-            # Count document prompts
-            total_prompts = db.query(DocumentPromptsDB).count()
+
+            # Count document prompts (using unified system)
+            total_prompts = db.query(DocumentSpecificPromptsDB).count()
             
             return {
                 "pipeline_mode": "unified",

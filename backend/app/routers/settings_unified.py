@@ -668,19 +668,8 @@ async def get_pipeline_settings_internal(db: Session) -> dict:
             if step.step_name in step_mapping:
                 settings[step_mapping[step.step_name]] = step.enabled
         
-        # Check document-specific pipeline steps
-        from app.database.models import PipelineStepConfigDB, DocumentPromptsDB
-        document_specific_step_names = ["TRANSLATION", "FACT_CHECK", "GRAMMAR_CHECK", "FORMATTING"]
-        
-        for step_name in document_specific_step_names:
-            doc_specific_steps = db.query(PipelineStepConfigDB).join(
-                DocumentPromptsDB, PipelineStepConfigDB.document_prompts_id == DocumentPromptsDB.id
-            ).filter(PipelineStepConfigDB.step_name == step_name).all()
-            
-            # If any document-specific step is enabled, enable it in settings
-            if doc_specific_steps and any(step.enabled for step in doc_specific_steps):
-                frontend_key = step_mapping[step_name]
-                settings[frontend_key] = True
+        # Note: Old document-specific pipeline steps removed - now using universal_pipeline_steps
+        # All step configuration is now handled through the unified system
         
         return {"settings": settings}
         
@@ -778,36 +767,21 @@ async def update_pipeline_settings(
         # Update each step configuration based on frontend flags
         for frontend_key, step_name in step_mapping.items():
             if frontend_key in settings:
-                # Check if this is a document-specific step
-                document_specific_steps = ["TRANSLATION", "FACT_CHECK", "GRAMMAR_CHECK", "FORMATTING"]
-                
-                if step_name in document_specific_steps:
-                    # Handle document-specific steps
-                    from app.database.models import PipelineStepConfigDB, DocumentPromptsDB
-                    doc_specific_steps = db.query(PipelineStepConfigDB).join(
-                        DocumentPromptsDB, PipelineStepConfigDB.document_prompts_id == DocumentPromptsDB.id
-                    ).filter(PipelineStepConfigDB.step_name == step_name).all()
-                    
-                    for step in doc_specific_steps:
-                        step.enabled = settings[frontend_key]
-                        step.last_modified = datetime.now()
-                        step.modified_by = "frontend_update"
+                # All steps are now handled as universal steps (unified system)
+                step_db = db.query(UniversalPipelineStepConfigDB).filter_by(step_name=step_name).first()
+                if step_db:
+                    step_db.enabled = settings[frontend_key]
+                    step_db.last_modified = datetime.now()
+                    step_db.modified_by = "frontend_update"
                 else:
-                    # Handle universal steps
-                    step_db = db.query(UniversalPipelineStepConfigDB).filter_by(step_name=step_name).first()
-                    if step_db:
-                        step_db.enabled = settings[frontend_key]
-                        step_db.last_modified = datetime.now()
-                        step_db.modified_by = "frontend_update"
-                    else:
-                        # Create new step configuration if it doesn't exist
-                        new_step = UniversalPipelineStepConfigDB(
-                            step_name=step_name,
-                            enabled=settings[frontend_key],
-                            description=f"Step {step_name}",
-                            order=0
-                        )
-                        db.add(new_step)
+                    # Create new step configuration if it doesn't exist
+                    new_step = UniversalPipelineStepConfigDB(
+                        step_name=step_name,
+                        enabled=settings[frontend_key],
+                        description=f"Step {step_name}",
+                        order=0
+                    )
+                    db.add(new_step)
         
         db.commit()
         

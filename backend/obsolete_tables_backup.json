@@ -1,0 +1,293 @@
+{
+  "timestamp": "2025-09-29T09:39:29.006181",
+  "purpose": "Pre-table-drop backup of obsolete tables",
+  "tables": {
+    "document_prompts": {
+      "structure": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('document_prompts_id_seq'::regclass)"
+        },
+        {
+          "column_name": "document_type",
+          "data_type": "USER-DEFINED",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "translation_prompt",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "fact_check_prompt",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "final_check_prompt",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "version",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "last_modified",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "modified_by",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "column_name": "formatting_prompt",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null
+        }
+      ],
+      "data": [
+        {
+          "id": 9,
+          "document_type": "ARZTBRIEF",
+          "translation_prompt": "\u00dcbersetze diesen Arztbrief in einfache, verst\u00e4ndliche Sprache f\u00fcr Patienten.\n\nZIELE:\n- Verst\u00e4ndliche Sprache verwenden\n- Medizinische Fachbegriffe erkl\u00e4ren\n- Strukturierte Darstellung\n- Wichtige Informationen hervorheben\n- Patientenfreundliche Formulierung\n\nSTRUKTUR:\n- Klare \u00dcberschriften\n- Bullet Points f\u00fcr Listen\n- Kurze, verst\u00e4ndliche S\u00e4tze\n- Wichtige Informationen am Anfang",
+          "fact_check_prompt": "Pr\u00fcfe diesen medizinischen Text auf Korrektheit und Konsistenz.\n\nPR\u00dcFPUNKTE:\n- Medizinische Fakten korrekt\n- Konsistenz der Informationen\n- Logische Zusammenh\u00e4nge\n- Vollst\u00e4ndigkeit der Angaben\n- Plausibilit\u00e4t der Werte\n\nBEI FEHLERN:\n- Korrigiere offensichtliche Fehler\n- Erg\u00e4nze fehlende Informationen\n- Stelle Konsistenz her\n- Behalte Original bei Unsicherheit\n\nAntworte mit dem korrigierten Text.",
+          "final_check_prompt": "F\u00fchre eine finale Qualit\u00e4tskontrolle dieses medizinischen Textes durch.\n\nPR\u00dcFPUNKTE:\n- Vollst\u00e4ndigkeit der Informationen\n- Verst\u00e4ndlichkeit der Sprache\n- Korrekte Grammatik und Rechtschreibung\n- Konsistenz der Darstellung\n- Patientenfreundliche Formulierung\n- Strukturierte Darstellung\n\nOPTIMIERUNGEN:\n- Verbessere die Verst\u00e4ndlichkeit\n- Korrigiere verbleibende Fehler\n- Optimiere die Struktur\n- Stelle Konsistenz her\n\nAntworte mit dem optimierten Text.",
+          "version": 1,
+          "last_modified": "2025-09-26 11:45:58.697464",
+          "modified_by": "migration_script",
+          "formatting_prompt": "Formatiere diesen medizinischen Text f\u00fcr optimale Lesbarkeit.\n\nFORMATIERUNG:\n- Verwende klare \u00dcberschriften mit Emojis\n- Erstelle Bullet Points f\u00fcr Listen (\u2192)\n- Hebe wichtige Informationen hervor\n- Strukturiere den Text logisch\n- F\u00fcge Leerzeilen zwischen Abschnitten ein\n- Verwende einheitliche Formatierung\n\nBEHALTE:\n- Alle medizinischen Informationen\n- Die Verst\u00e4ndlichkeit\n- Alle wichtigen Details\n\nAntworte mit dem formatierten Text."
+        },
+        {
+          "id": 10,
+          "document_type": "BEFUNDBERICHT",
+          "translation_prompt": "\u00dcbersetze diesen Befundbericht in einfache, verst\u00e4ndliche Sprache f\u00fcr Patienten.\n\nZIELE:\n- Verst\u00e4ndliche Sprache verwenden\n- Medizinische Fachbegriffe erkl\u00e4ren\n- Befunde klar strukturieren\n- Wichtige Ergebnisse hervorheben\n- Patientenfreundliche Formulierung\n\nSTRUKTUR:\n- Klare \u00dcberschriften\n- Bullet Points f\u00fcr Listen\n- Kurze, verst\u00e4ndliche S\u00e4tze\n- Wichtige Befunde am Anfang",
+          "fact_check_prompt": "Pr\u00fcfe diesen medizinischen Text auf Korrektheit und Konsistenz.\n\nPR\u00dcFPUNKTE:\n- Medizinische Fakten korrekt\n- Konsistenz der Informationen\n- Logische Zusammenh\u00e4nge\n- Vollst\u00e4ndigkeit der Angaben\n- Plausibilit\u00e4t der Werte\n\nBEI FEHLERN:\n- Korrigiere offensichtliche Fehler\n- Erg\u00e4nze fehlende Informationen\n- Stelle Konsistenz her\n- Behalte Original bei Unsicherheit\n\nAntworte mit dem korrigierten Text.",
+          "final_check_prompt": "F\u00fchre eine finale Qualit\u00e4tskontrolle dieses medizinischen Textes durch.\n\nPR\u00dcFPUNKTE:\n- Vollst\u00e4ndigkeit der Informationen\n- Verst\u00e4ndlichkeit der Sprache\n- Korrekte Grammatik und Rechtschreibung\n- Konsistenz der Darstellung\n- Patientenfreundliche Formulierung\n- Strukturierte Darstellung\n\nOPTIMIERUNGEN:\n- Verbessere die Verst\u00e4ndlichkeit\n- Korrigiere verbleibende Fehler\n- Optimiere die Struktur\n- Stelle Konsistenz her\n\nAntworte mit dem optimierten Text.",
+          "version": 1,
+          "last_modified": "2025-09-26 11:45:58.697464",
+          "modified_by": "migration_script",
+          "formatting_prompt": "Formatiere diesen medizinischen Text f\u00fcr optimale Lesbarkeit.\n\nFORMATIERUNG:\n- Verwende klare \u00dcberschriften mit Emojis\n- Erstelle Bullet Points f\u00fcr Listen (\u2192)\n- Hebe wichtige Informationen hervor\n- Strukturiere den Text logisch\n- F\u00fcge Leerzeilen zwischen Abschnitten ein\n- Verwende einheitliche Formatierung\n\nBEHALTE:\n- Alle medizinischen Informationen\n- Die Verst\u00e4ndlichkeit\n- Alle wichtigen Details\n\nAntworte mit dem formatierten Text."
+        },
+        {
+          "id": 11,
+          "document_type": "LABORWERTE",
+          "translation_prompt": "\u00dcbersetze diese Laborwerte in einfache, verst\u00e4ndliche Sprache f\u00fcr Patienten.\n\nZIELE:\n- Verst\u00e4ndliche Sprache verwenden\n- Laborwerte erkl\u00e4ren\n- Referenzbereiche verst\u00e4ndlich machen\n- Wichtige Abweichungen hervorheben\n- Patientenfreundliche Formulierung\n\nSTRUKTUR:\n- Klare \u00dcberschriften\n- Tabellarische Darstellung\n- Kurze, verst\u00e4ndliche S\u00e4tze\n- Wichtige Werte am Anfang",
+          "fact_check_prompt": "Pr\u00fcfe diesen medizinischen Text auf Korrektheit und Konsistenz.\n\nPR\u00dcFPUNKTE:\n- Medizinische Fakten korrekt\n- Konsistenz der Informationen\n- Logische Zusammenh\u00e4nge\n- Vollst\u00e4ndigkeit der Angaben\n- Plausibilit\u00e4t der Werte\n\nBEI FEHLERN:\n- Korrigiere offensichtliche Fehler\n- Erg\u00e4nze fehlende Informationen\n- Stelle Konsistenz her\n- Behalte Original bei Unsicherheit\n\nAntworte mit dem korrigierten Text.",
+          "final_check_prompt": "F\u00fchre eine finale Qualit\u00e4tskontrolle dieses medizinischen Textes durch.\n\nPR\u00dcFPUNKTE:\n- Vollst\u00e4ndigkeit der Informationen\n- Verst\u00e4ndlichkeit der Sprache\n- Korrekte Grammatik und Rechtschreibung\n- Konsistenz der Darstellung\n- Patientenfreundliche Formulierung\n- Strukturierte Darstellung\n\nOPTIMIERUNGEN:\n- Verbessere die Verst\u00e4ndlichkeit\n- Korrigiere verbleibende Fehler\n- Optimiere die Struktur\n- Stelle Konsistenz her\n\nAntworte mit dem optimierten Text.",
+          "version": 1,
+          "last_modified": "2025-09-26 11:45:58.697464",
+          "modified_by": "migration_script",
+          "formatting_prompt": "Formatiere diesen medizinischen Text f\u00fcr optimale Lesbarkeit.\n\nFORMATIERUNG:\n- Verwende klare \u00dcberschriften mit Emojis\n- Erstelle Bullet Points f\u00fcr Listen (\u2192)\n- Hebe wichtige Informationen hervor\n- Strukturiere den Text logisch\n- F\u00fcge Leerzeilen zwischen Abschnitten ein\n- Verwende einheitliche Formatierung\n\nBEHALTE:\n- Alle medizinischen Informationen\n- Die Verst\u00e4ndlichkeit\n- Alle wichtigen Details\n\nAntworte mit dem formatierten Text."
+        }
+      ],
+      "row_count": 3
+    },
+    "pipeline_step_configs": {
+      "structure": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('pipeline_step_configs_id_seq'::regclass)"
+        },
+        {
+          "column_name": "document_prompts_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "step_name",
+          "data_type": "USER-DEFINED",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "enabled",
+          "data_type": "boolean",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "order",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null
+        },
+        {
+          "column_name": "description",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null
+        },
+        {
+          "column_name": "last_modified",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP"
+        },
+        {
+          "column_name": "modified_by",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null
+        }
+      ],
+      "data": [
+        {
+          "id": 166,
+          "document_prompts_id": 9,
+          "step_name": "FORMATTING",
+          "enabled": true,
+          "order": 9,
+          "name": "Formatierung",
+          "description": "Strukturiert und formatiert arztbrief f\u00fcr optimale Lesbarkeit",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 167,
+          "document_prompts_id": 10,
+          "step_name": "FORMATTING",
+          "enabled": true,
+          "order": 9,
+          "name": "Formatierung",
+          "description": "Strukturiert und formatiert befundbericht f\u00fcr optimale Lesbarkeit",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 168,
+          "document_prompts_id": 11,
+          "step_name": "FORMATTING",
+          "enabled": true,
+          "order": 9,
+          "name": "Formatierung",
+          "description": "Strukturiert und formatiert laborwerte f\u00fcr optimale Lesbarkeit",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 169,
+          "document_prompts_id": 9,
+          "step_name": "TRANSLATION",
+          "enabled": true,
+          "order": 4,
+          "name": "\u00dcbersetzung",
+          "description": "\u00dcbersetzt in verst\u00e4ndliche Sprache (je Dokumenttyp unterschiedlich)",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 170,
+          "document_prompts_id": 9,
+          "step_name": "FACT_CHECK",
+          "enabled": true,
+          "order": 5,
+          "name": "Faktenpr\u00fcfung",
+          "description": "Pr\u00fcft medizinische Korrektheit (je Dokumenttyp unterschiedlich)",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 171,
+          "document_prompts_id": 9,
+          "step_name": "GRAMMAR_CHECK",
+          "enabled": true,
+          "order": 6,
+          "name": "Grammatikpr\u00fcfung",
+          "description": "Korrigiert Grammatik und Rechtschreibung",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 172,
+          "document_prompts_id": 10,
+          "step_name": "TRANSLATION",
+          "enabled": true,
+          "order": 4,
+          "name": "\u00dcbersetzung",
+          "description": "\u00dcbersetzt in verst\u00e4ndliche Sprache (je Dokumenttyp unterschiedlich)",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 173,
+          "document_prompts_id": 10,
+          "step_name": "FACT_CHECK",
+          "enabled": true,
+          "order": 5,
+          "name": "Faktenpr\u00fcfung",
+          "description": "Pr\u00fcft medizinische Korrektheit (je Dokumenttyp unterschiedlich)",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 174,
+          "document_prompts_id": 10,
+          "step_name": "GRAMMAR_CHECK",
+          "enabled": true,
+          "order": 6,
+          "name": "Grammatikpr\u00fcfung",
+          "description": "Korrigiert Grammatik und Rechtschreibung",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 175,
+          "document_prompts_id": 11,
+          "step_name": "TRANSLATION",
+          "enabled": true,
+          "order": 4,
+          "name": "\u00dcbersetzung",
+          "description": "\u00dcbersetzt in verst\u00e4ndliche Sprache (je Dokumenttyp unterschiedlich)",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 176,
+          "document_prompts_id": 11,
+          "step_name": "FACT_CHECK",
+          "enabled": true,
+          "order": 5,
+          "name": "Faktenpr\u00fcfung",
+          "description": "Pr\u00fcft medizinische Korrektheit (je Dokumenttyp unterschiedlich)",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        },
+        {
+          "id": 177,
+          "document_prompts_id": 11,
+          "step_name": "GRAMMAR_CHECK",
+          "enabled": true,
+          "order": 6,
+          "name": "Grammatikpr\u00fcfung",
+          "description": "Korrigiert Grammatik und Rechtschreibung",
+          "last_modified": "2025-09-26 22:44:19.734869",
+          "modified_by": null
+        }
+      ],
+      "row_count": 12
+    }
+  }
+}

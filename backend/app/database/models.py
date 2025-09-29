@@ -30,46 +30,8 @@ class ProcessingStepEnum(str, Enum):
     FINAL_CHECK = "FINAL_CHECK"
     FORMATTING = "FORMATTING"
 
-class DocumentPromptsDB(Base):
-    """Database model for document prompts"""
-    __tablename__ = "document_prompts"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    document_type = Column(SQLEnum(DocumentClassEnum), nullable=False, index=True)
-    
-    # Prompt fields
-    medical_validation_prompt = Column(Text, nullable=False)
-    classification_prompt = Column(Text, nullable=False)
-    preprocessing_prompt = Column(Text, nullable=False)
-    translation_prompt = Column(Text, nullable=False)
-    fact_check_prompt = Column(Text, nullable=False)
-    grammar_check_prompt = Column(Text, nullable=False)
-    language_translation_prompt = Column(Text, nullable=False)
-    final_check_prompt = Column(Text, nullable=False)
-    formatting_prompt = Column(Text, nullable=False)
-    
-    # Metadata
-    version = Column(Integer, default=1, nullable=False)
-    last_modified = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
-    modified_by = Column(String(255), nullable=True)
-    
-    # Relationships
-    pipeline_steps = relationship("PipelineStepConfigDB", back_populates="document_prompts", cascade="all, delete-orphan")
-
-class PipelineStepConfigDB(Base):
-    """Database model for pipeline step configurations"""
-    __tablename__ = "pipeline_step_configs"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    document_prompts_id = Column(Integer, ForeignKey("document_prompts.id"), nullable=False)
-    step_name = Column(SQLEnum(ProcessingStepEnum), nullable=False)
-    enabled = Column(Boolean, default=True, nullable=False)
-    order = Column(Integer, nullable=False)
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-    
-    # Relationships
-    document_prompts = relationship("DocumentPromptsDB", back_populates="pipeline_steps")
+# DocumentPromptsDB and PipelineStepConfigDB removed - replaced by unified system
+# Use DocumentSpecificPromptsDB and UniversalPipelineStepConfigDB from app.database.unified_models instead
 
 class AIInteractionLog(Base):
     """Database model for comprehensive AI interaction logging"""
