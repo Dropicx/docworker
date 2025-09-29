@@ -109,43 +109,11 @@ class HybridTextExtractor:
 
     async def _apply_ocr_preprocessing(self, raw_text: str) -> str:
         """
-        Apply OCR preprocessing using unified prompt system
+        OCR preprocessing temporarily disabled to prevent content truncation.
+        The enhanced Vision LLM prompt already provides clean, well-formatted text.
         """
-        prompt_manager = self._get_prompt_manager()
-        if not prompt_manager:
-            logger.warning("⚠️ No prompt manager available, returning raw text")
-            return raw_text
-
-        try:
-            # Get OCR preprocessing prompt from unified system
-            universal_prompts = prompt_manager.get_universal_prompts()
-            if not universal_prompts or not hasattr(universal_prompts, 'ocr_preprocessing_prompt'):
-                logger.warning("⚠️ No OCR preprocessing prompt found, returning raw text")
-                return raw_text
-
-            ocr_prompt = universal_prompts.ocr_preprocessing_prompt
-            if not ocr_prompt:
-                return raw_text
-
-            # Apply OCR preprocessing using OVH client
-            logger.info("🔧 Applying OCR preprocessing with unified prompt")
-
-            # Replace placeholder in the prompt with actual text
-            full_prompt = ocr_prompt.replace("{extracted_text}", raw_text)
-
-            # Use fast model for OCR preprocessing to improve speed
-            processed_text = await self.ovh_client.process_medical_text_with_prompt(
-                full_prompt=full_prompt,
-                temperature=0.3,
-                max_tokens=4000,
-                use_fast_model=True  # Force fast model for OCR preprocessing
-            )
-
-            return processed_text if processed_text else raw_text
-
-        except Exception as e:
-            logger.error(f"❌ OCR preprocessing failed: {e}")
-            return raw_text
+        logger.debug("ℹ️ OCR preprocessing skipped - Vision LLM provides pre-formatted text")
+        return raw_text
 
     async def extract_text(
         self,
