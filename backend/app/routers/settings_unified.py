@@ -42,19 +42,18 @@ class AuthResponse(BaseModel):
     session_token: Optional[str] = None
 
 @router.post("/auth", response_model=AuthResponse)
-async def authenticate(auth_request: AuthRequest):
+async def authenticate(
+    auth_request: AuthRequest,
+    db: Session = Depends(get_session)
+):
     """
     Authenticate with access password.
     Returns a session token for accessing protected endpoints.
     """
     try:
         # Get correct password from database
-        db = next(get_session())
-        try:
-            password_setting = db.query(SystemSettingsDB).filter_by(key="settings_access_code").first()
-            correct_password = password_setting.value if password_setting else "milan"
-        finally:
-            db.close()
+        password_setting = db.query(SystemSettingsDB).filter_by(key="settings_access_code").first()
+        correct_password = password_setting.value if password_setting else "milan"
         
         if auth_request.password == correct_password:
             # Generate session token
@@ -121,6 +120,7 @@ async def get_universal_prompts(
             # Create default universal prompts
             universal_prompts = unified_manager.create_default_universal_prompts()
             unified_manager.save_universal_prompts(universal_prompts)
+            db.commit()
         
         return {
             "success": True,
@@ -174,8 +174,9 @@ async def update_universal_prompts(
         universal_prompts.modified_by = update_request.user or "settings_ui"
         
         success = unified_manager.save_universal_prompts(universal_prompts)
-        
+
         if success:
+            db.commit()
             logger.info(f"Updated universal prompts by {update_request.user or 'unknown'}")
             return {
                 "success": True,
@@ -189,6 +190,7 @@ async def update_universal_prompts(
             )
     except Exception as e:
         logger.error(f"Failed to update universal prompts: {e}")
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update universal prompts: {str(e)}"
@@ -220,6 +222,7 @@ async def get_document_prompts(
             # Create default document-specific prompts
             specific_prompts = unified_manager.create_default_document_specific_prompts(doc_class)
             unified_manager.save_document_specific_prompts(doc_class, specific_prompts)
+            db.commit()
         
         # Get combined prompts (universal + document-specific)
         combined_prompts = unified_manager.get_combined_prompts(doc_class)
@@ -372,6 +375,7 @@ async def get_pipeline_steps(
         # Create default steps if none exist
         if not steps:
             unified_manager.create_default_pipeline_steps()
+            db.commit()
             steps = unified_manager.get_pipeline_steps()
         
         pipeline_steps = {}
@@ -414,11 +418,12 @@ async def update_pipeline_step(
     try:
         unified_manager = UnifiedPromptManager(db)
         success = unified_manager.update_pipeline_step(
-            update_request.step_name, 
+            update_request.step_name,
             update_request.enabled
         )
-        
+
         if success:
+            db.commit()
             logger.info(f"Updated pipeline step {update_request.step_name}: enabled={update_request.enabled}")
             return {
                 "success": True,
@@ -431,6 +436,7 @@ async def update_pipeline_step(
             )
     except Exception as e:
         logger.error(f"Failed to update pipeline step {update_request.step_name}: {e}")
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to update pipeline step: {str(e)}"

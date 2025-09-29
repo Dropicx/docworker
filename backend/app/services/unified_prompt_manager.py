@@ -166,17 +166,16 @@ class UnifiedPromptManager:
             step = self.session.query(UniversalPipelineStepConfigDB).filter_by(
                 step_name=step_name.upper()
             ).first()
-            
+
             if step:
                 step.enabled = enabled
                 step.last_modified = datetime.now()
                 step.modified_by = "unified_manager"
-                self.session.commit()
+                # Don't commit here - let the caller handle it
                 return True
             return False
         except Exception as e:
             logger.error(f"Failed to update pipeline step {step_name}: {e}")
-            self.session.rollback()
             return False
     
     def create_default_pipeline_steps(self) -> bool:
@@ -210,11 +209,10 @@ class UnifiedPromptManager:
                 )
                 self.session.add(step)
             
-            self.session.commit()
+            # Don't commit here - let the caller handle it
             return True
         except Exception as e:
             logger.error(f"Failed to create default pipeline steps: {e}")
-            self.session.rollback()
             return False
     
     # ==================== COMBINED PROMPT ACCESS ====================
