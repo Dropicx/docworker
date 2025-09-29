@@ -574,57 +574,159 @@ async def get_active_processes(request: Request):
 @router.get("/process/pipeline-stats")
 async def get_pipeline_stats():
     """
-    Get pipeline performance statistics
+    Get comprehensive pipeline performance statistics from actual database data
     """
     try:
         # Get real statistics from database
         from app.database.connection import get_session
-        from app.database.unified_models import AILogInteractionDB
-        from app.database.unified_models import DocumentSpecificPromptsDB
+        from app.database.unified_models import UniversalPipelineStepConfigDB, DocumentSpecificPromptsDB, UniversalPromptsDB
+        from app.database.models import SystemSettingsDB, AIInteractionLog
+        from sqlalchemy import func, desc
 
         with get_session() as db:
-            # Count AI interactions
-            total_interactions = db.query(AILogInteractionDB).count()
-            recent_interactions = db.query(AILogInteractionDB).filter(
-                AILogInteractionDB.created_at >= datetime.now() - timedelta(hours=24)
+            # Get current time for calculations
+            now = datetime.now()
+            last_24h = now - timedelta(hours=24)
+            last_7d = now - timedelta(days=7)
+
+            # ==================== AI INTERACTION STATISTICS ====================
+
+            # Total AI interactions
+            total_interactions = db.query(AIInteractionLog).count()
+
+            # Recent interactions (24h)
+            recent_interactions = db.query(AIInteractionLog).filter(
+                AIInteractionLog.created_at >= last_24h
             ).count()
 
-            # Count document prompts (using unified system)
-            total_prompts = db.query(DocumentSpecificPromptsDB).count()
-            
+            # Weekly interactions
+            weekly_interactions = db.query(AIInteractionLog).filter(
+                AIInteractionLog.created_at >= last_7d
+            ).count()
+
+            # Average processing time (last 100 interactions)
+            avg_processing_time = db.query(func.avg(AIInteractionLog.processing_time_ms)).filter(
+                AIInteractionLog.processing_time_ms.isnot(None)
+            ).limit(100).scalar() or 0
+
+            # Success rate (last 100 interactions)
+            recent_logs = db.query(AIInteractionLog).order_by(desc(AIInteractionLog.created_at)).limit(100).all()
+            success_count = sum(1 for log in recent_logs if log.status == "success")
+            success_rate = (success_count / len(recent_logs) * 100) if recent_logs else 100
+
+            # Most used step
+            step_usage = db.query(
+                AIInteractionLog.step_name,
+                func.count(AIInteractionLog.step_name).label('count')
+            ).group_by(AIInteractionLog.step_name).order_by(desc('count')).first()
+            most_used_step = step_usage.step_name if step_usage else "N/A"
+
+            # ==================== PIPELINE CONFIGURATION STATISTICS ====================
+
+            # Pipeline steps status
+            pipeline_steps = db.query(UniversalPipelineStepConfigDB).order_by(UniversalPipelineStepConfigDB.order).all()
+            enabled_steps = [step for step in pipeline_steps if step.enabled]
+            disabled_steps = [step for step in pipeline_steps if not step.enabled]
+
+            # Configuration counts
+            total_universal_prompts = db.query(UniversalPromptsDB).count()
+            total_document_prompts = db.query(DocumentSpecificPromptsDB).count()
+
+            # Get system settings
+            system_settings = db.query(SystemSettingsDB).filter(
+                SystemSettingsDB.key.like('enable_%')
+            ).all()
+
+            enabled_features = sum(1 for setting in system_settings if setting.value.lower() == 'true')
+            total_features = len(system_settings)
+
+            # ==================== REAL PERFORMANCE METRICS ====================
+
+            # Calculate actual performance improvements based on data
+            performance_metrics = {}
+
+            if total_interactions > 0:
+                performance_metrics["avg_processing_time"] = f"{avg_processing_time:.0f}ms average processing time"
+                performance_metrics["success_rate"] = f"{success_rate:.1f}% success rate"
+                performance_metrics["daily_throughput"] = f"{recent_interactions} interactions in last 24h"
+                performance_metrics["weekly_volume"] = f"{weekly_interactions} interactions in last 7 days"
+            else:
+                performance_metrics["status"] = "No AI interactions recorded yet"
+
+            if len(enabled_steps) > 0:
+                performance_metrics["active_pipeline_steps"] = f"{len(enabled_steps)}/{len(pipeline_steps)} pipeline steps enabled"
+                performance_metrics["most_used_step"] = f"Most used: {most_used_step}"
+
+            performance_metrics["configuration_completeness"] = f"{total_universal_prompts} universal + {total_document_prompts} document-specific prompts configured"
+            performance_metrics["feature_adoption"] = f"{enabled_features}/{total_features} features enabled"
+
             return {
                 "pipeline_mode": "unified",
-                "cache_statistics": {
-                    "total_entries": total_prompts,
-                    "active_entries": recent_interactions,
-                    "expired_entries": max(0, total_interactions - recent_interactions),
-                    "cache_timeout_seconds": 1800  # 30 minutes
+                "timestamp": now.isoformat(),
+                "ai_interaction_statistics": {
+                    "total_interactions": total_interactions,
+                    "last_24h_interactions": recent_interactions,
+                    "last_7d_interactions": weekly_interactions,
+                    "avg_processing_time_ms": round(avg_processing_time, 2) if avg_processing_time else 0,
+                    "success_rate_percent": round(success_rate, 1),
+                    "most_used_step": most_used_step
                 },
-                "performance_improvements": {
-                    "unified_system": "Single source of truth for all prompts",
-                    "database_storage": "Persistent prompt and configuration storage",
-                    "universal_pipeline": "Global pipeline step control",
-                    "ai_logging": "Complete interaction traceability",
-                    "async_operations": "Non-blocking AI API calls"
-                }
+                "pipeline_configuration": {
+                    "total_steps": len(pipeline_steps),
+                    "enabled_steps": len(enabled_steps),
+                    "disabled_steps": len(disabled_steps),
+                    "enabled_step_names": [step.step_name for step in enabled_steps],
+                    "disabled_step_names": [step.step_name for step in disabled_steps]
+                },
+                "prompt_configuration": {
+                    "universal_prompts": total_universal_prompts,
+                    "document_specific_prompts": total_document_prompts,
+                    "total_prompts_configured": total_universal_prompts + total_document_prompts
+                },
+                "system_health": {
+                    "enabled_features": enabled_features,
+                    "total_features": total_features,
+                    "feature_adoption_percent": round((enabled_features / total_features * 100), 1) if total_features > 0 else 0,
+                    "database_status": "operational"
+                },
+                "performance_improvements": performance_metrics
             }
+
     except Exception as e:
+        logger.error(f"Failed to get pipeline statistics: {e}")
         return {
             "pipeline_mode": "unified",
-            "cache_statistics": {
-                "total_entries": 0,
-                "active_entries": 0,
-                "expired_entries": 0,
-                "cache_timeout_seconds": 1800
+            "timestamp": datetime.now().isoformat(),
+            "error": str(e),
+            "ai_interaction_statistics": {
+                "total_interactions": 0,
+                "last_24h_interactions": 0,
+                "last_7d_interactions": 0,
+                "avg_processing_time_ms": 0,
+                "success_rate_percent": 0,
+                "most_used_step": "N/A"
+            },
+            "pipeline_configuration": {
+                "total_steps": 0,
+                "enabled_steps": 0,
+                "disabled_steps": 0,
+                "enabled_step_names": [],
+                "disabled_step_names": []
+            },
+            "prompt_configuration": {
+                "universal_prompts": 0,
+                "document_specific_prompts": 0,
+                "total_prompts_configured": 0
+            },
+            "system_health": {
+                "enabled_features": 0,
+                "total_features": 0,
+                "feature_adoption_percent": 0,
+                "database_status": "error"
             },
             "performance_improvements": {
-                "unified_system": "Single source of truth for all prompts",
-                "database_storage": "Persistent prompt and configuration storage",
-                "universal_pipeline": "Global pipeline step control",
-                "ai_logging": "Complete interaction traceability",
-                "async_operations": "Non-blocking AI API calls"
-            },
-            "error": str(e)
+                "error": "Unable to calculate performance metrics"
+            }
         }
 
 @router.post("/process/clear-cache")

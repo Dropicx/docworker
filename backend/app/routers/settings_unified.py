@@ -941,9 +941,9 @@ async def seed_database(
     
     try:
         from app.database.unified_seed import unified_seed_database
-        
+
         result = unified_seed_database()
-        
+
         if result:
             return {
                 "success": True,
@@ -961,3 +961,4 @@ async def seed_database(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to seed database: {str(e)}"
         )
+
