@@ -22,6 +22,7 @@ class ProcessingStepEnum(str, Enum):
     """Processing step enumeration for database"""
     MEDICAL_VALIDATION = "MEDICAL_VALIDATION"
     CLASSIFICATION = "CLASSIFICATION"
+    TEXT_EXTRACTION = "TEXT_EXTRACTION"  # Enhanced OCR with conditional routing
     PREPROCESSING = "PREPROCESSING"
     TRANSLATION = "TRANSLATION"
     FACT_CHECK = "FACT_CHECK"

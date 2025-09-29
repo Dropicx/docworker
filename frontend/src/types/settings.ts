@@ -114,6 +114,7 @@ export interface GlobalPrompts {
   classification_prompt: string;
   preprocessing_prompt: string;
   language_translation_prompt: string;
+  ocr_preprocessing_prompt?: string;  // Added OCR preprocessing prompt
 }
 
 export interface GlobalPromptsMetadata {
@@ -133,6 +134,7 @@ export interface GlobalPromptUpdateRequest {
   classification_prompt: string;
   preprocessing_prompt: string;
   language_translation_prompt: string;
+  ocr_preprocessing_prompt?: string;
   user?: string;
 }
 
@@ -167,6 +169,7 @@ export interface PipelineSettings {
   pipeline_cache_timeout: number;
   enable_medical_validation: boolean;
   enable_classification: boolean;
+  enable_text_extraction: boolean;  // Added OCR/text extraction step
   enable_preprocessing: boolean;
   enable_translation: boolean;
   enable_fact_check: boolean;
@@ -212,6 +215,12 @@ export const GLOBAL_PROMPT_STEPS = {
     description: 'Template für Übersetzungen - gilt für alle Sprachen',
     placeholder: 'Übersetze diesen Text in {language}...',
     category: 'translation'
+  },
+  ocr_preprocessing_prompt: {
+    name: '👁️ OCR-Nachbearbeitung (Universal)',
+    description: 'Bereinigt und strukturiert OCR-extrahierte Texte',
+    placeholder: 'Bereinige diesen OCR-Text und korrigiere erkannte Fehler...',
+    category: 'preprocessing'
   }
 };
 
@@ -272,3 +281,23 @@ export const PROMPT_CATEGORIES = {
     color: 'orange'
   }
 };
+
+// OCR Settings interfaces
+export interface OCRSettings {
+  strategy: 'conditional' | 'local_only' | 'vision_only' | 'hybrid';
+  vision_model: string;
+  local_ocr_enabled: boolean;
+  quality_threshold: number;
+  multifile_enabled: boolean;
+  preprocessing_enabled: boolean;
+}
+
+export interface OCRSettingsResponse {
+  settings: OCRSettings;
+  success: boolean;
+  message: string;
+}
+
+export interface OCRSettingsUpdateRequest {
+  settings: Partial<OCRSettings>;
+}

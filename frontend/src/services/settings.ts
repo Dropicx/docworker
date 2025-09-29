@@ -18,7 +18,10 @@ import {
   PipelineStatsResponse,
   GlobalPrompts,
   GlobalPromptsResponse,
-  GlobalPromptUpdateRequest
+  GlobalPromptUpdateRequest,
+  OCRSettings,
+  OCRSettingsResponse,
+  OCRSettingsUpdateRequest
 } from '../types/settings';
 
 const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
@@ -554,6 +557,45 @@ class SettingsService {
       const axiosError = error as AxiosError<any>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get model configuration'
+      );
+    }
+  }
+
+  // OCR Settings management methods
+
+  /**
+   * Get current OCR settings
+   */
+  async getOCRSettings(): Promise<OCRSettings> {
+    try {
+      const response = await axios.get<OCRSettingsResponse>(
+        `${SETTINGS_BASE_URL}/ocr-settings`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data.settings;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to get OCR settings'
+      );
+    }
+  }
+
+  /**
+   * Update OCR settings
+   */
+  async updateOCRSettings(settings: Partial<OCRSettings>): Promise<OCRSettingsResponse> {
+    try {
+      const response = await axios.put<OCRSettingsResponse>(
+        `${SETTINGS_BASE_URL}/ocr-settings`,
+        { settings } as OCRSettingsUpdateRequest,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to update OCR settings'
       );
     }
   }

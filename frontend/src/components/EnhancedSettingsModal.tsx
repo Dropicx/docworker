@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { X, Settings, Save, RotateCcw, TestTube, Download, Upload, Eye, EyeOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import settingsService from '../services/settings';
-import { DocumentClass, DocumentPrompts, DocumentTypeInfo, PROMPT_STEPS, GLOBAL_PROMPT_STEPS, PipelineSettings, PipelineStatsResponse, GlobalPrompts, GlobalPromptsResponse } from '../types/settings';
+import { DocumentClass, DocumentPrompts, DocumentTypeInfo, PROMPT_STEPS, GLOBAL_PROMPT_STEPS, PipelineSettings, PipelineStatsResponse, GlobalPrompts, GlobalPromptsResponse, OCRSettings } from '../types/settings';
 
 interface EnhancedSettingsModalProps {
   isOpen: boolean;
@@ -46,7 +46,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   const [updatingSettings, setUpdatingSettings] = useState(false);
 
   // Active tab for settings
-  const [activeTab, setActiveTab] = useState<'prompts' | 'global' | 'optimization' | 'statistics'>('prompts');
+  const [activeTab, setActiveTab] = useState<'prompts' | 'global' | 'ocr' | 'optimization' | 'statistics'>('prompts');
 
   // Global prompts state
   const [globalPrompts, setGlobalPrompts] = useState<GlobalPrompts | null>(null);
@@ -63,6 +63,12 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
     environment_config: Record<string, string>;
     model_descriptions: Record<string, string>;
   } | null>(null);
+
+  // OCR settings state
+  const [ocrSettings, setOcrSettings] = useState<OCRSettings | null>(null);
+  const [ocrLoading, setOcrLoading] = useState(false);
+  const [ocrError, setOcrError] = useState('');
+  const [ocrSaving, setOcrSaving] = useState(false);
 
   // Check authentication on mount only if we have a token
   useEffect(() => {
@@ -113,6 +119,13 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
       loadModelConfiguration();
     }
   }, [isAuthenticated]);
+
+  // Load OCR settings when authenticated
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'ocr') {
+      loadOCRSettings();
+    }
+  }, [isAuthenticated, activeTab]);
 
   const checkAuth = async () => {
     try {
@@ -490,6 +503,42 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
     }
   };
 
+  // OCR settings methods
+  const loadOCRSettings = async () => {
+    setOcrLoading(true);
+    setOcrError('');
+
+    try {
+      const settings = await settingsService.getOCRSettings();
+      setOcrSettings(settings);
+    } catch (error: any) {
+      setOcrError(error.message);
+    } finally {
+      setOcrLoading(false);
+    }
+  };
+
+  const handleOCRSettingsUpdate = async (key: keyof OCRSettings, value: any) => {
+    if (!ocrSettings) return;
+
+    setOcrSaving(true);
+
+    try {
+      const response = await settingsService.updateOCRSettings({ [key]: value });
+      setOcrSettings(response.settings);
+
+      // Show success message
+      if (response.message) {
+        alert(`OCR-Einstellungen aktualisiert! ${response.message}`);
+      }
+    } catch (error: any) {
+      console.error('Failed to update OCR settings:', error);
+      alert(`Fehler beim Aktualisieren: ${error.message}`);
+    } finally {
+      setOcrSaving(false);
+    }
+  };
+
   // Helper function to get model name for a prompt
   const getModelForPrompt = (promptKey: string): string => {
     if (!modelConfig) return 'Loading...';
@@ -625,6 +674,16 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         }`}
                       >
                         🌐 Globale Prompts
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('ocr')}
+                        className={`w-full text-left p-3 rounded-lg transition-all ${
+                          activeTab === 'ocr'
+                            ? 'bg-brand-100 text-brand-900 border border-brand-300'
+                            : 'hover:bg-primary-100 text-primary-700'
+                        }`}
+                      >
+                        👁️ OCR-Einstellungen
                       </button>
                       <button
                         onClick={() => setActiveTab('optimization')}
@@ -1074,6 +1133,211 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                     </div>
                   </div>
                 ) : null
+              ) : activeTab === 'ocr' ? (
+                ocrLoading ? (
+                  <div className="text-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-600 mx-auto mb-4" />
+                    <p className="text-primary-600">OCR-Einstellungen werden geladen...</p>
+                  </div>
+                ) : ocrError ? (
+                  <div className="text-center py-12">
+                    <AlertCircle className="w-16 h-16 text-error-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-error-700 mb-2">Fehler beim Laden</h3>
+                    <p className="text-error-600 mb-4">{ocrError}</p>
+                    <button
+                      onClick={loadOCRSettings}
+                      className="btn-primary"
+                    >
+                      Erneut versuchen
+                    </button>
+                  </div>
+                ) : ocrSettings ? (
+                  <div className="space-y-6">
+                    {/* Header */}
+                    <div>
+                      <h3 className="text-xl font-bold text-primary-900">👁️ OCR-Einstellungen</h3>
+                      <p className="text-sm text-primary-600">
+                        Konfigurieren Sie das Enhanced OCR System für optimale Texterkennung
+                      </p>
+                    </div>
+
+                    {/* Info Box */}
+                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-4">
+                      <div className="flex items-start space-x-3">
+                        <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <span className="text-blue-600 text-sm">ℹ️</span>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-blue-900 mb-1">Enhanced OCR System</h4>
+                          <p className="text-sm text-blue-800">
+                            Das System verwendet intelligente Strategien für optimale Texterkennung:
+                          </p>
+                          <ul className="text-sm text-blue-700 mt-2 space-y-1">
+                            <li>• <strong>Bedingt:</strong> Automatische Wahl zwischen lokaler und KI-basierter OCR</li>
+                            <li>• <strong>Nur Vision-KI:</strong> Ausschließlich Qwen 2.5 VL für alle Dokumente</li>
+                            <li>• <strong>Nur lokal:</strong> Traditionelle OCR-Bibliotheken</li>
+                            <li>• <strong>Hybrid:</strong> Kombination aller verfügbaren Methoden</li>
+                          </ul>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* OCR Strategy Settings */}
+                    <div className="bg-white border border-primary-200 rounded-xl p-6">
+                      <h4 className="text-lg font-semibold text-primary-900 mb-4">🎯 OCR-Strategie</h4>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-primary-700 mb-2">
+                            Strategie auswählen
+                          </label>
+                          <select
+                            value={ocrSettings.strategy}
+                            onChange={(e) => handleOCRSettingsUpdate('strategy', e.target.value)}
+                            disabled={ocrSaving}
+                            className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none disabled:opacity-50"
+                          >
+                            <option value="conditional">🤖 Bedingt (Empfohlen)</option>
+                            <option value="vision_only">👁️ Nur Vision-KI</option>
+                            <option value="local_only">🖥️ Nur lokal</option>
+                            <option value="hybrid">🔄 Hybrid</option>
+                          </select>
+                          <p className="text-xs text-primary-500 mt-1">
+                            Die bedingte Strategie wählt automatisch die beste Methode basierend auf der Dokumentqualität
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-primary-700 mb-2">
+                            Vision-Modell: {ocrSettings.vision_model}
+                          </label>
+                          <div className="flex items-center space-x-2 text-sm text-success-700">
+                            <CheckCircle className="w-4 h-4" />
+                            <span>Qwen 2.5 VL 72B Instruct (OVH AI)</span>
+                          </div>
+                          <p className="text-xs text-primary-500 mt-1">
+                            Hochleistungs-Vision-Language-Modell für medizinische Dokumente
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Quality and Processing Settings */}
+                    <div className="bg-white border border-primary-200 rounded-xl p-6">
+                      <h4 className="text-lg font-semibold text-primary-900 mb-4">⚙️ Verarbeitungseinstellungen</h4>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h5 className="font-medium text-primary-900">Lokale OCR aktiviert</h5>
+                            <p className="text-sm text-primary-600">Tesseract als Fallback-Option verwenden</p>
+                          </div>
+                          <button
+                            onClick={() => handleOCRSettingsUpdate('local_ocr_enabled', !ocrSettings.local_ocr_enabled)}
+                            disabled={ocrSaving}
+                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
+                              ocrSettings.local_ocr_enabled ? 'bg-brand-600' : 'bg-primary-300'
+                            } ${ocrSaving ? 'opacity-50' : ''}`}
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                                ocrSettings.local_ocr_enabled ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="block text-sm font-medium text-primary-700">
+                            Qualitätsschwelle: {ocrSettings.quality_threshold}%
+                          </label>
+                          <input
+                            type="range"
+                            min="0"
+                            max="100"
+                            step="5"
+                            value={ocrSettings.quality_threshold}
+                            onChange={(e) => handleOCRSettingsUpdate('quality_threshold', parseInt(e.target.value))}
+                            disabled={ocrSaving}
+                            className="w-full h-2 bg-primary-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
+                          />
+                          <div className="flex justify-between text-xs text-primary-500">
+                            <span>Niedrig</span>
+                            <span>Hoch</span>
+                          </div>
+                          <p className="text-xs text-primary-500">
+                            Ab diesem Wert wird lokale OCR durch Vision-KI ersetzt
+                          </p>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h5 className="font-medium text-primary-900">Multi-File-Verarbeitung</h5>
+                            <p className="text-sm text-primary-600">Mehrere Dateien zu einem Dokument zusammenführen</p>
+                          </div>
+                          <button
+                            onClick={() => handleOCRSettingsUpdate('multifile_enabled', !ocrSettings.multifile_enabled)}
+                            disabled={ocrSaving}
+                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
+                              ocrSettings.multifile_enabled ? 'bg-brand-600' : 'bg-primary-300'
+                            } ${ocrSaving ? 'opacity-50' : ''}`}
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                                ocrSettings.multifile_enabled ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h5 className="font-medium text-primary-900">OCR-Nachbearbeitung</h5>
+                            <p className="text-sm text-primary-600">Automatische Bereinigung von OCR-Fehlern</p>
+                          </div>
+                          <button
+                            onClick={() => handleOCRSettingsUpdate('preprocessing_enabled', !ocrSettings.preprocessing_enabled)}
+                            disabled={ocrSaving}
+                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
+                              ocrSettings.preprocessing_enabled ? 'bg-brand-600' : 'bg-primary-300'
+                            } ${ocrSaving ? 'opacity-50' : ''}`}
+                          >
+                            <span
+                              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
+                                ocrSettings.preprocessing_enabled ? 'translate-x-6' : 'translate-x-1'
+                              }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pipeline Integration */}
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 border border-green-200 rounded-xl p-6">
+                      <h4 className="text-lg font-semibold text-green-900 mb-4">🔗 Pipeline-Integration</h4>
+                      <div className="space-y-3">
+                        <div className="flex items-center space-x-2 text-sm">
+                          <CheckCircle className="w-4 h-4 text-success-600" />
+                          <span className="text-green-700">TEXT_EXTRACTION Schritt ist in der Pipeline aktiviert</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-sm">
+                          <CheckCircle className="w-4 h-4 text-success-600" />
+                          <span className="text-green-700">OCR-Nachbearbeitung über universelle Prompts konfiguriert</span>
+                        </div>
+                        <div className="flex items-center space-x-2 text-sm">
+                          <CheckCircle className="w-4 h-4 text-success-600" />
+                          <span className="text-green-700">Multi-File-Support für zusammenhängende Dokumente</span>
+                        </div>
+                      </div>
+                      <div className="mt-4 p-3 bg-green-100 rounded-lg">
+                        <p className="text-sm text-green-800">
+                          <strong>Hinweis:</strong> OCR-Einstellungen werden automatisch mit der bestehenden Pipeline synchronisiert.
+                          Änderungen wirken sich sofort auf neue Dokumentverarbeitungen aus.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : null
               ) : activeTab === 'optimization' ? (
                 settingsLoading ? (
                   <div className="text-center py-12">
@@ -1175,15 +1439,16 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       {/* Universal Steps */}
                       <div className="mb-6">
                         <h5 className="text-md font-semibold text-blue-900 mb-3 flex items-center">
-                          🌐 Universelle Schritte (1-3, 7-9)
+                          🌐 Universelle Schritte (1-4, 8-9)
                         </h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {[
                             { key: 'enable_medical_validation', name: '1. Medizinische Validierung', desc: 'Prüft ob Text medizinischen Inhalt enthält', order: 1 },
-                            { key: 'enable_preprocessing', name: '2. Vorverarbeitung', desc: 'Entfernt persönliche Daten (PII)', order: 2 },
-                            { key: 'enable_classification', name: '3. Klassifizierung', desc: 'Erkennt Dokumenttyp (Arztbrief, Befund, etc.)', order: 3 },
-                            { key: 'enable_language_translation', name: '7. Sprachübersetzung', desc: 'Übersetzt in Zielsprache', order: 7 },
-                            { key: 'enable_final_check', name: '8. Finale Kontrolle', desc: 'Qualitätssicherung und Validierung', order: 8 }
+                            { key: 'enable_classification', name: '2. Klassifizierung', desc: 'Erkennt Dokumenttyp (Arztbrief, Befund, etc.)', order: 2 },
+                            { key: 'enable_text_extraction', name: '3. Text-Extraktion (OCR)', desc: 'Enhanced OCR mit intelligenter Strategie-Wahl', order: 3 },
+                            { key: 'enable_preprocessing', name: '4. Vorverarbeitung', desc: 'Entfernt persönliche Daten (PII)', order: 4 },
+                            { key: 'enable_language_translation', name: '8. Sprachübersetzung', desc: 'Übersetzt in Zielsprache', order: 8 },
+                            { key: 'enable_final_check', name: '9. Finale Kontrolle', desc: 'Qualitätssicherung und Validierung', order: 9 }
                           ].map(({ key, name, desc, order }) => (
                             <div key={key} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
                               <div>
@@ -1211,14 +1476,14 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       {/* Document-Specific Steps */}
                       <div>
                         <h5 className="text-md font-semibold text-green-900 mb-3 flex items-center">
-                          📄 Dokument-spezifische Schritte (4-6, 9)
+                          📄 Dokument-spezifische Schritte (5-7, 10)
                         </h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {[
-                            { key: 'enable_translation', name: '4. Übersetzung', desc: 'Übersetzt in verständliche Sprache (je Dokumenttyp unterschiedlich)', order: 4 },
-                            { key: 'enable_fact_check', name: '5. Faktenprüfung', desc: 'Prüft medizinische Korrektheit (je Dokumenttyp unterschiedlich)', order: 5 },
-                            { key: 'enable_grammar_check', name: '6. Grammatikprüfung', desc: 'Korrigiert Grammatik und Rechtschreibung', order: 6 },
-                            { key: 'enable_formatting', name: '9. Formatierung', desc: 'Strukturiert und formatiert den Text (je Dokumenttyp unterschiedlich)', order: 9 }
+                            { key: 'enable_translation', name: '5. Übersetzung', desc: 'Übersetzt in verständliche Sprache (je Dokumenttyp unterschiedlich)', order: 5 },
+                            { key: 'enable_fact_check', name: '6. Faktenprüfung', desc: 'Prüft medizinische Korrektheit (je Dokumenttyp unterschiedlich)', order: 6 },
+                            { key: 'enable_grammar_check', name: '7. Grammatikprüfung', desc: 'Korrigiert Grammatik und Rechtschreibung', order: 7 },
+                            { key: 'enable_formatting', name: '10. Formatierung', desc: 'Strukturiert und formatiert den Text (je Dokumenttyp unterschiedlich)', order: 10 }
                           ].map(({ key, name, desc, order }) => (
                             <div key={key} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
                               <div>

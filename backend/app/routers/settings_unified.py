@@ -130,7 +130,8 @@ async def get_universal_prompts(
                 "medical_validation_prompt": universal_prompts.medical_validation_prompt,
                 "classification_prompt": universal_prompts.classification_prompt,
                 "preprocessing_prompt": universal_prompts.preprocessing_prompt,
-                "language_translation_prompt": universal_prompts.language_translation_prompt
+                "language_translation_prompt": universal_prompts.language_translation_prompt,
+                "ocr_preprocessing_prompt": getattr(universal_prompts, 'ocr_preprocessing_prompt', None)
             },
             "version": universal_prompts.version,
             "last_modified": universal_prompts.last_modified.isoformat(),
@@ -148,6 +149,7 @@ class UniversalPromptUpdateRequest(BaseModel):
     classification_prompt: Optional[str] = Field(None, description="Classification prompt")
     preprocessing_prompt: Optional[str] = Field(None, description="Preprocessing prompt")
     language_translation_prompt: Optional[str] = Field(None, description="Language translation prompt")
+    ocr_preprocessing_prompt: Optional[str] = Field(None, description="OCR text cleaning and preprocessing prompt")
     user: Optional[str] = Field(None, description="Username making the change")
 
     class Config:
@@ -200,10 +202,14 @@ async def update_universal_prompts(
             universal_prompts.language_translation_prompt = update_request.language_translation_prompt
             updated_fields.append("language_translation_prompt")
 
+        if update_request.ocr_preprocessing_prompt is not None:
+            universal_prompts.ocr_preprocessing_prompt = update_request.ocr_preprocessing_prompt
+            updated_fields.append("ocr_preprocessing_prompt")
+
         if not updated_fields:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="No universal prompt fields provided to update. Valid fields: medical_validation_prompt, classification_prompt, preprocessing_prompt, language_translation_prompt"
+                detail="No universal prompt fields provided to update. Valid fields: medical_validation_prompt, classification_prompt, preprocessing_prompt, language_translation_prompt, ocr_preprocessing_prompt"
             )
 
         logger.info(f"Updated universal prompt fields: {updated_fields}")
@@ -968,6 +974,155 @@ async def seed_database(
             detail=f"Failed to seed database: {str(e)}"
         )
 
+# ==================== OCR SETTINGS ====================
+
+class OCRSettingsResponse(BaseModel):
+    """OCR settings response model"""
+    strategy: str = Field(description="OCR strategy: conditional, local_only, vision_only, hybrid")
+    vision_model: str = Field(description="Vision model for OCR tasks")
+    vision_base_url: str = Field(description="Base URL for vision OCR model")
+    confidence_threshold: float = Field(description="Confidence threshold for local OCR quality assessment")
+    opencv_enabled: bool = Field(description="Whether OpenCV is available for advanced image analysis")
+    fallback_enabled: bool = Field(description="Enable fallback to vision OCR when local OCR fails")
+    multi_file_enabled: bool = Field(description="Enable multi-file processing and intelligent merging")
+    multi_file_max_count: int = Field(description="Maximum number of files in multi-file processing")
+    file_sequence_detection: bool = Field(description="Enable intelligent file sequence detection")
+    medical_text_merging: str = Field(description="Text merging strategy: simple, smart, medical_aware")
+
+@router.get("/ocr-settings", response_model=OCRSettingsResponse)
+async def get_ocr_settings(
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_session)
+):
+    """Get Enhanced OCR System settings."""
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        settings = db.query(SystemSettingsDB).filter(
+            SystemSettingsDB.key.like('ocr_%') |
+            SystemSettingsDB.key.like('multi_file_%') |
+            SystemSettingsDB.key.like('file_sequence_%') |
+            SystemSettingsDB.key.like('medical_text_%')
+        ).all()
+
+        settings_dict = {}
+        for setting in settings:
+            if setting.value_type == 'bool':
+                settings_dict[setting.key] = setting.value.lower() == 'true'
+            elif setting.value_type == 'int':
+                settings_dict[setting.key] = int(setting.value)
+            elif setting.value_type == 'float':
+                settings_dict[setting.key] = float(setting.value)
+            else:
+                settings_dict[setting.key] = setting.value
+
+        # Return with defaults if not set
+        return OCRSettingsResponse(
+            strategy=settings_dict.get('ocr_strategy', 'conditional'),
+            vision_model=settings_dict.get('ocr_vision_model', 'Qwen2.5-VL-72B-Instruct'),
+            vision_base_url=settings_dict.get('ocr_vision_base_url', 'https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net'),
+            confidence_threshold=settings_dict.get('ocr_confidence_threshold', 0.7),
+            opencv_enabled=settings_dict.get('ocr_opencv_enabled', False),
+            fallback_enabled=settings_dict.get('ocr_fallback_enabled', True),
+            multi_file_enabled=settings_dict.get('multi_file_enabled', True),
+            multi_file_max_count=settings_dict.get('multi_file_max_count', 10),
+            file_sequence_detection=settings_dict.get('file_sequence_detection', True),
+            medical_text_merging=settings_dict.get('medical_text_merging', 'smart')
+        )
+    except Exception as e:
+        logger.error(f"Failed to get OCR settings: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get OCR settings: {str(e)}"
+        )
+
+class OCRSettingsUpdateRequest(BaseModel):
+    """OCR settings update request model"""
+    strategy: Optional[str] = Field(None, description="OCR strategy")
+    vision_model: Optional[str] = Field(None, description="Vision model")
+    vision_base_url: Optional[str] = Field(None, description="Vision model base URL")
+    confidence_threshold: Optional[float] = Field(None, description="Confidence threshold")
+    opencv_enabled: Optional[bool] = Field(None, description="OpenCV availability")
+    fallback_enabled: Optional[bool] = Field(None, description="Fallback enabled")
+    multi_file_enabled: Optional[bool] = Field(None, description="Multi-file processing")
+    multi_file_max_count: Optional[int] = Field(None, description="Max file count")
+    file_sequence_detection: Optional[bool] = Field(None, description="File sequence detection")
+    medical_text_merging: Optional[str] = Field(None, description="Text merging strategy")
+
+@router.put("/ocr-settings")
+async def update_ocr_settings(
+    update_request: OCRSettingsUpdateRequest,
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_session)
+):
+    """Update Enhanced OCR System settings."""
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        # Map request fields to system setting keys
+        field_mapping = {
+            'strategy': 'ocr_strategy',
+            'vision_model': 'ocr_vision_model',
+            'vision_base_url': 'ocr_vision_base_url',
+            'confidence_threshold': 'ocr_confidence_threshold',
+            'opencv_enabled': 'ocr_opencv_enabled',
+            'fallback_enabled': 'ocr_fallback_enabled',
+            'multi_file_enabled': 'multi_file_enabled',
+            'multi_file_max_count': 'multi_file_max_count',
+            'file_sequence_detection': 'file_sequence_detection',
+            'medical_text_merging': 'medical_text_merging'
+        }
+
+        updated_settings = []
+        for field_name, setting_key in field_mapping.items():
+            value = getattr(update_request, field_name)
+            if value is not None:
+                setting = db.query(SystemSettingsDB).filter_by(key=setting_key).first()
+
+                if setting:
+                    setting.value = str(value)
+                    setting.updated_at = datetime.now()
+                    setting.updated_by = "ocr_settings_ui"
+                else:
+                    # Create new setting
+                    value_type = "bool" if isinstance(value, bool) else "int" if isinstance(value, int) else "float" if isinstance(value, float) else "string"
+                    new_setting = SystemSettingsDB(
+                        key=setting_key,
+                        value=str(value),
+                        value_type=value_type,
+                        description=f"Enhanced OCR setting: {field_name}",
+                        is_encrypted=False,
+                        created_at=datetime.now(),
+                        updated_at=datetime.now(),
+                        updated_by="ocr_settings_ui"
+                    )
+                    db.add(new_setting)
+
+                updated_settings.append(setting_key)
+
+        db.commit()
+        logger.info(f"Updated OCR settings: {updated_settings}")
+
+        return {
+            "success": True,
+            "message": f"Updated {len(updated_settings)} OCR settings successfully",
+            "updated_settings": updated_settings
+        }
+    except Exception as e:
+        logger.error(f"Failed to update OCR settings: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update OCR settings: {str(e)}"
+        )
 
 @router.get("/model-configuration")
 async def get_model_configuration(authenticated: bool = Depends(verify_session_token)):
