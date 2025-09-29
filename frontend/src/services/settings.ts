@@ -534,6 +534,29 @@ class SettingsService {
       );
     }
   }
+
+  /**
+   * Get current model configuration for each prompt step
+   */
+  async getModelConfiguration(): Promise<{
+    success: boolean;
+    model_mapping: Record<string, string>;
+    environment_config: Record<string, string>;
+    model_descriptions: Record<string, string>;
+  }> {
+    try {
+      const response = await axios.get(
+        `${SETTINGS_BASE_URL}/model-configuration`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to get model configuration'
+      );
+    }
+  }
 }
 
 // Export singleton instance

@@ -962,3 +962,58 @@ async def seed_database(
             detail=f"Failed to seed database: {str(e)}"
         )
 
+
+@router.get("/model-configuration")
+async def get_model_configuration(authenticated: bool = Depends(verify_session_token)):
+    """Get current OVH model configuration for each pipeline step."""
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        # Get OVH client to access model configuration
+        ovh_client = OVHClient()
+
+        # Model mapping for each prompt/step type
+        model_mapping = {
+            # Universal/Global Prompts (preprocessing phase)
+            "medical_validation_prompt": ovh_client.main_model,
+            "classification_prompt": ovh_client.main_model,
+            "preprocessing_prompt": ovh_client.preprocessing_model,
+            "language_translation_prompt": ovh_client.translation_model,
+
+            # Document-specific prompts (main processing phase)
+            "translation_prompt": ovh_client.main_model,
+            "fact_check_prompt": ovh_client.main_model,
+            "grammar_check_prompt": ovh_client.main_model,
+            "final_check_prompt": ovh_client.main_model,
+            "formatting_prompt": ovh_client.main_model
+        }
+
+        # Environment variable info for reference
+        environment_config = {
+            "OVH_MAIN_MODEL": ovh_client.main_model,
+            "OVH_PREPROCESSING_MODEL": ovh_client.preprocessing_model,
+            "OVH_TRANSLATION_MODEL": ovh_client.translation_model
+        }
+
+        return {
+            "success": True,
+            "model_mapping": model_mapping,
+            "environment_config": environment_config,
+            "model_descriptions": {
+                ovh_client.main_model: "Primary model for most AI tasks",
+                ovh_client.preprocessing_model: "Specialized for text preprocessing and PII removal",
+                ovh_client.translation_model: "Optimized for language translation tasks"
+            }
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to get model configuration: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to get model configuration: {str(e)}"
+        )
+

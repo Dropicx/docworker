@@ -57,6 +57,13 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   const [globalSaveError, setGlobalSaveError] = useState('');
   const [globalSaveSuccess, setGlobalSaveSuccess] = useState(false);
 
+  // Model configuration state
+  const [modelConfig, setModelConfig] = useState<{
+    model_mapping: Record<string, string>;
+    environment_config: Record<string, string>;
+    model_descriptions: Record<string, string>;
+  } | null>(null);
+
   // Check authentication on mount only if we have a token
   useEffect(() => {
     if (isOpen && settingsService.isAuthenticated()) {
@@ -99,6 +106,13 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
       loadGlobalPrompts();
     }
   }, [isAuthenticated, activeTab]);
+
+  // Load model configuration when authenticated
+  useEffect(() => {
+    if (isAuthenticated && !modelConfig) {
+      loadModelConfiguration();
+    }
+  }, [isAuthenticated]);
 
   const checkAuth = async () => {
     try {
@@ -466,6 +480,32 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
     event.target.value = '';
   };
 
+  // Model configuration methods
+  const loadModelConfiguration = async () => {
+    try {
+      const config = await settingsService.getModelConfiguration();
+      setModelConfig(config);
+    } catch (error: any) {
+      console.error('Failed to load model configuration:', error);
+    }
+  };
+
+  // Helper function to get model name for a prompt
+  const getModelForPrompt = (promptKey: string): string => {
+    if (!modelConfig) return 'Loading...';
+    const model = modelConfig.model_mapping[promptKey];
+    return model || 'Unknown';
+  };
+
+  // Helper function to format model name for display
+  const formatModelName = (modelName: string): string => {
+    if (modelName === 'Loading...' || modelName === 'Unknown') return modelName;
+    // Shorten long model names for better display
+    if (modelName.includes('Meta-Llama-3_3-70B-Instruct')) return 'Llama 3.3 70B';
+    if (modelName.includes('Mistral-Nemo-Instruct-2407')) return 'Mistral Nemo';
+    return modelName;
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -767,7 +807,12 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                           <div key={key} className="border border-primary-200 rounded-xl p-6 bg-white">
                             <div className="flex items-center justify-between mb-4">
                               <div>
-                                <h4 className="text-lg font-semibold text-primary-900">{step.name}</h4>
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <h4 className="text-lg font-semibold text-primary-900">{step.name}</h4>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    🤖 {formatModelName(getModelForPrompt(promptKey))}
+                                  </span>
+                                </div>
                                 <p className="text-sm text-primary-600">{step.description}</p>
                               </div>
                               <button
@@ -942,7 +987,12 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                           <div key={key} className="border border-primary-200 rounded-xl p-6 bg-white">
                             <div className="flex items-center justify-between mb-4">
                               <div>
-                                <h4 className="text-lg font-semibold text-primary-900">{step.name}</h4>
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <h4 className="text-lg font-semibold text-primary-900">{step.name}</h4>
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                    🤖 {formatModelName(getModelForPrompt(promptKey))}
+                                  </span>
+                                </div>
                                 <p className="text-sm text-primary-600">{step.description}</p>
                                 <span className={`inline-block mt-2 px-2 py-1 rounded-full text-xs font-medium ${
                                   step.category === 'preprocessing' ? 'bg-blue-100 text-blue-800' :
