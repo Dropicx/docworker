@@ -43,8 +43,11 @@ async def process_document_unified(processing_id: str):
             print(f"❌ Processing data not found: {processing_id[:8]}")
             return
         
-        # Get database session
-        with get_session() as db:
+        # Get database session (generator)
+        session_gen = get_session()
+        db = next(session_gen)
+
+        try:
             # Initialize services
             unified_manager = UnifiedPromptManager(db)
             ai_logger = AILoggingService(db)
@@ -454,13 +457,22 @@ async def process_document_unified(processing_id: str):
             
             print(f"✅ Unified processing completed: {processing_id[:8]} ({processing_time:.2f}s)")
             
-    except Exception as e:
-        print(f"❌ Unified processing error {processing_id[:8]}: {e}")
-        logger.error(f"Unified processing error: {e}")
-        
-        update_processing_store(processing_id, {
-            "status": ProcessingStatus.ERROR,
-            "current_step": "Error in unified processing",
-            "error": str(e),
-            "error_at": datetime.now()
-        })
+        except Exception as e:
+            print(f"❌ Unified processing error {processing_id[:8]}: {e}")
+            logger.error(f"Unified processing error: {e}")
+
+            update_processing_store(processing_id, {
+                "status": ProcessingStatus.ERROR,
+                "current_step": "Error in unified processing",
+                "error": str(e),
+                "error_at": datetime.now()
+            })
+
+        finally:
+            # Properly close the session generator
+            try:
+                next(session_gen)  # This triggers the finally block in get_session()
+            except StopIteration:
+                pass  # Generator is exhausted, session is closed
+            except Exception:
+                pass  # Ignore cleanup errors
