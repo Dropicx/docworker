@@ -1131,6 +1131,96 @@ async def update_ocr_settings(
             detail=f"Failed to update OCR settings: {str(e)}"
         )
 
+@router.post("/migrate-pipeline-steps")
+async def migrate_pipeline_steps(
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_session)
+):
+    """
+    Migration endpoint to fix pipeline step orders and add missing TEXT_EXTRACTION step.
+    This should be called once after updating the codebase.
+    """
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        from app.database.unified_models import UniversalPipelineStepConfigDB, ProcessingStepEnum
+
+        logger.info("🔄 Starting pipeline steps migration...")
+
+        # Define the correct order mapping
+        correct_orders = {
+            "TEXT_EXTRACTION": 0,
+            "MEDICAL_VALIDATION": 1,
+            "CLASSIFICATION": 2,
+            "PREPROCESSING": 3,
+            "TRANSLATION": 4,
+            "FACT_CHECK": 5,
+            "GRAMMAR_CHECK": 6,
+            "LANGUAGE_TRANSLATION": 7,
+            "FINAL_CHECK": 8,
+            "FORMATTING": 9
+        }
+
+        migration_results = []
+
+        # Check if TEXT_EXTRACTION step exists, if not create it
+        text_extraction_step = db.query(UniversalPipelineStepConfigDB).filter_by(
+            step_name=ProcessingStepEnum.TEXT_EXTRACTION
+        ).first()
+
+        if not text_extraction_step:
+            logger.info("➕ Adding missing TEXT_EXTRACTION step...")
+            new_step = UniversalPipelineStepConfigDB(
+                step_name=ProcessingStepEnum.TEXT_EXTRACTION,
+                enabled=True,
+                order=0,
+                name="Text Extraction (OCR)",
+                description="Extract text from images/PDFs using conditional OCR strategy",
+                modified_by="pipeline_migration"
+            )
+            db.add(new_step)
+            migration_results.append("Added TEXT_EXTRACTION step with order 0")
+        else:
+            migration_results.append("TEXT_EXTRACTION step already exists")
+
+        # Update all step orders to match the correct sequence
+        all_steps = db.query(UniversalPipelineStepConfigDB).all()
+
+        for step in all_steps:
+            current_order = step.order
+            correct_order = correct_orders.get(step.step_name)
+
+            if correct_order is not None and current_order != correct_order:
+                logger.info(f"📝 Updating {step.step_name}: order {current_order} → {correct_order}")
+                step.order = correct_order
+                step.modified_by = "pipeline_migration"
+                migration_results.append(f"Updated {step.step_name}: order {current_order} → {correct_order}")
+            else:
+                migration_results.append(f"Kept {step.step_name}: order {current_order} (already correct)")
+
+        # Commit all changes
+        db.commit()
+        logger.info("✅ Pipeline steps migration completed successfully")
+
+        return {
+            "success": True,
+            "message": "Pipeline steps migration completed successfully",
+            "results": migration_results,
+            "correct_orders": correct_orders
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Pipeline steps migration failed: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Migration failed: {str(e)}"
+        )
+
 @router.get("/model-configuration")
 async def get_model_configuration(authenticated: bool = Depends(verify_session_token)):
     """Get current OVH model configuration for each pipeline step."""

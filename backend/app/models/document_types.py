@@ -38,9 +38,10 @@ class DocumentPrompts(BaseModel):
     final_check_prompt: str = Field(..., description="Prompt for final quality assurance")
     formatting_prompt: str = Field(..., description="Prompt for text formatting and structure")
 
-    # Pipeline step configuration
+    # Pipeline step configuration - CORRECTED ORDER
     pipeline_steps: Dict[str, PipelineStepConfig] = Field(
         default_factory=lambda: {
+            "TEXT_EXTRACTION": PipelineStepConfig(enabled=True, order=0, name="Text Extraction (OCR)", description="Extract text from images/PDFs using conditional OCR strategy"),
             "MEDICAL_VALIDATION": PipelineStepConfig(enabled=True, order=1, name="Medical Content Validation", description="Validate if document contains medical content"),
             "CLASSIFICATION": PipelineStepConfig(enabled=True, order=2, name="Document Classification", description="Classify document type (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)"),
             "PREPROCESSING": PipelineStepConfig(enabled=True, order=3, name="Preprocessing", description="Remove PII and clean text"),

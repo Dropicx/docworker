@@ -110,9 +110,10 @@ def unified_seed_database():
                 'modified_by': 'system_seed'
             })
             
-            # Insert universal pipeline steps
+            # Insert universal pipeline steps - CORRECTED ORDER
             logger.info("⚙️ Inserting universal pipeline steps...")
             pipeline_steps = [
+                ('TEXT_EXTRACTION', True, 0, 'Text Extraction (OCR)', 'Extract text from images/PDFs using conditional OCR strategy'),
                 ('MEDICAL_VALIDATION', True, 1, 'Medical Content Validation', 'Validate if document contains medical content'),
                 ('CLASSIFICATION', True, 2, 'Document Classification', 'Classify document type (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)'),
                 ('PREPROCESSING', True, 3, 'Preprocessing', 'Remove PII and clean text'),
