@@ -34,7 +34,8 @@ class OVHClient:
 
         # Vision model for OCR tasks
         self.vision_model = os.getenv("OVH_VISION_MODEL", "Qwen2.5-VL-72B-Instruct")
-        self.vision_base_url = os.getenv("OVH_VISION_BASE_URL", "https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net/v1")
+        # Try without /v1 suffix for OVH specific endpoints
+        self.vision_base_url = os.getenv("OVH_VISION_BASE_URL", "https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net")
 
         # Define which prompt types should use fast model for speed optimization
         self.fast_model_prompt_types = {
@@ -923,16 +924,60 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                 }
             ]
 
-            # Make API call to Qwen 2.5 VL
+            # Make API call to Qwen 2.5 VL using direct HTTP request
+            # OVH endpoints may have different structure than OpenAI
             logger.info(f"🚀 Calling Qwen 2.5 VL vision API at {self.vision_base_url}")
-            response = await self.vision_client.chat.completions.create(
-                model=self.vision_model,
-                messages=messages,
-                max_tokens=4000,
-                temperature=0.1  # Very low for precise OCR
-            )
 
-            extracted_text = response.choices[0].message.content
+            # Try direct HTTP call first
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                headers = {
+                    "Authorization": f"Bearer {self.access_token}",
+                    "Content-Type": "application/json"
+                }
+
+                payload = {
+                    "model": self.vision_model,
+                    "messages": messages,
+                    "max_tokens": 4000,
+                    "temperature": 0.1
+                }
+
+                # Try different endpoint paths
+                endpoints_to_try = [
+                    f"{self.vision_base_url}/v1/chat/completions",
+                    f"{self.vision_base_url}/chat/completions",
+                    f"{self.vision_base_url}/completions",
+                    f"{self.vision_base_url}/v1/completions"
+                ]
+
+                last_error = None
+                for endpoint_url in endpoints_to_try:
+                    try:
+                        logger.info(f"🔄 Trying endpoint: {endpoint_url}")
+                        response = await client.post(endpoint_url, headers=headers, json=payload)
+
+                        if response.status_code == 200:
+                            response_data = response.json()
+                            logger.info(f"✅ Success with endpoint: {endpoint_url}")
+                            break
+                        else:
+                            logger.warning(f"❌ Failed {endpoint_url}: {response.status_code} - {response.text[:200]}")
+                            last_error = f"HTTP {response.status_code}: {response.text}"
+
+                    except Exception as e:
+                        logger.warning(f"❌ Exception with {endpoint_url}: {e}")
+                        last_error = str(e)
+                        continue
+                else:
+                    # None of the endpoints worked
+                    raise Exception(f"All vision API endpoints failed. Last error: {last_error}")
+
+            # Parse response from the successful endpoint call
+            if 'choices' in response_data and len(response_data['choices']) > 0:
+                extracted_text = response_data['choices'][0]['message']['content']
+            else:
+                logger.error(f"❌ Unexpected response format: {response_data}")
+                extracted_text = "Unerwartetes Antwortformat vom Vision-API."
 
             if not extracted_text or len(extracted_text.strip()) < 10:
                 logger.warning("⚠️ Vision OCR returned very short text")
@@ -948,46 +993,28 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
 
         except Exception as e:
             logger.error(f"❌ Vision OCR failed: {e}")
+            # Log more details about the error
+            logger.error(f"   Vision Base URL: {self.vision_base_url}")
+            logger.error(f"   Vision Model: {self.vision_model}")
+            logger.error(f"   Messages structure: {len(messages)} messages")
             return f"Vision OCR error: {str(e)}", 0.0
 
     def _get_medical_ocr_prompt(self) -> str:
         """
-        Get specialized OCR prompt for medical documents
+        Get simplified and more direct OCR prompt for medical documents
         """
-        return """Du bist ein hochpräziser OCR-Scanner, spezialisiert auf medizinische Dokumente.
+        return """Extract ALL visible text from this image exactly as it appears.
 
-🎯 AUFGABE:
-Extrahiere ALLEN sichtbaren Text aus diesem medizinischen Dokument mit höchster Präzision.
+RULES:
+- Read every word, number, and symbol you can see
+- Keep the exact structure and layout
+- Include all medical terms, dates, values, and units
+- For tables, preserve the table format
+- For lists, keep the list structure
+- Mark unclear text as [unclear]
+- Do NOT interpret or change anything - just extract the text
 
-⚡ KRITISCHE REGELN:
-1. EXTRAHIERE JEDEN sichtbaren Text - auch kleine Details
-2. BEHALTE die originale Struktur und Formatierung bei
-3. ERKENNE Tabellen, Listen, Formulare und ihre Struktur
-4. ACHTE besonders auf:
-   - Laborwerte und Messergebnisse
-   - Medizinische Begriffe und Abkürzungen
-   - Datum- und Zeitangaben
-   - Dosierungen und Einheiten
-   - Unterschriften und Stempel (transkribiere sie)
-5. Bei unleserlichen Stellen: markiere mit [unleserlich]
-6. KEINE Interpretation oder Korrektur - nur exakte Extraktion
-7. BEWAHRE alle Zahlen, Symbole und Sonderzeichen
-
-📋 FORMATIERUNG:
-- Nutze Markdown für Struktur
-- Tabellen als Markdown-Tabellen
-- Listen mit Bindestrichen (-)
-- Überschriften mit ##
-- Behalte Zeilenumbrüche bei
-
-🏥 MEDIZINISCHE PRÄZISION:
-- Alle Laborwerte mit exakten Zahlen
-- Alle Einheiten (mg/dl, mmol/l, etc.)
-- Alle Referenzbereiche
-- Alle Medikamentennamen und Dosierungen
-- Alle Diagnosecodes (ICD, OPS)
-
-Beginne sofort mit der Textextraktion:"""
+Start extracting the text now:"""
 
     def _calculate_vision_ocr_confidence(self, text: str) -> float:
         """
