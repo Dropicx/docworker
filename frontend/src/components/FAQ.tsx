@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, Shield, Lock, Clock, Database, Globe, FileText, AlertCircle } from 'lucide-react';
 
 interface FAQItem {
@@ -9,6 +9,10 @@ interface FAQItem {
 
 const FAQ: React.FC = () => {
   const [openItems, setOpenItems] = useState<Set<number>>(new Set());
+  const [modelConfig, setModelConfig] = useState<{
+    model_mapping: Record<string, string>;
+    model_descriptions: Record<string, string>;
+  } | null>(null);
 
   const toggleItem = (index: number) => {
     const newOpenItems = new Set(openItems);
@@ -18,6 +22,40 @@ const FAQ: React.FC = () => {
       newOpenItems.add(index);
     }
     setOpenItems(newOpenItems);
+  };
+
+  // Load model configuration
+  useEffect(() => {
+    const loadModelConfiguration = async () => {
+      try {
+        const response = await fetch('/api/settings/model-config');
+        if (response.ok) {
+          const config = await response.json();
+          setModelConfig(config);
+        }
+      } catch (error) {
+        console.error('Failed to load model configuration:', error);
+      }
+    };
+
+    loadModelConfiguration();
+  }, []);
+
+  // Helper function to get current language translation model
+  const getLanguageTranslationModel = (): string => {
+    if (!modelConfig) return 'Llama 3.3';
+    const model = modelConfig.model_mapping['language_translation_prompt'];
+    if (!model) return 'Llama 3.3';
+
+    // Format model name for display
+    if (model.includes('Meta-Llama-3_3-70B-Instruct')) return 'Llama 3.3';
+    if (model.includes('Mixtral')) return 'Mixtral';
+    if (model.includes('mistral')) return 'Mistral';
+    if (model.includes('qwen')) return 'Qwen';
+    if (model.includes('Qwen')) return 'Qwen';
+
+    // Default fallback - extract first part of model name
+    return model.split('-')[0] || 'Llama 3.3';
   };
 
   const faqItems: FAQItem[] = [
@@ -43,7 +81,7 @@ const FAQ: React.FC = () => {
     },
     {
       question: "In welche Sprachen kann übersetzt werden?",
-      answer: "Neben der Vereinfachung ins verständliche Deutsch unterstützen wir Übersetzungen in 19 sorgfältig ausgewählte Sprachen, die von Llama 3.3 optimal unterstützt werden: Englisch, Französisch, Spanisch, Italienisch, Portugiesisch, Niederländisch, Russisch, Chinesisch, Japanisch, Koreanisch, Arabisch, Hindi, Polnisch, Tschechisch, Schwedisch, Norwegisch und Dänisch. Die Übersetzung erfolgt dabei immer zweistufig: erst Vereinfachung, dann präzise Übersetzung.",
+      answer: `Neben der Vereinfachung ins verständliche Deutsch unterstützen wir Übersetzungen in 19 sorgfältig ausgewählte Sprachen, die von ${getLanguageTranslationModel()} optimal unterstützt werden: Englisch, Französisch, Spanisch, Italienisch, Portugiesisch, Niederländisch, Russisch, Chinesisch, Japanisch, Koreanisch, Arabisch, Hindi, Polnisch, Tschechisch, Schwedisch, Norwegisch und Dänisch. Die Übersetzung erfolgt dabei immer zweistufig: erst Vereinfachung, dann präzise Übersetzung.`,
       icon: Globe
     },
     {
