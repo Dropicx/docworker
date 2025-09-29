@@ -709,22 +709,28 @@ async def get_document_types(
     try:
         document_types = [
             {
-                "type": "arztbrief",
+                "id": "arztbrief",
                 "name": "Arztbrief",
-                "description": "Medical letter from doctor to patient or other healthcare providers"
+                "description": "Briefe zwischen Ärzten, Entlassungsbriefe, Überweisungen",
+                "icon": "📨",
+                "examples": ["Entlassungsbrief", "Überweisungsschreiben", "Konsiliarbericht", "Therapiebericht"]
             },
             {
-                "type": "befundbericht", 
+                "id": "befundbericht",
                 "name": "Befundbericht",
-                "description": "Medical findings report with test results and diagnoses"
+                "description": "Medizinische Befunde, Untersuchungsergebnisse, Bildgebung",
+                "icon": "🔬",
+                "examples": ["MRT-Befund", "CT-Bericht", "Ultraschallbefund", "Pathologiebefund"]
             },
             {
-                "type": "laborwerte",
-                "name": "Laborwerte", 
-                "description": "Laboratory values and test results"
+                "id": "laborwerte",
+                "name": "Laborwerte",
+                "description": "Laborergebnisse, Blutwerte, Messwerte mit Referenzbereichen",
+                "icon": "🧪",
+                "examples": ["Blutbild", "Urinanalyse", "Hormonwerte", "Tumormarker"]
             }
         ]
-        
+
         return {"document_types": document_types}
         
     except Exception as e:
