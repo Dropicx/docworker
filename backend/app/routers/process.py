@@ -673,6 +673,12 @@ async def get_pipeline_stats(
         enabled_features = sum(1 for setting in system_settings if setting.value.lower() == 'true')
         total_features = len(system_settings)
 
+        # Get the actual cache timeout from database settings
+        cache_timeout_setting = db.query(SystemSettingsDB).filter(
+            SystemSettingsDB.key == 'pipeline_cache_timeout'
+        ).first()
+        actual_cache_timeout = int(cache_timeout_setting.value) if cache_timeout_setting and cache_timeout_setting.value.isdigit() else 3600
+
         # ==================== REAL PERFORMANCE METRICS ====================
 
         # Calculate actual performance improvements based on data
@@ -695,13 +701,13 @@ async def get_pipeline_stats(
 
         # ==================== CACHE STATISTICS (for frontend compatibility) ====================
 
-        # For now, create mock cache statistics based on AI interactions
+        # Create cache statistics based on AI interactions and real settings
         # This matches the frontend expectation structure
         cache_statistics = {
             "total_entries": total_interactions,
             "active_entries": recent_interactions,  # Recent interactions as "active"
             "expired_entries": max(0, total_interactions - recent_interactions),  # Older entries as "expired"
-            "cache_timeout_seconds": 3600  # Default 1 hour timeout
+            "cache_timeout_seconds": actual_cache_timeout  # Use actual cache timeout from database
         }
 
         return {
@@ -739,6 +745,16 @@ async def get_pipeline_stats(
 
     except Exception as e:
         logger.error(f"Failed to get pipeline statistics: {e}")
+
+        # Try to get cache timeout even in error case
+        try:
+            cache_timeout_setting = db.query(SystemSettingsDB).filter(
+                SystemSettingsDB.key == 'pipeline_cache_timeout'
+            ).first()
+            error_cache_timeout = int(cache_timeout_setting.value) if cache_timeout_setting and cache_timeout_setting.value.isdigit() else 3600
+        except:
+            error_cache_timeout = 3600
+
         return {
             "pipeline_mode": "unified",
             "timestamp": datetime.now().isoformat(),
@@ -747,7 +763,7 @@ async def get_pipeline_stats(
                 "total_entries": 0,
                 "active_entries": 0,
                 "expired_entries": 0,
-                "cache_timeout_seconds": 3600
+                "cache_timeout_seconds": error_cache_timeout
             },
             "ai_interaction_statistics": {
                 "total_interactions": 0,
