@@ -1002,18 +1002,34 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         """
         Get simplified and more direct OCR prompt for medical documents
         """
-        return """Extract ALL visible text from this image exactly as it appears.
+        return """Extract ALL visible text from this medical document image with perfect structure preservation.
 
-RULES:
-- Read every word, number, and symbol you can see
-- Keep the exact structure and layout
-- Include all medical terms, dates, values, and units
-- For tables, preserve the table format
-- For lists, keep the list structure
-- Mark unclear text as [unclear]
-- Do NOT interpret or change anything - just extract the text
+**CRITICAL TABLE FORMATTING RULES:**
+- If you see a table, format it using pipe separators: | Column1 | Column2 | Column3 |
+- Each table row must be on its own line
+- Align columns consistently
+- Preserve headers and data relationships
+- Example table format:
+  | Parameter | Wert | Referenzbereich | Einheit |
+  | Glukose | 95 | 70-110 | mg/dl |
+  | Hämoglobin | 14.2 | 12.0-16.0 | g/dl |
 
-Start extracting the text now:"""
+**TEXT FORMATTING RULES:**
+- Keep paragraph structure with proper line breaks
+- Preserve headers, subheaders, and section divisions
+- Maintain list formatting (bullet points, numbers)
+- Keep date/time formatting intact
+- Preserve medical terminology exactly as written
+
+**QUALITY REQUIREMENTS:**
+- Extract every visible character, number, and symbol
+- Include all medical values, units, and reference ranges
+- Mark unclear text as [unclear] but try to read everything
+- Do NOT add extra line breaks between table rows
+- Do NOT split table cells across multiple lines
+- Do NOT interpret or change medical terms
+
+Begin text extraction with perfect structure preservation:"""
 
     def _calculate_vision_ocr_confidence(self, text: str) -> float:
         """
@@ -1045,13 +1061,25 @@ Start extracting the text now:"""
         confidence += min(found_terms * 0.01, 0.1)
 
         # Structure indicators (tables, lists)
-        if '|' in text or '- ' in text or '## ' in text:
-            confidence += 0.05
-
-        # Number indicators (likely measurements)
         import re
-        numbers_with_units = len(re.findall(r'\d+[.,]?\d*\s*(mg|ml|mmol|µg|ng|u/l|iu/l|%)', text, re.IGNORECASE))
-        confidence += min(numbers_with_units * 0.005, 0.05)
+
+        # Reward proper table formatting with pipes
+        table_rows = len(re.findall(r'\|.*\|.*\|', text))
+        if table_rows >= 2:  # At least header + one data row
+            confidence += min(table_rows * 0.01, 0.1)  # Up to 0.1 bonus for well-formatted tables
+            logger.debug(f"📊 Found {table_rows} properly formatted table rows, confidence boost: +{min(table_rows * 0.01, 0.1):.3f}")
+
+        # Basic structure indicators
+        if '|' in text or '- ' in text or '## ' in text:
+            confidence += 0.02
+
+        # Number indicators (likely measurements) - more weight for medical values
+        numbers_with_units = len(re.findall(r'\d+[.,]?\d*\s*(mg/dl|mmol/l|µg/l|ng/ml|u/l|iu/l|g/l|%|/µl)', text, re.IGNORECASE))
+        confidence += min(numbers_with_units * 0.008, 0.08)  # Higher reward for medical units
+
+        # Penalize weird line breaks (common OCR issue)
+        excessive_breaks = len(re.findall(r'\n\s*\n\s*\n', text))  # 3+ consecutive line breaks
+        confidence -= min(excessive_breaks * 0.02, 0.05)  # Penalty for formatting issues
 
         return min(confidence, 0.95)  # Cap at 95%
 
