@@ -551,21 +551,62 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   // Helper function to format model name for display
   const formatModelName = (modelName: string): string => {
     if (modelName === 'Loading...' || modelName === 'Unknown') return modelName;
-    // Shorten long model names for better display
+
+    // Dynamic model name formatting for better display
+
+    // Llama variants
     if (modelName.includes('Meta-Llama-3_3-70B-Instruct')) return 'Llama 3.3 70B (Quality)';
+    if (modelName.includes('Meta-Llama-3_3')) return 'Llama 3.3 (Quality)';
+    if (modelName.includes('Meta-Llama') || modelName.includes('llama')) return 'Llama (Quality)';
+
+    // Mistral variants
     if (modelName.includes('Mistral-Nemo-Instruct-2407')) return 'Mistral Nemo (Fast)';
-    return modelName;
+    if (modelName.includes('Mistral-Nemo')) return 'Mistral Nemo (Fast)';
+    if (modelName.includes('Mixtral-8x7B')) return 'Mixtral 8x7B (Quality)';
+    if (modelName.includes('Mixtral-8x22B')) return 'Mixtral 8x22B (Quality)';
+    if (modelName.includes('Mixtral')) return 'Mixtral (Quality)';
+    if (modelName.includes('Mistral') || modelName.includes('mistral')) return 'Mistral (Fast)';
+
+    // Qwen variants
+    if (modelName.includes('Qwen2.5-VL-72B-Instruct')) return 'Qwen 2.5 VL 72B (Vision)';
+    if (modelName.includes('Qwen2.5-VL')) return 'Qwen 2.5 VL (Vision)';
+    if (modelName.includes('Qwen2.5-72B')) return 'Qwen 2.5 72B (Quality)';
+    if (modelName.includes('Qwen2.5')) return 'Qwen 2.5 (Quality)';
+    if (modelName.includes('Qwen') || modelName.includes('qwen')) return 'Qwen (Quality)';
+
+    // Extract and format unknown models nicely
+    const cleanName = modelName
+      .replace(/[-_]/g, ' ')
+      .replace(/\b\d+B\b/g, (match) => `${match} (Quality)`)
+      .replace(/\bInstruct\b/i, '')
+      .replace(/\bChat\b/i, '')
+      .trim();
+
+    // Return shortened version if too long
+    return cleanName.length > 30 ? cleanName.substring(0, 27) + '...' : cleanName;
   };
 
   // Helper function to get badge color based on model type
   const getModelBadgeClass = (modelName: string): string => {
-    if (modelName.includes('Mistral-Nemo')) {
-      return 'bg-green-100 text-green-800'; // Fast model - green
+    // Fast models - green
+    if (modelName.includes('Mistral-Nemo') || modelName.includes('mistral')) {
+      return 'bg-green-100 text-green-800';
     }
-    if (modelName.includes('Meta-Llama-3_3')) {
-      return 'bg-purple-100 text-purple-800'; // Quality model - purple
+
+    // Vision models - blue
+    if (modelName.includes('VL') || modelName.includes('vision') || modelName.includes('Vision')) {
+      return 'bg-blue-100 text-blue-800';
     }
-    return 'bg-gray-100 text-gray-800'; // Default
+
+    // Quality models - purple
+    if (modelName.includes('Meta-Llama') || modelName.includes('llama') ||
+        modelName.includes('Mixtral') || modelName.includes('70B') ||
+        modelName.includes('72B') || modelName.includes('Qwen')) {
+      return 'bg-purple-100 text-purple-800';
+    }
+
+    // Default - gray
+    return 'bg-gray-100 text-gray-800';
   };
 
   if (!isOpen) return null;

@@ -1247,14 +1247,18 @@ async def get_model_configuration(authenticated: bool = Depends(verify_session_t
             "language_translation_prompt": ovh_client.preprocessing_model,  # Template-based translation
             "grammar_check_prompt": ovh_client.preprocessing_model,         # Grammar fixes (straightforward)
             "final_check_prompt": ovh_client.preprocessing_model,           # Final validation (not content creation)
-            "formatting_prompt": ovh_client.preprocessing_model             # Structure/layout changes
+            "formatting_prompt": ovh_client.preprocessing_model,            # Structure/layout changes
+
+            # VISION/OCR TASKS (Use Qwen Vision model for OCR processing)
+            "ocr_preprocessing_prompt": ovh_client.vision_model             # OCR text cleaning and structuring
         }
 
         # Environment variable info for reference
         environment_config = {
             "OVH_MAIN_MODEL": ovh_client.main_model,
             "OVH_PREPROCESSING_MODEL": ovh_client.preprocessing_model,
-            "OVH_TRANSLATION_MODEL": ovh_client.translation_model
+            "OVH_TRANSLATION_MODEL": ovh_client.translation_model,
+            "OVH_VISION_MODEL": ovh_client.vision_model
         }
 
         return {
@@ -1264,11 +1268,13 @@ async def get_model_configuration(authenticated: bool = Depends(verify_session_t
             "model_descriptions": {
                 ovh_client.main_model: "High-quality model for critical medical tasks (validation, classification, main translation, fact-checking)",
                 ovh_client.preprocessing_model: "Fast model for routine processing (PII removal, grammar, formatting, template translation, final checks)",
-                ovh_client.translation_model: "Reserved for specialized language translation tasks"
+                ovh_client.translation_model: "Reserved for specialized language translation tasks",
+                ovh_client.vision_model: "Vision model for OCR text extraction and post-processing (Qwen 2.5 VL)"
             },
             "optimization_info": {
                 "speed_optimized_steps": 5,
                 "quality_critical_steps": 4,
+                "vision_specialized_steps": 1,
                 "expected_speedup": "40-50% faster pipeline processing"
             }
         }

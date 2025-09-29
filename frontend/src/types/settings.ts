@@ -190,37 +190,42 @@ export interface PipelineStatsResponse {
   performance_improvements: Record<string, string>;
 }
 
-// Global prompt step descriptions for UI
+// Global prompt step descriptions for UI (ordered by pipeline step sequence)
 export const GLOBAL_PROMPT_STEPS = {
+  ocr_preprocessing_prompt: {
+    name: '👁️ OCR-Nachbearbeitung (Universal)',
+    description: 'Bereinigt und strukturiert OCR-extrahierte Texte - Schritt 0',
+    placeholder: 'Bereinige diesen OCR-Text und korrigiere erkannte Fehler...',
+    category: 'preprocessing',
+    order: 0
+  },
   medical_validation_prompt: {
     name: '🔍 Medizinische Validierung (Universal)',
-    description: 'Erkennt medizinische Inhalte - gilt für alle Dokumenttypen',
+    description: 'Erkennt medizinische Inhalte - gilt für alle Dokumenttypen - Schritt 1',
     placeholder: 'Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält...',
-    category: 'preprocessing'
+    category: 'preprocessing',
+    order: 1
   },
   classification_prompt: {
     name: '📋 Dokumentklassifizierung (Universal)',
-    description: 'Bestimmt den Dokumenttyp - gilt für alle Eingänge',
+    description: 'Bestimmt den Dokumenttyp - gilt für alle Eingänge - Schritt 2',
     placeholder: 'Analysiere diesen medizinischen Text und klassifiziere ihn als...',
-    category: 'preprocessing'
+    category: 'preprocessing',
+    order: 2
   },
   preprocessing_prompt: {
     name: '🔒 Datenbereinigung (Universal)',
-    description: 'Entfernt persönliche Daten - gilt für alle Dokumenttypen',
+    description: 'Entfernt persönliche Daten - gilt für alle Dokumenttypen - Schritt 3',
     placeholder: 'Entferne alle persönlichen Daten aus diesem Text...',
-    category: 'preprocessing'
+    category: 'preprocessing',
+    order: 3
   },
   language_translation_prompt: {
     name: '🌍 Sprachübersetzung (Universal)',
-    description: 'Template für Übersetzungen - gilt für alle Sprachen',
+    description: 'Template für Übersetzungen - gilt für alle Sprachen - Schritt 7',
     placeholder: 'Übersetze diesen Text in {language}...',
-    category: 'translation'
-  },
-  ocr_preprocessing_prompt: {
-    name: '👁️ OCR-Nachbearbeitung (Universal)',
-    description: 'Bereinigt und strukturiert OCR-extrahierte Texte',
-    placeholder: 'Bereinige diesen OCR-Text und korrigiere erkannte Fehler...',
-    category: 'preprocessing'
+    category: 'translation',
+    order: 7
   }
 };
 
