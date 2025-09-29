@@ -68,12 +68,12 @@ class HybridTextExtractor:
             self.local_ocr = None
             logger.info("ℹ️ Local OCR not available")
 
-        logger.info("🚀 Hybrid Text Extractor initialized")
-        logger.info(f"   - Quality Detector: ✅")
-        logger.info(f"   - Sequence Detector: ✅")
-        logger.info(f"   - Prompt Manager: {'⏳' if self.prompt_manager is None else '✅'}")
-        logger.info(f"   - OVH Vision: {'✅' if self.ovh_client.vision_client else '❌'}")
-        logger.info(f"   - Local OCR: {'✅' if self.local_ocr_available else '❌'}")
+        logger.debug("🚀 Hybrid Text Extractor initialized")
+        logger.debug(f"   - Quality Detector: ✅")
+        logger.debug(f"   - Sequence Detector: ✅")
+        logger.debug(f"   - Prompt Manager: {'⏳' if self.prompt_manager is None else '✅'}")
+        logger.debug(f"   - OVH Vision: {'✅' if self.ovh_client.vision_client else '❌'}")
+        logger.debug(f"   - Local OCR: {'✅' if self.local_ocr_available else '❌'}")
 
     def _get_prompt_manager(self):
         """Get or initialize prompt manager when needed"""
@@ -90,7 +90,7 @@ class HybridTextExtractor:
 
                 # Initialize the prompt manager with the session
                 self.prompt_manager = UnifiedPromptManager(session)
-                logger.info("✅ Unified Prompt Manager connected on demand")
+                logger.debug("✅ Unified Prompt Manager connected on demand")
 
             except Exception as e:
                 logger.warning(f"⚠️ Could not connect to Unified Prompt Manager: {e}")

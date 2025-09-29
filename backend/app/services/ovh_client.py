@@ -49,20 +49,21 @@ class OVHClient:
         # Initialize privacy filter for local PII removal
         if ADVANCED_FILTER_AVAILABLE:
             self.privacy_filter = AdvancedPrivacyFilter()
-            logger.info("🧠 Using AdvancedPrivacyFilter with spaCy NER")
+            logger.debug("🧠 Using AdvancedPrivacyFilter with spaCy NER")
         else:
             self.privacy_filter = SmartPrivacyFilter()
-            logger.info("📝 Using SmartPrivacyFilter (heuristic-based)")
+            logger.debug("📝 Using SmartPrivacyFilter (heuristic-based)")
         
-        # Debug logging for environment variables
-        logger.info(f"🔍 OVH Client Initialization:")
-        logger.info(f"   - Access Token: {'✅ Set' if self.access_token else '❌ NOT SET'}")
-        logger.info(f"   - Token Length: {len(self.access_token) if self.access_token else 0} chars")
-        logger.info(f"   - Base URL: {self.base_url}")
-        logger.info(f"   - Main Model: {self.main_model}")
-        logger.info(f"   - Vision Model: {self.vision_model}")
-        logger.info(f"   - Vision URL: {self.vision_base_url}")
-        logger.info(f"   - USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}")
+        # Debug logging for environment variables (only if debug enabled)
+        if logger.isEnabledFor(logging.DEBUG):
+            logger.debug(f"🔍 OVH Client Initialization:")
+            logger.debug(f"   - Access Token: {'✅ Set' if self.access_token else '❌ NOT SET'}")
+            logger.debug(f"   - Token Length: {len(self.access_token) if self.access_token else 0} chars")
+            logger.debug(f"   - Base URL: {self.base_url}")
+            logger.debug(f"   - Main Model: {self.main_model}")
+            logger.debug(f"   - Vision Model: {self.vision_model}")
+            logger.debug(f"   - Vision URL: {self.vision_base_url}")
+            logger.debug(f"   - USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}")
         
         if not self.access_token:
             logger.warning("⚠️ OVH_AI_ENDPOINTS_ACCESS_TOKEN not set - API calls will fail!")
@@ -106,9 +107,9 @@ class OVHClient:
             return False, error
             
         try:
-            logger.info(f"🔄 Testing OVH connection to {self.base_url}")
-            logger.info(f"   Using model: {self.main_model}")
-            logger.info(f"   Token (last 8 chars): ...{self.access_token[-8:] if self.access_token else 'NOT SET'}")
+            logger.debug(f"🔄 Testing OVH connection to {self.base_url}")
+            logger.debug(f"   Using model: {self.main_model}")
+            logger.debug(f"   Token (last 8 chars): ...{self.access_token[-8:] if self.access_token else 'NOT SET'}")
             
             # Try a simple completion to test connection
             response = await self.client.chat.completions.create(
@@ -186,7 +187,7 @@ class OVHClient:
         model_type = "fast" if use_fast_model else "high-quality"
 
         try:
-            logger.info(f"🚀 Processing with OVH {model_to_use} ({model_type})")
+            logger.debug(f"🚀 Processing with OVH {model_to_use} ({model_type})")
 
             # Use simple user message with the full prompt (like ollama)
             messages = [
@@ -206,7 +207,7 @@ class OVHClient:
             )
 
             result = response.choices[0].message.content
-            logger.info(f"✅ OVH processing successful with {model_to_use} ({model_type})")
+            logger.debug(f"✅ OVH processing successful with {model_to_use} ({model_type})")
             return result.strip()
 
         except Exception as e:
@@ -259,7 +260,7 @@ class OVHClient:
             return "Error: OVH API token not configured. Please set OVH_AI_ENDPOINTS_ACCESS_TOKEN in .env"
         
         try:
-            logger.info(f"🚀 Processing with OVH {self.main_model}")
+            logger.debug(f"🚀 Processing with OVH {self.main_model}")
             
             # Prepare the message
             messages = [
@@ -283,7 +284,7 @@ class OVHClient:
             )
             
             result = response.choices[0].message.content
-            logger.info(f"✅ OVH processing successful")
+            logger.debug(f"✅ OVH processing successful")
             return result.strip()
             
         except Exception as e:
@@ -335,11 +336,11 @@ class OVHClient:
         # SCHRITT 2: Optional zusätzliche Bereinigung mit OVH (wenn API verfügbar)
         # Dies ist jetzt optional - wenn OVH nicht verfügbar, verwenden wir nur lokale Bereinigung
         if not self.access_token:
-            logger.info("ℹ️ OVH API not configured, using local PII removal only")
+            logger.debug("ℹ️ OVH API not configured, using local PII removal only")
             return cleaned_text  # Return locally cleaned text
         
         try:
-            logger.info(f"🔧 Additional preprocessing with OVH {self.preprocessing_model}")
+            logger.debug(f"🔧 Additional preprocessing with OVH {self.preprocessing_model}")
             
             preprocess_prompt = """Du bist ein medizinischer Dokumentenbereiniger für Datenschutz und Übersichtlichkeit.
 
@@ -413,7 +414,7 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
             logger.info(f"   Total reduction from original: {len(text) - len(result)} characters")
             logger.info("-" * 40)
             
-            logger.info(f"✅ OVH preprocessing successful with {self.preprocessing_model}")
+            logger.debug(f"✅ OVH preprocessing successful with {self.preprocessing_model}")
             logger.info("=" * 80)
             logger.info("📄 PREPROCESSING PIPELINE COMPLETED")
             logger.info("=" * 80)
@@ -446,7 +447,7 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
             return simplified_text, 0.0
         
         try:
-            logger.info(f"🌐 Translating to {target_language} with OVH {self.translation_model}")
+            logger.debug(f"🌐 Translating to {target_language} with OVH {self.translation_model}")
             
             if custom_prompt:
                 # Use custom prompt and replace placeholders
@@ -484,7 +485,7 @@ TEXT ZUM ÜBERSETZEN:
             )
             
             result = response.choices[0].message.content
-            logger.info(f"✅ OVH language translation successful")
+            logger.debug(f"✅ OVH language translation successful")
             
             # Improve formatting for bullet points and arrows
             result = self._improve_formatting(result)

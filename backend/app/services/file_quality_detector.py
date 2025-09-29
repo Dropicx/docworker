@@ -157,6 +157,7 @@ class FileQualityDetector:
             logger.info(f"   - Has tables: {analysis['has_tables']}")
             logger.info(f"   - Strategy: {strategy.value}")
             logger.info(f"   - Complexity: {complexity.value}")
+            logger.info(f"   - Decision reason: {analysis.get('reasons', ['unknown'])[-1]}")
 
             return strategy, complexity, analysis
 
@@ -293,6 +294,18 @@ class FileQualityDetector:
             analysis["reasons"].append("good_embedded_text_no_tables")
             return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.SIMPLE
 
+        # High quality text regardless of coverage - prioritize cost savings
+        if text_quality >= 0.9 and text_coverage >= 0.6:
+            analysis["reasons"].append("very_high_quality_text_cost_optimization")
+            # Excellent quality (0.9+) should always try local extraction first
+            return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.MODERATE
+
+        # High quality text with moderate coverage - cost optimization
+        if text_quality >= 0.8 and text_coverage >= 0.5:
+            analysis["reasons"].append("high_quality_moderate_coverage_cost_optimization")
+            # High quality (0.8+) with reasonable coverage should use local extraction
+            return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.MODERATE
+
         # Moderate embedded text
         if text_coverage >= 0.5 and text_quality >= 0.4:
             analysis["reasons"].append("moderate_embedded_text")
@@ -301,7 +314,12 @@ class FileQualityDetector:
             elif not has_tables:
                 return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.MODERATE  # Try local first
             else:
-                return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
+                # Only use Vision LLM if quality is not high enough for local extraction
+                if text_quality >= 0.7:
+                    analysis["reasons"].append("moderate_coverage_decent_quality_try_local")
+                    return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.MODERATE
+                else:
+                    return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
 
         # Poor or no embedded text - likely scanned
         analysis["reasons"].append("poor_or_no_embedded_text")
