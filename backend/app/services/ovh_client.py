@@ -932,8 +932,8 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             # OVH endpoints may have different structure than OpenAI
             logger.info(f"🚀 Calling Qwen 2.5 VL vision API at {self.vision_base_url}")
 
-            # Try direct HTTP call with optimized timeout for vision processing
-            vision_timeout = 45.0  # Shorter timeout for individual vision calls
+            # Try direct HTTP call with reasonable timeout for vision processing
+            vision_timeout = 90.0  # Longer timeout for complex vision processing
             async with httpx.AsyncClient(timeout=vision_timeout) as client:
                 headers = {
                     "Authorization": f"Bearer {self.access_token}",
@@ -948,34 +948,19 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                     "temperature": 0.1
                 }
 
-                # Try different endpoint paths based on OVH documentation
-                endpoints_to_try = [
-                    f"{self.vision_base_url}/api/openai_compat/v1/chat/completions",  # OVH specific format
-                    f"{self.vision_base_url}/v1/chat/completions",
-                    f"{self.vision_base_url}/chat/completions"
-                ]
+                # Use the correct OVH vision endpoint only
+                endpoint_url = f"{self.vision_base_url}/api/openai_compat/v1/chat/completions"
 
-                last_error = None
-                for endpoint_url in endpoints_to_try:
-                    try:
-                        logger.info(f"🔄 Trying endpoint: {endpoint_url}")
-                        response = await client.post(endpoint_url, headers=headers, json=payload)
+                logger.info(f"🔄 Calling endpoint: {endpoint_url}")
+                response = await client.post(endpoint_url, headers=headers, json=payload)
 
-                        if response.status_code == 200:
-                            response_data = response.json()
-                            logger.info(f"✅ Success with endpoint: {endpoint_url}")
-                            break
-                        else:
-                            logger.warning(f"❌ Failed {endpoint_url}: {response.status_code} - {response.text[:200]}")
-                            last_error = f"HTTP {response.status_code}: {response.text}"
-
-                    except Exception as e:
-                        logger.warning(f"❌ Exception with {endpoint_url}: {e}")
-                        last_error = str(e)
-                        continue
+                if response.status_code == 200:
+                    response_data = response.json()
+                    logger.info(f"✅ Success with endpoint: {endpoint_url}")
                 else:
-                    # None of the endpoints worked
-                    raise Exception(f"All vision API endpoints failed. Last error: {last_error}")
+                    error_text = response.text
+                    logger.error(f"❌ Vision API failed {response.status_code}: {error_text[:200]}")
+                    raise Exception(f"Vision API error {response.status_code}: {error_text}")
 
             # Parse response from the successful endpoint call
             if 'choices' in response_data and len(response_data['choices']) > 0:
@@ -997,12 +982,20 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             return extracted_text.strip(), confidence
 
         except Exception as e:
-            logger.error(f"❌ Vision OCR failed: {e}")
-            # Log more details about the error
-            logger.error(f"   Vision Base URL: {self.vision_base_url}")
-            logger.error(f"   Vision Model: {self.vision_model}")
-            logger.error(f"   Messages structure: {len(messages)} messages")
-            return f"Vision OCR error: {str(e)}", 0.0
+            error_msg = str(e)
+            logger.error(f"❌ Vision OCR failed: {error_msg}")
+
+            # Provide specific error messages
+            if "timeout" in error_msg.lower():
+                return "Vision OCR timeout - document may be too complex or server overloaded", 0.0
+            elif "404" in error_msg:
+                return "Vision API endpoint not found - service may be temporarily unavailable", 0.0
+            elif "401" in error_msg or "unauthorized" in error_msg.lower():
+                return "Vision API authentication failed - token may be invalid", 0.0
+            elif "429" in error_msg or "rate" in error_msg.lower():
+                return "Vision API rate limit exceeded - too many concurrent requests", 0.0
+            else:
+                return f"Vision OCR error: {error_msg}", 0.0
 
     def _get_medical_ocr_prompt(self) -> str:
         """
@@ -1089,7 +1082,7 @@ Start extracting the text now:"""
         logger.info("🚀 Starting parallel OCR processing for all images")
 
         # Limit concurrent API calls to prevent overwhelming OVH servers
-        semaphore = asyncio.Semaphore(3)  # Max 3 concurrent vision API calls
+        semaphore = asyncio.Semaphore(2)  # Max 2 concurrent vision API calls for stability
 
         async def process_single_image(i: int, image: Union[bytes, Image.Image]) -> dict:
             """Process a single image and return result with concurrency control"""
