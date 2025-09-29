@@ -1175,11 +1175,16 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                             Das System verwendet intelligente Strategien für optimale Texterkennung:
                           </p>
                           <ul className="text-sm text-blue-700 mt-2 space-y-1">
-                            <li>• <strong>Bedingt:</strong> Automatische Wahl zwischen lokaler und KI-basierter OCR</li>
-                            <li>• <strong>Nur Vision-KI:</strong> Ausschließlich Qwen 2.5 VL für alle Dokumente</li>
-                            <li>• <strong>Nur lokal:</strong> Traditionelle OCR-Bibliotheken</li>
-                            <li>• <strong>Hybrid:</strong> Kombination aller verfügbaren Methoden</li>
+                            <li>• <strong>Bedingt (Empfohlen):</strong> Automatische Wahl zwischen lokaler und KI-basierter OCR basierend auf Bildqualität</li>
+                            <li>• <strong>Nur Vision-KI:</strong> Ausschließlich Qwen 2.5 VL für alle Bilder und PDFs</li>
+                            <li>• <strong>Nur lokal:</strong> Traditionelle OCR-Bibliotheken (Tesseract)</li>
+                            <li>• <strong>Hybrid:</strong> Kombination aller verfügbaren Methoden mit Qualitätsprüfung</li>
                           </ul>
+                          <div className="mt-3 p-2 bg-blue-100 rounded-lg">
+                            <p className="text-sm text-blue-800">
+                              <strong>💡 Intelligente Verarbeitung:</strong> OCR läuft nur bei Bildern/PDFs. Text-Dateien werden direkt verarbeitet.
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1452,21 +1457,34 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       {/* Universal Steps */}
                       <div className="mb-6">
                         <h5 className="text-md font-semibold text-blue-900 mb-3 flex items-center">
-                          🌐 Universelle Schritte (1-4, 8-9)
+                          🌐 Universelle Schritte (0-4, 8-9)
                         </h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {[
-                            { key: 'enable_text_extraction', name: '1. Text-Extraktion (OCR)', desc: 'Enhanced OCR mit intelligenter Strategie-Wahl - MUSS ZUERST ausgeführt werden', order: 1 },
-                            { key: 'enable_medical_validation', name: '2. Medizinische Validierung', desc: 'Prüft ob extrahierter Text medizinischen Inhalt enthält', order: 2 },
-                            { key: 'enable_classification', name: '3. Klassifizierung', desc: 'Erkennt Dokumenttyp (Arztbrief, Befund, etc.)', order: 3 },
-                            { key: 'enable_preprocessing', name: '4. Vorverarbeitung', desc: 'Entfernt persönliche Daten (PII)', order: 4 },
-                            { key: 'enable_language_translation', name: '8. Sprachübersetzung', desc: 'Übersetzt in Zielsprache', order: 8 },
-                            { key: 'enable_final_check', name: '9. Finale Kontrolle', desc: 'Qualitätssicherung und Validierung', order: 9 }
-                          ].map(({ key, name, desc, order }) => (
-                            <div key={key} className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            { key: 'enable_text_extraction', name: '0. Text-Extraktion (Bedingt)', desc: '📄 Nur bei Bildern/PDFs - Springt über bei Text-Dateien', order: 0, conditional: true },
+                            { key: 'enable_medical_validation', name: '1. Medizinische Validierung', desc: 'Prüft ob Text medizinischen Inhalt enthält', order: 1 },
+                            { key: 'enable_classification', name: '2. Klassifizierung', desc: 'Erkennt Dokumenttyp (Arztbrief, Befund, etc.)', order: 2 },
+                            { key: 'enable_preprocessing', name: '3. Vorverarbeitung', desc: 'Entfernt persönliche Daten (PII)', order: 3 },
+                            { key: 'enable_language_translation', name: '7. Sprachübersetzung', desc: 'Übersetzt in Zielsprache', order: 7 },
+                            { key: 'enable_final_check', name: '8. Finale Kontrolle', desc: 'Qualitätssicherung und Validierung', order: 8 }
+                          ].map(({ key, name, desc, order, conditional }) => (
+                            <div key={key} className={`flex items-center justify-between p-3 rounded-lg border ${
+                              conditional ? 'bg-yellow-50 border-yellow-200' : 'bg-blue-50 border-blue-200'
+                            }`}>
                               <div>
-                                <h6 className="text-sm font-medium text-blue-900">{name}</h6>
-                                <p className="text-xs text-blue-600">{desc}</p>
+                                <div className="flex items-center space-x-2">
+                                  <h6 className={`text-sm font-medium ${
+                                    conditional ? 'text-yellow-900' : 'text-blue-900'
+                                  }`}>{name}</h6>
+                                  {conditional && (
+                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                      Auto
+                                    </span>
+                                  )}
+                                </div>
+                                <p className={`text-xs ${
+                                  conditional ? 'text-yellow-600' : 'text-blue-600'
+                                }`}>{desc}</p>
                               </div>
                               <button
                                 onClick={() => handleSettingsUpdate(key as keyof PipelineSettings, !(pipelineSettings as any)[key])}
@@ -1489,14 +1507,14 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       {/* Document-Specific Steps */}
                       <div>
                         <h5 className="text-md font-semibold text-green-900 mb-3 flex items-center">
-                          📄 Dokument-spezifische Schritte (5-7, 10)
+                          📄 Dokument-spezifische Schritte (4-6, 9)
                         </h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {[
-                            { key: 'enable_translation', name: '5. Übersetzung', desc: 'Übersetzt in verständliche Sprache (je Dokumenttyp unterschiedlich)', order: 5 },
-                            { key: 'enable_fact_check', name: '6. Faktenprüfung', desc: 'Prüft medizinische Korrektheit (je Dokumenttyp unterschiedlich)', order: 6 },
-                            { key: 'enable_grammar_check', name: '7. Grammatikprüfung', desc: 'Korrigiert Grammatik und Rechtschreibung', order: 7 },
-                            { key: 'enable_formatting', name: '10. Formatierung', desc: 'Strukturiert und formatiert den Text (je Dokumenttyp unterschiedlich)', order: 10 }
+                            { key: 'enable_translation', name: '4. Übersetzung', desc: 'Übersetzt in verständliche Sprache (je Dokumenttyp unterschiedlich)', order: 4 },
+                            { key: 'enable_fact_check', name: '5. Faktenprüfung', desc: 'Prüft medizinische Korrektheit (je Dokumenttyp unterschiedlich)', order: 5 },
+                            { key: 'enable_grammar_check', name: '6. Grammatikprüfung', desc: 'Korrigiert Grammatik und Rechtschreibung', order: 6 },
+                            { key: 'enable_formatting', name: '9. Formatierung', desc: 'Strukturiert und formatiert den Text (je Dokumenttyp unterschiedlich)', order: 9 }
                           ].map(({ key, name, desc, order }) => (
                             <div key={key} className="flex items-center justify-between p-3 bg-green-50 rounded-lg border border-green-200">
                               <div>

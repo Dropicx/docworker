@@ -50,17 +50,99 @@ async def process_document_unified(processing_id: str):
             ai_logger = AILoggingService(db)
             ovh_client = OVHClient()
             
-            # Get extracted text
+            # Step 0: Conditional Text Extraction (OCR if needed)
             extracted_text = processing_data.get("extracted_text", "")
+
             if not extracted_text:
-                print(f"❌ No extracted text found: {processing_id[:8]}")
+                print(f"📄 No pre-extracted text found - checking if OCR needed: {processing_id[:8]}")
+
+                # Check if we have file content that needs OCR
+                file_content = processing_data.get("file_content")
+                file_type = processing_data.get("file_type", "")
+                filename = processing_data.get("filename", "")
+
+                if file_content and file_type:
+                    # Check if file type requires OCR (images, PDFs)
+                    needs_ocr = file_type.lower() in ['pdf', 'jpg', 'jpeg', 'png', 'tiff', 'bmp', 'gif']
+
+                    if needs_ocr:
+                        print(f"🔍 File type '{file_type}' requires OCR - starting text extraction")
+                        update_processing_store(processing_id, {
+                            "status": ProcessingStatus.PROCESSING,
+                            "progress_percent": 5,
+                            "current_step": "Extracting text from image/PDF..."
+                        })
+
+                        # Import and use the hybrid text extractor for conditional OCR
+                        from app.services.hybrid_text_extractor import HybridTextExtractor
+
+                        try:
+                            hybrid_extractor = HybridTextExtractor()
+                            extracted_text, extraction_confidence = await hybrid_extractor.extract_text(
+                                file_content, file_type, filename
+                            )
+
+                            if extracted_text and len(extracted_text.strip()) >= 10:
+                                # Store extracted text for future use
+                                processing_data["extracted_text"] = extracted_text
+                                processing_data["extraction_confidence"] = extraction_confidence
+                                processing_data["extraction_method"] = "hybrid_ocr"
+                                update_processing_store(processing_id, processing_data)
+
+                                print(f"✅ Text extracted successfully: {len(extracted_text)} chars (confidence: {extraction_confidence:.2%})")
+                            else:
+                                raise Exception("Insufficient text extracted from document")
+
+                        except Exception as e:
+                            print(f"❌ OCR extraction failed: {e}")
+                            update_processing_store(processing_id, {
+                                "status": ProcessingStatus.ERROR,
+                                "error": f"Text extraction failed: {str(e)}",
+                                "error_at": datetime.now()
+                            })
+                            return
+                    else:
+                        # File type doesn't need OCR (e.g., plain text files)
+                        if file_type.lower() in ['txt', 'text']:
+                            try:
+                                extracted_text = file_content.decode('utf-8') if isinstance(file_content, bytes) else str(file_content)
+                                print(f"📝 Text file processed directly: {len(extracted_text)} chars")
+                            except Exception as e:
+                                print(f"❌ Failed to decode text file: {e}")
+                                update_processing_store(processing_id, {
+                                    "status": ProcessingStatus.ERROR,
+                                    "error": f"Failed to process text file: {str(e)}",
+                                    "error_at": datetime.now()
+                                })
+                                return
+                        else:
+                            print(f"❌ Unsupported file type for processing: {file_type}")
+                            update_processing_store(processing_id, {
+                                "status": ProcessingStatus.ERROR,
+                                "error": f"Unsupported file type: {file_type}",
+                                "error_at": datetime.now()
+                            })
+                            return
+                else:
+                    print(f"❌ No file content available for processing: {processing_id[:8]}")
+                    update_processing_store(processing_id, {
+                        "status": ProcessingStatus.ERROR,
+                        "error": "No file content found for processing",
+                        "error_at": datetime.now()
+                    })
+                    return
+            else:
+                print(f"✅ Using pre-extracted text: {len(extracted_text)} chars")
+
+            if not extracted_text:
+                print(f"❌ No text available after extraction: {processing_id[:8]}")
                 update_processing_store(processing_id, {
                     "status": ProcessingStatus.ERROR,
-                    "error": "No extracted text found",
+                    "error": "No text extracted or provided",
                     "error_at": datetime.now()
                 })
                 return
-            
+
             print(f"📄 Processing text: {len(extracted_text)} characters")
             start_time = time.time()
             
