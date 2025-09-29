@@ -109,4 +109,28 @@ class HealthCheck(BaseModel):
     status: str
     timestamp: datetime = Field(default_factory=datetime.now)
     services: Dict[str, str] = Field(default_factory=dict)
-    memory_usage: Optional[Dict[str, Any]] = None 
+    memory_usage: Optional[Dict[str, Any]] = None
+
+class ProcessingResponse(BaseModel):
+    """Response model for multi-file processing results"""
+    processing_id: str = Field(..., description="Unique processing identifier")
+    status: ProcessingStatus = Field(..., description="Current processing status")
+    files_processed: int = Field(..., description="Number of files processed")
+    total_files: int = Field(..., description="Total number of files to process")
+    extracted_text: Optional[str] = Field(None, description="Combined extracted text from all files")
+    translated_text: Optional[str] = Field(None, description="Translated text")
+    confidence_score: Optional[float] = Field(None, description="Overall confidence score", ge=0, le=1)
+    processing_time_seconds: Optional[float] = Field(None, description="Total processing time")
+    error_message: Optional[str] = Field(None, description="Error message if processing failed")
+    file_details: Optional[List[Dict[str, Any]]] = Field(None, description="Details about each processed file")
+    timestamp: datetime = Field(default_factory=datetime.now)
+
+class CustomPrompts(BaseModel):
+    """Custom prompts for document processing"""
+    medical_analysis_prompt: Optional[str] = Field(None, description="Custom prompt for medical document analysis")
+    translation_prompt: Optional[str] = Field(None, description="Custom prompt for translation")
+    preprocessing_prompt: Optional[str] = Field(None, description="Custom prompt for text preprocessing")
+    ocr_prompt: Optional[str] = Field(None, description="Custom prompt for OCR processing")
+
+    class Config:
+        extra = "allow"  # Allow additional prompt fields 
