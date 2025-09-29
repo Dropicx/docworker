@@ -119,7 +119,8 @@ async def get_universal_prompts(
         if not universal_prompts:
             # Create default universal prompts
             universal_prompts = unified_manager.create_default_universal_prompts()
-            unified_manager.save_universal_prompts(universal_prompts)
+            universal_prompts.is_active = True
+            db.add(universal_prompts)
             db.commit()
         
         return {
@@ -161,33 +162,30 @@ async def update_universal_prompts(
     try:
         unified_manager = UnifiedPromptManager(db)
         universal_prompts = unified_manager.get_universal_prompts()
-        
+
         if not universal_prompts:
             universal_prompts = unified_manager.create_default_universal_prompts()
-        
-        # Update prompts
+            universal_prompts.is_active = True
+            db.add(universal_prompts)
+            db.flush()  # Ensure it gets an ID
+
+        # Update prompts directly
         for key, value in update_request.prompts.items():
             if hasattr(universal_prompts, key):
                 setattr(universal_prompts, key, value)
-        
+
         universal_prompts.last_modified = datetime.now()
         universal_prompts.modified_by = update_request.user or "settings_ui"
-        
-        success = unified_manager.save_universal_prompts(universal_prompts)
 
-        if success:
-            db.commit()
-            logger.info(f"Updated universal prompts by {update_request.user or 'unknown'}")
-            return {
-                "success": True,
-                "message": "Universal prompts updated successfully",
-                "version": universal_prompts.version
-            }
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to save universal prompts"
-            )
+        # Commit - SQLAlchemy will automatically generate UPDATE
+        db.commit()
+
+        logger.info(f"Updated universal prompts by {update_request.user or 'unknown'}")
+        return {
+            "success": True,
+            "message": "Universal prompts updated successfully",
+            "version": universal_prompts.version
+        }
     except Exception as e:
         logger.error(f"Failed to update universal prompts: {e}")
         db.rollback()
@@ -221,7 +219,8 @@ async def get_document_prompts(
         if not specific_prompts:
             # Create default document-specific prompts
             specific_prompts = unified_manager.create_default_document_specific_prompts(doc_class)
-            unified_manager.save_document_specific_prompts(doc_class, specific_prompts)
+            specific_prompts.document_type = doc_class.value.upper()
+            db.add(specific_prompts)
             db.commit()
         
         # Get combined prompts (universal + document-specific)
@@ -282,41 +281,43 @@ async def update_document_prompts(
         # Convert document type
         doc_class = DocumentClass(document_type.upper())
 
-        # Use dependency-injected session instead of manual session management
         unified_manager = UnifiedPromptManager(db)
 
         # Get or create document-specific prompts
         specific_prompts = unified_manager.get_document_specific_prompts(doc_class)
         if not specific_prompts:
             specific_prompts = unified_manager.create_default_document_specific_prompts(doc_class)
+            specific_prompts.document_type = doc_class.value.upper()
+            db.add(specific_prompts)
+            db.flush()  # Ensure it gets an ID
 
         # Separate universal and document-specific prompts
         universal_prompt_fields = [
             "medical_validation_prompt", "classification_prompt", "preprocessing_prompt",
-            "language_translation_prompt"
+            "language_translation_prompt", "grammar_check_prompt"  # Added missing field!
         ]
         document_specific_prompt_fields = [
             "translation_prompt", "fact_check_prompt", "grammar_check_prompt",
             "final_check_prompt", "formatting_prompt"
         ]
 
-        # Update document-specific prompts
+        # Track if we need to update anything
+        doc_updated = False
+        universal_updated = False
+
+        # Update document-specific prompts directly
         for key, value in update_request.prompts.items():
             if key in document_specific_prompt_fields and hasattr(specific_prompts, key):
                 setattr(specific_prompts, key, value)
+                doc_updated = True
 
-        specific_prompts.last_modified = datetime.now()
-        specific_prompts.modified_by = update_request.user or "settings_ui"
-
-        # Save document-specific prompts
-        success = unified_manager.save_document_specific_prompts(doc_class, specific_prompts)
-        if not success:
-            raise Exception("Failed to save document-specific prompts")
+        if doc_updated:
+            specific_prompts.last_modified = datetime.now()
+            specific_prompts.modified_by = update_request.user or "settings_ui"
 
         # Update universal prompts if any were provided
         universal_prompts = unified_manager.get_universal_prompts()
         if universal_prompts:
-            universal_updated = False
             for key, value in update_request.prompts.items():
                 if key in universal_prompt_fields and hasattr(universal_prompts, key):
                     setattr(universal_prompts, key, value)
@@ -325,11 +326,8 @@ async def update_document_prompts(
             if universal_updated:
                 universal_prompts.last_modified = datetime.now()
                 universal_prompts.modified_by = update_request.user or "settings_ui"
-                universal_success = unified_manager.save_universal_prompts(universal_prompts)
-                if not universal_success:
-                    raise Exception("Failed to save universal prompts")
 
-        # Commit all changes at once
+        # Commit all changes at once - SQLAlchemy will automatically generate UPDATEs
         db.commit()
 
         logger.info(f"Updated document prompts for {document_type} by {update_request.user or 'unknown'}")
@@ -374,9 +372,10 @@ async def get_pipeline_steps(
         
         # Create default steps if none exist
         if not steps:
-            unified_manager.create_default_pipeline_steps()
-            db.commit()
-            steps = unified_manager.get_pipeline_steps()
+            success = unified_manager.create_default_pipeline_steps()
+            if success:
+                db.commit()
+                steps = unified_manager.get_pipeline_steps()
         
         pipeline_steps = {}
         for step in steps:
