@@ -58,11 +58,10 @@ class UnifiedPromptManager:
                 prompts.last_modified = datetime.now()
                 self.session.add(prompts)
             
-            self.session.commit()
+            # Don't commit here - let the caller handle it
             return True
         except Exception as e:
             logger.error(f"Failed to save universal prompts: {e}")
-            self.session.rollback()
             return False
     
     def create_default_universal_prompts(self) -> UniversalPromptsDB:
@@ -115,11 +114,10 @@ class UnifiedPromptManager:
                 prompts.last_modified = datetime.now()
                 self.session.add(prompts)
             
-            self.session.commit()
+            # Don't commit here - let the caller handle it
             return True
         except Exception as e:
             logger.error(f"Failed to save document-specific prompts for {document_type.value}: {e}")
-            self.session.rollback()
             return False
     
     def create_default_document_specific_prompts(self, document_type: DocumentClass) -> DocumentSpecificPromptsDB:

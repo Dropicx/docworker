@@ -281,6 +281,8 @@ async def update_document_prompts(
         # Get database session
         db = next(get_session())
         try:
+            # Ensure session is clean
+            db.rollback()
             unified_manager = UnifiedPromptManager(db)
             
             # Get or create document-specific prompts
@@ -326,6 +328,9 @@ async def update_document_prompts(
                     universal_success = unified_manager.save_universal_prompts(universal_prompts)
                     if not universal_success:
                         raise Exception("Failed to save universal prompts")
+            
+            # Commit all changes at once
+            db.commit()
             
             logger.info(f"Updated document prompts for {document_type} by {update_request.user or 'unknown'}")
             return {
