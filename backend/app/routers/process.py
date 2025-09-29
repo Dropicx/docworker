@@ -4,7 +4,8 @@ import time
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Request
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Request, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.responses import StreamingResponse
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -33,6 +34,25 @@ import os
 
 # Setup logging
 logger = logging.getLogger(__name__)
+
+# Authentication setup
+security = HTTPBearer()
+
+def verify_session_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> bool:
+    """Verify session token for pipeline statistics access."""
+    token = credentials.credentials
+    # Import here to avoid circular imports
+    from app.routers.settings_unified import active_sessions
+    if token in active_sessions:
+        if active_sessions[token] > datetime.now():
+            return True
+        else:
+            # Remove expired token
+            del active_sessions[token]
+    raise HTTPException(
+        status_code=401,
+        detail="Invalid or expired session token"
+    )
 
 # Smart text extractor selection based on OCR availability
 try:
@@ -576,10 +596,19 @@ async def get_active_processes(request: Request):
 # Global optimized pipeline instance removed - now using unified system
 
 @router.get("/process/pipeline-stats")
-async def get_pipeline_stats():
+async def get_pipeline_stats(
+    authenticated: bool = Depends(verify_session_token)
+):
     """
     Get comprehensive pipeline performance statistics from actual database data
+    Requires authentication via settings session token.
     """
+    if not authenticated:
+        raise HTTPException(
+            status_code=401,
+            detail="Authentication required to access pipeline statistics"
+        )
+
     try:
         # Get real statistics from database
         from app.database.connection import get_session

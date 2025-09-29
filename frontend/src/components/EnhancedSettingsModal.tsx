@@ -46,7 +46,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   const [updatingSettings, setUpdatingSettings] = useState(false);
 
   // Active tab for settings
-  const [activeTab, setActiveTab] = useState<'prompts' | 'global' | 'optimization'>('prompts');
+  const [activeTab, setActiveTab] = useState<'prompts' | 'global' | 'optimization' | 'statistics'>('prompts');
 
   // Global prompts state
   const [globalPrompts, setGlobalPrompts] = useState<GlobalPrompts | null>(null);
@@ -82,6 +82,13 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   useEffect(() => {
     if (isAuthenticated && activeTab === 'optimization') {
       loadPipelineSettings();
+      loadPipelineStats();
+    }
+  }, [isAuthenticated, activeTab]);
+
+  // Load pipeline stats for statistics tab
+  useEffect(() => {
+    if (isAuthenticated && activeTab === 'statistics') {
       loadPipelineStats();
     }
   }, [isAuthenticated, activeTab]);
@@ -572,6 +579,16 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         }`}
                       >
                         🚀 Pipeline-Optimierung
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('statistics')}
+                        className={`w-full text-left p-3 rounded-lg transition-all ${
+                          activeTab === 'statistics'
+                            ? 'bg-brand-100 text-brand-900 border border-brand-300'
+                            : 'hover:bg-primary-100 text-primary-700'
+                        }`}
+                      >
+                        📊 Statistiken
                       </button>
                     </div>
                   </div>
@@ -1203,6 +1220,135 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                     )}
                   </div>
                 ) : null
+              ) : activeTab === 'statistics' ? (
+                pipelineStats ? (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="text-xl font-bold text-primary-900">📊 Pipeline-Statistiken</h3>
+                      <p className="text-sm text-primary-600">
+                        Detaillierte Analyse der Verarbeitungsstatistiken und Performance-Metriken
+                      </p>
+                    </div>
+
+                    {/* Overview Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-xl p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-blue-700">Pipeline-Modus</p>
+                            <p className="text-2xl font-bold text-blue-900 capitalize">{pipelineStats.pipeline_mode}</p>
+                          </div>
+                          <div className="w-12 h-12 bg-blue-200 rounded-lg flex items-center justify-center">
+                            <span className="text-blue-600 text-xl">⚙️</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-xl p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-green-700">Cache Einträge</p>
+                            <p className="text-2xl font-bold text-green-900">{pipelineStats.cache_statistics.active_entries}</p>
+                            <p className="text-xs text-green-600">von {pipelineStats.cache_statistics.total_entries} gesamt</p>
+                          </div>
+                          <div className="w-12 h-12 bg-green-200 rounded-lg flex items-center justify-center">
+                            <span className="text-green-600 text-xl">💾</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-xl p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-purple-700">Cache Timeout</p>
+                            <p className="text-2xl font-bold text-purple-900">{pipelineStats.cache_statistics.cache_timeout_seconds}s</p>
+                            <p className="text-xs text-purple-600">{pipelineStats.cache_statistics.expired_entries} abgelaufen</p>
+                          </div>
+                          <div className="w-12 h-12 bg-purple-200 rounded-lg flex items-center justify-center">
+                            <span className="text-purple-600 text-xl">⏱️</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Cache Statistics Detail */}
+                    <div className="bg-white border border-primary-200 rounded-xl p-6">
+                      <h4 className="text-lg font-semibold text-primary-900 mb-4">💾 Cache-Statistiken</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between py-2 border-b border-primary-100">
+                            <span className="text-sm font-medium text-primary-700">Gesamte Einträge:</span>
+                            <span className="text-sm font-bold text-primary-900">{pipelineStats.cache_statistics.total_entries}</span>
+                          </div>
+                          <div className="flex items-center justify-between py-2 border-b border-primary-100">
+                            <span className="text-sm font-medium text-primary-700">Aktive Einträge:</span>
+                            <span className="text-sm font-bold text-success-600">{pipelineStats.cache_statistics.active_entries}</span>
+                          </div>
+                          <div className="flex items-center justify-between py-2 border-b border-primary-100">
+                            <span className="text-sm font-medium text-primary-700">Abgelaufene Einträge:</span>
+                            <span className="text-sm font-bold text-warning-600">{pipelineStats.cache_statistics.expired_entries}</span>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between py-2 border-b border-primary-100">
+                            <span className="text-sm font-medium text-primary-700">Timeout-Einstellung:</span>
+                            <span className="text-sm font-bold text-primary-900">{pipelineStats.cache_statistics.cache_timeout_seconds} Sekunden</span>
+                          </div>
+                          <div className="flex items-center justify-between py-2 border-b border-primary-100">
+                            <span className="text-sm font-medium text-primary-700">Cache-Effizienz:</span>
+                            <span className="text-sm font-bold text-brand-600">
+                              {pipelineStats.cache_statistics.total_entries > 0
+                                ? Math.round((pipelineStats.cache_statistics.active_entries / pipelineStats.cache_statistics.total_entries) * 100)
+                                : 0}%
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Performance Improvements */}
+                    <div className="bg-white border border-primary-200 rounded-xl p-6">
+                      <h4 className="text-lg font-semibold text-primary-900 mb-4">🚀 Performance-Verbesserungen</h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        {Object.entries(pipelineStats.performance_improvements).map(([key, description]) => (
+                          <div key={key} className="flex items-start space-x-3 p-3 bg-gradient-to-r from-success-50 to-green-50 border border-success-200 rounded-lg">
+                            <div className="w-6 h-6 bg-success-100 rounded-full flex items-center justify-center mt-0.5">
+                              <CheckCircle className="w-4 h-4 text-success-600" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-success-900 capitalize">{key.replace(/_/g, ' ')}</p>
+                              <p className="text-sm text-success-700">{description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="bg-gradient-to-r from-accent-50 to-brand-50 border border-accent-200 rounded-xl p-6">
+                      <h4 className="text-lg font-semibold text-primary-900 mb-4">🛠️ Aktionen</h4>
+                      <div className="flex items-center space-x-4">
+                        <button
+                          onClick={loadPipelineStats}
+                          className="btn-primary"
+                        >
+                          🔄 Statistiken aktualisieren
+                        </button>
+                        <button
+                          onClick={handleClearCache}
+                          className="btn-secondary"
+                        >
+                          🗑️ Cache leeren
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Loader2 className="w-8 h-8 animate-spin text-brand-600 mx-auto mb-4" />
+                    <p className="text-primary-600">Pipeline-Statistiken werden geladen...</p>
+                  </div>
+                )
               ) : null}
             </div>
           </div>
