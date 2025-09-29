@@ -1,4 +1,5 @@
 import asyncio
+import logging
 import time
 from datetime import datetime, timedelta
 from typing import Optional
@@ -29,6 +30,9 @@ from app.routers.process_unified import process_document_unified
 from app.database.connection import get_session
 from sqlalchemy.orm import Session
 import os
+
+# Setup logging
+logger = logging.getLogger(__name__)
 
 # Smart text extractor selection based on OCR availability
 try:
