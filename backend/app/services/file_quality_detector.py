@@ -404,24 +404,21 @@ class FileQualityDetector:
         has_tables = analysis.get("has_tables", False)
         has_images = analysis.get("has_images", False)
 
-        # High-quality embedded text - always use local extraction (cost-effective)
-        if text_coverage >= 0.9 and text_quality >= 0.7 and not has_tables:
-            analysis["reasons"].append("high_quality_embedded_text")
+        # PRIORITY 1: Table detection - if tables detected, use Vision LLM for accuracy
+        if has_tables:
+            analysis["reasons"].append("tables_detected_require_vision_llm")
+            if text_coverage >= 0.8 and text_quality >= 0.6:
+                return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
+            else:
+                return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX
+
+        # PRIORITY 2: High-quality embedded text WITHOUT tables - use local extraction (cost-effective)
+        if text_coverage >= 0.9 and text_quality >= 0.7:
+            analysis["reasons"].append("high_quality_embedded_text_no_tables")
             return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.SIMPLE
 
-        # Very high-quality text with simple tables - try local first (cost optimization)
-        if text_coverage >= 0.9 and text_quality >= 0.8 and has_tables:
-            analysis["reasons"].append("high_quality_text_with_simple_tables")
-            # For very clean PDFs, even with tables, try local extraction first
-            return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.MODERATE
-
-        # Good embedded text but with complex tables - use vision LLM
-        if text_coverage >= 0.8 and text_quality >= 0.6 and has_tables:
-            analysis["reasons"].append("good_text_with_complex_tables")
-            return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX
-
         # Good embedded text without tables - use local (cost-effective)
-        if text_coverage >= 0.7 and text_quality >= 0.6 and not has_tables:
+        if text_coverage >= 0.7 and text_quality >= 0.6:
             analysis["reasons"].append("good_embedded_text_no_tables")
             return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.SIMPLE
 
