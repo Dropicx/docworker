@@ -19,15 +19,24 @@ class OVHClient:
     """
     Client for OVH AI Endpoints using Meta-Llama-3.3-70B-Instruct
     """
-    
+
     def __init__(self):
         self.access_token = os.getenv("OVH_AI_ENDPOINTS_ACCESS_TOKEN")
         self.base_url = os.getenv("OVH_AI_BASE_URL", "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1")
-        
+
         # Different models for different tasks
         self.main_model = os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct")
         self.preprocessing_model = os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407")
         self.translation_model = os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
+
+        # Define which prompt types should use fast model for speed optimization
+        self.fast_model_prompt_types = {
+            'preprocessing_prompt',
+            'language_translation_prompt',
+            'grammar_check_prompt',
+            'final_check_prompt',
+            'formatting_prompt'
+        }
         
         # Initialize privacy filter for local PII removal
         if ADVANCED_FILTER_AVAILABLE:
@@ -120,23 +129,48 @@ class OVHClient:
                 logger.error(f"   → {error}")
             
             return False, error
-    
+
+    def should_use_fast_model(self, prompt_type: str = None, task_description: str = None) -> bool:
+        """
+        Determine whether to use fast model based on prompt type or task description.
+        Fast model is used for routine tasks to improve speed.
+        """
+        if prompt_type and prompt_type in self.fast_model_prompt_types:
+            return True
+
+        # Additional heuristics based on task description
+        if task_description:
+            task_lower = task_description.lower()
+            speed_optimized_keywords = [
+                'grammar', 'formatting', 'format', 'structure', 'layout',
+                'final check', 'validation', 'template', 'language_translation'
+            ]
+            return any(keyword in task_lower for keyword in speed_optimized_keywords)
+
+        return False
+
     async def process_medical_text_with_prompt(
         self,
         full_prompt: str,
         temperature: float = 0.3,
-        max_tokens: int = 4000
+        max_tokens: int = 4000,
+        use_fast_model: bool = False
     ) -> str:
         """
         Process medical text with complete prompt (identical to ollama_client.py format)
+        Now supports fast model for routine tasks to improve speed
         """
         if not self.access_token:
             logger.error("❌ OVH API token not configured")
             return "Error: OVH API token not configured. Please set OVH_AI_ENDPOINTS_ACCESS_TOKEN in .env"
-        
+
+        # Choose model based on task type
+        model_to_use = self.preprocessing_model if use_fast_model else self.main_model
+        model_type = "fast" if use_fast_model else "high-quality"
+
         try:
-            logger.info(f"🚀 Processing with OVH {self.main_model}")
-            
+            logger.info(f"🚀 Processing with OVH {model_to_use} ({model_type})")
+
             # Use simple user message with the full prompt (like ollama)
             messages = [
                 {
@@ -144,24 +178,46 @@ class OVHClient:
                     "content": full_prompt
                 }
             ]
-            
+
             # Make the API call using OpenAI client
             response = await self.client.chat.completions.create(
-                model=self.main_model,
+                model=model_to_use,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
                 top_p=0.9
             )
-            
+
             result = response.choices[0].message.content
-            logger.info(f"✅ OVH processing successful")
+            logger.info(f"✅ OVH processing successful with {model_to_use} ({model_type})")
             return result.strip()
-            
+
         except Exception as e:
             logger.error(f"❌ OVH API error: {e}")
             return f"Error processing with OVH API: {str(e)}"
-    
+
+    async def process_prompt_with_optimization(
+        self,
+        full_prompt: str,
+        prompt_type: str = None,
+        temperature: float = 0.3,
+        max_tokens: int = 4000
+    ) -> str:
+        """
+        Process a prompt with automatic model optimization based on prompt type.
+        This is the recommended method for processing prompts in the pipeline.
+        """
+        use_fast = self.should_use_fast_model(prompt_type=prompt_type)
+
+        logger.info(f"🔄 Processing prompt type '{prompt_type}' with {'fast' if use_fast else 'high-quality'} model")
+
+        return await self.process_medical_text_with_prompt(
+            full_prompt=full_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            use_fast_model=use_fast
+        )
+
     async def process_medical_text(
         self, 
         text: str,
@@ -527,11 +583,12 @@ ORIGINAL MEDIZINISCHER TEXT:
 
 ÜBERSETZUNG IN EINFACHER SPRACHE:"""
             
-            # Process with OVH API using the formatted prompt
+            # Process with OVH API using the formatted prompt (main translation - use high-quality model)
             translated_text = await self.process_medical_text_with_prompt(
                 full_prompt=full_prompt,
                 temperature=0.3,
-                max_tokens=4000
+                max_tokens=4000,
+                use_fast_model=False  # Main translation needs quality
             )
             
             # Log the translated text
@@ -769,11 +826,15 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             if not text or not formatting_prompt:
                 return text
             
-            # Use the medical text processing with the formatting prompt
+            # Create full prompt for formatting
+            full_prompt = f"{formatting_prompt}\n\nTEXT TO FORMAT:\n{text}"
+
+            # Use the medical text processing with the formatting prompt (use fast model for formatting)
             formatted_text = await self.process_medical_text_with_prompt(
-                text=text,
-                prompt=formatting_prompt,
-                model_name="llama-3.3-70b-instruct"
+                full_prompt=full_prompt,
+                temperature=0.3,
+                max_tokens=4000,
+                use_fast_model=True  # Formatting is routine task - use fast model
             )
             
             # Apply additional formatting improvements

@@ -501,9 +501,20 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   const formatModelName = (modelName: string): string => {
     if (modelName === 'Loading...' || modelName === 'Unknown') return modelName;
     // Shorten long model names for better display
-    if (modelName.includes('Meta-Llama-3_3-70B-Instruct')) return 'Llama 3.3 70B';
-    if (modelName.includes('Mistral-Nemo-Instruct-2407')) return 'Mistral Nemo';
+    if (modelName.includes('Meta-Llama-3_3-70B-Instruct')) return 'Llama 3.3 70B (Quality)';
+    if (modelName.includes('Mistral-Nemo-Instruct-2407')) return 'Mistral Nemo (Fast)';
     return modelName;
+  };
+
+  // Helper function to get badge color based on model type
+  const getModelBadgeClass = (modelName: string): string => {
+    if (modelName.includes('Mistral-Nemo')) {
+      return 'bg-green-100 text-green-800'; // Fast model - green
+    }
+    if (modelName.includes('Meta-Llama-3_3')) {
+      return 'bg-purple-100 text-purple-800'; // Quality model - purple
+    }
+    return 'bg-gray-100 text-gray-800'; // Default
   };
 
   if (!isOpen) return null;
@@ -809,7 +820,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                               <div>
                                 <div className="flex items-center space-x-3 mb-2">
                                   <h4 className="text-lg font-semibold text-primary-900">{step.name}</h4>
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModelBadgeClass(getModelForPrompt(promptKey))}`}>
                                     🤖 {formatModelName(getModelForPrompt(promptKey))}
                                   </span>
                                 </div>
@@ -989,7 +1000,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                               <div>
                                 <div className="flex items-center space-x-3 mb-2">
                                   <h4 className="text-lg font-semibold text-primary-900">{step.name}</h4>
-                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getModelBadgeClass(getModelForPrompt(promptKey))}`}>
                                     🤖 {formatModelName(getModelForPrompt(promptKey))}
                                   </span>
                                 </div>
