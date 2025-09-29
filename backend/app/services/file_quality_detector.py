@@ -167,26 +167,72 @@ class FileQualityDetector:
             return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX, analysis
 
     def _detect_table_structure_in_page(self, page) -> bool:
-        """Detect if a PDF page contains table structures"""
+        """Detect if a PDF page contains actual table structures (improved algorithm)"""
         try:
-            # Look for table-like patterns in the page
+            # Method 1: Use pdfplumber's built-in table detection
+            tables = page.find_tables()
+            if tables and len(tables) > 0:
+                # Found actual table structures
+                logger.debug(f"📊 Found {len(tables)} table structures using pdfplumber")
+                return True
+
+            # Method 2: Look for table-like character alignment patterns
             chars = page.chars
             if not chars:
                 return False
 
-            # Count characters that are aligned vertically (potential columns)
+            # Count characters aligned vertically (potential columns)
             x_positions = [char['x0'] for char in chars]
+            y_positions = [char['y0'] for char in chars]
 
-            # Simple heuristic: if we have many characters at similar x-positions, likely a table
             from collections import Counter
-            x_counter = Counter([round(x/10)*10 for x in x_positions])  # Group by ~10px
 
-            # If we have 3+ columns with 5+ characters each, likely a table
-            significant_columns = [count for count in x_counter.values() if count >= 5]
+            # Group x-positions (columns) with tighter grouping
+            x_counter = Counter([round(x/8)*8 for x in x_positions])  # Group by ~8px
+            # Group y-positions (rows)
+            y_counter = Counter([round(y/5)*5 for y in y_positions])  # Group by ~5px
 
-            return len(significant_columns) >= 3
+            # Must have multiple distinct columns AND rows for a table
+            significant_columns = [count for count in x_counter.values() if count >= 8]
+            significant_rows = [count for count in y_counter.values() if count >= 4]
 
-        except Exception:
+            has_column_structure = len(significant_columns) >= 4  # At least 4 columns
+            has_row_structure = len(significant_rows) >= 3        # At least 3 rows
+
+            # Method 3: Look for table indicators in text
+            page_text = page.extract_text() or ""
+            table_indicators = [
+                # Common table separators
+                '\t', '|',
+                # Multiple spaces (column separation)
+                '   ',
+                # Common medical table terms
+                'wert', 'normal', 'bereich', 'referenz',
+                'labor', 'befund', 'ergebnis',
+                # Table-like number patterns
+            ]
+
+            has_table_text_patterns = any(indicator in page_text.lower() for indicator in table_indicators)
+
+            # Also check for number-heavy content (likely lab values in tables)
+            import re
+            numbers = re.findall(r'\d+[.,]\d+|\d+\s*(mg|ml|mmol|µg|ng|u/l|iu/l|%)', page_text)
+            has_many_numbers = len(numbers) >= 5
+
+            # Decision logic: must have strong evidence of table structure
+            is_table = (
+                (has_column_structure and has_row_structure) or  # Strong structural evidence
+                (has_column_structure and has_many_numbers) or   # Columns + lab values
+                (has_table_text_patterns and has_many_numbers and len(significant_columns) >= 2)  # Text indicators + numbers + some structure
+            )
+
+            if is_table:
+                logger.debug(f"📊 Table detected - Columns: {len(significant_columns)}, Rows: {len(significant_rows)}, Numbers: {len(numbers)}")
+
+            return is_table
+
+        except Exception as e:
+            logger.debug(f"Table detection error: {e}")
             return False
 
     def _evaluate_text_quality(self, text: str) -> float:
@@ -226,22 +272,34 @@ class FileQualityDetector:
         has_tables = analysis.get("has_tables", False)
         has_images = analysis.get("has_images", False)
 
-        # High-quality embedded text
+        # High-quality embedded text - always use local extraction (cost-effective)
         if text_coverage >= 0.9 and text_quality >= 0.7 and not has_tables:
             analysis["reasons"].append("high_quality_embedded_text")
             return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.SIMPLE
 
-        # Good embedded text but with tables
+        # Very high-quality text with simple tables - try local first (cost optimization)
+        if text_coverage >= 0.9 and text_quality >= 0.8 and has_tables:
+            analysis["reasons"].append("high_quality_text_with_simple_tables")
+            # For very clean PDFs, even with tables, try local extraction first
+            return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.MODERATE
+
+        # Good embedded text but with complex tables - use vision LLM
         if text_coverage >= 0.8 and text_quality >= 0.6 and has_tables:
-            analysis["reasons"].append("good_text_with_tables")
-            # Tables are complex - use vision LLM
+            analysis["reasons"].append("good_text_with_complex_tables")
             return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX
+
+        # Good embedded text without tables - use local (cost-effective)
+        if text_coverage >= 0.7 and text_quality >= 0.6 and not has_tables:
+            analysis["reasons"].append("good_embedded_text_no_tables")
+            return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.SIMPLE
 
         # Moderate embedded text
         if text_coverage >= 0.5 and text_quality >= 0.4:
             analysis["reasons"].append("moderate_embedded_text")
-            if self.tesseract_available and not has_tables:
+            if not has_tables and self.tesseract_available:
                 return ExtractionStrategy.LOCAL_OCR, DocumentComplexity.MODERATE
+            elif not has_tables:
+                return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.MODERATE  # Try local first
             else:
                 return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
 

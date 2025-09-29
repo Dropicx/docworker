@@ -299,41 +299,144 @@ class HybridTextExtractor:
             return await self._extract_with_vision_llm(content, file_type, analysis)
 
         try:
-            logger.info("📖 Extracting with local PDF text extraction")
+            logger.info("📖 Extracting with local PDF text extraction (cost-optimized)")
 
-            # Try pdfplumber first
+            # Try pdfplumber first - better for tables
             text = await self._extract_pdf_with_pdfplumber(content)
 
+            # Quality check for local extraction
             if text and len(text.strip()) > 50:
-                logger.info(f"✅ pdfplumber successful: {len(text)} characters")
-                return text.strip(), 0.9
+                # Check if the text looks reasonable
+                confidence = self._evaluate_local_extraction_quality(text)
+
+                if confidence >= 0.7:  # Good quality local extraction
+                    logger.info(f"✅ pdfplumber successful: {len(text)} characters, confidence: {confidence:.2%}")
+                    return text.strip(), confidence
+                else:
+                    logger.info(f"⚠️ pdfplumber low quality (confidence: {confidence:.2%}), trying PyPDF2")
 
             # Fallback to PyPDF2
             text = await self._extract_pdf_with_pypdf2(content)
 
             if text and len(text.strip()) > 50:
-                logger.info(f"✅ PyPDF2 successful: {len(text)} characters")
-                return text.strip(), 0.8
+                confidence = self._evaluate_local_extraction_quality(text)
 
-            # If both failed, fallback to vision LLM
-            logger.warning("⚠️ Local text extraction failed, falling back to vision LLM")
+                if confidence >= 0.6:  # Reasonable quality
+                    logger.info(f"✅ PyPDF2 successful: {len(text)} characters, confidence: {confidence:.2%}")
+                    return text.strip(), confidence
+                else:
+                    logger.info(f"⚠️ PyPDF2 low quality (confidence: {confidence:.2%}), falling back to vision LLM")
+
+            # If local extraction quality is poor, fallback to vision LLM
+            logger.warning("⚠️ Local text extraction quality insufficient, falling back to vision LLM")
             return await self._extract_with_vision_llm(content, file_type, analysis)
 
         except Exception as e:
             logger.error(f"❌ Local text extraction failed: {e}")
             return await self._extract_with_vision_llm(content, file_type, analysis)
 
+    def _evaluate_local_extraction_quality(self, text: str) -> float:
+        """Evaluate the quality of locally extracted text"""
+        if not text or len(text.strip()) < 20:
+            return 0.0
+
+        confidence = 0.5  # Base confidence
+
+        # Length indicators (longer text usually means better extraction)
+        if len(text) > 200:
+            confidence += 0.1
+        if len(text) > 1000:
+            confidence += 0.1
+
+        # Medical content indicators
+        medical_terms = [
+            'patient', 'arzt', 'diagnose', 'behandlung', 'medizin',
+            'befund', 'labor', 'wert', 'normal', 'untersuchung',
+            'datum', 'geburtsdatum', 'versicherung'
+        ]
+
+        text_lower = text.lower()
+        found_medical_terms = sum(1 for term in medical_terms if term in text_lower)
+        confidence += min(found_medical_terms * 0.02, 0.1)
+
+        # Structure indicators (proper sentences, punctuation)
+        import re
+        sentences = len(re.findall(r'[.!?]+', text))
+        if sentences > 5:
+            confidence += 0.05
+        if sentences > 15:
+            confidence += 0.05
+
+        # Check for garbage characters (indicates poor extraction)
+        garbage_patterns = ['���', '□', '▢', '※', '◦']
+        has_garbage = any(pattern in text for pattern in garbage_patterns)
+        if has_garbage:
+            confidence -= 0.2
+
+        # Check for reasonable word structure
+        words = text.split()
+        if len(words) > 20:
+            confidence += 0.05
+
+            # Average word length should be reasonable (2-15 characters)
+            avg_word_length = sum(len(word) for word in words[:50]) / min(50, len(words))
+            if 3 <= avg_word_length <= 12:
+                confidence += 0.05
+
+        # Check for medical numbers and units (lab values, measurements)
+        medical_numbers = re.findall(r'\d+[.,]?\d*\s*(mg|ml|mmol|µg|ng|u/l|iu/l|%|cm|kg)', text)
+        if len(medical_numbers) > 0:
+            confidence += min(len(medical_numbers) * 0.01, 0.1)
+
+        return min(confidence, 0.95)  # Cap at 95%
+
     async def _extract_pdf_with_pdfplumber(self, content: bytes) -> Optional[str]:
-        """Extract text using pdfplumber"""
+        """Extract text using pdfplumber with enhanced table handling"""
         try:
             pdf_file = BytesIO(content)
             text_parts = []
 
             with pdfplumber.open(pdf_file) as pdf:
                 for page_num, page in enumerate(pdf.pages, 1):
-                    page_text = page.extract_text()
-                    if page_text:
-                        text_parts.append(f"--- Seite {page_num} ---\n{page_text}")
+                    page_content = []
+
+                    # First, try to extract tables
+                    tables = page.find_tables()
+
+                    if tables:
+                        logger.debug(f"📊 Found {len(tables)} tables on page {page_num}")
+
+                        # Extract text outside tables first
+                        page_text = page.extract_text()
+                        if page_text:
+                            page_content.append(page_text)
+
+                        # Then add table data
+                        for i, table in enumerate(tables):
+                            try:
+                                table_data = table.extract()
+                                if table_data:
+                                    # Format table as markdown-like structure
+                                    table_text = f"\n--- Tabelle {i+1} ---\n"
+                                    for row in table_data:
+                                        if row and any(cell for cell in row if cell):  # Skip empty rows
+                                            # Join non-empty cells with " | "
+                                            cells = [str(cell).strip() if cell else "" for cell in row]
+                                            table_text += " | ".join(cells) + "\n"
+
+                                    page_content.append(table_text)
+                            except Exception as e:
+                                logger.debug(f"Table extraction error on page {page_num}: {e}")
+
+                    else:
+                        # No tables found, extract text normally
+                        page_text = page.extract_text()
+                        if page_text:
+                            page_content.append(page_text)
+
+                    if page_content:
+                        combined_content = "\n".join(page_content)
+                        text_parts.append(f"--- Seite {page_num} ---\n{combined_content}")
 
             return "\n\n".join(text_parts) if text_parts else None
 
