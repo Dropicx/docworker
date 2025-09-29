@@ -282,22 +282,35 @@ export const PROMPT_CATEGORIES = {
   }
 };
 
-// OCR Settings interfaces
+// OCR Settings interfaces - matching backend structure
 export interface OCRSettings {
   strategy: 'conditional' | 'local_only' | 'vision_only' | 'hybrid';
   vision_model: string;
-  local_ocr_enabled: boolean;
-  quality_threshold: number;
-  multifile_enabled: boolean;
-  preprocessing_enabled: boolean;
+  vision_base_url: string;
+  confidence_threshold: number;
+  opencv_enabled: boolean;
+  fallback_enabled: boolean;
+  multi_file_enabled: boolean;
+  multi_file_max_count: number;
+  file_sequence_detection: boolean;
+  medical_text_merging: 'simple' | 'smart' | 'medical_aware';
 }
 
 export interface OCRSettingsResponse {
-  settings: OCRSettings;
   success: boolean;
   message: string;
+  updated_settings?: string[];
 }
 
 export interface OCRSettingsUpdateRequest {
-  settings: Partial<OCRSettings>;
+  strategy?: 'conditional' | 'local_only' | 'vision_only' | 'hybrid';
+  vision_model?: string;
+  vision_base_url?: string;
+  confidence_threshold?: number;
+  opencv_enabled?: boolean;
+  fallback_enabled?: boolean;
+  multi_file_enabled?: boolean;
+  multi_file_max_count?: number;
+  file_sequence_detection?: boolean;
+  medical_text_merging?: 'simple' | 'smart' | 'medical_aware';
 }

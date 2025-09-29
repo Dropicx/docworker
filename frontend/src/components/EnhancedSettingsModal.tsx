@@ -525,7 +525,9 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
 
     try {
       const response = await settingsService.updateOCRSettings({ [key]: value });
-      setOcrSettings(response.settings);
+
+      // Reload the settings to get the updated values
+      await loadOCRSettings();
 
       // Show success message
       if (response.message) {
@@ -1229,35 +1231,27 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
                           <div>
-                            <h5 className="font-medium text-primary-900">Lokale OCR aktiviert</h5>
-                            <p className="text-sm text-primary-600">Tesseract als Fallback-Option verwenden</p>
+                            <h5 className="font-medium text-primary-900">OpenCV verfügbar</h5>
+                            <p className="text-sm text-primary-600">Erweiterte Bildanalyse für Qualitätsbewertung</p>
                           </div>
-                          <button
-                            onClick={() => handleOCRSettingsUpdate('local_ocr_enabled', !ocrSettings.local_ocr_enabled)}
-                            disabled={ocrSaving}
-                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
-                              ocrSettings.local_ocr_enabled ? 'bg-brand-600' : 'bg-primary-300'
-                            } ${ocrSaving ? 'opacity-50' : ''}`}
-                          >
-                            <span
-                              className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                                ocrSettings.local_ocr_enabled ? 'translate-x-6' : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
+                          <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm ${
+                            ocrSettings.opencv_enabled ? 'bg-success-100 text-success-800' : 'bg-warning-100 text-warning-800'
+                          }`}>
+                            {ocrSettings.opencv_enabled ? '✅ Verfügbar' : '⚠️ Nicht verfügbar'}
+                          </div>
                         </div>
 
                         <div className="space-y-2">
                           <label className="block text-sm font-medium text-primary-700">
-                            Qualitätsschwelle: {ocrSettings.quality_threshold}%
+                            Qualitätsschwelle: {Math.round((ocrSettings.confidence_threshold || 0.7) * 100)}%
                           </label>
                           <input
                             type="range"
                             min="0"
                             max="100"
                             step="5"
-                            value={ocrSettings.quality_threshold}
-                            onChange={(e) => handleOCRSettingsUpdate('quality_threshold', parseInt(e.target.value))}
+                            value={Math.round((ocrSettings.confidence_threshold || 0.7) * 100)}
+                            onChange={(e) => handleOCRSettingsUpdate('confidence_threshold', parseInt(e.target.value) / 100)}
                             disabled={ocrSaving}
                             className="w-full h-2 bg-primary-200 rounded-lg appearance-none cursor-pointer disabled:opacity-50"
                           />
@@ -1273,18 +1267,18 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         <div className="flex items-center justify-between">
                           <div>
                             <h5 className="font-medium text-primary-900">Multi-File-Verarbeitung</h5>
-                            <p className="text-sm text-primary-600">Mehrere Dateien zu einem Dokument zusammenführen</p>
+                            <p className="text-sm text-primary-600">Mehrere Dateien zu einem Dokument zusammenführen (max: {ocrSettings.multi_file_max_count})</p>
                           </div>
                           <button
-                            onClick={() => handleOCRSettingsUpdate('multifile_enabled', !ocrSettings.multifile_enabled)}
+                            onClick={() => handleOCRSettingsUpdate('multi_file_enabled', !ocrSettings.multi_file_enabled)}
                             disabled={ocrSaving}
                             className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
-                              ocrSettings.multifile_enabled ? 'bg-brand-600' : 'bg-primary-300'
+                              ocrSettings.multi_file_enabled ? 'bg-brand-600' : 'bg-primary-300'
                             } ${ocrSaving ? 'opacity-50' : ''}`}
                           >
                             <span
                               className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                                ocrSettings.multifile_enabled ? 'translate-x-6' : 'translate-x-1'
+                                ocrSettings.multi_file_enabled ? 'translate-x-6' : 'translate-x-1'
                               }`}
                             />
                           </button>
@@ -1292,22 +1286,41 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
 
                         <div className="flex items-center justify-between">
                           <div>
-                            <h5 className="font-medium text-primary-900">OCR-Nachbearbeitung</h5>
-                            <p className="text-sm text-primary-600">Automatische Bereinigung von OCR-Fehlern</p>
+                            <h5 className="font-medium text-primary-900">Datei-Sequenzerkennung</h5>
+                            <p className="text-sm text-primary-600">Intelligente Erkennung der Reihenfolge bei Multi-File-Verarbeitung</p>
                           </div>
                           <button
-                            onClick={() => handleOCRSettingsUpdate('preprocessing_enabled', !ocrSettings.preprocessing_enabled)}
+                            onClick={() => handleOCRSettingsUpdate('file_sequence_detection', !ocrSettings.file_sequence_detection)}
                             disabled={ocrSaving}
                             className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-500 focus:ring-offset-2 ${
-                              ocrSettings.preprocessing_enabled ? 'bg-brand-600' : 'bg-primary-300'
+                              ocrSettings.file_sequence_detection ? 'bg-brand-600' : 'bg-primary-300'
                             } ${ocrSaving ? 'opacity-50' : ''}`}
                           >
                             <span
                               className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${
-                                ocrSettings.preprocessing_enabled ? 'translate-x-6' : 'translate-x-1'
+                                ocrSettings.file_sequence_detection ? 'translate-x-6' : 'translate-x-1'
                               }`}
                             />
                           </button>
+                        </div>
+
+                        <div>
+                          <label className="block text-sm font-medium text-primary-700 mb-2">
+                            Text-Zusammenführungsstrategie
+                          </label>
+                          <select
+                            value={ocrSettings.medical_text_merging}
+                            onChange={(e) => handleOCRSettingsUpdate('medical_text_merging', e.target.value)}
+                            disabled={ocrSaving}
+                            className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none disabled:opacity-50"
+                          >
+                            <option value="simple">📝 Einfach - Direktes Anhängen</option>
+                            <option value="smart">🤖 Intelligent - Strukturerkennung</option>
+                            <option value="medical_aware">🏥 Medizinisch - Spezialisierte Zusammenführung</option>
+                          </select>
+                          <p className="text-xs text-primary-500 mt-1">
+                            Bestimmt, wie Texte aus mehreren Dateien zusammengeführt werden
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1443,9 +1456,9 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         </h5>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {[
-                            { key: 'enable_medical_validation', name: '1. Medizinische Validierung', desc: 'Prüft ob Text medizinischen Inhalt enthält', order: 1 },
-                            { key: 'enable_classification', name: '2. Klassifizierung', desc: 'Erkennt Dokumenttyp (Arztbrief, Befund, etc.)', order: 2 },
-                            { key: 'enable_text_extraction', name: '3. Text-Extraktion (OCR)', desc: 'Enhanced OCR mit intelligenter Strategie-Wahl', order: 3 },
+                            { key: 'enable_text_extraction', name: '1. Text-Extraktion (OCR)', desc: 'Enhanced OCR mit intelligenter Strategie-Wahl - MUSS ZUERST ausgeführt werden', order: 1 },
+                            { key: 'enable_medical_validation', name: '2. Medizinische Validierung', desc: 'Prüft ob extrahierter Text medizinischen Inhalt enthält', order: 2 },
+                            { key: 'enable_classification', name: '3. Klassifizierung', desc: 'Erkennt Dokumenttyp (Arztbrief, Befund, etc.)', order: 3 },
                             { key: 'enable_preprocessing', name: '4. Vorverarbeitung', desc: 'Entfernt persönliche Daten (PII)', order: 4 },
                             { key: 'enable_language_translation', name: '8. Sprachübersetzung', desc: 'Übersetzt in Zielsprache', order: 8 },
                             { key: 'enable_final_check', name: '9. Finale Kontrolle', desc: 'Qualitätssicherung und Validierung', order: 9 }

@@ -568,11 +568,11 @@ class SettingsService {
    */
   async getOCRSettings(): Promise<OCRSettings> {
     try {
-      const response = await axios.get<OCRSettingsResponse>(
+      const response = await axios.get<OCRSettings>(
         `${SETTINGS_BASE_URL}/ocr-settings`,
         { headers: this.getAuthHeaders() }
       );
-      return response.data.settings;
+      return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<any>;
       throw new Error(
@@ -584,11 +584,11 @@ class SettingsService {
   /**
    * Update OCR settings
    */
-  async updateOCRSettings(settings: Partial<OCRSettings>): Promise<OCRSettingsResponse> {
+  async updateOCRSettings(settings: OCRSettingsUpdateRequest): Promise<OCRSettingsResponse> {
     try {
       const response = await axios.put<OCRSettingsResponse>(
         `${SETTINGS_BASE_URL}/ocr-settings`,
-        { settings } as OCRSettingsUpdateRequest,
+        settings,
         { headers: this.getAuthHeaders() }
       );
       return response.data;
