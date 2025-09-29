@@ -1,21 +1,26 @@
 # Complete Railway Dockerfile with ALL features and latest packages
 FROM python:3.11-slim
 
-# Install ALL necessary system dependencies with security updates
+# Install system dependencies for Enhanced OCR System
 RUN apt-get update && apt-get install -y \
     nginx \
     curl \
     build-essential \
+    ca-certificates \
+    gnupg \
+    libmagic1 \
+    poppler-utils \
     tesseract-ocr \
     tesseract-ocr-deu \
     tesseract-ocr-eng \
-    poppler-utils \
-    libmagic1 \
-    ca-certificates \
-    gnupg \
     && apt-get upgrade -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Enhanced OCR System uses:
+# - poppler-utils: PDF to image conversion (REQUIRED for PDF OCR)
+# - tesseract-ocr: Local OCR fallback (OPTIONAL - conditional routing)
+# - Primary OCR: Qwen 2.5 VL Vision Model via OVH AI (cloud-based)
 
 # Install Node.js 24.x (current/latest) from NodeSource repository
 RUN curl -fsSL https://deb.nodesource.com/setup_current.x | bash - \

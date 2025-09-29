@@ -10,23 +10,48 @@ echo "- OVH_AI_ENDPOINTS_ACCESS_TOKEN: ${OVH_AI_ENDPOINTS_ACCESS_TOKEN:+[SET]}"
 echo "- PORT: ${PORT:-8080}"
 echo "- RAILWAY_ENVIRONMENT: ${RAILWAY_ENVIRONMENT:-not set}"
 
-# Check OCR capabilities
+# Check Enhanced OCR System capabilities
 echo ""
-echo "=== OCR Capability Check ==="
-if command -v tesseract &> /dev/null; then
-    echo "✅ Tesseract OCR is installed:"
-    tesseract --version 2>&1 | head -n 1
-    echo "   Available languages:"
-    tesseract --list-langs 2>&1 | grep -E "deu|eng" | head -5
+echo "=== Enhanced OCR System Check ==="
+echo "Primary OCR: Qwen 2.5 VL Vision Model via OVH AI"
+echo "OCR Strategy: Conditional routing (local text → local OCR → vision LLM)"
+
+# Check PDF processing capability
+if command -v pdftoppm &> /dev/null; then
+    echo "✅ PDF to image conversion available (poppler-utils)"
 else
-    echo "❌ Tesseract OCR is NOT installed"
+    echo "⚠️ PDF to image conversion not available (some PDF OCR may fail)"
 fi
 
-if command -v pdftoppm &> /dev/null; then
-    echo "✅ Poppler-utils (PDF to image) is installed"
+# Check optional local OCR fallback
+if command -v tesseract &> /dev/null; then
+    echo "✅ Local OCR fallback available (Tesseract)"
+    tesseract --version 2>&1 | head -n 1 | sed 's/^/   /'
 else
-    echo "❌ Poppler-utils is NOT installed (PDF OCR will not work)"
+    echo "ℹ️ Local OCR fallback not available (will use vision model only)"
 fi
+
+# Check Python OCR dependencies
+python3 -c "
+try:
+    from PIL import Image
+    print('✅ PIL/Pillow available for image processing')
+except ImportError:
+    print('❌ PIL/Pillow not available')
+
+try:
+    import PyPDF2, pdfplumber
+    print('✅ PDF processing libraries available')
+except ImportError:
+    print('❌ PDF processing libraries missing')
+
+try:
+    from pdf2image import convert_from_bytes
+    print('✅ PDF to image conversion available')
+except ImportError:
+    print('⚠️ PDF to image conversion not available')
+" 2>/dev/null || echo "⚠️ Python dependency check failed"
+
 echo "==="
 
 # Railway provides PORT environment variable that MUST be used
@@ -116,10 +141,16 @@ server {
         add_header Content-Type text/plain;
     }
     
-    # Frontend (Vite outputs to 'dist')
+    # Frontend (Vite React app outputs to 'dist')
     location / {
         root /app/frontend/dist;
         try_files \$uri \$uri/ /index.html;
+
+        # Cache static assets for performance
+        location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2)\$ {
+            expires 30d;
+            add_header Cache-Control "public, immutable";
+        }
     }
     
     # Backend API with error handling
