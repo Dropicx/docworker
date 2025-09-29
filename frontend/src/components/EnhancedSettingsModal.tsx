@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Settings, Save, RotateCcw, TestTube, Download, Upload, Eye, EyeOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
+import { X, Settings, Save, RotateCcw, Download, Upload, Eye, EyeOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import settingsService from '../services/settings';
 import { DocumentClass, DocumentPrompts, DocumentTypeInfo, PROMPT_STEPS, GLOBAL_PROMPT_STEPS, PipelineSettings, PipelineStatsResponse, GlobalPrompts, GlobalPromptsResponse, OCRSettings } from '../types/settings';
 
@@ -28,12 +28,6 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   const [saveError, setSaveError] = useState('');
   const [saveSuccess, setSaveSuccess] = useState(false);
 
-  // Prompt testing
-  const [testingPrompt, setTestingPrompt] = useState<string | null>(null);
-  const [testSample, setTestSample] = useState('');
-  const [testResult, setTestResult] = useState('');
-  const [testLoading, setTestLoading] = useState(false);
-  const [testError, setTestError] = useState('');
 
   // Show/hide passwords
   const [showPasswords, setShowPasswords] = useState(false);
@@ -242,40 +236,6 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
     }
   };
 
-  const handleTestPrompt = async (field: keyof DocumentPrompts) => {
-    if (!editedPrompts || !testSample.trim()) {
-      setTestError('Bitte geben Sie einen Testtext ein');
-      return;
-    }
-
-    // Only test string prompt fields, not metadata fields
-    const promptFields = ['medical_validation_prompt', 'classification_prompt', 'preprocessing_prompt', 'translation_prompt', 'fact_check_prompt', 'grammar_check_prompt', 'language_translation_prompt', 'final_check_prompt', 'formatting_prompt'];
-    if (!promptFields.includes(field)) {
-      setTestError('Dieses Feld kann nicht getestet werden');
-      return;
-    }
-
-    setTestingPrompt(field);
-    setTestLoading(true);
-    setTestError('');
-    setTestResult('');
-
-    try {
-      const response = await settingsService.testPrompt({
-        prompt: (editedPrompts[field] as string) || '',
-        sample_text: testSample,
-        temperature: 0.3,
-        max_tokens: 1000
-      });
-
-      setTestResult(response.result);
-    } catch (error: any) {
-      setTestError(error.message);
-    } finally {
-      setTestLoading(false);
-      setTestingPrompt(null);
-    }
-  };
 
   const handleExport = async () => {
     try {
@@ -434,33 +394,6 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
     }
   };
 
-  const handleTestGlobalPrompt = async (field: keyof GlobalPrompts) => {
-    if (!editedGlobalPrompts || !testSample.trim()) {
-      setTestError('Bitte geben Sie einen Testtext ein');
-      return;
-    }
-
-    setTestingPrompt(field);
-    setTestLoading(true);
-    setTestError('');
-    setTestResult('');
-
-    try {
-      const response = await settingsService.testGlobalPrompt({
-        prompt: editedGlobalPrompts[field] || '',
-        sample_text: testSample,
-        temperature: 0.3,
-        max_tokens: 1000
-      });
-
-      setTestResult(response.result);
-    } catch (error: any) {
-      setTestError(error.message);
-    } finally {
-      setTestLoading(false);
-      setTestingPrompt(null);
-    }
-  };
 
   const handleExportGlobal = async () => {
     try {
@@ -928,14 +861,6 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                                 </div>
                                 <p className="text-sm text-primary-600">{step.description}</p>
                               </div>
-                              <button
-                                onClick={() => handleTestPrompt(promptKey)}
-                                disabled={testLoading || !testSample.trim()}
-                                className="btn-ghost disabled:opacity-50"
-                              >
-                                <TestTube className="w-4 h-4" />
-                                Testen
-                              </button>
                             </div>
 
                             <textarea
@@ -949,41 +874,6 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       })}
                     </div>
 
-                    {/* Test Section */}
-                    <div className="border border-primary-200 rounded-xl p-6 bg-gradient-to-br from-accent-50 to-brand-50">
-                      <h4 className="text-lg font-semibold text-primary-900 mb-4">Prompt-Test</h4>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-primary-700 mb-2">
-                            Testtext eingeben
-                          </label>
-                          <textarea
-                            value={testSample}
-                            onChange={(e) => setTestSample(e.target.value)}
-                            className="w-full h-24 p-3 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none resize-none"
-                            placeholder="Geben Sie hier einen medizinischen Text ein, um die Prompts zu testen..."
-                          />
-                        </div>
-
-                        {testResult && (
-                          <div>
-                            <label className="block text-sm font-medium text-primary-700 mb-2">
-                              Testergebnis
-                            </label>
-                            <div className="p-4 bg-white border border-primary-200 rounded-lg">
-                              <pre className="whitespace-pre-wrap text-sm text-primary-800">{testResult}</pre>
-                            </div>
-                          </div>
-                        )}
-
-                        {testError && (
-                          <div className="flex items-center space-x-2 p-3 bg-error-50 border border-error-200 rounded-lg">
-                            <AlertCircle className="w-4 h-4 text-error-600" />
-                            <span className="text-error-700">{testError}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 ) : null
               ) : activeTab === 'global' ? (
@@ -1118,14 +1008,6 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                                    step.category === 'translation' ? 'Übersetzung' : 'Sonstige'}
                                 </span>
                               </div>
-                              <button
-                                onClick={() => handleTestGlobalPrompt(promptKey)}
-                                disabled={testLoading || !testSample.trim()}
-                                className="btn-ghost disabled:opacity-50"
-                              >
-                                <TestTube className="w-4 h-4" />
-                                Testen
-                              </button>
                             </div>
 
                             <textarea
@@ -1139,41 +1021,6 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       })}
                     </div>
 
-                    {/* Test Section for Global Prompts */}
-                    <div className="border border-primary-200 rounded-xl p-6 bg-gradient-to-br from-accent-50 to-brand-50">
-                      <h4 className="text-lg font-semibold text-primary-900 mb-4">🧪 Globale Prompt-Tests</h4>
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-sm font-medium text-primary-700 mb-2">
-                            Testtext eingeben
-                          </label>
-                          <textarea
-                            value={testSample}
-                            onChange={(e) => setTestSample(e.target.value)}
-                            className="w-full h-24 p-3 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none resize-none"
-                            placeholder="Geben Sie hier einen Text ein, um die globalen Prompts zu testen..."
-                          />
-                        </div>
-
-                        {testResult && (
-                          <div>
-                            <label className="block text-sm font-medium text-primary-700 mb-2">
-                              Testergebnis
-                            </label>
-                            <div className="p-4 bg-white border border-primary-200 rounded-lg">
-                              <pre className="whitespace-pre-wrap text-sm text-primary-800">{testResult}</pre>
-                            </div>
-                          </div>
-                        )}
-
-                        {testError && (
-                          <div className="flex items-center space-x-2 p-3 bg-error-50 border border-error-200 rounded-lg">
-                            <AlertCircle className="w-4 h-4 text-error-600" />
-                            <span className="text-error-700">{testError}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
                   </div>
                 ) : null
               ) : activeTab === 'ocr' ? (
