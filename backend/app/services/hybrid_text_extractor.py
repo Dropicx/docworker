@@ -53,14 +53,15 @@ class HybridTextExtractor:
             self.prompt_manager = None
 
         # Initialize local OCR if available
-        if LOCAL_OCR_AVAILABLE:
+        self.local_ocr_available = LOCAL_OCR_AVAILABLE
+        if self.local_ocr_available:
             try:
                 self.local_ocr = TextExtractorWithOCR()
                 logger.info("✅ Local OCR (Tesseract) available")
             except Exception as e:
                 logger.warning(f"⚠️ Local OCR initialization failed: {e}")
                 self.local_ocr = None
-                LOCAL_OCR_AVAILABLE = False
+                self.local_ocr_available = False
         else:
             self.local_ocr = None
             logger.info("ℹ️ Local OCR not available")
@@ -70,7 +71,7 @@ class HybridTextExtractor:
         logger.info(f"   - Sequence Detector: ✅")
         logger.info(f"   - Prompt Manager: {'✅' if self.prompt_manager else '❌'}")
         logger.info(f"   - OVH Vision: {'✅' if self.ovh_client.vision_client else '❌'}")
-        logger.info(f"   - Local OCR: {'✅' if LOCAL_OCR_AVAILABLE else '❌'}")
+        logger.info(f"   - Local OCR: {'✅' if self.local_ocr_available else '❌'}")
 
     async def _apply_ocr_preprocessing(self, raw_text: str) -> str:
         """
@@ -325,7 +326,7 @@ class HybridTextExtractor:
     ) -> Tuple[str, float]:
         """Extract text using local OCR (Tesseract)"""
 
-        if not LOCAL_OCR_AVAILABLE or not self.local_ocr:
+        if not self.local_ocr_available or not self.local_ocr:
             logger.warning("⚠️ Local OCR not available, falling back to vision LLM")
             return await self._extract_with_vision_llm(content, file_type, analysis)
 
