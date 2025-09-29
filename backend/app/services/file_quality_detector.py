@@ -12,8 +12,16 @@ from enum import Enum
 import PyPDF2
 import pdfplumber
 from PIL import Image
-import cv2
-import numpy as np
+
+# Optional OpenCV import - graceful fallback if not available
+try:
+    import cv2
+    import numpy as np
+    OPENCV_AVAILABLE = True
+except ImportError:
+    OPENCV_AVAILABLE = False
+    cv2 = None
+    np = None
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +46,10 @@ class FileQualityDetector:
 
     def __init__(self):
         self.tesseract_available = self._check_tesseract_available()
-        logger.info(f"🔍 File Quality Detector initialized. Tesseract: {'✅' if self.tesseract_available else '❌'}")
+        self.opencv_available = OPENCV_AVAILABLE
+        logger.info(f"🔍 File Quality Detector initialized:")
+        logger.info(f"   - Tesseract: {'✅' if self.tesseract_available else '❌'}")
+        logger.info(f"   - OpenCV: {'✅' if self.opencv_available else '❌'}")
 
     def _check_tesseract_available(self) -> bool:
         """Check if Tesseract OCR is available"""
@@ -283,6 +294,7 @@ class FileQualityDetector:
             logger.info(f"   - Quality: {analysis['image_quality']:.2f}")
             logger.info(f"   - Text density: {analysis['text_density']:.2f}")
             logger.info(f"   - Has tables: {analysis['has_tables']}")
+            logger.info(f"   - OpenCV available: {self.opencv_available}")
             logger.info(f"   - Strategy: {strategy.value}")
             logger.info(f"   - Complexity: {complexity.value}")
 
@@ -294,16 +306,22 @@ class FileQualityDetector:
             analysis["reasons"].append("analysis_failed")
             return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX, analysis
 
-    def _pil_to_cv2(self, pil_image: Image.Image) -> np.ndarray:
-        """Convert PIL Image to OpenCV format"""
+    def _pil_to_cv2(self, pil_image: Image.Image):
+        """Convert PIL Image to OpenCV format - returns None if OpenCV not available"""
+        if not OPENCV_AVAILABLE:
+            return None
+
         if pil_image.mode != 'RGB':
             pil_image = pil_image.convert('RGB')
 
         open_cv_image = np.array(pil_image)
         return cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
 
-    def _assess_image_quality(self, cv_image: np.ndarray) -> float:
+    def _assess_image_quality(self, cv_image) -> float:
         """Assess the quality of an image for OCR"""
+        if not OPENCV_AVAILABLE or cv_image is None:
+            return 0.5  # Default medium quality when OpenCV not available
+
         try:
             # Convert to grayscale
             gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
@@ -325,8 +343,11 @@ class FileQualityDetector:
         except Exception:
             return 0.5  # Default medium quality
 
-    def _detect_table_in_image(self, cv_image: np.ndarray) -> bool:
+    def _detect_table_in_image(self, cv_image) -> bool:
         """Detect if image contains table structures"""
+        if not OPENCV_AVAILABLE or cv_image is None:
+            return False  # Can't detect tables without OpenCV
+
         try:
             gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
@@ -350,8 +371,11 @@ class FileQualityDetector:
         except Exception:
             return False
 
-    def _detect_form_structure(self, cv_image: np.ndarray) -> bool:
+    def _detect_form_structure(self, cv_image) -> bool:
         """Detect if image contains form-like structures"""
+        if not OPENCV_AVAILABLE or cv_image is None:
+            return False  # Can't detect forms without OpenCV
+
         try:
             gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
@@ -378,8 +402,11 @@ class FileQualityDetector:
         except Exception:
             return False
 
-    def _estimate_text_density(self, cv_image: np.ndarray) -> float:
+    def _estimate_text_density(self, cv_image) -> float:
         """Estimate the density of text in the image"""
+        if not OPENCV_AVAILABLE or cv_image is None:
+            return 0.1  # Default low density when OpenCV not available
+
         try:
             gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
 
