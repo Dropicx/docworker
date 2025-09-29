@@ -129,10 +129,16 @@ class HybridTextExtractor:
 
             # Apply OCR preprocessing using OVH client
             logger.info("🔧 Applying OCR preprocessing with unified prompt")
-            processed_text = await self.ovh_client.generate_response(
-                ocr_prompt,
-                raw_text,
-                model_type='preprocessing'  # Use fast model for preprocessing
+
+            # Replace placeholder in the prompt with actual text
+            full_prompt = ocr_prompt.replace("{extracted_text}", raw_text)
+
+            # Use the correct method with proper prompt type for optimization
+            processed_text = await self.ovh_client.process_prompt_with_optimization(
+                full_prompt=full_prompt,
+                prompt_type='ocr_preprocessing_prompt',
+                temperature=0.3,
+                max_tokens=4000
             )
 
             return processed_text if processed_text else raw_text

@@ -34,7 +34,7 @@ class OVHClient:
 
         # Vision model for OCR tasks
         self.vision_model = os.getenv("OVH_VISION_MODEL", "Qwen2.5-VL-72B-Instruct")
-        self.vision_base_url = os.getenv("OVH_VISION_BASE_URL", "https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net")
+        self.vision_base_url = os.getenv("OVH_VISION_BASE_URL", "https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net/v1")
 
         # Define which prompt types should use fast model for speed optimization
         self.fast_model_prompt_types = {
