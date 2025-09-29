@@ -207,12 +207,6 @@ export const GLOBAL_PROMPT_STEPS = {
     placeholder: 'Entferne alle persönlichen Daten aus diesem Text...',
     category: 'preprocessing'
   },
-  grammar_check_prompt: {
-    name: '✏️ Grammatikprüfung (Universal)',
-    description: 'Korrigiert Sprache - gilt für alle Dokumenttypen',
-    placeholder: 'Korrigiere Grammatik und Rechtschreibung in diesem Text...',
-    category: 'quality'
-  },
   language_translation_prompt: {
     name: '🌍 Sprachübersetzung (Universal)',
     description: 'Template für Übersetzungen - gilt für alle Sprachen',
@@ -233,6 +227,12 @@ export const PROMPT_STEPS = {
     name: 'Faktenprüfung',
     description: 'Überprüfung der medizinischen Korrektheit (dokumentspezifisch)',
     placeholder: 'Prüfe diesen Text auf medizinische Korrektheit...',
+    category: 'quality'
+  },
+  grammar_check_prompt: {
+    name: 'Grammatikprüfung',
+    description: 'Korrigiert Grammatik und Rechtschreibung (dokumentspezifisch)',
+    placeholder: 'Korrigiere Grammatik und Rechtschreibung in diesem Text...',
     category: 'quality'
   },
   final_check_prompt: {

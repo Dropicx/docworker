@@ -15,6 +15,7 @@ import secrets
 from fastapi import APIRouter, HTTPException, Depends, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field, ValidationError
+from typing import Union
 
 from app.models.document_types import DocumentClass, PromptTestRequest, PromptTestResponse
 from app.services.unified_prompt_manager import UnifiedPromptManager
@@ -146,6 +147,10 @@ class UniversalPromptUpdateRequest(BaseModel):
     prompts: Dict[str, str] = Field(..., description="Universal prompts to update")
     user: Optional[str] = Field(None, description="Username making the change")
 
+    class Config:
+        # Allow extra fields to be ignored
+        extra = "ignore"
+
 @router.put("/universal-prompts")
 async def update_universal_prompts(
     update_request: UniversalPromptUpdateRequest,
@@ -158,6 +163,9 @@ async def update_universal_prompts(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required"
         )
+
+    # Add validation logging
+    logger.info(f"Universal prompts update request: {update_request.prompts.keys()}")
     
     try:
         unified_manager = UnifiedPromptManager(db)
@@ -169,10 +177,30 @@ async def update_universal_prompts(
             db.add(universal_prompts)
             db.flush()  # Ensure it gets an ID
 
-        # Update prompts directly
+        # Valid universal prompt fields
+        valid_universal_fields = {
+            "medical_validation_prompt",
+            "classification_prompt",
+            "preprocessing_prompt",
+            "language_translation_prompt"
+        }
+
+        # Update prompts directly - only valid fields
+        updated_fields = []
         for key, value in update_request.prompts.items():
-            if hasattr(universal_prompts, key):
+            if key in valid_universal_fields and hasattr(universal_prompts, key):
                 setattr(universal_prompts, key, value)
+                updated_fields.append(key)
+            elif key not in valid_universal_fields:
+                logger.warning(f"Skipping invalid universal prompt field: {key}")
+
+        if not updated_fields:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"No valid universal prompt fields found. Valid fields: {list(valid_universal_fields)}"
+            )
+
+        logger.info(f"Updated universal prompt fields: {updated_fields}")
 
         universal_prompts.last_modified = datetime.now()
         universal_prompts.modified_by = update_request.user or "settings_ui"
@@ -188,6 +216,93 @@ async def update_universal_prompts(
         }
     except Exception as e:
         logger.error(f"Failed to update universal prompts: {e}")
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to update universal prompts: {str(e)}"
+        )
+
+@router.put("/universal-prompts-debug")
+async def update_universal_prompts_debug(
+    request: Request,
+    authenticated: bool = Depends(verify_session_token),
+    db: Session = Depends(get_session)
+):
+    """Debug endpoint for universal prompts update - accepts raw JSON."""
+    if not authenticated:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication required"
+        )
+
+    try:
+        # Get raw request body
+        raw_body = await request.json()
+        logger.info(f"Raw universal prompts update request: {raw_body}")
+
+        # Extract prompts and user
+        prompts = raw_body.get("prompts", {})
+        user = raw_body.get("user", "debug_user")
+
+        if not prompts or not isinstance(prompts, dict):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or missing 'prompts' field"
+            )
+
+        logger.info(f"Prompts keys received: {list(prompts.keys())}")
+
+        unified_manager = UnifiedPromptManager(db)
+        universal_prompts = unified_manager.get_universal_prompts()
+
+        if not universal_prompts:
+            universal_prompts = unified_manager.create_default_universal_prompts()
+            universal_prompts.is_active = True
+            db.add(universal_prompts)
+            db.flush()
+
+        # Valid universal prompt fields
+        valid_universal_fields = {
+            "medical_validation_prompt",
+            "classification_prompt",
+            "preprocessing_prompt",
+            "language_translation_prompt"
+        }
+
+        # Update prompts directly - only valid fields
+        updated_fields = []
+        for key, value in prompts.items():
+            if key in valid_universal_fields and hasattr(universal_prompts, key):
+                setattr(universal_prompts, key, value)
+                updated_fields.append(key)
+                logger.info(f"Updated {key}")
+            elif key not in valid_universal_fields:
+                logger.warning(f"Skipping invalid universal prompt field: {key}")
+
+        if not updated_fields:
+            available_fields = [f for f in valid_universal_fields if hasattr(universal_prompts, f)]
+            return {
+                "error": "No valid universal prompt fields found",
+                "received_fields": list(prompts.keys()),
+                "valid_fields": list(valid_universal_fields),
+                "available_fields": available_fields
+            }
+
+        universal_prompts.last_modified = datetime.now()
+        universal_prompts.modified_by = user
+
+        db.commit()
+
+        logger.info(f"Successfully updated universal prompt fields: {updated_fields}")
+        return {
+            "success": True,
+            "message": "Universal prompts updated successfully",
+            "updated_fields": updated_fields,
+            "version": universal_prompts.version
+        }
+
+    except Exception as e:
+        logger.error(f"Failed to update universal prompts (debug): {e}")
         db.rollback()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
