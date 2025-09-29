@@ -45,11 +45,14 @@ class UnifiedPromptManager:
             # Update existing or create new
             existing = self.session.query(UniversalPromptsDB).filter_by(is_active=True).first()
             if existing:
-                # Update existing
-                for key, value in prompts.__dict__.items():
-                    if not key.startswith('_') and key != 'id':
-                        setattr(existing, key, value)
+                # Update existing - only update specific prompt fields
+                existing.medical_validation_prompt = prompts.medical_validation_prompt
+                existing.classification_prompt = prompts.classification_prompt
+                existing.preprocessing_prompt = prompts.preprocessing_prompt
+                existing.language_translation_prompt = prompts.language_translation_prompt
+                existing.version = prompts.version
                 existing.last_modified = datetime.now()
+                existing.modified_by = prompts.modified_by
             else:
                 # Create new
                 prompts.last_modified = datetime.now()
@@ -97,11 +100,15 @@ class UnifiedPromptManager:
             ).first()
             
             if existing:
-                # Update existing
-                for key, value in prompts.__dict__.items():
-                    if not key.startswith('_') and key != 'id':
-                        setattr(existing, key, value)
+                # Update existing - only update specific prompt fields
+                existing.translation_prompt = prompts.translation_prompt
+                existing.fact_check_prompt = prompts.fact_check_prompt
+                existing.grammar_check_prompt = prompts.grammar_check_prompt
+                existing.final_check_prompt = prompts.final_check_prompt
+                existing.formatting_prompt = prompts.formatting_prompt
+                existing.version = prompts.version
                 existing.last_modified = datetime.now()
+                existing.modified_by = prompts.modified_by
             else:
                 # Create new
                 prompts.document_type = document_type.value.upper()

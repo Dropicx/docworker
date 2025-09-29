@@ -282,8 +282,9 @@ async def update_document_prompts(
         db = next(get_session())
         try:
             unified_manager = UnifiedPromptManager(db)
-            specific_prompts = unified_manager.get_document_specific_prompts(doc_class)
             
+            # Get or create document-specific prompts
+            specific_prompts = unified_manager.get_document_specific_prompts(doc_class)
             if not specific_prompts:
                 specific_prompts = unified_manager.create_default_document_specific_prompts(doc_class)
             
@@ -305,7 +306,10 @@ async def update_document_prompts(
             specific_prompts.last_modified = datetime.now()
             specific_prompts.modified_by = update_request.user or "settings_ui"
             
+            # Save document-specific prompts
             success = unified_manager.save_document_specific_prompts(doc_class, specific_prompts)
+            if not success:
+                raise Exception("Failed to save document-specific prompts")
             
             # Update universal prompts if any were provided
             universal_prompts = unified_manager.get_universal_prompts()
@@ -319,20 +323,28 @@ async def update_document_prompts(
                 if universal_updated:
                     universal_prompts.last_modified = datetime.now()
                     universal_prompts.modified_by = update_request.user or "settings_ui"
-                    unified_manager.save_universal_prompts(universal_prompts)
+                    universal_success = unified_manager.save_universal_prompts(universal_prompts)
+                    if not universal_success:
+                        raise Exception("Failed to save universal prompts")
             
-            if success:
-                logger.info(f"Updated document prompts for {document_type} by {update_request.user or 'unknown'}")
-                return {
-                    "success": True,
-                    "message": f"Document prompts updated successfully for {document_type}",
-                    "version": specific_prompts.version
-                }
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Failed to save document prompts"
-                )
+            logger.info(f"Updated document prompts for {document_type} by {update_request.user or 'unknown'}")
+            return {
+                "success": True,
+                "message": f"Document prompts updated successfully for {document_type}",
+                "version": specific_prompts.version
+            }
+            
+        except Exception as e:
+            logger.error(f"Database error in prompt update: {e}")
+            # Ensure rollback on any error
+            try:
+                db.rollback()
+            except:
+                pass
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Failed to update document prompts: {str(e)}"
+            )
         finally:
             db.close()
     except ValueError as e:
