@@ -302,6 +302,11 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
       setPipelineStats(stats);
     } catch (error: any) {
       console.error('Failed to load pipeline stats:', error);
+      setPipelineStats(null);
+      // If it's an authentication error, we might want to handle it differently
+      if (error.message?.includes('401') || error.message?.includes('Authentication')) {
+        console.warn('Pipeline stats authentication failed - user may need to re-login');
+      }
     }
   };
 
@@ -1221,7 +1226,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                   </div>
                 ) : null
               ) : activeTab === 'statistics' ? (
-                pipelineStats ? (
+                pipelineStats && pipelineStats.cache_statistics ? (
                   <div className="space-y-6">
                     <div>
                       <h3 className="text-xl font-bold text-primary-900">📊 Pipeline-Statistiken</h3>
@@ -1236,7 +1241,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-blue-700">Pipeline-Modus</p>
-                            <p className="text-2xl font-bold text-blue-900 capitalize">{pipelineStats.pipeline_mode}</p>
+                            <p className="text-2xl font-bold text-blue-900 capitalize">{pipelineStats.pipeline_mode || 'Unbekannt'}</p>
                           </div>
                           <div className="w-12 h-12 bg-blue-200 rounded-lg flex items-center justify-center">
                             <span className="text-blue-600 text-xl">⚙️</span>
@@ -1248,8 +1253,8 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-green-700">Cache Einträge</p>
-                            <p className="text-2xl font-bold text-green-900">{pipelineStats.cache_statistics.active_entries}</p>
-                            <p className="text-xs text-green-600">von {pipelineStats.cache_statistics.total_entries} gesamt</p>
+                            <p className="text-2xl font-bold text-green-900">{pipelineStats.cache_statistics?.active_entries || 0}</p>
+                            <p className="text-xs text-green-600">von {pipelineStats.cache_statistics?.total_entries || 0} gesamt</p>
                           </div>
                           <div className="w-12 h-12 bg-green-200 rounded-lg flex items-center justify-center">
                             <span className="text-green-600 text-xl">💾</span>
@@ -1261,8 +1266,8 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-purple-700">Cache Timeout</p>
-                            <p className="text-2xl font-bold text-purple-900">{pipelineStats.cache_statistics.cache_timeout_seconds}s</p>
-                            <p className="text-xs text-purple-600">{pipelineStats.cache_statistics.expired_entries} abgelaufen</p>
+                            <p className="text-2xl font-bold text-purple-900">{pipelineStats.cache_statistics?.cache_timeout_seconds || 0}s</p>
+                            <p className="text-xs text-purple-600">{pipelineStats.cache_statistics?.expired_entries || 0} abgelaufen</p>
                           </div>
                           <div className="w-12 h-12 bg-purple-200 rounded-lg flex items-center justify-center">
                             <span className="text-purple-600 text-xl">⏱️</span>
@@ -1278,27 +1283,27 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         <div className="space-y-3">
                           <div className="flex items-center justify-between py-2 border-b border-primary-100">
                             <span className="text-sm font-medium text-primary-700">Gesamte Einträge:</span>
-                            <span className="text-sm font-bold text-primary-900">{pipelineStats.cache_statistics.total_entries}</span>
+                            <span className="text-sm font-bold text-primary-900">{pipelineStats.cache_statistics?.total_entries || 0}</span>
                           </div>
                           <div className="flex items-center justify-between py-2 border-b border-primary-100">
                             <span className="text-sm font-medium text-primary-700">Aktive Einträge:</span>
-                            <span className="text-sm font-bold text-success-600">{pipelineStats.cache_statistics.active_entries}</span>
+                            <span className="text-sm font-bold text-success-600">{pipelineStats.cache_statistics?.active_entries || 0}</span>
                           </div>
                           <div className="flex items-center justify-between py-2 border-b border-primary-100">
                             <span className="text-sm font-medium text-primary-700">Abgelaufene Einträge:</span>
-                            <span className="text-sm font-bold text-warning-600">{pipelineStats.cache_statistics.expired_entries}</span>
+                            <span className="text-sm font-bold text-warning-600">{pipelineStats.cache_statistics?.expired_entries || 0}</span>
                           </div>
                         </div>
                         <div className="space-y-3">
                           <div className="flex items-center justify-between py-2 border-b border-primary-100">
                             <span className="text-sm font-medium text-primary-700">Timeout-Einstellung:</span>
-                            <span className="text-sm font-bold text-primary-900">{pipelineStats.cache_statistics.cache_timeout_seconds} Sekunden</span>
+                            <span className="text-sm font-bold text-primary-900">{pipelineStats.cache_statistics?.cache_timeout_seconds || 0} Sekunden</span>
                           </div>
                           <div className="flex items-center justify-between py-2 border-b border-primary-100">
                             <span className="text-sm font-medium text-primary-700">Cache-Effizienz:</span>
                             <span className="text-sm font-bold text-brand-600">
-                              {pipelineStats.cache_statistics.total_entries > 0
-                                ? Math.round((pipelineStats.cache_statistics.active_entries / pipelineStats.cache_statistics.total_entries) * 100)
+                              {(pipelineStats.cache_statistics?.total_entries || 0) > 0
+                                ? Math.round(((pipelineStats.cache_statistics?.active_entries || 0) / (pipelineStats.cache_statistics?.total_entries || 1)) * 100)
                                 : 0}%
                             </span>
                           </div>
@@ -1310,17 +1315,23 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                     <div className="bg-white border border-primary-200 rounded-xl p-6">
                       <h4 className="text-lg font-semibold text-primary-900 mb-4">🚀 Performance-Verbesserungen</h4>
                       <div className="grid grid-cols-1 gap-3">
-                        {Object.entries(pipelineStats.performance_improvements).map(([key, description]) => (
-                          <div key={key} className="flex items-start space-x-3 p-3 bg-gradient-to-r from-success-50 to-green-50 border border-success-200 rounded-lg">
-                            <div className="w-6 h-6 bg-success-100 rounded-full flex items-center justify-center mt-0.5">
-                              <CheckCircle className="w-4 h-4 text-success-600" />
+                        {pipelineStats.performance_improvements && Object.keys(pipelineStats.performance_improvements).length > 0 ? (
+                          Object.entries(pipelineStats.performance_improvements).map(([key, description]) => (
+                            <div key={key} className="flex items-start space-x-3 p-3 bg-gradient-to-r from-success-50 to-green-50 border border-success-200 rounded-lg">
+                              <div className="w-6 h-6 bg-success-100 rounded-full flex items-center justify-center mt-0.5">
+                                <CheckCircle className="w-4 h-4 text-success-600" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium text-success-900 capitalize">{key.replace(/_/g, ' ')}</p>
+                                <p className="text-sm text-success-700">{description}</p>
+                              </div>
                             </div>
-                            <div>
-                              <p className="text-sm font-medium text-success-900 capitalize">{key.replace(/_/g, ' ')}</p>
-                              <p className="text-sm text-success-700">{description}</p>
-                            </div>
+                          ))
+                        ) : (
+                          <div className="text-center py-4">
+                            <p className="text-sm text-primary-500">Keine Performance-Verbesserungen verfügbar</p>
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
 
@@ -1342,6 +1353,20 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         </button>
                       </div>
                     </div>
+                  </div>
+                ) : pipelineStats ? (
+                  <div className="text-center py-12">
+                    <AlertCircle className="w-16 h-16 text-warning-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-warning-700 mb-2">Unvollständige Daten</h3>
+                    <p className="text-warning-600 mb-4">
+                      Pipeline-Statistiken sind verfügbar, aber die Cache-Daten sind unvollständig.
+                    </p>
+                    <button
+                      onClick={loadPipelineStats}
+                      className="btn-primary"
+                    >
+                      🔄 Erneut laden
+                    </button>
                   </div>
                 ) : (
                   <div className="text-center py-12">
