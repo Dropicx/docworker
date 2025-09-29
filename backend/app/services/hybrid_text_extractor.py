@@ -133,12 +133,12 @@ class HybridTextExtractor:
             # Replace placeholder in the prompt with actual text
             full_prompt = ocr_prompt.replace("{extracted_text}", raw_text)
 
-            # Use the correct method with proper prompt type for optimization
-            processed_text = await self.ovh_client.process_prompt_with_optimization(
+            # Use fast model for OCR preprocessing to improve speed
+            processed_text = await self.ovh_client.process_medical_text_with_prompt(
                 full_prompt=full_prompt,
-                prompt_type='ocr_preprocessing_prompt',
                 temperature=0.3,
-                max_tokens=4000
+                max_tokens=4000,
+                use_fast_model=True  # Force fast model for OCR preprocessing
             )
 
             return processed_text if processed_text else raw_text

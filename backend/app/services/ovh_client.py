@@ -932,8 +932,9 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             # OVH endpoints may have different structure than OpenAI
             logger.info(f"🚀 Calling Qwen 2.5 VL vision API at {self.vision_base_url}")
 
-            # Try direct HTTP call first
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            # Try direct HTTP call with optimized timeout for vision processing
+            vision_timeout = 45.0  # Shorter timeout for individual vision calls
+            async with httpx.AsyncClient(timeout=vision_timeout) as client:
                 headers = {
                     "Authorization": f"Bearer {self.access_token}",
                     "Content-Type": "application/json"
@@ -1083,21 +1084,59 @@ Start extracting the text now:"""
         ocr_results = []
         total_confidence = 0.0
 
-        for i, image in enumerate(images, 1):
-            logger.info(f"📄 Processing image {i}/{len(images)}")
+        # Process all images in parallel for much faster performance
+        import asyncio
+        logger.info("🚀 Starting parallel OCR processing for all images")
 
-            text, confidence = await self.extract_text_with_vision(image, f"image_{i}")
+        # Limit concurrent API calls to prevent overwhelming OVH servers
+        semaphore = asyncio.Semaphore(3)  # Max 3 concurrent vision API calls
+
+        async def process_single_image(i: int, image: Union[bytes, Image.Image]) -> dict:
+            """Process a single image and return result with concurrency control"""
+            async with semaphore:  # Limit concurrent API calls
+                logger.info(f"📄 Processing image {i}/{len(images)} in parallel")
+
+                text, confidence = await self.extract_text_with_vision(image, f"image_{i}")
 
             if text and not text.startswith("Error"):
-                ocr_results.append({
+                logger.info(f"✅ Image {i} processed: {len(text)} chars, confidence: {confidence:.2%}")
+                return {
                     'page': i,
                     'text': text,
-                    'confidence': confidence
-                })
-                total_confidence += confidence
-                logger.info(f"✅ Image {i} processed: {len(text)} chars, confidence: {confidence:.2%}")
+                    'confidence': confidence,
+                    'success': True
+                }
             else:
                 logger.warning(f"⚠️ Image {i} failed: {text}")
+                return {
+                    'page': i,
+                    'text': text,
+                    'confidence': 0.0,
+                    'success': False
+                }
+
+        # Create tasks for all images
+        tasks = [
+            process_single_image(i, image)
+            for i, image in enumerate(images, 1)
+        ]
+
+        # Process all images concurrently
+        parallel_results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Process results
+        for result in parallel_results:
+            if isinstance(result, Exception):
+                logger.error(f"❌ Parallel OCR task failed: {result}")
+                continue
+
+            if result['success']:
+                ocr_results.append({
+                    'page': result['page'],
+                    'text': result['text'],
+                    'confidence': result['confidence']
+                })
+                total_confidence += result['confidence']
 
         if not ocr_results:
             return "Failed to extract text from any image", 0.0
