@@ -888,24 +888,28 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         try:
             logger.info(f"🔍 Starting vision OCR with Qwen 2.5 VL for {file_type}")
 
-            # Convert image to base64
+            # Convert image to base64 with proper MIME type detection (like OVH example)
+            import mimetypes
+
             if isinstance(image_data, Image.Image):
                 # Convert PIL Image to bytes
                 buffered = BytesIO()
                 # Save as PNG for best quality
                 image_data.save(buffered, format="PNG")
                 image_bytes = buffered.getvalue()
+                mime_type = "image/png"
             else:
                 image_bytes = image_data
+                # Try to detect MIME type, default to PNG for PDFs converted to images
+                mime_type = "image/png"  # Default for PDF->image conversion
 
-            # Encode to base64
-            image_base64 = base64.b64encode(image_bytes).decode('utf-8')
-            image_url = f"data:image/png;base64,{image_base64}"
+            # Encode to base64 exactly like OVH example
+            encoded_image = f"data:{mime_type};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
 
             # Create medical OCR prompt
             ocr_prompt = self._get_medical_ocr_prompt()
 
-            # Prepare messages for vision model
+            # Prepare messages for vision model (exactly like OVH example)
             messages = [
                 {
                     "role": "user",
@@ -917,7 +921,7 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                         {
                             "type": "image_url",
                             "image_url": {
-                                "url": image_url
+                                "url": encoded_image
                             }
                         }
                     ]
@@ -935,19 +939,19 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                     "Content-Type": "application/json"
                 }
 
+                # Payload structure exactly matching OVH example
                 payload = {
-                    "model": self.vision_model,
-                    "messages": messages,
                     "max_tokens": 4000,
+                    "messages": messages,
+                    "model": self.vision_model,
                     "temperature": 0.1
                 }
 
-                # Try different endpoint paths
+                # Try different endpoint paths based on OVH documentation
                 endpoints_to_try = [
+                    f"{self.vision_base_url}/api/openai_compat/v1/chat/completions",  # OVH specific format
                     f"{self.vision_base_url}/v1/chat/completions",
-                    f"{self.vision_base_url}/chat/completions",
-                    f"{self.vision_base_url}/completions",
-                    f"{self.vision_base_url}/v1/completions"
+                    f"{self.vision_base_url}/chat/completions"
                 ]
 
                 last_error = None
