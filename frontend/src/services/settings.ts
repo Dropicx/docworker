@@ -24,7 +24,7 @@ import {
   OCRSettingsUpdateRequest
 } from '../types/settings';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
 const SETTINGS_BASE_URL = `${API_BASE_URL}/settings`;
 
 // Token management

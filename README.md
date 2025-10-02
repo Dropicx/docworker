@@ -30,13 +30,16 @@ DocTranslator transforms complex medical documents into patient-friendly languag
 
 1. Click "Deploy on Railway"
 2. Connect your GitHub repository
-3. Add environment variables:
+3. Create two environments:
+   - `dev` → linked to `dev` branch
+   - `production` → linked to `main` branch
+4. Add PostgreSQL to both environments
+5. Set environment variables (both environments):
    ```bash
    OVH_AI_ENDPOINTS_ACCESS_TOKEN=your-token-here
    USE_OVH_ONLY=true
    ```
-4. Add PostgreSQL database service
-5. Deploy! 🎉
+6. Railway auto-deploys on push to respective branches
 
 See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions.
 
@@ -60,12 +63,16 @@ open http://localhost:8080
 
 ### Local Development
 
+**Prerequisites:** Railway dev environment with PostgreSQL ([Setup Guide](./docs/RAILWAY_DEV_SETUP.md))
+
 **Backend:**
 ```bash
 cd backend
+cp .env.example .env.development  # Configure with Railway DATABASE_URL
 python -m venv venv
 source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
+export $(cat .env.development | xargs)
 python -m uvicorn app.main:app --reload --port 9122
 ```
 
@@ -76,13 +83,20 @@ npm install
 npm run dev
 ```
 
+See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for complete local setup guide.
+
 ## 📚 Documentation
 
-- [Architecture](./docs/ARCHITECTURE.md) - System design and components
-- [API Reference](./docs/API.md) - Complete API documentation
-- [Database](./docs/DATABASE.md) - Database schema and queries
-- [Deployment](./docs/DEPLOYMENT.md) - Production deployment guide
-- [Privacy Filter](./docs/PRIVACY_FILTER.md) - PII detection system
+- **Getting Started**
+  - [Development Setup](./docs/DEVELOPMENT.md) - Local development quick start
+  - [Railway Dev Setup](./docs/RAILWAY_DEV_SETUP.md) - Railway + PostgreSQL setup
+- **Architecture & API**
+  - [Architecture](./docs/ARCHITECTURE.md) - System design and components
+  - [API Reference](./docs/API.md) - Complete API documentation
+  - [Database](./docs/DATABASE.md) - Database schema and queries
+- **Deployment**
+  - [Deployment Guide](./docs/DEPLOYMENT.md) - Production deployment
+  - [Privacy Filter](./docs/PRIVACY_FILTER.md) - PII detection system
 
 ## 🏗️ Architecture
 
