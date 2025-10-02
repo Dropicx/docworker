@@ -128,6 +128,10 @@ docker-compose.local.yml
 # IDE / Editors
 # ===========================
 
+# Claude Code
+.claude/
+.claude/settings.local.json
+
 # Visual Studio Code
 .vscode/
 *.code-workspace
@@ -230,32 +234,6 @@ uploaded_files/
 .env.*
 !.env.example
 !.env.template
-
-# Claude Flow specific
-claude-flow*
-.roo*
-.claude
-.claude/settings.local.json
-.claude-flow/
-.swarm/
-.hive-mind/
-.mcp.json
-claude-flow.config.json
-memory/claude-flow-data.json
-memory/sessions/*
-!memory/sessions/README.md
-memory/agents/*
-!memory/agents/README.md
-coordination/memory_bank/*
-coordination/orchestration/*
-coordination/subtasks/*
-hive-mind-prompt-*.txt
-
-# Claude Flow executables (tracked in repo for this project)
-# Uncomment these if you want to exclude them:
-# claude-flow
-# claude-flow.bat
-# claude-flow.ps1
 
 # API keys and secrets
 *.key
@@ -430,28 +408,3 @@ gcp-key.json
 !deploy.sh
 !check.sh
 !update_*.sh
-
-# Claude Flow generated files
-.claude/settings.local.json
-.mcp.json
-claude-flow.config.json
-.swarm/
-.hive-mind/
-memory/claude-flow-data.json
-memory/sessions/*
-!memory/sessions/README.md
-memory/agents/*
-!memory/agents/README.md
-coordination/memory_bank/*
-coordination/subtasks/*
-coordination/orchestration/*
-*.db
-*.db-journal
-*.db-wal
-*.sqlite
-*.sqlite-journal
-*.sqlite-wal
-claude-flow
-claude-flow.bat
-claude-flow.ps1
-hive-mind-prompt-*.txt
