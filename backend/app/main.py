@@ -138,12 +138,16 @@ app.add_middleware(
     allowed_hosts=["*"]  # In Docker-Umgebung weniger restriktiv
 )
 
-# CORS Middleware - Railway compatible
-allowed_origins = ["*"] if os.getenv("ENVIRONMENT") == "production" else [
-    "http://localhost:9121", 
+# CORS Middleware - Microservices compatible
+# Allow frontend service and localhost for development
+allowed_origins = [
+    "*"  # In production, will be restricted via nginx
+] if os.getenv("ENVIRONMENT") == "production" else [
+    "http://localhost:9121",  # Local nginx proxy
     "http://127.0.0.1:9121",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000"
+    "http://localhost:3000",  # Direct frontend dev server
+    "http://127.0.0.1:3000",
+    "http://frontend:8080",  # Docker frontend service
 ]
 
 app.add_middleware(

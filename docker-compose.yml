@@ -1,46 +1,148 @@
 services:
-  backend:
-    build: 
-      context: ./backend
-      dockerfile: Dockerfile
-    container_name: medical-translator-backend
+  # Redis - Task queue broker and backend
+  redis:
+    image: redis:7-alpine
+    container_name: medical-translator-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - medical-translator
+    ports:
+      - "6379:6379"  # Exposed for local debugging
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: medical-translator-postgres
     restart: unless-stopped
     environment:
-      - ENVIRONMENT=production
-      - PYTHONPATH=/app
+      - POSTGRES_USER=${POSTGRES_USER:-doctranslator}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-doctranslator}
+      - POSTGRES_DB=${POSTGRES_DB:-doctranslator}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - medical-translator
+    ports:
+      - "5432:5432"  # Exposed for local debugging
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-doctranslator}"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Backend Service
+  backend:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.backend
+    container_name: medical-translator-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONPATH=/app:/app/backend:/app/shared
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-doctranslator}:${POSTGRES_PASSWORD:-doctranslator}@postgres:5432/${POSTGRES_DB:-doctranslator}
+      - REDIS_URL=redis://redis:6379/0
+      - USE_WORKER_SERVICE=true
     env_file:
       - ./.env
     volumes:
       - /tmp/medical-translator:/tmp
       - ./logs:/app/logs
-      - ./.env:/app/.env:ro
+      - ./backend:/app/backend:ro  # Mount for development
+      - ./shared:/app/shared:ro
     networks:
       - medical-translator
     ports:
-      - "9122:9122"  # Direkt erreichbar für lokale Entwicklung
+      - "9122:9122"  # Backend API port
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9122/api/health/simple"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:9122/api/health')"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
 
+  # Worker Service
+  worker:
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.worker
+    container_name: medical-translator-worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      backend:
+        condition: service_healthy
+    environment:
+      - ENVIRONMENT=development
+      - PYTHONPATH=/app:/app/worker:/app/backend:/app/shared
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-doctranslator}:${POSTGRES_PASSWORD:-doctranslator}@postgres:5432/${POSTGRES_DB:-doctranslator}
+      - REDIS_URL=redis://redis:6379/0
+      - WORKER_CONCURRENCY=2
+      - WORKER_MAX_TASKS_PER_CHILD=50
+    env_file:
+      - ./.env
+    volumes:
+      - /tmp/medical-translator:/tmp
+      - ./logs:/app/logs
+      - ./worker:/app/worker:ro  # Mount for development
+      - ./backend:/app/backend:ro
+      - ./shared:/app/shared:ro
+    networks:
+      - medical-translator
+    healthcheck:
+      test: ["CMD", "python", "-c", "from shared.redis_client import get_redis; get_redis().ping()"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 15s
+
+  # Frontend Service
   frontend:
-    build: 
-      context: ./frontend
-      dockerfile: Dockerfile
+    build:
+      context: .
+      dockerfile: dockerfiles/Dockerfile.frontend
+      args:
+        - VITE_API_URL=/api
     container_name: medical-translator-frontend
     restart: unless-stopped
     depends_on:
       backend:
         condition: service_healthy
     environment:
-      - REACT_APP_API_URL=/api
+      - PORT=8080
+      - BACKEND_URL=http://backend:9122
     networks:
       - medical-translator
     ports:
-      - "9121:9121"  # Direkt erreichbar für lokale Entwicklung
+      - "9121:8080"  # Frontend nginx port
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 
 networks:
   medical-translator:
-    external: false
+    driver: bridge
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local

@@ -112,18 +112,53 @@ async def start_processing(
         # Verarbeitungsoptionen speichern
         if options:
             processing_data["options"] = options.dict()
-        
-        # Verarbeitung im Hintergrund starten
-        background_tasks.add_task(process_document, processing_id)
-        
-        # Status auf PROCESSING setzen
-        update_processing_store(processing_id, {
-            "status": ProcessingStatus.PROCESSING,
-            "progress_percent": 10,
-            "current_step": "Verarbeitung gestartet",
-            "started_at": datetime.now(),
-            "options": options.dict() if options else {}
-        })
+
+        # Check if we should use worker service or local processing
+        use_worker = os.getenv('USE_WORKER_SERVICE', 'false').lower() == 'true'
+
+        if use_worker:
+            # Enqueue task to worker service
+            from app.services.celery_client import enqueue_document_processing
+
+            try:
+                task_id = enqueue_document_processing(processing_id, options.dict() if options else None)
+
+                # Status auf QUEUED setzen
+                update_processing_store(processing_id, {
+                    "status": ProcessingStatus.PROCESSING,
+                    "progress_percent": 5,
+                    "current_step": "Task queued for processing",
+                    "started_at": datetime.now(),
+                    "task_id": task_id,
+                    "options": options.dict() if options else {}
+                })
+
+                print(f"📤 Task enqueued to worker: {processing_id[:8]} (task_id: {task_id})")
+
+            except Exception as e:
+                print(f"❌ Failed to enqueue task, falling back to local processing: {e}")
+                # Fallback to local processing
+                background_tasks.add_task(process_document, processing_id)
+
+                update_processing_store(processing_id, {
+                    "status": ProcessingStatus.PROCESSING,
+                    "progress_percent": 10,
+                    "current_step": "Verarbeitung gestartet (local)",
+                    "started_at": datetime.now(),
+                    "options": options.dict() if options else {}
+                })
+        else:
+            # Verarbeitung im Hintergrund starten (local processing)
+            background_tasks.add_task(process_document, processing_id)
+
+            # Status auf PROCESSING setzen
+            update_processing_store(processing_id, {
+                "status": ProcessingStatus.PROCESSING,
+                "progress_percent": 10,
+                "current_step": "Verarbeitung gestartet",
+                "started_at": datetime.now(),
+                "options": options.dict() if options else {}
+            })
         
         print(f"🔄 Verarbeitung gestartet: {processing_id[:8]} (Sprache: {options.target_language if options else 'Keine'})")
         

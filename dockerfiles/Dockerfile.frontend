@@ -1,0 +1,54 @@
+# ==========================================
+# Stage 1: Build Frontend
+# ==========================================
+FROM node:24-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+# Copy package files
+COPY frontend/package*.json ./
+
+# Install dependencies
+RUN npm ci --only=production
+
+# Copy frontend source
+COPY frontend/ .
+
+# Build frontend
+ARG VITE_API_URL
+ENV VITE_API_URL=${VITE_API_URL}
+RUN npm run build
+
+# ==========================================
+# Stage 2: Production nginx Server
+# ==========================================
+FROM nginx:1.27-alpine
+
+# Install envsubst for environment variable substitution
+RUN apk add --no-cache gettext
+
+# Copy nginx configuration template
+COPY dockerfiles/nginx/nginx.conf /etc/nginx/nginx.conf.template
+
+# Copy built frontend
+COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
+
+# Environment variables for nginx configuration
+ENV PORT=8080
+ENV BACKEND_URL=http://backend:9122
+
+# Create startup script for environment variable substitution
+RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
+    echo 'envsubst "\\$PORT \\$BACKEND_URL" < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf' >> /docker-entrypoint.sh && \
+    echo 'exec nginx -g "daemon off;"' >> /docker-entrypoint.sh && \
+    chmod +x /docker-entrypoint.sh
+
+# Expose port
+EXPOSE 8080
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1
+
+# Start nginx
+CMD ["/docker-entrypoint.sh"]
