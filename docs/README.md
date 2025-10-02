@@ -59,7 +59,7 @@ DocTranslator (branded as HealthLingo) is a web-based application designed to ma
 - 🏥 **Medical Specialization**: Optimized for medical terminology and documents
 - 🔒 **GDPR Compliant**: No data storage, complete privacy protection
 - 📄 **Multiple Formats**: Supports PDF, TXT, JPG, PNG files
-- 🤖 **Local AI Processing**: Uses Ollama for on-premise language models
+- 🤖 **AI Processing**: Uses OVH AI Endpoints for cloud-based processing
 - ⚡ **Fast Processing**: Results in seconds
 - 🌐 **Modern UI**: React-based responsive interface
 

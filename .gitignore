@@ -190,11 +190,8 @@ $RECYCLE.BIN/
 # Project Specific
 # ===========================
 
-# Ollama-related files (removed from Railway deployment)
+# AI service directories (not used - OVH API only)
 ollama/
-ollama-startup-*.sh
-ollama-gpu/
-ollama-cpu/
 
 # Logs
 logs/

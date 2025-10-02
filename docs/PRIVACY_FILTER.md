@@ -48,7 +48,7 @@ RUN python -m spacy download de_core_news_sm
 Die Anwendung wählt automatisch den besten verfügbaren Filter:
 
 ```python
-# In ovh_client.py und ollama_client.py
+# In ovh_client.py
 if ADVANCED_FILTER_AVAILABLE:
     self.privacy_filter = AdvancedPrivacyFilter()  # Mit spaCy
     logger.info("🧠 Using AdvancedPrivacyFilter with spaCy NER")

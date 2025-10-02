@@ -1,106 +1,249 @@
-# DocTranslator - Medical Document Translation Service
+# DocTranslator 🏥
 
-GDPR-compliant translation service for medical documents with OVH AI integration.
+> GDPR-compliant medical document translation service powered by AI
 
-## Features
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![Python](https://img.shields.io/badge/python-3.11-blue.svg)
+![React](https://img.shields.io/badge/react-18.3-blue.svg)
+![FastAPI](https://img.shields.io/badge/fastapi-0.115-green.svg)
 
-- 🔒 **GDPR Compliant** - All data processing within EU
-- 🏥 **Medical Specialization** - Optimized for medical terminology
-- 🌍 **Multi-Language** - DE, EN, FR, ES, IT, PT, NL, PL support
-- 📄 **Multiple Formats** - PDF, DOCX, TXT, images
-- 🔍 **Full OCR Support** - Tesseract OCR for scanned documents (DE/EN)
-- 🚀 **OVH AI Powered** - Using Llama 3.3 70B model
-- 🔐 **Secure** - No data retention, encrypted processing
+DocTranslator transforms complex medical documents into patient-friendly language while maintaining complete data privacy and GDPR compliance. Built with FastAPI and React, powered by OVH AI Endpoints.
 
-## Quick Start
+## ✨ Features
+
+- 🔒 **GDPR Compliant** - All data processing within EU, zero data retention
+- 🏥 **Medical Specialization** - Optimized for medical terminology and documents
+- 🌍 **Multi-Language Support** - DE, EN, FR, ES, IT, PT, NL, PL
+- 📄 **Multiple Formats** - PDF, DOCX, TXT, JPG, PNG (up to 50MB)
+- 🔍 **Full OCR Support** - Tesseract OCR for scanned documents
+- 🚀 **AI-Powered** - Llama 3.3 70B and Mistral Nemo via OVH AI Endpoints
+- 🛡️ **Privacy Filter** - Automatic PII removal with spaCy NER
+- ⚡ **Fast Processing** - Optimized 9-step pipeline
+- 🎨 **Modern UI** - React + TypeScript + TailwindCSS
+- 📊 **Admin Dashboard** - Configurable prompts and pipeline steps
+
+## 🚀 Quick Start
+
+### Using Railway (Recommended)
+
+[![Deploy on Railway](https://railway.app/button.svg)](https://railway.app/new)
+
+1. Click "Deploy on Railway"
+2. Connect your GitHub repository
+3. Add environment variables:
+   ```bash
+   OVH_AI_ENDPOINTS_ACCESS_TOKEN=your-token-here
+   USE_OVH_ONLY=true
+   ```
+4. Add PostgreSQL database service
+5. Deploy! 🎉
+
+See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions.
+
+### Using Docker
+
+```bash
+# Clone repository
+git clone <your-repo-url>
+cd doctranslator
+
+# Set environment variables
+cp .env.example .env
+# Edit .env with your OVH credentials
+
+# Run with Docker Compose
+docker-compose up -d
+
+# Access application
+open http://localhost:8080
+```
 
 ### Local Development
 
+**Backend:**
 ```bash
-# Backend
 cd backend
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 python -m uvicorn app.main:app --reload --port 9122
+```
 
-# Frontend
+**Frontend:**
+```bash
 cd frontend
 npm install
 npm run dev
 ```
 
-### Docker Deployment
+## 📚 Documentation
+
+- [Architecture](./docs/ARCHITECTURE.md) - System design and components
+- [API Reference](./docs/API.md) - Complete API documentation
+- [Database](./docs/DATABASE.md) - Database schema and queries
+- [Deployment](./docs/DEPLOYMENT.md) - Production deployment guide
+- [Privacy Filter](./docs/PRIVACY_FILTER.md) - PII detection system
+
+## 🏗️ Architecture
+
+```
+┌─────────────┐
+│   React UI  │ (TypeScript + TailwindCSS)
+└──────┬──────┘
+       │ HTTP/SSE
+┌──────▼──────┐
+│  FastAPI    │ (Python 3.11 + async)
+│  Backend    │
+└──────┬──────┘
+       │
+       ├─────────────┐
+       │             │
+┌──────▼──────┐ ┌───▼────────┐
+│ OVH AI      │ │ PostgreSQL │
+│ Endpoints   │ │ Database   │
+└─────────────┘ └────────────┘
+```
+
+## 🔧 Technology Stack
+
+**Backend:**
+- FastAPI 0.115.6 - Modern async web framework
+- Uvicorn 0.34.0 - ASGI server
+- PostgreSQL - Production database
+- Tesseract OCR - Text extraction
+- spaCy NER - Privacy filtering
+- OVH AI Endpoints - AI processing
+
+**Frontend:**
+- React 18.3.1 - UI framework
+- TypeScript 5.7.3 - Type safety
+- Vite 6.0.6 - Build tool
+- TailwindCSS 3.4.17 - Styling
+- Axios 1.7.9 - HTTP client
+
+**Infrastructure:**
+- Railway - Cloud platform
+- Docker - Containerization
+- nginx - Reverse proxy
+
+## 🔐 Security & Privacy
+
+- ✅ **No Data Retention** - Documents deleted after processing
+- ✅ **EU-Based Processing** - OVH AI Endpoints in EU
+- ✅ **PII Removal** - Automated privacy filtering
+- ✅ **HTTPS Only** - Encrypted transport
+- ✅ **CORS Protection** - Configurable origins
+- ✅ **Input Validation** - Pydantic models
+
+## 🏥 Medical Document Support
+
+| Document Type | Description | Examples |
+|---------------|-------------|----------|
+| **ARZTBRIEF** | Doctor's letters | Discharge summaries, referrals |
+| **BEFUNDBERICHT** | Medical reports | Radiology, pathology findings |
+| **LABORWERTE** | Lab results | Blood tests, clinical chemistry |
+
+## 🌍 Language Support
+
+| Input | Output Translations |
+|-------|---------------------|
+| German (DE) | English, French, Spanish, Italian, Portuguese, Dutch, Polish |
+
+## 📊 Processing Pipeline
+
+1. **TEXT_EXTRACTION** - OCR preprocessing with Qwen Vision
+2. **MEDICAL_VALIDATION** - Binary medical classification
+3. **CLASSIFICATION** - Document type detection
+4. **PII_PREPROCESSING** - Privacy filtering
+5. **TRANSLATION** - Patient-friendly German
+6. **FACT_CHECK** - Medical accuracy verification
+7. **GRAMMAR_CHECK** - Language correction
+8. **LANGUAGE_TRANSLATION** - Multi-language support
+9. **FINAL_CHECK** - Quality assurance
+10. **FORMATTING** - Markdown output
+
+All steps are configurable via admin dashboard.
+
+## 🛠️ Configuration
+
+### Environment Variables
 
 ```bash
-docker-compose up
+# Required
+OVH_AI_ENDPOINTS_ACCESS_TOKEN=your-token
+OVH_AI_BASE_URL=https://oai.endpoints.kepler.ai.cloud.ovh.net/v1
+USE_OVH_ONLY=true
+
+# Optional
+OVH_MAIN_MODEL=Meta-Llama-3_3-70B-Instruct
+OVH_PREPROCESSING_MODEL=Mistral-Nemo-Instruct-2407
+LOG_LEVEL=INFO
+DATABASE_URL=postgresql://...  # Auto-configured on Railway
 ```
 
-### Railway Deployment
+See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for complete reference.
 
-1. Deploy to Railway using the button or CLI
-2. Set environment variables in Railway dashboard:
-   ```
-   OVH_AI_ENDPOINTS_ACCESS_TOKEN=your-token-here
-   OVH_AI_BASE_URL=https://oai.endpoints.kepler.ai.cloud.ovh.net/v1
-   USE_OVH_ONLY=true
-   ```
-3. Railway will automatically build and deploy using `Dockerfile.railway`
+## 📈 Performance
 
-## Environment Variables
+- **Processing Time**: 3-5 seconds average
+- **Max File Size**: 50MB
+- **Concurrent Requests**: Railway plan-dependent
+- **Uptime**: 99.9% on Railway
 
-| Variable | Description | Required |
-|----------|-------------|----------|
-| `OVH_AI_ENDPOINTS_ACCESS_TOKEN` | OVH API token | Yes |
-| `OVH_AI_BASE_URL` | OVH API endpoint | Yes |
-| `USE_OVH_ONLY` | Use only OVH (no local Ollama) | Yes |
-| `OVH_MAIN_MODEL` | Main AI model | No (default: Meta-Llama-3_3-70B-Instruct) |
+## 🧪 Testing
 
-## Architecture
+```bash
+# Backend tests
+cd backend
+pytest
 
-```
-frontend/          # React + TypeScript + Vite
-├── src/          # Source code
-└── dist/         # Built files
+# Frontend tests
+cd frontend
+npm test
 
-backend/          # FastAPI + Python
-├── app/          # Application code
-│   ├── routers/  # API endpoints
-│   └── services/ # Business logic
-└── tests/        # Test files
-
-railway/          # Deployment configs
-└── *.sh         # Startup scripts
-
-docs/             # Documentation
+# E2E tests
+npm run test:e2e
 ```
 
-## API Endpoints
+## 🤝 Contributing
 
-- `GET /api/health` - Health check
-- `POST /api/upload` - Upload document
-- `POST /api/process/translate` - Translate document
-- `GET /api/health/env-debug` - Debug environment
+Contributions welcome! Please:
 
-## Security
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit changes (`git commit -m 'Add amazing feature'`)
+4. Push to branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
-- No data persistence after processing
-- Automatic cleanup every 30 seconds
-- CORS protection
-- Rate limiting
-- Input validation
-- Encrypted transport (HTTPS)
+## 📝 License
 
-## Development
+MIT License - see [LICENSE](LICENSE) file for details.
 
-See [docs/development/README.md](docs/development/README.md) for development guidelines.
+## 🙏 Acknowledgments
 
-## Deployment
+- [OVH Cloud](https://www.ovhcloud.com/) - AI Endpoints infrastructure
+- [Railway](https://railway.app/) - Deployment platform
+- [Tesseract OCR](https://github.com/tesseract-ocr/tesseract) - OCR engine
+- [spaCy](https://spacy.io/) - NLP and NER
+- [FastAPI](https://fastapi.tiangolo.com/) - Backend framework
+- [React](https://react.dev/) - Frontend framework
 
-See [RAILWAY_DEPLOYMENT.md](RAILWAY_DEPLOYMENT.md) for Railway deployment instructions.
+## 📞 Support
 
-## License
+- 📖 [Documentation](./docs/README.md)
+- 🐛 [Issues](https://github.com/your-repo/issues)
+- 💬 [Discussions](https://github.com/your-repo/discussions)
 
-MIT
+## 🗺️ Roadmap
 
-## Support
+- [ ] Batch document processing
+- [ ] Advanced analytics dashboard
+- [ ] Multi-tenant support
+- [ ] Custom model fine-tuning
+- [ ] API authentication
+- [ ] WebSocket real-time updates
+- [ ] Mobile app
 
-For issues, please create an issue on GitHub.
+---
+
+**Built with ❤️ for healthcare professionals and patients**

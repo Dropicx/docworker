@@ -175,8 +175,8 @@ class OVHClient:
         use_fast_model: bool = False
     ) -> str:
         """
-        Process medical text with complete prompt (identical to ollama_client.py format)
-        Now supports fast model for routine tasks to improve speed
+        Process medical text with complete prompt.
+        Supports fast model for routine tasks to improve speed.
         """
         if not self.access_token:
             logger.error("❌ OVH API token not configured")
@@ -189,7 +189,7 @@ class OVHClient:
         try:
             logger.debug(f"🚀 Processing with OVH {model_to_use} ({model_type})")
 
-            # Use simple user message with the full prompt (like ollama)
+            # Use simple user message with the full prompt
             messages = [
                 {
                     "role": "user",
@@ -593,7 +593,7 @@ TEXT ZUM ÜBERSETZEN:
                 instruction = self._get_medical_translation_instruction()
                 logger.info(f"📝 Using default translation prompt for {document_type}")
             
-            # Format the complete prompt exactly like ollama_client.py
+            # Format the complete prompt
             full_prompt = f"""{instruction}
 
 ORIGINAL MEDIZINISCHER TEXT:
@@ -634,7 +634,7 @@ ORIGINAL MEDIZINISCHER TEXT:
             return f"Translation error: {str(e)}", "error", 0.0, text
     
     def _get_medical_translation_instruction(self) -> str:
-        """Get the comprehensive medical translation instruction - identical to ollama_client.py"""
+        """Get the comprehensive medical translation instruction"""
         
         base_instruction = """Du bist ein hochspezialisierter medizinischer Übersetzer. Deine Aufgabe ist es, medizinische Dokumente vollständig und präzise in patientenfreundliche Sprache zu übersetzen.
 
