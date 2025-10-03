@@ -72,5 +72,12 @@ def get_session() -> Generator[Session, None, None]:
     finally:
         session.close()
 
+def get_db_session() -> Generator[Session, None, None]:
+    """
+    Get database session (alias for get_session for compatibility).
+    Returns a generator that yields a SQLAlchemy Session.
+    """
+    return get_session()
+
 # Global engine instance
 engine = get_engine()
