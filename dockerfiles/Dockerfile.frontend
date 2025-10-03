@@ -35,7 +35,7 @@ COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 # Environment variables for nginx configuration
 ENV PORT=8080
-ENV BACKEND_URL=http://doctranslator-backend.railway.internal:9122
+ENV BACKEND_URL=doctranslator-backend.railway.internal:9122
 
 # Create startup script with proper envsubst
 RUN printf '#!/bin/sh\n\
