@@ -44,7 +44,6 @@ celery_app.conf.update(
     worker_prefetch_multiplier=1,  # Process one task at a time
     worker_max_tasks_per_child=50,  # Restart worker after 50 tasks
     task_acks_late=True,  # Acknowledge task after completion
-    worker_prefetch_multiplier=1,  # Don't prefetch tasks
 )
 
 logger.info("✅ Celery worker initialized")
