@@ -23,10 +23,13 @@ def _normalize_paddleocr_url(url: str) -> str:
     Normalize PaddleOCR service URL to handle IPv6 and missing scheme.
 
     Railway provides IPv6 addresses that need brackets in URLs.
-    Also ensures http:// prefix is present.
+    Also ensures http:// prefix is present and removes trailing slashes.
     """
     if not url:
         return "http://paddleocr.railway.internal:9123"
+
+    # Remove trailing slashes to prevent double slashes in paths
+    url = url.rstrip('/')
 
     # Add http:// if missing
     if not url.startswith(('http://', 'https://')):
