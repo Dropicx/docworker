@@ -23,7 +23,8 @@ import {
   Zap,
   Brain,
   Image as ImageIcon,
-  Boxes
+  Boxes,
+  RefreshCw
 } from 'lucide-react';
 import { pipelineApi } from '../../services/pipelineApi';
 import {
@@ -66,6 +67,12 @@ const PipelineBuilder: React.FC = () => {
   const [success, setSuccess] = useState<string>('');
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
 
+  // Pipeline Tab State (NEW)
+  const [activePipelineTab, setActivePipelineTab] = useState<'universal' | number>('universal');
+
+  // Track previous document class count for notifications (NEW)
+  const [prevClassCount, setPrevClassCount] = useState<number>(0);
+
   // Load data on mount
   useEffect(() => {
     loadOCRConfig();
@@ -74,6 +81,16 @@ const PipelineBuilder: React.FC = () => {
     loadModels();
     loadDocumentClasses(); // NEW
   }, []);
+
+  // Track document class changes and show notification (NEW)
+  useEffect(() => {
+    if (prevClassCount > 0 && documentClasses.length > prevClassCount) {
+      const newClassCount = documentClasses.length - prevClassCount;
+      setSuccess(`✨ ${newClassCount} neue Dokumentklasse${newClassCount > 1 ? 'n' : ''} hinzugefügt! Neue Tabs sind jetzt verfügbar.`);
+      setTimeout(() => setSuccess(''), 5000);
+    }
+    setPrevClassCount(documentClasses.length);
+  }, [documentClasses.length]);
 
   // ==================== DATA LOADING ====================
 
@@ -171,6 +188,36 @@ const PipelineBuilder: React.FC = () => {
   const handleAddStep = () => {
     setEditingStep(null);
     setIsEditorOpen(true);
+  };
+
+  // Get default document class ID based on active tab context
+  const getDefaultDocumentClassId = (): number | null => {
+    return activePipelineTab === 'universal' ? null : activePipelineTab;
+  };
+
+  // Get step count for a specific document class or universal
+  const getStepCount = (context: 'universal' | number): number => {
+    if (context === 'universal') {
+      return steps.filter(s => s.document_class_id === null).length;
+    } else {
+      return steps.filter(s => s.document_class_id === context).length;
+    }
+  };
+
+  // Get filtered steps based on active tab
+  const getDisplayedSteps = (): PipelineStep[] => {
+    if (activePipelineTab === 'universal') {
+      return steps.filter(s => s.document_class_id === null).sort((a, b) => a.order - b.order);
+    } else {
+      return steps.filter(s => s.document_class_id === activePipelineTab).sort((a, b) => a.order - b.order);
+    }
+  };
+
+  // Get document class name by ID or context
+  const getDocumentClassName = (classId: number | null | 'universal'): string => {
+    if (classId === null || classId === 'universal') return 'Universal';
+    const docClass = documentClasses.find(c => c.id === classId);
+    return docClass ? `${docClass.icon} ${docClass.display_name}` : `Class ${classId}`;
   };
 
   const handleEditStep = (step: PipelineStep) => {
@@ -354,34 +401,108 @@ const PipelineBuilder: React.FC = () => {
               Konfigurieren Sie die Verarbeitungsschritte Ihrer Pipeline
             </p>
           </div>
-          <button
-            onClick={handleAddStep}
-            className="btn-primary flex items-center space-x-2"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Schritt hinzufügen</span>
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={async () => {
+                await loadDocumentClasses();
+                setSuccess('Dokumentklassen aktualisiert!');
+                setTimeout(() => setSuccess(''), 2000);
+              }}
+              disabled={classesLoading}
+              className="p-2 hover:bg-primary-100 rounded-lg transition-colors text-primary-600"
+              title="Dokumentklassen aktualisieren"
+            >
+              <RefreshCw className={`w-4 h-4 ${classesLoading ? 'animate-spin' : ''}`} />
+            </button>
+            <button
+              onClick={handleAddStep}
+              className="btn-primary flex items-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Schritt hinzufügen</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Pipeline Context Tabs */}
+        <div className="border-b border-primary-200 -mx-6 px-6 mb-6">
+          <div className="flex space-x-1 -mb-px overflow-x-auto">
+            {/* Universal Tab */}
+            <button
+              onClick={() => setActivePipelineTab('universal')}
+              className={`flex items-center space-x-2 px-6 py-3 rounded-t-lg font-medium transition-all whitespace-nowrap ${
+                activePipelineTab === 'universal'
+                  ? 'bg-white border-t-2 border-x-2 border-brand-600 text-brand-700 -mb-px'
+                  : 'text-primary-600 hover:bg-primary-50 border-b-2 border-transparent'
+              }`}
+            >
+              <Settings className="w-4 h-4" />
+              <span>Universal</span>
+              <span className={`px-2 py-0.5 text-xs rounded ${
+                activePipelineTab === 'universal'
+                  ? 'bg-brand-100 text-brand-700'
+                  : 'bg-primary-100 text-primary-600'
+              }`}>
+                {getStepCount('universal')}
+              </span>
+            </button>
+
+            {/* Dynamic Document Class Tabs */}
+            {documentClasses.map((docClass) => (
+              <button
+                key={docClass.id}
+                onClick={() => setActivePipelineTab(docClass.id)}
+                className={`flex items-center space-x-2 px-6 py-3 rounded-t-lg font-medium transition-all whitespace-nowrap ${
+                  activePipelineTab === docClass.id
+                    ? 'bg-white border-t-2 border-x-2 border-brand-600 text-brand-700 -mb-px'
+                    : 'text-primary-600 hover:bg-primary-50 border-b-2 border-transparent'
+                }`}
+              >
+                <span className="text-xl">{docClass.icon}</span>
+                <span>{docClass.display_name}</span>
+                <span className={`px-2 py-0.5 text-xs rounded ${
+                  activePipelineTab === docClass.id
+                    ? 'bg-brand-100 text-brand-700'
+                    : 'bg-primary-100 text-primary-600'
+                }`}>
+                  {getStepCount(docClass.id)}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {stepsLoading ? (
           <div className="flex justify-center py-8">
             <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
           </div>
-        ) : steps.length === 0 ? (
+        ) : getDisplayedSteps().length === 0 ? (
           <div className="text-center py-8 text-primary-500">
-            <p>Keine Pipeline-Schritte konfiguriert.</p>
-            <p className="text-sm mt-2">Klicken Sie auf "Schritt hinzufügen", um zu beginnen.</p>
+            {activePipelineTab === 'universal' ? (
+              <>
+                <p>Keine universellen Schritte konfiguriert.</p>
+                <p className="text-sm mt-2">Diese Schritte laufen für alle Dokumenttypen.</p>
+                <p className="text-sm">Klicken Sie auf "Schritt hinzufügen", um zu beginnen.</p>
+              </>
+            ) : (
+              <>
+                <p>Keine Schritte für {getDocumentClassName(activePipelineTab)} konfiguriert.</p>
+                <p className="text-sm mt-2">Klicken Sie auf "Schritt hinzufügen", um klassenspezifische Verarbeitung zu erstellen.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="space-y-3">
-            {steps.map((step) => {
+            {getDisplayedSteps().map((step) => {
               const isExpanded = expandedSteps.has(step.id);
 
               return (
                 <div
                   key={step.id}
                   className={`border rounded-lg transition-all ${
-                    step.enabled
+                    step.is_branching_step
+                      ? 'border-orange-300 bg-gradient-to-r from-amber-50/50 to-orange-50/50 shadow-md'
+                      : step.enabled
                       ? 'border-primary-200 bg-white'
                       : 'border-neutral-200 bg-neutral-50'
                   }`}
@@ -401,13 +522,26 @@ const PipelineBuilder: React.FC = () => {
                         </div>
 
                         <div>
-                          <div className="flex items-center space-x-2">
+                          <div className="flex items-center space-x-2 flex-wrap">
                             <h4 className={`font-semibold ${step.enabled ? 'text-primary-900' : 'text-neutral-600'}`}>
                               {step.name}
                             </h4>
                             {!step.enabled && (
                               <span className="text-xs px-2 py-1 bg-neutral-200 text-neutral-600 rounded">
                                 Deaktiviert
+                              </span>
+                            )}
+                            {/* Branching Point Indicator */}
+                            {step.is_branching_step && (
+                              <span className="text-xs px-2 py-1 bg-gradient-to-r from-amber-100 to-orange-100 text-orange-700 border border-orange-300 rounded flex items-center space-x-1 font-semibold">
+                                <Zap className="w-3 h-3" />
+                                <span>VERZWEIGUNG</span>
+                              </span>
+                            )}
+                            {/* Document Class Label (if different from active tab) */}
+                            {step.document_class_id !== null && step.document_class_id !== activePipelineTab && (
+                              <span className="text-xs px-2 py-1 bg-brand-100 text-brand-700 border border-brand-300 rounded">
+                                {getDocumentClassName(step.document_class_id)}
                               </span>
                             )}
                           </div>
@@ -482,6 +616,8 @@ const PipelineBuilder: React.FC = () => {
           step={editingStep}
           models={models}
           documentClasses={documentClasses}
+          defaultDocumentClassId={getDefaultDocumentClassId()}
+          pipelineContext={getDocumentClassName(activePipelineTab)}
           isOpen={isEditorOpen}
           onClose={() => {
             setIsEditorOpen(false);
@@ -491,6 +627,7 @@ const PipelineBuilder: React.FC = () => {
             setIsEditorOpen(false);
             setEditingStep(null);
             await loadSteps();
+            await loadDocumentClasses(); // Refresh in case new class was created
             setSuccess('Schritt erfolgreich gespeichert!');
             setTimeout(() => setSuccess(''), 3000);
           }}

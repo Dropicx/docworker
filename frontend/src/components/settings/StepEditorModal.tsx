@@ -30,6 +30,8 @@ interface StepEditorModalProps {
   step: PipelineStep | null; // null for creating new step
   models: AIModel[];
   documentClasses: DocumentClass[]; // NEW: For document class selection
+  defaultDocumentClassId?: number | null; // NEW: Pre-fill based on active tab
+  pipelineContext?: string; // NEW: Display context in header (e.g., "Universal" or "📨 ARZTBRIEF")
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -39,6 +41,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   step,
   models,
   documentClasses,
+  defaultDocumentClassId,
+  pipelineContext,
   isOpen,
   onClose,
   onSave
@@ -101,12 +105,12 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setMaxRetries(3);
       setInputFromPreviousStep(true);
       setOutputFormat('text');
-      // NEW: Branching field defaults
-      setDocumentClassId(null);
+      // NEW: Branching field defaults - pre-fill document_class_id from active tab context
+      setDocumentClassId(defaultDocumentClassId !== undefined ? defaultDocumentClassId : null);
       setIsBranchingStep(false);
       setBranchingField('document_type');
     }
-  }, [step, models]);
+  }, [step, models, defaultDocumentClassId]);
 
   // Validate form
   const validateForm = (): boolean => {
@@ -208,7 +212,15 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                 {step ? 'Schritt bearbeiten' : 'Neuen Schritt erstellen'}
               </h2>
               <p className="text-sm text-primary-600">
-                Konfigurieren Sie einen Pipeline-Verarbeitungsschritt
+                {step ? (
+                  'Konfigurieren Sie einen Pipeline-Verarbeitungsschritt'
+                ) : pipelineContext ? (
+                  <>
+                    Erstelle Schritt für: <span className="font-semibold text-brand-700">{pipelineContext} Pipeline</span>
+                  </>
+                ) : (
+                  'Konfigurieren Sie einen Pipeline-Verarbeitungsschritt'
+                )}
               </p>
             </div>
           </div>
@@ -428,11 +440,18 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                 <label className="block text-sm font-medium text-primary-700 mb-2 flex items-center space-x-2">
                   <Tag className="w-4 h-4" />
                   <span>Dokumentenklasse</span>
+                  {step && (
+                    <span className="text-xs text-warning-600 font-normal">(Änderung nicht empfohlen)</span>
+                  )}
                 </label>
                 <select
                   value={documentClassId || ''}
                   onChange={(e) => setDocumentClassId(e.target.value ? parseInt(e.target.value) : null)}
-                  className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                  disabled={step !== null}
+                  className={`w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none ${
+                    step !== null ? 'bg-neutral-100 cursor-not-allowed opacity-75' : ''
+                  }`}
+                  title={step ? 'Dokumentenklasse kann bei bestehenden Schritten nicht geändert werden' : ''}
                 >
                   <option value="">Universal (für alle Dokumenttypen)</option>
                   {documentClasses.map((docClass) => (
@@ -442,7 +461,11 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   ))}
                 </select>
                 <p className="text-xs text-primary-500 mt-1">
-                  Wählen Sie eine Dokumentenklasse für klassenspezifische Schritte oder lassen Sie es leer für universelle Schritte
+                  {step ? (
+                    '⚠️ Die Dokumentenklasse ist bei bestehenden Schritten fixiert, um Pipeline-Konsistenz zu gewährleisten'
+                  ) : (
+                    'Wählen Sie eine Dokumentenklasse für klassenspezifische Schritte oder lassen Sie es leer für universelle Schritte'
+                  )}
                 </p>
               </div>
 
@@ -463,6 +486,21 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                 <p className="text-xs text-primary-500 mt-1 ml-7">
                   Aktivieren Sie dies für den Schritt, der die Dokumentklasse bestimmt und die Pipeline verzweigt
                 </p>
+
+                {/* Warning for universal step as branching point */}
+                {isBranchingStep && documentClassId === null && (
+                  <div className="ml-7 mt-3 p-3 bg-warning-50 border border-warning-300 rounded-lg flex items-start space-x-2">
+                    <AlertCircle className="w-4 h-4 text-warning-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs text-warning-700">
+                      <p className="font-semibold mb-1">⚠️ Verzweigungs-Schritt ist universal</p>
+                      <p>
+                        Dieser Schritt läuft für <strong>alle Dokumenttypen</strong> und leitet dann zu klassenspezifischen Schritten weiter.
+                        Stellen Sie sicher, dass Ihr Prompt das Feld <code className="px-1 py-0.5 bg-warning-100 rounded font-mono">{branchingField}</code> mit
+                        einem gültigen Klassenschlüssel zurückgibt.
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Branching Field (only shown if branching step is enabled) */}
