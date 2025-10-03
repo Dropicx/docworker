@@ -564,16 +564,19 @@ const PipelineBuilder: React.FC = () => {
                         {isExpanded ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
 
+                      {/* Toggle Switch for Enable/Disable */}
                       <button
                         onClick={() => handleToggleStep(step)}
-                        className={`p-2 rounded-lg transition-colors ${
-                          step.enabled
-                            ? 'hover:bg-warning-100 text-warning-600'
-                            : 'hover:bg-success-100 text-success-600'
-                        }`}
-                        title={step.enabled ? "Deaktivieren" : "Aktivieren"}
+                        className="relative inline-flex items-center"
+                        title={step.enabled ? "Schritt deaktivieren" : "Schritt aktivieren"}
                       >
-                        <Settings className="w-4 h-4" />
+                        <div className={`w-11 h-6 rounded-full transition-colors ${
+                          step.enabled ? 'bg-success-500' : 'bg-neutral-300'
+                        }`}>
+                          <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
+                            step.enabled ? 'translate-x-5' : 'translate-x-0'
+                          }`} />
+                        </div>
                       </button>
 
                       <button
