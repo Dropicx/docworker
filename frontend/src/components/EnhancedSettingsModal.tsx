@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { X, Settings, Save, RotateCcw, Download, Upload, Eye, EyeOff, AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import settingsService from '../services/settings';
 import { DocumentClass, DocumentPrompts, DocumentTypeInfo, PROMPT_STEPS, GLOBAL_PROMPT_STEPS, PipelineSettings, PipelineStatsResponse, GlobalPrompts, GlobalPromptsResponse, OCRSettings } from '../types/settings';
+import PipelineBuilder from './settings/PipelineBuilder';
+import { pipelineApi } from '../services/pipelineApi';
 
 interface EnhancedSettingsModalProps {
   isOpen: boolean;
@@ -40,7 +42,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   const [updatingSettings, setUpdatingSettings] = useState(false);
 
   // Active tab for settings
-  const [activeTab, setActiveTab] = useState<'prompts' | 'global' | 'ocr' | 'optimization' | 'statistics'>('prompts');
+  const [activeTab, setActiveTab] = useState<'prompts' | 'global' | 'ocr' | 'pipeline' | 'optimization' | 'statistics'>('prompts');
 
   // Global prompts state
   const [globalPrompts, setGlobalPrompts] = useState<GlobalPrompts | null>(null);
@@ -127,6 +129,8 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
       setIsAuthenticated(authenticated);
       if (authenticated) {
         setAuthError('');
+        // Sync token with pipeline API
+        pipelineApi.updateToken(localStorage.getItem('settings_auth_token'));
       }
     } catch (error) {
       setIsAuthenticated(false);
@@ -143,6 +147,8 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
       if (response.success) {
         setIsAuthenticated(true);
         setAccessCode('');
+        // Sync token with pipeline API
+        pipelineApi.updateToken(response.session_token || null);
       }
     } catch (error: any) {
       setAuthError(error.message);
@@ -660,6 +666,16 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                         }`}
                       >
                         👁️ OCR-Einstellungen
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('pipeline')}
+                        className={`w-full text-left p-3 rounded-lg transition-all ${
+                          activeTab === 'pipeline'
+                            ? 'bg-brand-100 text-brand-900 border border-brand-300'
+                            : 'hover:bg-primary-100 text-primary-700'
+                        }`}
+                      >
+                        ⚙️ Pipeline-Konfiguration
                       </button>
                       <button
                         onClick={() => setActiveTab('optimization')}
@@ -1470,6 +1486,18 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                     )}
                   </div>
                 ) : null
+              ) : activeTab === 'pipeline' ? (
+                <div className="space-y-6">
+                  <div>
+                    <h3 className="text-xl font-bold text-primary-900">⚙️ Pipeline-Konfiguration</h3>
+                    <p className="text-sm text-primary-600">
+                      Konfigurieren Sie OCR-Engine und dynamische Pipeline-Schritte
+                    </p>
+                  </div>
+
+                  {/* Pipeline Builder Component */}
+                  <PipelineBuilder />
+                </div>
               ) : activeTab === 'statistics' ? (
                 pipelineStats && pipelineStats.cache_statistics ? (
                   <div className="space-y-6">

@@ -7,6 +7,9 @@ from sqlalchemy import create_engine
 from app.database.unified_models import Base
 from app.database.connection import get_database_url
 
+# Import modular pipeline models to register them with Base.metadata
+from app.database import modular_pipeline_models
+
 logger = logging.getLogger(__name__)
 
 def init_database():
@@ -23,12 +26,23 @@ def init_database():
         try:
             from app.database.unified_seed import unified_seed_database
             if unified_seed_database():
-                logger.info("Database seeded with initial data successfully")
+                logger.info("Database seeded with unified data successfully")
             else:
-                logger.warning("Failed to seed database with initial data")
+                logger.warning("Failed to seed database with unified data")
         except Exception as e:
-            logger.error(f"Error during database seeding: {e}")
-            logger.warning("Continuing without seeding - database tables created but empty")
+            logger.error(f"Error during unified database seeding: {e}")
+            logger.warning("Continuing without unified seeding - database tables created but may be empty")
+
+        # Seed modular pipeline configuration
+        try:
+            from app.database.modular_pipeline_seed import seed_modular_pipeline
+            if seed_modular_pipeline():
+                logger.info("Database seeded with modular pipeline configuration successfully")
+            else:
+                logger.warning("Failed to seed modular pipeline configuration")
+        except Exception as e:
+            logger.error(f"Error during modular pipeline seeding: {e}")
+            logger.warning("Continuing without modular pipeline seeding - modular pipeline tables may be empty")
         
         return True
     except Exception as e:
