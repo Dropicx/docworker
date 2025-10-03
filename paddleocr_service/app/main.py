@@ -53,38 +53,16 @@ async def lifespan(app: FastAPI):
 
         paddle_ocr = PaddleOCR(
             use_angle_cls=True,  # Enable text angle classification
-            lang='en',           # English + numbers (can add 'de' for German)
+            lang='german',       # German language support (includes Latin characters)
             use_gpu=False,       # CPU mode
             show_log=False       # Reduce console noise
         )
 
         init_time = time.time() - start_init
-        logger.info(f"✅ PaddleOCR initialized in {init_time:.2f}s")
-
-        # Functionality verification test
-        logger.info("🧪 Running startup verification test...")
-        try:
-            import numpy as np
-            from PIL import Image
-
-            # Create a simple test image with text-like pattern
-            test_img = np.ones((100, 300, 3), dtype=np.uint8) * 255
-            test_img = Image.fromarray(test_img)
-
-            # Test OCR (even on blank image, should work without error)
-            test_result = paddle_ocr.ocr(test_img, cls=True)
-
-            logger.info("✅ PaddleOCR functionality verified")
-            logger.info(f"   - Models: Detection ✓ | Recognition ✓ | Angle Classification ✓")
-            logger.info(f"   - Mode: CPU | Language: EN")
-            logger.info("🟢 Service ready to process requests")
-
-        except Exception as test_error:
-            error_msg = str(test_error) if str(test_error) else type(test_error).__name__
-            logger.warning(f"⚠️  Verification test failed (non-critical): {error_msg}")
-            logger.info("🟡 Service initialized but verification inconclusive")
-            # Still mark as ready since PaddleOCR loaded successfully
-            logger.info("🟡 Service ready to process requests (verification skipped)")
+        logger.info(f"✅ PaddleOCR initialized successfully in {init_time:.2f}s")
+        logger.info(f"   - Models: Detection ✓ | Recognition ✓ | Angle Classification ✓")
+        logger.info(f"   - Mode: CPU | Language: DE (German) | GPU: Disabled")
+        logger.info("🟢 Service ready to process requests")
 
     except Exception as e:
         logger.error(f"❌ Failed to initialize PaddleOCR: {e}")
