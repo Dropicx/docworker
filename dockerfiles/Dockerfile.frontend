@@ -38,7 +38,7 @@ ENV PORT=8080
 ENV BACKEND_URL=doctranslator-backend.railway.internal
 ENV BACKEND_PORT=9122
 
-# Create startup script with proper envsubst
+# Create startup script with proper envsubst and DNS extraction
 RUN printf '#!/bin/sh\n\
 set -e\n\
 \n\
@@ -53,6 +53,15 @@ echo "BACKEND_URL: $BACKEND_URL"\n\
 echo "BACKEND_PORT: $BACKEND_PORT"\n\
 echo "Full Backend URL: http://$BACKEND_URL:$BACKEND_PORT"\n\
 echo ""\n\
+\n\
+# Extract DNS server from /etc/resolv.conf\n\
+DNS_SERVER=$(grep -m1 "^nameserver" /etc/resolv.conf | awk '"'"'{print $2}'"'"')\n\
+if [ -z "$DNS_SERVER" ]; then\n\
+    DNS_SERVER="127.0.0.11"\n\
+fi\n\
+echo "DNS Server: $DNS_SERVER"\n\
+export DNS_SERVER\n\
+\n\
 echo -n "DNS Resolution: "\n\
 if nslookup $BACKEND_URL > /dev/null 2>&1; then\n\
     echo "✓ OK"\n\
@@ -67,8 +76,8 @@ else\n\
 fi\n\
 echo "======================================"\n\
 \n\
-# Substitute environment variables\n\
-envsubst '"'"'$PORT $BACKEND_URL $BACKEND_PORT'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf\n\
+# Substitute environment variables including DNS_SERVER\n\
+envsubst '"'"'$PORT $BACKEND_URL $BACKEND_PORT $DNS_SERVER'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf\n\
 \n\
 # Validate nginx configuration\n\
 nginx -t 2>&1\n\
