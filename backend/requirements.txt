@@ -32,5 +32,9 @@ sqlalchemy==2.0.43
 psycopg2-binary==2.9.9
 alembic==1.16.5
 
+# Task Queue (for worker health checks)
+celery[redis]==5.4.0
+redis==5.0.0
+
 # NLP for advanced PII removal (optional)
 spacy==3.8.3
