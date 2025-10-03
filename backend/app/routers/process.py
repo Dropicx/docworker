@@ -82,93 +82,33 @@ async def start_processing(
 ):
     """
     Startet die Verarbeitung eines hochgeladenen Dokuments
-    
+
     - **processing_id**: ID des hochgeladenen Dokuments
     - **options**: Verarbeitungsoptionen (z.B. Zielsprache)
     """
-    
+
     try:
-        # Verarbeitungsdaten abrufen
-        processing_data = get_from_processing_store(processing_id)
-        
-        if not processing_data:
-            raise HTTPException(
-                status_code=404,
-                detail="Verarbeitung nicht gefunden oder bereits abgelaufen"
-            )
-        
-        # Status prüfen
-        current_status = processing_data.get("status")
-        if current_status == ProcessingStatus.PROCESSING:
-            raise HTTPException(
-                status_code=409,
-                detail="Verarbeitung läuft bereits"
-            )
-        
-        if current_status == ProcessingStatus.COMPLETED:
-            raise HTTPException(
-                status_code=409,
-                detail="Verarbeitung bereits abgeschlossen"
-            )
-        
-        # Verarbeitungsoptionen speichern
-        if options:
-            processing_data["options"] = options.dict()
+        # Load job from database (new architecture)
+        db = next(get_db_session())
+        try:
+            job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
 
-        # Check if we should use worker service or local processing
-        use_worker = os.getenv('USE_WORKER_SERVICE', 'false').lower() == 'true'
+            if not job:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Verarbeitung nicht gefunden oder bereits abgelaufen"
+                )
+        finally:
+            db.close()
 
-        if use_worker:
-            # Enqueue task to worker service
-            from app.services.celery_client import enqueue_document_processing
+        # Job already queued to worker by upload endpoint - just return status
+        logger.info(f"🔄 Processing status requested for: {processing_id[:8]}")
 
-            try:
-                task_id = enqueue_document_processing(processing_id, options.dict() if options else None)
-
-                # Status auf QUEUED setzen
-                update_processing_store(processing_id, {
-                    "status": ProcessingStatus.PROCESSING,
-                    "progress_percent": 5,
-                    "current_step": "Task queued for processing",
-                    "started_at": datetime.now(),
-                    "task_id": task_id,
-                    "options": options.dict() if options else {}
-                })
-
-                print(f"📤 Task enqueued to worker: {processing_id[:8]} (task_id: {task_id})")
-
-            except Exception as e:
-                print(f"❌ Failed to enqueue task, falling back to local processing: {e}")
-                # Fallback to local processing
-                background_tasks.add_task(process_document, processing_id)
-
-                update_processing_store(processing_id, {
-                    "status": ProcessingStatus.PROCESSING,
-                    "progress_percent": 10,
-                    "current_step": "Verarbeitung gestartet (local)",
-                    "started_at": datetime.now(),
-                    "options": options.dict() if options else {}
-                })
-        else:
-            # Verarbeitung im Hintergrund starten (local processing)
-            background_tasks.add_task(process_document, processing_id)
-
-            # Status auf PROCESSING setzen
-            update_processing_store(processing_id, {
-                "status": ProcessingStatus.PROCESSING,
-                "progress_percent": 10,
-                "current_step": "Verarbeitung gestartet",
-                "started_at": datetime.now(),
-                "options": options.dict() if options else {}
-            })
-        
-        print(f"🔄 Verarbeitung gestartet: {processing_id[:8]} (Sprache: {options.target_language if options else 'Keine'})")
-        
         return {
-            "message": "Verarbeitung gestartet",
+            "message": "Verarbeitung bereits in Warteschlange",
             "processing_id": processing_id,
-            "status": ProcessingStatus.PROCESSING,
-            "target_language": options.target_language if options else None
+            "status": "PROCESSING",
+            "note": "Worker processes job automatically"
         }
         
     except HTTPException:
