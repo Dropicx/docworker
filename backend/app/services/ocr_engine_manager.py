@@ -282,7 +282,7 @@ class OCREngineManager:
 
     async def check_paddleocr_health(self) -> bool:
         """
-        Check if PaddleOCR microservice is available.
+        Check if PaddleOCR microservice is available (async version).
 
         Returns:
             True if service is healthy, False otherwise
@@ -295,6 +295,23 @@ class OCREngineManager:
                     return data.get("paddleocr_available", False)
         except Exception as e:
             logger.debug(f"PaddleOCR health check failed: {e}")
+        return False
+
+    def _check_paddleocr_health_sync(self) -> bool:
+        """
+        Check if PaddleOCR microservice is available (synchronous version).
+
+        Returns:
+            True if service is healthy, False otherwise
+        """
+        try:
+            with httpx.Client(timeout=5.0) as client:
+                response = client.get(f"{PADDLEOCR_SERVICE_URL}/health")
+                if response.status_code == 200:
+                    data = response.json()
+                    return data.get("paddleocr_available", False)
+        except Exception as e:
+            logger.debug(f"PaddleOCR health check failed (sync): {e}")
         return False
 
     def get_available_engines(self) -> Dict[str, Dict[str, Any]]:
@@ -318,9 +335,7 @@ class OCREngineManager:
             vision_available = False
 
         # Check PaddleOCR service availability (synchronous check)
-        # Note: This is a sync method, so we can't await. We'll mark as "unknown" and let the frontend check.
-        # For production, consider caching this status or making this method async.
-        paddleocr_available = False  # Default to False, service must prove availability
+        paddleocr_available = self._check_paddleocr_health_sync()
 
         return {
             "TESSERACT": {
