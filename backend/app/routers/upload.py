@@ -142,7 +142,7 @@ async def upload_document(
                 client_ip=get_remote_address(request),
                 status=StepExecutionStatus.PENDING,
                 progress_percent=0,
-                pipeline_config=pipeline_steps,  # Snapshot der Pipeline-Konfiguration
+                pipeline_config=pipeline_config,  # Snapshot der Pipeline-Konfiguration
                 ocr_config=ocr_config  # Snapshot der OCR-Konfiguration
             )
 
