@@ -56,10 +56,14 @@ _raw_url = os.getenv(
     "PADDLEOCR_SERVICE_URL",
     "http://paddleocr.railway.internal:9123"
 )
+
+# Debug: Log raw environment variable value
+logger.info(f"🔍 Raw PADDLEOCR_SERVICE_URL env var: {repr(_raw_url)}")
+
 PADDLEOCR_SERVICE_URL = _normalize_paddleocr_url(_raw_url)
 
 # Log the URL being used at startup
-logger.info(f"🔗 PaddleOCR service URL: {PADDLEOCR_SERVICE_URL}")
+logger.info(f"🔗 PaddleOCR service URL (after normalization): {PADDLEOCR_SERVICE_URL}")
 
 
 class OCREngineManager:
@@ -344,25 +348,40 @@ class OCREngineManager:
         """
         try:
             logger.info(f"🔍 Checking PaddleOCR service at: {PADDLEOCR_SERVICE_URL}")
-            with httpx.Client(timeout=5.0) as client:
+
+            # More detailed connection attempt with longer timeout
+            with httpx.Client(timeout=10.0, follow_redirects=True) as client:
+                logger.info(f"📡 Attempting HTTP GET to {PADDLEOCR_SERVICE_URL}/health")
                 response = client.get(f"{PADDLEOCR_SERVICE_URL}/health")
+
+                logger.info(f"📊 Response status: {response.status_code}")
+                logger.info(f"📊 Response headers: {dict(response.headers)}")
+
                 if response.status_code == 200:
                     data = response.json()
+                    logger.info(f"📊 Response body: {data}")
+
                     is_available = data.get("paddleocr_available", False)
                     if is_available:
-                        logger.info(f"✅ PaddleOCR service is available")
+                        logger.info(f"✅ PaddleOCR service is available and ready")
                     else:
                         logger.warning(f"⚠️ PaddleOCR service responded but paddleocr_available=False")
                     return is_available
                 else:
                     logger.warning(f"⚠️ PaddleOCR service returned status {response.status_code}")
+                    logger.warning(f"⚠️ Response content: {response.text[:200]}")
                     return False
+
         except httpx.ConnectError as e:
-            logger.warning(f"⚠️ Cannot connect to PaddleOCR service: {str(e)}")
+            logger.error(f"❌ Cannot connect to PaddleOCR service: {str(e)}")
+            logger.error(f"❌ Connection error type: {type(e).__name__}")
+            logger.error(f"❌ Full error details: {repr(e)}")
         except httpx.TimeoutException:
-            logger.warning(f"⚠️ PaddleOCR service timeout (5s)")
+            logger.error(f"❌ PaddleOCR service timeout (10s)")
         except Exception as e:
-            logger.warning(f"⚠️ PaddleOCR health check failed: {str(e)}")
+            logger.error(f"❌ PaddleOCR health check failed: {str(e)}")
+            logger.error(f"❌ Error type: {type(e).__name__}")
+            logger.error(f"❌ Full error details: {repr(e)}")
         return False
 
     def get_available_engines(self) -> Dict[str, Dict[str, Any]]:
