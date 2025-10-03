@@ -53,11 +53,18 @@ echo "BACKEND_URL: $BACKEND_URL"\n\
 echo "BACKEND_PORT: $BACKEND_PORT"\n\
 echo "Full Backend URL: http://$BACKEND_URL:$BACKEND_PORT"\n\
 echo ""\n\
-echo "Testing DNS resolution..."\n\
-nslookup $BACKEND_URL || echo "Warning: DNS resolution failed"\n\
-echo ""\n\
-echo "Testing backend connectivity..."\n\
-nc -zv -w5 $BACKEND_URL $BACKEND_PORT 2>&1 || echo "Warning: Backend not reachable yet"\n\
+echo -n "DNS Resolution: "\n\
+if nslookup $BACKEND_URL > /dev/null 2>&1; then\n\
+    echo "✓ OK"\n\
+else\n\
+    echo "✗ Failed (will retry)"\n\
+fi\n\
+echo -n "Backend Connectivity: "\n\
+if nc -z -w5 $BACKEND_URL $BACKEND_PORT 2>/dev/null; then\n\
+    echo "✓ OK"\n\
+else\n\
+    echo "✗ Not ready (backend may still be starting)"\n\
+fi\n\
 echo "======================================"\n\
 \n\
 # Substitute environment variables\n\
