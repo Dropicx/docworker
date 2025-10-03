@@ -22,15 +22,16 @@ RUN apt-get update && apt-get install -y \
 COPY paddleocr_service/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Create non-root user BEFORE downloading models
+# Create non-root user
 RUN useradd -m -u 1000 appuser
 
 # Copy application code
 COPY paddleocr_service/app/ app/
-RUN chown -R appuser:appuser /app
 
-# Switch to appuser
-USER appuser
+# Copy and setup entrypoint script
+COPY paddleocr_service/entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh && \
+    chown -R appuser:appuser /app
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
@@ -45,5 +46,5 @@ ENV PYTHONUNBUFFERED=1
 ENV ENVIRONMENT=production
 ENV PYTHONWARNINGS="ignore"
 
-# Run the application (info shows startup verification, then quiets down)
-CMD ["sh", "-c", "python -W ignore::UserWarning -m uvicorn app.main:app --host 0.0.0.0 --port 9123 --log-level info"]
+# Run entrypoint script (fixes permissions, then starts service as appuser)
+CMD ["/entrypoint.sh"]
