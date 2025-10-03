@@ -106,31 +106,36 @@ REDIS_URL=redis://...  # Only needed when USE_REDIS_QUEUE=true
 
 ### Frontend Environment Variables
 
-**CRITICAL:** Set this environment variable in Railway frontend service:
+**REQUIRED:** Set these environment variables in Railway frontend service:
 
 ```bash
-# Backend Internal URL (Railway service reference)
-BACKEND_INTERNAL_URL=${{backend.RAILWAY_PRIVATE_DOMAIN}}
+# Backend Internal URL (Railway private network)
+BACKEND_URL=backend.railway.internal  # Replace with your backend service name
 
-# Note: Replace "backend" with your actual backend service name in Railway
-# The format is: ${{SERVICE_NAME.RAILWAY_PRIVATE_DOMAIN}}
+# Backend Port
+BACKEND_PORT=9122
 ```
 
-**How to set this in Railway:**
+**How to set in Railway:**
 1. Go to Railway Dashboard → Frontend Service → Variables
-2. Click **"+ New Variable"**
-3. Add **Reference Variable**:
-   - **Key**: `BACKEND_INTERNAL_URL`
-   - **Value**: `${{backend.RAILWAY_PRIVATE_DOMAIN}}`
-   - (Replace `backend` with your backend service name if different)
-4. Click **"Add"**
-5. Redeploy frontend service
+2. Click **"+ New Variable"** for each:
 
-**Alternative (if service reference doesn't work):**
-```bash
-# Use explicit internal URL format
-BACKEND_INTERNAL_URL=http://YOUR-BACKEND-SERVICE-NAME.railway.internal:9122
-```
+   **Variable 1:**
+   - **Key**: `BACKEND_URL`
+   - **Value**: `YOUR-BACKEND-SERVICE-NAME.railway.internal`
+   - Example: `backend.railway.internal` or `doctranslator-backend.railway.internal`
+
+   **Variable 2:**
+   - **Key**: `BACKEND_PORT`
+   - **Value**: `9122`
+
+3. Click **"Add"** for each variable
+4. Redeploy frontend service
+
+**Finding your backend service internal URL:**
+- Railway Dashboard → Backend Service → Settings
+- Look for "Private Networking" or internal domain
+- Format is always: `SERVICE-NAME.railway.internal`
 
 ---
 
@@ -365,24 +370,31 @@ Expected: JSON array with 9 pipeline steps
 **Root Cause:** Frontend can't connect to backend service
 
 **Solution:**
-1. **Check Environment Variable:**
+1. **Check Environment Variables:**
    ```bash
-   # In Railway frontend service → Variables
-   BACKEND_INTERNAL_URL=${{backend.RAILWAY_PRIVATE_DOMAIN}}
+   # In Railway frontend service → Variables, verify both exist:
+   BACKEND_URL=backend.railway.internal
+   BACKEND_PORT=9122
    ```
 
-2. **Verify Service Name:**
+2. **Verify Backend Service Name:**
    - Railway Dashboard → Your Project → Check backend service name
-   - If backend is named "doctranslator-backend", use:
+   - Update `BACKEND_URL` to match: `your-backend-name.railway.internal`
+   - Example: If backend is "doctranslator-backend", use:
      ```bash
-     BACKEND_INTERNAL_URL=${{doctranslator-backend.RAILWAY_PRIVATE_DOMAIN}}
+     BACKEND_URL=doctranslator-backend.railway.internal
      ```
 
 3. **Check Frontend Logs:**
    ```bash
    railway logs --service frontend
    ```
-   Look for: `📡 Backend URL: http://...`
+   Look for:
+   ```
+   📡 Backend URL: backend.railway.internal
+   📡 Backend Port: 9122
+   📡 Full Backend URL: http://backend.railway.internal:9122
+   ```
 
 4. **Test Backend Directly:**
    ```bash
@@ -390,15 +402,13 @@ Expected: JSON array with 9 pipeline steps
    curl https://YOUR-BACKEND-URL.railway.app/api/health
    ```
 
-5. **Manual Configuration (if service reference fails):**
-   - Get backend service name from Railway dashboard
-   - Set explicit URL:
-     ```bash
-     BACKEND_INTERNAL_URL=http://YOUR-SERVICE-NAME.railway.internal:9122
-     ```
+5. **Verify Internal Networking:**
+   - Railway Dashboard → Backend Service → Settings
+   - Check "Private Networking" is enabled
+   - Copy the internal domain (should end in `.railway.internal`)
 
 6. **Redeploy Frontend:**
-   - After setting variable, click "Deploy" in Railway frontend service
+   - After setting/updating variables, click "Deploy" in Railway frontend service
 
 ---
 

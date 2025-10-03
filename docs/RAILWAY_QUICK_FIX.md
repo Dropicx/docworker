@@ -15,26 +15,30 @@ Frontend nginx can't find the backend service - missing environment variable.
 2. Go to your project
 3. Note the **exact name** of your backend service (e.g., "backend", "doctranslator-backend", etc.)
 
-### Step 2: Set Environment Variable in Frontend Service
+### Step 2: Verify Environment Variables in Frontend Service
+
+⚠️ **Important:** You should already have these variables set. Just verify they exist:
+
 1. Railway Dashboard → **Frontend Service** → **Variables** tab
-2. Click **"+ New Variable"**
-3. Add:
+2. Check these variables exist:
    ```
-   Key:   BACKEND_INTERNAL_URL
-   Value: ${{YOUR-BACKEND-SERVICE-NAME.RAILWAY_PRIVATE_DOMAIN}}
-   ```
-
-   **Example if backend service is named "backend":**
-   ```
-   BACKEND_INTERNAL_URL=${{backend.RAILWAY_PRIVATE_DOMAIN}}
+   BACKEND_URL=YOUR-BACKEND-SERVICE-NAME.railway.internal
+   BACKEND_PORT=9122
    ```
 
-   **Example if backend service is named "doctranslator-backend":**
+   **Example:**
    ```
-   BACKEND_INTERNAL_URL=${{doctranslator-backend.RAILWAY_PRIVATE_DOMAIN}}
+   BACKEND_URL=backend.railway.internal
+   BACKEND_PORT=9122
    ```
 
-4. Click **"Add"** to save
+3. **If missing**, add them:
+   - Click **"+ New Variable"**
+   - Add both variables with your backend service's internal domain
+
+**Finding your backend internal domain:**
+- Railway Dashboard → Backend Service → Settings → Copy the internal domain
+- Format: `SERVICE-NAME.railway.internal`
 
 ### Step 3: Deploy Updated Code & Redeploy Frontend
 1. **Push the fixed code:**
@@ -86,14 +90,16 @@ Open browser console and check:
 
 ## 🆘 Still Not Working?
 
-### Alternative 1: Use Explicit Service URL
-If service reference doesn't work, use explicit URL:
+### Alternative 1: Check Environment Variable Values
+If still not working, verify the exact values:
 
-1. Get backend service name from Railway dashboard
-2. Set variable manually:
+1. Railway Dashboard → Frontend Service → Variables
+2. Check values match your backend:
    ```
-   BACKEND_INTERNAL_URL=http://YOUR-SERVICE-NAME.railway.internal:9122
+   BACKEND_URL=your-backend-service-name.railway.internal
+   BACKEND_PORT=9122
    ```
+3. Update if needed and redeploy
 
 ### Alternative 2: Check Backend Health First
 ```bash
@@ -124,12 +130,14 @@ railway status
 
 ## 🎯 Summary
 
-1. ✅ Set `BACKEND_INTERNAL_URL=${{backend.RAILWAY_PRIVATE_DOMAIN}}` in frontend variables
+1. ✅ Verify `BACKEND_URL` and `BACKEND_PORT` are set in Railway frontend variables
 2. ✅ Push updated code with `entrypoint.sh` and fixed `Dockerfile`
 3. ✅ Redeploy frontend service
-4. ✅ Verify logs show correct backend URL
+4. ✅ Verify logs show correct backend URL (should show both URL and port)
 5. ✅ Test frontend - API errors should be gone
 
 **Total time:** 5 minutes
+
+**What the fix does:** The entrypoint script now uses your existing `BACKEND_URL` and `BACKEND_PORT` environment variables to dynamically generate the nginx configuration at container startup.
 
 **Questions?** Check `docs/RAILWAY_DEPLOYMENT_GUIDE.md` for detailed troubleshooting.

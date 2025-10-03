@@ -3,11 +3,16 @@ set -e
 
 echo "🚀 Starting Frontend with dynamic configuration..."
 
-# Get backend URL from environment variable
-# Railway provides this automatically via service references
-BACKEND_URL=${BACKEND_INTERNAL_URL:-"http://backend.railway.internal:9122"}
+# Get backend URL and port from Railway environment variables
+BACKEND_URL=${BACKEND_URL:-"backend.railway.internal"}
+BACKEND_PORT=${BACKEND_PORT:-"9122"}
+
+# Construct full backend URL
+FULL_BACKEND_URL="http://${BACKEND_URL}:${BACKEND_PORT}"
 
 echo "📡 Backend URL: $BACKEND_URL"
+echo "📡 Backend Port: $BACKEND_PORT"
+echo "📡 Full Backend URL: $FULL_BACKEND_URL"
 
 # Create nginx configuration with environment variable substitution
 cat > /etc/nginx/conf.d/default.conf << EOF
@@ -58,7 +63,7 @@ server {
 
     # API proxy to backend (dynamic from environment)
     location /api/ {
-        proxy_pass ${BACKEND_URL};
+        proxy_pass ${FULL_BACKEND_URL};
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
         proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
