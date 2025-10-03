@@ -77,8 +77,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             ocr_manager = OCREngineManager(db)
             start_time = time.time()
 
-            # Call PaddleOCR service
-            extracted_text = await_sync(
+            # Call OCR engine (selected engine from database configuration)
+            extracted_text, ocr_confidence = await_sync(
                 ocr_manager.extract_text(
                     file_content=job.file_content,
                     file_type=job.file_type,
@@ -88,7 +88,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
             ocr_time = time.time() - start_time
             job.ocr_time_seconds = ocr_time
-            logger.info(f"✅ OCR completed in {ocr_time:.2f}s: {len(extracted_text)} characters")
+            logger.info(f"✅ OCR completed in {ocr_time:.2f}s: {len(extracted_text)} characters, confidence: {ocr_confidence:.2%}")
 
         # Update progress
         job.progress_percent = 20
