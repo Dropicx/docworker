@@ -35,12 +35,32 @@ COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 # Environment variables for nginx configuration
 ENV PORT=8080
-ENV BACKEND_URL=doctranslator-backend.railway.internal:9122
+ENV BACKEND_URL=doctranslator-backend.railway.internal
+ENV BACKEND_PORT=9122
 
 # Create startup script with proper envsubst
 RUN printf '#!/bin/sh\n\
-envsubst '"'"'$PORT $BACKEND_URL'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf\n\
-cat /etc/nginx/nginx.conf\n\
+set -e\n\
+\n\
+# Set defaults if not provided by Railway\n\
+: ${PORT:=8080}\n\
+: ${BACKEND_URL:=doctranslator-backend.railway.internal}\n\
+: ${BACKEND_PORT:=9122}\n\
+\n\
+echo "=== Frontend Service Configuration ==="\n\
+echo "PORT: $PORT"\n\
+echo "BACKEND_URL: $BACKEND_URL"\n\
+echo "BACKEND_PORT: $BACKEND_PORT"\n\
+echo "Full Backend URL: http://$BACKEND_URL:$BACKEND_PORT"\n\
+echo "======================================"\n\
+\n\
+# Substitute environment variables\n\
+envsubst '"'"'$PORT $BACKEND_URL $BACKEND_PORT'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf\n\
+\n\
+# Validate nginx configuration\n\
+nginx -t\n\
+\n\
+# Start nginx\n\
 exec nginx -g "daemon off;"\n' > /docker-entrypoint.sh && \
     chmod +x /docker-entrypoint.sh
 
