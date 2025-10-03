@@ -21,17 +21,6 @@ def init_database():
         # Create all tables
         Base.metadata.create_all(bind=engine)
         logger.info("Database tables created successfully")
-        
-        # Seed initial data
-        try:
-            from app.database.unified_seed import unified_seed_database
-            if unified_seed_database():
-                logger.info("Database seeded with unified data successfully")
-            else:
-                logger.warning("Failed to seed database with unified data")
-        except Exception as e:
-            logger.error(f"Error during unified database seeding: {e}")
-            logger.warning("Continuing without unified seeding - database tables created but may be empty")
 
         # Seed modular pipeline configuration
         try:

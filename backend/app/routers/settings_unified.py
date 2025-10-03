@@ -959,14 +959,14 @@ async def seed_database(
         )
     
     try:
-        from app.database.unified_seed import unified_seed_database
+        from app.database.modular_pipeline_seed import seed_modular_pipeline
 
-        result = unified_seed_database()
+        result = seed_modular_pipeline()
 
         if result:
             return {
                 "success": True,
-                "message": "Database seeded successfully"
+                "message": "Database seeded with modular pipeline configuration successfully"
             }
         else:
             return {
