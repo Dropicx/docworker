@@ -39,8 +39,9 @@ paddle_ocr = None
 async def lifespan(app: FastAPI):
     """Initialize PaddleOCR at startup"""
     global paddle_ocr
+    import sys
 
-    logger.info("🚀 PaddleOCR Service starting up...")
+    print("🚀 PaddleOCR Service starting up...", file=sys.stderr, flush=True)
 
     if not PADDLEOCR_AVAILABLE:
         logger.error("❌ PaddleOCR is not installed!")
@@ -48,7 +49,8 @@ async def lifespan(app: FastAPI):
         return
 
     try:
-        logger.info("🔧 Initializing PaddleOCR (CPU mode)...")
+        import sys
+        print("🔧 Initializing PaddleOCR (CPU mode)...", file=sys.stderr, flush=True)
         start_init = time.time()
 
         paddle_ocr = PaddleOCR(
@@ -59,10 +61,10 @@ async def lifespan(app: FastAPI):
         )
 
         init_time = time.time() - start_init
-        logger.info(f"✅ PaddleOCR initialized successfully in {init_time:.2f}s")
-        logger.info(f"   - Models: Detection ✓ | Recognition ✓ | Angle Classification ✓")
-        logger.info(f"   - Mode: CPU | Language: DE (German) | GPU: Disabled")
-        logger.info("🟢 Service ready to process requests")
+        print(f"✅ PaddleOCR initialized successfully in {init_time:.2f}s", file=sys.stderr, flush=True)
+        print(f"   - Models: Detection ✓ | Recognition ✓ | Angle Classification ✓", file=sys.stderr, flush=True)
+        print(f"   - Mode: CPU | Language: DE (German) | GPU: Disabled", file=sys.stderr, flush=True)
+        print("🟢 Service ready to process requests", file=sys.stderr, flush=True)
 
     except Exception as e:
         logger.error(f"❌ Failed to initialize PaddleOCR: {e}")
