@@ -2,10 +2,12 @@
 Modular Pipeline Database Models
 
 This module contains database models for the user-configurable modular pipeline system.
-Users can configure OCR engines, create custom pipeline steps, and manage available AI models.
+Users can configure OCR engines, create custom pipeline steps, manage available AI models,
+and define custom document classes with their own pipeline branches.
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, JSON, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, JSON, Enum as SQLEnum, ForeignKey
+from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from enum import Enum
 from app.database.unified_models import Base
@@ -62,6 +64,40 @@ class OCRConfigurationDB(Base):
         return f"<OCRConfigurationDB(engine='{self.selected_engine}')>"
 
 
+class DocumentClassDB(Base):
+    """
+    Dynamic document classification types.
+    Users can define custom document classes (e.g., ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)
+    and create separate pipeline branches for each class.
+    """
+    __tablename__ = "document_classes"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Class identification
+    class_key = Column(String(100), nullable=False, unique=True, index=True)  # e.g., "ARZTBRIEF"
+    display_name = Column(String(255), nullable=False)  # e.g., "Arztbrief"
+    description = Column(Text, nullable=True)
+    icon = Column(String(10), nullable=True)  # emoji like "📨"
+
+    # Examples and classification hints
+    examples = Column(JSON, nullable=True)  # List of example documents
+    strong_indicators = Column(JSON, nullable=True)  # Keywords for pattern matching
+    weak_indicators = Column(JSON, nullable=True)
+
+    # Status and permissions
+    is_enabled = Column(Boolean, default=True, nullable=False)
+    is_system_class = Column(Boolean, default=False, nullable=False)  # Prevent deletion of core classes
+
+    # Metadata
+    created_at = Column(DateTime, default=func.now(), nullable=False)
+    last_modified = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
+    created_by = Column(String(255), nullable=True)
+
+    def __repr__(self):
+        return f"<DocumentClassDB(class_key='{self.class_key}', display_name='{self.display_name}')>"
+
+
 class AvailableModelDB(Base):
     """
     Registry of available AI models for pipeline steps.
@@ -101,6 +137,11 @@ class DynamicPipelineStepDB(Base):
     User-configurable pipeline steps.
     Each step has a custom prompt and selected AI model.
     Steps are executed in order based on the 'order' field.
+
+    Pipeline Branching:
+    - document_class_id = NULL: Universal step (runs for all documents)
+    - document_class_id = ID: Class-specific step (runs only for that document class)
+    - is_branching_step = True: Step that determines which branch to follow
     """
     __tablename__ = "dynamic_pipeline_steps"
 
@@ -113,6 +154,11 @@ class DynamicPipelineStepDB(Base):
     # Execution order and status
     order = Column(Integer, nullable=False, index=True)  # 1, 2, 3, ... (OCR is always step 0)
     enabled = Column(Boolean, default=True, nullable=False)
+
+    # Pipeline branching
+    document_class_id = Column(Integer, ForeignKey('document_classes.id'), nullable=True, index=True)
+    is_branching_step = Column(Boolean, default=False, nullable=False)
+    branching_field = Column(String(100), nullable=True)  # Field to extract from output (e.g., "document_type")
 
     # Step configuration
     prompt_template = Column(Text, nullable=False)  # Custom prompt for this step
