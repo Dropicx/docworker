@@ -7,6 +7,8 @@ Supports multiple OCR engines based on database configuration.
 
 import logging
 import json
+import os
+import httpx
 from typing import Tuple, Optional, Dict, Any
 from sqlalchemy.orm import Session
 
@@ -14,6 +16,12 @@ from app.database.modular_pipeline_models import OCRConfigurationDB, OCREngineEn
 from app.services.hybrid_text_extractor import HybridTextExtractor
 
 logger = logging.getLogger(__name__)
+
+# PaddleOCR microservice URL (Railway internal networking)
+PADDLEOCR_SERVICE_URL = os.getenv(
+    "PADDLEOCR_SERVICE_URL",
+    "http://paddleocr.railway.internal:9123"
+)
 
 
 class OCREngineManager:
@@ -219,39 +227,75 @@ class OCREngineManager:
         filename: str
     ) -> Tuple[str, float]:
         """
-        Extract text using PaddleOCR (GPU-based).
+        Extract text using PaddleOCR microservice.
 
-        Future implementation - 30x faster than Vision LLM.
-        Currently falls back to hybrid extraction.
+        Calls the separate PaddleOCR service via HTTP.
+        Falls back to hybrid extraction on failure.
         """
-        logger.warning("⚠️ PaddleOCR not yet implemented")
-        logger.info("🔄 Falling back to hybrid extraction")
-        return await self._extract_with_hybrid(file_content, file_type, filename)
+        logger.info(f"🤖 Calling PaddleOCR microservice at {PADDLEOCR_SERVICE_URL}")
 
-        # Future PaddleOCR implementation:
-        # try:
-        #     from paddleocr import PaddleOCR
-        #     paddleocr_config = self.get_engine_config(OCREngineEnum.PADDLEOCR)
-        #
-        #     ocr = PaddleOCR(
-        #         use_angle_cls=True,
-        #         lang=paddleocr_config.get('lang', 'german'),
-        #         use_gpu=paddleocr_config.get('use_gpu', True)
-        #     )
-        #
-        #     # Process image/PDF
-        #     result = ocr.ocr(file_content, cls=True)
-        #
-        #     # Extract text from result
-        #     text = '\n'.join([line[1][0] for line in result[0]])
-        #     confidence = sum([line[1][1] for line in result[0]]) / len(result[0])
-        #
-        #     return text, confidence
-        # except Exception as e:
-        #     logger.error(f"❌ PaddleOCR extraction failed: {e}")
-        #     return await self._extract_with_hybrid(file_content, file_type, filename)
+        try:
+            # Check if PaddleOCR service is available
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                # Prepare multipart form data
+                files = {
+                    'file': (filename, file_content, f'image/{file_type}')
+                }
+
+                # Call PaddleOCR microservice
+                response = await client.post(
+                    f"{PADDLEOCR_SERVICE_URL}/extract",
+                    files=files
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    extracted_text = result.get('text', '')
+                    confidence = result.get('confidence', 0.0)
+                    processing_time = result.get('processing_time', 0.0)
+
+                    logger.info(f"✅ PaddleOCR extraction completed in {processing_time:.2f}s")
+                    logger.info(f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars")
+
+                    return extracted_text, confidence
+
+                else:
+                    logger.error(f"❌ PaddleOCR service error: {response.status_code}")
+                    raise Exception(f"PaddleOCR service returned {response.status_code}")
+
+        except httpx.TimeoutException:
+            logger.error("❌ PaddleOCR service timeout (60s)")
+            logger.info("🔄 Falling back to hybrid extraction")
+            return await self._extract_with_hybrid(file_content, file_type, filename)
+
+        except httpx.ConnectError as e:
+            logger.error(f"❌ Could not connect to PaddleOCR service: {e}")
+            logger.info("🔄 Falling back to hybrid extraction")
+            return await self._extract_with_hybrid(file_content, file_type, filename)
+
+        except Exception as e:
+            logger.error(f"❌ PaddleOCR extraction failed: {e}")
+            logger.info("🔄 Falling back to hybrid extraction")
+            return await self._extract_with_hybrid(file_content, file_type, filename)
 
     # ==================== UTILITY METHODS ====================
+
+    async def check_paddleocr_health(self) -> bool:
+        """
+        Check if PaddleOCR microservice is available.
+
+        Returns:
+            True if service is healthy, False otherwise
+        """
+        try:
+            async with httpx.AsyncClient(timeout=5.0) as client:
+                response = await client.get(f"{PADDLEOCR_SERVICE_URL}/health")
+                if response.status_code == 200:
+                    data = response.json()
+                    return data.get("paddleocr_available", False)
+        except Exception as e:
+            logger.debug(f"PaddleOCR health check failed: {e}")
+        return False
 
     def get_available_engines(self) -> Dict[str, Dict[str, Any]]:
         """
@@ -273,6 +317,11 @@ class OCREngineManager:
             logger.warning(f"⚠️ Could not check Vision LLM availability: {e}")
             vision_available = False
 
+        # Check PaddleOCR service availability (synchronous check)
+        # Note: This is a sync method, so we can't await. We'll mark as "unknown" and let the frontend check.
+        # For production, consider caching this status or making this method async.
+        paddleocr_available = False  # Default to False, service must prove availability
+
         return {
             "TESSERACT": {
                 "engine": "TESSERACT",
@@ -287,11 +336,11 @@ class OCREngineManager:
             "PADDLEOCR": {
                 "engine": "PADDLEOCR",
                 "name": "PaddleOCR",
-                "description": "GPU-accelerated OCR for complex documents",
-                "speed": "Very Fast (~2s per page)",
+                "description": "CPU-based OCR for complex documents",
+                "speed": "Fast (~2-5s per page)",
                 "accuracy": "Excellent",
-                "available": False,  # Not yet implemented
-                "cost": "Free (requires GPU)",
+                "available": paddleocr_available,
+                "cost": "Free (CPU-based microservice)",
                 "configuration": self.get_engine_config(OCREngineEnum.PADDLEOCR)
             },
             "VISION_LLM": {

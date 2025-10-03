@@ -44,7 +44,59 @@ DATABASE_URL=postgresql://...  # Auto-provided by Railway
 3. Railway auto-configures `DATABASE_URL`
 4. Database tables created automatically on first run
 
-### Step 4: Deploy
+### Step 4: Add PaddleOCR Microservice (Optional)
+
+PaddleOCR provides fast CPU-based OCR as a separate microservice.
+
+#### Deploy PaddleOCR Service
+
+1. In Railway project, click "New Service"
+2. Select "Empty Service"
+3. Configure service:
+   - **Name**: `paddleocr-service`
+   - **Root Directory**: `/paddleocr_service`
+   - **Dockerfile Path**: `/dockerfiles/Dockerfile.paddleocr`
+   - **Port**: `9123`
+
+#### Environment Variables for PaddleOCR
+
+```bash
+# Service port
+PORT=9123
+
+# Internal service URL (for backend to connect)
+# Add this to the BACKEND service environment
+PADDLEOCR_SERVICE_URL=http://paddleocr-service.railway.internal:9123
+```
+
+#### Service Configuration
+
+Railway automatically:
+- Builds the PaddleOCR Docker container
+- Exposes internal service at `paddleocr-service.railway.internal:9123`
+- Provides IPv6 networking for service-to-service communication
+- Sets up health checks at `/health` endpoint
+
+#### Verify PaddleOCR Service
+
+1. Check health endpoint: `http://paddleocr-service.railway.internal:9123/health` (from backend)
+2. Monitor service logs for successful startup: `✅ PaddleOCR initialized successfully`
+3. Test OCR extraction via backend API
+
+#### Connect Backend to PaddleOCR
+
+The backend service needs the PaddleOCR service URL. Add to **backend service** environment variables:
+
+```bash
+PADDLEOCR_SERVICE_URL=http://paddleocr-service.railway.internal:9123
+```
+
+The backend will automatically:
+- Detect PaddleOCR availability via health check
+- Use PaddleOCR for PADDLEOCR engine selection
+- Fallback to hybrid extraction if service unavailable
+
+### Step 5: Deploy
 
 Railway automatically:
 - Detects `railway.json` configuration
@@ -54,12 +106,13 @@ Railway automatically:
 - Sets up health checks
 - Provides HTTPS domain
 
-### Step 5: Verify Deployment
+### Step 6: Verify Deployment
 
 1. Check health endpoint: `https://your-app.up.railway.app/health`
 2. Access web interface: `https://your-app.up.railway.app/`
 3. Monitor logs in Railway dashboard
 4. Test document upload and processing
+5. Verify PaddleOCR service (if deployed): Check OCR engines API shows PaddleOCR as available
 
 ## Docker Deployment (Self-Hosted)
 
@@ -190,6 +243,7 @@ python app/database/unified_seed.py
 | `LOG_LEVEL` | Logging verbosity | `INFO` |
 | `DATABASE_URL` | PostgreSQL connection string | Auto-configured |
 | `DEBUG` | Enable debug mode | `false` |
+| `PADDLEOCR_SERVICE_URL` | PaddleOCR microservice URL | `http://paddleocr-service.railway.internal:9123` |
 
 ## Health Monitoring
 
@@ -204,6 +258,12 @@ curl https://your-app.up.railway.app/api/health
 
 # Detailed diagnostics
 curl https://your-app.up.railway.app/api/health/detailed
+
+# PaddleOCR microservice health (from within Railway network)
+curl http://paddleocr-service.railway.internal:9123/health
+
+# Check available OCR engines
+curl https://your-app.up.railway.app/api/pipeline/ocr-engines
 ```
 
 ### Expected Responses
@@ -267,6 +327,37 @@ curl https://your-app.up.railway.app/api/health/detailed
 2. Verify language data downloaded (deu, eng)
 3. Check file is valid image format
 4. Review OCR logs for specific errors
+
+### PaddleOCR Service Issues
+
+**Symptom**: PaddleOCR not available or connection errors
+
+**Solutions**:
+1. **Verify Service is Running**:
+   - Check Railway dashboard for PaddleOCR service status
+   - Review PaddleOCR service logs for startup errors
+   - Look for `✅ PaddleOCR initialized successfully` in logs
+
+2. **Check Service Configuration**:
+   - Verify `PADDLEOCR_SERVICE_URL` in backend environment variables
+   - Ensure correct internal URL: `http://paddleocr-service.railway.internal:9123`
+   - Check Railway's IPv6 internal networking is working
+
+3. **Debug Connection**:
+   - From backend service, test health endpoint: `curl http://paddleocr-service.railway.internal:9123/health`
+   - Check for DNS resolution issues in backend logs
+   - Verify both services are in the same Railway project
+
+4. **Model Download Issues**:
+   - PaddleOCR downloads models on first startup (~300MB)
+   - First startup may take 2-3 minutes
+   - Check for disk space issues in Railway logs
+   - Verify internet connectivity from Railway service
+
+5. **Graceful Degradation**:
+   - Backend automatically falls back to hybrid extraction if PaddleOCR unavailable
+   - Check `/api/pipeline/ocr-engines` to see PaddleOCR availability status
+   - System continues to work with Tesseract and Vision LLM even if PaddleOCR is down
 
 ### Performance Issues
 

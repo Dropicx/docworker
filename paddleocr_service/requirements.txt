@@ -1,0 +1,17 @@
+# PaddleOCR Microservice Dependencies
+
+# FastAPI & Web Server
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# PaddleOCR and dependencies
+paddleocr==2.9.1
+paddlepaddle==3.0.0b2  # CPU version
+
+# Image processing
+Pillow==11.0.0
+
+# Utilities
+pydantic==2.10.3
+pydantic-settings==2.7.0
