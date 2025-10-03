@@ -25,13 +25,15 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Create non-root user BEFORE downloading models
 RUN useradd -m -u 1000 appuser
 
+# Create volume directory for PaddleOCR models with proper permissions
+RUN mkdir -p /data/paddleocr && chown -R appuser:appuser /data
+
 # Copy application code
 COPY paddleocr_service/app/ app/
 RUN chown -R appuser:appuser /app
 
-# Switch to appuser and pre-download models (saves 50s on startup)
+# Switch to appuser
 USER appuser
-RUN python -c "from paddleocr import PaddleOCR; PaddleOCR(use_angle_cls=True, lang='en', use_gpu=False, show_log=False)" 2>/dev/null || echo "Model pre-download attempted"
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
@@ -45,6 +47,7 @@ ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 ENV ENVIRONMENT=production
 ENV PYTHONWARNINGS="ignore"
+ENV PADDLE_HOME=/data/paddleocr
 
 # Run the application (info shows startup verification, then quiets down)
 CMD ["sh", "-c", "python -W ignore::UserWarning -m uvicorn app.main:app --host 0.0.0.0 --port 9123 --log-level info"]
