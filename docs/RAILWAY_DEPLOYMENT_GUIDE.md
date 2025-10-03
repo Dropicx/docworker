@@ -106,9 +106,30 @@ REDIS_URL=redis://...  # Only needed when USE_REDIS_QUEUE=true
 
 ### Frontend Environment Variables
 
+**CRITICAL:** Set this environment variable in Railway frontend service:
+
 ```bash
-# Frontend should have this set (usually automatic)
-VITE_API_URL=/api  # Or your backend URL
+# Backend Internal URL (Railway service reference)
+BACKEND_INTERNAL_URL=${{backend.RAILWAY_PRIVATE_DOMAIN}}
+
+# Note: Replace "backend" with your actual backend service name in Railway
+# The format is: ${{SERVICE_NAME.RAILWAY_PRIVATE_DOMAIN}}
+```
+
+**How to set this in Railway:**
+1. Go to Railway Dashboard → Frontend Service → Variables
+2. Click **"+ New Variable"**
+3. Add **Reference Variable**:
+   - **Key**: `BACKEND_INTERNAL_URL`
+   - **Value**: `${{backend.RAILWAY_PRIVATE_DOMAIN}}`
+   - (Replace `backend` with your backend service name if different)
+4. Click **"Add"**
+5. Redeploy frontend service
+
+**Alternative (if service reference doesn't work):**
+```bash
+# Use explicit internal URL format
+BACKEND_INTERNAL_URL=http://YOUR-BACKEND-SERVICE-NAME.railway.internal:9122
 ```
 
 ---
@@ -330,6 +351,54 @@ Expected: JSON array with 9 pipeline steps
 1. Check backend logs for seeding errors
 2. Verify database tables exist (see verification section)
 3. Manually seed: `railway run python backend/app/database/modular_pipeline_seed.py`
+
+---
+
+### Frontend Can't Reach Backend API
+
+**Symptoms:**
+- "❌ API Error: undefined /health undefined"
+- "Request aborted"
+- "NetworkError when attempting to fetch resource"
+- Frontend loads but API calls fail
+
+**Root Cause:** Frontend can't connect to backend service
+
+**Solution:**
+1. **Check Environment Variable:**
+   ```bash
+   # In Railway frontend service → Variables
+   BACKEND_INTERNAL_URL=${{backend.RAILWAY_PRIVATE_DOMAIN}}
+   ```
+
+2. **Verify Service Name:**
+   - Railway Dashboard → Your Project → Check backend service name
+   - If backend is named "doctranslator-backend", use:
+     ```bash
+     BACKEND_INTERNAL_URL=${{doctranslator-backend.RAILWAY_PRIVATE_DOMAIN}}
+     ```
+
+3. **Check Frontend Logs:**
+   ```bash
+   railway logs --service frontend
+   ```
+   Look for: `📡 Backend URL: http://...`
+
+4. **Test Backend Directly:**
+   ```bash
+   # Get backend public URL from Railway dashboard
+   curl https://YOUR-BACKEND-URL.railway.app/api/health
+   ```
+
+5. **Manual Configuration (if service reference fails):**
+   - Get backend service name from Railway dashboard
+   - Set explicit URL:
+     ```bash
+     BACKEND_INTERNAL_URL=http://YOUR-SERVICE-NAME.railway.internal:9122
+     ```
+
+6. **Redeploy Frontend:**
+   - After setting variable, click "Deploy" in Railway frontend service
 
 ---
 

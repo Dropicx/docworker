@@ -30,11 +30,12 @@ RUN apk add --no-cache curl
 # Copy built frontend
 COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy entrypoint script for dynamic configuration
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 # Remove default nginx config to avoid conflicts
-RUN rm -f /etc/nginx/conf.d/default.conf.dpkg-old
+RUN rm -f /etc/nginx/conf.d/default.conf
 
 # Expose port (Railway uses 8080)
 EXPOSE 8080
@@ -43,5 +44,5 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
     CMD curl -f http://localhost:8080/health || exit 1
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"] 
+# Use entrypoint script for dynamic nginx configuration
+ENTRYPOINT ["/entrypoint.sh"] 
