@@ -498,7 +498,7 @@ const DocumentClassManager: React.FC = () => {
                   </label>
                   <input
                     type="text"
-                    value={formData.icon}
+                    value={formData.icon ?? ''}
                     onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
                     className="w-full px-3 py-2 border border-primary-300 rounded-lg text-2xl text-center focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="📄"
@@ -524,7 +524,7 @@ const DocumentClassManager: React.FC = () => {
                   Beschreibung
                 </label>
                 <textarea
-                  value={formData.description}
+                  value={formData.description ?? ''}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-3 py-2 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                   rows={3}
