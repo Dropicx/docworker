@@ -305,13 +305,26 @@ class OCREngineManager:
             True if service is healthy, False otherwise
         """
         try:
+            logger.info(f"🔍 Checking PaddleOCR service at: {PADDLEOCR_SERVICE_URL}")
             with httpx.Client(timeout=5.0) as client:
                 response = client.get(f"{PADDLEOCR_SERVICE_URL}/health")
                 if response.status_code == 200:
                     data = response.json()
-                    return data.get("paddleocr_available", False)
+                    is_available = data.get("paddleocr_available", False)
+                    if is_available:
+                        logger.info(f"✅ PaddleOCR service is available")
+                    else:
+                        logger.warning(f"⚠️ PaddleOCR service responded but paddleocr_available=False")
+                    return is_available
+                else:
+                    logger.warning(f"⚠️ PaddleOCR service returned status {response.status_code}")
+                    return False
+        except httpx.ConnectError as e:
+            logger.warning(f"⚠️ Cannot connect to PaddleOCR service: {str(e)}")
+        except httpx.TimeoutException:
+            logger.warning(f"⚠️ PaddleOCR service timeout (5s)")
         except Exception as e:
-            logger.debug(f"PaddleOCR health check failed (sync): {e}")
+            logger.warning(f"⚠️ PaddleOCR health check failed: {str(e)}")
         return False
 
     def get_available_engines(self) -> Dict[str, Dict[str, Any]]:
