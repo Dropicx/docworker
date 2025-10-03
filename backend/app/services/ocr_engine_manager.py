@@ -17,11 +17,49 @@ from app.services.hybrid_text_extractor import HybridTextExtractor
 
 logger = logging.getLogger(__name__)
 
+
+def _normalize_paddleocr_url(url: str) -> str:
+    """
+    Normalize PaddleOCR service URL to handle IPv6 and missing scheme.
+
+    Railway provides IPv6 addresses that need brackets in URLs.
+    Also ensures http:// prefix is present.
+    """
+    if not url:
+        return "http://paddleocr.railway.internal:9123"
+
+    # Add http:// if missing
+    if not url.startswith(('http://', 'https://')):
+        url = f"http://{url}"
+
+    # Check if we have a bare IPv6 address (contains : but not wrapped in [])
+    # Format: http://ipv6:port needs to become http://[ipv6]:port
+    if url.startswith('http://') and ':' in url:
+        # Extract the part after http://
+        rest = url[7:]  # Remove 'http://'
+
+        # Check if it's IPv6 (multiple colons and not already bracketed)
+        if rest.count(':') > 1 and not rest.startswith('['):
+            # Split on last colon to separate address from port
+            parts = rest.rsplit(':', 1)
+            if len(parts) == 2:
+                ipv6_addr, port = parts
+                # Rebuild with brackets around IPv6
+                url = f"http://[{ipv6_addr}]:{port}"
+                logger.info(f"🔧 Normalized IPv6 URL to: {url}")
+
+    return url
+
+
 # PaddleOCR microservice URL (Railway internal networking)
-PADDLEOCR_SERVICE_URL = os.getenv(
+_raw_url = os.getenv(
     "PADDLEOCR_SERVICE_URL",
     "http://paddleocr.railway.internal:9123"
 )
+PADDLEOCR_SERVICE_URL = _normalize_paddleocr_url(_raw_url)
+
+# Log the URL being used at startup
+logger.info(f"🔗 PaddleOCR service URL: {PADDLEOCR_SERVICE_URL}")
 
 
 class OCREngineManager:
