@@ -11,5 +11,6 @@ if [ -d "/home/appuser/.paddleocr" ]; then
 fi
 
 # Switch to appuser and run the application
+# Use :: for IPv6 (Railway internal networking) - listens on both IPv4 and IPv6
 echo "🚀 Starting PaddleOCR service as appuser..."
-exec su appuser -c "python -W ignore::UserWarning -m uvicorn app.main:app --host 0.0.0.0 --port 9123 --log-level info"
+exec su appuser -c "python -W ignore::UserWarning -m uvicorn app.main:app --host :: --port 9123 --log-level info"

@@ -33,7 +33,7 @@ COPY paddleocr_service/entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh && \
     chown -R appuser:appuser /app
 
-# Health check
+# Health check (localhost resolves to both IPv4 and IPv6)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
     CMD curl -f http://localhost:9123/health || exit 1
 
