@@ -260,38 +260,59 @@ class OCREngineManager:
         Returns:
             Dict mapping engine names to their capabilities
         """
+        # Safely check Vision LLM availability
+        vision_available = False
+        try:
+            vision_available = (
+                hasattr(self.hybrid_extractor, 'ovh_client') and
+                self.hybrid_extractor.ovh_client is not None and
+                hasattr(self.hybrid_extractor.ovh_client, 'vision_client') and
+                self.hybrid_extractor.ovh_client.vision_client is not None
+            )
+        except Exception as e:
+            logger.warning(f"⚠️ Could not check Vision LLM availability: {e}")
+            vision_available = False
+
         return {
             "TESSERACT": {
+                "engine": "TESSERACT",
                 "name": "Tesseract OCR",
                 "description": "Fast local OCR for clean documents",
                 "speed": "Fast (< 5s per page)",
                 "accuracy": "Good for clean text",
                 "available": self.hybrid_extractor.local_ocr_available,
-                "cost": "Free"
+                "cost": "Free",
+                "configuration": self.get_engine_config(OCREngineEnum.TESSERACT)
             },
             "PADDLEOCR": {
+                "engine": "PADDLEOCR",
                 "name": "PaddleOCR",
                 "description": "GPU-accelerated OCR for complex documents",
                 "speed": "Very Fast (~2s per page)",
                 "accuracy": "Excellent",
                 "available": False,  # Not yet implemented
-                "cost": "Free (requires GPU)"
+                "cost": "Free (requires GPU)",
+                "configuration": self.get_engine_config(OCREngineEnum.PADDLEOCR)
             },
             "VISION_LLM": {
+                "engine": "VISION_LLM",
                 "name": "Qwen 2.5 VL (Vision LLM)",
                 "description": "AI-powered OCR for highly complex documents",
                 "speed": "Slow (~2 minutes per page)",
                 "accuracy": "Excellent",
-                "available": self.hybrid_extractor.ovh_client.vision_client is not None,
-                "cost": "OVH AI Endpoints pricing"
+                "available": vision_available,
+                "cost": "OVH AI Endpoints pricing",
+                "configuration": self.get_engine_config(OCREngineEnum.VISION_LLM)
             },
             "HYBRID": {
+                "engine": "HYBRID",
                 "name": "Hybrid (Intelligent Routing)",
                 "description": "Automatically selects best OCR based on document quality",
                 "speed": "Variable",
                 "accuracy": "Optimal",
                 "available": True,
-                "cost": "Variable"
+                "cost": "Variable",
+                "configuration": self.get_engine_config(OCREngineEnum.HYBRID)
             }
         }
 
