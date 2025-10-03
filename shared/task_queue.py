@@ -126,3 +126,53 @@ def get_queue_length(redis_client, queue_name: str = 'celery') -> int:
     except Exception as e:
         logger.error(f"❌ Failed to get queue length: {str(e)}")
         return -1
+
+
+def check_workers_available(celery_app, timeout: float = 1.0) -> Dict[str, Any]:
+    """
+    Check if any Celery workers are active and responding
+
+    Args:
+        celery_app: Celery application instance
+        timeout: Timeout for worker ping (seconds)
+
+    Returns:
+        dict: Worker availability information
+            - available: bool - Whether any workers are active
+            - worker_count: int - Number of active workers
+            - workers: list - List of worker names
+    """
+    try:
+        # Use Celery inspect to ping workers
+        inspect = celery_app.control.inspect(timeout=timeout)
+        stats = inspect.stats()
+
+        if stats is None:
+            # No workers responded
+            logger.warning("⚠️ No Celery workers are active")
+            return {
+                'available': False,
+                'worker_count': 0,
+                'workers': [],
+                'error': 'No workers responded to ping'
+            }
+
+        # Workers are active
+        worker_names = list(stats.keys())
+        logger.info(f"✅ Found {len(worker_names)} active workers: {worker_names}")
+
+        return {
+            'available': True,
+            'worker_count': len(worker_names),
+            'workers': worker_names,
+            'stats': stats
+        }
+
+    except Exception as e:
+        logger.error(f"❌ Failed to check worker availability: {str(e)}")
+        return {
+            'available': False,
+            'worker_count': 0,
+            'workers': [],
+            'error': str(e)
+        }

@@ -2,6 +2,7 @@ import uuid
 import time
 import logging
 import json
+import os
 from datetime import datetime
 from typing import Optional
 
@@ -9,11 +10,13 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Request
 from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
+from celery import Celery
 
 from app.models.document import UploadResponse, ProcessingStatus, DocumentType, ErrorResponse
 from app.services.file_validator import FileValidator
 from app.database.connection import get_db_session
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
+from shared.task_queue import check_workers_available
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +64,28 @@ async def upload_document(
                 status_code=400,
                 detail=f"Dateivalidierung fehlgeschlagen: {error_message}"
             )
-        
+
+        # Worker-Verfügbarkeit prüfen
+        logger.debug("🔍 Prüfe Worker-Verfügbarkeit...")
+        try:
+            REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+            celery_app = Celery(broker=REDIS_URL, backend=REDIS_URL)
+            worker_status = check_workers_available(celery_app, timeout=1.0)
+
+            if not worker_status['available']:
+                logger.error(f"❌ Keine Worker verfügbar: {worker_status.get('error', 'Unknown error')}")
+                raise HTTPException(
+                    status_code=503,
+                    detail="Service temporarily unavailable: No workers available to process document. Please try again later."
+                )
+
+            logger.info(f"✅ Worker verfügbar: {worker_status['worker_count']} aktive Worker")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"⚠️ Worker-Check fehlgeschlagen (Upload wird fortgesetzt): {str(e)}")
+            # Continue with upload even if worker check fails (might be temporary issue)
+
         # Eindeutige IDs generieren
         processing_id = str(uuid.uuid4())
         job_id = str(uuid.uuid4())

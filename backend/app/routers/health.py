@@ -3,9 +3,14 @@ from fastapi import APIRouter, Request
 from app.models.document import HealthCheck
 from app.services.cleanup import get_memory_usage
 from app.services.ovh_client import OVHClient
+from shared.redis_client import get_redis
+from shared.task_queue import check_workers_available
 import tempfile
 import os
 import shutil
+import logging
+
+logger = logging.getLogger(__name__)
 
 def check_ocr_capabilities() -> dict:
     """Check OCR capabilities of the system"""
@@ -59,7 +64,7 @@ async def health_check(request: Request = None):
     """
     Umfassender Gesundheitscheck des Systems
     """
-    
+
     # Debug: Log health check request
     if request:
         print(f"🔍 === HEALTH REQUEST DEBUG ===")
@@ -68,15 +73,37 @@ async def health_check(request: Request = None):
         print(f"🔍 Headers: {dict(request.headers)}")
         print(f"🔍 Client: {request.client}")
         print(f"🔍 === END HEALTH DEBUG ===")
-    
+
     try:
         services = {}
-        
+
+        # Redis prüfen
+        try:
+            redis_client = get_redis()
+            redis_client.ping()
+            services["redis"] = "healthy"
+        except Exception as e:
+            services["redis"] = f"error: {str(e)[:50]}"
+
+        # Celery Worker prüfen
+        try:
+            from celery import Celery
+            REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+            celery_app = Celery(broker=REDIS_URL, backend=REDIS_URL)
+
+            worker_status = check_workers_available(celery_app, timeout=1.0)
+            if worker_status['available']:
+                services["worker"] = f"healthy ({worker_status['worker_count']} active)"
+            else:
+                services["worker"] = f"error: {worker_status.get('error', 'No workers available')}"
+        except Exception as e:
+            services["worker"] = f"error: {str(e)[:50]}"
+
         # OVH API prüfen
         ovh_client = OVHClient()
         ovh_connected, error_msg = await ovh_client.check_connection()
         services["ovh_api"] = "healthy" if ovh_connected else f"error: {error_msg[:100]}"
-        
+
         # Tesseract prüfen
         try:
             import pytesseract
@@ -84,7 +111,7 @@ async def health_check(request: Request = None):
             services["tesseract"] = "healthy"
         except Exception:
             services["tesseract"] = "error"
-        
+
         # Temporäres Verzeichnis prüfen
         try:
             temp_dir = tempfile.gettempdir()
@@ -95,14 +122,14 @@ async def health_check(request: Request = None):
             services["filesystem"] = "healthy"
         except Exception:
             services["filesystem"] = "error"
-        
+
         # PIL/Pillow prüfen
         try:
             from PIL import Image
             services["image_processing"] = "healthy"
         except Exception:
             services["image_processing"] = "error"
-        
+
         # PDF-Verarbeitung prüfen
         try:
             import PyPDF2
@@ -110,20 +137,28 @@ async def health_check(request: Request = None):
             services["pdf_processing"] = "healthy"
         except Exception:
             services["pdf_processing"] = "error"
-        
+
         # Speichernutzung
         memory_usage = get_memory_usage()
-        
-        # Gesamtstatus bestimmen
-        error_services = [name for name, status in services.items() if status == "error"]
-        overall_status = "healthy" if not error_services else "degraded" if len(error_services) < len(services) / 2 else "error"
-        
+
+        # Gesamtstatus bestimmen - Worker ist kritisch!
+        error_services = [name for name, status in services.items() if "error" in status]
+        critical_services = ["redis", "worker", "ovh_api"]
+        critical_errors = [name for name in error_services if name in critical_services]
+
+        if critical_errors:
+            overall_status = "error"
+        elif error_services:
+            overall_status = "degraded"
+        else:
+            overall_status = "healthy"
+
         return HealthCheck(
             status=overall_status,
             services=services,
             memory_usage=memory_usage
         )
-        
+
     except Exception as e:
         return HealthCheck(
             status="error",
