@@ -1,6 +1,7 @@
 import uuid
 import time
 import logging
+import json
 from datetime import datetime
 from typing import Optional
 
@@ -11,7 +12,8 @@ from slowapi.util import get_remote_address
 
 from app.models.document import UploadResponse, ProcessingStatus, DocumentType, ErrorResponse
 from app.services.file_validator import FileValidator
-from app.services.cleanup import add_to_processing_store
+from app.database.connection import get_db_session
+from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
 
 logger = logging.getLogger(__name__)
 
@@ -60,31 +62,81 @@ async def upload_document(
                 detail=f"Dateivalidierung fehlgeschlagen: {error_message}"
             )
         
-        # Eindeutige Verarbeitungs-ID generieren
+        # Eindeutige IDs generieren
         processing_id = str(uuid.uuid4())
-        
+        job_id = str(uuid.uuid4())
+
         # Dateityp bestimmen
         file_type_str = FileValidator.get_file_type(file.filename)
         file_type = DocumentType.PDF if file_type_str == "pdf" else DocumentType.IMAGE
-        
+
         # Dateiinhalt lesen
         file_content = await file.read()
         file_size = len(file_content)
-        
-        # Daten im Processing Store speichern
-        processing_data = {
-            "filename": file.filename,
-            "file_type": file_type_str,
-            "file_size": file_size,
-            "file_content": file_content,
-            "status": ProcessingStatus.PENDING,
-            "progress_percent": 0,
-            "current_step": "Upload abgeschlossen",
-            "uploaded_at": datetime.now(),
-            "client_ip": get_remote_address(request)
-        }
-        
-        add_to_processing_store(processing_id, processing_data)
+
+        # Pipeline-Konfiguration laden (für Job-Snapshot)
+        db = next(get_db_session())
+        try:
+            from app.services.modular_pipeline_executor import ModularPipelineExecutor
+            executor = ModularPipelineExecutor(db)
+
+            # Lade aktuelle Pipeline- und OCR-Konfiguration
+            pipeline_steps_list = executor.load_pipeline_steps()
+            ocr_config_obj = executor.load_ocr_configuration()
+
+            # Serialize für JSON-Speicherung
+            pipeline_config = [
+                {
+                    "id": step.id,
+                    "name": step.name,
+                    "order": step.order,
+                    "enabled": step.enabled,
+                    "prompt_template": step.prompt_template,
+                    "selected_model_id": step.selected_model_id,
+                    "document_class_id": step.document_class_id,
+                    "is_branching_step": step.is_branching_step,
+                    "branching_field": step.branching_field
+                }
+                for step in pipeline_steps_list
+            ]
+
+            ocr_config = {
+                "selected_engine": str(ocr_config_obj.selected_engine) if ocr_config_obj else "TESSERACT",
+                "tesseract_config": ocr_config_obj.tesseract_config if ocr_config_obj else {},
+                "paddleocr_config": ocr_config_obj.paddleocr_config if ocr_config_obj else {},
+                "vision_llm_config": ocr_config_obj.vision_llm_config if ocr_config_obj else {}
+            }
+
+            # Erstelle Pipeline-Job in der Datenbank
+            pipeline_job = PipelineJobDB(
+                job_id=job_id,
+                processing_id=processing_id,
+                filename=file.filename,
+                file_type=file_type_str,
+                file_size=file_size,
+                file_content=file_content,
+                client_ip=get_remote_address(request),
+                status=StepExecutionStatus.PENDING,
+                progress_percent=0,
+                pipeline_config=pipeline_steps,  # Snapshot der Pipeline-Konfiguration
+                ocr_config=ocr_config  # Snapshot der OCR-Konfiguration
+            )
+
+            db.add(pipeline_job)
+            db.commit()
+            db.refresh(pipeline_job)
+
+            # Queue Celery task (nur wenn nicht im Test-Modus)
+            try:
+                from worker.tasks.document_processing import process_medical_document
+                process_medical_document.delay(processing_id, options={})
+                logger.info(f"📤 Job queued to Redis: {job_id[:8]}")
+            except Exception as queue_error:
+                logger.warning(f"⚠️ Failed to queue Celery task (running without worker?): {queue_error}")
+                # Job bleibt in DB als PENDING, kann später verarbeitet werden
+
+        finally:
+            db.close()
         
         # Response erstellen
         response = UploadResponse(
@@ -93,7 +145,7 @@ async def upload_document(
             file_type=file_type,
             file_size=file_size,
             status=ProcessingStatus.PENDING,
-            message="Datei erfolgreich hochgeladen und zur Verarbeitung bereit"
+            message="Datei erfolgreich hochgeladen und in Warteschlange eingereiht"
         )
         
         success_log = f"📄 Datei hochgeladen: {file.filename} ({file_size} bytes) - ID: {processing_id[:8]}"

@@ -20,10 +20,12 @@ from app.models.document import (
     LANGUAGE_NAMES
 )
 from app.services.cleanup import (
-    get_from_processing_store, 
+    get_from_processing_store,
     update_processing_store,
     remove_from_processing_store
 )
+from app.database.connection import get_db_session
+from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
 from app.services.ovh_client import OVHClient
 from app.services.unified_prompt_manager import UnifiedPromptManager
 from app.services.ai_logging_service import AILoggingService
@@ -517,29 +519,53 @@ async def process_document_legacy(processing_id: str):
 @router.get("/process/{processing_id}/status", response_model=ProcessingProgress)
 async def get_processing_status(processing_id: str):
     """
-    Gibt den aktuellen Verarbeitungsstatus zurück
-    
+    Gibt den aktuellen Verarbeitungsstatus zurück (aus Datenbank)
+
     - **processing_id**: ID der Verarbeitung
     """
-    
+
     try:
-        processing_data = get_from_processing_store(processing_id)
-        
-        if not processing_data:
-            raise HTTPException(
-                status_code=404,
-                detail="Verarbeitung nicht gefunden oder bereits abgelaufen"
+        # Load job from database
+        db = next(get_db_session())
+        try:
+            job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+
+            if not job:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Verarbeitung nicht gefunden"
+                )
+
+            # Map database status to API status
+            status_mapping = {
+                StepExecutionStatus.PENDING: ProcessingStatus.PENDING,
+                StepExecutionStatus.RUNNING: ProcessingStatus.PROCESSING,
+                StepExecutionStatus.COMPLETED: ProcessingStatus.COMPLETED,
+                StepExecutionStatus.FAILED: ProcessingStatus.FAILED,
+                StepExecutionStatus.SKIPPED: ProcessingStatus.FAILED
+            }
+
+            # Determine current step description
+            current_step = "Warten auf Verarbeitung..."
+            if job.status == StepExecutionStatus.RUNNING:
+                current_step = f"Verarbeite Schritt {job.progress_percent}%"
+            elif job.status == StepExecutionStatus.COMPLETED:
+                current_step = "Verarbeitung abgeschlossen"
+            elif job.status == StepExecutionStatus.FAILED:
+                current_step = "Fehler bei Verarbeitung"
+
+            return ProcessingProgress(
+                processing_id=processing_id,
+                status=status_mapping.get(job.status, ProcessingStatus.PENDING),
+                progress_percent=job.progress_percent,
+                current_step=current_step,
+                message=None,
+                error=job.error_message
             )
-        
-        return ProcessingProgress(
-            processing_id=processing_id,
-            status=processing_data.get("status", ProcessingStatus.PENDING),
-            progress_percent=processing_data.get("progress_percent", 0),
-            current_step=processing_data.get("current_step", "Warten..."),
-            message=processing_data.get("message"),
-            error=processing_data.get("error")
-        )
-        
+
+        finally:
+            db.close()
+
     except HTTPException:
         raise
     except Exception as e:
@@ -552,40 +578,42 @@ async def get_processing_status(processing_id: str):
 @router.get("/process/{processing_id}/result", response_model=TranslationResult)
 async def get_processing_result(processing_id: str):
     """
-    Gibt das Verarbeitungsergebnis zurück
-    
+    Gibt das Verarbeitungsergebnis zurück (aus Datenbank)
+
     - **processing_id**: ID der Verarbeitung
     """
-    
+
     try:
-        processing_data = get_from_processing_store(processing_id)
-        
-        if not processing_data:
-            raise HTTPException(
-                status_code=404,
-                detail="Verarbeitung nicht gefunden oder bereits abgelaufen"
-            )
-        
-        status = processing_data.get("status")
-        
-        if status != ProcessingStatus.COMPLETED:
-            raise HTTPException(
-                status_code=409,
-                detail=f"Verarbeitung noch nicht abgeschlossen. Status: {status}"
-            )
-        
-        result_data = processing_data.get("result")
-        if not result_data:
-            raise HTTPException(
-                status_code=500,
-                detail="Verarbeitungsergebnis nicht verfügbar"
-            )
-        
-        # Nach Abruf des Ergebnisses aus Speicher entfernen
-        remove_from_processing_store(processing_id)
-        
-        return TranslationResult(**result_data)
-        
+        # Load job from database
+        db = next(get_db_session())
+        try:
+            job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+
+            if not job:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Verarbeitung nicht gefunden"
+                )
+
+            if job.status != StepExecutionStatus.COMPLETED:
+                raise HTTPException(
+                    status_code=409,
+                    detail=f"Verarbeitung noch nicht abgeschlossen. Status: {job.status}"
+                )
+
+            result_data = job.result_data
+            if not result_data:
+                raise HTTPException(
+                    status_code=500,
+                    detail="Verarbeitungsergebnis nicht verfügbar"
+                )
+
+            # Return result (we keep it in DB for audit purposes, don't delete)
+            return TranslationResult(**result_data)
+
+        finally:
+            db.close()
+
     except HTTPException:
         raise
     except Exception as e:

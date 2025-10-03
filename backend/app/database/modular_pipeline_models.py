@@ -6,7 +6,7 @@ Users can configure OCR engines, create custom pipeline steps, manage available 
 and define custom document classes with their own pipeline branches.
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, JSON, Enum as SQLEnum, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, JSON, Enum as SQLEnum, ForeignKey, LargeBinary
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from enum import Enum
@@ -196,6 +196,16 @@ class PipelineJobDB(Base):
     # Job identification
     job_id = Column(String(255), nullable=False, unique=True, index=True)  # UUID
     processing_id = Column(String(255), nullable=False, index=True)  # Links to document processing
+
+    # File storage (uploaded document)
+    filename = Column(String(255), nullable=False)
+    file_type = Column(String(50), nullable=False)  # "pdf", "jpg", "png"
+    file_size = Column(Integer, nullable=False)
+    file_content = Column(LargeBinary, nullable=False)  # Binary file data
+
+    # Upload metadata
+    client_ip = Column(String(100), nullable=True)  # Client IP for security logging
+    uploaded_at = Column(DateTime, default=func.now(), nullable=False)
 
     # Job status
     status = Column(SQLEnum(StepExecutionStatus), default=StepExecutionStatus.PENDING, nullable=False, index=True)
