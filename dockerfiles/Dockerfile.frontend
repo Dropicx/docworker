@@ -58,7 +58,7 @@ echo "======================================"\n\
 envsubst '"'"'$PORT $BACKEND_URL $BACKEND_PORT'"'"' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf\n\
 \n\
 # Validate nginx configuration\n\
-nginx -t\n\
+nginx -t 2>&1\n\
 \n\
 # Start nginx\n\
 exec nginx -g "daemon off;"\n' > /docker-entrypoint.sh && \
