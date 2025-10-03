@@ -19,14 +19,17 @@ import {
   FileText,
   ToggleLeft,
   ToggleRight,
-  Loader2
+  Loader2,
+  GitBranch,
+  Tag
 } from 'lucide-react';
 import { pipelineApi } from '../../services/pipelineApi';
-import { PipelineStep, AIModel, PipelineStepRequest } from '../../types/pipeline';
+import { PipelineStep, AIModel, PipelineStepRequest, DocumentClass } from '../../types/pipeline';
 
 interface StepEditorModalProps {
   step: PipelineStep | null; // null for creating new step
   models: AIModel[];
+  documentClasses: DocumentClass[]; // NEW: For document class selection
   isOpen: boolean;
   onClose: () => void;
   onSave: () => void;
@@ -35,6 +38,7 @@ interface StepEditorModalProps {
 const StepEditorModal: React.FC<StepEditorModalProps> = ({
   step,
   models,
+  documentClasses,
   isOpen,
   onClose,
   onSave
@@ -52,6 +56,11 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   const [maxRetries, setMaxRetries] = useState(3);
   const [inputFromPreviousStep, setInputFromPreviousStep] = useState(true);
   const [outputFormat, setOutputFormat] = useState<string>('text');
+
+  // NEW: Branching fields
+  const [documentClassId, setDocumentClassId] = useState<number | null>(null);
+  const [isBranchingStep, setIsBranchingStep] = useState(false);
+  const [branchingField, setBranchingField] = useState<string>('document_type');
 
   // UI State
   const [saving, setSaving] = useState(false);
@@ -74,6 +83,10 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setMaxRetries(step.max_retries);
       setInputFromPreviousStep(step.input_from_previous_step);
       setOutputFormat(step.output_format || 'text');
+      // NEW: Branching fields
+      setDocumentClassId(step.document_class_id);
+      setIsBranchingStep(step.is_branching_step);
+      setBranchingField(step.branching_field || 'document_type');
     } else {
       // Creating new step - set defaults
       setName('');
@@ -88,6 +101,10 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setMaxRetries(3);
       setInputFromPreviousStep(true);
       setOutputFormat('text');
+      // NEW: Branching field defaults
+      setDocumentClassId(null);
+      setIsBranchingStep(false);
+      setBranchingField('document_type');
     }
   }, [step, models]);
 
@@ -145,7 +162,11 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
         retry_on_failure: retryOnFailure,
         max_retries: maxRetries,
         input_from_previous_step: inputFromPreviousStep,
-        output_format: outputFormat
+        output_format: outputFormat,
+        // NEW: Branching fields
+        document_class_id: documentClassId,
+        is_branching_step: isBranchingStep,
+        branching_field: isBranchingStep ? branchingField : null
       };
 
       if (step) {
@@ -391,6 +412,77 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   <option value="markdown">Markdown</option>
                 </select>
               </div>
+            </div>
+          </div>
+
+          {/* Pipeline Branching Settings */}
+          <div className="border-t border-primary-200 pt-6">
+            <h4 className="font-semibold text-primary-900 mb-4 flex items-center space-x-2">
+              <GitBranch className="w-5 h-5 text-brand-600" />
+              <span>Pipeline-Verzweigung</span>
+            </h4>
+
+            <div className="space-y-4">
+              {/* Document Class Selection */}
+              <div>
+                <label className="block text-sm font-medium text-primary-700 mb-2 flex items-center space-x-2">
+                  <Tag className="w-4 h-4" />
+                  <span>Dokumentenklasse</span>
+                </label>
+                <select
+                  value={documentClassId || ''}
+                  onChange={(e) => setDocumentClassId(e.target.value ? parseInt(e.target.value) : null)}
+                  className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                >
+                  <option value="">Universal (für alle Dokumenttypen)</option>
+                  {documentClasses.map((docClass) => (
+                    <option key={docClass.id} value={docClass.id}>
+                      {docClass.icon} {docClass.display_name} ({docClass.class_key})
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-primary-500 mt-1">
+                  Wählen Sie eine Dokumentenklasse für klassenspezifische Schritte oder lassen Sie es leer für universelle Schritte
+                </p>
+              </div>
+
+              {/* Branching Step Checkbox */}
+              <div>
+                <label className="flex items-center space-x-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={isBranchingStep}
+                    onChange={(e) => setIsBranchingStep(e.target.checked)}
+                    className="w-4 h-4 text-brand-600 border-primary-300 rounded focus:ring-brand-500"
+                  />
+                  <span className="text-sm font-medium text-primary-700 flex items-center space-x-2">
+                    <GitBranch className="w-4 h-4" />
+                    <span>Klassifizierungs-Schritt (verzweigt Pipeline)</span>
+                  </span>
+                </label>
+                <p className="text-xs text-primary-500 mt-1 ml-7">
+                  Aktivieren Sie dies für den Schritt, der die Dokumentklasse bestimmt und die Pipeline verzweigt
+                </p>
+              </div>
+
+              {/* Branching Field (only shown if branching step is enabled) */}
+              {isBranchingStep && (
+                <div className="ml-7 p-4 bg-brand-50 border border-brand-200 rounded-lg">
+                  <label className="block text-sm font-medium text-brand-700 mb-2">
+                    Verzweigungs-Feldname
+                  </label>
+                  <input
+                    type="text"
+                    value={branchingField}
+                    onChange={(e) => setBranchingField(e.target.value)}
+                    className="w-full px-3 py-2 border border-brand-300 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none font-mono text-sm"
+                    placeholder="document_type"
+                  />
+                  <p className="text-xs text-brand-600 mt-1">
+                    Das Feld in der Ausgabe, das den Klassenschlüssel enthält (Standard: "document_type")
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>

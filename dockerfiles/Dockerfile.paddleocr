@@ -44,7 +44,7 @@ EXPOSE 9123
 ENV PYTHONPATH=/app
 ENV PYTHONUNBUFFERED=1
 ENV ENVIRONMENT=production
-ENV LOG_LEVEL=warning
+ENV PYTHONWARNINGS="ignore::UserWarning:paddle"
 
-# Run the application (log-level warning reduces startup noise)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9123", "--log-level", "warning"]
+# Run the application (info shows startup verification, then quiets down)
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9123", "--log-level", "info"]

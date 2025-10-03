@@ -32,7 +32,8 @@ import {
   PipelineStep,
   AIModel,
   EngineStatusMap,
-  PipelineStepRequest
+  PipelineStepRequest,
+  DocumentClass
 } from '../../types/pipeline';
 import StepEditorModal from './StepEditorModal';
 
@@ -52,6 +53,10 @@ const PipelineBuilder: React.FC = () => {
   const [models, setModels] = useState<AIModel[]>([]);
   const [modelsLoading, setModelsLoading] = useState(false);
 
+  // Document Classes State (NEW)
+  const [documentClasses, setDocumentClasses] = useState<DocumentClass[]>([]);
+  const [classesLoading, setClassesLoading] = useState(false);
+
   // Step Editor Modal State
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingStep, setEditingStep] = useState<PipelineStep | null>(null);
@@ -67,6 +72,7 @@ const PipelineBuilder: React.FC = () => {
     loadEngines();
     loadSteps();
     loadModels();
+    loadDocumentClasses(); // NEW
   }, []);
 
   // ==================== DATA LOADING ====================
@@ -114,6 +120,18 @@ const PipelineBuilder: React.FC = () => {
       setError(err.message);
     } finally {
       setModelsLoading(false);
+    }
+  };
+
+  const loadDocumentClasses = async () => {
+    setClassesLoading(true);
+    try {
+      const classesData = await pipelineApi.getAllDocumentClasses(true); // Only enabled classes
+      setDocumentClasses(classesData);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setClassesLoading(false);
     }
   };
 
@@ -463,6 +481,7 @@ const PipelineBuilder: React.FC = () => {
         <StepEditorModal
           step={editingStep}
           models={models}
+          documentClasses={documentClasses}
           isOpen={isEditorOpen}
           onClose={() => {
             setIsEditorOpen(false);

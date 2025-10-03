@@ -19,9 +19,11 @@ from app.database.modular_pipeline_models import (
     OCRConfigurationDB,
     PipelineJobDB,
     PipelineStepExecutionDB,
-    StepExecutionStatus
+    StepExecutionStatus,
+    DocumentClassDB
 )
 from app.services.ovh_client import OVHClient
+from app.services.document_class_manager import DocumentClassManager
 
 logger = logging.getLogger(__name__)
 
@@ -46,6 +48,7 @@ class ModularPipelineExecutor:
         """
         self.session = session
         self.ovh_client = OVHClient()
+        self.doc_class_manager = DocumentClassManager(session)
 
     # ==================== CONFIGURATION LOADING ====================
 
@@ -66,6 +69,105 @@ class ModularPipelineExecutor:
         except Exception as e:
             logger.error(f"❌ Failed to load pipeline steps: {e}")
             return []
+
+    def load_universal_steps(self) -> List[DynamicPipelineStepDB]:
+        """
+        Load universal pipeline steps (document_class_id = NULL).
+        These steps run for all documents regardless of classification.
+
+        Returns:
+            List of universal pipeline steps ordered by execution order
+        """
+        try:
+            steps = self.session.query(DynamicPipelineStepDB).filter_by(
+                enabled=True,
+                document_class_id=None
+            ).order_by(DynamicPipelineStepDB.order).all()
+
+            logger.info(f"📋 Loaded {len(steps)} universal pipeline steps")
+            return steps
+        except Exception as e:
+            logger.error(f"❌ Failed to load universal pipeline steps: {e}")
+            return []
+
+    def load_steps_by_document_class(self, document_class_id: int) -> List[DynamicPipelineStepDB]:
+        """
+        Load pipeline steps specific to a document class.
+
+        Args:
+            document_class_id: ID of the document class
+
+        Returns:
+            List of document-specific pipeline steps ordered by execution order
+        """
+        try:
+            steps = self.session.query(DynamicPipelineStepDB).filter_by(
+                enabled=True,
+                document_class_id=document_class_id
+            ).order_by(DynamicPipelineStepDB.order).all()
+
+            logger.info(f"📋 Loaded {len(steps)} steps for document class ID {document_class_id}")
+            return steps
+        except Exception as e:
+            logger.error(f"❌ Failed to load steps for document class {document_class_id}: {e}")
+            return []
+
+    def find_branching_step(self, steps: List[DynamicPipelineStepDB]) -> Optional[DynamicPipelineStepDB]:
+        """
+        Find the branching/classification step in the pipeline.
+
+        Args:
+            steps: List of pipeline steps to search
+
+        Returns:
+            The branching step or None if not found
+        """
+        for step in steps:
+            if step.is_branching_step:
+                logger.info(f"🔀 Found branching step: {step.name} (order: {step.order})")
+                return step
+
+        logger.warning("⚠️ No branching step found in pipeline")
+        return None
+
+    def extract_branch_value(self, output_text: str, branching_field: str = "document_type") -> Optional[str]:
+        """
+        Extract the branch value from step output.
+
+        For classification steps, this extracts the document class key (e.g., "ARZTBRIEF")
+        from the AI model's output.
+
+        Args:
+            output_text: Output text from the branching step
+            branching_field: Field name to extract (currently only supports "document_type")
+
+        Returns:
+            Extracted branch value (document class key) or None if extraction failed
+        """
+        if not output_text:
+            logger.error("❌ Cannot extract branch value from empty output")
+            return None
+
+        # Clean and uppercase the output
+        branch_value = output_text.strip().upper()
+
+        # Remove common prefixes/suffixes
+        for prefix in ["DOCUMENT_TYPE:", "CLASS:", "CLASSIFICATION:"]:
+            if branch_value.startswith(prefix):
+                branch_value = branch_value[len(prefix):].strip()
+
+        # Extract first word (should be the class key)
+        branch_value = branch_value.split()[0] if branch_value.split() else branch_value
+
+        # Validate it's a known document class
+        doc_class = self.doc_class_manager.get_class_by_key(branch_value)
+        if doc_class:
+            logger.info(f"✅ Extracted branch value: {branch_value} → {doc_class.display_name}")
+            return branch_value
+        else:
+            logger.warning(f"⚠️ Unknown document class: {branch_value}")
+            # Return it anyway - might be a new class or fallback behavior needed
+            return branch_value
 
     def load_ocr_configuration(self) -> Optional[OCRConfigurationDB]:
         """
@@ -207,7 +309,7 @@ class ModularPipelineExecutor:
         """
         context = context or {}
 
-        logger.info(f"🚀 Starting modular pipeline execution: {processing_id[:8]}")
+        logger.info(f"🚀 Starting modular pipeline execution with branching support: {processing_id[:8]}")
 
         # Create pipeline job record
         job_id = str(uuid.uuid4())
@@ -225,33 +327,48 @@ class ModularPipelineExecutor:
         self.session.add(job)
         self.session.commit()
 
-        # Load pipeline steps
-        steps = self.load_pipeline_steps()
-        if not steps:
-            error = "No enabled pipeline steps found"
-            logger.error(f"❌ {error}")
-            self._mark_job_failed(job, error)
-            return False, "", {"error": error}
+        # Load universal pipeline steps (document_class_id = NULL)
+        universal_steps = self.load_universal_steps()
+        if not universal_steps:
+            logger.warning("⚠️ No universal pipeline steps found, loading all steps as fallback")
+            universal_steps = self.load_pipeline_steps()
 
-        # Execute steps sequentially
+        # Find branching step
+        branching_step = self.find_branching_step(universal_steps)
+
+        # Initialize execution state
         current_output = input_text
         execution_metadata = {
             "job_id": job_id,
-            "total_steps": len(steps),
+            "total_steps": 0,
+            "universal_steps": len(universal_steps),
             "steps_executed": [],
-            "total_time": 0
+            "total_time": 0,
+            "branching_occurred": False,
+            "document_class": None
         }
 
         pipeline_start_time = time.time()
+        all_steps = []  # Track all steps for progress calculation
 
-        for idx, step in enumerate(steps):
+        # ==================== PHASE 1: UNIVERSAL STEPS ====================
+        logger.info(f"📋 Phase 1: Executing {len(universal_steps)} universal steps")
+
+        branch_value = None
+        document_class_specific_steps = []
+
+        for idx, step in enumerate(universal_steps):
             step_start_time = time.time()
+            all_steps.append(step)
 
             # Update job progress
-            progress_percent = int((idx / len(steps)) * 100)
+            total_steps_so_far = len(all_steps)
+            progress_percent = int((idx / max(len(universal_steps), 1)) * 50)  # First 50% is universal steps
             job.progress_percent = progress_percent
             job.current_step_id = step.id
             self.session.commit()
+
+            logger.info(f"▶️  Step {idx + 1}/{len(universal_steps)}: {step.name}")
 
             # Execute step
             success, output, error = await self.execute_step(
@@ -269,7 +386,7 @@ class ModularPipelineExecutor:
                 step_name=step.name,
                 step_order=step.order,
                 status=StepExecutionStatus.COMPLETED if success else StepExecutionStatus.FAILED,
-                input_text=current_output[:1000],  # Truncate for storage
+                input_text=current_output[:1000],
                 output_text=output[:1000] if success else None,
                 model_used=self.get_model_info(step.selected_model_id).name if success else None,
                 prompt_used=step.prompt_template[:500],
@@ -287,7 +404,8 @@ class ModularPipelineExecutor:
                 "step_order": step.order,
                 "success": success,
                 "execution_time": step_execution_time,
-                "error": error
+                "error": error,
+                "is_branching_step": step.is_branching_step
             })
 
             if not success:
@@ -301,9 +419,112 @@ class ModularPipelineExecutor:
             if step.input_from_previous_step:
                 current_output = output
 
+            # Check if this is the branching step
+            if step.is_branching_step and branching_step:
+                logger.info(f"🔀 Branching step detected: {step.name}")
+
+                # Extract branch value (document class)
+                branch_value = self.extract_branch_value(
+                    output,
+                    step.branching_field or "document_type"
+                )
+
+                if branch_value:
+                    # Get document class
+                    doc_class = self.doc_class_manager.get_class_by_key(branch_value)
+
+                    if doc_class:
+                        logger.info(f"🎯 Branch selected: {doc_class.display_name} (ID: {doc_class.id})")
+
+                        # Load document class-specific steps
+                        document_class_specific_steps = self.load_steps_by_document_class(doc_class.id)
+
+                        execution_metadata["branching_occurred"] = True
+                        execution_metadata["document_class"] = {
+                            "class_key": doc_class.class_key,
+                            "display_name": doc_class.display_name,
+                            "class_id": doc_class.id
+                        }
+                        execution_metadata["class_specific_steps"] = len(document_class_specific_steps)
+
+                        # Store document_type in context for subsequent steps
+                        context["document_type"] = doc_class.class_key
+
+                        break  # Exit universal steps loop, continue with class-specific steps
+                    else:
+                        logger.warning(f"⚠️ Document class '{branch_value}' not found, continuing without branching")
+                else:
+                    logger.warning(f"⚠️ Failed to extract branch value, continuing without branching")
+
+        # ==================== PHASE 2: CLASS-SPECIFIC STEPS ====================
+        if document_class_specific_steps:
+            logger.info(f"📋 Phase 2: Executing {len(document_class_specific_steps)} class-specific steps")
+
+            for idx, step in enumerate(document_class_specific_steps):
+                step_start_time = time.time()
+                all_steps.append(step)
+
+                # Update job progress
+                progress_percent = 50 + int((idx / max(len(document_class_specific_steps), 1)) * 50)
+                job.progress_percent = progress_percent
+                job.current_step_id = step.id
+                self.session.commit()
+
+                logger.info(f"▶️  Step {idx + 1}/{len(document_class_specific_steps)}: {step.name} [{execution_metadata['document_class']['class_key']}]")
+
+                # Execute step
+                success, output, error = await self.execute_step(
+                    step=step,
+                    input_text=current_output,
+                    context=context
+                )
+
+                step_execution_time = time.time() - step_start_time
+
+                # Log step execution
+                step_execution = PipelineStepExecutionDB(
+                    job_id=job_id,
+                    step_id=step.id,
+                    step_name=step.name,
+                    step_order=step.order,
+                    status=StepExecutionStatus.COMPLETED if success else StepExecutionStatus.FAILED,
+                    input_text=current_output[:1000],
+                    output_text=output[:1000] if success else None,
+                    model_used=self.get_model_info(step.selected_model_id).name if success else None,
+                    prompt_used=step.prompt_template[:500],
+                    started_at=datetime.fromtimestamp(step_start_time),
+                    completed_at=datetime.now(),
+                    execution_time_seconds=step_execution_time,
+                    error_message=error
+                )
+                self.session.add(step_execution)
+                self.session.commit()
+
+                # Store metadata
+                execution_metadata["steps_executed"].append({
+                    "step_name": step.name,
+                    "step_order": step.order,
+                    "success": success,
+                    "execution_time": step_execution_time,
+                    "error": error,
+                    "document_class_id": step.document_class_id
+                })
+
+                if not success:
+                    logger.error(f"❌ Pipeline failed at step '{step.name}': {error}")
+                    self._mark_job_failed(job, error, step.id)
+                    execution_metadata["failed_at_step"] = step.name
+                    execution_metadata["total_time"] = time.time() - pipeline_start_time
+                    return False, current_output, execution_metadata
+
+                # Update current output for next step
+                if step.input_from_previous_step:
+                    current_output = output
+
         # Pipeline completed successfully
         total_time = time.time() - pipeline_start_time
         execution_metadata["total_time"] = total_time
+        execution_metadata["total_steps"] = len(all_steps)
 
         job.status = StepExecutionStatus.COMPLETED
         job.completed_at = datetime.now()

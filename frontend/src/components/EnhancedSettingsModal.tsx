@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, Settings, AlertCircle } from 'lucide-react';
+import { X, Settings, AlertCircle, FileText, Workflow } from 'lucide-react';
 import settingsService from '../services/settings';
 import PipelineBuilder from './settings/PipelineBuilder';
+import DocumentClassManager from './settings/DocumentClassManager';
 import { pipelineApi } from '../services/pipelineApi';
 
 interface EnhancedSettingsModalProps {
@@ -14,6 +15,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   const [accessCode, setAccessCode] = useState('');
   const [authError, setAuthError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'pipeline' | 'classes'>('pipeline');
 
   // Check authentication on mount only if we have a token
   useEffect(() => {
@@ -151,10 +153,36 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
             </div>
           ) : (
             /* Pipeline Settings Content */
-            <div className="flex-1 overflow-y-auto p-8">
-              <div className="max-w-6xl mx-auto space-y-6">
-                {/* Logout Button */}
-                <div className="flex justify-end">
+            <div className="flex-1 flex flex-col overflow-hidden">
+              {/* Tabs */}
+              <div className="border-b border-primary-200 bg-white px-8 pt-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => setActiveTab('pipeline')}
+                      className={`flex items-center space-x-2 px-6 py-3 rounded-t-lg font-medium transition-all ${
+                        activeTab === 'pipeline'
+                          ? 'bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-md'
+                          : 'text-primary-600 hover:bg-primary-50'
+                      }`}
+                    >
+                      <Workflow className="w-4 h-4" />
+                      <span>Pipeline-Konfiguration</span>
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('classes')}
+                      className={`flex items-center space-x-2 px-6 py-3 rounded-t-lg font-medium transition-all ${
+                        activeTab === 'classes'
+                          ? 'bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-md'
+                          : 'text-primary-600 hover:bg-primary-50'
+                      }`}
+                    >
+                      <FileText className="w-4 h-4" />
+                      <span>Dokumentenklassen</span>
+                    </button>
+                  </div>
+
+                  {/* Logout Button */}
                   <button
                     onClick={handleLogout}
                     className="px-4 py-2 text-sm text-primary-700 hover:bg-primary-100 rounded-lg transition-colors"
@@ -162,9 +190,14 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                     Abmelden
                   </button>
                 </div>
+              </div>
 
-                {/* Pipeline Builder Component */}
-                <PipelineBuilder />
+              {/* Tab Content */}
+              <div className="flex-1 overflow-y-auto p-8 bg-gray-50">
+                <div className="max-w-6xl mx-auto">
+                  {activeTab === 'pipeline' && <PipelineBuilder />}
+                  {activeTab === 'classes' && <DocumentClassManager />}
+                </div>
               </div>
             </div>
           )}

@@ -290,16 +290,37 @@ class DocumentClassManager:
         """
         Trigger update of classification prompt when document classes change.
 
-        This method should update the classification step's prompt to include
-        all current enabled document classes.
-
-        Note: Implementation depends on how classification prompts are stored.
+        Automatically updates all branching steps to include current enabled document classes.
         """
-        logger.info("🔄 Classification prompt update triggered (implementation pending)")
+        logger.info("🔄 Updating classification prompts for all branching steps...")
 
-        # TODO: Implement auto-update of classification step prompt
-        # This will be implemented in Phase 2.3
-        pass
+        try:
+            # Find all branching/classification steps
+            branching_steps = self.session.query(DynamicPipelineStepDB).filter_by(
+                is_branching_step=True
+            ).all()
+
+            if not branching_steps:
+                logger.info("   ℹ️  No branching steps found to update")
+                return
+
+            # Generate new classification prompt template
+            new_prompt_template = self.get_classification_prompt_template()
+
+            # Update all branching steps
+            updated_count = 0
+            for step in branching_steps:
+                step.prompt_template = new_prompt_template
+                step.last_modified = datetime.now()
+                updated_count += 1
+
+            self.session.commit()
+
+            logger.info(f"   ✅ Updated {updated_count} classification step(s) with new document classes")
+
+        except Exception as e:
+            logger.error(f"   ❌ Failed to update classification prompts: {e}")
+            self.session.rollback()
 
     def get_classification_prompt_template(self) -> str:
         """

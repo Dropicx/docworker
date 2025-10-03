@@ -18,7 +18,11 @@ import {
   EngineStatusMap,
   StepReorderRequest,
   StepReorderResponse,
-  OCREngineEnum
+  OCREngineEnum,
+  DocumentClass,
+  DocumentClassRequest,
+  DocumentClassStatistics,
+  PipelineVisualization
 } from '../types/pipeline';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -280,6 +284,176 @@ class PipelineApiService {
       const axiosError = error as AxiosError<any>;
       throw new Error(
         axiosError.response?.data?.detail || `Failed to get model ${modelId}`
+      );
+    }
+  }
+
+  // ==================== BRANCHING PIPELINE STEPS ====================
+
+  /**
+   * Get universal pipeline steps (document_class_id = NULL)
+   */
+  async getUniversalSteps(): Promise<PipelineStep[]> {
+    try {
+      const response = await axios.get<PipelineStep[]>(
+        `${PIPELINE_BASE_URL}/steps/universal`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to get universal steps'
+      );
+    }
+  }
+
+  /**
+   * Get pipeline steps for a specific document class
+   */
+  async getStepsByClass(classId: number): Promise<PipelineStep[]> {
+    try {
+      const response = await axios.get<PipelineStep[]>(
+        `${PIPELINE_BASE_URL}/steps/by-class/${classId}`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || `Failed to get steps for class ${classId}`
+      );
+    }
+  }
+
+  /**
+   * Get complete pipeline visualization showing branches
+   */
+  async getPipelineVisualization(): Promise<PipelineVisualization> {
+    try {
+      const response = await axios.get<PipelineVisualization>(
+        `${PIPELINE_BASE_URL}/visualization`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to get pipeline visualization'
+      );
+    }
+  }
+
+  // ==================== DOCUMENT CLASSES ====================
+
+  /**
+   * Get all document classes
+   */
+  async getAllDocumentClasses(enabledOnly: boolean = false): Promise<DocumentClass[]> {
+    try {
+      const response = await axios.get<DocumentClass[]>(
+        `${PIPELINE_BASE_URL}/document-classes`,
+        {
+          headers: this.getAuthHeaders(),
+          params: { enabled_only: enabledOnly }
+        }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to get document classes'
+      );
+    }
+  }
+
+  /**
+   * Get a single document class by ID
+   */
+  async getDocumentClass(classId: number): Promise<DocumentClass> {
+    try {
+      const response = await axios.get<DocumentClass>(
+        `${PIPELINE_BASE_URL}/document-classes/${classId}`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || `Failed to get document class ${classId}`
+      );
+    }
+  }
+
+  /**
+   * Create a new document class
+   */
+  async createDocumentClass(documentClass: DocumentClassRequest): Promise<DocumentClass> {
+    try {
+      const response = await axios.post<DocumentClass>(
+        `${PIPELINE_BASE_URL}/document-classes`,
+        documentClass,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to create document class'
+      );
+    }
+  }
+
+  /**
+   * Update an existing document class
+   */
+  async updateDocumentClass(classId: number, documentClass: DocumentClassRequest): Promise<DocumentClass> {
+    try {
+      const response = await axios.put<DocumentClass>(
+        `${PIPELINE_BASE_URL}/document-classes/${classId}`,
+        documentClass,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || `Failed to update document class ${classId}`
+      );
+    }
+  }
+
+  /**
+   * Delete a document class
+   */
+  async deleteDocumentClass(classId: number): Promise<void> {
+    try {
+      await axios.delete(
+        `${PIPELINE_BASE_URL}/document-classes/${classId}`,
+        { headers: this.getAuthHeaders() }
+      );
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || `Failed to delete document class ${classId}`
+      );
+    }
+  }
+
+  /**
+   * Get document class statistics
+   */
+  async getDocumentClassStatistics(): Promise<DocumentClassStatistics> {
+    try {
+      const response = await axios.get<DocumentClassStatistics>(
+        `${PIPELINE_BASE_URL}/document-classes/statistics/summary`,
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      const axiosError = error as AxiosError<any>;
+      throw new Error(
+        axiosError.response?.data?.detail || 'Failed to get document class statistics'
       );
     }
   }

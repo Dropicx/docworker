@@ -72,6 +72,11 @@ export interface PipelineStep {
   created_at: string;
   last_modified: string;
   modified_by: string | null;
+
+  // Pipeline branching fields
+  document_class_id: number | null;
+  is_branching_step: boolean;
+  branching_field: string | null;
 }
 
 export interface PipelineStepRequest {
@@ -87,6 +92,11 @@ export interface PipelineStepRequest {
   max_retries: number;
   input_from_previous_step: boolean;
   output_format?: string | null;
+
+  // Pipeline branching fields
+  document_class_id?: number | null;
+  is_branching_step?: boolean;
+  branching_field?: string | null;
 }
 
 // ==================== AI MODELS ====================
@@ -129,4 +139,63 @@ export interface StepReorderRequest {
 export interface StepReorderResponse {
   success: boolean;
   message: string;
+}
+
+// ==================== DOCUMENT CLASSES ====================
+
+export interface DocumentClass {
+  id: number;
+  class_key: string;
+  display_name: string;
+  description: string | null;
+  icon: string | null;
+  examples: string[] | null;
+  strong_indicators: string[] | null;
+  weak_indicators: string[] | null;
+  is_enabled: boolean;
+  is_system_class: boolean;
+  created_at: string;
+  last_modified: string;
+  created_by: string | null;
+}
+
+export interface DocumentClassRequest {
+  class_key: string;
+  display_name: string;
+  description?: string | null;
+  icon?: string | null;
+  examples?: string[] | null;
+  strong_indicators?: string[] | null;
+  weak_indicators?: string[] | null;
+  is_enabled: boolean;
+}
+
+export interface DocumentClassStatistics {
+  total_classes: number;
+  enabled_classes: number;
+  system_classes: number;
+  custom_classes: number;
+}
+
+// ==================== PIPELINE VISUALIZATION ====================
+
+export interface PipelineBranch {
+  class_info: {
+    id: number;
+    class_key: string;
+    display_name: string;
+    description: string | null;
+    icon: string | null;
+    is_enabled: boolean;
+    is_system_class: boolean;
+  };
+  steps: PipelineStep[];
+}
+
+export interface PipelineVisualization {
+  universal_steps: PipelineStep[];
+  branching_step: PipelineStep | null;
+  branches: {
+    [classKey: string]: PipelineBranch;
+  };
 }
