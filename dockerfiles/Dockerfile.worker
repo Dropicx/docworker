@@ -24,16 +24,21 @@ RUN pip install --no-cache-dir -r /app/worker/requirements.txt
 RUN python -m spacy download en_core_web_sm && \
     python -m spacy download de_core_news_sm
 
+# Create non-root user for security
+RUN useradd -m -u 1000 celeryuser && \
+    mkdir -p /app/backend/uploads && \
+    chown -R celeryuser:celeryuser /app
+
 # Copy worker code
-COPY worker/ /app/worker/
-COPY backend/ /app/backend/
-COPY shared/ /app/shared/
+COPY --chown=celeryuser:celeryuser worker/ /app/worker/
+COPY --chown=celeryuser:celeryuser backend/ /app/backend/
+COPY --chown=celeryuser:celeryuser shared/ /app/shared/
 
 # Set Python path to include all modules
 ENV PYTHONPATH=/app:/app/worker:/app/backend:/app/shared
 
-# Create uploads directory (worker may need to access files)
-RUN mkdir -p /app/backend/uploads
+# Switch to non-root user
+USER celeryuser
 
 # Health check via Redis connection
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
