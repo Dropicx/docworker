@@ -24,17 +24,25 @@ const FAQ: React.FC = () => {
     setOpenItems(newOpenItems);
   };
 
-  // Load model configuration
+  // Load model configuration (only if authenticated)
   useEffect(() => {
     const loadModelConfiguration = async () => {
+      // Check if we have auth token in sessionStorage
+      const authToken = sessionStorage.getItem('settings_auth_token');
+      if (!authToken) {
+        // Not authenticated - use default, don't make request
+        return;
+      }
+
       try {
-        const response = await fetch('/api/settings/model-configuration');
+        const response = await fetch('/api/settings/model-configuration', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`
+          }
+        });
         if (response.ok) {
           const config = await response.json();
           setModelConfig(config);
-        } else if (response.status === 403) {
-          // Expected when not authenticated - silently skip
-          return;
         }
       } catch (error) {
         // Network errors or other issues - silently skip
