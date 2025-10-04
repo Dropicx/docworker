@@ -157,8 +157,9 @@ async def extract_text(
             # PDF processing - convert each page to image
             logger.info("📑 PDF detected - converting pages to images")
             pdf_document = fitz.open(stream=file_content, filetype="pdf")
+            page_count = len(pdf_document)
 
-            for page_num in range(len(pdf_document)):
+            for page_num in range(page_count):
                 page = pdf_document[page_num]
                 # Render page to image at 300 DPI for good quality
                 pix = page.get_pixmap(matrix=fitz.Matrix(300/72, 300/72))
@@ -178,7 +179,7 @@ async def extract_text(
                             all_confidences.append(conf)
 
             pdf_document.close()
-            logger.info(f"✅ Processed {len(pdf_document)} PDF pages")
+            logger.info(f"✅ Processed {page_count} PDF pages")
 
         else:
             # Image processing
