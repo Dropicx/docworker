@@ -24,7 +24,7 @@ export interface TranslationResult {
   translated_text: string;
   language_translated_text?: string;
   target_language?: string;
-  document_type_detected: string;
+  document_type_detected?: string;
   confidence_score: number;
   language_confidence_score?: number;
   processing_time_seconds: number;

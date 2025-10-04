@@ -93,7 +93,7 @@ class TranslationResult(BaseModel):
     translated_text: str = Field(..., description="Übersetzter Text in einfacher Sprache")
     language_translated_text: Optional[str] = Field(None, description="In andere Sprache übersetzter Text")
     target_language: Optional[SupportedLanguage] = Field(None, description="Zielsprache der Übersetzung")
-    document_type_detected: str = Field(..., description="Erkannter Dokumenttyp")
+    document_type_detected: Optional[str] = Field(None, description="Erkannter Dokumenttyp")
     confidence_score: float = Field(ge=0, le=1, description="Vertrauensgrad der Übersetzung")
     language_confidence_score: Optional[float] = Field(None, description="Vertrauensgrad der Sprachübersetzung")
     processing_time_seconds: float = Field(..., description="Verarbeitungszeit in Sekunden")
