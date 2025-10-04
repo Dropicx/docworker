@@ -481,8 +481,8 @@ async def get_processing_status(processing_id: str):
                 StepExecutionStatus.PENDING: ProcessingStatus.PENDING,
                 StepExecutionStatus.RUNNING: ProcessingStatus.PROCESSING,
                 StepExecutionStatus.COMPLETED: ProcessingStatus.COMPLETED,
-                StepExecutionStatus.FAILED: ProcessingStatus.FAILED,
-                StepExecutionStatus.SKIPPED: ProcessingStatus.FAILED
+                StepExecutionStatus.FAILED: ProcessingStatus.ERROR,
+                StepExecutionStatus.SKIPPED: ProcessingStatus.ERROR
             }
 
             # Determine current step description
