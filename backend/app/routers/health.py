@@ -77,14 +77,6 @@ async def health_check(request: Request = None):
         ovh_connected, error_msg = await ovh_client.check_connection()
         services["ovh_api"] = "healthy" if ovh_connected else f"error: {error_msg[:100]}"
 
-        # Tesseract prüfen
-        try:
-            import pytesseract
-            pytesseract.get_tesseract_version()
-            services["tesseract"] = "healthy"
-        except Exception:
-            services["tesseract"] = "error"
-
         # Temporäres Verzeichnis prüfen
         try:
             temp_dir = tempfile.gettempdir()
