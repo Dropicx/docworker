@@ -33,7 +33,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
     # Import dependencies
     from app.database.connection import get_db_session
-    from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
+    from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus, OCRConfigurationDB
     from app.services.modular_pipeline_executor import ModularPipelineExecutor
     from app.services.ocr_engine_manager import OCREngineManager
     from sqlalchemy.orm import Session
@@ -91,25 +91,32 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             logger.info(f"✅ OCR completed in {ocr_time:.2f}s: {len(extracted_text)} characters, confidence: {ocr_confidence:.2%}")
 
             # ⚡ Step 1.5: LOCAL PII Removal (BEFORE sending to AI pipeline)
-            logger.info("🔒 Starting local PII removal...")
-            self.update_state(
-                state='PROCESSING',
-                meta={'progress': 15, 'status': 'pii_removal', 'current_step': 'Entfernung persönlicher Daten'}
-            )
+            # Check if PII removal is enabled in OCR config
+            ocr_config = db.query(OCRConfigurationDB).first()
+            pii_enabled = ocr_config.pii_removal_enabled if ocr_config else True
 
-            from app.services.optimized_privacy_filter import OptimizedPrivacyFilter
+            if pii_enabled:
+                logger.info("🔒 Starting local PII removal...")
+                self.update_state(
+                    state='PROCESSING',
+                    meta={'progress': 15, 'status': 'pii_removal', 'current_step': 'Entfernung persönlicher Daten'}
+                )
 
-            pii_filter = OptimizedPrivacyFilter()
-            pii_start_time = time.time()
-            original_length = len(extracted_text)
+                from app.services.optimized_privacy_filter import OptimizedPrivacyFilter
 
-            extracted_text = pii_filter.remove_pii(extracted_text)
+                pii_filter = OptimizedPrivacyFilter()
+                pii_start_time = time.time()
+                original_length = len(extracted_text)
 
-            pii_time_ms = (time.time() - pii_start_time) * 1000
-            cleaned_length = len(extracted_text)
+                extracted_text = pii_filter.remove_pii(extracted_text)
 
-            logger.info(f"✅ PII removal completed in {pii_time_ms:.1f}ms")
-            logger.info(f"   Original: {original_length} chars → Cleaned: {cleaned_length} chars")
+                pii_time_ms = (time.time() - pii_start_time) * 1000
+                cleaned_length = len(extracted_text)
+
+                logger.info(f"✅ PII removal completed in {pii_time_ms:.1f}ms")
+                logger.info(f"   Original: {original_length} chars → Cleaned: {cleaned_length} chars")
+            else:
+                logger.info("⏭️  PII removal disabled - skipping privacy filter")
 
         # Update progress
         job.progress_percent = 20

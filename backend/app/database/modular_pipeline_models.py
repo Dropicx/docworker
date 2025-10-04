@@ -56,6 +56,9 @@ class OCRConfigurationDB(Base):
     vision_llm_config = Column(JSON, nullable=True)  # e.g., {"model": "Qwen2.5-VL-72B-Instruct"}
     hybrid_config = Column(JSON, nullable=True)  # e.g., {"quality_threshold": 0.7}
 
+    # Privacy settings
+    pii_removal_enabled = Column(Boolean, default=True, nullable=False)  # Global PII removal toggle
+
     # Metadata
     last_modified = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
     modified_by = Column(String(255), nullable=True)

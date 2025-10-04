@@ -58,18 +58,20 @@ def seed_modular_pipeline():
 
             conn.execute(text("""
                 INSERT INTO ocr_configuration (
-                    selected_engine, tesseract_config, paddleocr_config,
-                    vision_llm_config, hybrid_config, last_modified, modified_by
+                    selected_engine, paddleocr_config,
+                    vision_llm_config, hybrid_config, pii_removal_enabled,
+                    last_modified, modified_by
                 ) VALUES (
-                    :selected_engine, :tesseract_config, :paddleocr_config,
-                    :vision_llm_config, :hybrid_config, CURRENT_TIMESTAMP, :modified_by
+                    :selected_engine, :paddleocr_config,
+                    :vision_llm_config, :hybrid_config, :pii_removal_enabled,
+                    CURRENT_TIMESTAMP, :modified_by
                 )
             """), {
-                'selected_engine': 'TESSERACT',
-                'tesseract_config': json.dumps(tesseract_config),
+                'selected_engine': 'PADDLEOCR',
                 'paddleocr_config': json.dumps(paddleocr_config),
                 'vision_llm_config': json.dumps(vision_llm_config),
                 'hybrid_config': json.dumps(hybrid_config),
+                'pii_removal_enabled': True,
                 'modified_by': 'system_seed'
             })
 

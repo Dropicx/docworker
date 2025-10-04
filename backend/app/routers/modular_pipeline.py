@@ -43,6 +43,7 @@ class OCRConfigRequest(BaseModel):
     paddleocr_config: Optional[Dict[str, Any]] = None
     vision_llm_config: Optional[Dict[str, Any]] = None
     hybrid_config: Optional[Dict[str, Any]] = None
+    pii_removal_enabled: Optional[bool] = True
 
 class OCRConfigResponse(BaseModel):
     """Response model for OCR configuration"""
@@ -52,6 +53,7 @@ class OCRConfigResponse(BaseModel):
     paddleocr_config: Optional[Dict[str, Any]]
     vision_llm_config: Optional[Dict[str, Any]]
     hybrid_config: Optional[Dict[str, Any]]
+    pii_removal_enabled: bool
     last_modified: datetime
 
     class Config:
