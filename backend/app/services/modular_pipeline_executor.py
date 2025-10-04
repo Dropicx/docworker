@@ -311,20 +311,32 @@ class ModularPipelineExecutor:
 
         logger.info(f"🚀 Starting modular pipeline execution with branching support: {processing_id[:8]}")
 
-        # Create pipeline job record
-        job_id = str(uuid.uuid4())
-        pipeline_config = self._serialize_pipeline_config()
-        ocr_config = self._serialize_ocr_config()
+        # Check if job already exists (worker architecture)
+        job = self.session.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
 
-        job = PipelineJobDB(
-            job_id=job_id,
-            processing_id=processing_id,
-            status=StepExecutionStatus.RUNNING,
-            pipeline_config=pipeline_config,
-            ocr_config=ocr_config,
-            started_at=datetime.now()
-        )
-        self.session.add(job)
+        if job:
+            # Job already exists (created by upload endpoint) - update it
+            logger.info(f"📋 Using existing job: {job.job_id}")
+            job.status = StepExecutionStatus.RUNNING
+            job.started_at = datetime.now()
+            job_id = job.job_id
+        else:
+            # Create new pipeline job record (legacy path)
+            logger.info(f"📝 Creating new job for processing_id: {processing_id[:8]}")
+            job_id = str(uuid.uuid4())
+            pipeline_config = self._serialize_pipeline_config()
+            ocr_config = self._serialize_ocr_config()
+
+            job = PipelineJobDB(
+                job_id=job_id,
+                processing_id=processing_id,
+                status=StepExecutionStatus.RUNNING,
+                pipeline_config=pipeline_config,
+                ocr_config=ocr_config,
+                started_at=datetime.now()
+            )
+            self.session.add(job)
+
         self.session.commit()
 
         # Load universal pipeline steps (document_class_id = NULL)
