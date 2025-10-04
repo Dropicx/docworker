@@ -44,6 +44,8 @@ echo "   Skip init: $SKIP_INIT"
 echo ""
 
 # Check if model already exists on volume
+MODEL_NEEDS_DOWNLOAD=false
+
 if [ -d "$VOLUME_PATH" ] && [ -f "$VOLUME_PATH/meta.json" ]; then
     echo "✅ spaCy model found on Railway volume"
     echo "   Path: $VOLUME_PATH"
@@ -55,10 +57,15 @@ if [ -d "$VOLUME_PATH" ] && [ -f "$VOLUME_PATH/meta.json" ]; then
     else
         echo "⚠️  Model corrupted, will re-download..."
         rm -rf "$VOLUME_PATH"
+        MODEL_NEEDS_DOWNLOAD=true
     fi
 else
     echo "📥 spaCy model not found on volume"
     echo "   Downloading model (this happens only once)..."
+    MODEL_NEEDS_DOWNLOAD=true
+fi
+
+if [ "$MODEL_NEEDS_DOWNLOAD" = "true" ]; then
 
     # Create volume directory structure
     echo "📁 Creating directory: $(dirname "$VOLUME_PATH")"
@@ -121,9 +128,9 @@ for sp in site.getsitepackages():
         echo "❌ ERROR: Model copy failed"
         exit 1
     fi
-fi
+fi  # End of MODEL_NEEDS_DOWNLOAD block
 
-# Display model information
+# Display model information only if model exists
 echo ""
 echo "================================================"
 echo "📊 Model Information:"
