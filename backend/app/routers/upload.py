@@ -150,13 +150,13 @@ async def upload_document(
             db.commit()
             db.refresh(pipeline_job)
 
-            # Queue Celery task (nur wenn nicht im Test-Modus)
+            # Queue Celery task using celery_client
             try:
-                from worker.tasks.document_processing import process_medical_document
-                process_medical_document.delay(processing_id, options={})
-                logger.info(f"📤 Job queued to Redis: {job_id[:8]}")
+                from app.services.celery_client import enqueue_document_processing
+                task_id = enqueue_document_processing(processing_id, options={})
+                logger.info(f"📤 Job queued to Redis: {job_id[:8]} (task_id: {task_id})")
             except Exception as queue_error:
-                logger.warning(f"⚠️ Failed to queue Celery task (running without worker?): {queue_error}")
+                logger.warning(f"⚠️ Failed to queue Celery task: {queue_error}")
                 # Job bleibt in DB als PENDING, kann später verarbeitet werden
 
         finally:
