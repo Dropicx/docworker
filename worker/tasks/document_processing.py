@@ -67,7 +67,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         # Step 1: OCR (if needed)
         extracted_text = ""
-        if job.file_type in ["pdf", "jpg", "jpeg", "png"]:
+        if job.file_type in ["pdf", "image", "jpg", "jpeg", "png"]:
             logger.info(f"🔍 Starting OCR for {job.file_type.upper()}...")
             self.update_state(
                 state='PROCESSING',
@@ -145,7 +145,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         return {
             'status': 'completed',
             'processing_id': processing_id,
-            'result': result,
+            'result': result_data,
             'metrics': {
                 'ocr_time': job.ocr_time_seconds,
                 'pipeline_time': job.ai_processing_time_seconds,
