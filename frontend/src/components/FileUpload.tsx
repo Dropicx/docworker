@@ -45,7 +45,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setTimeout(() => {
       privacyCheckboxRef.current?.scrollIntoView({
         behavior: 'smooth',
-        block: 'center'
+        block: 'start'
       });
     }, 300);
   }, [onUploadError]);
