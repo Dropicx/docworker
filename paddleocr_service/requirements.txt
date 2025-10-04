@@ -13,6 +13,9 @@ paddlepaddle==3.2.0  # CPU version (stable release)
 Pillow==11.0.0
 numpy<2.0  # PaddleOCR requires numpy<2.0
 
+# PDF processing
+PyMuPDF==1.24.14  # fitz - PDF to image conversion
+
 # Utilities
 pydantic==2.10.3
 pydantic-settings==2.7.0

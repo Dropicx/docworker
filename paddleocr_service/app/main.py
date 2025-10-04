@@ -140,44 +140,75 @@ async def extract_text(
         # Read file content
         file_content = await file.read()
 
-        # Validate file type
-        if not file.content_type or not file.content_type.startswith('image/'):
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid file type: {file.content_type}. Only images are supported."
-            )
-
-        logger.info(f"📄 Processing file: {file.filename} ({len(file_content)} bytes)")
+        logger.info(f"📄 Processing file: {file.filename} ({len(file_content)} bytes, type: {file.content_type})")
 
         # Convert bytes to numpy array format PaddleOCR expects
         from PIL import Image
         import numpy as np
+        import fitz  # PyMuPDF
 
-        image = Image.open(io.BytesIO(file_content))
+        # Check if it's a PDF
+        is_pdf = file.content_type == 'application/pdf' or file.filename.lower().endswith('.pdf')
 
-        # Convert PIL Image to numpy array (RGB format)
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        image_array = np.array(image)
+        all_text = []
+        all_confidences = []
 
-        # Run OCR with numpy array
-        result = paddle_ocr.ocr(image_array, cls=True)
+        if is_pdf:
+            # PDF processing - convert each page to image
+            logger.info("📑 PDF detected - converting pages to images")
+            pdf_document = fitz.open(stream=file_content, filetype="pdf")
 
-        # Extract text and confidence
-        extracted_text = []
-        confidences = []
+            for page_num in range(len(pdf_document)):
+                page = pdf_document[page_num]
+                # Render page to image at 300 DPI for good quality
+                pix = page.get_pixmap(matrix=fitz.Matrix(300/72, 300/72))
+                # Convert to PIL Image
+                image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+                image_array = np.array(image)
 
-        if result and result[0]:
-            for line in result[0]:
-                if line and len(line) >= 2:
-                    text = line[1][0]  # Text content
-                    conf = line[1][1]  # Confidence score
-                    extracted_text.append(text)
-                    confidences.append(conf)
+                # Run OCR on this page
+                result = paddle_ocr.ocr(image_array, cls=True)
 
-        # Combine text
-        full_text = "\n".join(extracted_text)
-        avg_confidence = sum(confidences) / len(confidences) if confidences else 0.0
+                if result and result[0]:
+                    for line in result[0]:
+                        if line and len(line) >= 2:
+                            text = line[1][0]
+                            conf = line[1][1]
+                            all_text.append(text)
+                            all_confidences.append(conf)
+
+            pdf_document.close()
+            logger.info(f"✅ Processed {len(pdf_document)} PDF pages")
+
+        else:
+            # Image processing
+            if not file.content_type or not file.content_type.startswith('image/'):
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Invalid file type: {file.content_type}. Only images and PDFs are supported."
+                )
+
+            image = Image.open(io.BytesIO(file_content))
+
+            # Convert PIL Image to numpy array (RGB format)
+            if image.mode != 'RGB':
+                image = image.convert('RGB')
+            image_array = np.array(image)
+
+            # Run OCR with numpy array
+            result = paddle_ocr.ocr(image_array, cls=True)
+
+            if result and result[0]:
+                for line in result[0]:
+                    if line and len(line) >= 2:
+                        text = line[1][0]
+                        conf = line[1][1]
+                        all_text.append(text)
+                        all_confidences.append(conf)
+
+        # Combine text from all pages/images
+        full_text = "\n".join(all_text)
+        avg_confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
 
         processing_time = time.time() - start_time
 
@@ -189,9 +220,10 @@ async def extract_text(
             processing_time=processing_time,
             engine="PaddleOCR",
             details={
-                "lines_detected": len(extracted_text),
+                "lines_detected": len(all_text),
                 "file_size_bytes": len(file_content),
-                "filename": file.filename
+                "filename": file.filename,
+                "file_type": "PDF" if is_pdf else "Image"
             }
         )
 
