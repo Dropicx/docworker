@@ -52,7 +52,10 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         # Update job status to RUNNING
         job.status = StepExecutionStatus.RUNNING
-        job.started_at = datetime.now()
+        # Track when worker starts processing (if not set, use created_at or now)
+        worker_start_time = datetime.now()
+        if not job.started_at:
+            job.started_at = worker_start_time
         job.progress_percent = 0
         db.commit()
 
