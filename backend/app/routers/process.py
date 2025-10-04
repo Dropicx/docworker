@@ -57,17 +57,11 @@ def verify_session_token(credentials: HTTPAuthorizationCredentials = Depends(sec
         detail="Invalid or expired session token"
     )
 
-# Smart text extractor selection based on OCR availability
-try:
-    # Try to import the OCR-enabled text extractor first
-    from app.services.text_extractor_ocr import TextExtractorWithOCR
-    text_extractor = TextExtractorWithOCR()
-    print("📄 Using OCR-enabled text extractor", flush=True)
-except ImportError as e:
-    # Fallback to simple text extractor if OCR dependencies are missing
-    print(f"⚠️ OCR dependencies missing ({e}), using simple text extractor", flush=True)
-    from app.services.text_extractor_simple import TextExtractor
-    text_extractor = TextExtractor()
+# ==================== TEXT EXTRACTION ====================
+# NOTE: OCR and text extraction now happen in the WORKER service, not backend
+# Backend delegates all document processing to the Celery worker via upload endpoint
+# This eliminates OCR dependencies from backend and improves architecture separation
+print("📄 Backend service initialized (OCR handled by worker)", flush=True)
 
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
@@ -135,26 +129,45 @@ async def process_document_optimized(processing_id: str):
     await process_document_unified(processing_id)
 
 async def process_document_legacy(processing_id: str):
+    """
+    LEGACY FUNCTION - NO LONGER USED
+
+    This function is kept for backwards compatibility but is NOT called in the current system.
+    All document processing now happens via the worker service using process_document_unified.
+
+    The worker handles:
+    - OCR text extraction (PaddleOCR, Vision LLM, Hybrid)
+    - Local PII removal (before sending to AI)
+    - Pipeline execution via ModularPipelineExecutor
+    """
     try:
+        # Import text extractor locally (only if this legacy function is somehow called)
+        try:
+            from app.services.text_extractor_ocr import TextExtractorWithOCR
+            text_extractor = TextExtractorWithOCR()
+        except ImportError:
+            from app.services.text_extractor_simple import TextExtractor
+            text_extractor = TextExtractor()
+
         processing_data = get_from_processing_store(processing_id)
         if not processing_data:
             return
-        
+
         start_time = time.time()
         options = processing_data.get("options", {})
         target_language = options.get("target_language")
-        
+
         # Schritt 1: Textextraktion
         update_processing_store(processing_id, {
             "status": ProcessingStatus.EXTRACTING_TEXT,
             "progress_percent": 20,
             "current_step": "Text wird extrahiert..."
         })
-        
+
         file_content = processing_data["file_content"]
         file_type = processing_data["file_type"]
         filename = processing_data["filename"]
-        
+
         extracted_text, text_confidence = await text_extractor.extract_text(
             file_content, file_type, filename
         )

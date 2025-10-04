@@ -13,48 +13,21 @@ import logging
 logger = logging.getLogger(__name__)
 
 def check_ocr_capabilities() -> dict:
-    """Check OCR capabilities of the system"""
+    """
+    Check OCR architecture status
+
+    NOTE: OCR processing now happens in the WORKER service, not backend.
+    Backend no longer requires OCR dependencies (PaddleOCR runs in worker).
+    """
     ocr_info = {
-        "tesseract_available": False,
-        "tesseract_version": None,
-        "languages": [],
-        "pdf2image_available": False,
-        "status": "not_available"
+        "ocr_location": "worker_service",
+        "backend_ocr": False,
+        "available_engines": ["PADDLEOCR", "VISION_LLM", "HYBRID"],
+        "architecture": "worker_based",
+        "status": "delegated_to_worker",
+        "note": "OCR handled by Celery worker with PaddleOCR, Vision LLM, and Hybrid engines"
     }
-    
-    try:
-        import pytesseract
-        # Check Tesseract
-        try:
-            version = pytesseract.get_tesseract_version()
-            ocr_info["tesseract_available"] = True
-            ocr_info["tesseract_version"] = str(version)
-            
-            # Get available languages
-            output = pytesseract.get_languages()
-            ocr_info["languages"] = output
-            
-            if "deu" in output and "eng" in output:
-                ocr_info["status"] = "fully_functional"
-            else:
-                ocr_info["status"] = "limited_languages"
-                
-        except Exception as e:
-            ocr_info["tesseract_available"] = False
-            ocr_info["status"] = "tesseract_error"
-            
-        # Check pdf2image
-        try:
-            from pdf2image import convert_from_bytes
-            ocr_info["pdf2image_available"] = True
-        except ImportError:
-            ocr_info["pdf2image_available"] = False
-            if ocr_info["tesseract_available"]:
-                ocr_info["status"] = "pdf_ocr_unavailable"
-                
-    except ImportError:
-        ocr_info["status"] = "dependencies_missing"
-        
+
     return ocr_info
 
 router = APIRouter()

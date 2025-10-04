@@ -101,8 +101,11 @@ for sp in site.getsitepackages():
     echo "📦 Found model at: $SYSTEM_MODEL_PATH"
     echo "📋 Copying model to volume: $VOLUME_PATH"
 
-    # Copy model to volume
-    cp -r "$SYSTEM_MODEL_PATH" "$VOLUME_PATH"
+    # Ensure target directory exists
+    mkdir -p "$VOLUME_PATH"
+
+    # Copy model contents to volume (not the directory itself)
+    cp -r "$SYSTEM_MODEL_PATH/"* "$VOLUME_PATH/"
 
     # Verify copy was successful
     if [ -f "$VOLUME_PATH/meta.json" ]; then
