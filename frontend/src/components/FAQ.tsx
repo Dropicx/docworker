@@ -32,9 +32,13 @@ const FAQ: React.FC = () => {
         if (response.ok) {
           const config = await response.json();
           setModelConfig(config);
+        } else if (response.status === 403) {
+          // Expected when not authenticated - silently skip
+          return;
         }
       } catch (error) {
-        console.error('Failed to load model configuration:', error);
+        // Network errors or other issues - silently skip
+        return;
       }
     };
 
