@@ -106,14 +106,32 @@ for sp in site.getsitepackages():
     fi
 
     echo "📦 Found model at: $SYSTEM_MODEL_PATH"
-    echo "📋 Copying model to volume: $VOLUME_PATH"
 
-    # Ensure target directory exists and has proper permissions
-    mkdir -p "$VOLUME_PATH"
+    # spaCy models have a versioned subdirectory (e.g., de_core_news_sm-3.8.0)
+    # We need to find this subdirectory and copy its contents to the root of VOLUME_PATH
+    VERSIONED_SUBDIR=$(find "$SYSTEM_MODEL_PATH" -maxdepth 1 -type d -name "${MODEL_NAME}-*" | head -1)
 
-    # Copy model contents to volume with verbose output
-    echo "🔄 Copying files..."
-    cp -rv "$SYSTEM_MODEL_PATH/"* "$VOLUME_PATH/" 2>&1 | head -20
+    if [ -n "$VERSIONED_SUBDIR" ]; then
+        echo "📦 Found versioned model directory: $VERSIONED_SUBDIR"
+        echo "📋 Copying model contents to volume: $VOLUME_PATH"
+
+        # Ensure target directory exists
+        mkdir -p "$VOLUME_PATH"
+
+        # Copy versioned model contents directly to volume root
+        echo "🔄 Copying files..."
+        cp -rv "$VERSIONED_SUBDIR/"* "$VOLUME_PATH/" 2>&1 | head -20
+    else
+        echo "⚠️  No versioned subdirectory found, copying all contents..."
+        echo "📋 Copying model to volume: $VOLUME_PATH"
+
+        # Ensure target directory exists
+        mkdir -p "$VOLUME_PATH"
+
+        # Copy model contents to volume with verbose output
+        echo "🔄 Copying files..."
+        cp -rv "$SYSTEM_MODEL_PATH/"* "$VOLUME_PATH/" 2>&1 | head -20
+    fi
 
     # Set proper permissions on copied files
     echo "🔐 Setting permissions..."
