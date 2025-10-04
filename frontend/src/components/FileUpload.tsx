@@ -23,10 +23,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const privacyCheckboxRef = useRef<HTMLDivElement>(null);
 
   const handleFileUpload = useCallback(async (files: File[]) => {
     setValidationError(null);
-    
+
     // Validate all files
     for (const file of files) {
       const validation = ApiService.validateFile(file);
@@ -39,6 +40,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
     // Add files to selected files
     setSelectedFiles(prev => [...prev, ...files]);
+
+    // Scroll to privacy checkbox after a short delay to allow rendering
+    setTimeout(() => {
+      privacyCheckboxRef.current?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }, 300);
   }, [onUploadError]);
 
   const handleStartProcessing = useCallback(async () => {
@@ -200,12 +209,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
       <div
         {...getRootProps()}
         onClick={handleClick}
-        className={`upload-area ${isDragActive ? 'dragover' : ''} ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${isUploading ? 'pointer-events-none' : ''}`}
+        className={`upload-area ${selectedFiles.length > 0 ? 'py-6 sm:py-8' : ''} ${isDragActive ? 'dragover' : ''} ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${isUploading ? 'pointer-events-none' : ''}`}
         style={{ display: isUploading ? 'none' : 'block' }}
       >
         <input {...getInputProps()} ref={fileInputRef} />
-        
-        <div className="space-y-4 sm:space-y-6">
+
+        <div className={`${selectedFiles.length > 0 ? 'space-y-3 sm:space-y-4' : 'space-y-4 sm:space-y-6'}`}>
           <div className="flex justify-center">
             <div className={`group w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 ${!disabled ? 'group-hover:scale-110 group-hover:shadow-glow' : ''}`}>
               <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-white transition-transform duration-300 group-hover:scale-110" />
@@ -302,7 +311,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           </div>
 
           {/* Privacy Policy Checkbox */}
-          <div className="card-elevated">
+          <div ref={privacyCheckboxRef} className="card-elevated">
             <div className="card-body">
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0 pt-0.5">
