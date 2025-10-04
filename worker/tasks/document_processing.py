@@ -90,6 +90,27 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             job.ocr_time_seconds = ocr_time
             logger.info(f"✅ OCR completed in {ocr_time:.2f}s: {len(extracted_text)} characters, confidence: {ocr_confidence:.2%}")
 
+            # ⚡ Step 1.5: LOCAL PII Removal (BEFORE sending to AI pipeline)
+            logger.info("🔒 Starting local PII removal...")
+            self.update_state(
+                state='PROCESSING',
+                meta={'progress': 15, 'status': 'pii_removal', 'current_step': 'Entfernung persönlicher Daten'}
+            )
+
+            from app.services.optimized_privacy_filter import OptimizedPrivacyFilter
+
+            pii_filter = OptimizedPrivacyFilter()
+            pii_start_time = time.time()
+            original_length = len(extracted_text)
+
+            extracted_text = pii_filter.remove_pii(extracted_text)
+
+            pii_time_ms = (time.time() - pii_start_time) * 1000
+            cleaned_length = len(extracted_text)
+
+            logger.info(f"✅ PII removal completed in {pii_time_ms:.1f}ms")
+            logger.info(f"   Original: {original_length} chars → Cleaned: {cleaned_length} chars")
+
         # Update progress
         job.progress_percent = 20
         db.commit()

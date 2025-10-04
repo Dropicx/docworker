@@ -69,9 +69,18 @@ DocTranslator is a **microservices-based** medical document translation service 
   - Mistral-Nemo-Instruct-2407 (preprocessing)
   - Qwen2-VL-72B-Instruct (vision/OCR)
 - **OpenAI Python SDK** 1.59.2 - Compatible API client
-- **spaCy** 3.8.3 - NLP library for PII detection
-  - en_core_web_sm (English model)
-  - de_core_news_sm (German model)
+- **spaCy** 3.8.3 - NLP library for PII detection (with Railway volume persistence)
+  - de_core_news_sm (German model - primary)
+  - en_core_web_sm (English model - optional)
+
+### Privacy & Security
+- **OptimizedPrivacyFilter** - Hybrid PII removal (50-100ms, 95%+ accuracy)
+  - Fast-path: Regex-based for simple documents (10-20ms)
+  - Slow-path: spaCy NER for complex documents (100-120ms)
+  - Medical term protection: Preserves all medical terminology
+  - Railway volume: Persistent spaCy model storage (no re-download)
+  - GDPR compliant: 100% local processing before cloud AI calls
+  - See [OPTIMIZED_PII_FILTER.md](OPTIMIZED_PII_FILTER.md) for details
 
 ### Frontend
 - **React** 18.3.1 - Component-based UI library

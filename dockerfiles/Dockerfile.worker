@@ -20,22 +20,32 @@ COPY worker/requirements.txt /app/worker/requirements.txt
 # Install Python dependencies
 RUN pip install --no-cache-dir -r /app/worker/requirements.txt
 
-# Download spaCy models (same as backend)
-RUN python -m spacy download en_core_web_sm && \
-    python -m spacy download de_core_news_sm
+# ⚡ OPTIMIZED: spaCy models now loaded from Railway volume (not downloaded at build time)
+# This speeds up deployment and allows model persistence across restarts
+
+# Create directories for Railway volume mount and uploads
+RUN mkdir -p /data/spacy_models && \
+    mkdir -p /app/backend/uploads
 
 # Create non-root user for security
 RUN useradd -m -u 1000 celeryuser && \
-    mkdir -p /app/backend/uploads && \
-    chown -R celeryuser:celeryuser /app
+    chown -R celeryuser:celeryuser /app && \
+    chown -R celeryuser:celeryuser /data
 
 # Copy worker code
 COPY --chown=celeryuser:celeryuser worker/ /app/worker/
 COPY --chown=celeryuser:celeryuser backend/ /app/backend/
 COPY --chown=celeryuser:celeryuser shared/ /app/shared/
 
+# Copy spaCy initialization script
+COPY --chown=celeryuser:celeryuser worker/scripts/init_spacy.sh /app/init_spacy.sh
+RUN chmod +x /app/init_spacy.sh
+
 # Set Python path to include all modules
 ENV PYTHONPATH=/app:/app/worker:/app/backend:/app/shared
+
+# Set environment variable for spaCy model path (Railway volume)
+ENV SPACY_MODEL_PATH=/data/spacy_models/de_core_news_sm
 
 # Switch to non-root user
 USER celeryuser
@@ -44,8 +54,6 @@ USER celeryuser
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
     CMD python -c "from shared.redis_client import get_redis; get_redis().ping()" || exit 1
 
-# Start Celery worker
-CMD ["celery", "-A", "worker.worker.celery_app", "worker", \
-     "--loglevel=info", \
-     "--concurrency=2", \
-     "--max-tasks-per-child=50"]
+# ⚡ OPTIMIZED STARTUP: Initialize spaCy models from Railway volume, then start worker
+# The init script downloads models only on first run, subsequent starts are instant
+CMD ["/bin/bash", "-c", "/app/init_spacy.sh && celery -A worker.worker.celery_app worker --loglevel=info --concurrency=2 --max-tasks-per-child=50"]
