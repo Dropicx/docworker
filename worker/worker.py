@@ -45,6 +45,10 @@ celery_app.conf.update(
     worker_max_tasks_per_child=50,  # Restart worker after 50 tasks
     task_acks_late=True,  # Acknowledge task after completion
     broker_connection_retry_on_startup=True,  # Retry Redis connection on startup (Celery 6.0+ compatibility)
+    result_expires=3600,  # Task results expire after 1 hour
+    result_backend_transport_options={
+        'master_name': 'mymaster'
+    } if 'sentinel' in REDIS_URL.lower() else {},
 )
 
 logger.info("✅ Celery worker initialized")

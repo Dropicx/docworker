@@ -22,6 +22,10 @@ CELERYBEAT_SCHEDULE = {
         'task': 'cleanup_old_files',
         'schedule': 3600.0,  # Every hour
     },
+    'cleanup-celery-results-hourly': {
+        'task': 'cleanup_celery_results',
+        'schedule': 3600.0,  # Every hour
+    },
     'database-maintenance-daily': {
         'task': 'database_maintenance',
         'schedule': 86400.0,  # Every day

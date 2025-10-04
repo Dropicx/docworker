@@ -26,6 +26,7 @@ celery_client.conf.update(
     result_serializer='json',
     timezone='Europe/Berlin',
     enable_utc=True,
+    result_expires=3600,  # Task results expire after 1 hour
 )
 
 logger.info(f"🔗 Celery client configured with Redis: {REDIS_URL.split('@')[0]}...")
