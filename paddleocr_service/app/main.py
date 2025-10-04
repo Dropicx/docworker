@@ -149,12 +149,19 @@ async def extract_text(
 
         logger.info(f"📄 Processing file: {file.filename} ({len(file_content)} bytes)")
 
-        # Convert bytes to image format PaddleOCR expects
+        # Convert bytes to numpy array format PaddleOCR expects
         from PIL import Image
+        import numpy as np
+
         image = Image.open(io.BytesIO(file_content))
 
-        # Run OCR
-        result = paddle_ocr.ocr(image, cls=True)
+        # Convert PIL Image to numpy array (RGB format)
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        image_array = np.array(image)
+
+        # Run OCR with numpy array
+        result = paddle_ocr.ocr(image_array, cls=True)
 
         # Extract text and confidence
         extracted_text = []

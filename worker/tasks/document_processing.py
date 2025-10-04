@@ -119,17 +119,18 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         if not success:
             raise Exception(f"Pipeline execution failed: {metadata.get('error', 'Unknown error')}")
 
-        # Build result data structure
+        # Build result data structure (matches TranslationResult model)
+        total_time = time.time() - job.started_at.timestamp()
         result_data = {
-            "status": "completed",
-            "translated_text": final_output,
+            "processing_id": processing_id,
             "original_text": extracted_text,
-            "metadata": metadata,
-            "processing_time": {
-                "ocr_seconds": job.ocr_time_seconds,
-                "pipeline_seconds": pipeline_time,
-                "total_seconds": time.time() - job.started_at.timestamp()
-            }
+            "translated_text": final_output,
+            "language_translated_text": metadata.get('language_translation', None),
+            "target_language": options.get('target_language', None) if options else None,
+            "document_type_detected": metadata.get('document_class', 'UNKNOWN'),
+            "confidence_score": metadata.get('confidence_score', 0.0),
+            "language_confidence_score": metadata.get('language_confidence', None),
+            "processing_time_seconds": total_time
         }
 
         # Update job with final results
@@ -137,7 +138,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         job.completed_at = datetime.now()
         job.progress_percent = 100
         job.result_data = result_data
-        job.total_execution_time_seconds = time.time() - job.started_at.timestamp()
+        job.total_execution_time_seconds = total_time
         db.commit()
 
         logger.info(f"✅ Document processed successfully: {processing_id}")
