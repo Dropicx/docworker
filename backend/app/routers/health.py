@@ -77,6 +77,22 @@ async def health_check(request: Request = None):
         ovh_connected, error_msg = await ovh_client.check_connection()
         services["ovh_api"] = "healthy" if ovh_connected else f"error: {error_msg[:100]}"
 
+        # PaddleOCR Service prüfen
+        try:
+            paddleocr_url = os.getenv('PADDLEOCR_SERVICE_URL')
+            if paddleocr_url:
+                import httpx
+                async with httpx.AsyncClient(timeout=2.0) as client:
+                    response = await client.get(f"{paddleocr_url}/health")
+                    if response.status_code == 200:
+                        services["paddleocr"] = "healthy"
+                    else:
+                        services["paddleocr"] = f"error: HTTP {response.status_code}"
+            else:
+                services["paddleocr"] = "not_configured"
+        except Exception as e:
+            services["paddleocr"] = f"error: {str(e)[:50]}"
+
         # Temporäres Verzeichnis prüfen
         try:
             temp_dir = tempfile.gettempdir()
@@ -106,9 +122,9 @@ async def health_check(request: Request = None):
         # Speichernutzung
         memory_usage = get_memory_usage()
 
-        # Gesamtstatus bestimmen - Worker ist kritisch!
+        # Gesamtstatus bestimmen - Worker und OCR sind kritisch!
         error_services = [name for name, status in services.items() if "error" in status]
-        critical_services = ["redis", "worker", "ovh_api"]
+        critical_services = ["redis", "worker", "ovh_api", "paddleocr"]
         critical_errors = [name for name in error_services if name in critical_services]
 
         if critical_errors:
