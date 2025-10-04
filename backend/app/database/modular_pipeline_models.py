@@ -16,10 +16,10 @@ from app.database.unified_models import Base
 
 class OCREngineEnum(str, Enum):
     """Available OCR engines"""
-    TESSERACT = "TESSERACT"  # Current: Local Tesseract OCR
-    PADDLEOCR = "PADDLEOCR"  # Future: Fast GPU-based OCR
-    VISION_LLM = "VISION_LLM"  # Current: Qwen 2.5 VL (slow but accurate)
+    PADDLEOCR = "PADDLEOCR"  # Fast CPU-based OCR
+    VISION_LLM = "VISION_LLM"  # Slow but accurate (Qwen 2.5 VL)
     HYBRID = "HYBRID"  # Intelligent routing based on document quality
+    # TESSERACT removed - poor quality
 
 class StepExecutionStatus(str, Enum):
     """Pipeline step execution status"""
@@ -48,10 +48,10 @@ class OCRConfigurationDB(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     # OCR engine selection
-    selected_engine = Column(SQLEnum(OCREngineEnum), default=OCREngineEnum.TESSERACT, nullable=False)
+    selected_engine = Column(SQLEnum(OCREngineEnum), default=OCREngineEnum.PADDLEOCR, nullable=False)
 
     # Engine-specific settings (JSON for flexibility)
-    tesseract_config = Column(JSON, nullable=True)  # e.g., {"lang": "deu+eng", "psm": 3}
+    # tesseract_config removed - Tesseract OCR deprecated
     paddleocr_config = Column(JSON, nullable=True)  # e.g., {"use_gpu": true, "lang": "german"}
     vision_llm_config = Column(JSON, nullable=True)  # e.g., {"model": "Qwen2.5-VL-72B-Instruct"}
     hybrid_config = Column(JSON, nullable=True)  # e.g., {"quality_threshold": 0.7}

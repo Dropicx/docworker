@@ -7,12 +7,10 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    tesseract-ocr \
-    tesseract-ocr-eng \
-    tesseract-ocr-deu \
     poppler-utils \
     libmagic1 \
     && rm -rf /var/lib/apt/lists/*
+# tesseract-ocr removed - OCR now happens in worker service
 
 # Copy requirements
 COPY backend/requirements.txt /app/backend/requirements.txt
@@ -20,9 +18,8 @@ COPY backend/requirements.txt /app/backend/requirements.txt
 # Install Python dependencies
 RUN pip install --no-cache-dir -r /app/backend/requirements.txt
 
-# Download spaCy models
-RUN python -m spacy download en_core_web_sm && \
-    python -m spacy download de_core_news_sm
+# ⚡ NOTE: spaCy models removed - PII filtering now happens in worker service
+# This speeds up backend deployment and reduces image size
 
 # Copy backend code
 COPY backend/ /app/backend/

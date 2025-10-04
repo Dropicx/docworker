@@ -6,11 +6,10 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    tesseract-ocr \
-    tesseract-ocr-deu \
     libmagic1 \
     curl \
     && rm -rf /var/lib/apt/lists/*
+# tesseract-ocr removed - OCR now happens in worker service
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .

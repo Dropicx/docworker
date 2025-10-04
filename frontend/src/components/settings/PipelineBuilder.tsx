@@ -24,7 +24,8 @@ import {
   Brain,
   Image as ImageIcon,
   Boxes,
-  RefreshCw
+  RefreshCw,
+  Shield
 } from 'lucide-react';
 import { pipelineApi } from '../../services/pipelineApi';
 import {
@@ -43,6 +44,7 @@ const PipelineBuilder: React.FC = () => {
   const [ocrConfig, setOcrConfig] = useState<OCRConfiguration | null>(null);
   const [engines, setEngines] = useState<EngineStatusMap | null>(null);
   const [selectedEngine, setSelectedEngine] = useState<OCREngineEnum>(OCREngineEnum.HYBRID);
+  const [piiRemovalEnabled, setPiiRemovalEnabled] = useState<boolean>(true); // NEW: PII removal toggle
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrSaving, setOcrSaving] = useState(false);
 
@@ -100,6 +102,7 @@ const PipelineBuilder: React.FC = () => {
       const config = await pipelineApi.getOCRConfig();
       setOcrConfig(config);
       setSelectedEngine(config.selected_engine as OCREngineEnum);
+      setPiiRemovalEnabled(config.pii_removal_enabled ?? true); // Load PII toggle state
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -169,7 +172,8 @@ const PipelineBuilder: React.FC = () => {
         tesseract_config: ocrConfig?.tesseract_config || null,
         paddleocr_config: ocrConfig?.paddleocr_config || null,
         vision_llm_config: ocrConfig?.vision_llm_config || null,
-        hybrid_config: ocrConfig?.hybrid_config || null
+        hybrid_config: ocrConfig?.hybrid_config || null,
+        pii_removal_enabled: piiRemovalEnabled // NEW: Save PII toggle state
       });
 
       setSuccess('OCR-Konfiguration erfolgreich gespeichert!');
@@ -387,6 +391,33 @@ const PipelineBuilder: React.FC = () => {
             })}
           </div>
         )}
+
+        {/* PII Removal Toggle */}
+        <div className="mt-6 pt-6 border-t border-primary-200">
+          <div className="flex items-center justify-between">
+            <div className="flex-1">
+              <h4 className="font-semibold text-primary-900 mb-1 flex items-center space-x-2">
+                <Shield className="w-4 h-4 text-brand-600" />
+                <span>PII-Entfernung nach OCR</span>
+              </h4>
+              <p className="text-sm text-primary-600">
+                Entfernt automatisch personenbezogene Daten (Namen, Adressen, etc.) nach der Texterkennung - lokal und datenschutzkonform
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer ml-4">
+              <input
+                type="checkbox"
+                checked={piiRemovalEnabled}
+                onChange={(e) => setPiiRemovalEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-neutral-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
+              <span className="ml-3 text-sm font-medium text-primary-700">
+                {piiRemovalEnabled ? 'Aktiviert' : 'Deaktiviert'}
+              </span>
+            </label>
+          </div>
+        </div>
       </div>
 
       {/* Pipeline Steps */}
