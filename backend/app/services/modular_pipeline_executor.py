@@ -428,7 +428,8 @@ class ModularPipelineExecutor:
                 return False, current_output, execution_metadata
 
             # Update current output for next step
-            if step.input_from_previous_step:
+            # For branching steps, keep the input flowing (don't replace with branch decision)
+            if step.input_from_previous_step and not step.is_branching_step:
                 current_output = output
 
             # Check if this is the branching step
