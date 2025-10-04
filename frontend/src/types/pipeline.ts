@@ -38,7 +38,6 @@ export interface OCRConfig {
 export interface OCRConfiguration {
   id: number;
   selected_engine: string;
-  tesseract_config: OCRConfig | null;
   paddleocr_config: OCRConfig | null;
   vision_llm_config: OCRConfig | null;
   hybrid_config: OCRConfig | null;
@@ -48,7 +47,6 @@ export interface OCRConfiguration {
 
 export interface OCRConfigRequest {
   selected_engine: OCREngineEnum;
-  tesseract_config?: OCRConfig | null;
   paddleocr_config?: OCRConfig | null;
   vision_llm_config?: OCRConfig | null;
   hybrid_config?: OCRConfig | null;

@@ -28,7 +28,7 @@ const FAQ: React.FC = () => {
   useEffect(() => {
     const loadModelConfiguration = async () => {
       try {
-        const response = await fetch('/api/settings/model-config');
+        const response = await fetch('/api/settings/model-configuration');
         if (response.ok) {
           const config = await response.json();
           setModelConfig(config);

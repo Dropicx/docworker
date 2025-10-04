@@ -74,8 +74,7 @@ class OCREngineManager:
     Manages OCR engine selection and execution based on database configuration.
 
     Supported Engines:
-    - TESSERACT: Local Tesseract OCR (fast, good for clean documents)
-    - PADDLEOCR: GPU-based OCR (future: 30x faster than Vision LLM)
+    - PADDLEOCR: Fast CPU-based OCR (microservice)
     - VISION_LLM: Qwen 2.5 VL (slow but accurate for complex documents)
     - HYBRID: Intelligent routing based on document quality
     """
@@ -123,7 +122,6 @@ class OCREngineManager:
             return {}
 
         config_map = {
-            OCREngineEnum.TESSERACT: config.tesseract_config,
             OCREngineEnum.PADDLEOCR: config.paddleocr_config,
             OCREngineEnum.VISION_LLM: config.vision_llm_config,
             OCREngineEnum.HYBRID: config.hybrid_config
@@ -173,10 +171,6 @@ class OCREngineManager:
                 # Use hybrid extractor (current production system)
                 return await self._extract_with_hybrid(file_content, file_type, filename)
 
-            elif selected_engine == OCREngineEnum.TESSERACT:
-                # Force Tesseract OCR
-                return await self._extract_with_tesseract(file_content, file_type, filename)
-
             elif selected_engine == OCREngineEnum.VISION_LLM:
                 # Force Vision LLM
                 return await self._extract_with_vision_llm(file_content, file_type, filename)
@@ -209,36 +203,6 @@ class OCREngineManager:
         """
         logger.info("🎯 Using HYBRID extraction (intelligent routing)")
         return await self.hybrid_extractor.extract_text(file_content, file_type, filename)
-
-    async def _extract_with_tesseract(
-        self,
-        file_content: bytes,
-        file_type: str,
-        filename: str
-    ) -> Tuple[str, float]:
-        """
-        Extract text using Tesseract OCR.
-
-        Fast and good for clean, simple documents.
-        """
-        logger.info("📝 Using TESSERACT extraction")
-
-        # Get Tesseract configuration
-        tesseract_config = self.get_engine_config(OCREngineEnum.TESSERACT)
-
-        # Use hybrid extractor's local OCR method
-        if not self.hybrid_extractor.local_ocr_available:
-            logger.warning("⚠️ Tesseract not available, falling back to hybrid")
-            return await self._extract_with_hybrid(file_content, file_type, filename)
-
-        try:
-            return await self.hybrid_extractor._extract_with_local_ocr(
-                file_content, file_type, tesseract_config
-            )
-        except Exception as e:
-            logger.error(f"❌ Tesseract extraction failed: {e}")
-            logger.info("🔄 Falling back to hybrid extraction")
-            return await self._extract_with_hybrid(file_content, file_type, filename)
 
     async def _extract_with_vision_llm(
         self,
@@ -411,16 +375,6 @@ class OCREngineManager:
         paddleocr_available = self._check_paddleocr_health_sync()
 
         return {
-            "TESSERACT": {
-                "engine": "TESSERACT",
-                "name": "Tesseract OCR",
-                "description": "Fast local OCR for clean documents",
-                "speed": "Fast (< 5s per page)",
-                "accuracy": "Good for clean text",
-                "available": self.hybrid_extractor.local_ocr_available,
-                "cost": "Free",
-                "configuration": self.get_engine_config(OCREngineEnum.TESSERACT)
-            },
             "PADDLEOCR": {
                 "engine": "PADDLEOCR",
                 "name": "PaddleOCR",

@@ -39,7 +39,6 @@ router = APIRouter(prefix="/api/pipeline", tags=["pipeline"])
 class OCRConfigRequest(BaseModel):
     """Request model for OCR configuration update"""
     selected_engine: OCREngineEnum
-    tesseract_config: Optional[Dict[str, Any]] = None
     paddleocr_config: Optional[Dict[str, Any]] = None
     vision_llm_config: Optional[Dict[str, Any]] = None
     hybrid_config: Optional[Dict[str, Any]] = None
@@ -49,7 +48,6 @@ class OCRConfigResponse(BaseModel):
     """Response model for OCR configuration"""
     id: int
     selected_engine: str
-    tesseract_config: Optional[Dict[str, Any]]
     paddleocr_config: Optional[Dict[str, Any]]
     vision_llm_config: Optional[Dict[str, Any]]
     hybrid_config: Optional[Dict[str, Any]]

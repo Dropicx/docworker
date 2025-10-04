@@ -573,10 +573,10 @@ class ModularPipelineExecutor:
 
         return {
             "selected_engine": config.selected_engine,
-            "tesseract_config": config.tesseract_config,
             "paddleocr_config": config.paddleocr_config,
             "vision_llm_config": config.vision_llm_config,
-            "hybrid_config": config.hybrid_config
+            "hybrid_config": config.hybrid_config,
+            "pii_removal_enabled": config.pii_removal_enabled
         }
 
     def _mark_job_failed(

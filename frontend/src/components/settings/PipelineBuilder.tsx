@@ -169,11 +169,10 @@ const PipelineBuilder: React.FC = () => {
     try {
       await pipelineApi.updateOCRConfig({
         selected_engine: selectedEngine,
-        tesseract_config: ocrConfig?.tesseract_config || null,
         paddleocr_config: ocrConfig?.paddleocr_config || null,
         vision_llm_config: ocrConfig?.vision_llm_config || null,
         hybrid_config: ocrConfig?.hybrid_config || null,
-        pii_removal_enabled: piiRemovalEnabled // NEW: Save PII toggle state
+        pii_removal_enabled: piiRemovalEnabled
       });
 
       setSuccess('OCR-Konfiguration erfolgreich gespeichert!');
@@ -283,8 +282,6 @@ const PipelineBuilder: React.FC = () => {
 
   const getEngineIcon = (engine: string) => {
     switch (engine) {
-      case 'TESSERACT':
-        return <Zap className="w-5 h-5" />;
       case 'PADDLEOCR':
         return <Brain className="w-5 h-5" />;
       case 'VISION_LLM':
