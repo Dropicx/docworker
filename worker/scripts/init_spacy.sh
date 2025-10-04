@@ -108,25 +108,47 @@ for sp in site.getsitepackages():
     echo "📦 Found model at: $SYSTEM_MODEL_PATH"
     echo "📋 Copying model to volume: $VOLUME_PATH"
 
-    # Ensure target directory exists
+    # Ensure target directory exists and has proper permissions
     mkdir -p "$VOLUME_PATH"
 
-    # Copy model contents to volume (not the directory itself)
-    cp -r "$SYSTEM_MODEL_PATH/"* "$VOLUME_PATH/"
+    # Copy model contents to volume with verbose output
+    echo "🔄 Copying files..."
+    cp -rv "$SYSTEM_MODEL_PATH/"* "$VOLUME_PATH/" 2>&1 | head -20
 
-    # Verify copy was successful
-    if [ -f "$VOLUME_PATH/meta.json" ]; then
-        echo "✅ Model successfully installed to Railway volume"
+    # Set proper permissions on copied files
+    echo "🔐 Setting permissions..."
+    chmod -R 755 "$VOLUME_PATH"
 
-        # Test loading the model
-        if python3 -c "import spacy; spacy.load('$VOLUME_PATH')" 2>/dev/null; then
-            echo "✅ Model verified and ready to use"
-        else
-            echo "⚠️  Warning: Model verification failed, but will attempt to use it"
+    # List what was copied for debugging
+    echo "📂 Files in volume:"
+    ls -la "$VOLUME_PATH" | head -10
+
+    # Verify critical files exist
+    CRITICAL_FILES=("meta.json" "config.cfg" "vocab" "ner")
+    MISSING_FILES=()
+
+    for file in "${CRITICAL_FILES[@]}"; do
+        if [ ! -e "$VOLUME_PATH/$file" ]; then
+            MISSING_FILES+=("$file")
         fi
-    else
-        echo "❌ ERROR: Model copy failed"
+    done
+
+    if [ ${#MISSING_FILES[@]} -gt 0 ]; then
+        echo "❌ ERROR: Missing critical files: ${MISSING_FILES[*]}"
+        echo "   Copy may have failed. Volume contents:"
+        ls -la "$VOLUME_PATH"
         exit 1
+    fi
+
+    echo "✅ Model successfully installed to Railway volume"
+
+    # Test loading the model with error details
+    if python3 -c "import spacy; spacy.load('$VOLUME_PATH')" 2>&1; then
+        echo "✅ Model verified and ready to use"
+    else
+        echo "⚠️  Warning: Model verification failed"
+        echo "   Trying to get more details..."
+        python3 -c "import spacy; print(spacy.load('$VOLUME_PATH'))" 2>&1 || true
     fi
 fi  # End of MODEL_NEEDS_DOWNLOAD block
 
