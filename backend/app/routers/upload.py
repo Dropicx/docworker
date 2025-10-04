@@ -125,8 +125,7 @@ async def upload_document(
             ]
 
             ocr_config = {
-                "selected_engine": str(ocr_config_obj.selected_engine) if ocr_config_obj else "TESSERACT",
-                "tesseract_config": ocr_config_obj.tesseract_config if ocr_config_obj else {},
+                "selected_engine": str(ocr_config_obj.selected_engine) if ocr_config_obj else "PADDLEOCR",
                 "paddleocr_config": ocr_config_obj.paddleocr_config if ocr_config_obj else {},
                 "vision_llm_config": ocr_config_obj.vision_llm_config if ocr_config_obj else {}
             }
