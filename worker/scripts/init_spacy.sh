@@ -61,7 +61,13 @@ else
     echo "   Downloading model (this happens only once)..."
 
     # Create volume directory structure
-    mkdir -p "$(dirname "$VOLUME_PATH")"
+    echo "📁 Creating directory: $(dirname "$VOLUME_PATH")"
+    mkdir -p "$(dirname "$VOLUME_PATH")" || {
+        echo "❌ ERROR: Failed to create directory $(dirname "$VOLUME_PATH")"
+        echo "   Check volume permissions and mount point"
+        echo "   Volume should be mounted at /data with write permissions"
+        exit 1
+    }
 
     # Download spaCy model using pip
     echo "🔽 Downloading $MODEL_NAME via spaCy..."

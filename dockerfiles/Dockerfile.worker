@@ -47,13 +47,10 @@ ENV PYTHONPATH=/app:/app/worker:/app/backend:/app/shared
 # Set environment variable for spaCy model path (Railway volume)
 ENV SPACY_MODEL_PATH=/data/spacy_models/de_core_news_sm
 
-# Switch to non-root user
-USER celeryuser
-
 # Health check via Redis connection
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
     CMD python -c "from shared.redis_client import get_redis; get_redis().ping()" || exit 1
 
-# ⚡ OPTIMIZED STARTUP: Initialize spaCy models from Railway volume, then start worker
-# The init script downloads models only on first run, subsequent starts are instant
-CMD ["/bin/bash", "-c", "/app/init_spacy.sh && celery -A worker.worker.celery_app worker --loglevel=info --concurrency=2 --max-tasks-per-child=50"]
+# ⚡ OPTIMIZED STARTUP: Run as root to fix volume permissions, then switch to celeryuser
+# Railway mounts volumes as root, so we need root to create directories
+CMD ["/bin/bash", "-c", "chown -R celeryuser:celeryuser /data && su celeryuser -c '/app/init_spacy.sh && celery -A worker.worker.celery_app worker --loglevel=info --concurrency=2 --max-tasks-per-child=50'"]

@@ -36,5 +36,5 @@ alembic==1.16.5
 celery[redis]==5.4.0
 redis==5.0.0
 
-# NLP for advanced PII removal (optional)
-spacy==3.8.3
+# NOTE: spaCy moved to worker requirements.txt
+# PII removal now happens in worker, not backend

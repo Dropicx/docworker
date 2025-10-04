@@ -7,13 +7,10 @@ from openai import AsyncOpenAI
 import json
 from PIL import Image
 from io import BytesIO
-# Try to use advanced filter with spaCy, fallback to smart filter
-try:
-    from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
-    ADVANCED_FILTER_AVAILABLE = True
-except ImportError:
-    from app.services.smart_privacy_filter import SmartPrivacyFilter
-    ADVANCED_FILTER_AVAILABLE = False
+
+# ⚡ NOTE: PII removal now happens in worker (OptimizedPrivacyFilter)
+# This service receives already-cleaned text from the worker
+# No need to import privacy filters here anymore
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -45,15 +42,10 @@ class OVHClient:
             'final_check_prompt',
             'formatting_prompt'
         }
-        
-        # Initialize privacy filter for local PII removal
-        if ADVANCED_FILTER_AVAILABLE:
-            self.privacy_filter = AdvancedPrivacyFilter()
-            logger.debug("🧠 Using AdvancedPrivacyFilter with spaCy NER")
-        else:
-            self.privacy_filter = SmartPrivacyFilter()
-            logger.debug("📝 Using SmartPrivacyFilter (heuristic-based)")
-        
+
+        # ⚡ NOTE: PII filtering now happens in worker before pipeline execution
+        # No privacy filter needed here - text arrives pre-cleaned
+
         # Debug logging for environment variables (only if debug enabled)
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f"🔍 OVH Client Initialization:")
@@ -310,28 +302,11 @@ class OVHClient:
         logger.info(f"   Length: {len(text)} characters")
         logger.info("-" * 40)
         
-        # SCHRITT 1: Lokale PII-Entfernung mit Python (schnell und datenschutzfreundlich)
-        try:
-            logger.info("🔒 [2/3] APPLYING PRIVACY FILTER...")
-            cleaned_text = self.privacy_filter.remove_pii(text)
-            
-            # Log the privacy-filtered text
-            logger.info(f"🔐 [2/3] PRIVACY-FILTERED TEXT (first 1000 chars):")
-            logger.info("-" * 40)
-            logger.info(cleaned_text[:1000] + "..." if len(cleaned_text) > 1000 else cleaned_text)
-            logger.info(f"   Length: {len(cleaned_text)} characters")
-            logger.info(f"   Reduction: {len(text) - len(cleaned_text)} characters removed")
-            logger.info("-" * 40)
-            
-            # Grundlegende Validierung
-            if len(cleaned_text) > 50:  # Mindestens etwas Text sollte übrig bleiben
-                logger.info("✅ Local PII removal successful")
-            else:
-                logger.warning("⚠️ Text too short after PII removal, using original text")
-                cleaned_text = text
-        except Exception as e:
-            logger.warning(f"⚠️ Local PII removal failed: {e}, using original text")
-            cleaned_text = text
+        # ⚡ PII REMOVAL NOW HAPPENS IN WORKER (before pipeline)
+        # This preprocessing step no longer needs to remove PII
+        # Text arrives here already cleaned by OptimizedPrivacyFilter in worker
+        logger.info("ℹ️  [2/3] Text already PII-filtered by worker (OptimizedPrivacyFilter)")
+        cleaned_text = text
         
         # SCHRITT 2: Optional zusätzliche Bereinigung mit OVH (wenn API verfügbar)
         # Dies ist jetzt optional - wenn OVH nicht verfügbar, verwenden wir nur lokale Bereinigung
