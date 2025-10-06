@@ -342,7 +342,16 @@ class ModularPipelineExecutor:
         context: Dict[str, Any] = None
     ) -> Tuple[bool, str, Dict[str, Any]]:
         """
-        Execute complete pipeline on input text.
+        Execute complete AI pipeline on input text.
+
+        IMPORTANT - EXECUTOR IS A PURE SERVICE:
+        - Does NOT modify job status (worker's responsibility)
+        - Does NOT set job.started_at (preserves queue time)
+        - Does NOT mark jobs as failed (returns errors to worker)
+        - Only writes PipelineStepExecutionDB records for audit trail
+        - Only updates progress_percent and current_step_id for real-time tracking
+
+        The worker (orchestrator) owns the job lifecycle and handles all status changes.
 
         Args:
             processing_id: Unique ID for this processing request
@@ -351,38 +360,24 @@ class ModularPipelineExecutor:
 
         Returns:
             Tuple of (success: bool, final_output: str, execution_metadata: Dict)
+            - success: True if pipeline completed, False if error occurred
+            - final_output: Processed text from pipeline
+            - execution_metadata: Complete metadata including errors if any
         """
         context = context or {}
 
         logger.info(f"🚀 Starting modular pipeline execution with branching support: {processing_id[:8]}")
 
-        # Check if job already exists (worker architecture)
+        # Load job (must exist - created by upload endpoint)
         job = self.session.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
 
-        if job:
-            # Job already exists (created by upload endpoint) - update it
-            logger.info(f"📋 Using existing job: {job.job_id}")
-            job.status = StepExecutionStatus.RUNNING
-            job.started_at = datetime.now()
-            job_id = job.job_id
-        else:
-            # Create new pipeline job record (legacy path)
-            logger.info(f"📝 Creating new job for processing_id: {processing_id[:8]}")
-            job_id = str(uuid.uuid4())
-            pipeline_config = self._serialize_pipeline_config()
-            ocr_config = self._serialize_ocr_config()
+        if not job:
+            error_msg = f"Job not found for processing_id: {processing_id}"
+            logger.error(f"❌ {error_msg}")
+            return False, "", {"error": error_msg, "error_type": "job_not_found"}
 
-            job = PipelineJobDB(
-                job_id=job_id,
-                processing_id=processing_id,
-                status=StepExecutionStatus.RUNNING,
-                pipeline_config=pipeline_config,
-                ocr_config=ocr_config,
-                started_at=datetime.now()
-            )
-            self.session.add(job)
-
-        self.session.commit()
+        logger.info(f"📋 Loaded job: {job.job_id}")
+        job_id = job.job_id
 
         # Load universal pipeline steps (document_class_id = NULL)
         universal_steps = self.load_universal_steps()
@@ -523,8 +518,11 @@ class ModularPipelineExecutor:
 
             if not success:
                 logger.error(f"❌ Pipeline failed at step '{step.name}': {error}")
-                self._mark_job_failed(job, error, step.id)
+                # Return error to worker - don't mark job as failed here
                 execution_metadata["failed_at_step"] = step.name
+                execution_metadata["failed_step_id"] = step.id
+                execution_metadata["error"] = error
+                execution_metadata["error_type"] = "step_execution_failed"
                 execution_metadata["total_time"] = time.time() - pipeline_start_time
                 return False, current_output, execution_metadata
 
@@ -627,8 +625,11 @@ class ModularPipelineExecutor:
 
                 if not success:
                     logger.error(f"❌ Pipeline failed at step '{step.name}': {error}")
-                    self._mark_job_failed(job, error, step.id)
+                    # Return error to worker - don't mark job as failed here
                     execution_metadata["failed_at_step"] = step.name
+                    execution_metadata["failed_step_id"] = step.id
+                    execution_metadata["error"] = error
+                    execution_metadata["error_type"] = "step_execution_failed"
                     execution_metadata["total_time"] = time.time() - pipeline_start_time
                     return False, current_output, execution_metadata
 
@@ -683,19 +684,6 @@ class ModularPipelineExecutor:
             "hybrid_config": config.hybrid_config,
             "pii_removal_enabled": config.pii_removal_enabled
         }
-
-    def _mark_job_failed(
-        self,
-        job: PipelineJobDB,
-        error_message: str,
-        failed_step_id: Optional[int] = None
-    ):
-        """Mark job as failed with error details."""
-        job.status = StepExecutionStatus.FAILED
-        job.failed_at = datetime.now()
-        job.error_message = error_message
-        job.error_step_id = failed_step_id
-        self.session.commit()
 
 
 class ModularPipelineManager:

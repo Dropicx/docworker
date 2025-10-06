@@ -52,10 +52,11 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         # Update job status to RUNNING
         job.status = StepExecutionStatus.RUNNING
-        # Track when worker starts processing (if not set, use created_at or now)
-        worker_start_time = datetime.now()
+        # Preserve started_at from upload endpoint (includes queue time)
+        # Only set if somehow missing (shouldn't happen in normal flow)
         if not job.started_at:
-            job.started_at = worker_start_time
+            job.started_at = datetime.now()
+            logger.warning("⚠️ started_at was not set by upload endpoint, setting now")
         job.progress_percent = 0
         db.commit()
 
@@ -72,6 +73,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         extracted_text = ""
         if job.file_type in ["pdf", "image", "jpg", "jpeg", "png"]:
             logger.info(f"🔍 Starting OCR for {job.file_type.upper()}...")
+            job.progress_percent = 10
+            db.commit()
             self.update_state(
                 state='PROCESSING',
                 meta={'progress': 10, 'status': 'ocr', 'current_step': 'Texterkennung (OCR)'}
@@ -91,6 +94,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
             ocr_time = time.time() - start_time
             job.ocr_time_seconds = ocr_time
+            db.commit()  # Persist OCR time immediately
             logger.info(f"✅ OCR completed in {ocr_time:.2f}s: {len(extracted_text)} characters, confidence: {ocr_confidence:.2%}")
 
             # ⚡ Step 1.5: LOCAL PII Removal (BEFORE sending to AI pipeline)
@@ -100,6 +104,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
             if pii_enabled:
                 logger.info("🔒 Starting local PII removal...")
+                job.progress_percent = 15
+                db.commit()
                 self.update_state(
                     state='PROCESSING',
                     meta={'progress': 15, 'status': 'pii_removal', 'current_step': 'Entfernung persönlicher Daten'}
@@ -145,10 +151,25 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         pipeline_time = time.time() - pipeline_start
         job.ai_processing_time_seconds = pipeline_time
+        db.commit()  # Persist AI processing time immediately
 
         # Check if pipeline succeeded
         if not success:
-            raise Exception(f"Pipeline execution failed: {metadata.get('error', 'Unknown error')}")
+            # Executor returns detailed error information
+            error_msg = metadata.get('error', 'Unknown error')
+            failed_step = metadata.get('failed_at_step', 'Unknown step')
+            error_type = metadata.get('error_type', 'unknown')
+            failed_step_id = metadata.get('failed_step_id', None)
+
+            logger.error(f"❌ Pipeline failed at step '{failed_step}': {error_msg}")
+            logger.error(f"   Error type: {error_type}, Step ID: {failed_step_id}")
+
+            # Store error details in job before raising exception
+            job.error_message = f"[{failed_step}] {error_msg}"
+            job.error_step_id = failed_step_id
+            db.commit()
+
+            raise Exception(f"Pipeline execution failed at '{failed_step}': {error_msg}")
 
         # ==================== WORKER IS THE ORCHESTRATOR ====================
         # Worker owns the job lifecycle and builds final result_data
@@ -195,7 +216,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         job.progress_percent = 100
         job.result_data = result_data
         job.total_execution_time_seconds = total_time
-        job.ai_processing_time_seconds = metadata.get('pipeline_execution_time', 0.0)
+        # Note: job.ocr_time_seconds and job.ai_processing_time_seconds already committed earlier
         db.commit()
 
         logger.info(f"✅ Document processed successfully: {processing_id}")

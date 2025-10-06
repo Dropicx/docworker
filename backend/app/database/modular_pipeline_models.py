@@ -24,10 +24,13 @@ class OCREngineEnum(str, Enum):
 class StepExecutionStatus(str, Enum):
     """Pipeline step execution status"""
     PENDING = "PENDING"
+    QUEUED = "QUEUED"  # In Redis queue, waiting for worker
     RUNNING = "RUNNING"
     COMPLETED = "COMPLETED"
     FAILED = "FAILED"
     SKIPPED = "SKIPPED"
+    CANCELLED = "CANCELLED"  # User cancelled processing
+    TIMEOUT = "TIMEOUT"  # Processing exceeded time limit
 
 class ModelProvider(str, Enum):
     """AI model providers"""

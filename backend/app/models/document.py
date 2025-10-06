@@ -9,12 +9,15 @@ class DocumentType(str, Enum):
 
 class ProcessingStatus(str, Enum):
     PENDING = "pending"
-    PROCESSING = "processing" 
+    QUEUED = "queued"  # In queue, waiting for worker
+    PROCESSING = "processing"
     EXTRACTING_TEXT = "extracting_text"
     TRANSLATING = "translating"
     LANGUAGE_TRANSLATING = "language_translating"
     COMPLETED = "completed"
     ERROR = "error"
+    CANCELLED = "cancelled"  # User cancelled processing
+    TIMEOUT = "timeout"  # Processing exceeded time limit
     NON_MEDICAL_CONTENT = "non_medical_content"
 
 class SupportedLanguage(str, Enum):
