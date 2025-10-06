@@ -28,7 +28,7 @@ from app.database.modular_pipeline_models import (
 from app.services.modular_pipeline_executor import ModularPipelineManager
 from app.services.ocr_engine_manager import OCREngineManager
 from app.services.document_class_manager import DocumentClassManager
-from app.routers.settings_unified import verify_session_token
+from app.routers.settings_auth import verify_session_token
 
 logger = logging.getLogger(__name__)
 

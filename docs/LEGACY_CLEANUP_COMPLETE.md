@@ -70,6 +70,12 @@ Successfully removed **ALL** legacy unified prompt system code from the codebase
 
 **Why**: Worker handles all processing via `ModularPipelineExecutor`, backend only tracks jobs.
 
+### 2b. `backend/app/routers/modular_pipeline.py`
+**Changes**:
+- Updated import: `from app.routers.settings_auth import verify_session_token` (was `settings_unified`)
+
+**Why**: Use new minimal auth router for session verification.
+
 ### 3. `backend/app/main.py`
 **Changes**:
 - Updated import: `from app.routers.settings_auth import router as settings_auth_router`
