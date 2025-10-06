@@ -24,6 +24,7 @@ from app.database.modular_pipeline_models import (
 )
 from app.services.ovh_client import OVHClient
 from app.services.document_class_manager import DocumentClassManager
+from app.services.ai_cost_tracker import AICostTracker
 
 logger = logging.getLogger(__name__)
 
@@ -49,6 +50,8 @@ class ModularPipelineExecutor:
         self.session = session
         self.ovh_client = OVHClient()
         self.doc_class_manager = DocumentClassManager(session)
+        self.cost_tracker = AICostTracker(session)
+        logger.info("💰 Cost tracker initialized for pipeline executor")
 
     # ==================== CONFIGURATION LOADING ====================
 
@@ -303,7 +306,7 @@ class ModularPipelineExecutor:
                 # Call AI model
                 start_time = time.time()
 
-                result = await self.ovh_client.process_medical_text_with_prompt(
+                result_dict = await self.ovh_client.process_medical_text_with_prompt(
                     full_prompt=prompt,
                     temperature=step.temperature or 0.7,
                     max_tokens=step.max_tokens or model.max_tokens or 4096,
@@ -312,11 +315,38 @@ class ModularPipelineExecutor:
 
                 execution_time = time.time() - start_time
 
+                # Extract text from dict response
+                result = result_dict["text"]
+
                 # Check for API errors
                 if result.startswith("Error"):
                     last_error = result
                     logger.warning(f"⚠️ API error on attempt {attempt + 1}: {result}")
                     continue
+
+                # ✨ NEW: Log AI call with token usage (don't break pipeline if this fails!)
+                try:
+                    self.cost_tracker.log_ai_call(
+                        processing_id=processing_id,
+                        step_name=step.name,
+                        input_tokens=result_dict.get("input_tokens", 0),
+                        output_tokens=result_dict.get("output_tokens", 0),
+                        model_provider="OVH",
+                        model_name=result_dict.get("model") or model.name,
+                        processing_time_seconds=execution_time,
+                        document_type=document_type,
+                        metadata={
+                            "step_id": step.id,
+                            "temperature": step.temperature or 0.7,
+                            "max_tokens": step.max_tokens or model.max_tokens or 4096,
+                            "model_db_id": model.id,
+                            "attempt": attempt + 1
+                        }
+                    )
+                    logger.info(f"💰 Logged {result_dict.get('total_tokens', 0)} tokens for step '{step.name}'")
+                except Exception as log_error:
+                    # Don't fail the pipeline if logging fails!
+                    logger.error(f"⚠️ Failed to log AI costs (non-critical): {log_error}")
 
                 # Success!
                 logger.info(f"✅ Step '{step.name}' completed in {execution_time:.2f}s")

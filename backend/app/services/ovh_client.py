@@ -165,14 +165,28 @@ class OVHClient:
         temperature: float = 0.3,
         max_tokens: int = 4000,
         use_fast_model: bool = False
-    ) -> str:
+    ) -> Dict[str, Any]:
         """
         Process medical text with complete prompt.
         Supports fast model for routine tasks to improve speed.
+
+        Returns:
+            Dict with:
+            - text: str - The processed text
+            - input_tokens: int - Number of input tokens
+            - output_tokens: int - Number of output tokens
+            - total_tokens: int - Total tokens used
+            - model: str - Model name used
         """
         if not self.access_token:
             logger.error("❌ OVH API token not configured")
-            return "Error: OVH API token not configured. Please set OVH_AI_ENDPOINTS_ACCESS_TOKEN in .env"
+            return {
+                "text": "Error: OVH API token not configured. Please set OVH_AI_ENDPOINTS_ACCESS_TOKEN in .env",
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "model": None
+            }
 
         # Choose model based on task type
         model_to_use = self.preprocessing_model if use_fast_model else self.main_model
@@ -199,12 +213,35 @@ class OVHClient:
             )
 
             result = response.choices[0].message.content
-            logger.debug(f"✅ OVH processing successful with {model_to_use} ({model_type})")
-            return result.strip()
+
+            # ✨ NEW: Extract token usage from response
+            usage = getattr(response, 'usage', None)
+            input_tokens = getattr(usage, 'prompt_tokens', 0) if usage else 0
+            output_tokens = getattr(usage, 'completion_tokens', 0) if usage else 0
+            total_tokens = getattr(usage, 'total_tokens', 0) if usage else 0
+
+            if not usage:
+                logger.warning(f"⚠️ API response has no usage data")
+
+            logger.debug(f"✅ OVH processing successful with {model_to_use} ({model_type}) - {total_tokens} tokens")
+
+            return {
+                "text": result.strip(),
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
+                "total_tokens": total_tokens,
+                "model": model_to_use
+            }
 
         except Exception as e:
             logger.error(f"❌ OVH API error: {e}")
-            return f"Error processing with OVH API: {str(e)}"
+            return {
+                "text": f"Error processing with OVH API: {str(e)}",
+                "input_tokens": 0,
+                "output_tokens": 0,
+                "total_tokens": 0,
+                "model": model_to_use
+            }
 
     async def process_prompt_with_optimization(
         self,

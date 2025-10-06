@@ -108,6 +108,7 @@ class AvailableModelDB(Base):
     """
     Registry of available AI models for pipeline steps.
     Users can select from these models when creating pipeline steps.
+    Includes pricing information for cost tracking.
     """
     __tablename__ = "available_models"
 
@@ -122,6 +123,10 @@ class AvailableModelDB(Base):
     description = Column(Text, nullable=True)
     max_tokens = Column(Integer, nullable=True)  # e.g., 8192
     supports_vision = Column(Boolean, default=False, nullable=False)
+
+    # Pricing (USD per 1M tokens)
+    price_input_per_1m_tokens = Column(Float, nullable=True)  # e.g., 0.54 (= $0.54 per 1M input tokens)
+    price_output_per_1m_tokens = Column(Float, nullable=True)  # e.g., 0.81 (= $0.81 per 1M output tokens)
 
     # Model configuration
     model_config = Column(JSON, nullable=True)  # e.g., {"temperature": 0.7, "top_p": 0.9}

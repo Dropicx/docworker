@@ -33,7 +33,7 @@ class AILoggingService:
         session_id: Optional[str] = None,
         request_id: Optional[str] = None,
         confidence_score: Optional[float] = None,
-        model_used: Optional[str] = None,
+        model_name: Optional[str] = None,
         input_metadata: Optional[Dict[str, Any]] = None,
         output_metadata: Optional[Dict[str, Any]] = None
     ):
@@ -52,7 +52,7 @@ class AILoggingService:
                 session_id=session_id,
                 request_id=request_id,
                 confidence_score=confidence_score,
-                model_used=model_used,
+                model_name=model_name,
                 input_metadata=input_metadata,
                 output_metadata=output_metadata,
                 created_at=datetime.now()
@@ -170,7 +170,7 @@ class AILoggingService:
         input_text: str,
         output_text: str,
         confidence: float,
-        model_used: str,
+        model_name: str,
         document_type: Optional[str] = None
     ):
         """Log translation step"""
@@ -180,10 +180,10 @@ class AILoggingService:
             input_text=input_text,
             output_text=output_text,
             confidence_score=confidence,
-            model_used=model_used,
+            model_name=model_name,
             status="success",
             document_type=document_type,
-            output_metadata={"confidence": confidence, "model": model_used}
+            output_metadata={"confidence": confidence, "model": model_name}
         )
 
     def log_quality_check(
