@@ -288,6 +288,9 @@ class PipelineStepExecutionDB(Base):
     error_message = Column(Text, nullable=True)
     retry_count = Column(Integer, default=0, nullable=False)
 
+    # Step-specific metadata (branching decisions, custom data)
+    step_metadata = Column(JSON, nullable=True)  # Stores branching info, decisions, and step-specific data
+
     # Metadata
     created_at = Column(DateTime, default=func.now(), nullable=False)
 

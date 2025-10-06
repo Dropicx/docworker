@@ -154,7 +154,7 @@ def seed_modular_pipeline():
             pipeline_steps = [
                 {
                     'name': 'Medical Content Validation',
-                    'description': 'Validates if document contains medical content',
+                    'description': 'Validates if document contains medical content (Universal Branching Step)',
                     'order': 1,
                     'enabled': True,
                     'prompt_template': 'Analysiere den folgenden Text und bestimme, ob er medizinische Inhalte enthält.\n\nText:\n{input_text}\n\nAntworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH',
@@ -164,11 +164,14 @@ def seed_modular_pipeline():
                     'retry_on_failure': True,
                     'max_retries': 3,
                     'input_from_previous_step': True,
-                    'output_format': 'text'
+                    'output_format': 'text',
+                    'is_branching_step': True,
+                    'branching_field': 'medical_validation',
+                    'document_class_id': None  # Universal step
                 },
                 {
                     'name': 'Document Classification',
-                    'description': 'Classifies document type (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)',
+                    'description': 'Classifies document type (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE) - Routes to class-specific pipeline',
                     'order': 2,
                     'enabled': True,
                     'prompt_template': 'Analysiere diesen medizinischen Text und bestimme, ob es sich um einen Arztbrief, einen Befundbericht oder Laborwerte handelt.\n\nText:\n{input_text}\n\nAntworte NUR mit dem erkannten Typ: ARZTBRIEF, BEFUNDBERICHT oder LABORWERTE',
@@ -178,7 +181,10 @@ def seed_modular_pipeline():
                     'retry_on_failure': True,
                     'max_retries': 3,
                     'input_from_previous_step': True,
-                    'output_format': 'text'
+                    'output_format': 'text',
+                    'is_branching_step': True,
+                    'branching_field': 'document_type',
+                    'document_class_id': None  # Universal step
                 },
                 {
                     'name': 'PII Preprocessing',
@@ -286,15 +292,20 @@ def seed_modular_pipeline():
                         name, description, "order", enabled, prompt_template,
                         selected_model_id, temperature, max_tokens,
                         retry_on_failure, max_retries, input_from_previous_step,
-                        output_format, created_at, last_modified, modified_by
+                        output_format, is_branching_step, branching_field, document_class_id,
+                        created_at, last_modified, modified_by
                     ) VALUES (
                         :name, :description, :order, :enabled, :prompt_template,
                         :selected_model_id, :temperature, :max_tokens,
                         :retry_on_failure, :max_retries, :input_from_previous_step,
-                        :output_format, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
+                        :output_format, :is_branching_step, :branching_field, :document_class_id,
+                        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
                     )
                 """), {
                     **step,
+                    'is_branching_step': step.get('is_branching_step', False),
+                    'branching_field': step.get('branching_field', None),
+                    'document_class_id': step.get('document_class_id', None),
                     'modified_by': 'system_seed'
                 })
 

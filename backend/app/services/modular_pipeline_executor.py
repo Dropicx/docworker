@@ -130,19 +130,29 @@ class ModularPipelineExecutor:
         logger.warning("⚠️ No branching step found in pipeline")
         return None
 
-    def extract_branch_value(self, output_text: str, branching_field: str = "document_type") -> Optional[str]:
+    def extract_branch_value(self, output_text: str, branching_field: str = "document_type") -> Optional[Dict[str, Any]]:
         """
-        Extract the branch value from step output.
+        Extract the branch value from step output with DYNAMIC BRANCHING SUPPORT.
 
-        For classification steps, this extracts the document class key (e.g., "ARZTBRIEF")
-        from the AI model's output.
+        Supports multiple branching types:
+        - document_type: Routes to document class-specific pipeline steps
+        - Any other field: Generic branching with metadata storage (boolean, enum, etc.)
 
         Args:
             output_text: Output text from the branching step
-            branching_field: Field name to extract (currently only supports "document_type")
+            branching_field: Field name to extract (e.g., "document_type", "medical_validation", "quality_level")
 
         Returns:
-            Extracted branch value (document class key) or None if extraction failed
+            Dictionary with branching metadata:
+            {
+                "field": "medical_validation",
+                "value": "MEDIZINISCH",
+                "type": "boolean" | "document_class" | "enum" | "generic",
+                "target_id": 3,  # For document_class type only
+                "target_key": "ARZTBRIEF",  # For document_class type only
+                "target_display_name": "Arztbrief"  # For document_class type only
+            }
+            Returns None if extraction fails
         """
         if not output_text:
             logger.error("❌ Cannot extract branch value from empty output")
@@ -152,22 +162,57 @@ class ModularPipelineExecutor:
         branch_value = output_text.strip().upper()
 
         # Remove common prefixes/suffixes
-        for prefix in ["DOCUMENT_TYPE:", "CLASS:", "CLASSIFICATION:"]:
+        for prefix in ["DOCUMENT_TYPE:", "CLASS:", "CLASSIFICATION:", f"{branching_field.upper()}:"]:
             if branch_value.startswith(prefix):
                 branch_value = branch_value[len(prefix):].strip()
 
-        # Extract first word (should be the class key)
+        # Extract first word (should be the decision value)
         branch_value = branch_value.split()[0] if branch_value.split() else branch_value
 
-        # Validate it's a known document class
-        doc_class = self.doc_class_manager.get_class_by_key(branch_value)
-        if doc_class:
-            logger.info(f"✅ Extracted branch value: {branch_value} → {doc_class.display_name}")
-            return branch_value
+        # Determine branch type based on field name
+        if branching_field == "document_type":
+            # Document class branching - lookup class and load class-specific steps
+            doc_class = self.doc_class_manager.get_class_by_key(branch_value)
+            if doc_class:
+                logger.info(f"✅ Document class branching: {branch_value} → {doc_class.display_name}")
+                return {
+                    "field": branching_field,
+                    "value": branch_value,
+                    "type": "document_class",
+                    "target_id": doc_class.id,
+                    "target_key": doc_class.class_key,
+                    "target_display_name": doc_class.display_name
+                }
+            else:
+                logger.warning(f"⚠️ Unknown document class: {branch_value}")
+                return {
+                    "field": branching_field,
+                    "value": branch_value,
+                    "type": "document_class",
+                    "target_id": None,
+                    "target_key": branch_value,
+                    "target_display_name": "Unknown"
+                }
         else:
-            logger.warning(f"⚠️ Unknown document class: {branch_value}")
-            # Return it anyway - might be a new class or fallback behavior needed
-            return branch_value
+            # Generic branching (boolean, enum, quality level, etc.)
+            # Determine subtype based on common patterns
+            branch_type = "generic"
+            if branch_value in ["TRUE", "FALSE", "YES", "NO", "JA", "NEIN"]:
+                branch_type = "boolean"
+            elif branch_value in ["MEDIZINISCH", "NICHT_MEDIZINISCH"]:
+                branch_type = "boolean"  # Medical validation boolean
+            elif branch_value in ["HIGH", "MEDIUM", "LOW", "HOCH", "MITTEL", "NIEDRIG"]:
+                branch_type = "enum"  # Quality level enum
+
+            logger.info(f"✅ Generic branching ({branch_type}): {branching_field} = {branch_value}")
+            return {
+                "field": branching_field,
+                "value": branch_value,
+                "type": branch_type,
+                "target_id": None,
+                "target_key": None,
+                "target_display_name": None
+            }
 
     def load_ocr_configuration(self) -> Optional[OCRConfigurationDB]:
         """
@@ -357,7 +402,8 @@ class ModularPipelineExecutor:
             "steps_executed": [],
             "total_time": 0,
             "branching_occurred": False,
-            "document_class": None
+            "document_class": None,
+            "branching_path": []  # NEW: Track all branching decisions
         }
 
         pipeline_start_time = time.time()
@@ -366,7 +412,7 @@ class ModularPipelineExecutor:
         # ==================== PHASE 1: UNIVERSAL STEPS ====================
         logger.info(f"📋 Phase 1: Executing {len(universal_steps)} universal steps")
 
-        branch_value = None
+        branch_metadata = None  # Stores branching metadata (replaces branch_value)
         document_class_specific_steps = []
 
         for idx, step in enumerate(universal_steps):
@@ -391,7 +437,61 @@ class ModularPipelineExecutor:
 
             step_execution_time = time.time() - step_start_time
 
-            # Log step execution
+            # Prepare step metadata (will be populated for branching steps)
+            step_metadata_dict = None
+
+            # Check if this is the branching step - extract branch BEFORE logging to DB
+            if step.is_branching_step and branching_step and success:
+                logger.info(f"🔀 Branching step detected: {step.name}")
+
+                # Extract branch metadata (new dynamic system)
+                branch_metadata = self.extract_branch_value(
+                    output,
+                    step.branching_field or "document_type"
+                )
+
+                if branch_metadata:
+                    # Store branching metadata for this step
+                    step_metadata_dict = {
+                        "is_branching_step": True,
+                        "branching_field": step.branching_field or "document_type",
+                        "branch_metadata": branch_metadata,
+                        "decision_timestamp": datetime.now().isoformat()
+                    }
+
+                    # Add to branching path for job-level tracking
+                    execution_metadata["branching_path"].append({
+                        "step_name": step.name,
+                        "step_order": step.order,
+                        "field": branch_metadata["field"],
+                        "decision": branch_metadata["value"],
+                        "type": branch_metadata["type"]
+                    })
+
+                    # Handle document class branching (loads class-specific steps)
+                    if branch_metadata["type"] == "document_class" and branch_metadata["target_id"]:
+                        logger.info(f"🎯 Document class branch: {branch_metadata['target_display_name']} (ID: {branch_metadata['target_id']})")
+
+                        # Load document class-specific steps
+                        document_class_specific_steps = self.load_steps_by_document_class(branch_metadata["target_id"])
+
+                        execution_metadata["branching_occurred"] = True
+                        execution_metadata["document_class"] = {
+                            "class_key": branch_metadata["target_key"],
+                            "display_name": branch_metadata["target_display_name"],
+                            "class_id": branch_metadata["target_id"]
+                        }
+                        execution_metadata["class_specific_steps"] = len(document_class_specific_steps)
+
+                        # Store document_type in context for subsequent steps
+                        context["document_type"] = branch_metadata["target_key"]
+                    else:
+                        # Generic branching (boolean, enum, etc.) - just log the decision
+                        logger.info(f"🔀 Generic branch decision: {branch_metadata['field']} = {branch_metadata['value']}")
+                else:
+                    logger.warning(f"⚠️ Failed to extract branch value from output")
+
+            # Log step execution with metadata
             step_execution = PipelineStepExecutionDB(
                 job_id=job_id,
                 step_id=step.id,
@@ -405,12 +505,13 @@ class ModularPipelineExecutor:
                 started_at=datetime.fromtimestamp(step_start_time),
                 completed_at=datetime.now(),
                 execution_time_seconds=step_execution_time,
-                error_message=error
+                error_message=error,
+                step_metadata=step_metadata_dict  # NEW: Store branching metadata
             )
             self.session.add(step_execution)
             self.session.commit()
 
-            # Store metadata
+            # Store metadata for in-memory tracking
             execution_metadata["steps_executed"].append({
                 "step_name": step.name,
                 "step_order": step.order,
@@ -432,42 +533,9 @@ class ModularPipelineExecutor:
             if step.input_from_previous_step and not step.is_branching_step:
                 current_output = output
 
-            # Check if this is the branching step
-            if step.is_branching_step and branching_step:
-                logger.info(f"🔀 Branching step detected: {step.name}")
-
-                # Extract branch value (document class)
-                branch_value = self.extract_branch_value(
-                    output,
-                    step.branching_field or "document_type"
-                )
-
-                if branch_value:
-                    # Get document class
-                    doc_class = self.doc_class_manager.get_class_by_key(branch_value)
-
-                    if doc_class:
-                        logger.info(f"🎯 Branch selected: {doc_class.display_name} (ID: {doc_class.id})")
-
-                        # Load document class-specific steps
-                        document_class_specific_steps = self.load_steps_by_document_class(doc_class.id)
-
-                        execution_metadata["branching_occurred"] = True
-                        execution_metadata["document_class"] = {
-                            "class_key": doc_class.class_key,
-                            "display_name": doc_class.display_name,
-                            "class_id": doc_class.id
-                        }
-                        execution_metadata["class_specific_steps"] = len(document_class_specific_steps)
-
-                        # Store document_type in context for subsequent steps
-                        context["document_type"] = doc_class.class_key
-
-                        break  # Exit universal steps loop, continue with class-specific steps
-                    else:
-                        logger.warning(f"⚠️ Document class '{branch_value}' not found, continuing without branching")
-                else:
-                    logger.warning(f"⚠️ Failed to extract branch value, continuing without branching")
+            # If document class branching occurred, break to load class-specific steps
+            if step.is_branching_step and document_class_specific_steps:
+                break  # Exit universal steps loop, continue with class-specific steps
 
         # ==================== PHASE 2: CLASS-SPECIFIC STEPS ====================
         if document_class_specific_steps:
@@ -494,7 +562,40 @@ class ModularPipelineExecutor:
 
                 step_execution_time = time.time() - step_start_time
 
-                # Log step execution
+                # Prepare step metadata (class-specific steps could also be branching)
+                step_metadata_dict = None
+
+                # Check if this is a branching step (rare in class-specific, but supported)
+                if step.is_branching_step and success:
+                    logger.info(f"🔀 Branching step in class-specific pipeline: {step.name}")
+
+                    # Extract branch metadata
+                    branch_info = self.extract_branch_value(
+                        output,
+                        step.branching_field or "document_type"
+                    )
+
+                    if branch_info:
+                        # Store branching metadata for this step
+                        step_metadata_dict = {
+                            "is_branching_step": True,
+                            "branching_field": step.branching_field or "document_type",
+                            "branch_metadata": branch_info,
+                            "decision_timestamp": datetime.now().isoformat()
+                        }
+
+                        # Add to branching path
+                        execution_metadata["branching_path"].append({
+                            "step_name": step.name,
+                            "step_order": step.order,
+                            "field": branch_info["field"],
+                            "decision": branch_info["value"],
+                            "type": branch_info["type"]
+                        })
+
+                        logger.info(f"🔀 Class-specific branch decision: {branch_info['field']} = {branch_info['value']}")
+
+                # Log step execution with metadata
                 step_execution = PipelineStepExecutionDB(
                     job_id=job_id,
                     step_id=step.id,
@@ -508,12 +609,13 @@ class ModularPipelineExecutor:
                     started_at=datetime.fromtimestamp(step_start_time),
                     completed_at=datetime.now(),
                     execution_time_seconds=step_execution_time,
-                    error_message=error
+                    error_message=error,
+                    step_metadata=step_metadata_dict  # NEW: Store branching metadata
                 )
                 self.session.add(step_execution)
                 self.session.commit()
 
-                # Store metadata
+                # Store metadata for in-memory tracking
                 execution_metadata["steps_executed"].append({
                     "step_name": step.name,
                     "step_order": step.order,
@@ -539,14 +641,27 @@ class ModularPipelineExecutor:
         execution_metadata["total_time"] = total_time
         execution_metadata["total_steps"] = len(all_steps)
 
+        # Build enhanced result_data with branching path
+        result_data = {
+            "output": current_output[:1000],
+            "branching_path": execution_metadata["branching_path"],  # NEW: Complete decision tree
+            "total_steps": len(all_steps),
+            "execution_time": total_time
+        }
+
+        # Add document class info if branching occurred
+        if execution_metadata.get("document_class"):
+            result_data["document_class"] = execution_metadata["document_class"]
+
         job.status = StepExecutionStatus.COMPLETED
         job.completed_at = datetime.now()
         job.progress_percent = 100
-        job.result_data = {"output": current_output[:1000]}
+        job.result_data = result_data  # Enhanced with branching metadata
         job.total_execution_time_seconds = total_time
         self.session.commit()
 
         logger.info(f"✅ Pipeline completed successfully in {total_time:.2f}s")
+        logger.info(f"📊 Branching path: {len(execution_metadata['branching_path'])} decision(s) made")
         return True, current_output, execution_metadata
 
     # ==================== HELPER METHODS ====================
