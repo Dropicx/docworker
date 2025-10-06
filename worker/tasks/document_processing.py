@@ -178,11 +178,11 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             # ==================== TIMING BREAKDOWN ====================
             "ocr_time_seconds": job.ocr_time_seconds,
             "ai_processing_time_seconds": metadata.get('pipeline_execution_time', 0.0),
-            "total_time_seconds": total_time,
+            "processing_time_seconds": total_time,  # Required by TranslationResult model
 
             # ==================== QUALITY METRICS ====================
             "confidence_score": metadata.get('confidence_score', 0.0),
-            "language_translation": metadata.get('language_translation', None),
+            "language_translated_text": metadata.get('language_translation', None),
             "language_confidence_score": metadata.get('language_confidence', None),
 
             # ==================== REQUEST CONTEXT ====================

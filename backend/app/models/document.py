@@ -99,6 +99,18 @@ class TranslationResult(BaseModel):
     processing_time_seconds: float = Field(..., description="Verarbeitungszeit in Sekunden")
     timestamp: datetime = Field(default_factory=datetime.now)
 
+    # NEW: Dynamic branching metadata
+    branching_path: Optional[List[Dict[str, Any]]] = Field(default=[], description="Complete decision tree of branching steps")
+    document_class: Optional[Dict[str, Any]] = Field(None, description="Document classification details")
+    total_steps: Optional[int] = Field(None, description="Total pipeline steps executed")
+    pipeline_execution_time: Optional[float] = Field(None, description="Pipeline execution time in seconds")
+    ocr_time_seconds: Optional[float] = Field(None, description="OCR processing time in seconds")
+    ai_processing_time_seconds: Optional[float] = Field(None, description="AI pipeline processing time in seconds")
+
+    class Config:
+        # Allow extra fields (forward compatibility)
+        extra = "allow"
+
 class ErrorResponse(BaseModel):
     error: str
     message: str
