@@ -16,7 +16,7 @@ from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 
 from app.routers import upload, process, health
-from app.routers.settings_unified import router as settings_router
+from app.routers.settings_auth import router as settings_auth_router
 from app.routers.process_multi_file import router as multi_file_router
 from app.routers.modular_pipeline import router as modular_pipeline_router
 from app.services.cleanup import cleanup_temp_files
@@ -220,7 +220,7 @@ app.include_router(upload.router, prefix="/api", tags=["upload"])
 app.include_router(process.router, prefix="/api", tags=["process"])
 app.include_router(multi_file_router, prefix="/api", tags=["multi-file"])
 app.include_router(health.router, prefix="/api", tags=["health"])
-app.include_router(settings_router, tags=["settings"])  # Settings has its own prefix
+app.include_router(settings_auth_router, tags=["settings"])  # Minimal auth for settings UI
 app.include_router(modular_pipeline_router, tags=["pipeline"])  # Modular pipeline has its own prefix
 
 @app.get("/")

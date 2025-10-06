@@ -1,98 +1,15 @@
 """
-Unified Database Models for Universal Prompt System
+System-Wide Database Models
 
-This module contains the final, unified database models that replace
-the old document-specific system with a universal approach.
+This module contains database models for system settings and logging.
+Legacy prompt models have been removed - use modular_pipeline_models instead.
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Float, JSON, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Float, JSON
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from enum import Enum
-
-# Define enums directly to avoid pydantic dependency
-
-class DocumentClassEnum(str, Enum):
-    ARZTBRIEF = "ARZTBRIEF"
-    BEFUNDBERICHT = "BEFUNDBERICHT"
-    LABORWERTE = "LABORWERTE"
-
-class ProcessingStepEnum(str, Enum):
-    TEXT_EXTRACTION = "TEXT_EXTRACTION"  # Enhanced OCR with conditional routing - STEP 0
-    MEDICAL_VALIDATION = "MEDICAL_VALIDATION"  # STEP 1
-    CLASSIFICATION = "CLASSIFICATION"  # STEP 2
-    PREPROCESSING = "PREPROCESSING"  # STEP 3
-    TRANSLATION = "TRANSLATION"  # STEP 4
-    FACT_CHECK = "FACT_CHECK"  # STEP 5
-    GRAMMAR_CHECK = "GRAMMAR_CHECK"  # STEP 6
-    LANGUAGE_TRANSLATION = "LANGUAGE_TRANSLATION"  # STEP 7
-    FINAL_CHECK = "FINAL_CHECK"  # STEP 8
-    FORMATTING = "FORMATTING"  # STEP 9
 
 Base = declarative_base()
-
-class UniversalPromptsDB(Base):
-    """
-    Database model for universal prompts used across all document types.
-    These prompts are used for steps that should be the same regardless of document type.
-    """
-    __tablename__ = "universal_prompts"
-
-    id = Column(Integer, primary_key=True, index=True)
-
-    # Universal prompts - same for all document types
-    medical_validation_prompt = Column(Text, nullable=False)
-    classification_prompt = Column(Text, nullable=False)
-    ocr_preprocessing_prompt = Column(Text, nullable=True)  # OCR text cleaning and preprocessing
-    preprocessing_prompt = Column(Text, nullable=False)
-    language_translation_prompt = Column(Text, nullable=False)
-
-    # Metadata
-    version = Column(Integer, default=1, nullable=False)
-    last_modified = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
-    modified_by = Column(String(255), nullable=True)
-    is_active = Column(Boolean, default=True, nullable=False)
-
-class DocumentSpecificPromptsDB(Base):
-    """
-    Database model for document-type-specific prompts.
-    These prompts are tailored to specific document types.
-    """
-    __tablename__ = "document_specific_prompts"
-
-    id = Column(Integer, primary_key=True, index=True)
-    document_type = Column(SQLEnum(DocumentClassEnum), nullable=False, unique=True, index=True)
-
-    # Document-specific prompts - tailored to each document type
-    translation_prompt = Column(Text, nullable=False)  # Different complexity levels per doc type
-    fact_check_prompt = Column(Text, nullable=False)   # Domain-specific medical validation
-    grammar_check_prompt = Column(Text, nullable=False)  # Grammar and spelling correction
-    final_check_prompt = Column(Text, nullable=False)  # Type-specific quality criteria
-    formatting_prompt = Column(Text, nullable=False)   # Type-specific formatting rules
-
-    # Metadata
-    version = Column(Integer, default=1, nullable=False)
-    last_modified = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
-    modified_by = Column(String(255), nullable=True)
-
-class UniversalPipelineStepConfigDB(Base):
-    """
-    Database model for universal pipeline step configurations.
-    These settings apply to all document types globally.
-    """
-    __tablename__ = "universal_pipeline_steps"
-
-    id = Column(Integer, primary_key=True, index=True)
-    step_name = Column(SQLEnum(ProcessingStepEnum), nullable=False, unique=True, index=True)
-    enabled = Column(Boolean, default=True, nullable=False)
-    order = Column(Integer, nullable=False)
-    name = Column(String(255), nullable=False)
-    description = Column(Text, nullable=True)
-
-    # Metadata
-    last_modified = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
-    modified_by = Column(String(255), nullable=True)
 
 class AILogInteractionDB(Base):
     """
