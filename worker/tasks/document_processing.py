@@ -150,26 +150,52 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         if not success:
             raise Exception(f"Pipeline execution failed: {metadata.get('error', 'Unknown error')}")
 
-        # Build result data structure (matches TranslationResult model)
+        # ==================== WORKER IS THE ORCHESTRATOR ====================
+        # Worker owns the job lifecycle and builds final result_data
+        # Executor is a pure service that returns metadata
+
+        # Calculate total processing time (includes OCR + PII + Pipeline + Queue time)
         total_time = time.time() - job.started_at.timestamp()
+
+        # Extract document class information from metadata
+        document_class_info = metadata.get('document_class', {})
+        document_class_key = document_class_info.get('class_key', 'UNKNOWN') if isinstance(document_class_info, dict) else 'UNKNOWN'
+
+        # Build comprehensive result_data from all processing stages
         result_data = {
+            # ==================== PIPELINE EXECUTION METADATA ====================
+            "branching_path": metadata.get('branching_path', []),  # Complete decision tree
+            "document_class": document_class_info,  # Document classification details
+            "total_steps": metadata.get('total_steps', 0),
+            "pipeline_execution_time": metadata.get('pipeline_execution_time', 0.0),
+
+            # ==================== PROCESSING METADATA ====================
             "processing_id": processing_id,
             "original_text": extracted_text,
             "translated_text": final_output,
-            "language_translated_text": metadata.get('language_translation', None),
-            "target_language": options.get('target_language', None) if options else None,
-            "document_type_detected": metadata.get('document_class', 'UNKNOWN'),
+            "document_type_detected": document_class_key,
+
+            # ==================== TIMING BREAKDOWN ====================
+            "ocr_time_seconds": job.ocr_time_seconds,
+            "ai_processing_time_seconds": metadata.get('pipeline_execution_time', 0.0),
+            "total_time_seconds": total_time,
+
+            # ==================== QUALITY METRICS ====================
             "confidence_score": metadata.get('confidence_score', 0.0),
+            "language_translation": metadata.get('language_translation', None),
             "language_confidence_score": metadata.get('language_confidence', None),
-            "processing_time_seconds": total_time
+
+            # ==================== REQUEST CONTEXT ====================
+            "target_language": options.get('target_language', None) if options else None
         }
 
-        # Update job with final results
+        # ==================== FINALIZE JOB (SINGLE SOURCE OF TRUTH) ====================
         job.status = StepExecutionStatus.COMPLETED
         job.completed_at = datetime.now()
         job.progress_percent = 100
         job.result_data = result_data
         job.total_execution_time_seconds = total_time
+        job.ai_processing_time_seconds = metadata.get('pipeline_execution_time', 0.0)
         db.commit()
 
         logger.info(f"✅ Document processed successfully: {processing_id}")

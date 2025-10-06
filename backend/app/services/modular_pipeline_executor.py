@@ -640,28 +640,17 @@ class ModularPipelineExecutor:
         total_time = time.time() - pipeline_start_time
         execution_metadata["total_time"] = total_time
         execution_metadata["total_steps"] = len(all_steps)
+        execution_metadata["pipeline_execution_time"] = total_time  # For worker to use
 
-        # Build enhanced result_data with branching path
-        result_data = {
-            "output": current_output[:1000],
-            "branching_path": execution_metadata["branching_path"],  # NEW: Complete decision tree
-            "total_steps": len(all_steps),
-            "execution_time": total_time
-        }
+        # NOTE: Executor is a pure service - it does NOT finalize the job
+        # The worker (orchestrator) is responsible for job finalization
+        # We only return execution results for the worker to use
 
-        # Add document class info if branching occurred
-        if execution_metadata.get("document_class"):
-            result_data["document_class"] = execution_metadata["document_class"]
+        logger.info(f"✅ Pipeline execution completed successfully in {total_time:.2f}s")
+        logger.info(f"📊 Branching decisions: {len(execution_metadata['branching_path'])} decision(s) made")
+        if execution_metadata.get('document_class'):
+            logger.info(f"📄 Document class: {execution_metadata['document_class']['display_name']}")
 
-        job.status = StepExecutionStatus.COMPLETED
-        job.completed_at = datetime.now()
-        job.progress_percent = 100
-        job.result_data = result_data  # Enhanced with branching metadata
-        job.total_execution_time_seconds = total_time
-        self.session.commit()
-
-        logger.info(f"✅ Pipeline completed successfully in {total_time:.2f}s")
-        logger.info(f"📊 Branching path: {len(execution_metadata['branching_path'])} decision(s) made")
         return True, current_output, execution_metadata
 
     # ==================== HELPER METHODS ====================
