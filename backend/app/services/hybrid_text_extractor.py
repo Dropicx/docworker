@@ -19,15 +19,6 @@ from app.services.file_quality_detector import (
 )
 from app.services.ovh_client import OVHClient
 from app.services.file_sequence_detector import FileSequenceDetector
-# Optional imports for prompt management (fallback gracefully if not available)
-try:
-    from app.services.unified_prompt_manager import UnifiedPromptManager
-    from app.database.connection import get_session
-    PROMPT_MANAGER_AVAILABLE = True
-except ImportError:
-    UnifiedPromptManager = None
-    get_session = None
-    PROMPT_MANAGER_AVAILABLE = False
 
 # Optional imports for local OCR (fallback gracefully if not available)
 try:
@@ -50,10 +41,6 @@ class HybridTextExtractor:
         self.ovh_client = OVHClient()
         self.sequence_detector = FileSequenceDetector()
 
-        # Initialize unified prompt manager for OCR prompts
-        self.prompt_manager = None  # Initialize later when needed to avoid startup issues
-        self.session_generator = None  # Keep reference to session generator
-
         # Initialize local OCR if available
         self.local_ocr_available = LOCAL_OCR_AVAILABLE
         if self.local_ocr_available:
@@ -71,41 +58,8 @@ class HybridTextExtractor:
         logger.debug("🚀 Hybrid Text Extractor initialized")
         logger.debug(f"   - Quality Detector: ✅")
         logger.debug(f"   - Sequence Detector: ✅")
-        logger.debug(f"   - Prompt Manager: {'⏳' if self.prompt_manager is None else '✅'}")
         logger.debug(f"   - OVH Vision: {'✅' if self.ovh_client.vision_client else '❌'}")
         logger.debug(f"   - Local OCR: {'✅' if self.local_ocr_available else '❌'}")
-
-    def _get_prompt_manager(self):
-        """Get or initialize prompt manager when needed"""
-        if not PROMPT_MANAGER_AVAILABLE:
-            logger.warning("⚠️ Prompt manager not available due to import issues")
-            return None
-
-        if self.prompt_manager is None:
-            try:
-                # Create a session using the dependency function
-                # Keep the session generator alive for the lifetime of the prompt manager
-                self.session_generator = get_session()
-                session = next(self.session_generator)
-
-                # Initialize the prompt manager with the session
-                self.prompt_manager = UnifiedPromptManager(session)
-                logger.debug("✅ Unified Prompt Manager connected on demand")
-
-            except Exception as e:
-                logger.warning(f"⚠️ Could not connect to Unified Prompt Manager: {e}")
-                return None
-        return self.prompt_manager
-
-    def __del__(self):
-        """Cleanup session generator on destruction"""
-        if hasattr(self, 'session_generator') and self.session_generator is not None:
-            try:
-                next(self.session_generator)  # This triggers the finally block in get_session()
-            except StopIteration:
-                pass  # Generator is exhausted, session is closed
-            except Exception:
-                pass  # Ignore cleanup errors
 
     async def _apply_ocr_preprocessing(self, raw_text: str) -> str:
         """

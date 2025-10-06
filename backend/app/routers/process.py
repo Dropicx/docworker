@@ -27,10 +27,8 @@ from app.services.cleanup import (
 from app.database.connection import get_db_session
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
 from app.services.ovh_client import OVHClient
-from app.services.unified_prompt_manager import UnifiedPromptManager
 from app.services.ai_logging_service import AILoggingService
 from app.services.hybrid_text_extractor import HybridTextExtractor
-from app.routers.process_unified import process_document_unified
 from app.database.connection import get_session
 from sqlalchemy.orm import Session
 import os
@@ -42,16 +40,18 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer()
 
 def verify_session_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> bool:
-    """Verify session token for pipeline statistics access."""
+    """
+    Verify session token for pipeline statistics access.
+    Uses minimal auth from settings_auth router.
+    """
     token = credentials.credentials
-    # Import here to avoid circular imports
-    from app.routers.settings_unified import active_sessions
-    if token in active_sessions:
-        if active_sessions[token] > datetime.now():
-            return True
-        else:
-            # Remove expired token
-            del active_sessions[token]
+    # Simple token validation - check if token matches access code hash
+    import hashlib
+    expected_token = hashlib.sha256(os.getenv("SETTINGS_ACCESS_CODE", "admin123").encode()).hexdigest()
+
+    if token == expected_token:
+        return True
+
     raise HTTPException(
         status_code=401,
         detail="Invalid or expired session token"
@@ -113,20 +113,6 @@ async def start_processing(
             status_code=500,
             detail=f"Fehler beim Starten der Verarbeitung: {str(e)}"
         )
-
-async def process_document(processing_id: str):
-    """
-    Verarbeitet Dokument im Hintergrund mit dem neuen unified System
-    """
-    # Use unified system (always)
-    await process_document_unified(processing_id)
-
-async def process_document_optimized(processing_id: str):
-    """
-    Optimized document processing - now uses unified system
-    """
-    # Use unified system (same as regular processing)
-    await process_document_unified(processing_id)
 
 async def process_document_legacy(processing_id: str):
     """
@@ -627,10 +613,10 @@ async def get_pipeline_stats(
         )
 
     try:
-        # Get real statistics from database
+        # Get real statistics from database (MODULAR PIPELINE)
         from app.database.connection import get_session
-        from app.database.unified_models import UniversalPipelineStepConfigDB, DocumentSpecificPromptsDB, UniversalPromptsDB
-        from app.database.models import SystemSettingsDB, AIInteractionLog
+        from app.database.modular_pipeline_models import DynamicPipelineStepDB, PipelineStepExecutionDB
+        from app.database.unified_models import SystemSettingsDB, AILogInteractionDB
         from sqlalchemy import func, desc
 
         db = next(get_session())
@@ -642,45 +628,50 @@ async def get_pipeline_stats(
         # ==================== AI INTERACTION STATISTICS ====================
 
         # Total AI interactions
-        total_interactions = db.query(AIInteractionLog).count()
+        total_interactions = db.query(PipelineStepExecutionDB).count()
 
         # Recent interactions (24h)
-        recent_interactions = db.query(AIInteractionLog).filter(
-            AIInteractionLog.created_at >= last_24h
+        recent_interactions = db.query(PipelineStepExecutionDB).filter(
+            PipelineStepExecutionDB.started_at >= last_24h
         ).count()
 
         # Weekly interactions
-        weekly_interactions = db.query(AIInteractionLog).filter(
-            AIInteractionLog.created_at >= last_7d
+        weekly_interactions = db.query(PipelineStepExecutionDB).filter(
+            PipelineStepExecutionDB.started_at >= last_7d
         ).count()
 
         # Average processing time (last 100 interactions)
-        avg_processing_time = db.query(func.avg(AIInteractionLog.processing_time_ms)).filter(
-            AIInteractionLog.processing_time_ms.isnot(None)
+        avg_processing_time = db.query(func.avg(PipelineStepExecutionDB.execution_time_seconds)).filter(
+            PipelineStepExecutionDB.execution_time_seconds.isnot(None)
         ).limit(100).scalar() or 0
+        avg_processing_time_ms = avg_processing_time * 1000  # Convert to ms
 
-        # Success rate (last 100 interactions)
-        recent_logs = db.query(AIInteractionLog).order_by(desc(AIInteractionLog.created_at)).limit(100).all()
-        success_count = sum(1 for log in recent_logs if log.status == "success")
+        # Success rate (last 100 executions)
+        recent_logs = db.query(PipelineStepExecutionDB).order_by(desc(PipelineStepExecutionDB.started_at)).limit(100).all()
+        success_count = sum(1 for log in recent_logs if log.status == "COMPLETED")
         success_rate = (success_count / len(recent_logs) * 100) if recent_logs else 100
 
         # Most used step
         step_usage = db.query(
-            AIInteractionLog.step_name,
-            func.count(AIInteractionLog.step_name).label('count')
-        ).group_by(AIInteractionLog.step_name).order_by(desc('count')).first()
-        most_used_step = step_usage.step_name if step_usage else "N/A"
+            PipelineStepExecutionDB.step_id,
+            func.count(PipelineStepExecutionDB.step_id).label('count')
+        ).group_by(PipelineStepExecutionDB.step_id).order_by(desc('count')).first()
+
+        if step_usage:
+            most_used_step_db = db.query(DynamicPipelineStepDB).filter_by(id=step_usage.step_id).first()
+            most_used_step = most_used_step_db.name if most_used_step_db else "N/A"
+        else:
+            most_used_step = "N/A"
 
         # ==================== PIPELINE CONFIGURATION STATISTICS ====================
 
-        # Pipeline steps status
-        pipeline_steps = db.query(UniversalPipelineStepConfigDB).order_by(UniversalPipelineStepConfigDB.order).all()
+        # Pipeline steps status (modular system)
+        pipeline_steps = db.query(DynamicPipelineStepDB).order_by(DynamicPipelineStepDB.order).all()
         enabled_steps = [step for step in pipeline_steps if step.enabled]
         disabled_steps = [step for step in pipeline_steps if not step.enabled]
 
-        # Configuration counts
-        total_universal_prompts = db.query(UniversalPromptsDB).count()
-        total_document_prompts = db.query(DocumentSpecificPromptsDB).count()
+        # Configuration counts (modular system)
+        total_pipeline_steps = len(pipeline_steps)
 
         # Get system settings
         system_settings = db.query(SystemSettingsDB).filter(
@@ -702,7 +693,7 @@ async def get_pipeline_stats(
         performance_metrics = {}
 
         if total_interactions > 0:
-            performance_metrics["avg_processing_time"] = f"{avg_processing_time:.0f}ms average processing time"
+            performance_metrics["avg_processing_time"] = f"{avg_processing_time_ms:.0f}ms average processing time"
             performance_metrics["success_rate"] = f"{success_rate:.1f}% success rate"
             performance_metrics["daily_throughput"] = f"{recent_interactions} interactions in last 24h"
             performance_metrics["weekly_volume"] = f"{weekly_interactions} interactions in last 7 days"
@@ -713,29 +704,28 @@ async def get_pipeline_stats(
             performance_metrics["active_pipeline_steps"] = f"{len(enabled_steps)}/{len(pipeline_steps)} pipeline steps enabled"
             performance_metrics["most_used_step"] = f"Most used: {most_used_step}"
 
-        performance_metrics["configuration_completeness"] = f"{total_universal_prompts} universal + {total_document_prompts} document-specific prompts configured"
+        performance_metrics["configuration_completeness"] = f"{total_pipeline_steps} dynamic pipeline steps configured"
         performance_metrics["feature_adoption"] = f"{enabled_features}/{total_features} features enabled"
 
         # ==================== CACHE STATISTICS (for frontend compatibility) ====================
 
         # Create cache statistics based on AI interactions and real settings
-        # This matches the frontend expectation structure
         cache_statistics = {
             "total_entries": total_interactions,
-            "active_entries": recent_interactions,  # Recent interactions as "active"
-            "expired_entries": max(0, total_interactions - recent_interactions),  # Older entries as "expired"
-            "cache_timeout_seconds": actual_cache_timeout  # Use actual cache timeout from database
+            "active_entries": recent_interactions,
+            "expired_entries": max(0, total_interactions - recent_interactions),
+            "cache_timeout_seconds": actual_cache_timeout
         }
 
         return {
-            "pipeline_mode": "unified",
+            "pipeline_mode": "modular",
             "timestamp": now.isoformat(),
             "cache_statistics": cache_statistics,
             "ai_interaction_statistics": {
                 "total_interactions": total_interactions,
                 "last_24h_interactions": recent_interactions,
                 "last_7d_interactions": weekly_interactions,
-                "avg_processing_time_ms": round(avg_processing_time, 2) if avg_processing_time else 0,
+                "avg_processing_time_ms": round(avg_processing_time_ms, 2) if avg_processing_time_ms else 0,
                 "success_rate_percent": round(success_rate, 1),
                 "most_used_step": most_used_step
             },
@@ -743,13 +733,12 @@ async def get_pipeline_stats(
                 "total_steps": len(pipeline_steps),
                 "enabled_steps": len(enabled_steps),
                 "disabled_steps": len(disabled_steps),
-                "enabled_step_names": [step.step_name for step in enabled_steps],
-                "disabled_step_names": [step.step_name for step in disabled_steps]
+                "enabled_step_names": [step.name for step in enabled_steps],
+                "disabled_step_names": [step.name for step in disabled_steps]
             },
             "prompt_configuration": {
-                "universal_prompts": total_universal_prompts,
-                "document_specific_prompts": total_document_prompts,
-                "total_prompts_configured": total_universal_prompts + total_document_prompts
+                "dynamic_pipeline_steps": total_pipeline_steps,
+                "total_prompts_configured": total_pipeline_steps
             },
             "system_health": {
                 "enabled_features": enabled_features,
