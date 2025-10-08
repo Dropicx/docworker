@@ -70,7 +70,7 @@ const PipelineBuilder: React.FC = () => {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
 
   // Pipeline Tab State (NEW)
-  const [activePipelineTab, setActivePipelineTab] = useState<'universal' | number>('universal');
+  const [activePipelineTab, setActivePipelineTab] = useState<'pre-branching' | 'post-branching' | number>('pre-branching');
 
   // Track previous document class count for notifications (NEW)
   const [prevClassCount, setPrevClassCount] = useState<number>(0);
@@ -195,13 +195,23 @@ const PipelineBuilder: React.FC = () => {
 
   // Get default document class ID based on active tab context
   const getDefaultDocumentClassId = (): number | null => {
-    return activePipelineTab === 'universal' ? null : activePipelineTab;
+    if (activePipelineTab === 'pre-branching' || activePipelineTab === 'post-branching') {
+      return null;
+    }
+    return activePipelineTab;
   };
 
-  // Get step count for a specific document class or universal
-  const getStepCount = (context: 'universal' | number): number => {
-    if (context === 'universal') {
-      return steps.filter(s => s.document_class_id === null).length;
+  // Get default post_branching flag based on active tab context
+  const getDefaultPostBranching = (): boolean => {
+    return activePipelineTab === 'post-branching';
+  };
+
+  // Get step count for a specific document class or phase
+  const getStepCount = (context: 'pre-branching' | 'post-branching' | number): number => {
+    if (context === 'pre-branching') {
+      return steps.filter(s => s.document_class_id === null && !s.post_branching).length;
+    } else if (context === 'post-branching') {
+      return steps.filter(s => s.document_class_id === null && s.post_branching).length;
     } else {
       return steps.filter(s => s.document_class_id === context).length;
     }
@@ -209,16 +219,20 @@ const PipelineBuilder: React.FC = () => {
 
   // Get filtered steps based on active tab
   const getDisplayedSteps = (): PipelineStep[] => {
-    if (activePipelineTab === 'universal') {
-      return steps.filter(s => s.document_class_id === null).sort((a, b) => a.order - b.order);
+    if (activePipelineTab === 'pre-branching') {
+      return steps.filter(s => s.document_class_id === null && !s.post_branching).sort((a, b) => a.order - b.order);
+    } else if (activePipelineTab === 'post-branching') {
+      return steps.filter(s => s.document_class_id === null && s.post_branching).sort((a, b) => a.order - b.order);
     } else {
       return steps.filter(s => s.document_class_id === activePipelineTab).sort((a, b) => a.order - b.order);
     }
   };
 
   // Get document class name by ID or context
-  const getDocumentClassName = (classId: number | null | 'universal'): string => {
+  const getDocumentClassName = (classId: number | null | 'pre-branching' | 'post-branching' | 'universal'): string => {
     if (classId === null || classId === 'universal') return 'Universal';
+    if (classId === 'pre-branching') return 'Pre-Branching';
+    if (classId === 'post-branching') return 'Post-Branching';
     const docClass = documentClasses.find(c => c.id === classId);
     return docClass ? `${docClass.icon} ${docClass.display_name}` : `Class ${classId}`;
   };
@@ -455,23 +469,23 @@ const PipelineBuilder: React.FC = () => {
         {/* Pipeline Context Tabs */}
         <div className="border-b border-primary-200 -mx-6 px-6 mb-6">
           <div className="flex space-x-1 -mb-px overflow-x-auto">
-            {/* Universal Tab */}
+            {/* Pre-Branching Tab */}
             <button
-              onClick={() => setActivePipelineTab('universal')}
+              onClick={() => setActivePipelineTab('pre-branching')}
               className={`flex items-center space-x-2 px-6 py-3 rounded-t-lg font-medium transition-all whitespace-nowrap ${
-                activePipelineTab === 'universal'
+                activePipelineTab === 'pre-branching'
                   ? 'bg-white border-t-2 border-x-2 border-brand-600 text-brand-700 -mb-px'
                   : 'text-primary-600 hover:bg-primary-50 border-b-2 border-transparent'
               }`}
             >
               <Settings className="w-4 h-4" />
-              <span>Universal</span>
+              <span>Pre-Branching</span>
               <span className={`px-2 py-0.5 text-xs rounded ${
-                activePipelineTab === 'universal'
+                activePipelineTab === 'pre-branching'
                   ? 'bg-brand-100 text-brand-700'
                   : 'bg-primary-100 text-primary-600'
               }`}>
-                {getStepCount('universal')}
+                {getStepCount('pre-branching')}
               </span>
             </button>
 
@@ -497,6 +511,26 @@ const PipelineBuilder: React.FC = () => {
                 </span>
               </button>
             ))}
+
+            {/* Post-Branching Tab */}
+            <button
+              onClick={() => setActivePipelineTab('post-branching')}
+              className={`flex items-center space-x-2 px-6 py-3 rounded-t-lg font-medium transition-all whitespace-nowrap ${
+                activePipelineTab === 'post-branching'
+                  ? 'bg-white border-t-2 border-x-2 border-brand-600 text-brand-700 -mb-px'
+                  : 'text-primary-600 hover:bg-primary-50 border-b-2 border-transparent'
+              }`}
+            >
+              <Boxes className="w-4 h-4" />
+              <span>Post-Branching</span>
+              <span className={`px-2 py-0.5 text-xs rounded ${
+                activePipelineTab === 'post-branching'
+                  ? 'bg-brand-100 text-brand-700'
+                  : 'bg-primary-100 text-primary-600'
+              }`}>
+                {getStepCount('post-branching')}
+              </span>
+            </button>
           </div>
         </div>
 
@@ -506,11 +540,17 @@ const PipelineBuilder: React.FC = () => {
           </div>
         ) : getDisplayedSteps().length === 0 ? (
           <div className="text-center py-8 text-primary-500">
-            {activePipelineTab === 'universal' ? (
+            {activePipelineTab === 'pre-branching' ? (
               <>
-                <p>Keine universellen Schritte konfiguriert.</p>
-                <p className="text-sm mt-2">Diese Schritte laufen für alle Dokumenttypen.</p>
+                <p>Keine Pre-Branching Schritte konfiguriert.</p>
+                <p className="text-sm mt-2">Diese Schritte laufen VOR der dokumentspezifischen Verarbeitung.</p>
                 <p className="text-sm">Klicken Sie auf "Schritt hinzufügen", um zu beginnen.</p>
+              </>
+            ) : activePipelineTab === 'post-branching' ? (
+              <>
+                <p>Keine Post-Branching Schritte konfiguriert.</p>
+                <p className="text-sm mt-2">Diese Schritte laufen NACH der dokumentspezifischen Verarbeitung.</p>
+                <p className="text-sm">Ideal für universelle Aufgaben wie Übersetzung oder Formatierung.</p>
               </>
             ) : (
               <>
@@ -648,6 +688,7 @@ const PipelineBuilder: React.FC = () => {
           models={models}
           documentClasses={documentClasses}
           defaultDocumentClassId={getDefaultDocumentClassId()}
+          defaultPostBranching={getDefaultPostBranching()}
           pipelineContext={getDocumentClassName(activePipelineTab)}
           isOpen={isEditorOpen}
           onClose={() => {

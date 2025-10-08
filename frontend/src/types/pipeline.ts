@@ -77,6 +77,7 @@ export interface PipelineStep {
   document_class_id: number | null;
   is_branching_step: boolean;
   branching_field: string | null;
+  post_branching: boolean;  // NEW: Runs after document-specific processing
 }
 
 export interface PipelineStepRequest {
@@ -97,6 +98,7 @@ export interface PipelineStepRequest {
   document_class_id?: number | null;
   is_branching_step?: boolean;
   branching_field?: string | null;
+  post_branching?: boolean;  // NEW: Runs after document-specific processing
 }
 
 // ==================== AI MODELS ====================
@@ -193,9 +195,10 @@ export interface PipelineBranch {
 }
 
 export interface PipelineVisualization {
-  universal_steps: PipelineStep[];
+  pre_branching_steps: PipelineStep[];  // NEW: Pre-branching universal steps
   branching_step: PipelineStep | null;
   branches: {
     [classKey: string]: PipelineBranch;
   };
+  post_branching_steps: PipelineStep[];  // NEW: Post-branching universal steps
 }

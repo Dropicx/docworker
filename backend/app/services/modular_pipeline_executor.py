@@ -75,22 +75,44 @@ class ModularPipelineExecutor:
 
     def load_universal_steps(self) -> List[DynamicPipelineStepDB]:
         """
-        Load universal pipeline steps (document_class_id = NULL).
-        These steps run for all documents regardless of classification.
+        Load pre-branching universal pipeline steps (document_class_id = NULL, post_branching = FALSE).
+        These steps run for all documents BEFORE document-specific processing.
 
         Returns:
-            List of universal pipeline steps ordered by execution order
+            List of pre-branching universal pipeline steps ordered by execution order
         """
         try:
             steps = self.session.query(DynamicPipelineStepDB).filter_by(
                 enabled=True,
-                document_class_id=None
+                document_class_id=None,
+                post_branching=False
             ).order_by(DynamicPipelineStepDB.order).all()
 
-            logger.info(f"📋 Loaded {len(steps)} universal pipeline steps")
+            logger.info(f"📋 Loaded {len(steps)} pre-branching universal pipeline steps")
             return steps
         except Exception as e:
             logger.error(f"❌ Failed to load universal pipeline steps: {e}")
+            return []
+
+    def load_post_branching_steps(self) -> List[DynamicPipelineStepDB]:
+        """
+        Load post-branching universal pipeline steps (document_class_id = NULL, post_branching = TRUE).
+        These steps run for all documents AFTER document-specific processing.
+
+        Returns:
+            List of post-branching universal pipeline steps ordered by execution order
+        """
+        try:
+            steps = self.session.query(DynamicPipelineStepDB).filter_by(
+                enabled=True,
+                document_class_id=None,
+                post_branching=True
+            ).order_by(DynamicPipelineStepDB.order).all()
+
+            logger.info(f"📋 Loaded {len(steps)} post-branching universal pipeline steps")
+            return steps
+        except Exception as e:
+            logger.error(f"❌ Failed to load post-branching pipeline steps: {e}")
             return []
 
     def load_steps_by_document_class(self, document_class_id: int) -> List[DynamicPipelineStepDB]:
@@ -423,12 +445,13 @@ class ModularPipelineExecutor:
         execution_metadata = {
             "job_id": job_id,
             "total_steps": 0,
-            "universal_steps": len(universal_steps),
+            "pre_branching_steps": len(universal_steps),
             "steps_executed": [],
             "total_time": 0,
             "branching_occurred": False,
             "document_class": None,
-            "branching_path": []  # NEW: Track all branching decisions
+            "branching_path": [],  # Track all branching decisions
+            "post_branching_steps": 0  # Will be set later
         }
 
         pipeline_start_time = time.time()
@@ -667,10 +690,83 @@ class ModularPipelineExecutor:
                 if step.input_from_previous_step:
                     current_output = output
 
+        # ==================== PHASE 3: POST-BRANCHING UNIVERSAL STEPS ====================
+        post_branching_steps = self.load_post_branching_steps()
+
+        if post_branching_steps:
+            logger.info(f"📋 Phase 3: Executing {len(post_branching_steps)} post-branching universal steps")
+
+            for idx, step in enumerate(post_branching_steps):
+                step_start_time = time.time()
+                all_steps.append(step)
+
+                # Update job progress
+                # Phase 3 is the last 20% of progress (50% universal + 30% doc-specific + 20% post-branching)
+                base_progress = 80  # After Phase 1 (50%) and Phase 2 (30%)
+                progress_percent = base_progress + int((idx / max(len(post_branching_steps), 1)) * 20)
+                job.progress_percent = progress_percent
+                job.current_step_id = step.id
+                self.session.commit()
+
+                logger.info(f"▶️  Step {idx + 1}/{len(post_branching_steps)}: {step.name} [POST-BRANCHING]")
+
+                # Execute step
+                success, output, error = await self.execute_step(
+                    step=step,
+                    input_text=current_output,
+                    context=context
+                )
+
+                step_execution_time = time.time() - step_start_time
+
+                # Log step execution
+                step_execution = PipelineStepExecutionDB(
+                    job_id=job_id,
+                    step_id=step.id,
+                    step_name=step.name,
+                    step_order=step.order,
+                    status=StepExecutionStatus.COMPLETED if success else StepExecutionStatus.FAILED,
+                    input_text=current_output[:1000],
+                    output_text=output[:1000] if success else None,
+                    model_used=self.get_model_info(step.selected_model_id).name if success else None,
+                    prompt_used=step.prompt_template[:500],
+                    started_at=datetime.fromtimestamp(step_start_time),
+                    completed_at=datetime.now(),
+                    execution_time_seconds=step_execution_time,
+                    error_message=error,
+                    step_metadata={"post_branching": True}
+                )
+                self.session.add(step_execution)
+                self.session.commit()
+
+                # Store metadata for in-memory tracking
+                execution_metadata["steps_executed"].append({
+                    "step_name": step.name,
+                    "step_order": step.order,
+                    "success": success,
+                    "execution_time": step_execution_time,
+                    "error": error,
+                    "post_branching": True
+                })
+
+                if not success:
+                    logger.error(f"❌ Pipeline failed at post-branching step '{step.name}': {error}")
+                    execution_metadata["failed_at_step"] = step.name
+                    execution_metadata["failed_step_id"] = step.id
+                    execution_metadata["error"] = error
+                    execution_metadata["error_type"] = "step_execution_failed"
+                    execution_metadata["total_time"] = time.time() - pipeline_start_time
+                    return False, current_output, execution_metadata
+
+                # Update current output for next step
+                if step.input_from_previous_step:
+                    current_output = output
+
         # Pipeline completed successfully
         total_time = time.time() - pipeline_start_time
         execution_metadata["total_time"] = total_time
         execution_metadata["total_steps"] = len(all_steps)
+        execution_metadata["post_branching_steps"] = len(post_branching_steps) if post_branching_steps else 0
         execution_metadata["pipeline_execution_time"] = total_time  # For worker to use
 
         # NOTE: Executor is a pure service - it does NOT finalize the job

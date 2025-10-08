@@ -153,6 +153,7 @@ class DynamicPipelineStepDB(Base):
     - document_class_id = NULL: Universal step (runs for all documents)
     - document_class_id = ID: Class-specific step (runs only for that document class)
     - is_branching_step = True: Step that determines which branch to follow
+    - post_branching = True: Universal step that runs AFTER document-specific processing
     """
     __tablename__ = "dynamic_pipeline_steps"
 
@@ -170,6 +171,7 @@ class DynamicPipelineStepDB(Base):
     document_class_id = Column(Integer, ForeignKey('document_classes.id'), nullable=True, index=True)
     is_branching_step = Column(Boolean, default=False, nullable=False)
     branching_field = Column(String(100), nullable=True)  # Field to extract from output (e.g., "document_type")
+    post_branching = Column(Boolean, default=False, nullable=False, index=True)  # Runs after doc-specific steps
 
     # Step configuration
     prompt_template = Column(Text, nullable=False)  # Custom prompt for this step

@@ -77,6 +77,7 @@ class PipelineStepRequest(BaseModel):
     document_class_id: Optional[int] = None
     is_branching_step: bool = False
     branching_field: Optional[str] = "document_type"
+    post_branching: bool = False  # NEW: Runs after document-specific processing
 
     @validator('prompt_template')
     def validate_prompt(cls, v):
@@ -109,6 +110,7 @@ class PipelineStepResponse(BaseModel):
     document_class_id: Optional[int]
     is_branching_step: bool
     branching_field: Optional[str]
+    post_branching: bool  # NEW: Runs after document-specific processing
 
     class Config:
         from_attributes = True

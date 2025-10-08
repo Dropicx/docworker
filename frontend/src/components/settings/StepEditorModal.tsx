@@ -21,7 +21,8 @@ import {
   ToggleRight,
   Loader2,
   GitBranch,
-  Tag
+  Tag,
+  Boxes
 } from 'lucide-react';
 import { pipelineApi } from '../../services/pipelineApi';
 import { PipelineStep, AIModel, PipelineStepRequest, DocumentClass } from '../../types/pipeline';
@@ -31,6 +32,7 @@ interface StepEditorModalProps {
   models: AIModel[];
   documentClasses: DocumentClass[]; // NEW: For document class selection
   defaultDocumentClassId?: number | null; // NEW: Pre-fill based on active tab
+  defaultPostBranching?: boolean; // NEW: Pre-fill post_branching flag based on active tab
   pipelineContext?: string; // NEW: Display context in header (e.g., "Universal" or "📨 ARZTBRIEF")
   isOpen: boolean;
   onClose: () => void;
@@ -42,6 +44,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   models,
   documentClasses,
   defaultDocumentClassId,
+  defaultPostBranching = false,
   pipelineContext,
   isOpen,
   onClose,
@@ -65,6 +68,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   const [documentClassId, setDocumentClassId] = useState<number | null>(null);
   const [isBranchingStep, setIsBranchingStep] = useState(false);
   const [branchingField, setBranchingField] = useState<string>('document_type');
+  const [postBranching, setPostBranching] = useState(false); // NEW: Post-branching flag
 
   // UI State
   const [saving, setSaving] = useState(false);
@@ -91,6 +95,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setDocumentClassId(step.document_class_id);
       setIsBranchingStep(step.is_branching_step);
       setBranchingField(step.branching_field || 'document_type');
+      setPostBranching(step.post_branching || false);
     } else {
       // Creating new step - set defaults
       setName('');
@@ -109,8 +114,9 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setDocumentClassId(defaultDocumentClassId !== undefined ? defaultDocumentClassId : null);
       setIsBranchingStep(false);
       setBranchingField('document_type');
+      setPostBranching(defaultPostBranching); // NEW: Pre-fill from active tab
     }
-  }, [step, models, defaultDocumentClassId]);
+  }, [step, models, defaultDocumentClassId, defaultPostBranching]);
 
   // Validate form
   const validateForm = (): boolean => {
@@ -170,7 +176,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
         // NEW: Branching fields
         document_class_id: documentClassId,
         is_branching_step: isBranchingStep,
-        branching_field: isBranchingStep ? branchingField : null
+        branching_field: isBranchingStep ? branchingField : null,
+        post_branching: postBranching // NEW: Post-branching flag
       };
 
       if (step) {
@@ -502,6 +509,27 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   </div>
                 )}
               </div>
+
+              {/* Post-Branching Checkbox (only for universal steps) */}
+              {documentClassId === null && !isBranchingStep && (
+                <div>
+                  <label className="flex items-center space-x-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={postBranching}
+                      onChange={(e) => setPostBranching(e.target.checked)}
+                      className="w-4 h-4 text-brand-600 border-primary-300 rounded focus:ring-brand-500"
+                    />
+                    <span className="text-sm font-medium text-primary-700 flex items-center space-x-2">
+                      <Boxes className="w-4 h-4" />
+                      <span>Nach dokumentspezifischen Schritten ausführen</span>
+                    </span>
+                  </label>
+                  <p className="text-xs text-primary-500 mt-1 ml-7">
+                    Aktivieren Sie dies für universelle Schritte, die NACH der dokumentspezifischen Verarbeitung laufen sollen (z.B. Übersetzung, Formatierung)
+                  </p>
+                </div>
+              )}
 
               {/* Branching Field (only shown if branching step is enabled) */}
               {isBranchingStep && (
