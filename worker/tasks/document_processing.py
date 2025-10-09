@@ -159,23 +159,41 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         job.ai_processing_time_seconds = pipeline_time
         db.commit()  # Persist AI processing time immediately
 
-        # Check if pipeline succeeded
+        # Check if pipeline succeeded or terminated early
         if not success:
-            # Executor returns detailed error information
-            error_msg = metadata.get('error', 'Unknown error')
-            failed_step = metadata.get('failed_at_step', 'Unknown step')
-            error_type = metadata.get('error_type', 'unknown')
-            failed_step_id = metadata.get('failed_step_id', None)
+            # Check if this is a controlled termination (valid outcome) vs. actual failure
+            if metadata.get('terminated', False):
+                # ==================== CONTROLLED TERMINATION ====================
+                # This is a VALID outcome (e.g., non-medical content detected)
+                # Not an error - just an early exit with a specific reason
+                termination_reason = metadata.get('termination_reason', 'Processing stopped')
+                termination_message = metadata.get('termination_message', 'Processing was terminated.')
+                termination_step = metadata.get('termination_step', 'Unknown')
 
-            logger.error(f"❌ Pipeline failed at step '{failed_step}': {error_msg}")
-            logger.error(f"   Error type: {error_type}, Step ID: {failed_step_id}")
+                logger.warning(f"🛑 Pipeline terminated at '{termination_step}': {termination_reason}")
+                logger.info(f"   Message: {termination_message}")
 
-            # Store error details in job before raising exception
-            job.error_message = f"[{failed_step}] {error_msg}"
-            job.error_step_id = failed_step_id
-            db.commit()
+                # Set final_output to termination message for user display
+                final_output = termination_message
 
-            raise Exception(f"Pipeline execution failed at '{failed_step}': {error_msg}")
+                # Continue to finalization (this is a valid outcome, not an error)
+            else:
+                # ==================== ACTUAL PIPELINE FAILURE ====================
+                # This is a real error - executor encountered a problem
+                error_msg = metadata.get('error', 'Unknown error')
+                failed_step = metadata.get('failed_at_step', 'Unknown step')
+                error_type = metadata.get('error_type', 'unknown')
+                failed_step_id = metadata.get('failed_step_id', None)
+
+                logger.error(f"❌ Pipeline failed at step '{failed_step}': {error_msg}")
+                logger.error(f"   Error type: {error_type}, Step ID: {failed_step_id}")
+
+                # Store error details in job before raising exception
+                job.error_message = f"[{failed_step}] {error_msg}"
+                job.error_step_id = failed_step_id
+                db.commit()
+
+                raise Exception(f"Pipeline execution failed at '{failed_step}': {error_msg}")
 
         # ==================== WORKER IS THE ORCHESTRATOR ====================
         # Worker owns the job lifecycle and builds final result_data
@@ -211,6 +229,13 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             "confidence_score": metadata.get('confidence_score', 0.0),
             "language_translated_text": metadata.get('language_translation', None),
             "language_confidence_score": metadata.get('language_confidence', None),
+
+            # ==================== TERMINATION INFO (if applicable) ====================
+            "terminated": metadata.get('terminated', False),
+            "termination_reason": metadata.get('termination_reason', None),
+            "termination_message": metadata.get('termination_message', None),
+            "termination_step": metadata.get('termination_step', None),
+            "matched_value": metadata.get('matched_value', None),
 
             # ==================== REQUEST CONTEXT ====================
             "target_language": options.get('target_language', None) if options else None
