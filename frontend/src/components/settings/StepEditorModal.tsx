@@ -825,6 +825,60 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   </div>
                 )}
 
+                {/* Matching Preview */}
+                {stopOnValues.length > 0 && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs font-semibold text-blue-900 mb-2">
+                      🔍 Matching-Vorschau (nur ERSTES WORT wird geprüft)
+                    </p>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-blue-700 font-medium mb-1">
+                          Pipeline wird gestoppt, wenn die Ausgabe startet mit:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {stopOnValues.map((value, idx) => (
+                            <code key={idx} className="px-2 py-0.5 bg-blue-100 border border-blue-300 rounded text-xs font-mono text-blue-800">
+                              {value}
+                            </code>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="border-t border-blue-200 pt-2">
+                        <p className="text-xs text-blue-700 font-medium mb-1">Beispiele:</p>
+                        <ul className="text-xs text-blue-600 space-y-1">
+                          <li className="flex items-start space-x-2">
+                            <span className="text-green-600 font-bold">✓</span>
+                            <span>
+                              <code className="bg-green-50 px-1 rounded">{stopOnValues[0] || 'STOP_VALUE'}</code> → Pipeline stoppt
+                            </span>
+                          </li>
+                          <li className="flex items-start space-x-2">
+                            <span className="text-green-600 font-bold">✓</span>
+                            <span>
+                              <code className="bg-green-50 px-1 rounded">{stopOnValues[0] || 'STOP_VALUE'} - Details hier</code> → Pipeline stoppt
+                            </span>
+                          </li>
+                          <li className="flex items-start space-x-2">
+                            <span className="text-red-600 font-bold">✗</span>
+                            <span>
+                              <code className="bg-red-50 px-1 rounded">Der Text ist {stopOnValues[0] || 'STOP_VALUE'}</code> → Pipeline läuft weiter
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="border-t border-blue-200 pt-2">
+                        <p className="text-xs text-blue-800 font-medium">
+                          💡 Best Practice: Konfigurieren Sie Ihren Prompt so, dass der Stop-Wert das ERSTE WORT ist
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          Beispiel: "Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH"
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {/* Help text */}
                 <div className="mt-3 p-3 bg-warning-50 border border-warning-200 rounded-lg">
                   <p className="text-xs font-semibold text-warning-900 mb-2">⚠️ Wichtig:</p>

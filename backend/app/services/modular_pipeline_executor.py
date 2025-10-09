@@ -159,6 +159,15 @@ class ModularPipelineExecutor:
         """
         Check if step output matches termination condition.
 
+        **Matching Strategy:**
+        - Extracts the FIRST WORD from step output (case-insensitive)
+        - Example: "NICHT_MEDIZINISCH - Details here" → matches "NICHT_MEDIZINISCH"
+        - Example: "Der Text ist NICHT_MEDIZINISCH" → does NOT match (first word is "DER")
+
+        **Best Practice:**
+        - Configure your prompt to return the decision value as the FIRST word
+        - Example prompt: "Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH"
+
         Args:
             step: Pipeline step configuration
             output_text: Output from the step
@@ -169,7 +178,9 @@ class ModularPipelineExecutor:
                 "should_stop": True,
                 "termination_reason": "Non-medical content detected",
                 "termination_message": "Das hochgeladene Dokument enthält keinen medizinischen Inhalt.",
-                "matched_value": "NICHT_MEDIZINISCH"
+                "matched_value": "NICHT_MEDIZINISCH",
+                "step_name": "Medical Content Validation",
+                "step_order": 1
             }
         """
         if not step.stop_conditions:
@@ -179,6 +190,7 @@ class ModularPipelineExecutor:
         clean_output = output_text.strip().upper()
 
         # Extract first word (decision value)
+        # IMPORTANT: Only matches if stop value is the FIRST word in output
         decision_value = clean_output.split()[0] if clean_output.split() else clean_output
 
         # Get stop values from configuration
@@ -200,6 +212,124 @@ class ModularPipelineExecutor:
                 }
 
         return None
+
+    def _log_step_execution(
+        self,
+        job_id: int,
+        step: DynamicPipelineStepDB,
+        status: StepExecutionStatus,
+        input_text: str,
+        output_text: Optional[str],
+        step_start_time: float,
+        error: Optional[str] = None,
+        metadata: Optional[Dict] = None
+    ) -> None:
+        """
+        Centralized step execution logging.
+
+        Args:
+            job_id: Pipeline job ID
+            step: Pipeline step configuration
+            status: Execution status (COMPLETED, FAILED, SKIPPED, TERMINATED)
+            input_text: Input text for the step
+            output_text: Output text from the step (None if failed)
+            step_start_time: Step start timestamp
+            error: Error message if step failed
+            metadata: Additional metadata to store
+        """
+        step_execution = PipelineStepExecutionDB(
+            job_id=job_id,
+            step_id=step.id,
+            step_name=step.name,
+            step_order=step.order,
+            status=status,
+            input_text=input_text[:1000] if input_text else None,
+            output_text=output_text[:1000] if output_text else None,
+            model_used=self.get_model_info(step.selected_model_id).name if output_text else None,
+            prompt_used=step.prompt_template[:500],
+            started_at=datetime.fromtimestamp(step_start_time),
+            completed_at=datetime.now(),
+            execution_time_seconds=time.time() - step_start_time,
+            error_message=error,
+            step_metadata=metadata
+        )
+        self.session.add(step_execution)
+        self.session.commit()
+
+    def _handle_stop_condition(
+        self,
+        step: DynamicPipelineStepDB,
+        output: str,
+        current_output: str,
+        job_id: int,
+        step_start_time: float,
+        step_execution_time: float,
+        pipeline_start_time: float,
+        execution_metadata: Dict,
+        success: bool = True
+    ) -> Tuple[bool, str, Dict]:
+        """
+        Check and handle stop conditions for a step.
+
+        Args:
+            step: Pipeline step configuration
+            output: Output from the step
+            current_output: Current pipeline output
+            job_id: Pipeline job ID
+            step_start_time: Step start timestamp
+            step_execution_time: Step execution time
+            pipeline_start_time: Pipeline start timestamp
+            execution_metadata: Execution metadata dictionary
+            success: Whether step executed successfully
+
+        Returns:
+            (should_terminate, current_output, execution_metadata)
+            should_terminate=True means pipeline should stop immediately
+        """
+        if not success:
+            return False, current_output, execution_metadata
+
+        stop_info = self.check_stop_condition(step, output)
+        if not stop_info or not stop_info.get("should_stop"):
+            return False, current_output, execution_metadata
+
+        logger.warning(f"🛑 Pipeline termination triggered: {stop_info['termination_reason']}")
+
+        # Log this step as TERMINATED
+        self._log_step_execution(
+            job_id=job_id,
+            step=step,
+            status=StepExecutionStatus.TERMINATED,
+            input_text=current_output,
+            output_text=output,
+            step_start_time=step_start_time,
+            error=None,
+            metadata={
+                "termination_info": stop_info,
+                "is_termination_step": True
+            }
+        )
+
+        # Add to execution metadata
+        execution_metadata["steps_executed"].append({
+            "step_name": step.name,
+            "step_order": step.order,
+            "success": True,
+            "execution_time": step_execution_time,
+            "error": None,
+            "terminated": True
+        })
+
+        # Return early with termination info
+        execution_metadata["terminated"] = True
+        execution_metadata["termination_step"] = step.name
+        execution_metadata["termination_reason"] = stop_info["termination_reason"]
+        execution_metadata["termination_message"] = stop_info["termination_message"]
+        execution_metadata["matched_value"] = stop_info["matched_value"]
+        execution_metadata["total_time"] = time.time() - pipeline_start_time
+
+        logger.info(f"🛑 Pipeline terminated at step '{step.name}': {stop_info['termination_reason']}")
+        return True, current_output, execution_metadata
 
     def extract_branch_value(self, output_text: str, branching_field: str = "document_type") -> Optional[Dict[str, Any]]:
         """
@@ -630,73 +760,31 @@ class ModularPipelineExecutor:
                     logger.warning(f"⚠️ Failed to extract branch value from output")
 
             # Check for stop conditions (early termination)
-            stop_info = self.check_stop_condition(step, output) if success else None
-            if stop_info and stop_info.get("should_stop"):
-                logger.warning(f"🛑 Pipeline termination triggered: {stop_info['termination_reason']}")
-
-                # Log this step as TERMINATED
-                step_execution = PipelineStepExecutionDB(
-                    job_id=job_id,
-                    step_id=step.id,
-                    step_name=step.name,
-                    step_order=step.order,
-                    status=StepExecutionStatus.TERMINATED,
-                    input_text=current_output[:1000],
-                    output_text=output[:1000],
-                    model_used=self.get_model_info(step.selected_model_id).name,
-                    prompt_used=step.prompt_template[:500],
-                    started_at=datetime.fromtimestamp(step_start_time),
-                    completed_at=datetime.now(),
-                    execution_time_seconds=step_execution_time,
-                    error_message=None,
-                    step_metadata={
-                        "termination_info": stop_info,
-                        "is_termination_step": True
-                    }
-                )
-                self.session.add(step_execution)
-                self.session.commit()
-
-                # Add to execution metadata
-                execution_metadata["steps_executed"].append({
-                    "step_name": step.name,
-                    "step_order": step.order,
-                    "success": True,
-                    "execution_time": step_execution_time,
-                    "error": None,
-                    "terminated": True
-                })
-
-                # Return early with termination info
-                execution_metadata["terminated"] = True
-                execution_metadata["termination_step"] = step.name
-                execution_metadata["termination_reason"] = stop_info["termination_reason"]
-                execution_metadata["termination_message"] = stop_info["termination_message"]
-                execution_metadata["matched_value"] = stop_info["matched_value"]
-                execution_metadata["total_time"] = time.time() - pipeline_start_time
-
-                logger.info(f"🛑 Pipeline terminated at step '{step.name}': {stop_info['termination_reason']}")
+            should_terminate, current_output, execution_metadata = self._handle_stop_condition(
+                step=step,
+                output=output,
+                current_output=current_output,
+                job_id=job_id,
+                step_start_time=step_start_time,
+                step_execution_time=step_execution_time,
+                pipeline_start_time=pipeline_start_time,
+                execution_metadata=execution_metadata,
+                success=success
+            )
+            if should_terminate:
                 return False, current_output, execution_metadata
 
             # Log step execution with metadata
-            step_execution = PipelineStepExecutionDB(
+            self._log_step_execution(
                 job_id=job_id,
-                step_id=step.id,
-                step_name=step.name,
-                step_order=step.order,
+                step=step,
                 status=StepExecutionStatus.COMPLETED if success else StepExecutionStatus.FAILED,
-                input_text=current_output[:1000],
-                output_text=output[:1000] if success else None,
-                model_used=self.get_model_info(step.selected_model_id).name if success else None,
-                prompt_used=step.prompt_template[:500],
-                started_at=datetime.fromtimestamp(step_start_time),
-                completed_at=datetime.now(),
-                execution_time_seconds=step_execution_time,
-                error_message=error,
-                step_metadata=step_metadata_dict  # NEW: Store branching metadata
+                input_text=current_output,
+                output_text=output if success else None,
+                step_start_time=step_start_time,
+                error=error,
+                metadata=step_metadata_dict  # Store branching metadata
             )
-            self.session.add(step_execution)
-            self.session.commit()
 
             # Store metadata for in-memory tracking
             execution_metadata["steps_executed"].append({
@@ -785,25 +873,32 @@ class ModularPipelineExecutor:
 
                         logger.info(f"🔀 Class-specific branch decision: {branch_info['field']} = {branch_info['value']}")
 
-                # Log step execution with metadata
-                step_execution = PipelineStepExecutionDB(
+                # Check for stop conditions (early termination) - PHASE 2
+                should_terminate, current_output, execution_metadata = self._handle_stop_condition(
+                    step=step,
+                    output=output,
+                    current_output=current_output,
                     job_id=job_id,
-                    step_id=step.id,
-                    step_name=step.name,
-                    step_order=step.order,
-                    status=StepExecutionStatus.COMPLETED if success else StepExecutionStatus.FAILED,
-                    input_text=current_output[:1000],
-                    output_text=output[:1000] if success else None,
-                    model_used=self.get_model_info(step.selected_model_id).name if success else None,
-                    prompt_used=step.prompt_template[:500],
-                    started_at=datetime.fromtimestamp(step_start_time),
-                    completed_at=datetime.now(),
-                    execution_time_seconds=step_execution_time,
-                    error_message=error,
-                    step_metadata=step_metadata_dict  # NEW: Store branching metadata
+                    step_start_time=step_start_time,
+                    step_execution_time=step_execution_time,
+                    pipeline_start_time=pipeline_start_time,
+                    execution_metadata=execution_metadata,
+                    success=success
                 )
-                self.session.add(step_execution)
-                self.session.commit()
+                if should_terminate:
+                    return False, current_output, execution_metadata
+
+                # Log step execution with metadata
+                self._log_step_execution(
+                    job_id=job_id,
+                    step=step,
+                    status=StepExecutionStatus.COMPLETED if success else StepExecutionStatus.FAILED,
+                    input_text=current_output,
+                    output_text=output if success else None,
+                    step_start_time=step_start_time,
+                    error=error,
+                    metadata=step_metadata_dict  # Store branching metadata
+                )
 
                 # Store metadata for in-memory tracking
                 execution_metadata["steps_executed"].append({
@@ -904,25 +999,32 @@ class ModularPipelineExecutor:
 
                 step_execution_time = time.time() - step_start_time
 
-                # Log step execution
-                step_execution = PipelineStepExecutionDB(
+                # Check for stop conditions (early termination) - PHASE 3
+                should_terminate, current_output, execution_metadata = self._handle_stop_condition(
+                    step=step,
+                    output=output,
+                    current_output=current_output,
                     job_id=job_id,
-                    step_id=step.id,
-                    step_name=step.name,
-                    step_order=step.order,
-                    status=StepExecutionStatus.COMPLETED if success else StepExecutionStatus.FAILED,
-                    input_text=current_output[:1000],
-                    output_text=output[:1000] if success else None,
-                    model_used=self.get_model_info(step.selected_model_id).name if success else None,
-                    prompt_used=step.prompt_template[:500],
-                    started_at=datetime.fromtimestamp(step_start_time),
-                    completed_at=datetime.now(),
-                    execution_time_seconds=step_execution_time,
-                    error_message=error,
-                    step_metadata={"post_branching": True}
+                    step_start_time=step_start_time,
+                    step_execution_time=step_execution_time,
+                    pipeline_start_time=pipeline_start_time,
+                    execution_metadata=execution_metadata,
+                    success=success
                 )
-                self.session.add(step_execution)
-                self.session.commit()
+                if should_terminate:
+                    return False, current_output, execution_metadata
+
+                # Log step execution
+                self._log_step_execution(
+                    job_id=job_id,
+                    step=step,
+                    status=StepExecutionStatus.COMPLETED if success else StepExecutionStatus.FAILED,
+                    input_text=current_output,
+                    output_text=output if success else None,
+                    step_start_time=step_start_time,
+                    error=error,
+                    metadata={"post_branching": True}
+                )
 
                 # Store metadata for in-memory tracking
                 execution_metadata["steps_executed"].append({

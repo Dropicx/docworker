@@ -79,11 +79,51 @@ class PipelineStepRequest(BaseModel):
     branching_field: Optional[str] = "document_type"
     post_branching: bool = False  # NEW: Runs after document-specific processing
 
+    # Conditional execution
+    required_context_variables: Optional[List[str]] = None
+
+    # Stop conditions (early termination)
+    stop_conditions: Optional[Dict[str, Any]] = None
+
     @validator('prompt_template')
     def validate_prompt(cls, v):
         """Validate prompt template contains {input_text} placeholder"""
         if '{input_text}' not in v:
             raise ValueError('Prompt template must contain {input_text} placeholder')
+        return v
+
+    @validator('stop_conditions')
+    def validate_stop_conditions(cls, v):
+        """Validate stop_conditions structure"""
+        if v is None:
+            return v
+
+        # Ensure it's a dictionary
+        if not isinstance(v, dict):
+            raise ValueError('stop_conditions must be a dictionary')
+
+        # Validate stop_on_values exists and is a non-empty list
+        if 'stop_on_values' not in v:
+            raise ValueError('stop_conditions must contain stop_on_values')
+
+        if not isinstance(v['stop_on_values'], list):
+            raise ValueError('stop_on_values must be a list')
+
+        if len(v['stop_on_values']) == 0:
+            raise ValueError('stop_on_values cannot be empty')
+
+        # Ensure all values are strings
+        if not all(isinstance(val, str) for val in v['stop_on_values']):
+            raise ValueError('All stop_on_values must be strings')
+
+        # Ensure termination_message exists
+        if not v.get('termination_message'):
+            raise ValueError('termination_message is required when stop_conditions is set')
+
+        # Provide default for termination_reason if not set
+        if not v.get('termination_reason'):
+            v['termination_reason'] = 'Pipeline stopped'
+
         return v
 
 
@@ -111,6 +151,12 @@ class PipelineStepResponse(BaseModel):
     is_branching_step: bool
     branching_field: Optional[str]
     post_branching: bool  # NEW: Runs after document-specific processing
+
+    # Conditional execution
+    required_context_variables: Optional[List[str]]
+
+    # Stop conditions (early termination)
+    stop_conditions: Optional[Dict[str, Any]]
 
     class Config:
         from_attributes = True
