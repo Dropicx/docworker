@@ -22,6 +22,7 @@ def upgrade():
         conn.commit()
 
         print("✅ Migration completed: Added stop_conditions column")
+        return True
 
 def downgrade():
     """Remove stop_conditions column"""
