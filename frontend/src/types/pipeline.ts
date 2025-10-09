@@ -81,6 +81,13 @@ export interface PipelineStep {
 
   // Conditional execution
   required_context_variables: string[] | null;  // NEW: Step will be skipped if these variables are missing
+
+  // Stop conditions (early termination)
+  stop_conditions: {
+    stop_on_values: string[];
+    termination_reason: string;
+    termination_message: string;
+  } | null;
 }
 
 export interface PipelineStepRequest {
@@ -105,6 +112,13 @@ export interface PipelineStepRequest {
 
   // Conditional execution
   required_context_variables?: string[] | null;  // NEW: Step will be skipped if these variables are missing
+
+  // Stop conditions (early termination)
+  stop_conditions?: {
+    stop_on_values: string[];
+    termination_reason: string;
+    termination_message: string;
+  } | null;
 }
 
 // ==================== AI MODELS ====================
