@@ -457,7 +457,9 @@ class ModularPipelineExecutor:
         self,
         step: DynamicPipelineStepDB,
         input_text: str,
-        context: Dict[str, Any] = None
+        context: Dict[str, Any] = None,
+        processing_id: str = None,
+        document_type: str = None
     ) -> Tuple[bool, str, Optional[str]]:
         """
         Execute a single pipeline step.
@@ -466,6 +468,8 @@ class ModularPipelineExecutor:
             step: Pipeline step configuration
             input_text: Input text for this step
             context: Additional context variables (e.g., target_language)
+            processing_id: Processing ID for cost tracking (optional)
+            document_type: Document type for cost tracking (optional)
 
         Returns:
             Tuple of (success: bool, output_text: str, error_message: Optional[str])
@@ -700,7 +704,9 @@ class ModularPipelineExecutor:
             success, output, error = await self.execute_step(
                 step=step,
                 input_text=current_output,
-                context=context
+                context=context,
+                processing_id=processing_id,
+                document_type=context.get("document_type")
             )
 
             step_execution_time = time.time() - step_start_time
@@ -835,7 +841,9 @@ class ModularPipelineExecutor:
                 success, output, error = await self.execute_step(
                     step=step,
                     input_text=current_output,
-                    context=context
+                    context=context,
+                    processing_id=processing_id,
+                    document_type=context.get("document_type")
                 )
 
                 step_execution_time = time.time() - step_start_time
@@ -994,7 +1002,9 @@ class ModularPipelineExecutor:
                 success, output, error = await self.execute_step(
                     step=step,
                     input_text=current_output,
-                    context=context
+                    context=context,
+                    processing_id=processing_id,
+                    document_type=context.get("document_type")
                 )
 
                 step_execution_time = time.time() - step_start_time
