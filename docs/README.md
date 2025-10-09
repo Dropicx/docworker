@@ -68,17 +68,42 @@ DocTranslator uses a **microservices architecture** deployed on Railway:
 ### Core Documentation
 
 - **[ARCHITECTURE.md](./ARCHITECTURE.md)** - Detailed system architecture, components, and data flow
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Complete deployment guide for Railway and Docker
-- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Local development setup and workflow
 - **[API.md](./API.md)** - REST API endpoint reference
 - **[DATABASE.md](./DATABASE.md)** - Database schema and migrations
-- **[PRIVACY_FILTER.md](./PRIVACY_FILTER.md)** - PII detection and removal system
+
+### Deployment & Development
+
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - Production deployment guide for Railway
+- **[RAILWAY_DEPLOYMENT_GUIDE.md](./RAILWAY_DEPLOYMENT_GUIDE.md)** - Detailed Railway setup
+- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Local development setup and workflow
+
+### Pipeline Configuration
+
+- **[PIPELINE_VARIABLES.md](./PIPELINE_VARIABLES.md)** - ⭐ **NEW** - Variables and context system for pipeline steps
+  - Access original OCR text in any step
+  - Use document type for conditional logic
+  - Multi-language handling with context variables
+
+### Privacy & Security
+
+- **[OPTIMIZED_PII_FILTER.md](./OPTIMIZED_PII_FILTER.md)** - Advanced PII detection with spaCy NER
+- **[PII_REMOVAL_TOGGLE.md](./PII_REMOVAL_TOGGLE.md)** - Configurable PII removal feature
+- **[PRIVACY_FILTER.md](./PRIVACY_FILTER.md)** - Basic privacy filter overview
+
+### AI & Cost Management
+
+- **[TOKEN_TRACKING.md](./TOKEN_TRACKING.md)** - AI token usage tracking and cost management
 
 ### Quick Start
 
-1. **Deploy to Railway** → See [DEPLOYMENT.md](./DEPLOYMENT.md#railway-deployment)
+1. **Deploy to Railway** → See [RAILWAY_DEPLOYMENT_GUIDE.md](./RAILWAY_DEPLOYMENT_GUIDE.md)
 2. **Local Development** → See [DEVELOPMENT.md](./DEVELOPMENT.md)
-3. **API Integration** → See [API.md](./API.md)
+3. **Configure Pipeline** → See [PIPELINE_VARIABLES.md](./PIPELINE_VARIABLES.md)
+4. **API Integration** → See [API.md](./API.md)
+
+### Archive
+
+Historical documentation moved to **[archive/](./archive/)** for reference.
 
 ## 🚀 Technology Stack
 

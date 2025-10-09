@@ -252,13 +252,19 @@ const PipelineBuilder: React.FC = () => {
     }
 
     try {
+      // Optimistically remove from local state
+      const newSteps = steps.filter(s => s.id !== stepId);
+      setSteps(newSteps);
+
+      // Persist to backend
       await pipelineApi.deleteStep(stepId);
       setSuccess('Schritt erfolgreich gelöscht!');
-      await loadSteps();
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err: any) {
       setError(err.message);
+      // Reload on error to restore correct state
+      await loadSteps();
     }
   };
 
@@ -284,10 +290,21 @@ const PipelineBuilder: React.FC = () => {
         post_branching: step.post_branching
       };
 
-      await pipelineApi.updateStep(step.id, updatedStep);
-      await loadSteps();
+      // Optimistically update local state first
+      const newSteps = steps.map(s =>
+        s.id === step.id ? { ...s, enabled: !s.enabled } : s
+      );
+      setSteps(newSteps);
+
+      // Persist to backend (no await to keep UI responsive)
+      pipelineApi.updateStep(step.id, updatedStep).catch((err) => {
+        // If API fails, reload to get correct state
+        setError(err.message);
+        loadSteps();
+      });
     } catch (err: any) {
       setError(err.message);
+      await loadSteps();
     }
   };
 
@@ -357,16 +374,31 @@ const PipelineBuilder: React.FC = () => {
     const newOrderIds = reorderedSteps.map(s => s.id);
 
     try {
-      // Call API to reorder
-      await pipelineApi.reorderSteps(newOrderIds);
+      // Optimistically update local state first
+      // Update the order values in the reordered steps
+      const updatedReorderedSteps = reorderedSteps.map((step, index) => ({
+        ...step,
+        order: index + 1
+      }));
 
-      // Reload steps to get updated order values
-      await loadSteps();
+      // Update the global steps array by replacing the affected steps
+      const otherSteps = steps.filter(s => !newOrderIds.includes(s.id));
+      const newSteps = [...otherSteps, ...updatedReorderedSteps].sort((a, b) => a.order - b.order);
+      setSteps(newSteps);
+
+      // Call API to persist the change (no await needed for UI responsiveness)
+      pipelineApi.reorderSteps(newOrderIds).catch((err) => {
+        // If API fails, reload to get correct state
+        setError(err.message);
+        loadSteps();
+      });
 
       setSuccess('Schritte erfolgreich neu geordnet!');
       setTimeout(() => setSuccess(''), 2000);
     } catch (err: any) {
       setError(err.message);
+      // Reload on error to restore correct state
+      await loadSteps();
     } finally {
       setDraggedStep(null);
       setDraggedOverStep(null);
