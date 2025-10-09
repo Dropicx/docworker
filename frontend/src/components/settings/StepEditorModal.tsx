@@ -316,7 +316,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                 </div>
                 <div>
                   <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{original_text}'}</code> / <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{ocr_text}'}</code>
-                  <span className="ml-2">🔒 Ursprünglicher OCR-Text (bleibt immer verfügbar)</span>
+                  <span className="ml-2">🔒 OCR-Text nach PII-Entfernung (datenschutzsicher, bleibt immer verfügbar)</span>
                 </div>
                 <div>
                   <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{target_language}'}</code>

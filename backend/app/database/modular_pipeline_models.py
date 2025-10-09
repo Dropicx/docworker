@@ -31,6 +31,7 @@ class StepExecutionStatus(str, Enum):
     SKIPPED = "SKIPPED"
     CANCELLED = "CANCELLED"  # User cancelled processing
     TIMEOUT = "TIMEOUT"  # Processing exceeded time limit
+    TERMINATED = "TERMINATED"  # Pipeline stopped early due to stop condition
 
 class ModelProvider(str, Enum):
     """AI model providers"""
@@ -186,6 +187,9 @@ class DynamicPipelineStepDB(Base):
     # Input/Output configuration
     input_from_previous_step = Column(Boolean, default=True, nullable=False)
     output_format = Column(String(50), nullable=True)  # e.g., "json", "markdown", "text"
+
+    # Early termination conditions
+    stop_conditions = Column(JSON, nullable=True)  # e.g., {"stop_on_values": ["NICHT_MEDIZINISCH"], "termination_reason": "Non-medical content detected", "termination_message": "Das hochgeladene Dokument enthält keinen medizinischen Inhalt."}
 
     # Metadata
     created_at = Column(DateTime, default=func.now(), nullable=False)

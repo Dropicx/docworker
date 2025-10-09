@@ -167,7 +167,12 @@ def seed_modular_pipeline():
                     'output_format': 'text',
                     'is_branching_step': True,
                     'branching_field': 'medical_validation',
-                    'document_class_id': None  # Universal step
+                    'document_class_id': None,  # Universal step
+                    'stop_conditions': {
+                        'stop_on_values': ['NICHT_MEDIZINISCH'],
+                        'termination_reason': 'Non-medical content detected',
+                        'termination_message': 'Das hochgeladene Dokument enthält keinen medizinischen Inhalt. Bitte laden Sie ein medizinisches Dokument (z.B. Arztbrief, Befundbericht, Laborwerte) hoch.'
+                    }
                 },
                 {
                     'name': 'Document Classification',
@@ -293,19 +298,20 @@ def seed_modular_pipeline():
                         selected_model_id, temperature, max_tokens,
                         retry_on_failure, max_retries, input_from_previous_step,
                         output_format, is_branching_step, branching_field, document_class_id,
-                        created_at, last_modified, modified_by
+                        stop_conditions, created_at, last_modified, modified_by
                     ) VALUES (
                         :name, :description, :order, :enabled, :prompt_template,
                         :selected_model_id, :temperature, :max_tokens,
                         :retry_on_failure, :max_retries, :input_from_previous_step,
                         :output_format, :is_branching_step, :branching_field, :document_class_id,
-                        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
+                        :stop_conditions, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
                     )
                 """), {
                     **step,
                     'is_branching_step': step.get('is_branching_step', False),
                     'branching_field': step.get('branching_field', None),
                     'document_class_id': step.get('document_class_id', None),
+                    'stop_conditions': json.dumps(step.get('stop_conditions')) if step.get('stop_conditions') else None,
                     'modified_by': 'system_seed'
                 })
 

@@ -140,9 +140,10 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         pipeline_start = time.time()
 
-        # Prepare context with original OCR text preserved
+        # Prepare context with PII-cleaned OCR text preserved
+        # Note: extracted_text has already been through PII removal (if enabled)
         pipeline_context = options or {}
-        pipeline_context['original_text'] = extracted_text  # Preserve original OCR output
+        pipeline_context['original_text'] = extracted_text  # PII-cleaned OCR text (safe for AI processing)
         pipeline_context['ocr_text'] = extracted_text  # Alias for clarity
 
         # Execute pipeline (async method, need to await)

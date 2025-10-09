@@ -21,18 +21,23 @@ The DocTranslator pipeline provides a **context system** that allows any pipelin
 
 | Variable | Type | Description | Availability |
 |----------|------|-------------|--------------|
-| `{original_text}` | string | **🔒 Original OCR-extracted text** | **Every step (never changes)** |
+| `{original_text}` | string | **🔒 PII-cleaned OCR text (privacy-safe)** | **Every step (never changes)** |
 | `{ocr_text}` | string | Alias for `{original_text}` | **Every step (never changes)** |
 
 **Behavior**:
 - **Immutable** - remains constant throughout the entire pipeline
-- Always contains the raw OCR output before any AI transformations
+- Contains OCR output **after PII removal** (if enabled) - safe for AI processing
+- **No sensitive data** (names, addresses, dates of birth removed by spaCy NER)
+- Before any AI transformations, perfect for fact-checking and comparisons
 - Perfect for fact-checking, comparisons, or re-extracting specific information
 
-**Added in**: `worker/tasks/document_processing.py` lines 143-146
+**Security Note**: ⚠️ This text has already passed through the PII removal filter, so it's safe to send to AI services and does not contain sensitive personal information.
+
+**Added in**: `worker/tasks/document_processing.py` lines 143-147
 ```python
+# Note: extracted_text has already been through PII removal (if enabled)
 pipeline_context = options or {}
-pipeline_context['original_text'] = extracted_text  # Preserve original OCR output
+pipeline_context['original_text'] = extracted_text  # PII-cleaned OCR text (safe for AI processing)
 pipeline_context['ocr_text'] = extracted_text  # Alias for clarity
 ```
 
@@ -210,9 +215,10 @@ Score: 1-10 and explain issues.
 # Lines 143-154
 pipeline_start = time.time()
 
-# Prepare context with original OCR text preserved
+# Prepare context with PII-cleaned OCR text preserved
+# Note: extracted_text has already been through PII removal (if enabled)
 pipeline_context = options or {}
-pipeline_context['original_text'] = extracted_text  # Preserve original OCR output
+pipeline_context['original_text'] = extracted_text  # PII-cleaned OCR text (safe for AI processing)
 pipeline_context['ocr_text'] = extracted_text  # Alias for clarity
 
 # Execute pipeline (async method, need to await)
@@ -224,6 +230,12 @@ success, final_output, metadata = await_sync(
     )
 )
 ```
+
+**Processing Order**:
+1. **OCR Extraction** (line 87-93): Raw text extracted from document
+2. **PII Removal** (line 105-120): Sensitive data removed with spaCy NER (if enabled)
+3. **Context Creation** (line 143-147): PII-cleaned text stored as `original_text`
+4. **Pipeline Execution**: All steps receive privacy-safe text
 
 ### Context Flow Through Pipeline
 
@@ -248,14 +260,21 @@ prompt = step.prompt_template.format(
 ```
 ┌─────────────────────────────────────────────────────────┐
 │ OCR Extraction                                           │
-│ extracted_text = "Patient Name: John..."                │
+│ extracted_text = "Patient Name: John Doe, DOB: 1980..." │
+└────────────────────┬────────────────────────────────────┘
+                     │
+                     ▼
+┌─────────────────────────────────────────────────────────┐
+│ 🔒 PII Removal (spaCy NER)                              │
+│ extracted_text = "Patient Name: [REDACTED], DOB: ..."  │
+│ ✅ Sensitive data removed locally before AI processing │
 └────────────────────┬────────────────────────────────────┘
                      │
                      ▼
 ┌─────────────────────────────────────────────────────────┐
 │ Context Initialization (Worker)                         │
 │ context = {                                             │
-│   'original_text': extracted_text,  # 🔒 Immutable     │
+│   'original_text': extracted_text,  # 🔒 PII-cleaned   │
 │   'ocr_text': extracted_text,       # Alias            │
 │   'target_language': 'en',          # User option      │
 │ }                                                       │
@@ -307,8 +326,8 @@ prompt = step.prompt_template.format(
 | Variable | Mutable? | Added When | Example Value | Use Cases |
 |----------|----------|------------|---------------|-----------|
 | `{input_text}` | ✅ Yes | Every step | Current transformed text | Main processing input |
-| `{original_text}` | 🔒 No | Worker init | "Patient Name: John..." | Fact-checking, comparisons |
-| `{ocr_text}` | 🔒 No | Worker init | Same as original_text | Alias for clarity |
+| `{original_text}` | 🔒 No | Worker init (after PII removal) | "Patient Name: [REDACTED]..." | Fact-checking, comparisons (privacy-safe) |
+| `{ocr_text}` | 🔒 No | Worker init (after PII removal) | Same as original_text | Alias for clarity |
 | `{target_language}` | ✅ Maybe | User request | "en", "fr", "es" | Conditional translation |
 | `{document_type}` | ✅ Maybe | After branching | "ARZTBRIEF", "LABORWERTE" | Type-specific logic |
 

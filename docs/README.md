@@ -9,7 +9,7 @@ Medical document translation service with AI-powered processing and OCR support.
 ### Key Features
 
 - 🏥 **Medical Document Translation** - Translates German medical documents into simple, understandable language
-- 🔒 **GDPR Compliant** - Zero data retention, EU-based processing, automated PII removal
+- 🔒 **GDPR Compliant** - 24-hour data retention (configurable), EU-based processing, automated PII removal
 - 📄 **Multi-Format Support** - PDF, images (JPG, PNG) with OCR
 - 🤖 **Multiple OCR Engines** - Tesseract, PaddleOCR microservice, Vision LLM, intelligent hybrid routing
 - ⚡ **Background Processing** - Celery worker with Redis queue for async document processing
@@ -86,6 +86,10 @@ DocTranslator uses a **microservices architecture** deployed on Railway:
 
 ### Privacy & Security
 
+- **[DATA_RETENTION.md](./DATA_RETENTION.md)** - ⭐ **NEW** - Data retention policy and GDPR compliance
+  - 24-hour automatic cleanup (configurable)
+  - Privacy-safe storage (PII-cleaned data only)
+  - Production recommendations and security best practices
 - **[OPTIMIZED_PII_FILTER.md](./OPTIMIZED_PII_FILTER.md)** - Advanced PII detection with spaCy NER
 - **[PII_REMOVAL_TOGGLE.md](./PII_REMOVAL_TOGGLE.md)** - Configurable PII removal feature
 - **[PRIVACY_FILTER.md](./PRIVACY_FILTER.md)** - Basic privacy filter overview
@@ -145,11 +149,12 @@ Historical documentation moved to **[archive/](./archive/)** for reference.
 ## 🔐 Security & Privacy
 
 ### GDPR Compliance
-- ✅ **Zero Data Retention** - Documents processed in-memory only
+- ✅ **Limited Data Retention** - Jobs deleted after 24 hours (configurable via `DB_RETENTION_HOURS`)
 - ✅ **EU-Based Processing** - OVH AI Endpoints hosted in EU
-- ✅ **Automated PII Removal** - spaCy NER-based privacy filter
+- ✅ **Automated PII Removal** - spaCy NER-based privacy filter removes sensitive data before AI processing
 - ✅ **No Third-Party Tracking** - No analytics or external scripts
 - ✅ **Audit Logging** - Optional AI interaction logging (configurable)
+- ✅ **Privacy-Safe Storage** - Only PII-cleaned text stored in database
 
 ### Application Security
 - ✅ **HTTPS Only** - Encrypted transport (Railway automatic)

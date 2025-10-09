@@ -155,6 +155,52 @@ class ModularPipelineExecutor:
         logger.warning("⚠️ No branching step found in pipeline")
         return None
 
+    def check_stop_condition(self, step: DynamicPipelineStepDB, output_text: str) -> Optional[Dict[str, Any]]:
+        """
+        Check if step output matches termination condition.
+
+        Args:
+            step: Pipeline step configuration
+            output_text: Output from the step
+
+        Returns:
+            Dictionary with termination info if condition matches, None otherwise:
+            {
+                "should_stop": True,
+                "termination_reason": "Non-medical content detected",
+                "termination_message": "Das hochgeladene Dokument enthält keinen medizinischen Inhalt.",
+                "matched_value": "NICHT_MEDIZINISCH"
+            }
+        """
+        if not step.stop_conditions:
+            return None
+
+        # Clean and uppercase the output for matching
+        clean_output = output_text.strip().upper()
+
+        # Extract first word (decision value)
+        decision_value = clean_output.split()[0] if clean_output.split() else clean_output
+
+        # Get stop values from configuration
+        stop_values = step.stop_conditions.get("stop_on_values", [])
+        if not stop_values:
+            return None
+
+        # Check if output matches any stop value
+        for stop_value in stop_values:
+            if decision_value == stop_value.upper():
+                logger.warning(f"🛑 Stop condition matched for step '{step.name}': {decision_value}")
+                return {
+                    "should_stop": True,
+                    "termination_reason": step.stop_conditions.get("termination_reason", "Processing stopped"),
+                    "termination_message": step.stop_conditions.get("termination_message", "Processing was terminated."),
+                    "matched_value": decision_value,
+                    "step_name": step.name,
+                    "step_order": step.order
+                }
+
+        return None
+
     def extract_branch_value(self, output_text: str, branching_field: str = "document_type") -> Optional[Dict[str, Any]]:
         """
         Extract the branch value from step output with DYNAMIC BRANCHING SUPPORT.
@@ -538,6 +584,55 @@ class ModularPipelineExecutor:
                         logger.info(f"🔀 Generic branch decision: {branch_metadata['field']} = {branch_metadata['value']}")
                 else:
                     logger.warning(f"⚠️ Failed to extract branch value from output")
+
+            # Check for stop conditions (early termination)
+            stop_info = self.check_stop_condition(step, output) if success else None
+            if stop_info and stop_info.get("should_stop"):
+                logger.warning(f"🛑 Pipeline termination triggered: {stop_info['termination_reason']}")
+
+                # Log this step as TERMINATED
+                step_execution = PipelineStepExecutionDB(
+                    job_id=job_id,
+                    step_id=step.id,
+                    step_name=step.name,
+                    step_order=step.order,
+                    status=StepExecutionStatus.TERMINATED,
+                    input_text=current_output[:1000],
+                    output_text=output[:1000],
+                    model_used=self.get_model_info(step.selected_model_id).name,
+                    prompt_used=step.prompt_template[:500],
+                    started_at=datetime.fromtimestamp(step_start_time),
+                    completed_at=datetime.now(),
+                    execution_time_seconds=step_execution_time,
+                    error_message=None,
+                    step_metadata={
+                        "termination_info": stop_info,
+                        "is_termination_step": True
+                    }
+                )
+                self.session.add(step_execution)
+                self.session.commit()
+
+                # Add to execution metadata
+                execution_metadata["steps_executed"].append({
+                    "step_name": step.name,
+                    "step_order": step.order,
+                    "success": True,
+                    "execution_time": step_execution_time,
+                    "error": None,
+                    "terminated": True
+                })
+
+                # Return early with termination info
+                execution_metadata["terminated"] = True
+                execution_metadata["termination_step"] = step.name
+                execution_metadata["termination_reason"] = stop_info["termination_reason"]
+                execution_metadata["termination_message"] = stop_info["termination_message"]
+                execution_metadata["matched_value"] = stop_info["matched_value"]
+                execution_metadata["total_time"] = time.time() - pipeline_start_time
+
+                logger.info(f"🛑 Pipeline terminated at step '{step.name}': {stop_info['termination_reason']}")
+                return False, current_output, execution_metadata
 
             # Log step execution with metadata
             step_execution = PipelineStepExecutionDB(

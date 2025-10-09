@@ -15,23 +15,29 @@ processing_store: Dict[str, Dict[str, Any]] = {}
 # Maximale Lebenszeit für temporäre Daten (30 Minuten)
 MAX_DATA_AGE = timedelta(minutes=30)
 
+# Database retention period (24 hours for development, configurable via env)
+DB_RETENTION_HOURS = int(os.getenv('DB_RETENTION_HOURS', '24'))
+
 async def cleanup_temp_files():
     """Bereinigt alle temporären Dateien und Daten"""
     try:
         # Cleanup temporäre Dateien im System temp
         files_removed = await cleanup_system_temp_files()
-        
+
         # Cleanup In-Memory Store
         items_removed = await cleanup_memory_store()
-        
+
+        # Cleanup old database jobs
+        jobs_removed = await cleanup_old_database_jobs()
+
         # Garbage Collection
         gc.collect()
-        
-        if files_removed > 0 or items_removed > 0:
-            logger.info(f"🧹 Cleanup: {files_removed} files, {items_removed} memory items removed")
-        
+
+        if files_removed > 0 or items_removed > 0 or jobs_removed > 0:
+            logger.info(f"🧹 Cleanup: {files_removed} files, {items_removed} memory items, {jobs_removed} database jobs removed")
+
         return files_removed
-        
+
     except Exception as e:
         logger.error(f"❌ Cleanup-Fehler: {e}")
         return 0
@@ -71,28 +77,73 @@ async def cleanup_memory_store():
     try:
         current_time = datetime.now()
         expired_keys = []
-        
+
         for processing_id, data in processing_store.items():
             created_time = data.get('created_at', current_time)
-            
+
             # Daten älter als MAX_DATA_AGE?
             if current_time - created_time > MAX_DATA_AGE:
                 expired_keys.append(processing_id)
-        
+
         # Abgelaufene Daten löschen
         for key in expired_keys:
             del processing_store[key]
             items_removed += 1
             logger.debug(f"🗑️ Abgelaufene Verarbeitungsdaten gelöscht: {key}")
-        
+
         if len(processing_store) > 0:
             logger.debug(f"📊 Aktive Verarbeitungen: {len(processing_store)}")
-        
+
         return items_removed
-        
+
     except Exception as e:
         logger.error(f"❌ Memory-Store-Cleanup Fehler: {e}")
         return items_removed
+
+
+async def cleanup_old_database_jobs():
+    """
+    Deletes pipeline jobs older than DB_RETENTION_HOURS from database.
+    Removes both completed and failed jobs to comply with data retention policies.
+    """
+    jobs_removed = 0
+    try:
+        # Import here to avoid circular imports
+        from app.database.connection import get_db_session
+        from app.database.modular_pipeline_models import PipelineJobDB
+
+        db = next(get_db_session())
+
+        try:
+            cutoff_time = datetime.now() - timedelta(hours=DB_RETENTION_HOURS)
+
+            # Find jobs older than retention period
+            old_jobs = db.query(PipelineJobDB).filter(
+                PipelineJobDB.uploaded_at < cutoff_time
+            ).all()
+
+            if old_jobs:
+                logger.info(f"🗑️ Found {len(old_jobs)} jobs older than {DB_RETENTION_HOURS} hours")
+
+                for job in old_jobs:
+                    job_age_hours = (datetime.now() - job.uploaded_at).total_seconds() / 3600
+                    logger.debug(f"   Deleting job {job.processing_id} (age: {job_age_hours:.1f}h, status: {job.status})")
+                    db.delete(job)
+                    jobs_removed += 1
+
+                db.commit()
+                logger.info(f"✅ Deleted {jobs_removed} old database jobs")
+            else:
+                logger.debug(f"📊 No jobs older than {DB_RETENTION_HOURS} hours found")
+
+            return jobs_removed
+
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.error(f"❌ Database cleanup error: {e}")
+        return jobs_removed
 
 def add_to_processing_store(processing_id: str, data: Dict[str, Any]):
     """Fügt Daten zum Processing Store hinzu"""
@@ -167,18 +218,56 @@ async def emergency_cleanup():
     """Notfall-Bereinigung bei hoher Speichernutzung"""
     try:
         logger.warning("🚨 Notfall-Bereinigung gestartet...")
-        
+
         # Alle Verarbeitungsdaten löschen
         processing_store.clear()
-        
+
         # Aggressive temp file cleanup
         await cleanup_system_temp_files()
-        
+
+        # Aggressive database cleanup (delete all completed jobs)
+        await cleanup_all_completed_jobs()
+
         # Force garbage collection
         for _ in range(3):
             gc.collect()
-        
+
         logger.info("✅ Notfall-Bereinigung abgeschlossen")
-        
+
     except Exception as e:
-        logger.error(f"❌ Notfall-Bereinigung Fehler: {e}") 
+        logger.error(f"❌ Notfall-Bereinigung Fehler: {e}")
+
+
+async def cleanup_all_completed_jobs():
+    """
+    Emergency function: Deletes ALL completed jobs from database.
+    Used only during emergency cleanup.
+    """
+    jobs_removed = 0
+    try:
+        from app.database.connection import get_db_session
+        from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
+
+        db = next(get_db_session())
+
+        try:
+            # Delete all completed jobs
+            completed_jobs = db.query(PipelineJobDB).filter(
+                PipelineJobDB.status == StepExecutionStatus.COMPLETED
+            ).all()
+
+            for job in completed_jobs:
+                db.delete(job)
+                jobs_removed += 1
+
+            db.commit()
+            logger.warning(f"🚨 Emergency: Deleted {jobs_removed} completed jobs")
+
+            return jobs_removed
+
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.error(f"❌ Emergency database cleanup error: {e}")
+        return jobs_removed 
