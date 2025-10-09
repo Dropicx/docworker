@@ -6,7 +6,7 @@ import { ProcessingProgress, ProcessingStatus as Status } from '../types/api';
 interface ProcessingStatusProps {
   processingId: string;
   onComplete: () => void;
-  onError: (error: string) => void;
+  onError: (error: string, metadata?: any) => void;
   onCancel?: () => void;
 }
 
@@ -35,10 +35,30 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
           setIsPolling(false);
           setError(statusResponse.error || 'Unbekannter Fehler');
           onError(statusResponse.error || 'Verarbeitung fehlgeschlagen');
-        } else if (statusResponse.status === 'non_medical_content') {
+        } else if (
+          statusResponse.status === 'terminated' ||
+          statusResponse.status === 'non_medical_content' ||
+          statusResponse.terminated === true
+        ) {
+          // Termination detected - graceful stop, not an error
           setIsPolling(false);
-          setError(statusResponse.error || 'Dokument enthält keinen medizinischen Inhalt');
-          onError(statusResponse.error || 'Bitte laden Sie ein medizinisches Dokument hoch');
+
+          const terminationMessage =
+            statusResponse.termination_message ||
+            statusResponse.error ||
+            statusResponse.message ||
+            'Verarbeitung wurde gestoppt';
+
+          setError(terminationMessage);
+
+          // Pass structured metadata to parent for specialized UI
+          const metadata = {
+            isTermination: true,
+            reason: statusResponse.termination_reason,
+            step: statusResponse.termination_step || statusResponse.current_step
+          };
+
+          onError(terminationMessage, metadata);
         }
       } catch (err: any) {
         console.error('Status polling error:', err);
@@ -84,7 +104,8 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
       case 'error':
         return <AlertCircle className="w-5 h-5 text-error-600" />;
       case 'non_medical_content':
-        return <FileCheck className="w-5 h-5 text-error-600" />;
+      case 'terminated':
+        return <AlertCircle className="w-5 h-5 text-warning-600" />;
       default:
         return <RefreshCw className="w-5 h-5 text-primary-600" />;
     }

@@ -4,6 +4,7 @@ import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap, Globe, Che
 import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
+import TerminationCard from './components/TerminationCard';
 import EnhancedSettingsModal from './components/EnhancedSettingsModal';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
@@ -20,6 +21,7 @@ function App() {
   const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null);
   const [translationResult, setTranslationResult] = useState<TranslationData | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [errorMetadata, setErrorMetadata] = useState<any>(null);
   const [health, setHealth] = useState<HealthCheck | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [availableLanguages, setAvailableLanguages] = useState<SupportedLanguage[]>([]);
@@ -108,6 +110,22 @@ function App() {
 
     try {
       const result = await ApiService.getProcessingResult(uploadResponse.processing_id);
+
+      // Check if processing was terminated (e.g., non-medical content)
+      if (result.terminated) {
+        const metadata = {
+          isTermination: true,
+          reason: result.termination_reason,
+          step: result.termination_step
+        };
+        handleProcessingError(
+          result.termination_message || 'Verarbeitung wurde gestoppt',
+          metadata
+        );
+        return;
+      }
+
+      // Normal completion
       setTranslationResult(result);
       setAppState('result');
     } catch (error: any) {
@@ -116,8 +134,9 @@ function App() {
     }
   };
 
-  const handleProcessingError = (errorMessage: string) => {
+  const handleProcessingError = (errorMessage: string, metadata?: any) => {
     setError(errorMessage);
+    setErrorMetadata(metadata || null);
     setAppState('error');
   };
 
@@ -132,6 +151,7 @@ function App() {
     setUploadResponse(null);
     setTranslationResult(null);
     setError(null);
+    setErrorMetadata(null);
     setSelectedLanguage(null);
   };
 
@@ -378,30 +398,39 @@ function App() {
           {/* Error State */}
           {appState === 'error' && (
             <div className="animate-fade-in">
-              <div className="card-elevated border-error-200/50 bg-gradient-to-br from-error-50/50 to-white">
-                <div className="card-body">
-                  <div className="flex items-start space-x-4">
-                    <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-error-500 to-error-600 rounded-xl flex items-center justify-center">
-                      <AlertTriangle className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="text-xl font-bold text-error-900 mb-2">
-                        Verarbeitung fehlgeschlagen
-                      </h3>
-                      <p className="text-error-700 mb-6 leading-relaxed">
-                        {error}
-                      </p>
-                      <button
-                        onClick={handleNewTranslation}
-                        className="btn-primary"
-                      >
-                        <Sparkles className="w-4 h-4 mr-2" />
-                        Neuen Versuch starten
-                      </button>
+              {errorMetadata?.isTermination ? (
+                <TerminationCard
+                  message={error || 'Verarbeitung wurde gestoppt'}
+                  reason={errorMetadata.reason}
+                  step={errorMetadata.step}
+                  onReset={handleNewTranslation}
+                />
+              ) : (
+                <div className="card-elevated border-error-200/50 bg-gradient-to-br from-error-50/50 to-white">
+                  <div className="card-body">
+                    <div className="flex items-start space-x-4">
+                      <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-error-500 to-error-600 rounded-xl flex items-center justify-center">
+                        <AlertTriangle className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-error-900 mb-2">
+                          Verarbeitung fehlgeschlagen
+                        </h3>
+                        <p className="text-error-700 mb-6 leading-relaxed">
+                          {error}
+                        </p>
+                        <button
+                          onClick={handleNewTranslation}
+                          className="btn-primary"
+                        >
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Neuen Versuch starten
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
           )}
 
