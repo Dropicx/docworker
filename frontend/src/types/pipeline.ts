@@ -78,6 +78,9 @@ export interface PipelineStep {
   is_branching_step: boolean;
   branching_field: string | null;
   post_branching: boolean;  // NEW: Runs after document-specific processing
+
+  // Conditional execution
+  required_context_variables: string[] | null;  // NEW: Step will be skipped if these variables are missing
 }
 
 export interface PipelineStepRequest {
@@ -99,6 +102,9 @@ export interface PipelineStepRequest {
   is_branching_step?: boolean;
   branching_field?: string | null;
   post_branching?: boolean;  // NEW: Runs after document-specific processing
+
+  // Conditional execution
+  required_context_variables?: string[] | null;  // NEW: Step will be skipped if these variables are missing
 }
 
 // ==================== AI MODELS ====================

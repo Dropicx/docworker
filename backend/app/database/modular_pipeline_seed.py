@@ -298,13 +298,13 @@ def seed_modular_pipeline():
                         selected_model_id, temperature, max_tokens,
                         retry_on_failure, max_retries, input_from_previous_step,
                         output_format, is_branching_step, branching_field, document_class_id,
-                        stop_conditions, post_branching, created_at, last_modified, modified_by
+                        stop_conditions, post_branching, required_context_variables, created_at, last_modified, modified_by
                     ) VALUES (
                         :name, :description, :order, :enabled, :prompt_template,
                         :selected_model_id, :temperature, :max_tokens,
                         :retry_on_failure, :max_retries, :input_from_previous_step,
                         :output_format, :is_branching_step, :branching_field, :document_class_id,
-                        :stop_conditions, :post_branching, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
+                        :stop_conditions, :post_branching, :required_context_variables, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
                     )
                 """), {
                     **step,
@@ -313,6 +313,7 @@ def seed_modular_pipeline():
                     'document_class_id': step.get('document_class_id', None),
                     'post_branching': step.get('post_branching', False),
                     'stop_conditions': json.dumps(step.get('stop_conditions')) if step.get('stop_conditions') else None,
+                    'required_context_variables': json.dumps(step.get('required_context_variables')) if step.get('required_context_variables') else None,
                     'modified_by': 'system_seed'
                 })
 
