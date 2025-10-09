@@ -140,12 +140,17 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         pipeline_start = time.time()
 
+        # Prepare context with original OCR text preserved
+        pipeline_context = options or {}
+        pipeline_context['original_text'] = extracted_text  # Preserve original OCR output
+        pipeline_context['ocr_text'] = extracted_text  # Alias for clarity
+
         # Execute pipeline (async method, need to await)
         success, final_output, metadata = await_sync(
             executor.execute_pipeline(
                 processing_id=processing_id,
                 input_text=extracted_text,
-                context=options or {}
+                context=pipeline_context
             )
         )
 

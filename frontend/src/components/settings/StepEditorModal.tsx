@@ -307,9 +307,27 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
               placeholder="Ihr Prompt hier... Verwenden Sie {input_text} für den Eingabetext."
               required
             />
-            <p className="text-xs text-primary-500 mt-1">
-              Verfügbare Platzhalter: {'{input_text}'}, {'{target_language}'} (falls anwendbar)
-            </p>
+            <div className="mt-2 p-3 bg-brand-50 border border-brand-200 rounded-lg">
+              <p className="text-xs font-semibold text-brand-900 mb-2">📝 Verfügbare Variablen:</p>
+              <div className="grid grid-cols-1 gap-2 text-xs text-brand-700">
+                <div>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{input_text}'}</code>
+                  <span className="ml-2">Ausgabe des vorherigen Schritts (wird überschrieben)</span>
+                </div>
+                <div>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{original_text}'}</code> / <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{ocr_text}'}</code>
+                  <span className="ml-2">🔒 Ursprünglicher OCR-Text (bleibt immer verfügbar)</span>
+                </div>
+                <div>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{target_language}'}</code>
+                  <span className="ml-2">Zielsprache (falls vom Benutzer angegeben)</span>
+                </div>
+                <div>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{document_type}'}</code>
+                  <span className="ml-2">Dokumenttyp (nach Klassifizierungs-Schritt)</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Model Selection */}

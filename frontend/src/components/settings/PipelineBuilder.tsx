@@ -75,6 +75,10 @@ const PipelineBuilder: React.FC = () => {
   // Track previous document class count for notifications (NEW)
   const [prevClassCount, setPrevClassCount] = useState<number>(0);
 
+  // Drag and Drop State
+  const [draggedStep, setDraggedStep] = useState<PipelineStep | null>(null);
+  const [draggedOverStep, setDraggedOverStep] = useState<PipelineStep | null>(null);
+
   // Load data on mount
   useEffect(() => {
     loadOCRConfig();
@@ -295,6 +299,78 @@ const PipelineBuilder: React.FC = () => {
       newExpanded.add(stepId);
     }
     setExpandedSteps(newExpanded);
+  };
+
+  // ==================== DRAG AND DROP HANDLERS ====================
+
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, step: PipelineStep) => {
+    setDraggedStep(step);
+    e.dataTransfer.effectAllowed = 'move';
+    // Add a semi-transparent effect
+    if (e.currentTarget) {
+      e.currentTarget.style.opacity = '0.5';
+    }
+  };
+
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    setDraggedStep(null);
+    setDraggedOverStep(null);
+    // Reset opacity
+    if (e.currentTarget) {
+      e.currentTarget.style.opacity = '1';
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>, step: PipelineStep) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+
+    if (draggedStep && draggedStep.id !== step.id) {
+      setDraggedOverStep(step);
+    }
+  };
+
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement>, targetStep: PipelineStep) => {
+    e.preventDefault();
+
+    if (!draggedStep || draggedStep.id === targetStep.id) {
+      return;
+    }
+
+    // Get the current displayed steps for this tab
+    const displayedSteps = getDisplayedSteps();
+
+    // Find indices
+    const draggedIndex = displayedSteps.findIndex(s => s.id === draggedStep.id);
+    const targetIndex = displayedSteps.findIndex(s => s.id === targetStep.id);
+
+    if (draggedIndex === -1 || targetIndex === -1) {
+      return;
+    }
+
+    // Create new array with reordered steps
+    const reorderedSteps = [...displayedSteps];
+    reorderedSteps.splice(draggedIndex, 1);
+    reorderedSteps.splice(targetIndex, 0, draggedStep);
+
+    // Extract step IDs in new order
+    const newOrderIds = reorderedSteps.map(s => s.id);
+
+    try {
+      // Call API to reorder
+      await pipelineApi.reorderSteps(newOrderIds);
+
+      // Reload steps to get updated order values
+      await loadSteps();
+
+      setSuccess('Schritte erfolgreich neu geordnet!');
+      setTimeout(() => setSuccess(''), 2000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setDraggedStep(null);
+      setDraggedOverStep(null);
+    }
   };
 
   // ==================== RENDER HELPERS ====================
@@ -572,8 +648,15 @@ const PipelineBuilder: React.FC = () => {
               return (
                 <div
                   key={step.id}
-                  className={`border rounded-lg transition-all ${
-                    step.is_branching_step
+                  draggable={true}
+                  onDragStart={(e) => handleDragStart(e, step)}
+                  onDragEnd={handleDragEnd}
+                  onDragOver={(e) => handleDragOver(e, step)}
+                  onDrop={(e) => handleDrop(e, step)}
+                  className={`border rounded-lg transition-all cursor-grab active:cursor-grabbing ${
+                    draggedOverStep?.id === step.id
+                      ? 'border-brand-500 border-2 bg-brand-50 shadow-lg scale-105'
+                      : step.is_branching_step
                       ? 'border-orange-300 bg-gradient-to-r from-amber-50/50 to-orange-50/50 shadow-md'
                       : step.enabled
                       ? 'border-primary-200 bg-white'
