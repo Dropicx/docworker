@@ -235,6 +235,7 @@ class PipelineJobDB(Base):
     # Job configuration (worker-serializable)
     pipeline_config = Column(JSON, nullable=False)  # Snapshot of pipeline steps at job creation
     ocr_config = Column(JSON, nullable=False)  # Snapshot of OCR config at job creation
+    processing_options = Column(JSON, nullable=True, default={})  # Processing options (target_language, etc.)
 
     # Execution details
     started_at = Column(DateTime, nullable=True)

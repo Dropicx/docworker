@@ -50,6 +50,15 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         logger.info(f"📋 Loaded job: {job.filename} ({job.file_size} bytes)")
 
+        # Merge options: Celery task options take priority, fallback to job's processing_options
+        if not options:
+            options = {}
+        if job.processing_options:
+            # Job's processing_options as base, task options override
+            merged_options = {**job.processing_options, **options}
+            options = merged_options
+            logger.info(f"📋 Processing options: {options}")
+
         # Update job status to RUNNING
         job.status = StepExecutionStatus.RUNNING
         # Preserve started_at from upload endpoint (includes queue time)
