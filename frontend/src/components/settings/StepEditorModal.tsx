@@ -70,6 +70,10 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   const [branchingField, setBranchingField] = useState<string>('document_type');
   const [postBranching, setPostBranching] = useState(false); // NEW: Post-branching flag
 
+  // NEW: Conditional execution
+  const [requiredContextVariables, setRequiredContextVariables] = useState<string[]>([]);
+  const [newVariable, setNewVariable] = useState('');
+
   // UI State
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -96,6 +100,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setIsBranchingStep(step.is_branching_step);
       setBranchingField(step.branching_field || 'document_type');
       setPostBranching(step.post_branching || false);
+      // NEW: Conditional execution
+      setRequiredContextVariables(step.required_context_variables || []);
     } else {
       // Creating new step - set defaults
       setName('');
@@ -115,7 +121,10 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setIsBranchingStep(false);
       setBranchingField('document_type');
       setPostBranching(defaultPostBranching); // NEW: Pre-fill from active tab
+      // NEW: Conditional execution defaults
+      setRequiredContextVariables([]);
     }
+    setNewVariable(''); // Reset input field
   }, [step, models, defaultDocumentClassId, defaultPostBranching]);
 
   // Validate form
@@ -177,7 +186,9 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
         document_class_id: documentClassId,
         is_branching_step: isBranchingStep,
         branching_field: isBranchingStep ? branchingField : null,
-        post_branching: postBranching // NEW: Post-branching flag
+        post_branching: postBranching, // NEW: Post-branching flag
+        // NEW: Conditional execution
+        required_context_variables: requiredContextVariables.length > 0 ? requiredContextVariables : null
       };
 
       if (step) {
@@ -567,6 +578,114 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* Conditional Execution Settings */}
+          <div className="border-t border-primary-200 pt-6">
+            <h4 className="font-semibold text-primary-900 mb-4 flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-brand-600" />
+              <span>Bedingte Ausführung</span>
+            </h4>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-primary-600 mb-3">
+                  Definieren Sie Kontextvariablen, die vorhanden sein müssen, damit dieser Schritt ausgeführt wird.
+                  Wenn eine Variable fehlt, wird der Schritt übersprungen.
+                </p>
+
+                {/* List of required variables */}
+                {requiredContextVariables.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {requiredContextVariables.map((variable, index) => (
+                      <div
+                        key={index}
+                        className="inline-flex items-center space-x-2 px-3 py-1.5 bg-brand-50 border border-brand-200 rounded-lg"
+                      >
+                        <code className="text-sm font-mono text-brand-700">{variable}</code>
+                        <button
+                          onClick={() => {
+                            setRequiredContextVariables(prev => prev.filter((_, i) => i !== index));
+                          }}
+                          className="text-brand-600 hover:text-brand-800 transition-colors"
+                          title="Variable entfernen"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new variable */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={newVariable}
+                    onChange={(e) => setNewVariable(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const trimmed = newVariable.trim();
+                        if (trimmed && !requiredContextVariables.includes(trimmed)) {
+                          setRequiredContextVariables(prev => [...prev, trimmed]);
+                          setNewVariable('');
+                        }
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none font-mono text-sm"
+                    placeholder="z.B. target_language"
+                  />
+                  <button
+                    onClick={() => {
+                      const trimmed = newVariable.trim();
+                      if (trimmed && !requiredContextVariables.includes(trimmed)) {
+                        setRequiredContextVariables(prev => [...prev, trimmed]);
+                        setNewVariable('');
+                      }
+                    }}
+                    disabled={!newVariable.trim() || requiredContextVariables.includes(newVariable.trim())}
+                    className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Variable hinzufügen"
+                  >
+                    Hinzufügen
+                  </button>
+                </div>
+
+                {/* Help text */}
+                <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs font-semibold text-blue-900 mb-2">💡 Verfügbare Kontextvariablen:</p>
+                  <div className="grid grid-cols-1 gap-2 text-xs text-blue-700">
+                    <div>
+                      <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">target_language</code>
+                      <span className="ml-2">Zielsprache für Übersetzung</span>
+                    </div>
+                    <div>
+                      <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">document_type</code>
+                      <span className="ml-2">Dokumenttyp (nach Klassifizierung)</span>
+                    </div>
+                    <div>
+                      <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">original_text</code>
+                      <span className="ml-2">OCR-Text (immer verfügbar)</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Example warning */}
+                {requiredContextVariables.includes('target_language') && (
+                  <div className="mt-3 p-3 bg-brand-50 border border-brand-200 rounded-lg flex items-start space-x-2">
+                    <AlertCircle className="w-4 h-4 text-brand-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs text-brand-700">
+                      <p className="font-semibold mb-1">ℹ️ Hinweis</p>
+                      <p>
+                        Dieser Schritt wird übersprungen, wenn der Benutzer keine Zielsprache auswählt.
+                        Der Schritt wird im Audit-Log als SKIPPED markiert.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
