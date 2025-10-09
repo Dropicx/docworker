@@ -522,6 +522,50 @@ class ModularPipelineExecutor:
 
             logger.info(f"▶️  Step {idx + 1}/{len(universal_steps)}: {step.name}")
 
+            # Check if step has required context variables
+            if step.required_context_variables:
+                missing_vars = [var for var in step.required_context_variables if var not in context or context[var] is None]
+
+                if missing_vars:
+                    logger.info(f"⏭️  Skipping step '{step.name}' - missing required context variables: {missing_vars}")
+
+                    # Log skipped step
+                    step_execution = PipelineStepExecutionDB(
+                        job_id=job_id,
+                        step_id=step.id,
+                        step_name=step.name,
+                        step_order=step.order,
+                        status=StepExecutionStatus.SKIPPED,
+                        input_text=current_output[:1000],
+                        output_text=None,
+                        model_used=None,
+                        prompt_used=step.prompt_template[:500],
+                        started_at=datetime.fromtimestamp(step_start_time),
+                        completed_at=datetime.now(),
+                        execution_time_seconds=time.time() - step_start_time,
+                        error_message=None,
+                        step_metadata={
+                            "skip_reason": "missing_required_context_variables",
+                            "missing_variables": missing_vars,
+                            "required_variables": step.required_context_variables
+                        }
+                    )
+                    self.session.add(step_execution)
+                    self.session.commit()
+
+                    execution_metadata["steps_executed"].append({
+                        "step_name": step.name,
+                        "step_order": step.order,
+                        "success": True,  # Skipping is success
+                        "execution_time": time.time() - step_start_time,
+                        "error": None,
+                        "skipped": True,
+                        "skip_reason": f"Missing required variables: {', '.join(missing_vars)}"
+                    })
+
+                    # Continue to next step without updating current_output
+                    continue
+
             # Execute step
             success, output, error = await self.execute_step(
                 step=step,
@@ -804,6 +848,52 @@ class ModularPipelineExecutor:
                 self.session.commit()
 
                 logger.info(f"▶️  Step {idx + 1}/{len(post_branching_steps)}: {step.name} [POST-BRANCHING]")
+
+                # Check if step has required context variables
+                if step.required_context_variables:
+                    missing_vars = [var for var in step.required_context_variables if var not in context or context[var] is None]
+
+                    if missing_vars:
+                        logger.info(f"⏭️  Skipping post-branching step '{step.name}' - missing required context variables: {missing_vars}")
+
+                        # Log skipped step
+                        step_execution = PipelineStepExecutionDB(
+                            job_id=job_id,
+                            step_id=step.id,
+                            step_name=step.name,
+                            step_order=step.order,
+                            status=StepExecutionStatus.SKIPPED,
+                            input_text=current_output[:1000],
+                            output_text=None,
+                            model_used=None,
+                            prompt_used=step.prompt_template[:500],
+                            started_at=datetime.fromtimestamp(step_start_time),
+                            completed_at=datetime.now(),
+                            execution_time_seconds=time.time() - step_start_time,
+                            error_message=None,
+                            step_metadata={
+                                "post_branching": True,
+                                "skip_reason": "missing_required_context_variables",
+                                "missing_variables": missing_vars,
+                                "required_variables": step.required_context_variables
+                            }
+                        )
+                        self.session.add(step_execution)
+                        self.session.commit()
+
+                        execution_metadata["steps_executed"].append({
+                            "step_name": step.name,
+                            "step_order": step.order,
+                            "success": True,  # Skipping is success
+                            "execution_time": time.time() - step_start_time,
+                            "error": None,
+                            "post_branching": True,
+                            "skipped": True,
+                            "skip_reason": f"Missing required variables: {', '.join(missing_vars)}"
+                        })
+
+                        # Continue to next step without updating current_output
+                        continue
 
                 # Execute step
                 success, output, error = await self.execute_step(
