@@ -272,7 +272,12 @@ const PipelineBuilder: React.FC = () => {
         retry_on_failure: step.retry_on_failure,
         max_retries: step.max_retries,
         input_from_previous_step: step.input_from_previous_step,
-        output_format: step.output_format
+        output_format: step.output_format,
+        // Include branching fields to prevent unwanted changes
+        document_class_id: step.document_class_id,
+        is_branching_step: step.is_branching_step,
+        branching_field: step.branching_field,
+        post_branching: step.post_branching
       };
 
       await pipelineApi.updateStep(step.id, updatedStep);
