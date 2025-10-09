@@ -24,10 +24,14 @@ except ImportError:
     PADDLEOCR_AVAILABLE = False
     PaddleOCR = None
 
-# Logging configuration
+# Logging configuration - Standardized format
+import sys
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format='%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S',
+    handlers=[logging.StreamHandler(sys.stdout)],
+    force=True
 )
 logger = logging.getLogger(__name__)
 
@@ -39,9 +43,8 @@ paddle_ocr = None
 async def lifespan(app: FastAPI):
     """Initialize PaddleOCR at startup"""
     global paddle_ocr
-    import sys
 
-    print("🚀 PaddleOCR Service starting up...", file=sys.stderr, flush=True)
+    logger.info("🚀 PaddleOCR Service starting up...")
 
     if not PADDLEOCR_AVAILABLE:
         logger.error("❌ PaddleOCR is not installed!")
@@ -49,8 +52,7 @@ async def lifespan(app: FastAPI):
         return
 
     try:
-        import sys
-        print("🔧 Initializing PaddleOCR (CPU mode)...", file=sys.stderr, flush=True)
+        logger.info("🔧 Initializing PaddleOCR (CPU mode)...")
         start_init = time.time()
 
         paddle_ocr = PaddleOCR(
@@ -61,10 +63,10 @@ async def lifespan(app: FastAPI):
         )
 
         init_time = time.time() - start_init
-        print(f"✅ PaddleOCR initialized successfully in {init_time:.2f}s", file=sys.stderr, flush=True)
-        print(f"   - Models: Detection ✓ | Recognition ✓ | Angle Classification ✓", file=sys.stderr, flush=True)
-        print(f"   - Mode: CPU | Language: DE (German) | GPU: Disabled", file=sys.stderr, flush=True)
-        print("🟢 Service ready to process requests", file=sys.stderr, flush=True)
+        logger.info(f"✅ PaddleOCR initialized successfully in {init_time:.2f}s")
+        logger.info(f"   Models: Detection ✓ | Recognition ✓ | Angle Classification ✓")
+        logger.info(f"   Mode: CPU | Language: DE (German) | GPU: Disabled")
+        logger.info("🟢 Service ready to process requests")
 
     except Exception as e:
         logger.error(f"❌ Failed to initialize PaddleOCR: {e}")
