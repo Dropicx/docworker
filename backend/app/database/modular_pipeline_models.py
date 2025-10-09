@@ -191,6 +191,9 @@ class DynamicPipelineStepDB(Base):
     # Early termination conditions
     stop_conditions = Column(JSON, nullable=True)  # e.g., {"stop_on_values": ["NICHT_MEDIZINISCH"], "termination_reason": "Non-medical content detected", "termination_message": "Das hochgeladene Dokument enthält keinen medizinischen Inhalt."}
 
+    # Conditional execution
+    required_context_variables = Column(JSON, nullable=True)  # e.g., ["target_language"] - step will be skipped if these variables are not in context
+
     # Metadata
     created_at = Column(DateTime, default=func.now(), nullable=False)
     last_modified = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)

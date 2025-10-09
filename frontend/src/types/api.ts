@@ -16,6 +16,11 @@ export interface ProcessingProgress {
   message?: string;
   error?: string;
   timestamp: string;
+  // Pipeline termination fields
+  terminated?: boolean;
+  termination_message?: string;
+  termination_reason?: string;
+  termination_step?: string;
 }
 
 export interface TranslationResult {
@@ -29,6 +34,12 @@ export interface TranslationResult {
   language_confidence_score?: number;
   processing_time_seconds: number;
   timestamp: string;
+  // Pipeline termination fields
+  terminated?: boolean;
+  termination_step?: string;
+  termination_reason?: string;
+  termination_message?: string;
+  matched_value?: string;
 }
 
 export interface ProcessingOptions {
@@ -69,7 +80,7 @@ export interface HealthCheck {
 }
 
 // Processing Status Enum
-export type ProcessingStatus = 
+export type ProcessingStatus =
   | 'pending'
   | 'processing'
   | 'extracting_text'
@@ -77,7 +88,8 @@ export type ProcessingStatus =
   | 'language_translating'
   | 'completed'
   | 'error'
-  | 'non_medical_content';
+  | 'non_medical_content'
+  | 'terminated';
 
 // File Types
 export type FileType = 'pdf' | 'image';

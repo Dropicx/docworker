@@ -55,12 +55,14 @@ def run_all_migrations(database_url: str):
     from app.database.migrations.add_step_metadata_migration import run_migration as step_metadata_migration
     from app.database.migrations.add_stop_conditions import upgrade as stop_conditions_migration
     from app.database.migrations.add_post_branching_column import migrate_up as post_branching_migration
+    from app.database.migrations.add_required_context_variables import upgrade as required_context_vars_migration
 
     migrations = [
         ("add_pii_toggle", pii_toggle_migration),
         ("add_step_metadata", step_metadata_migration),
         ("add_stop_conditions", stop_conditions_migration),
         ("add_post_branching", post_branching_migration),
+        ("add_required_context_variables", required_context_vars_migration),
     ]
 
     results = []
