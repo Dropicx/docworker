@@ -1,9 +1,12 @@
 import magic
 import os
+import logging
 from typing import Tuple, Optional
 from PIL import Image
 import PyPDF2
 from fastapi import UploadFile, HTTPException
+
+logger = logging.getLogger(__name__)
 
 # Erlaubte MIME-Types und Dateiendungen (inkl. Fallbacks)
 ALLOWED_MIME_TYPES = {
@@ -34,27 +37,27 @@ class FileValidator:
             Tuple[bool, Optional[str]]: (is_valid, error_message)
         """
         try:
-            print(f"📋 FileValidator: Validiere {file.filename}")
-            
+            logger.debug(f"📋 Validating file: {file.filename}")
+
             # Dateiinhalt lesen
             content = await file.read()
             await file.seek(0)  # Zurück zum Anfang
-            
+
             # Größenvalidierung
             file_size = len(content)
-            print(f"📋 FileValidator: Dateigröße {file_size} bytes")
-            
+            logger.debug(f"📋 File size: {file_size} bytes")
+
             if file_size < MIN_FILE_SIZE:
-                print(f"❌ FileValidator: Datei zu klein ({file_size} < {MIN_FILE_SIZE})")
+                logger.warning(f"❌ File too small ({file_size} < {MIN_FILE_SIZE})")
                 return False, f"Datei zu klein. Mindestgröße: {MIN_FILE_SIZE} Bytes"
-            
+
             if file_size > MAX_FILE_SIZE:
-                print(f"❌ FileValidator: Datei zu groß ({file_size} > {MAX_FILE_SIZE})")
+                logger.warning(f"❌ File too large ({file_size} > {MAX_FILE_SIZE})")
                 return False, f"Datei zu groß. Maximalgröße: {MAX_FILE_SIZE // 1024 // 1024}MB"
-            
+
             # MIME-Type über magic bestimmen
             detected_mime = magic.from_buffer(content, mime=True)
-            print(f"📋 FileValidator: Erkannter MIME-Type: {detected_mime}")
+            logger.debug(f"📋 Detected MIME type: {detected_mime}")
             
             # Dateiendung prüfen
             filename_lower = file.filename.lower() if file.filename else ""
@@ -69,13 +72,13 @@ class FileValidator:
                 allowed_extensions = ALLOWED_MIME_TYPES[detected_mime]
                 if file_extension in allowed_extensions:
                     mime_valid = True
-                    print(f"✅ FileValidator: Direkter MIME-Type Match: {detected_mime} mit Endung {file_extension}")
+                    logger.debug(f"✅ Direct MIME type match: {detected_mime} with extension {file_extension}")
             elif detected_mime in FALLBACK_MIME_TYPES:
                 # Fallback-Match basierend auf Dateiendung
                 allowed_extensions = FALLBACK_MIME_TYPES[detected_mime]
                 if file_extension in allowed_extensions:
                     mime_valid = True
-                    print(f"⚠️ FileValidator: Fallback MIME-Type Match: {detected_mime} mit Endung {file_extension}")
+                    logger.debug(f"⚠️ Fallback MIME type match: {detected_mime} with extension {file_extension}")
                     # Bestimme den eigentlichen MIME-Type basierend auf Endung
                     if file_extension == ".pdf":
                         used_mime_type = "application/pdf"
@@ -83,11 +86,11 @@ class FileValidator:
                         used_mime_type = "image/jpeg"
                     elif file_extension == ".png":
                         used_mime_type = "image/png"
-            
+
             if not mime_valid:
-                print(f"❌ FileValidator: MIME-Type/Endung nicht unterstützt: {detected_mime} mit {file_extension}")
-                print(f"   Erlaubte MIME-Types: {list(ALLOWED_MIME_TYPES.keys())}")
-                print(f"   Fallback MIME-Types: {list(FALLBACK_MIME_TYPES.keys())}")
+                logger.warning(f"❌ Unsupported MIME type/extension: {detected_mime} with {file_extension}")
+                logger.debug(f"Allowed MIME types: {list(ALLOWED_MIME_TYPES.keys())}")
+                logger.debug(f"Fallback MIME types: {list(FALLBACK_MIME_TYPES.keys())}")
                 return False, f"Dateityp nicht unterstützt: {detected_mime} mit Endung {file_extension}"
             
             # Spezifische Validierung nach erkanntem Dateityp
@@ -100,12 +103,12 @@ class FileValidator:
                 is_valid, error = await FileValidator._validate_image(content)
                 if not is_valid:
                     return False, error
-            
-            print(f"✅ FileValidator: Datei {file.filename} erfolgreich validiert")
+
+            logger.info(f"✅ File validated successfully: {file.filename}")
             return True, None
-            
+
         except Exception as e:
-            print(f"❌ FileValidator: Exception bei Validierung: {str(e)}")
+            logger.error(f"❌ File validation exception: {str(e)}")
             return False, f"Fehler bei der Dateivalidierung: {str(e)}"
     
     @staticmethod
