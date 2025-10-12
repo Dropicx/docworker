@@ -17,12 +17,44 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 class OVHClient:
-    """
-    Client for OVH AI Endpoints using Meta-Llama-3.3-70B-Instruct.
-    Configuration is loaded from centralized settings.
+    """OVH AI Endpoints client for medical text processing and vision OCR.
+
+    This client provides a comprehensive interface to OVH's AI infrastructure,
+    supporting both text-based LLM operations and vision-based OCR. It handles
+    medical document translation, multi-image processing, and streaming responses.
+
+    The client uses different models optimized for specific tasks:
+    - Main Model (Llama 3.3 70B): High-quality translation and processing
+    - Preprocessing Model (Mistral Nemo): Fast routine tasks
+    - Vision Model (Qwen 2.5 VL): Advanced OCR and image understanding
+
+    Attributes:
+        access_token (str): OVH API access token from settings
+        base_url (str): Base URL for OVH AI Endpoints
+        main_model (str): Primary LLM model for high-quality tasks
+        preprocessing_model (str): Fast model for routine operations
+        translation_model (str): Model for language translation
+        vision_model (str): Vision model for OCR tasks
+        vision_base_url (str): Base URL for vision API
+        client (AsyncOpenAI): OpenAI-compatible client for text models
+        vision_client (AsyncOpenAI): OpenAI-compatible client for vision
+        timeout (int): Request timeout in seconds
+
+    Example:
+        >>> client = OVHClient()
+        >>> text, confidence = await client.extract_text_with_vision(
+        ...     image_data=pdf_bytes,
+        ...     file_type="pdf"
+        ... )
+        >>> print(f"Extracted {len(text)} characters with {confidence:.0%} confidence")
+
+    Note:
+        All methods that call AI models return token usage information for
+        cost tracking. The client automatically selects the optimal model
+        based on task complexity.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Load configuration from settings
         self.access_token = settings.ovh_api_token
         self.base_url = settings.ovh_ai_base_url
@@ -86,8 +118,29 @@ class OVHClient:
         self.timeout = settings.ai_timeout_seconds
         
     async def check_connection(self) -> tuple[bool, str]:
-        """Check connection to OVH AI Endpoints
-        Returns: (success: bool, error_message: str)
+        """Verify connectivity and authentication with OVH AI Endpoints.
+
+        Performs a simple test API call to validate that the client is properly
+        configured and can communicate with OVH's AI infrastructure.
+
+        Returns:
+            tuple[bool, str]: A tuple containing:
+                - bool: True if connection successful, False otherwise
+                - str: Success message or detailed error description
+
+        Example:
+            >>> client = OVHClient()
+            >>> success, message = await client.check_connection()
+            >>> if success:
+            ...     print(f"Connected: {message}")
+            ... else:
+            ...     print(f"Connection failed: {message}")
+
+        Note:
+            Provides specific error guidance for common issues:
+            - 401: Invalid or expired API token
+            - 404: Model not found or unavailable
+            - Timeout: Network connectivity issues
         """
         if not self.access_token:
             error = "OVH API token not configured - OVH_AI_ENDPOINTS_ACCESS_TOKEN is empty or not set"
@@ -168,17 +221,43 @@ class OVHClient:
         max_tokens: int = 4000,
         use_fast_model: bool = False
     ) -> Dict[str, Any]:
-        """
-        Process medical text with complete prompt.
-        Supports fast model for routine tasks to improve speed.
+        """Process medical text using AI with intelligent model selection.
+
+        Sends a complete prompt to OVH AI and returns the processed result along
+        with detailed token usage for cost tracking. Automatically selects between
+        high-quality (Llama 3.3 70B) and fast (Mistral Nemo) models based on task.
+
+        Args:
+            full_prompt: Complete prompt including instructions and input text
+            temperature: Sampling temperature (0.0-1.0). Lower = more deterministic.
+                Default 0.3 for medical accuracy.
+            max_tokens: Maximum tokens to generate in response. Default 4000.
+            use_fast_model: If True, uses Mistral Nemo for speed. If False, uses
+                Llama 3.3 70B for quality. Default False.
 
         Returns:
-            Dict with:
-            - text: str - The processed text
-            - input_tokens: int - Number of input tokens
-            - output_tokens: int - Number of output tokens
-            - total_tokens: int - Total tokens used
-            - model: str - Model name used
+            Dict[str, Any]: Processing result containing:
+                - text (str): The AI-generated response
+                - input_tokens (int): Number of tokens in the prompt
+                - output_tokens (int): Number of tokens in the response
+                - total_tokens (int): Sum of input and output tokens
+                - model (str): Name of the model that was used
+
+        Example:
+            >>> client = OVHClient()
+            >>> prompt = "Translate this medical text: {text}"
+            >>> result = await client.process_medical_text_with_prompt(
+            ...     full_prompt=prompt,
+            ...     temperature=0.3,
+            ...     use_fast_model=False
+            ... )
+            >>> print(f"Used {result['total_tokens']} tokens")
+            >>> print(f"Response: {result['text']}")
+
+        Note:
+            - Fast model (Mistral Nemo): 50-100ms faster, suitable for formatting/grammar
+            - High-quality model (Llama 3.3 70B): Best for translation and medical content
+            - Token usage is returned for cost tracking via AICostTracker
         """
         if not self.access_token:
             logger.error("❌ OVH API token not configured")
@@ -453,8 +532,45 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         max_tokens: int = 4000,
         custom_prompt: Optional[str] = None
     ) -> tuple[str, float]:
-        """
-        Translate simplified text to another language using Meta-Llama-3.3-70B
+        """Translate simplified medical text to target language with quality scoring.
+
+        Translates patient-friendly medical text to another language while preserving
+        formatting, medical terms, and numerical values. Automatically evaluates
+        translation quality based on multiple indicators.
+
+        Args:
+            simplified_text: German medical text already simplified for patients
+            target_language: Target language code (e.g., "English", "French", "Spanish")
+            temperature: AI temperature (0.0-1.0). Default 0.3 for accuracy.
+            max_tokens: Maximum response tokens. Default 4000.
+            custom_prompt: Optional custom translation prompt. If None, uses
+                default prompt with strict formatting rules.
+
+        Returns:
+            tuple[str, float]: A tuple containing:
+                - str: Translated text with preserved formatting
+                - float: Translation quality confidence (0.0-1.0)
+
+        Example:
+            >>> client = OVHClient()
+            >>> de_text = "Ihr Blutdruck ist erhöht (145/90 mmHg)."
+            >>> en_text, confidence = await client.translate_to_language(
+            ...     simplified_text=de_text,
+            ...     target_language="English"
+            ... )
+            >>> print(f"Translation ({confidence:.0%} confidence): {en_text}")
+            >>> # Output: "Your blood pressure is elevated (145/90 mmHg)."
+
+        Note:
+            **Quality Indicators**:
+            - Text length comparison (0.7-1.5 ratio expected)
+            - Symbol preservation (bullets, arrows, emojis)
+            - Structure preservation (formatting, line breaks)
+
+            **Translation Rules**:
+            - Numbers and units preserved exactly
+            - Medical symbols (•, →, ##) unchanged
+            - Formatting (line breaks, indentation) maintained
         """
         if not self.access_token:
             logger.error("❌ OVH API token not configured")
@@ -885,16 +1001,44 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         file_type: str = "image",
         confidence_threshold: float = 0.7
     ) -> tuple[str, float]:
-        """
-        Extract text from image using Qwen 2.5 VL vision model
+        """Extract text from images using Qwen 2.5 VL vision model with OCR.
+
+        Performs advanced OCR on images using OVH's vision AI model. Handles
+        complex medical documents including tables, multi-column layouts, and
+        handwritten text. Provides confidence scoring based on text quality.
 
         Args:
-            image_data: Image as bytes or PIL Image
-            file_type: Type of file being processed
-            confidence_threshold: Minimum confidence for success
+            image_data: Image content as raw bytes or PIL Image object
+            file_type: Type of source file ("image", "pdf", "jpg", "png").
+                Used for format detection and logging.
+            confidence_threshold: Minimum confidence score (0.0-1.0) to consider
+                extraction successful. Default 0.7.
 
         Returns:
-            tuple[str, float]: (extracted_text, confidence_score)
+            tuple[str, float]: A tuple containing:
+                - str: Extracted text with preserved formatting (tables use pipe syntax)
+                - float: Confidence score (0.0-1.0) based on text quality indicators
+
+        Raises:
+            Exception: On API failures, returns error message as text with 0.0 confidence
+
+        Example:
+            >>> client = OVHClient()
+            >>> with open("medical_report.pdf", "rb") as f:
+            ...     pdf_bytes = f.read()
+            >>> text, confidence = await client.extract_text_with_vision(
+            ...     image_data=pdf_bytes,
+            ...     file_type="pdf"
+            ... )
+            >>> if confidence > 0.7:
+            ...     print(f"High quality extraction: {len(text)} characters")
+
+        Note:
+            - Table formatting: Uses pipe separators (| Col1 | Col2 |)
+            - Medical terms: Preserved exactly as written
+            - Unclear text: Marked with [unclear] placeholder
+            - Timeout: 180 seconds for complex multi-page documents
+            - Confidence factors: Text length, medical terms, table structure
         """
         if not self.access_token or not self.vision_client:
             logger.error("❌ OVH vision client not configured")
@@ -1109,15 +1253,47 @@ Begin text extraction with perfect structure preservation:"""
         images: List[Union[bytes, Image.Image]],
         merge_strategy: str = "sequential"
     ) -> tuple[str, float]:
-        """
-        Process multiple images with OCR and merge results intelligently
+        """Process multiple images with parallel OCR and intelligent merging.
+
+        Extracts text from multiple images concurrently using vision AI, then
+        merges the results using the specified strategy. Includes retry logic,
+        concurrency control, and comprehensive error handling for production use.
 
         Args:
-            images: List of images to process
-            merge_strategy: How to merge results ("sequential", "smart")
+            images: List of images to process. Each can be raw bytes or PIL Image.
+            merge_strategy: Strategy for combining results. Options:
+                - "sequential": Adds page separators between each page
+                - "smart": Intelligently detects continuation vs new sections
 
         Returns:
-            tuple[str, float]: (merged_text, average_confidence)
+            tuple[str, float]: A tuple containing:
+                - str: Merged text from all pages with proper formatting
+                - float: Average confidence score across all pages
+
+        Example:
+            >>> client = OVHClient()
+            >>> images = [page1_bytes, page2_bytes, page3_bytes]
+            >>> text, confidence = await client.process_multiple_images_ocr(
+            ...     images=images,
+            ...     merge_strategy="smart"
+            ... )
+            >>> print(f"Extracted {len(text)} chars from {len(images)} pages")
+            >>> print(f"Average confidence: {confidence:.0%}")
+
+        Note:
+            **Performance Optimizations**:
+            - Parallel processing with semaphore (max 2 concurrent API calls)
+            - Retry logic: Up to 3 attempts per image with exponential backoff
+            - Failed pages: Included with [ERROR] markers to maintain page order
+
+            **Merge Strategies**:
+            - Sequential: "--- Seite 1 ---\\nText\\n\\n--- Seite 2 ---"
+            - Smart: Detects sentence continuation (commas, conjunctions)
+
+            **Error Handling**:
+            - Individual page failures don't stop processing
+            - Failed pages tracked and reported in logs
+            - Returns partial results if some pages succeed
         """
         if not images:
             return "No images provided", 0.0
