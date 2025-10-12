@@ -27,14 +27,77 @@ MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB für Handyfotos
 MIN_FILE_SIZE = 1024  # 1KB
 
 class FileValidator:
-    
+    """Comprehensive file validation service for medical document uploads.
+
+    Validates uploaded files for type safety, size constraints, and content integrity.
+    Supports PDF documents and images (JPEG, PNG) with intelligent MIME type detection
+    and fallback handling for inconsistent browser/OS file type reporting.
+
+    **Validation Layers**:
+        1. Size validation (1KB - 50MB range)
+        2. MIME type detection with python-magic library
+        3. Extension verification with fallback matching
+        4. Content-specific validation (PDF structure, image integrity)
+
+    **Supported File Types**:
+        - PDF: application/pdf (.pdf), max 50 pages
+        - JPEG: image/jpeg (.jpg, .jpeg)
+        - PNG: image/png (.png)
+        - Image constraints: 100x100 to 8000x8000 pixels
+
+    **Fallback MIME Handling**:
+        Some systems misreport MIME types (text/plain, octet-stream).
+        The validator uses extension-based fallback for reliable detection.
+
+    Example:
+        >>> validator = FileValidator()
+        >>> is_valid, error = await validator.validate_file(upload_file)
+        >>> if is_valid:
+        ...     print("File is valid")
+        ... else:
+        ...     print(f"Validation failed: {error}")
+
+    Note:
+        All methods are static - no instance state required.
+        Designed for FastAPI UploadFile integration.
+    """
+
     @staticmethod
     async def validate_file(file: UploadFile) -> Tuple[bool, Optional[str]]:
-        """
-        Validiert eine hochgeladene Datei auf Typ, Größe und Inhalt
-        
+        """Validate uploaded file for type, size, and content integrity.
+
+        Performs comprehensive validation including MIME type detection, size checks,
+        and format-specific validation (PDF structure or image integrity). Uses
+        python-magic for reliable MIME detection with extension-based fallback.
+
+        Args:
+            file: FastAPI UploadFile object containing uploaded file data
+
         Returns:
-            Tuple[bool, Optional[str]]: (is_valid, error_message)
+            Tuple[bool, Optional[str]]: Validation result tuple containing:
+                - bool: True if file is valid and safe to process
+                - Optional[str]: Error message if validation failed, None if valid
+
+        Example:
+            >>> from fastapi import UploadFile
+            >>> file = UploadFile(filename="report.pdf", file=pdf_bytes)
+            >>> is_valid, error = await FileValidator.validate_file(file)
+            >>> if not is_valid:
+            ...     raise HTTPException(400, detail=error)
+
+        Note:
+            **Size Constraints**:
+            - Minimum: 1KB (prevents empty/corrupt files)
+            - Maximum: 50MB (accommodates high-res phone photos)
+
+            **MIME Type Fallback**:
+            - Direct match: Magic library detection
+            - Fallback match: Extension-based when MIME misreported
+            - Common fallbacks: text/plain, octet-stream → check extension
+
+            **Content Validation**:
+            - PDF: Checks page count (max 50), structure integrity
+            - Image: Verifies format, dimensions, data corruption
         """
         try:
             logger.debug(f"📋 Validating file: {file.filename}")
@@ -113,7 +176,35 @@ class FileValidator:
     
     @staticmethod
     async def _validate_pdf(content: bytes) -> Tuple[bool, Optional[str]]:
-        """Validiert PDF-Datei"""
+        """Validate PDF file structure and constraints.
+
+        Checks PDF file integrity, page count limits, and text extractability.
+        Ensures PDF is processable by OCR and translation pipeline.
+
+        Args:
+            content: Raw PDF file content as bytes
+
+        Returns:
+            Tuple[bool, Optional[str]]: Validation result tuple containing:
+                - bool: True if PDF is valid, False otherwise
+                - Optional[str]: Error message if invalid, None if valid
+
+        Example:
+            >>> pdf_bytes = open("report.pdf", "rb").read()
+            >>> is_valid, error = await FileValidator._validate_pdf(pdf_bytes)
+            >>> if not is_valid:
+            ...     print(f"PDF validation failed: {error}")
+
+        Note:
+            **Validation Checks**:
+            - PDF structure: Must be readable by PyPDF2
+            - Page count: Must have at least 1 page, max 50 pages
+            - Content: Validates first 5 pages for text extraction
+
+            **Performance**:
+            - Only checks first 5 pages for text (optimization)
+            - Empty PDFs (scanned images) still pass - OCR handles them
+        """
         try:
             from io import BytesIO
             pdf_file = BytesIO(content)
@@ -145,7 +236,39 @@ class FileValidator:
     
     @staticmethod
     async def _validate_image(content: bytes) -> Tuple[bool, Optional[str]]:
-        """Validiert Bilddatei"""
+        """Validate image file format, dimensions, and data integrity.
+
+        Checks image format support, dimension constraints, and data corruption.
+        Ensures image is processable by OCR vision models.
+
+        Args:
+            content: Raw image file content as bytes
+
+        Returns:
+            Tuple[bool, Optional[str]]: Validation result tuple containing:
+                - bool: True if image is valid, False otherwise
+                - Optional[str]: Error message if invalid, None if valid
+
+        Example:
+            >>> img_bytes = open("scan.jpg", "rb").read()
+            >>> is_valid, error = await FileValidator._validate_image(img_bytes)
+            >>> if is_valid:
+            ...     print("Image ready for OCR processing")
+
+        Note:
+            **Format Support**:
+            - JPEG: Standard medical scan format
+            - PNG: Lossless medical document format
+            - Other formats (TIFF, BMP): Not supported
+
+            **Dimension Constraints**:
+            - Minimum: 100x100 pixels (too small for OCR)
+            - Maximum: 8000x8000 pixels (memory/processing limits)
+
+            **Integrity Check**:
+            - Uses PIL.Image.verify() to detect corruption
+            - Catches truncated files, invalid headers, corrupted data
+        """
         try:
             from io import BytesIO
             image_file = BytesIO(content)
@@ -173,7 +296,35 @@ class FileValidator:
     
     @staticmethod
     def get_file_type(filename: str) -> str:
-        """Bestimmt Dateityp basierend auf Endung"""
+        """Determine file type from filename extension.
+
+        Maps file extensions to standardized type identifiers used throughout
+        the application. Simple extension-based detection for routing to
+        appropriate processing pipelines.
+
+        Args:
+            filename: Original filename including extension
+
+        Returns:
+            str: Standardized file type identifier:
+                - "pdf": PDF documents
+                - "image": JPEG or PNG images
+                - "unknown": Unsupported or missing extension
+
+        Example:
+            >>> FileValidator.get_file_type("report.pdf")
+            'pdf'
+            >>> FileValidator.get_file_type("scan.jpg")
+            'image'
+            >>> FileValidator.get_file_type("document.docx")
+            'unknown'
+            >>> FileValidator.get_file_type("")
+            'unknown'
+
+        Note:
+            This is a simple helper for routing, not validation.
+            Actual validation uses MIME type detection in validate_file().
+        """
         if not filename:
             return "unknown"
         
