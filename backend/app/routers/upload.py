@@ -11,10 +11,11 @@ from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from celery import Celery
+from sqlalchemy.orm import Session
 
 from app.models.document import UploadResponse, ProcessingStatus, DocumentType, ErrorResponse
 from app.services.file_validator import FileValidator
-from app.database.connection import get_db_session
+from app.database.connection import get_session
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
 from shared.task_queue import check_workers_available
 
@@ -29,7 +30,8 @@ limiter = Limiter(key_func=get_remote_address)
 @limiter.limit("5/minute")  # Maximal 5 Uploads pro Minute
 async def upload_document(
     request: Request,
-    file: UploadFile = File(..., description="Medizinisches Dokument (PDF, JPG, PNG)")
+    file: UploadFile = File(..., description="Medizinisches Dokument (PDF, JPG, PNG)"),
+    db: Session = Depends(get_session)
 ):
     # Log upload request
     upload_log = f"📤 Upload request: {file.filename} ({file.content_type})"
@@ -99,64 +101,59 @@ async def upload_document(
         file_size = len(file_content)
 
         # Pipeline-Konfiguration laden (für Job-Snapshot)
-        db = next(get_db_session())
-        try:
-            from app.services.modular_pipeline_executor import ModularPipelineExecutor
-            executor = ModularPipelineExecutor(db)
+        from app.services.modular_pipeline_executor import ModularPipelineExecutor
+        executor = ModularPipelineExecutor(db)
 
-            # Lade aktuelle Pipeline- und OCR-Konfiguration
-            pipeline_steps_list = executor.load_pipeline_steps()
-            ocr_config_obj = executor.load_ocr_configuration()
+        # Lade aktuelle Pipeline- und OCR-Konfiguration
+        pipeline_steps_list = executor.load_pipeline_steps()
+        ocr_config_obj = executor.load_ocr_configuration()
 
-            # Serialize für JSON-Speicherung
-            pipeline_config = [
-                {
-                    "id": step.id,
-                    "name": step.name,
-                    "order": step.order,
-                    "enabled": step.enabled,
-                    "prompt_template": step.prompt_template,
-                    "selected_model_id": step.selected_model_id,
-                    "document_class_id": step.document_class_id,
-                    "is_branching_step": step.is_branching_step,
-                    "branching_field": step.branching_field
-                }
-                for step in pipeline_steps_list
-            ]
-
-            ocr_config = {
-                "selected_engine": str(ocr_config_obj.selected_engine) if ocr_config_obj else "PADDLEOCR",
-                "paddleocr_config": ocr_config_obj.paddleocr_config if ocr_config_obj else {},
-                "vision_llm_config": ocr_config_obj.vision_llm_config if ocr_config_obj else {}
+        # Serialize für JSON-Speicherung
+        pipeline_config = [
+            {
+                "id": step.id,
+                "name": step.name,
+                "order": step.order,
+                "enabled": step.enabled,
+                "prompt_template": step.prompt_template,
+                "selected_model_id": step.selected_model_id,
+                "document_class_id": step.document_class_id,
+                "is_branching_step": step.is_branching_step,
+                "branching_field": step.branching_field
             }
+            for step in pipeline_steps_list
+        ]
 
-            # Erstelle Pipeline-Job in der Datenbank
-            pipeline_job = PipelineJobDB(
-                job_id=job_id,
-                processing_id=processing_id,
-                filename=file.filename,
-                file_type=file_type_str,
-                file_size=file_size,
-                file_content=file_content,
-                client_ip=get_remote_address(request),
-                status=StepExecutionStatus.PENDING,
-                progress_percent=0,
-                started_at=datetime.now(),  # Track when user initiates processing
-                pipeline_config=pipeline_config,  # Snapshot der Pipeline-Konfiguration
-                ocr_config=ocr_config  # Snapshot der OCR-Konfiguration
-            )
+        ocr_config = {
+            "selected_engine": str(ocr_config_obj.selected_engine) if ocr_config_obj else "PADDLEOCR",
+            "paddleocr_config": ocr_config_obj.paddleocr_config if ocr_config_obj else {},
+            "vision_llm_config": ocr_config_obj.vision_llm_config if ocr_config_obj else {}
+        }
 
-            db.add(pipeline_job)
-            db.commit()
-            db.refresh(pipeline_job)
+        # Erstelle Pipeline-Job in der Datenbank
+        pipeline_job = PipelineJobDB(
+            job_id=job_id,
+            processing_id=processing_id,
+            filename=file.filename,
+            file_type=file_type_str,
+            file_size=file_size,
+            file_content=file_content,
+            client_ip=get_remote_address(request),
+            status=StepExecutionStatus.PENDING,
+            progress_percent=0,
+            started_at=datetime.now(),  # Track when user initiates processing
+            pipeline_config=pipeline_config,  # Snapshot der Pipeline-Konfiguration
+            ocr_config=ocr_config  # Snapshot der OCR-Konfiguration
+        )
 
-            # NOTE: Worker is NOT enqueued here anymore!
-            # It will be enqueued when frontend calls /process/{id} with options (target_language, etc.)
-            # This allows frontend to set language selection BEFORE processing starts
-            logger.info(f"📝 Job created and ready: {job_id[:8]} (status: PENDING, waiting for /process call)")
+        db.add(pipeline_job)
+        db.commit()
+        db.refresh(pipeline_job)
 
-        finally:
-            db.close()
+        # NOTE: Worker is NOT enqueued here anymore!
+        # It will be enqueued when frontend calls /process/{id} with options (target_language, etc.)
+        # This allows frontend to set language selection BEFORE processing starts
+        logger.info(f"📝 Job created and ready: {job_id[:8]} (status: PENDING, waiting for /process call)")
         
         # Response erstellen
         response = UploadResponse(

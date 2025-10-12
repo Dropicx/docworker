@@ -24,12 +24,11 @@ from app.services.cleanup import (
     update_processing_store,
     remove_from_processing_store
 )
-from app.database.connection import get_db_session
+from app.database.connection import get_session
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
 from app.services.ovh_client import OVHClient
 from app.services.ai_logging_service import AILoggingService
 from app.services.hybrid_text_extractor import HybridTextExtractor
-from app.database.connection import get_session
 from sqlalchemy.orm import Session
 import os
 
@@ -72,7 +71,8 @@ async def start_processing(
     processing_id: str,
     request: Request,
     background_tasks: BackgroundTasks,
-    options: Optional[ProcessingOptions] = None
+    options: Optional[ProcessingOptions] = None,
+    db: Session = Depends(get_session)
 ):
     """
     Startet die Verarbeitung eines hochgeladenen Dokuments
@@ -83,45 +83,40 @@ async def start_processing(
 
     try:
         # Load job from database (new architecture)
-        db = next(get_db_session())
+        job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+
+        if not job:
+            raise HTTPException(
+                status_code=404,
+                detail="Verarbeitung nicht gefunden oder bereits abgelaufen"
+            )
+
+        # Save processing options (including target_language) to job
+        options_dict = options.dict() if options else {}
+        job.processing_options = options_dict
+        db.commit()
+
+        logger.info(f"📋 Processing options saved for {processing_id[:8]}: {options_dict}")
+
+        # NOW enqueue the worker task with the options
         try:
-            job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+            from app.services.celery_client import enqueue_document_processing
+            task_id = enqueue_document_processing(processing_id, options=options_dict)
+            logger.info(f"📤 Job queued to Redis: {processing_id[:8]} (task_id: {task_id})")
 
-            if not job:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Verarbeitung nicht gefunden oder bereits abgelaufen"
-                )
-
-            # Save processing options (including target_language) to job
-            options_dict = options.dict() if options else {}
-            job.processing_options = options_dict
-            db.commit()
-
-            logger.info(f"📋 Processing options saved for {processing_id[:8]}: {options_dict}")
-
-            # NOW enqueue the worker task with the options
-            try:
-                from app.services.celery_client import enqueue_document_processing
-                task_id = enqueue_document_processing(processing_id, options=options_dict)
-                logger.info(f"📤 Job queued to Redis: {processing_id[:8]} (task_id: {task_id})")
-
-                return {
-                    "message": "Verarbeitung gestartet",
-                    "processing_id": processing_id,
-                    "status": "QUEUED",
-                    "task_id": task_id,
-                    "target_language": options_dict.get('target_language') if options_dict else None
-                }
-            except Exception as queue_error:
-                logger.error(f"❌ Failed to queue task: {queue_error}")
-                raise HTTPException(
-                    status_code=503,
-                    detail=f"Failed to queue processing task: {str(queue_error)}"
-                )
-
-        finally:
-            db.close()
+            return {
+                "message": "Verarbeitung gestartet",
+                "processing_id": processing_id,
+                "status": "QUEUED",
+                "task_id": task_id,
+                "target_language": options_dict.get('target_language') if options_dict else None
+            }
+        except Exception as queue_error:
+            logger.error(f"❌ Failed to queue task: {queue_error}")
+            raise HTTPException(
+                status_code=503,
+                detail=f"Failed to queue processing task: {str(queue_error)}"
+            )
 
     except HTTPException:
         raise
@@ -133,7 +128,10 @@ async def start_processing(
         )
 
 @router.get("/process/{processing_id}/status", response_model=ProcessingProgress)
-async def get_processing_status(processing_id: str):
+async def get_processing_status(
+    processing_id: str,
+    db: Session = Depends(get_session)
+):
     """
     Gibt den aktuellen Verarbeitungsstatus zurück (aus Datenbank)
 
@@ -142,45 +140,40 @@ async def get_processing_status(processing_id: str):
 
     try:
         # Load job from database
-        db = next(get_db_session())
-        try:
-            job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+        job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
 
-            if not job:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Verarbeitung nicht gefunden"
-                )
-
-            # Map database status to API status
-            status_mapping = {
-                StepExecutionStatus.PENDING: ProcessingStatus.PENDING,
-                StepExecutionStatus.RUNNING: ProcessingStatus.PROCESSING,
-                StepExecutionStatus.COMPLETED: ProcessingStatus.COMPLETED,
-                StepExecutionStatus.FAILED: ProcessingStatus.ERROR,
-                StepExecutionStatus.SKIPPED: ProcessingStatus.ERROR
-            }
-
-            # Determine current step description
-            current_step = "Warten auf Verarbeitung..."
-            if job.status == StepExecutionStatus.RUNNING:
-                current_step = f"Verarbeite Schritt {job.progress_percent}%"
-            elif job.status == StepExecutionStatus.COMPLETED:
-                current_step = "Verarbeitung abgeschlossen"
-            elif job.status == StepExecutionStatus.FAILED:
-                current_step = "Fehler bei Verarbeitung"
-
-            return ProcessingProgress(
-                processing_id=processing_id,
-                status=status_mapping.get(job.status, ProcessingStatus.PENDING),
-                progress_percent=job.progress_percent,
-                current_step=current_step,
-                message=None,
-                error=job.error_message
+        if not job:
+            raise HTTPException(
+                status_code=404,
+                detail="Verarbeitung nicht gefunden"
             )
 
-        finally:
-            db.close()
+        # Map database status to API status
+        status_mapping = {
+            StepExecutionStatus.PENDING: ProcessingStatus.PENDING,
+            StepExecutionStatus.RUNNING: ProcessingStatus.PROCESSING,
+            StepExecutionStatus.COMPLETED: ProcessingStatus.COMPLETED,
+            StepExecutionStatus.FAILED: ProcessingStatus.ERROR,
+            StepExecutionStatus.SKIPPED: ProcessingStatus.ERROR
+        }
+
+        # Determine current step description
+        current_step = "Warten auf Verarbeitung..."
+        if job.status == StepExecutionStatus.RUNNING:
+            current_step = f"Verarbeite Schritt {job.progress_percent}%"
+        elif job.status == StepExecutionStatus.COMPLETED:
+            current_step = "Verarbeitung abgeschlossen"
+        elif job.status == StepExecutionStatus.FAILED:
+            current_step = "Fehler bei Verarbeitung"
+
+        return ProcessingProgress(
+            processing_id=processing_id,
+            status=status_mapping.get(job.status, ProcessingStatus.PENDING),
+            progress_percent=job.progress_percent,
+            current_step=current_step,
+            message=None,
+            error=job.error_message
+        )
 
     except HTTPException:
         raise
@@ -192,7 +185,10 @@ async def get_processing_status(processing_id: str):
         )
 
 @router.get("/process/{processing_id}/result", response_model=TranslationResult)
-async def get_processing_result(processing_id: str):
+async def get_processing_result(
+    processing_id: str,
+    db: Session = Depends(get_session)
+):
     """
     Gibt das Verarbeitungsergebnis zurück (aus Datenbank)
 
@@ -201,34 +197,29 @@ async def get_processing_result(processing_id: str):
 
     try:
         # Load job from database
-        db = next(get_db_session())
-        try:
-            job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+        job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
 
-            if not job:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Verarbeitung nicht gefunden"
-                )
+        if not job:
+            raise HTTPException(
+                status_code=404,
+                detail="Verarbeitung nicht gefunden"
+            )
 
-            if job.status != StepExecutionStatus.COMPLETED:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Verarbeitung noch nicht abgeschlossen. Status: {job.status}"
-                )
+        if job.status != StepExecutionStatus.COMPLETED:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Verarbeitung noch nicht abgeschlossen. Status: {job.status}"
+            )
 
-            result_data = job.result_data
-            if not result_data:
-                raise HTTPException(
-                    status_code=500,
-                    detail="Verarbeitungsergebnis nicht verfügbar"
-                )
+        result_data = job.result_data
+        if not result_data:
+            raise HTTPException(
+                status_code=500,
+                detail="Verarbeitungsergebnis nicht verfügbar"
+            )
 
-            # Return result (we keep it in DB for audit purposes, don't delete)
-            return TranslationResult(**result_data)
-
-        finally:
-            db.close()
+        # Return result (we keep it in DB for audit purposes, don't delete)
+        return TranslationResult(**result_data)
 
     except HTTPException:
         raise
