@@ -17,7 +17,7 @@ from sqlalchemy.orm import sessionmaker
 # Add the parent directory to the Python path to allow imports from 'app'
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app.database.connection import get_database_url
+from app.core.config import settings
 from app.database.unified_models import Base as UnifiedBase
 from app.database.models import Base as OldBase, DocumentPromptsDB, PipelineStepConfigDB
 # Define DocumentClass directly to avoid pydantic dependency
@@ -34,8 +34,7 @@ def migrate_to_unified_system():
     
     try:
         # Get database connection
-        database_url = get_database_url()
-        engine = create_engine(database_url)
+        engine = create_engine(settings.database_url)
         Session = sessionmaker(autocommit=False, autoflush=False, bind=engine)
         
         with Session() as session:

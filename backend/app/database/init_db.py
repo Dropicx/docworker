@@ -5,7 +5,7 @@ Database initialization script
 import logging
 from sqlalchemy import create_engine
 from app.database.unified_models import Base
-from app.database.connection import get_database_url
+from app.core.config import settings
 
 # Import modular pipeline models to register them with Base.metadata
 from app.database import modular_pipeline_models
@@ -15,8 +15,7 @@ logger = logging.getLogger(__name__)
 def init_database():
     """Initialize database tables and seed initial data"""
     try:
-        database_url = get_database_url()
-        engine = create_engine(database_url)
+        engine = create_engine(settings.database_url)
         
         # Create all tables
         Base.metadata.create_all(bind=engine)
@@ -41,8 +40,7 @@ def init_database():
 def drop_database():
     """Drop all database tables (use with caution!)"""
     try:
-        database_url = get_database_url()
-        engine = create_engine(database_url)
+        engine = create_engine(settings.database_url)
         
         # Drop all tables
         Base.metadata.drop_all(bind=engine)

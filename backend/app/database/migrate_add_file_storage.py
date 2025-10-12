@@ -12,15 +12,14 @@ This migration adds columns for storing uploaded documents directly in the datab
 
 import logging
 from sqlalchemy import create_engine, text
-from app.database.connection import get_database_url
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 def migrate_add_file_storage():
     """Add file storage columns to pipeline_jobs table"""
     try:
-        database_url = get_database_url()
-        engine = create_engine(database_url)
+        engine = create_engine(settings.database_url)
 
         with engine.connect() as conn:
             # Start transaction
