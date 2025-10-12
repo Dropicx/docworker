@@ -110,7 +110,8 @@ class Settings(BaseSettings):
     )
     admin_access_code: str = Field(
         default="admin123",
-        description="Access code for settings UI"
+        description="Access code for settings UI",
+        validation_alias="SETTINGS_ACCESS_CODE"  # Keep backward compatibility with Railway env var
     )
     allowed_origins: List[str] = Field(
         default_factory=lambda: ["*"],
