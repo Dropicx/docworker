@@ -1,9 +1,95 @@
-"""
-Document Class Manager Service
+"""Document Class Manager Service for dynamic medical document classification.
 
-Manages CRUD operations for dynamic document classification types.
-Allows users to create, update, and manage custom document classes
-with their own pipeline branches.
+Comprehensive CRUD service for managing document classification types with automatic
+pipeline integration. Supports system-protected classes (ARZTBRIEF, BEFUNDBERICHT,
+LABORWERTE) and user-defined custom classes for extensible medical workflows.
+
+**Core Features**:
+    - CRUD operations: Create, Read, Update, Delete document classes
+    - System protection: Prevent deletion/modification of core medical classes
+    - Auto-sync: Classification prompts update when classes change
+    - Validation: Unique keys, referential integrity checks
+    - Statistics: Count system vs. custom classes
+
+**Document Class System**:
+    - **System Classes** (protected): ARZTBRIEF, BEFUNDBERICHT, LABORWERTE
+      * Cannot be deleted
+      * class_key cannot be modified
+      * Essential for medical document processing
+
+    - **Custom Classes** (user-defined): Any additional categories
+      * Full CRUD support
+      * Can be disabled without deletion
+      * Support custom pipeline branches
+
+**Database Integration**:
+    - Primary table: document_classes (DocumentClassDB)
+    - Related table: dynamic_pipeline_steps (DynamicPipelineStepDB)
+    - Cascading updates: Changes trigger classification prompt regeneration
+
+**Classification Prompt Auto-Generation**:
+    When document classes change (create/update/delete), the service automatically
+    rebuilds classification prompts for all branching pipeline steps. Ensures
+    AI classifiers always see current document types.
+
+**Use Cases**:
+    - Add new medical document types (e.g., "THERAPIEPLAN", "MEDIKATIONSPLAN")
+    - Customize document workflows per organization
+    - Enable/disable document types without data loss
+    - Generate classification prompts dynamically
+
+**Example Usage**:
+    >>> from app.database.connection import get_db_session
+    >>> db = next(get_db_session())
+    >>> manager = DocumentClassManager(session=db)
+    >>>
+    >>> # Create custom document class
+    >>> new_class = manager.create_class({
+    ...     "class_key": "THERAPIEPLAN",
+    ...     "display_name": "Therapieplan",
+    ...     "description": "Treatment and therapy plans",
+    ...     "icon": "📋",
+    ...     "is_enabled": True,
+    ...     "strong_indicators": ["Therapie", "Behandlungsplan"],
+    ...     "weak_indicators": ["Medikation", "Dosierung"]
+    ... })
+    >>>
+    >>> # Get all enabled classes
+    >>> enabled = manager.get_enabled_classes()
+    >>> for cls in enabled:
+    ...     print(f"{cls.icon} {cls.display_name}: {cls.description}")
+    >>>
+    >>> # Update class description
+    >>> manager.update_class(new_class.id, {
+    ...     "description": "Comprehensive therapy and treatment plans"
+    ... })
+    >>>
+    >>> # Get classification prompt (auto-generated from enabled classes)
+    >>> prompt = manager.get_classification_prompt_template()
+    >>> print(prompt)  # Includes all enabled classes with indicators
+
+**System Protection**:
+    System classes marked with is_system_class=True:
+    - ARZTBRIEF (Doctor's letters, discharge summaries)
+    - BEFUNDBERICHT (Medical findings, diagnostic reports)
+    - LABORWERTE (Lab results, blood tests)
+
+    Protection enforced:
+    - delete_class(): Raises ValueError if is_system_class=True
+    - update_class(): Prevents changing class_key if is_system_class=True
+
+Note:
+    **Referential Integrity**: Cannot delete classes with associated pipeline steps.
+    Must delete/reassign steps first to maintain database consistency.
+
+    **Prompt Synchronization**: All branching pipeline steps automatically updated
+    when classes change. Ensures classification always uses current schema.
+
+    **Custom Class Lifecycle**:
+    1. Create with strong/weak indicators
+    2. Enable for production use
+    3. Disable to hide (soft delete)
+    4. Delete when no longer needed (hard delete)
 """
 
 import logging
@@ -21,22 +107,73 @@ logger = logging.getLogger(__name__)
 
 
 class DocumentClassManager:
-    """
-    Service for managing dynamic document classification types.
+    """Comprehensive service for managing dynamic medical document classification types.
 
-    Features:
-    - CRUD operations for document classes
-    - System class protection (cannot delete ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)
-    - Auto-update classification prompts when classes change
-    - Validation and business logic
+    Provides full CRUD lifecycle management for document classes with built-in
+    system protections, automatic prompt synchronization, and referential integrity
+    validation. Designed for extensible medical document workflows.
+
+    **Key Responsibilities**:
+        - Create/Read/Update/Delete document classification types
+        - Protect system-critical classes from deletion/modification
+        - Auto-regenerate classification prompts on schema changes
+        - Validate uniqueness and referential integrity
+        - Generate statistics and analytics
+
+    **System vs. Custom Classes**:
+        - System: is_system_class=True (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)
+        - Custom: is_system_class=False (user-defined types)
+
+    **Auto-Sync Behavior**:
+        After create/update/delete operations, automatically calls
+        _trigger_classification_prompt_update() to keep AI classifiers
+        in sync with current document schema.
+
+    Attributes:
+        session (Session): SQLAlchemy database session for CRUD operations
+
+    Example:
+        >>> manager = DocumentClassManager(session=db)
+        >>>
+        >>> # Create new document type
+        >>> therapy_plan = manager.create_class({
+        ...     "class_key": "THERAPIEPLAN",
+        ...     "display_name": "Therapieplan",
+        ...     "description": "Treatment plans",
+        ...     "icon": "📋",
+        ...     "is_enabled": True
+        ... })
+        >>>
+        >>> # Get statistics
+        >>> stats = manager.get_class_statistics()
+        >>> print(f"{stats['custom_classes']} custom classes")
+        >>>
+        >>> # Generate classification prompt
+        >>> prompt = manager.get_classification_prompt_template()
+        >>> # Prompt includes all enabled classes
+
+    Note:
+        **Thread Safety**: Not thread-safe. Session shared across operations.
+        Use separate manager instances per thread/request.
+
+        **Transaction Management**: Methods commit on success, rollback on error.
+        Caller responsible for session lifecycle (creation/close).
+
+        **System Class Protection**:
+        ValueError raised if attempting to:
+        - Delete system class
+        - Change class_key of system class
+
+        **Referential Integrity**:
+        ValueError raised if attempting to delete class with associated
+        pipeline steps. Must orphan/delete steps first.
     """
 
     def __init__(self, session: Session):
-        """
-        Initialize Document Class Manager.
+        """Initialize Document Class Manager with database session.
 
         Args:
-            session: SQLAlchemy session for database access
+            session: SQLAlchemy session for database CRUD operations
         """
         self.session = session
 
