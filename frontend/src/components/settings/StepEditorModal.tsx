@@ -74,6 +74,12 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   const [requiredContextVariables, setRequiredContextVariables] = useState<string[]>([]);
   const [newVariable, setNewVariable] = useState('');
 
+  // NEW: Stop conditions (termination)
+  const [stopOnValues, setStopOnValues] = useState<string[]>([]);
+  const [newStopValue, setNewStopValue] = useState('');
+  const [terminationReason, setTerminationReason] = useState('');
+  const [terminationMessage, setTerminationMessage] = useState('');
+
   // UI State
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -102,6 +108,16 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setPostBranching(step.post_branching || false);
       // NEW: Conditional execution
       setRequiredContextVariables(step.required_context_variables || []);
+      // NEW: Stop conditions
+      if (step.stop_conditions) {
+        setStopOnValues(step.stop_conditions.stop_on_values || []);
+        setTerminationReason(step.stop_conditions.termination_reason || '');
+        setTerminationMessage(step.stop_conditions.termination_message || '');
+      } else {
+        setStopOnValues([]);
+        setTerminationReason('');
+        setTerminationMessage('');
+      }
     } else {
       // Creating new step - set defaults
       setName('');
@@ -123,8 +139,13 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setPostBranching(defaultPostBranching); // NEW: Pre-fill from active tab
       // NEW: Conditional execution defaults
       setRequiredContextVariables([]);
+      // NEW: Stop conditions defaults
+      setStopOnValues([]);
+      setTerminationReason('');
+      setTerminationMessage('');
     }
     setNewVariable(''); // Reset input field
+    setNewStopValue(''); // Reset stop value input field
   }, [step, models, defaultDocumentClassId, defaultPostBranching]);
 
   // Validate form
@@ -188,7 +209,13 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
         branching_field: isBranchingStep ? branchingField : null,
         post_branching: postBranching, // NEW: Post-branching flag
         // NEW: Conditional execution
-        required_context_variables: requiredContextVariables.length > 0 ? requiredContextVariables : null
+        required_context_variables: requiredContextVariables.length > 0 ? requiredContextVariables : null,
+        // NEW: Stop conditions
+        stop_conditions: stopOnValues.length > 0 ? {
+          stop_on_values: stopOnValues,
+          termination_reason: terminationReason || 'Pipeline stopped',
+          termination_message: terminationMessage || 'Die Verarbeitung wurde gestoppt.'
+        } : null
       };
 
       if (step) {
@@ -681,6 +708,198 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                       <p>
                         Dieser Schritt wird übersprungen, wenn der Benutzer keine Zielsprache auswählt.
                         Der Schritt wird im Audit-Log als SKIPPED markiert.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Stop Conditions (Early Termination) */}
+          <div className="border-t border-primary-200 pt-6">
+            <h4 className="font-semibold text-primary-900 mb-4 flex items-center space-x-2">
+              <AlertCircle className="w-5 h-5 text-error-600" />
+              <span>Stop-Bedingungen (Pipeline-Abbruch)</span>
+            </h4>
+
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm text-primary-600 mb-3">
+                  Definieren Sie Ausgabewerte, die die Pipeline sofort beenden sollen (z.B. NICHT_MEDIZINISCH).
+                  Die Pipeline wird gestoppt und der Benutzer erhält eine benutzerdefinierte Nachricht.
+                </p>
+
+                {/* List of stop values */}
+                {stopOnValues.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-2">
+                    {stopOnValues.map((value, index) => (
+                      <div
+                        key={index}
+                        className="inline-flex items-center space-x-2 px-3 py-1.5 bg-error-50 border border-error-200 rounded-lg"
+                      >
+                        <code className="text-sm font-mono text-error-700">{value}</code>
+                        <button
+                          onClick={() => {
+                            setStopOnValues(prev => prev.filter((_, i) => i !== index));
+                          }}
+                          className="text-error-600 hover:text-error-800 transition-colors"
+                          title="Wert entfernen"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Add new stop value */}
+                <div className="flex items-center space-x-2 mb-4">
+                  <input
+                    type="text"
+                    value={newStopValue}
+                    onChange={(e) => setNewStopValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const trimmed = newStopValue.trim().toUpperCase();
+                        if (trimmed && !stopOnValues.includes(trimmed)) {
+                          setStopOnValues(prev => [...prev, trimmed]);
+                          setNewStopValue('');
+                        }
+                      }
+                    }}
+                    className="flex-1 px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none font-mono text-sm"
+                    placeholder="z.B. NICHT_MEDIZINISCH"
+                  />
+                  <button
+                    onClick={() => {
+                      const trimmed = newStopValue.trim().toUpperCase();
+                      if (trimmed && !stopOnValues.includes(trimmed)) {
+                        setStopOnValues(prev => [...prev, trimmed]);
+                        setNewStopValue('');
+                      }
+                    }}
+                    disabled={!newStopValue.trim() || stopOnValues.includes(newStopValue.trim().toUpperCase())}
+                    className="px-4 py-2 bg-error-600 text-white rounded-lg hover:bg-error-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Wert hinzufügen"
+                  >
+                    Hinzufügen
+                  </button>
+                </div>
+
+                {/* Termination reason and message (only shown if stop values exist) */}
+                {stopOnValues.length > 0 && (
+                  <div className="space-y-3 p-4 bg-error-50 border border-error-200 rounded-lg">
+                    <div>
+                      <label className="block text-sm font-medium text-error-900 mb-2">
+                        Abbruchgrund (technisch)
+                      </label>
+                      <input
+                        type="text"
+                        value={terminationReason}
+                        onChange={(e) => setTerminationReason(e.target.value)}
+                        className="w-full px-3 py-2 border border-error-300 rounded-lg focus:border-error-500 focus:ring-2 focus:ring-error-100 focus:outline-none"
+                        placeholder="z.B. Non-medical content detected"
+                      />
+                      <p className="text-xs text-error-600 mt-1">
+                        Wird im Audit-Log gespeichert
+                      </p>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-error-900 mb-2">
+                        Benutzer-Nachricht (wird dem Benutzer angezeigt)
+                      </label>
+                      <textarea
+                        value={terminationMessage}
+                        onChange={(e) => setTerminationMessage(e.target.value)}
+                        rows={3}
+                        className="w-full px-3 py-2 border border-error-300 rounded-lg focus:border-error-500 focus:ring-2 focus:ring-error-100 focus:outline-none"
+                        placeholder="z.B. Das hochgeladene Dokument enthält keinen medizinischen Inhalt. Bitte laden Sie ein medizinisches Dokument hoch."
+                      />
+                      <p className="text-xs text-error-600 mt-1">
+                        Diese Nachricht wird im Frontend angezeigt
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Matching Preview */}
+                {stopOnValues.length > 0 && (
+                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs font-semibold text-blue-900 mb-2">
+                      🔍 Matching-Vorschau (nur ERSTES WORT wird geprüft)
+                    </p>
+                    <div className="space-y-2">
+                      <div>
+                        <p className="text-xs text-blue-700 font-medium mb-1">
+                          Pipeline wird gestoppt, wenn die Ausgabe startet mit:
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {stopOnValues.map((value, idx) => (
+                            <code key={idx} className="px-2 py-0.5 bg-blue-100 border border-blue-300 rounded text-xs font-mono text-blue-800">
+                              {value}
+                            </code>
+                          ))}
+                        </div>
+                      </div>
+                      <div className="border-t border-blue-200 pt-2">
+                        <p className="text-xs text-blue-700 font-medium mb-1">Beispiele:</p>
+                        <ul className="text-xs text-blue-600 space-y-1">
+                          <li className="flex items-start space-x-2">
+                            <span className="text-green-600 font-bold">✓</span>
+                            <span>
+                              <code className="bg-green-50 px-1 rounded">{stopOnValues[0] || 'STOP_VALUE'}</code> → Pipeline stoppt
+                            </span>
+                          </li>
+                          <li className="flex items-start space-x-2">
+                            <span className="text-green-600 font-bold">✓</span>
+                            <span>
+                              <code className="bg-green-50 px-1 rounded">{stopOnValues[0] || 'STOP_VALUE'} - Details hier</code> → Pipeline stoppt
+                            </span>
+                          </li>
+                          <li className="flex items-start space-x-2">
+                            <span className="text-red-600 font-bold">✗</span>
+                            <span>
+                              <code className="bg-red-50 px-1 rounded">Der Text ist {stopOnValues[0] || 'STOP_VALUE'}</code> → Pipeline läuft weiter
+                            </span>
+                          </li>
+                        </ul>
+                      </div>
+                      <div className="border-t border-blue-200 pt-2">
+                        <p className="text-xs text-blue-800 font-medium">
+                          💡 Best Practice: Konfigurieren Sie Ihren Prompt so, dass der Stop-Wert das ERSTE WORT ist
+                        </p>
+                        <p className="text-xs text-blue-600 mt-1">
+                          Beispiel: "Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH"
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Help text */}
+                <div className="mt-3 p-3 bg-warning-50 border border-warning-200 rounded-lg">
+                  <p className="text-xs font-semibold text-warning-900 mb-2">⚠️ Wichtig:</p>
+                  <ul className="text-xs text-warning-700 space-y-1 list-disc list-inside">
+                    <li>Stop-Werte werden GROSS/klein-Schreibung ignorierend verglichen</li>
+                    <li>Die Pipeline wird sofort nach diesem Schritt beendet</li>
+                    <li>Nachfolgende Schritte werden nicht ausgeführt</li>
+                    <li>Der Benutzer erhält eine benutzerfreundliche Fehlermeldung</li>
+                  </ul>
+                </div>
+
+                {/* Example */}
+                {stopOnValues.includes('NICHT_MEDIZINISCH') && (
+                  <div className="mt-3 p-3 bg-brand-50 border border-brand-200 rounded-lg flex items-start space-x-2">
+                    <AlertCircle className="w-4 h-4 text-brand-600 flex-shrink-0 mt-0.5" />
+                    <div className="text-xs text-brand-700">
+                      <p className="font-semibold mb-1">💡 Beispiel-Anwendung</p>
+                      <p>
+                        Wenn dieser Schritt "NICHT_MEDIZINISCH" ausgibt, wird die Pipeline sofort gestoppt.
+                        Der Benutzer sieht eine Warnung und kann ein anderes Dokument hochladen.
+                        Dies spart API-Kosten und verbessert die Benutzererfahrung.
                       </p>
                     </div>
                   </div>

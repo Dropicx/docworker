@@ -22,11 +22,11 @@ from app.routers.modular_pipeline import router as modular_pipeline_router
 from app.services.cleanup import cleanup_temp_files
 from app.database.init_db import init_database
 
-# Configure logging for Railway - FORCE stdout output
+# Configure logging for Railway - Standardized format
 import sys
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s',
+    format='%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
     handlers=[
         logging.StreamHandler(sys.stdout)  # Force output to stdout for Railway
@@ -34,51 +34,41 @@ logging.basicConfig(
     force=True  # Override any existing configuration
 )
 logger = logging.getLogger(__name__)
-
-# Also ensure print statements work
-print("🔧 Logging configured for Railway deployment", flush=True)
+logger.info("🔧 Logging configured for Railway deployment")
 
 # Rate limiting
 limiter = Limiter(key_func=get_remote_address)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup - use both print and logger for Railway visibility
-    print("🚀 Medical Document Translator starting up...", flush=True)
+    # Startup
     logger.info("🚀 Medical Document Translator starting up...")
-    
-    print(f"Environment: {os.getenv('ENVIRONMENT', 'development')}", flush=True)
-    print(f"Railway Environment: {os.getenv('RAILWAY_ENVIRONMENT', 'not set')}", flush=True)
-    print(f"Port: {os.getenv('PORT', '9122')}", flush=True)
-    print(f"USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}", flush=True)
-    
+    logger.info(f"Environment: {os.getenv('ENVIRONMENT', 'development')}")
+    logger.info(f"Railway Environment: {os.getenv('RAILWAY_ENVIRONMENT', 'not set')}")
+    logger.info(f"Port: {os.getenv('PORT', '9122')}")
+    logger.info(f"USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}")
+
     # Initialize database
-    print("🗄️ Initializing database...", flush=True)
+    logger.info("🗄️ Initializing database...")
     try:
         if init_database():
-            print("✅ Database initialized successfully", flush=True)
-            logger.info("Database initialized successfully")
+            logger.info("✅ Database initialized successfully")
         else:
-            print("❌ Database initialization failed", flush=True)
-            logger.error("Database initialization failed")
+            logger.error("❌ Database initialization failed")
     except Exception as e:
-        print(f"❌ Database initialization error: {e}", flush=True)
-        logger.error(f"Database initialization error: {e}")
-    
+        logger.error(f"❌ Database initialization error: {e}")
+
     # Log OVH configuration (without sensitive data)
     if os.getenv('OVH_AI_ENDPOINTS_ACCESS_TOKEN'):
-        print("✅ OVH API Token is configured", flush=True)
         logger.info("✅ OVH API Token is configured")
     else:
-        print("⚠️ OVH API Token is NOT configured", flush=True)
         logger.warning("⚠️ OVH API Token is NOT configured")
-    
-    print(f"OVH Base URL: {os.getenv('OVH_AI_BASE_URL', 'not set')}", flush=True)
-    
+
+    logger.info(f"OVH Base URL: {os.getenv('OVH_AI_BASE_URL', 'not set')}")
+
     # Cleanup task - runs every 30 seconds
     cleanup_task = asyncio.create_task(periodic_cleanup())
-    print("Started periodic cleanup task (30s interval)", flush=True)
-    logger.info("Started periodic cleanup task (30s interval)")
+    logger.info("✅ Started periodic cleanup task (30s interval)")
     
     yield
     
@@ -103,21 +93,15 @@ async def periodic_cleanup():
             files_removed = await cleanup_temp_files()
             cleanup_count += 1
             if files_removed > 0:
-                cleanup_log = f"🧹 Cleanup #{cleanup_count}: Removed {files_removed} temporary files"
-                print(cleanup_log, flush=True)
-                logger.info(cleanup_log)
+                logger.info(f"🧹 Cleanup #{cleanup_count}: Removed {files_removed} temporary files")
             else:
                 # Log auch wenn keine Dateien entfernt wurden (alle 5 Cleanups)
                 if cleanup_count % 5 == 0:
-                    status_log = f"✅ Cleanup #{cleanup_count}: System clean, no files to remove"
-                    print(status_log, flush=True)
-                    logger.debug(status_log)
+                    logger.debug(f"✅ Cleanup #{cleanup_count}: System clean, no files to remove")
         except asyncio.CancelledError:
             break
         except Exception as e:
-            error_log = f"❌ Cleanup error: {e}"
-            print(error_log, flush=True)
-            logger.error(error_log)
+            logger.error(f"❌ Cleanup error: {e}")
 
 # FastAPI App
 app = FastAPI(
@@ -163,34 +147,30 @@ app.add_middleware(
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
     start_time = datetime.now()
-    
+
     # Skip logging for status polling and health check endpoints to reduce spam
     skip_paths = ["/status", "/health", "/health/simple"]
     should_log = not any(request.url.path.endswith(path) for path in skip_paths)
-    
+
     # Only log important requests (uploads, processing, errors)
     if should_log and request.method != "OPTIONS":
         # Only log non-GET requests or important GET requests
         if request.method != "GET" or "/process/" in request.url.path:
-            request_log = f"📥 {request.method} {request.url.path}"
-            print(request_log, flush=True)
-            logger.info(request_log)
-    
+            logger.info(f"📥 {request.method} {request.url.path}")
+
     # Process request
     response = await call_next(request)
-    
+
     # Calculate processing time
     process_time = (datetime.now() - start_time).total_seconds()
-    
+
     # Only log errors or slow requests
     if should_log and (response.status_code >= 400 or process_time > 1.0):
-        response_log = f"📤 {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s"
-        print(response_log, flush=True)
-        logger.info(response_log)
-    
+        logger.warning(f"📤 {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s")
+
     # Add processing time header
     response.headers["X-Process-Time"] = str(process_time)
-    
+
     return response
 
 # Security Headers Middleware

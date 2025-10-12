@@ -28,23 +28,21 @@ class TextExtractorWithOCR:
         
         if self.ocr_available:
             logger.info("✅ Text extractor initialized with Tesseract OCR support")
-            print("✅ Text extractor initialized with Tesseract OCR support", flush=True)
             # Configure Tesseract for German and English with BEST quality
             # OEM 1 = LSTM neural net only (best accuracy)
             # PSM 3 = Fully automatic page segmentation (default, works best for most documents)
             # Additional optimizations for German medical documents
             self.tesseract_config = '--oem 1 --psm 3 -l deu+eng -c tessedit_char_whitelist="ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÜabcdefghijklmnopqrstuvwxyzäöüß0123456789.,;:!?()[]{}/-+= " -c preserve_interword_spaces=1 -c textord_heavy_nr=1'
-            
+
             # Special config for tables with better structure preservation
             # PSM 6 = Uniform block of text - better for tables
             # Added more table-specific parameters for better row/column detection
             self.tesseract_table_config = '--oem 1 --psm 6 -l deu+eng -c preserve_interword_spaces=1 -c textord_tabfind_vertical_text=0 -c textord_tablefind_recognize_tables=1 -c textord_tabfind_force_vertical_text=0 -c textord_tabfind_vertical_horizontal_mix=1'
-            
+
             # Config for sparse text (like forms)
             self.tesseract_sparse_config = '--oem 1 --psm 11 -l deu+eng -c preserve_interword_spaces=1'
         else:
             logger.warning("⚠️ Tesseract not found - OCR disabled")
-            print("⚠️ Tesseract not found - OCR disabled", flush=True)
     
     def _check_tesseract(self) -> bool:
         """Check if Tesseract is installed and available"""

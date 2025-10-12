@@ -150,14 +150,10 @@ async def upload_document(
             db.commit()
             db.refresh(pipeline_job)
 
-            # Queue Celery task using celery_client
-            try:
-                from app.services.celery_client import enqueue_document_processing
-                task_id = enqueue_document_processing(processing_id, options={})
-                logger.info(f"📤 Job queued to Redis: {job_id[:8]} (task_id: {task_id})")
-            except Exception as queue_error:
-                logger.warning(f"⚠️ Failed to queue Celery task: {queue_error}")
-                # Job bleibt in DB als PENDING, kann später verarbeitet werden
+            # NOTE: Worker is NOT enqueued here anymore!
+            # It will be enqueued when frontend calls /process/{id} with options (target_language, etc.)
+            # This allows frontend to set language selection BEFORE processing starts
+            logger.info(f"📝 Job created and ready: {job_id[:8]} (status: PENDING, waiting for /process call)")
 
         finally:
             db.close()

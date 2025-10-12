@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Clock, CheckCircle, AlertCircle, Loader, RefreshCw, X, Sparkles, Zap, FileCheck } from 'lucide-react';
 import ApiService from '../services/api';
 import { ProcessingProgress, ProcessingStatus as Status } from '../types/api';
+import { isTerminated, getTerminationMetadata } from '../utils/termination';
 
 interface ProcessingStatusProps {
   processingId: string;
@@ -35,30 +36,15 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
           setIsPolling(false);
           setError(statusResponse.error || 'Unbekannter Fehler');
           onError(statusResponse.error || 'Verarbeitung fehlgeschlagen');
-        } else if (
-          statusResponse.status === 'terminated' ||
-          statusResponse.status === 'non_medical_content' ||
-          statusResponse.terminated === true
-        ) {
+        } else if (isTerminated(statusResponse)) {
           // Termination detected - graceful stop, not an error
           setIsPolling(false);
 
-          const terminationMessage =
-            statusResponse.termination_message ||
-            statusResponse.error ||
-            statusResponse.message ||
-            'Verarbeitung wurde gestoppt';
-
-          setError(terminationMessage);
+          const metadata = getTerminationMetadata(statusResponse);
+          setError(metadata.message);
 
           // Pass structured metadata to parent for specialized UI
-          const metadata = {
-            isTermination: true,
-            reason: statusResponse.termination_reason,
-            step: statusResponse.termination_step || statusResponse.current_step
-          };
-
-          onError(terminationMessage, metadata);
+          onError(metadata.message, metadata);
         }
       } catch (err: any) {
         console.error('Status polling error:', err);

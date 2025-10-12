@@ -298,13 +298,15 @@ def seed_modular_pipeline():
                         selected_model_id, temperature, max_tokens,
                         retry_on_failure, max_retries, input_from_previous_step,
                         output_format, is_branching_step, branching_field, document_class_id,
-                        stop_conditions, post_branching, required_context_variables, created_at, last_modified, modified_by
+                        post_branching, stop_conditions, required_context_variables,
+                        created_at, last_modified, modified_by
                     ) VALUES (
                         :name, :description, :order, :enabled, :prompt_template,
                         :selected_model_id, :temperature, :max_tokens,
                         :retry_on_failure, :max_retries, :input_from_previous_step,
                         :output_format, :is_branching_step, :branching_field, :document_class_id,
-                        :stop_conditions, :post_branching, :required_context_variables, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
+                        :post_branching, :stop_conditions, :required_context_variables,
+                        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
                     )
                 """), {
                     **step,

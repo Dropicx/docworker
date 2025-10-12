@@ -24,13 +24,11 @@ class TextExtractorWithOCR:
         # Check if we should use OCR
         self.use_ocr = os.getenv("ENABLE_OCR", "true").lower() == "true"
         self.ovh_client = OVHClient() if self.use_ocr else None
-        
+
         if self.use_ocr:
             logger.info("📄 Text extractor initialized with OVH Vision OCR support")
-            print("📄 Text extractor initialized with OVH Vision OCR support", flush=True)
         else:
             logger.info("📄 Text extractor initialized (basic mode - no OCR)")
-            print("📄 Text extractor initialized (basic mode - no OCR)", flush=True)
     
     async def extract_text(self, file_content: bytes, file_type: str, filename: str) -> Tuple[str, float]:
         """

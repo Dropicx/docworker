@@ -92,19 +92,37 @@ async def start_processing(
                     status_code=404,
                     detail="Verarbeitung nicht gefunden oder bereits abgelaufen"
                 )
+
+            # Save processing options (including target_language) to job
+            options_dict = options.dict() if options else {}
+            job.processing_options = options_dict
+            db.commit()
+
+            logger.info(f"📋 Processing options saved for {processing_id[:8]}: {options_dict}")
+
+            # NOW enqueue the worker task with the options
+            try:
+                from app.services.celery_client import enqueue_document_processing
+                task_id = enqueue_document_processing(processing_id, options=options_dict)
+                logger.info(f"📤 Job queued to Redis: {processing_id[:8]} (task_id: {task_id})")
+
+                return {
+                    "message": "Verarbeitung gestartet",
+                    "processing_id": processing_id,
+                    "status": "QUEUED",
+                    "task_id": task_id,
+                    "target_language": options_dict.get('target_language') if options_dict else None
+                }
+            except Exception as queue_error:
+                logger.error(f"❌ Failed to queue task: {queue_error}")
+                raise HTTPException(
+                    status_code=503,
+                    detail=f"Failed to queue processing task: {str(queue_error)}"
+                )
+
         finally:
             db.close()
 
-        # Job already queued to worker by upload endpoint - just return status
-        logger.info(f"🔄 Processing status requested for: {processing_id[:8]}")
-
-        return {
-            "message": "Verarbeitung bereits in Warteschlange",
-            "processing_id": processing_id,
-            "status": "PROCESSING",
-            "note": "Worker processes job automatically"
-        }
-        
     except HTTPException:
         raise
     except Exception as e:
