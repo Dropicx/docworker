@@ -17,6 +17,7 @@ python-magic==0.4.27
 
 # Data Validation & Models
 pydantic==2.10.5
+pydantic-settings==2.1.0
 
 # Rate Limiting
 slowapi==0.1.9

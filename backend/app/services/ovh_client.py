@@ -1,4 +1,3 @@
-import os
 import httpx
 import logging
 import base64
@@ -7,6 +6,8 @@ from openai import AsyncOpenAI
 import json
 from PIL import Image
 from io import BytesIO
+
+from app.core.config import settings
 
 # ⚡ NOTE: PII removal now happens in worker (OptimizedPrivacyFilter)
 # This service receives already-cleaned text from the worker
@@ -17,22 +18,23 @@ logger = logging.getLogger(__name__)
 
 class OVHClient:
     """
-    Client for OVH AI Endpoints using Meta-Llama-3.3-70B-Instruct
+    Client for OVH AI Endpoints using Meta-Llama-3.3-70B-Instruct.
+    Configuration is loaded from centralized settings.
     """
 
     def __init__(self):
-        self.access_token = os.getenv("OVH_AI_ENDPOINTS_ACCESS_TOKEN")
-        self.base_url = os.getenv("OVH_AI_BASE_URL", "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1")
+        # Load configuration from settings
+        self.access_token = settings.ovh_api_token
+        self.base_url = settings.ovh_ai_base_url
 
         # Different models for different tasks
-        self.main_model = os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct")
-        self.preprocessing_model = os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407")
-        self.translation_model = os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
+        self.main_model = settings.ovh_main_model
+        self.preprocessing_model = settings.ovh_preprocessing_model
+        self.translation_model = settings.ovh_translation_model
 
         # Vision model for OCR tasks
-        self.vision_model = os.getenv("OVH_VISION_MODEL", "Qwen2.5-VL-72B-Instruct")
-        # Try without /v1 suffix for OVH specific endpoints
-        self.vision_base_url = os.getenv("OVH_VISION_BASE_URL", "https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net")
+        self.vision_model = settings.ovh_vision_model
+        self.vision_base_url = settings.ovh_vision_base_url
 
         # Define which prompt types should use fast model for speed optimization
         self.fast_model_prompt_types = {
@@ -46,7 +48,7 @@ class OVHClient:
         # ⚡ NOTE: PII filtering now happens in worker before pipeline execution
         # No privacy filter needed here - text arrives pre-cleaned
 
-        # Debug logging for environment variables (only if debug enabled)
+        # Debug logging for configuration (only if debug enabled)
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug(f"🔍 OVH Client Initialization:")
             logger.debug(f"   - Access Token: {'✅ Set' if self.access_token else '❌ NOT SET'}")
@@ -55,14 +57,14 @@ class OVHClient:
             logger.debug(f"   - Main Model: {self.main_model}")
             logger.debug(f"   - Vision Model: {self.vision_model}")
             logger.debug(f"   - Vision URL: {self.vision_base_url}")
-            logger.debug(f"   - USE_OVH_ONLY: {os.getenv('USE_OVH_ONLY', 'not set')}")
-        
+            logger.debug(f"   - USE_OVH_ONLY: {settings.use_ovh_only}")
+
         if not self.access_token:
             logger.warning("⚠️ OVH_AI_ENDPOINTS_ACCESS_TOKEN not set - API calls will fail!")
             logger.warning("   Please set the following environment variables in Railway:")
             logger.warning("   - OVH_AI_ENDPOINTS_ACCESS_TOKEN=your-token-here")
             logger.warning("   - OVH_AI_BASE_URL=https://oai.endpoints.kepler.ai.cloud.ovh.net/v1")
-        
+
         # Initialize OpenAI client for OVH (use dummy key to prevent initialization errors)
         try:
             self.client = AsyncOpenAI(
@@ -79,9 +81,9 @@ class OVHClient:
             logger.error(f"Failed to initialize OVH clients: {e}")
             self.client = None
             self.vision_client = None
-        
+
         # Alternative HTTP client for direct API calls
-        self.timeout = 300  # 5 minutes timeout
+        self.timeout = settings.ai_timeout_seconds
         
     async def check_connection(self) -> tuple[bool, str]:
         """Check connection to OVH AI Endpoints

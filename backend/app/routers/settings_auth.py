@@ -6,22 +6,16 @@ All pipeline configuration now handled by modular_pipeline.py router.
 """
 
 import logging
-import os
-from datetime import datetime
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends, status, Header
 from pydantic import BaseModel, Field
-from sqlalchemy.orm import Session
 
-from app.database.connection import get_session
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
-
-# Access code from environment variable
-SETTINGS_ACCESS_CODE = os.getenv("SETTINGS_ACCESS_CODE", "admin123")
 
 # ==================== PYDANTIC MODELS ====================
 
@@ -49,7 +43,7 @@ def verify_session_token(authorization: Optional[str] = Header(None)) -> bool:
         # Simple token validation - in production use JWT
         # For now, just check if token matches access code hash
         import hashlib
-        expected_token = hashlib.sha256(SETTINGS_ACCESS_CODE.encode()).hexdigest()
+        expected_token = hashlib.sha256(settings.settings_access_code.encode()).hexdigest()
 
         return token == expected_token
 
@@ -64,10 +58,10 @@ async def authenticate(auth_request: AuthRequest):
     Returns a session token for subsequent requests.
     """
     try:
-        if auth_request.password == SETTINGS_ACCESS_CODE:
+        if auth_request.password == settings.settings_access_code:
             # Generate session token
             import hashlib
-            session_token = hashlib.sha256(SETTINGS_ACCESS_CODE.encode()).hexdigest()
+            session_token = hashlib.sha256(settings.settings_access_code.encode()).hexdigest()
 
             logger.info("Settings authentication successful")
             return AuthResponse(
