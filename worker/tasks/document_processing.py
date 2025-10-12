@@ -120,9 +120,9 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                     meta={'progress': 15, 'status': 'pii_removal', 'current_step': 'Entfernung persönlicher Daten'}
                 )
 
-                from app.services.optimized_privacy_filter import OptimizedPrivacyFilter
+                from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
 
-                pii_filter = OptimizedPrivacyFilter()
+                pii_filter = AdvancedPrivacyFilter()
                 pii_start_time = time.time()
                 original_length = len(extracted_text)
 
