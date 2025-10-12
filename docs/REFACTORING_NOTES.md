@@ -11,15 +11,21 @@
 4. `backend/app/services/text_extractor_ovh.py` (236 lines) - Using OVH Vision API
 5. `backend/app/services/hybrid_text_extractor.py` (772 lines) - Combines multiple strategies
 
-**Recommendation:**
-- **Keep**: `hybrid_text_extractor.py` - Most feature-complete
-- **Archive**: Others - Move to `backend/app/services/_deprecated/`
-- **Future**: Create unified `TextExtractorService` with strategy pattern
+**Decision (2025-10-13):**
+- **Keep**: `hybrid_text_extractor.py` - Most feature-complete, already has strategy pattern
+  - Intelligently routes between LOCAL_TEXT, LOCAL_OCR, VISION_LLM, HYBRID
+  - Smart multi-file merging with medical context awareness
+  - Built-in fallback handling
+- **Keep**: `text_extractor_ocr.py` - Dependency of hybrid_text_extractor (used for LOCAL_OCR strategy)
+- **Deprecate**: Others to `_deprecated/`:
+  - `text_extractor.py` (basic version)
+  - `text_extractor_simple.py` (simplified version)
+  - `text_extractor_ovh.py` (OVH-only version)
 
 **Usage analysis:**
-- `process.py` router uses `text_extractor_ocr` and `text_extractor_simple`
-- `hybrid_text_extractor` imports `text_extractor_ocr`
-- Worker may use different extractors
+- `process.py` imports HybridTextExtractor as main, with conditional fallbacks to old extractors
+- `process_multi_file.py` uses only HybridTextExtractor
+- `hybrid_text_extractor` imports and uses `text_extractor_ocr` for local OCR strategy
 
 **Risk**: HIGH - Core functionality, breaking changes would affect document processing
 
@@ -33,10 +39,14 @@
 3. `backend/app/services/optimized_privacy_filter.py` (250 lines) - Performance optimized
 4. `backend/app/services/smart_privacy_filter.py` (439 lines) - AI-enhanced filtering
 
-**Recommendation:**
-- **Keep**: `smart_privacy_filter.py` or `privacy_filter_advanced.py`
-- **Archive**: Others
-- **Future**: Create unified `PrivacyFilterService` with configurable strategies
+**Decision (2025-10-13):**
+- **Keep**: `privacy_filter_advanced.py` - Most comprehensive and safest for GDPR
+  - 2x more medical terms (~146 vs ~70)
+  - 2x more protected abbreviations (~210 vs ~111)
+  - Optional spaCy NER with graceful fallback
+  - Includes validation method `validate_medical_content()`
+- **Archive**: Others to `_deprecated/`
+- **Future**: Create unified `PrivacyFilterService` wrapper with strategy pattern
 
 **Usage analysis:**
 - Tests use `privacy_filter_advanced` and `privacy_filter`

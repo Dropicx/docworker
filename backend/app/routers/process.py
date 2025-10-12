@@ -146,11 +146,12 @@ async def process_document_legacy(processing_id: str):
     """
     try:
         # Import text extractor locally (only if this legacy function is somehow called)
+        # NOTE: These are deprecated - use HybridTextExtractor for new code
         try:
             from app.services.text_extractor_ocr import TextExtractorWithOCR
             text_extractor = TextExtractorWithOCR()
         except ImportError:
-            from app.services.text_extractor_simple import TextExtractor
+            from app.services._deprecated.text_extractor_simple import TextExtractor
             text_extractor = TextExtractor()
 
         processing_data = get_from_processing_store(processing_id)
