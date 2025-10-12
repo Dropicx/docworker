@@ -5,6 +5,7 @@ redis==5.0.0
 # Shared dependencies from backend
 fastapi==0.115.6
 pydantic==2.10.5
+pydantic-settings==2.1.0
 python-dotenv==1.0.1
 sqlalchemy==2.0.43
 psycopg2-binary==2.9.9
