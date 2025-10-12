@@ -70,21 +70,47 @@ logger.info(f"🔗 PaddleOCR service URL (after normalization): {PADDLEOCR_SERVI
 
 
 class OCREngineManager:
-    """
-    Manages OCR engine selection and execution based on database configuration.
+    """Database-driven OCR engine manager with intelligent strategy selection.
 
-    Supported Engines:
-    - PADDLEOCR: Fast CPU-based OCR (microservice)
-    - VISION_LLM: Qwen 2.5 VL (slow but accurate for complex documents)
-    - HYBRID: Intelligent routing based on document quality
+    Orchestrates multiple OCR engines based on database configuration, providing
+    fallback mechanisms and automatic quality-based routing. Supports three engines:
+    PaddleOCR (fast microservice), Vision LLM (high accuracy), and Hybrid (intelligent).
+
+    The manager loads configuration from the database and automatically selects
+    the appropriate OCR strategy. Each engine has distinct characteristics:
+
+    **Supported Engines**:
+        - PADDLEOCR: CPU-based microservice, 2-5s/page, excellent accuracy, free
+        - VISION_LLM: Qwen 2.5 VL model, ~2 min/page, excellent accuracy, OVH cost
+        - HYBRID: Intelligent router, variable speed, optimal accuracy, variable cost
+
+    **Fallback Strategy**:
+        All engines fall back to HYBRID on failure, ensuring processing always completes.
+        The system prioritizes reliability over strict engine adherence.
+
+    Attributes:
+        session (Session): SQLAlchemy database session for config loading
+        hybrid_extractor (HybridTextExtractor): Fallback extractor instance
+
+    Example:
+        >>> manager = OCREngineManager(db_session)
+        >>> text, confidence = await manager.extract_text(
+        ...     file_content=pdf_bytes,
+        ...     file_type="pdf",
+        ...     filename="medical_report.pdf"
+        ... )
+        >>> print(f"Extracted {len(text)} chars with {confidence:.0%} confidence")
+
+    Note:
+        Configuration is loaded fresh on each extraction to allow runtime changes
+        without service restarts.
     """
 
-    def __init__(self, session: Session):
-        """
-        Initialize OCR Engine Manager.
+    def __init__(self, session: Session) -> None:
+        """Initialize OCR Engine Manager with database session.
 
         Args:
-            session: SQLAlchemy session for database access
+            session: SQLAlchemy session for loading OCR configuration from database
         """
         self.session = session
         self.hybrid_extractor = HybridTextExtractor()
@@ -148,17 +174,56 @@ class OCREngineManager:
         filename: str,
         override_engine: Optional[OCREngineEnum] = None
     ) -> Tuple[str, float]:
-        """
-        Extract text from document using configured OCR engine.
+        """Extract text from document using database-configured OCR engine.
+
+        Loads OCR configuration from database and dispatches to the appropriate
+        engine. Automatically falls back to HYBRID on errors. Supports engine
+        override for testing specific OCR strategies.
 
         Args:
-            file_content: File content as bytes
-            file_type: File type ('pdf', 'jpg', 'png', etc.)
-            filename: Original filename
-            override_engine: Optional engine override (for testing)
+            file_content: Document content as raw bytes
+            file_type: File extension/type ('pdf', 'jpg', 'png', etc.)
+            filename: Original filename for logging and debugging
+            override_engine: Optional engine override for testing. If provided,
+                ignores database configuration. Default None.
 
         Returns:
-            Tuple of (extracted_text: str, confidence: float)
+            Tuple[str, float]: A tuple containing:
+                - str: Extracted text with preserved formatting
+                - float: Confidence score (0.0-1.0) based on OCR quality
+
+        Raises:
+            Returns error message as text with 0.0 confidence instead of raising.
+            Logs detailed error information for debugging.
+
+        Example:
+            >>> manager = OCREngineManager(db_session)
+            >>> # Use database-configured engine
+            >>> text, conf = await manager.extract_text(
+            ...     file_content=pdf_bytes,
+            ...     file_type="pdf",
+            ...     filename="report.pdf"
+            ... )
+            >>> print(f"Confidence: {conf:.0%}")
+            >>>
+            >>> # Override for testing
+            >>> text, conf = await manager.extract_text(
+            ...     file_content=pdf_bytes,
+            ...     file_type="pdf",
+            ...     filename="report.pdf",
+            ...     override_engine=OCREngineEnum.VISION_LLM
+            ... )
+
+        Note:
+            **Engine Selection Priority**:
+            1. override_engine (if provided)
+            2. Database configuration (ocr_configuration.selected_engine)
+            3. Default to HYBRID if database config missing
+
+            **Fallback Behavior**:
+            - PADDLEOCR failure → HYBRID
+            - VISION_LLM failure → HYBRID
+            - HYBRID cannot fail (uses multiple strategies internally)
         """
         # Determine which engine to use
         config = self.load_ocr_config()
@@ -352,11 +417,43 @@ class OCREngineManager:
         return False
 
     def get_available_engines(self) -> Dict[str, Dict[str, Any]]:
-        """
-        Get information about available OCR engines.
+        """Get comprehensive information about all OCR engines and their availability.
+
+        Checks real-time availability of each engine by testing connections
+        (PaddleOCR microservice health check, Vision LLM client validation).
+        Returns detailed specifications including speed, accuracy, and cost.
 
         Returns:
-            Dict mapping engine names to their capabilities
+            Dict[str, Dict[str, Any]]: Dictionary mapping engine names to capabilities:
+                - engine (str): Engine enum value
+                - name (str): Human-readable name
+                - description (str): Detailed description
+                - speed (str): Performance characteristics
+                - accuracy (str): Quality level (Excellent, Good)
+                - available (bool): Real-time availability status
+                - cost (str): Pricing information
+                - configuration (Dict): Current engine-specific settings
+
+        Example:
+            >>> manager = OCREngineManager(db_session)
+            >>> engines = manager.get_available_engines()
+            >>> for name, info in engines.items():
+            ...     print(f"{name}: {'✅' if info['available'] else '❌'}")
+            ...     print(f"  Speed: {info['speed']}")
+            ...     print(f"  Cost: {info['cost']}")
+            PADDLEOCR: ✅
+              Speed: Fast (~2-5s per page)
+              Cost: Free (CPU-based microservice)
+            VISION_LLM: ✅
+              Speed: Slow (~2 minutes per page)
+              Cost: OVH AI Endpoints pricing
+            HYBRID: ✅
+              Speed: Variable
+              Cost: Variable
+
+        Note:
+            Availability checks are synchronous and may add latency. Use sparingly
+            in request paths. Consider caching results for frequent queries.
         """
         # Safely check Vision LLM availability
         vision_available = False
