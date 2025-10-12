@@ -31,11 +31,30 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class HybridTextExtractor:
-    """
-    Intelligent text extractor that chooses the best method based on document analysis
+    """Intelligent text extractor with adaptive strategy selection.
+
+    This extractor analyzes documents and intelligently selects the optimal
+    extraction method: LOCAL_TEXT (fast PDF parsing), LOCAL_OCR (Tesseract),
+    VISION_LLM (AI-powered), or HYBRID (combined approach).
+
+    Attributes:
+        quality_detector (FileQualityDetector): Analyzes file quality and recommends strategy
+        ovh_client (OVHClient): Client for Vision LLM processing
+        sequence_detector (FileSequenceDetector): Detects logical order of multi-file documents
+        local_ocr_available (bool): Whether Tesseract OCR is available
+        local_ocr (Optional[TextExtractorWithOCR]): Local OCR implementation if available
+
+    Example:
+        >>> extractor = HybridTextExtractor()
+        >>> text, confidence = await extractor.extract_text(
+        ...     file_content=pdf_bytes,
+        ...     file_type="pdf",
+        ...     filename="medical_report.pdf"
+        ... )
+        >>> print(f"Extracted {len(text)} characters with {confidence:.1%} confidence")
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Initialize components
         self.quality_detector = FileQualityDetector()
         self.ovh_client = OVHClient()
@@ -75,16 +94,34 @@ class HybridTextExtractor:
         file_type: str,
         filename: str
     ) -> Tuple[str, float]:
-        """
-        Extract text using the optimal strategy based on file analysis
+        """Extract text from a single file using optimal strategy.
+
+        Analyzes the file to determine the best extraction method (LOCAL_TEXT,
+        LOCAL_OCR, VISION_LLM, or HYBRID), then extracts text accordingly.
+        Falls back to Vision LLM if local methods fail.
 
         Args:
-            file_content: File content as bytes
-            file_type: Type of file ('pdf' or 'image')
-            filename: Original filename
+            file_content: Raw file content as bytes
+            file_type: File type identifier ('pdf', 'image', 'jpg', 'png')
+            filename: Original filename for logging and analysis
 
         Returns:
-            Tuple[str, float]: (extracted_text, confidence_score)
+            Tuple containing:
+                - str: Extracted text content
+                - float: Confidence score (0.0 to 1.0)
+
+        Raises:
+            Exception: Returns error message in tuple if extraction fails
+
+        Example:
+            >>> extractor = HybridTextExtractor()
+            >>> text, conf = await extractor.extract_text(
+            ...     file_content=pdf_bytes,
+            ...     file_type="pdf",
+            ...     filename="lab_results.pdf"
+            ... )
+            >>> if conf > 0.8:
+            ...     print(f"High confidence extraction: {len(text)} chars")
         """
         logger.info(f"📄 Starting hybrid extraction for: {filename}")
 
@@ -123,15 +160,40 @@ class HybridTextExtractor:
         files: List[Tuple[bytes, str, str]],
         merge_strategy: str = "smart"
     ) -> Tuple[str, float]:
-        """
-        Extract text from multiple files and merge intelligently
+        """Extract and intelligently merge text from multiple related files.
+
+        Processes multi-page medical documents by:
+        1. Detecting logical page sequence (e.g., "page1.jpg", "page2.jpg")
+        2. Analyzing all files to determine optimal extraction strategy
+        3. Extracting text from each file using the same strategy
+        4. Intelligently merging results based on medical document structure
 
         Args:
-            files: List of (content, file_type, filename) tuples
-            merge_strategy: How to merge results ("sequential", "smart")
+            files: List of tuples, each containing:
+                - bytes: File content
+                - str: File type ('pdf', 'image', 'jpg', 'png')
+                - str: Filename
+            merge_strategy: Merge approach, either:
+                - "smart": Context-aware merging with medical structure detection
+                - "sequential": Simple sequential concatenation with separators
 
         Returns:
-            Tuple[str, float]: (merged_text, average_confidence)
+            Tuple containing:
+                - str: Merged text content from all files
+                - float: Average confidence score across all files (0.0 to 1.0)
+
+        Example:
+            >>> extractor = HybridTextExtractor()
+            >>> files = [
+            ...     (page1_bytes, "image", "scan_page1.jpg"),
+            ...     (page2_bytes, "image", "scan_page2.jpg"),
+            ...     (page3_bytes, "image", "scan_page3.jpg")
+            ... ]
+            >>> merged_text, avg_conf = await extractor.extract_from_multiple_files(
+            ...     files=files,
+            ...     merge_strategy="smart"
+            ... )
+            >>> print(f"Merged {len(files)} pages: {len(merged_text)} chars")
         """
         if not files:
             return "No files provided", 0.0
@@ -214,7 +276,20 @@ class HybridTextExtractor:
         file_type: str,
         analysis: Dict[str, Any]
     ) -> Tuple[str, float]:
-        """Extract text using local PDF text extraction"""
+        """Extract text using local PDF parsing (no OCR).
+
+        Uses pdfplumber (preferred) and PyPDF2 (fallback) to extract text
+        from PDF files. Best for PDFs with selectable text. Falls back to
+        Vision LLM if quality is insufficient.
+
+        Args:
+            content: PDF file content as bytes
+            file_type: Must be "pdf" (falls back to Vision LLM otherwise)
+            analysis: File analysis metadata from quality detector
+
+        Returns:
+            Tuple of (extracted_text, confidence_score)
+        """
 
         if file_type != "pdf":
             logger.warning("⚠️ Local text extraction only works with PDFs, falling back to vision LLM")

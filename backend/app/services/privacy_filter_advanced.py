@@ -1,11 +1,19 @@
-"""
-Advanced Privacy Filter Service mit spaCy NER
-Entfernt sensible Daten aus medizinischen Dokumenten mit KI-basierter Namenerkennung
+"""Advanced Privacy Filter Service with spaCy NER.
+
+GDPR-compliant PII removal for German medical documents. Removes names,
+addresses, birthdates, contact information, and insurance numbers while
+preserving all medical information, lab values, diagnoses, and treatments.
+
+Features:
+    - Optional spaCy NER for intelligent name recognition
+    - Fallback to heuristic-based detection if spaCy unavailable
+    - Protects 146+ medical terms and 210+ medical abbreviations
+    - Validates medical content preservation (GDPR compliance)
 """
 
 import re
 import logging
-from typing import List, Set, Tuple, Optional
+from typing import List, Set, Tuple, Optional, Dict, Pattern
 
 # Try to import spaCy, but make it optional
 try:
@@ -20,13 +28,44 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 class AdvancedPrivacyFilter:
+    """GDPR-compliant privacy filter for German medical documents.
+
+    Uses optional spaCy NER combined with regex patterns to remove personally
+    identifiable information (PII) while preserving medical content. Designed
+    specifically for German medical documents (Arztbrief, Befundbericht, Laborwerte).
+
+    The filter removes:
+        - Patient names (detected via spaCy NER and title patterns)
+        - Birthdates (geb. XX.XX.XXXX format)
+        - Addresses (street, PLZ, city)
+        - Contact information (phone, email)
+        - Insurance numbers
+        - Salutations and signatures
+
+    The filter preserves:
+        - All medical terminology (146+ terms)
+        - Medical abbreviations (210+ protected)
+        - Lab values and measurements
+        - Diagnoses (ICD codes, medical conditions)
+        - Medications and dosages
+        - Medical procedures and findings
+
+    Attributes:
+        nlp (Optional[Language]): spaCy language model if available
+        has_ner (bool): Whether NER functionality is available
+        medical_terms (Set[str]): Protected medical terminology
+        protected_abbreviations (Set[str]): Protected medical abbreviations
+        patterns (Dict[str, Pattern]): Compiled regex patterns for PII detection
+
+    Example:
+        >>> filter = AdvancedPrivacyFilter()
+        >>> medical_text = "Patient: Max Mustermann, geb. 01.01.1980..."
+        >>> cleaned = filter.remove_pii(medical_text)
+        >>> is_valid = filter.validate_medical_content(medical_text, cleaned)
+        >>> print(f"Medical content preserved: {is_valid}")
     """
-    Privacy Filter mit spaCy NER.
-    Entfernt: Namen, Adressen, Geburtsdaten, Telefon, E-Mail, Versicherungsnummern, Anreden.
-    ERHÄLT: Alle medizinischen Informationen, Laborwerte, Diagnosen, Behandlungen.
-    """
-    
-    def __init__(self):
+
+    def __init__(self) -> None:
         """Initialisiert den Filter mit spaCy NER Model"""
         self.nlp = None
         self._initialize_spacy()
@@ -238,7 +277,7 @@ class AdvancedPrivacyFilter:
                 self.nlp = None
                 self.has_ner = False
     
-    def _compile_patterns(self) -> dict:
+    def _compile_patterns(self) -> Dict[str, Pattern[str]]:
         """Kompiliert Regex-Patterns für verschiedene PII-Typen"""
         return {
             # Geburtsdaten
@@ -298,14 +337,35 @@ class AdvancedPrivacyFilter:
         }
     
     def remove_pii(self, text: str) -> str:
-        """
-        PII-Entfernung: Namen, Adressen, Geburtsdaten, Kontaktdaten, Versicherungsnummern
-        
+        """Remove personally identifiable information while preserving medical content.
+
+        GDPR-compliant PII removal using a multi-stage approach:
+        1. Protect medical terms (temporary placeholders)
+        2. Remove explicit PII patterns (regex)
+        3. Remove names (spaCy NER or heuristic fallback)
+        4. Restore protected medical terms
+        5. Clean formatting
+
         Args:
-            text: Der zu bereinigende Text
-            
+            text: German medical document text to be anonymized
+
         Returns:
-            Bereinigter Text ohne persönliche Daten, aber mit allen medizinischen Informationen
+            Anonymized text with PII removed but medical information preserved.
+            PII is replaced with markers like [NAME ENTFERNT], [ADRESSE ENTFERNT].
+
+        Example:
+            >>> filter = AdvancedPrivacyFilter()
+            >>> doc = '''
+            ... Patient: Müller, Hans
+            ... Geb.: 01.01.1980
+            ... Diagnose: Diabetes mellitus Typ 2
+            ... HbA1c: 8.2%
+            ... '''
+            >>> cleaned = filter.remove_pii(doc)
+            >>> assert "Müller" not in cleaned
+            >>> assert "01.01.1980" not in cleaned
+            >>> assert "Diabetes" in cleaned
+            >>> assert "HbA1c" in cleaned
         """
         if not text:
             return text
