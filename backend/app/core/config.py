@@ -108,7 +108,7 @@ class Settings(BaseSettings):
         default=None,
         description="Secret key for session encryption"
     )
-    settings_access_code: str = Field(
+    admin_access_code: str = Field(
         default="admin123",
         description="Access code for settings UI"
     )
