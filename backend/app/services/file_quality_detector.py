@@ -40,8 +40,56 @@ class DocumentComplexity(Enum):
     VERY_COMPLEX = "very_complex"      # Handwritten, poor quality, complex forms
 
 class FileQualityDetector:
-    """
-    Analyzes files to determine optimal text extraction strategy
+    """Intelligent document analyzer for optimal OCR strategy selection.
+
+    Performs deep content analysis of PDF and image files to automatically select
+    the most cost-effective and accurate text extraction strategy. Evaluates document
+    complexity, text quality, table presence, and image characteristics to route to
+    appropriate OCR engines (local text, local OCR, or Vision LLM).
+
+    **Analysis Capabilities**:
+        - PDF: Embedded text detection, quality scoring, table detection, page structure
+        - Images: Quality assessment, table/form detection, text density estimation
+        - Multi-file: Consolidated strategy for document sequences
+
+    **Strategy Selection Logic**:
+        - LOCAL_TEXT: Clean PDFs with high-quality embedded text (free, instant)
+        - LOCAL_OCR: Moderate quality scanned docs (Tesseract, 2-5s/page, free)
+        - VISION_LLM: Complex layouts, tables, poor quality (Qwen 2.5 VL, ~2min/page, OVH cost)
+        - HYBRID: Intelligent routing based on content analysis
+
+    **Cost Optimization**:
+        Prioritizes free local extraction when quality permits, only escalating to
+        paid Vision LLM for complex medical tables, forms, or poor quality scans.
+
+    **Medical Document Awareness**:
+        - Detects lab value tables with medical units (mg/dl, mmol/l, etc.)
+        - Identifies medical terminology patterns
+        - Recognizes reference ranges and clinical formats
+
+    Attributes:
+        tesseract_available (bool): Whether Tesseract OCR is installed
+        opencv_available (bool): Whether OpenCV is available for image analysis
+
+    Example:
+        >>> detector = FileQualityDetector()
+        >>> strategy, complexity, metadata = await detector.analyze_file(
+        ...     file_content=pdf_bytes,
+        ...     file_type="pdf",
+        ...     filename="lab_report.pdf"
+        ... )
+        >>> print(f"Use {strategy.value} for {complexity.value} document")
+        Use vision_llm for complex document
+
+    Note:
+        **Feature Availability**:
+        - Tesseract: Optional, enables LOCAL_OCR strategy
+        - OpenCV: Optional, enhances image quality assessment
+        - Without optional deps: Falls back to basic analysis + Vision LLM
+
+        **Table Detection Priority**:
+        Tables in medical documents trigger Vision LLM for accuracy,
+        as table structure preservation is critical for lab values.
     """
 
     def __init__(self):
@@ -66,16 +114,64 @@ class FileQualityDetector:
         file_type: str,
         filename: str
     ) -> Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
-        """
-        Analyze a file and determine the best extraction strategy
+        """Analyze document and recommend optimal text extraction strategy.
+
+        Main entry point for document analysis. Performs comprehensive content evaluation
+        to determine the most cost-effective and accurate OCR approach. Routes to
+        specialized analyzers for PDFs vs. images, evaluating text quality, layout
+        complexity, and medical content patterns.
 
         Args:
-            file_content: File content as bytes
-            file_type: Type of file ('pdf' or 'image')
-            filename: Original filename
+            file_content: Raw file content as bytes (PDF or image data)
+            file_type: File type identifier - "pdf" or "image"
+            filename: Original filename for logging and analysis context
 
         Returns:
-            Tuple of (strategy, complexity, analysis_metadata)
+            Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
+                - ExtractionStrategy: Recommended OCR engine (LOCAL_TEXT, LOCAL_OCR,
+                  VISION_LLM, or HYBRID)
+                - DocumentComplexity: Assessed complexity level (SIMPLE, MODERATE,
+                  COMPLEX, or VERY_COMPLEX)
+                - Dict[str, Any]: Detailed analysis metadata including:
+                    * file_type, filename
+                    * Quality metrics (text_coverage, text_quality_score)
+                    * Structure flags (has_tables, has_images, has_forms)
+                    * Decision reasons (list explaining strategy choice)
+                    * Type-specific metrics (page_count for PDF, image_size for images)
+
+        Example:
+            >>> detector = FileQualityDetector()
+            >>> # Analyze clean PDF with embedded text
+            >>> strategy, complexity, meta = await detector.analyze_file(
+            ...     file_content=clean_pdf_bytes,
+            ...     file_type="pdf",
+            ...     filename="medical_report.pdf"
+            ... )
+            >>> print(strategy.value)
+            'local_text'  # Free, instant extraction
+            >>>
+            >>> # Analyze scanned lab results with tables
+            >>> strategy, complexity, meta = await detector.analyze_file(
+            ...     file_content=scanned_labs_bytes,
+            ...     file_type="pdf",
+            ...     filename="lab_results.pdf"
+            ... )
+            >>> print(strategy.value, meta['reasons'])
+            'vision_llm' ['tables_detected_require_vision_llm']
+
+        Note:
+            **Cost Optimization Logic**:
+            - Clean embedded text → LOCAL_TEXT (free, instant)
+            - Moderate scans without tables → LOCAL_OCR (free, 2-5s)
+            - Complex layouts, tables, forms → VISION_LLM (OVH cost, ~2min)
+
+            **Medical Table Priority**:
+            Presence of tables triggers Vision LLM regardless of text quality,
+            as medical lab tables require precise structure preservation.
+
+            **Fallback Handling**:
+            If analysis fails, defaults to VISION_LLM + COMPLEX to ensure
+            processing completes with highest accuracy method.
         """
         logger.info(f"🔍 Analyzing file: {filename} (type: {file_type})")
 
@@ -88,7 +184,71 @@ class FileQualityDetector:
             return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX, {"reason": "unknown_file_type"}
 
     async def _analyze_pdf(self, content: bytes, filename: str) -> Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
-        """Analyze PDF file to determine extraction strategy"""
+        """Perform comprehensive PDF analysis for optimal extraction strategy.
+
+        Analyzes PDF structure, embedded text quality, table presence, and medical
+        content patterns. Uses pdfplumber for primary analysis and PyPDF2 for
+        quality validation. Implements medical-aware table detection to identify
+        lab value tables and complex clinical layouts.
+
+        Args:
+            content: Raw PDF file content as bytes
+            filename: Original filename for logging context
+
+        Returns:
+            Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
+                Strategy recommendation, complexity level, and detailed metadata dict with:
+                - has_embedded_text (bool): Whether PDF contains extractable text
+                - text_coverage (float): Proportion of pages with text (0.0-1.0)
+                - text_quality_score (float): Text extraction quality (0.0-1.0)
+                - page_count (int): Total pages in PDF
+                - has_images (bool): Whether PDF contains embedded images
+                - has_tables (bool): Whether medical tables detected
+                - reasons (list): Decision rationale for strategy selection
+
+        Example:
+            >>> detector = FileQualityDetector()
+            >>> # Clean medical report with embedded text
+            >>> strategy, complexity, meta = await detector._analyze_pdf(
+            ...     content=report_pdf_bytes,
+            ...     filename="discharge_summary.pdf"
+            ... )
+            >>> print(f"Coverage: {meta['text_coverage']}, Quality: {meta['text_quality_score']}")
+            Coverage: 1.0, Quality: 0.85
+            >>> print(strategy.value)
+            'local_text'
+            >>>
+            >>> # Scanned lab results with tables
+            >>> strategy, complexity, meta = await detector._analyze_pdf(
+            ...     content=lab_pdf_bytes,
+            ...     filename="blood_work.pdf"
+            ... )
+            >>> print(f"Tables: {meta['has_tables']}, Reasons: {meta['reasons']}")
+            Tables: True, Reasons: ['tables_detected_require_vision_llm']
+            >>> print(strategy.value)
+            'vision_llm'
+
+        Note:
+            **Analysis Stages**:
+            1. Embedded text detection (pdfplumber on first 5 pages)
+            2. Text quality scoring (PyPDF2 validation)
+            3. Medical table detection (structural + content analysis)
+            4. Strategy determination (cost-optimized decision tree)
+
+            **Medical Table Detection**:
+            Combines pdfplumber's table detection with custom heuristics:
+            - Character alignment analysis (row/column structure)
+            - Medical content patterns (units: mg/dl, mmol/l, etc.)
+            - Lab term matching (laborwerte, befund, referenzbereich)
+
+            **Cost Optimization**:
+            - High quality text (0.9+) → LOCAL_TEXT even with moderate coverage
+            - Tables present → Always VISION_LLM for accuracy
+            - No tables + good text (0.7+ coverage, 0.6+ quality) → LOCAL_TEXT
+
+            **Performance**:
+            Analyzes only first 5 pages for speed, sufficient for strategy decision.
+        """
 
         analysis = {
             "filename": filename,
@@ -168,7 +328,50 @@ class FileQualityDetector:
             return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX, analysis
 
     def _detect_table_structure_in_page(self, page) -> bool:
-        """Detect if a PDF page contains actual table structures with high precision to minimize false positives"""
+        """Detect medical tables in PDF pages with high precision to minimize false positives.
+
+        Uses multi-method approach combining pdfplumber's built-in table detection,
+        character alignment analysis, and medical content pattern matching. Designed
+        to accurately identify lab value tables while avoiding false positives from
+        narrative medical text with incidental structure.
+
+        Args:
+            page: pdfplumber Page object to analyze
+
+        Returns:
+            bool: True if page contains actual table structure, False otherwise
+
+        Example:
+            >>> import pdfplumber
+            >>> with pdfplumber.open("lab_results.pdf") as pdf:
+            ...     detector = FileQualityDetector()
+            ...     has_tables = detector._detect_table_structure_in_page(pdf.pages[0])
+            >>> print(has_tables)
+            True
+
+        Note:
+            **Detection Methods** (applied in order):
+            1. **pdfplumber validation**: Uses library's table finder, validates
+               minimum 2 rows, 2 columns, 30% cell fill ratio
+            2. **Character alignment**: Analyzes row/column consistency, requires
+               3+ aligned rows with 3+ columns (structure score ≥0.7)
+            3. **Medical content patterns**: Detects lab terms (Laborwerte, Befund),
+               units (mg/dl, mmol/l), reference ranges (5.0-10.0)
+
+            **False Positive Prevention**:
+            - Pre-filters narrative text (long sentences, paragraphs)
+            - High thresholds: Structure 0.7+ OR (Structure 0.4+ AND Medical 0.6+)
+            - Validates pdfplumber tables for meaningful content
+
+            **Medical Awareness**:
+            Table detection tuned for clinical documents:
+            - Lab value patterns with units
+            - Medical terminology (Hämoglobin, Leukozyten, etc.)
+            - Reference ranges typical of lab reports
+
+            **Performance**:
+            Complex analysis cached per page, ~50-100ms per page.
+        """
         try:
             # Method 1: Use pdfplumber's built-in table detection with validation
             tables = page.find_tables()
@@ -368,7 +571,49 @@ class FileQualityDetector:
         return min(score, 1.0)
 
     def _evaluate_text_quality(self, text: str) -> float:
-        """Evaluate the quality of extracted text"""
+        """Evaluate extracted text quality using heuristic scoring.
+
+        Assesses text extraction quality based on length, character distribution,
+        and word patterns. Used to determine if embedded PDF text is sufficiently
+        clean for local extraction vs. requiring OCR.
+
+        Args:
+            text: Extracted text sample to evaluate
+
+        Returns:
+            float: Quality score from 0.0 (poor) to 1.0 (excellent)
+
+        Example:
+            >>> detector = FileQualityDetector()
+            >>> # High-quality extracted text
+            >>> clean_text = "Der Patient zeigt eine deutliche Verbesserung..."
+            >>> score = detector._evaluate_text_quality(clean_text)
+            >>> print(f"Quality: {score:.2f}")
+            Quality: 0.85
+            >>>
+            >>> # Poor quality (garbled extraction)
+            >>> garbled = "D�r P@t!3nt z31gt..."
+            >>> score = detector._evaluate_text_quality(garbled)
+            >>> print(f"Quality: {score:.2f}")
+            Quality: 0.32
+
+        Note:
+            **Scoring Components**:
+            - Length: 0.2 points for >100 chars, 0.2 more for >500 chars
+            - Letter ratio: 0.4 points max based on alphabetic chars / total
+            - Word patterns: 0.2 points if 10+ valid German/medical words
+
+            **Thresholds**:
+            - 0.9+: Excellent quality → Always try LOCAL_TEXT
+            - 0.7-0.9: High quality → LOCAL_TEXT for most cases
+            - 0.4-0.7: Moderate → Context-dependent
+            - <0.4: Poor → Prefer OCR/Vision LLM
+
+            **Use Cases**:
+            - Differentiating clean digital PDFs from scanned
+            - Detecting garbled/corrupted text extraction
+            - Optimizing cost by avoiding Vision LLM when unnecessary
+        """
         if not text or len(text.strip()) < 10:
             return 0.0
 
@@ -397,7 +642,81 @@ class FileQualityDetector:
         return min(quality_score, 1.0)
 
     def _determine_pdf_strategy(self, analysis: Dict[str, Any]) -> Tuple[ExtractionStrategy, DocumentComplexity]:
-        """Determine the best strategy based on PDF analysis"""
+        """Apply cost-optimized decision tree to select PDF extraction strategy.
+
+        Implements prioritized decision logic that balances cost efficiency with
+        accuracy requirements. Medical table detection takes highest priority,
+        followed by embedded text quality optimization, with fallback to OCR/Vision.
+
+        Args:
+            analysis: Analysis metadata dict containing:
+                - text_coverage (float): Proportion of pages with text (0.0-1.0)
+                - text_quality_score (float): Text quality score (0.0-1.0)
+                - has_tables (bool): Whether medical tables detected
+                - has_images (bool): Whether embedded images present
+
+        Returns:
+            Tuple[ExtractionStrategy, DocumentComplexity]:
+                Recommended strategy and assessed complexity level
+
+        Example:
+            >>> detector = FileQualityDetector()
+            >>> # High-quality PDF with tables
+            >>> analysis = {
+            ...     "text_coverage": 0.95,
+            ...     "text_quality_score": 0.85,
+            ...     "has_tables": True,
+            ...     "has_images": False,
+            ...     "reasons": []
+            ... }
+            >>> strategy, complexity = detector._determine_pdf_strategy(analysis)
+            >>> print(f"{strategy.value} - {complexity.value}")
+            vision_llm - moderate
+            >>>
+            >>> # Clean PDF without tables
+            >>> analysis = {
+            ...     "text_coverage": 0.95,
+            ...     "text_quality_score": 0.85,
+            ...     "has_tables": False,
+            ...     "has_images": False,
+            ...     "reasons": []
+            ... }
+            >>> strategy, complexity = detector._determine_pdf_strategy(analysis)
+            >>> print(f"{strategy.value} - {complexity.value}")
+            local_text - simple
+
+        Note:
+            **Decision Tree Priority** (evaluated top-to-bottom):
+
+            1. **Tables Detected** → VISION_LLM (accuracy critical)
+               - Medical lab tables require structure preservation
+               - Cost justified by accuracy requirement
+
+            2. **High-Quality Text Without Tables** → LOCAL_TEXT (cost-free)
+               - Coverage ≥0.9 + Quality ≥0.7 → SIMPLE
+               - Coverage ≥0.7 + Quality ≥0.6 → SIMPLE
+               - Quality ≥0.9 + Coverage ≥0.6 → MODERATE (prioritize quality)
+               - Quality ≥0.8 + Coverage ≥0.5 → MODERATE
+
+            3. **Moderate Quality** → Context-dependent
+               - Coverage ≥0.5 + Quality ≥0.4:
+                 * No tables + Tesseract → LOCAL_OCR
+                 * No tables + Quality ≥0.7 → LOCAL_TEXT
+                 * Otherwise → VISION_LLM
+
+            4. **Poor/No Text** → OCR/Vision
+               - Complex layout → VISION_LLM (VERY_COMPLEX)
+               - Simple scan + Tesseract → LOCAL_OCR (MODERATE)
+               - Otherwise → VISION_LLM (MODERATE)
+
+            **Cost Impact**:
+            - LOCAL_TEXT: Free, instant
+            - LOCAL_OCR: Free, 2-5s/page
+            - VISION_LLM: OVH cost (~$0.001/page), ~2min/page
+
+            **Reason Tracking**:
+            Appends decision rationale to analysis['reasons'] for debugging.
+        """
 
         text_coverage = analysis.get("text_coverage", 0.0)
         text_quality = analysis.get("text_quality_score", 0.0)
@@ -462,7 +781,73 @@ class FileQualityDetector:
                 return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
 
     async def _analyze_image(self, content: bytes, filename: str) -> Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
-        """Analyze image file to determine extraction strategy"""
+        """Analyze image quality and content for optimal OCR strategy selection.
+
+        Performs computer vision analysis using PIL and OpenCV (if available) to assess
+        image quality, detect tables/forms, and estimate text density. Routes to
+        appropriate OCR engine based on visual complexity and quality metrics.
+
+        Args:
+            content: Raw image file content as bytes (JPEG or PNG)
+            filename: Original filename for logging context
+
+        Returns:
+            Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
+                Strategy recommendation, complexity level, and detailed metadata dict with:
+                - image_size (tuple): Pixel dimensions (width, height)
+                - image_quality (float): Sharpness + contrast score (0.0-1.0)
+                - text_density (float): Estimated text coverage (0.0-1.0)
+                - has_tables (bool): Whether table structures detected
+                - has_forms (bool): Whether form fields detected
+                - reasons (list): Decision rationale
+
+        Example:
+            >>> detector = FileQualityDetector()
+            >>> # High-quality scan with tables
+            >>> strategy, complexity, meta = await detector._analyze_image(
+            ...     content=scan_bytes,
+            ...     filename="lab_scan.jpg"
+            ... )
+            >>> print(f"Quality: {meta['image_quality']:.2f}, Tables: {meta['has_tables']}")
+            Quality: 0.82, Tables: True
+            >>> print(strategy.value)
+            'vision_llm'
+            >>>
+            >>> # Simple clean scan without tables
+            >>> strategy, complexity, meta = await detector._analyze_image(
+            ...     content=clean_scan_bytes,
+            ...     filename="report.jpg"
+            ... )
+            >>> print(f"Quality: {meta['image_quality']:.2f}, Text density: {meta['text_density']:.2f}")
+            Quality: 0.75, Text density: 0.08
+            >>> print(strategy.value)
+            'local_ocr'
+
+        Note:
+            **Quality Assessment** (requires OpenCV):
+            - Sharpness: Laplacian variance (blur detection)
+            - Contrast: Standard deviation of grayscale
+            - Combined score normalized to 0.0-1.0
+
+            **Table Detection** (requires OpenCV):
+            - Morphological operations to find horizontal/vertical lines
+            - Hough transform for line detection
+            - Requires 3+ horizontal AND 2+ vertical lines
+
+            **Form Detection** (requires OpenCV):
+            - Edge detection with Canny algorithm
+            - Contour analysis for rectangular shapes
+            - Requires 3+ form-sized rectangles (1000-50000 px²)
+
+            **Strategy Selection**:
+            - Tables/forms present → VISION_LLM (structure preservation)
+            - High quality (0.7+) + text (0.05+) → LOCAL_OCR if Tesseract available
+            - Moderate quality (0.4+) → VISION_LLM
+            - Poor quality/low text → VISION_LLM
+
+            **Graceful Degradation**:
+            Without OpenCV: Defaults to medium quality (0.5) and Vision LLM.
+        """
 
         analysis = {
             "filename": filename,
@@ -665,14 +1050,58 @@ class FileQualityDetector:
         self,
         files: list[tuple[bytes, str, str]]
     ) -> Dict[str, Any]:
-        """
-        Analyze multiple files and provide consolidated strategy
+        """Analyze document sequence and provide consolidated extraction strategy.
+
+        Performs individual analysis of each file, then consolidates results to
+        recommend a unified processing strategy. Ensures consistency across multi-page
+        medical documents submitted as separate files (common for scanned records).
 
         Args:
-            files: List of (content, file_type, filename) tuples
+            files: List of (content, file_type, filename) tuples where:
+                - content (bytes): Raw file data
+                - file_type (str): "pdf" or "image"
+                - filename (str): Original filename
 
         Returns:
-            Consolidated analysis and recommended strategy
+            Dict[str, Any]: Consolidated analysis containing:
+                - file_count (int): Number of files analyzed
+                - individual_analyses (list): Per-file analysis metadata
+                - strategies (list): Strategy for each file
+                - complexities (list): Complexity for each file
+                - recommended_strategy (str): Unified strategy for all files
+                - recommended_complexity (str): Highest complexity level detected
+                - reasons (list): Rationale for consolidation decision
+
+        Example:
+            >>> detector = FileQualityDetector()
+            >>> # Multi-page scanned lab report
+            >>> files = [
+            ...     (page1_bytes, "image", "labs_page1.jpg"),
+            ...     (page2_bytes, "image", "labs_page2.jpg"),
+            ...     (page3_bytes, "image", "labs_page3.jpg")
+            ... ]
+            >>> result = await detector.analyze_multiple_files(files)
+            >>> print(f"Strategy: {result['recommended_strategy']}")
+            Strategy: vision_llm
+            >>> print(f"Files: {result['file_count']}, Complexity: {result['recommended_complexity']}")
+            Files: 3, Complexity: complex
+
+        Note:
+            **Consolidation Logic**:
+            - Pessimistic strategy selection: If ANY file needs VISION_LLM, use it for ALL
+            - Complexity escalation: Use HIGHEST complexity level detected
+            - Rationale: Ensures consistency and quality across document sequence
+
+            **Use Cases**:
+            - Multi-page scanned documents split into separate images
+            - Mixed document types in single submission
+            - Faxed medical records (page-by-page)
+
+            **Performance**:
+            Analyzes files sequentially to manage memory, ~100ms per file overhead.
+
+            **Empty Input**:
+            Returns default VISION_LLM + COMPLEX if files list is empty.
         """
         if not files:
             return {"strategy": ExtractionStrategy.VISION_LLM, "complexity": DocumentComplexity.COMPLEX}
