@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
-from app.repositories.base import BaseRepository
+from app.repositories.base_repository import BaseRepository
 
 
 class PipelineJobRepository(BaseRepository[PipelineJobDB]):
@@ -20,14 +20,14 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
     beyond basic CRUD operations.
     """
 
-    def __init__(self, session: Session):
+    def __init__(self, db: Session):
         """
         Initialize pipeline job repository.
 
         Args:
-            session: Database session
+            db: Database session
         """
-        super().__init__(PipelineJobDB, session)
+        super().__init__(db, PipelineJobDB)
 
     def get_by_processing_id(self, processing_id: str) -> PipelineJobDB | None:
         """
@@ -39,7 +39,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             Job instance or None if not found
         """
-        return self.session.query(self.model).filter_by(
+        return self.db.query(self.model).filter_by(
             processing_id=processing_id
         ).first()
 
@@ -50,7 +50,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             List of jobs with RUNNING status
         """
-        return self.session.query(self.model).filter_by(
+        return self.db.query(self.model).filter_by(
             status=StepExecutionStatus.RUNNING
         ).all()
 
@@ -61,7 +61,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             List of jobs with PENDING status
         """
-        return self.session.query(self.model).filter_by(
+        return self.db.query(self.model).filter_by(
             status=StepExecutionStatus.PENDING
         ).all()
 
@@ -80,7 +80,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             List of completed jobs
         """
-        query = self.session.query(self.model).filter_by(
+        query = self.db.query(self.model).filter_by(
             status=StepExecutionStatus.COMPLETED
         )
 
@@ -109,7 +109,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             List of failed jobs
         """
-        query = self.session.query(self.model).filter_by(
+        query = self.db.query(self.model).filter_by(
             status=StepExecutionStatus.FAILED
         )
 
@@ -133,7 +133,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             List of jobs with the given status
         """
-        return self.session.query(self.model).filter_by(status=status).all()
+        return self.db.query(self.model).filter_by(status=status).all()
 
     def get_recent_jobs(self, hours: int = 24, limit: int | None = None) -> list[PipelineJobDB]:
         """
@@ -147,7 +147,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
             List of recent jobs
         """
         since = datetime.now() - timedelta(hours=hours)
-        query = self.session.query(self.model).filter(
+        query = self.db.query(self.model).filter(
             self.model.created_at >= since
         ).order_by(self.model.created_at.desc())
 
@@ -183,8 +183,8 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
 
         job.updated_at = datetime.now()
 
-        self.session.commit()
-        self.session.refresh(job)
+        self.db.commit()
+        self.db.refresh(job)
         return job
 
     def update_job_progress(
@@ -214,8 +214,8 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
 
         job.updated_at = datetime.now()
 
-        self.session.commit()
-        self.session.refresh(job)
+        self.db.commit()
+        self.db.refresh(job)
         return job
 
     def set_job_result(
@@ -244,8 +244,8 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         job.progress_percent = 100
         job.updated_at = datetime.now()
 
-        self.session.commit()
-        self.session.refresh(job)
+        self.db.commit()
+        self.db.refresh(job)
         return job
 
     def delete_old_jobs(self, days: int = 7) -> int:
@@ -266,9 +266,9 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         count = len(jobs_to_delete)
 
         for job in jobs_to_delete:
-            self.session.delete(job)
+            self.db.delete(job)
 
-        self.session.commit()
+        self.db.commit()
         return count
 
     def get_job_statistics(self, since: datetime | None = None) -> dict:
@@ -281,7 +281,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             Dictionary with statistics (total, completed, failed, etc.)
         """
-        query = self.session.query(self.model)
+        query = self.db.query(self.model)
 
         if since:
             query = query.filter(self.model.created_at >= since)

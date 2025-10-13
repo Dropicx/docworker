@@ -28,18 +28,18 @@ class ProcessingService:
 
     def __init__(
         self,
-        session: Session,
+        db: Session,
         job_repository: PipelineJobRepository | None = None
     ):
         """
         Initialize processing service.
 
         Args:
-            session: Database session
+            db: Database session
             job_repository: Optional job repository (for dependency injection)
         """
-        self.session = session
-        self.job_repository = job_repository or PipelineJobRepository(session)
+        self.db = db
+        self.job_repository = job_repository or PipelineJobRepository(db)
 
     def start_processing(
         self,
@@ -67,7 +67,7 @@ class ProcessingService:
 
         # Update job with processing options
         job.processing_options = options
-        self.session.commit()
+        self.db.commit()
 
         logger.info(f"📋 Processing options saved for {processing_id[:8]}: {options}")
 
