@@ -1,27 +1,14 @@
 """
 Repository Layer
 
-Provides data access abstraction using the Repository pattern.
-All database access should go through repositories for better:
-- Testability (easy to mock)
-- Maintainability (centralized data access logic)
-- Reusability (common CRUD operations)
-
-Usage:
-    from app.repositories import SettingsRepository
-    from app.database.connection import get_session
-
-    with next(get_session()) as db:
-        settings_repo = SettingsRepository(db)
-        value = settings_repo.get_value("some_key", default="default")
+Provides data access abstraction following the Repository pattern.
+Separates business logic from database access concerns.
 """
 
-from app.repositories.base_repository import BaseRepository
-from app.repositories.feature_flags_repository import FeatureFlagsRepository
-from app.repositories.settings_repository import SettingsRepository
+from app.repositories.base import BaseRepository
+from app.repositories.pipeline_job_repository import PipelineJobRepository
 
 __all__ = [
     "BaseRepository",
-    "SettingsRepository",
-    "FeatureFlagsRepository",
+    "PipelineJobRepository",
 ]
