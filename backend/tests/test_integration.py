@@ -182,7 +182,7 @@ def seed_pipeline_steps(db_session, seed_models):
     return steps
 
 
-class TestDocumentClassManager Integration:
+class TestDocumentClassManagerIntegration:
     """Integration tests for DocumentClassManager with database"""
 
     def test_crud_lifecycle(self, db_session, seed_document_classes):
@@ -259,7 +259,7 @@ class TestDocumentClassManager Integration:
         assert all(cls.is_enabled for cls in enabled)
 
 
-class TestModularPipelineExecutor Integration:
+class TestModularPipelineExecutorIntegration:
     """Integration tests for ModularPipelineExecutor with database"""
 
     def test_load_pipeline_configuration(self, db_session, seed_pipeline_steps, seed_models):
@@ -302,7 +302,7 @@ class TestModularPipelineExecutor Integration:
             assert model.is_enabled is True
 
 
-class TestFileValidation Integration:
+class TestFileValidationIntegration:
     """Integration tests for file validation"""
 
     @pytest.mark.asyncio
