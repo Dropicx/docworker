@@ -261,6 +261,17 @@ exclude_lines = [
 ]
 
 # ==========================================
+# Bandit Configuration (Security Linter)
+# ==========================================
+
+[tool.bandit]
+exclude_dirs = ["tests", "migrations", "_deprecated"]
+skips = [
+    "B101",  # assert_used (we use asserts in tests)
+    "B601",  # paramiko_calls (if we use paramiko)
+]
+
+# ==========================================
 # Build System
 # ==========================================
 
