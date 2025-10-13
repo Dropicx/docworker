@@ -16,8 +16,10 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
+from app.core.dependencies import get_pipeline_step_repository
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import DynamicPipelineStepDB, OCREngineEnum
+from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.routers.settings_auth import verify_session_token
 from app.services.document_class_manager import DocumentClassManager
 from app.services.modular_pipeline_executor import ModularPipelineManager
@@ -483,8 +485,8 @@ async def reorder_steps(
 
 @router.get("/steps/universal", response_model=list[PipelineStepResponse])
 async def get_universal_steps(
-    db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
+    step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository)
 ):
     """
     Get universal pipeline steps (document_class_id = NULL).
@@ -495,10 +497,7 @@ async def get_universal_steps(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     try:
-        steps = db.query(DynamicPipelineStepDB).filter_by(
-            document_class_id=None
-        ).order_by(DynamicPipelineStepDB.order).all()
-
+        steps = step_repository.get_universal_steps()
         logger.info(f"📋 Retrieved {len(steps)} universal pipeline steps")
         return steps
 
@@ -510,8 +509,9 @@ async def get_universal_steps(
 @router.get("/steps/by-class/{class_id}", response_model=list[PipelineStepResponse])
 async def get_steps_by_document_class(
     class_id: int,
+    authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository)
 ):
     """
     Get pipeline steps for a specific document class.
@@ -527,10 +527,7 @@ async def get_steps_by_document_class(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found")
 
     try:
-        steps = db.query(DynamicPipelineStepDB).filter_by(
-            document_class_id=class_id
-        ).order_by(DynamicPipelineStepDB.order).all()
-
+        steps = step_repository.get_steps_by_document_class(class_id)
         logger.info(f"📋 Retrieved {len(steps)} steps for document class '{doc_class.class_key}'")
         return steps
 
@@ -541,8 +538,9 @@ async def get_steps_by_document_class(
 
 @router.get("/visualization")
 async def get_pipeline_visualization(
+    authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository)
 ):
     """
     Get complete pipeline structure showing universal steps and class-specific branches.
@@ -567,16 +565,10 @@ async def get_pipeline_visualization(
 
     try:
         # Get universal steps
-        universal_steps = db.query(DynamicPipelineStepDB).filter_by(
-            document_class_id=None
-        ).order_by(DynamicPipelineStepDB.order).all()
+        universal_steps = step_repository.get_universal_steps()
 
         # Find branching step
-        branching_step = None
-        for step in universal_steps:
-            if step.is_branching_step:
-                branching_step = step
-                break
+        branching_step = step_repository.get_branching_step()
 
         # Get all document classes
         doc_class_manager = DocumentClassManager(db)
@@ -585,9 +577,7 @@ async def get_pipeline_visualization(
         # Build branches
         branches = {}
         for doc_class in all_classes:
-            class_steps = db.query(DynamicPipelineStepDB).filter_by(
-                document_class_id=doc_class.id
-            ).order_by(DynamicPipelineStepDB.order).all()
+            class_steps = step_repository.get_steps_by_document_class(doc_class.id)
 
             branches[doc_class.class_key] = {
                 "class_info": {
