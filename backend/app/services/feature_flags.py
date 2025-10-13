@@ -2,7 +2,7 @@
 Feature Flag Service
 
 Provides centralized feature flag management for gradual rollout and A/B testing.
-Checks environment variables first, then falls back to database configuration.
+Three-tier priority system: environment variables → database → config defaults.
 
 **Supported Features:**
 - vision_llm_fallback_enabled: Allow fallback to Vision LLM when local OCR fails
@@ -11,10 +11,16 @@ Checks environment variables first, then falls back to database configuration.
 - cost_tracking_enabled: Enable AI cost tracking and logging
 - parallel_step_execution_enabled: Execute independent pipeline steps in parallel
 
+**Priority System:**
+1. Environment variables: FEATURE_FLAG_{NAME} (highest priority)
+2. Database configuration: SystemSettingsDB table
+3. Config defaults: Settings from app.core.config (fallback)
+
 **Usage Example:**
     >>> from app.services.feature_flags import FeatureFlags, Feature
+    >>> from app.core.config import settings
     >>>
-    >>> flags = FeatureFlags(db_session)
+    >>> flags = FeatureFlags(db_session, settings)
     >>> if flags.is_enabled(Feature.VISION_LLM_FALLBACK):
     ...     # Use Vision LLM fallback
     ...     result = await ovh_client.extract_text_with_vision(image)
@@ -27,6 +33,15 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
+
+# Import Settings for config defaults
+try:
+    from app.core.config import Settings, settings as global_settings
+except ImportError:
+    # Fallback if config not available (shouldn't happen in production)
+    Settings = None
+    global_settings = None
+    logger.warning("Could not import Settings from app.core.config")
 
 
 class Feature(str, Enum):
@@ -66,7 +81,8 @@ class FeatureFlags:
     **Priority Order:**
     1. Environment variable (FEATURE_FLAG_{FEATURE_NAME})
     2. Database configuration (system_settings table)
-    3. Default value (feature-specific)
+    3. Config default value (from Settings)
+    4. Hardcoded default (fallback)
 
     **Default Values:**
     Most features default to True (enabled) for production readiness.
@@ -74,10 +90,12 @@ class FeatureFlags:
 
     Attributes:
         session: SQLAlchemy database session for configuration lookup
+        settings: Application settings for config defaults
         _cache: In-memory cache of feature states (refreshed every 60 seconds)
 
     Example:
-        >>> flags = FeatureFlags(db_session)
+        >>> from app.core.config import settings
+        >>> flags = FeatureFlags(db_session, settings)
         >>>
         >>> # Check single feature
         >>> if flags.is_enabled(Feature.VISION_LLM_FALLBACK):
@@ -92,7 +110,7 @@ class FeatureFlags:
         >>> assert not flags.is_enabled(Feature.VISION_LLM_FALLBACK)
     """
 
-    # Default values for each feature
+    # Hardcoded defaults (lowest priority fallback)
     DEFAULTS = {
         # OCR - enabled by default
         Feature.VISION_LLM_FALLBACK: True,
@@ -117,15 +135,22 @@ class FeatureFlags:
         Feature.AUTO_QUALITY_DETECTION: False,
     }
 
-    def __init__(self, session: Optional[Session] = None):
+    def __init__(
+        self,
+        session: Optional[Session] = None,
+        settings: Optional["Settings"] = None
+    ):
         """
         Initialize feature flag service.
 
         Args:
             session: Optional SQLAlchemy session for database lookup.
-                     If None, only environment variables and defaults will be used.
+                     If None, only environment variables and config defaults will be used.
+            settings: Optional Settings instance for config defaults.
+                     If None, will use global settings or hardcoded defaults.
         """
         self.session = session
+        self.settings = settings if settings is not None else global_settings
         logger.debug("🚩 Feature Flags service initialized")
 
     def is_enabled(self, feature: Feature) -> bool:
@@ -135,7 +160,8 @@ class FeatureFlags:
         Priority order:
         1. Environment variable: FEATURE_FLAG_{FEATURE_NAME}
         2. Database configuration (system_settings table)
-        3. Default value from DEFAULTS dict
+        3. Config default (from Settings if available)
+        4. Hardcoded default from DEFAULTS dict
 
         Args:
             feature: Feature to check
@@ -144,11 +170,12 @@ class FeatureFlags:
             bool: True if feature is enabled, False otherwise
 
         Example:
-            >>> flags = FeatureFlags(db_session)
+            >>> from app.core.config import settings
+            >>> flags = FeatureFlags(db_session, settings)
             >>> if flags.is_enabled(Feature.VISION_LLM_FALLBACK):
             ...     print("Vision LLM fallback is enabled")
         """
-        # 1. Check environment variable first
+        # 1. Check environment variable first (highest priority)
         env_var_name = f"FEATURE_FLAG_{feature.value.upper()}"
         env_value = os.getenv(env_var_name)
 
@@ -174,9 +201,24 @@ class FeatureFlags:
             except Exception as e:
                 logger.warning(f"⚠️ Failed to check feature '{feature.value}' in DB: {e}")
 
-        # 3. Fall back to default
+        # 3. Try to get from Settings config (if available)
+        if self.settings:
+            # Map feature flags to config attributes
+            config_mapping = {
+                Feature.MULTI_FILE_PROCESSING: "enable_multi_file",
+                Feature.ADVANCED_PRIVACY_FILTER: "enable_privacy_filter",
+                Feature.PII_REMOVAL_ENABLED: "enable_privacy_filter",  # Same config
+            }
+
+            config_attr = config_mapping.get(feature)
+            if config_attr and hasattr(self.settings, config_attr):
+                config_value = getattr(self.settings, config_attr)
+                logger.debug(f"🚩 Feature '{feature.value}' from config: {config_value}")
+                return config_value
+
+        # 4. Fall back to hardcoded default
         default_value = self.DEFAULTS.get(feature, False)
-        logger.debug(f"🚩 Feature '{feature.value}' using default: {default_value}")
+        logger.debug(f"🚩 Feature '{feature.value}' using hardcoded default: {default_value}")
         return default_value
 
     def is_disabled(self, feature: Feature) -> bool:
@@ -266,40 +308,51 @@ class FeatureFlags:
 
 # Global helper functions for convenience
 
-def is_feature_enabled(feature: Feature, session: Optional[Session] = None) -> bool:
+def is_feature_enabled(
+    feature: Feature,
+    session: Optional[Session] = None,
+    settings: Optional["Settings"] = None
+) -> bool:
     """
     Global helper function to check if a feature is enabled.
 
     Args:
         feature: Feature to check
         session: Optional database session
+        settings: Optional Settings instance for config defaults
 
     Returns:
         bool: True if enabled, False otherwise
 
     Example:
         >>> from app.services.feature_flags import is_feature_enabled, Feature
-        >>> if is_feature_enabled(Feature.VISION_LLM_FALLBACK):
+        >>> from app.core.config import settings
+        >>> if is_feature_enabled(Feature.VISION_LLM_FALLBACK, settings=settings):
         ...     print("Vision LLM fallback enabled")
     """
-    flags = FeatureFlags(session=session)
+    flags = FeatureFlags(session=session, settings=settings)
     return flags.is_enabled(feature)
 
 
-def get_enabled_features(session: Optional[Session] = None) -> list[str]:
+def get_enabled_features(
+    session: Optional[Session] = None,
+    settings: Optional["Settings"] = None
+) -> list[str]:
     """
     Global helper function to get all enabled features.
 
     Args:
         session: Optional database session
+        settings: Optional Settings instance for config defaults
 
     Returns:
         List of enabled feature names
 
     Example:
         >>> from app.services.feature_flags import get_enabled_features
-        >>> enabled = get_enabled_features()
+        >>> from app.core.config import settings
+        >>> enabled = get_enabled_features(settings=settings)
         >>> print(f"Enabled features: {enabled}")
     """
-    flags = FeatureFlags(session=session)
+    flags = FeatureFlags(session=session, settings=settings)
     return flags.get_enabled_features()
