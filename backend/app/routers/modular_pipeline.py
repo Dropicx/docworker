@@ -13,7 +13,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_session
@@ -78,15 +78,17 @@ class PipelineStepRequest(BaseModel):
     # Stop conditions (early termination)
     stop_conditions: dict[str, Any] | None = None
 
-    @validator('prompt_template')
-    def validate_prompt(self, v):
+    @field_validator('prompt_template')
+    @classmethod
+    def validate_prompt(cls, v):
         """Validate prompt template contains {input_text} placeholder"""
         if '{input_text}' not in v:
             raise ValueError('Prompt template must contain {input_text} placeholder')
         return v
 
-    @validator('stop_conditions')
-    def validate_stop_conditions(self, v):
+    @field_validator('stop_conditions')
+    @classmethod
+    def validate_stop_conditions(cls, v):
         """Validate stop_conditions structure"""
         if v is None:
             return v
