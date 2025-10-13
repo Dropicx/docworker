@@ -7,7 +7,6 @@ Handles business logic for pipeline statistics and performance metrics.
 import logging
 from datetime import datetime, timedelta
 
-from sqlalchemy import desc, func
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import (
@@ -16,6 +15,7 @@ from app.database.modular_pipeline_models import (
 )
 from app.database.unified_models import SystemSettingsDB
 from app.repositories.pipeline_step_repository import PipelineStepRepository
+from app.repositories.pipeline_step_execution_repository import PipelineStepExecutionRepository
 from app.repositories.system_settings_repository import SystemSettingsRepository
 
 logger = logging.getLogger(__name__)
@@ -33,6 +33,7 @@ class StatisticsService:
         self,
         db: Session,
         step_repository: PipelineStepRepository | None = None,
+        execution_repository: PipelineStepExecutionRepository | None = None,
         settings_repository: SystemSettingsRepository | None = None
     ):
         """
@@ -41,10 +42,12 @@ class StatisticsService:
         Args:
             db: Database session
             step_repository: Optional step repository (for DI)
+            execution_repository: Optional execution repository (for DI)
             settings_repository: Optional settings repository (for DI)
         """
         self.db = db
         self.step_repository = step_repository or PipelineStepRepository(db)
+        self.execution_repository = execution_repository or PipelineStepExecutionRepository(db)
         self.settings_repository = settings_repository or SystemSettingsRepository(db)
 
     def get_pipeline_statistics(self) -> dict:
@@ -98,7 +101,7 @@ class StatisticsService:
 
     def _get_ai_interaction_statistics(self, last_24h: datetime, last_7d: datetime) -> dict:
         """
-        Get AI interaction statistics.
+        Get AI interaction statistics using repository pattern.
 
         Args:
             last_24h: Timestamp for 24 hours ago
@@ -108,42 +111,26 @@ class StatisticsService:
             Dictionary with AI interaction statistics
         """
         # Total AI interactions
-        total_interactions = self.db.query(PipelineStepExecutionDB).count()
+        total_interactions = self.execution_repository.count()
 
         # Recent interactions (24h)
-        recent_interactions = self.db.query(PipelineStepExecutionDB).filter(
-            PipelineStepExecutionDB.started_at >= last_24h
-        ).count()
+        recent_interactions = self.execution_repository.count_since(last_24h)
 
         # Weekly interactions
-        weekly_interactions = self.db.query(PipelineStepExecutionDB).filter(
-            PipelineStepExecutionDB.started_at >= last_7d
-        ).count()
+        weekly_interactions = self.execution_repository.count_since(last_7d)
 
         # Average processing time (last 100 interactions)
-        avg_processing_time = self.db.query(
-            func.avg(PipelineStepExecutionDB.execution_time_seconds)
-        ).filter(
-            PipelineStepExecutionDB.execution_time_seconds.isnot(None)
-        ).limit(100).scalar() or 0
+        avg_processing_time = self.execution_repository.get_average_execution_time(limit=100)
         avg_processing_time_ms = avg_processing_time * 1000  # Convert to ms
 
         # Success rate (last 100 executions)
-        recent_logs = self.db.query(PipelineStepExecutionDB).order_by(
-            desc(PipelineStepExecutionDB.started_at)
-        ).limit(100).all()
-        success_count = sum(1 for log in recent_logs if log.status == "COMPLETED")
-        success_rate = (success_count / len(recent_logs) * 100) if recent_logs else 100
+        success_rate = self.execution_repository.get_success_rate(limit=100)
 
         # Most used step
-        step_usage = self.db.query(
-            PipelineStepExecutionDB.step_id,
-            func.count(PipelineStepExecutionDB.step_id).label('count')
-        ).group_by(PipelineStepExecutionDB.step_id).order_by(desc('count')).first()
-
+        most_used_step_id = self.execution_repository.get_most_used_step_id()
         most_used_step = "N/A"
-        if step_usage:
-            most_used_step_db = self.step_repository.get(step_usage.step_id)
+        if most_used_step_id:
+            most_used_step_db = self.step_repository.get(most_used_step_id)
             most_used_step = most_used_step_db.name if most_used_step_db else "N/A"
 
         return {

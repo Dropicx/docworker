@@ -67,6 +67,7 @@ def get_statistics_service(
 
 from app.repositories.pipeline_job_repository import PipelineJobRepository
 from app.repositories.pipeline_step_repository import PipelineStepRepository
+from app.repositories.pipeline_step_execution_repository import PipelineStepExecutionRepository
 from app.repositories.document_class_repository import DocumentClassRepository
 from app.repositories.system_settings_repository import SystemSettingsRepository
 from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
@@ -101,6 +102,21 @@ def get_pipeline_step_repository(
         PipelineStepRepository instance
     """
     return PipelineStepRepository(db)
+
+
+def get_pipeline_step_execution_repository(
+    db: Session = Depends(get_session)
+) -> PipelineStepExecutionRepository:
+    """
+    Dependency injection factory for PipelineStepExecutionRepository.
+
+    Args:
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        PipelineStepExecutionRepository instance
+    """
+    return PipelineStepExecutionRepository(db)
 
 
 def get_document_class_repository(
