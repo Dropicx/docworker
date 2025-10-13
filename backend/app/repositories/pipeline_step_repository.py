@@ -209,9 +209,13 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             List of steps with stop conditions
         """
-        return self.db.query(self.model).filter(
-            self.model.stop_conditions.isnot(None)
-        ).all()
+        steps = self.get_all()
+
+        # Filter steps that have actual stop conditions (not None, not empty)
+        return [
+            step for step in steps
+            if step.stop_conditions
+        ]
 
     def duplicate_step(self, step_id: int, new_name: str) -> DynamicPipelineStepDB | None:
         """

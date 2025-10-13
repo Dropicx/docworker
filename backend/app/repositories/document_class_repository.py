@@ -5,6 +5,7 @@ Handles database operations for document class definitions.
 """
 
 from sqlalchemy.orm import Session
+from sqlalchemy.orm.attributes import flag_modified
 
 from app.database.modular_pipeline_models import DocumentClassDB
 from app.repositories.base_repository import BaseRepository
@@ -187,6 +188,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
 
         if example not in doc_class.examples:
             doc_class.examples.append(example)
+            flag_modified(doc_class, 'examples')
             self.db.commit()
             self.db.refresh(doc_class)
 
@@ -209,6 +211,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
 
         if example in doc_class.examples:
             doc_class.examples.remove(example)
+            flag_modified(doc_class, 'examples')
             self.db.commit()
             self.db.refresh(doc_class)
 
@@ -234,6 +237,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
 
         if indicator not in doc_class.strong_indicators:
             doc_class.strong_indicators.append(indicator)
+            flag_modified(doc_class, 'strong_indicators')
             self.db.commit()
             self.db.refresh(doc_class)
 
@@ -259,6 +263,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
 
         if indicator not in doc_class.weak_indicators:
             doc_class.weak_indicators.append(indicator)
+            flag_modified(doc_class, 'weak_indicators')
             self.db.commit()
             self.db.refresh(doc_class)
 

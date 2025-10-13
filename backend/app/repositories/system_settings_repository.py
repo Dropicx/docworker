@@ -136,6 +136,7 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
             setting = self.create(
                 key=key,
                 value=value,
+                value_type="string",
                 description=description or ""
             )
 
