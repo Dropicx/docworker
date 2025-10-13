@@ -37,6 +37,20 @@ class BaseRepository(Generic[ModelType]):
         self.db = db
         self.model = model
 
+    def get(self, id: Any) -> ModelType | None:
+        """
+        Get entity by primary key (convenience method).
+
+        Alias for get_by_id() for shorter syntax.
+
+        Args:
+            id: Primary key value
+
+        Returns:
+            Entity instance or None if not found
+        """
+        return self.get_by_id(id)
+
     def get_by_id(self, id: Any) -> ModelType | None:
         """Get entity by primary key."""
         try:
