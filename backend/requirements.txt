@@ -39,3 +39,9 @@ redis==5.0.0
 
 # NOTE: spaCy moved to worker requirements.txt
 # PII removal now happens in worker, not backend
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.2
+pytest-mock==3.14.0
+pytest-cov==6.0.0
