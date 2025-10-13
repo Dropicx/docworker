@@ -3,26 +3,26 @@ Hybrid Text Extractor with Conditional OCR Logic
 Intelligently routes between local text extraction, local OCR, and Vision LLM OCR
 """
 
-import os
-import logging
-from typing import Tuple, List, Optional, Union, Dict, Any
 from io import BytesIO
+import logging
+from typing import Any
 
+import pdfplumber
 from PIL import Image
 import PyPDF2
-import pdfplumber
 
 from app.services.file_quality_detector import (
-    FileQualityDetector,
+    DocumentComplexity,
     ExtractionStrategy,
-    DocumentComplexity
+    FileQualityDetector,
 )
-from app.services.ovh_client import OVHClient
 from app.services.file_sequence_detector import FileSequenceDetector
+from app.services.ovh_client import OVHClient
 
 # Optional imports for local OCR (fallback gracefully if not available)
 try:
     import pytesseract
+
     from app.services.text_extractor_ocr import TextExtractorWithOCR
     LOCAL_OCR_AVAILABLE = True
 except ImportError:
@@ -75,8 +75,8 @@ class HybridTextExtractor:
             logger.info("ℹ️ Local OCR not available")
 
         logger.debug("🚀 Hybrid Text Extractor initialized")
-        logger.debug(f"   - Quality Detector: ✅")
-        logger.debug(f"   - Sequence Detector: ✅")
+        logger.debug("   - Quality Detector: ✅")
+        logger.debug("   - Sequence Detector: ✅")
         logger.debug(f"   - OVH Vision: {'✅' if self.ovh_client.vision_client else '❌'}")
         logger.debug(f"   - Local OCR: {'✅' if self.local_ocr_available else '❌'}")
 
@@ -93,7 +93,7 @@ class HybridTextExtractor:
         file_content: bytes,
         file_type: str,
         filename: str
-    ) -> Tuple[str, float]:
+    ) -> tuple[str, float]:
         """Extract text from a single file using optimal strategy.
 
         Analyzes the file to determine the best extraction method (LOCAL_TEXT,
@@ -137,19 +137,18 @@ class HybridTextExtractor:
             if strategy == ExtractionStrategy.LOCAL_TEXT:
                 return await self._extract_with_local_text(file_content, file_type, analysis)
 
-            elif strategy == ExtractionStrategy.LOCAL_OCR:
+            if strategy == ExtractionStrategy.LOCAL_OCR:
                 return await self._extract_with_local_ocr(file_content, file_type, analysis)
 
-            elif strategy == ExtractionStrategy.VISION_LLM:
+            if strategy == ExtractionStrategy.VISION_LLM:
                 return await self._extract_with_vision_llm(file_content, file_type, analysis)
 
-            elif strategy == ExtractionStrategy.HYBRID:
+            if strategy == ExtractionStrategy.HYBRID:
                 return await self._extract_with_hybrid(file_content, file_type, analysis)
 
-            else:
-                # Fallback to vision LLM
-                logger.warning(f"⚠️ Unknown strategy {strategy}, falling back to vision LLM")
-                return await self._extract_with_vision_llm(file_content, file_type, analysis)
+            # Fallback to vision LLM
+            logger.warning(f"⚠️ Unknown strategy {strategy}, falling back to vision LLM")
+            return await self._extract_with_vision_llm(file_content, file_type, analysis)
 
         except Exception as e:
             logger.error(f"❌ Hybrid extraction failed for {filename}: {e}")
@@ -157,9 +156,9 @@ class HybridTextExtractor:
 
     async def extract_from_multiple_files(
         self,
-        files: List[Tuple[bytes, str, str]],
+        files: list[tuple[bytes, str, str]],
         merge_strategy: str = "smart"
-    ) -> Tuple[str, float]:
+    ) -> tuple[str, float]:
         """Extract and intelligently merge text from multiple related files.
 
         Processes multi-page medical documents by:
@@ -209,7 +208,7 @@ class HybridTextExtractor:
             if ordered_files != files:
                 original_names = [f[2] for f in files]
                 ordered_names = [f[2] for f in ordered_files]
-                logger.info(f"📄 File sequence reordered:")
+                logger.info("📄 File sequence reordered:")
                 logger.info(f"   Original: {original_names}")
                 logger.info(f"   Ordered:  {ordered_names}")
             else:
@@ -259,7 +258,7 @@ class HybridTextExtractor:
             merged_text = self._merge_extraction_results(extraction_results, merge_strategy)
             avg_confidence = total_confidence / len(extraction_results)
 
-            logger.info(f"🎯 Multi-file extraction complete:")
+            logger.info("🎯 Multi-file extraction complete:")
             logger.info(f"   - Files processed: {len(extraction_results)}/{len(files)}")
             logger.info(f"   - Total characters: {len(merged_text)}")
             logger.info(f"   - Average confidence: {avg_confidence:.2%}")
@@ -274,8 +273,8 @@ class HybridTextExtractor:
         self,
         content: bytes,
         file_type: str,
-        analysis: Dict[str, Any]
-    ) -> Tuple[str, float]:
+        analysis: dict[str, Any]
+    ) -> tuple[str, float]:
         """Extract text using local PDF parsing (no OCR).
 
         Uses pdfplumber (preferred) and PyPDF2 (fallback) to extract text
@@ -309,8 +308,7 @@ class HybridTextExtractor:
                 if confidence >= 0.7:  # Good quality local extraction
                     logger.info(f"✅ pdfplumber successful: {len(text)} characters, confidence: {confidence:.2%}")
                     return text.strip(), confidence
-                else:
-                    logger.info(f"⚠️ pdfplumber low quality (confidence: {confidence:.2%}), trying PyPDF2")
+                logger.info(f"⚠️ pdfplumber low quality (confidence: {confidence:.2%}), trying PyPDF2")
 
             # Fallback to PyPDF2
             text = await self._extract_pdf_with_pypdf2(content)
@@ -321,8 +319,7 @@ class HybridTextExtractor:
                 if confidence >= 0.6:  # Reasonable quality
                     logger.info(f"✅ PyPDF2 successful: {len(text)} characters, confidence: {confidence:.2%}")
                     return text.strip(), confidence
-                else:
-                    logger.info(f"⚠️ PyPDF2 low quality (confidence: {confidence:.2%}), falling back to vision LLM")
+                logger.info(f"⚠️ PyPDF2 low quality (confidence: {confidence:.2%}), falling back to vision LLM")
 
             # If local extraction quality is poor, fallback to vision LLM
             logger.warning("⚠️ Local text extraction quality insufficient, falling back to vision LLM")
@@ -387,7 +384,7 @@ class HybridTextExtractor:
 
         return min(confidence, 0.95)  # Cap at 95%
 
-    async def _extract_pdf_with_pdfplumber(self, content: bytes) -> Optional[str]:
+    async def _extract_pdf_with_pdfplumber(self, content: bytes) -> str | None:
         """Extract text using pdfplumber with enhanced table handling"""
         try:
             pdf_file = BytesIO(content)
@@ -441,7 +438,7 @@ class HybridTextExtractor:
             logger.debug(f"pdfplumber extraction failed: {e}")
             return None
 
-    async def _extract_pdf_with_pypdf2(self, content: bytes) -> Optional[str]:
+    async def _extract_pdf_with_pypdf2(self, content: bytes) -> str | None:
         """Extract text using PyPDF2"""
         try:
             pdf_file = BytesIO(content)
@@ -463,8 +460,8 @@ class HybridTextExtractor:
         self,
         content: bytes,
         file_type: str,
-        analysis: Dict[str, Any]
-    ) -> Tuple[str, float]:
+        analysis: dict[str, Any]
+    ) -> tuple[str, float]:
         """Extract text using local OCR (Tesseract)"""
 
         if not self.local_ocr_available or not self.local_ocr:
@@ -482,9 +479,8 @@ class HybridTextExtractor:
                 # Apply OCR preprocessing using unified prompt system
                 processed_text = await self._apply_ocr_preprocessing(text)
                 return processed_text, confidence
-            else:
-                logger.warning("⚠️ Local OCR failed or returned poor results, falling back to vision LLM")
-                return await self._extract_with_vision_llm(content, file_type, analysis)
+            logger.warning("⚠️ Local OCR failed or returned poor results, falling back to vision LLM")
+            return await self._extract_with_vision_llm(content, file_type, analysis)
 
         except Exception as e:
             logger.error(f"❌ Local OCR failed: {e}")
@@ -494,8 +490,8 @@ class HybridTextExtractor:
         self,
         content: bytes,
         file_type: str,
-        analysis: Dict[str, Any]
-    ) -> Tuple[str, float]:
+        analysis: dict[str, Any]
+    ) -> tuple[str, float]:
         """Extract text using Vision LLM (Qwen 2.5 VL)"""
 
         try:
@@ -512,7 +508,7 @@ class HybridTextExtractor:
 
                     if images:
                         # Process multiple images
-                        pil_images = [img for img in images]
+                        pil_images = list(images)
                         text, confidence = await self.ovh_client.process_multiple_images_ocr(
                             pil_images, merge_strategy="smart"
                         )
@@ -522,8 +518,7 @@ class HybridTextExtractor:
                             # Apply OCR preprocessing using unified prompt system
                             processed_text = await self._apply_ocr_preprocessing(text)
                             return processed_text, confidence
-                        else:
-                            return "Vision LLM konnte keinen Text aus dem PDF extrahieren.", 0.1
+                        return "Vision LLM konnte keinen Text aus dem PDF extrahieren.", 0.1
 
                 except ImportError:
                     logger.error("❌ pdf2image not available for PDF to image conversion")
@@ -539,8 +534,7 @@ class HybridTextExtractor:
                     # Apply OCR preprocessing using unified prompt system
                     processed_text = await self._apply_ocr_preprocessing(text)
                     return processed_text, confidence
-                else:
-                    return "Vision LLM konnte keinen Text aus dem Bild extrahieren.", 0.1
+                return "Vision LLM konnte keinen Text aus dem Bild extrahieren.", 0.1
 
             else:
                 return f"Nicht unterstützter Dateityp für Vision LLM: {file_type}", 0.0
@@ -553,8 +547,8 @@ class HybridTextExtractor:
         self,
         content: bytes,
         file_type: str,
-        analysis: Dict[str, Any]
-    ) -> Tuple[str, float]:
+        analysis: dict[str, Any]
+    ) -> tuple[str, float]:
         """Extract text using a hybrid approach"""
 
         logger.info("🔄 Using hybrid extraction approach")
@@ -580,9 +574,8 @@ class HybridTextExtractor:
             if vision_confidence > confidence:
                 logger.info(f"✅ Hybrid: Vision LLM better (confidence: {vision_confidence:.2%})")
                 return vision_text, vision_confidence
-            else:
-                logger.info(f"✅ Hybrid: Local method better (confidence: {confidence:.2%})")
-                return text, confidence
+            logger.info(f"✅ Hybrid: Local method better (confidence: {confidence:.2%})")
+            return text, confidence
 
         except Exception as e:
             logger.error(f"❌ Hybrid extraction failed: {e}")
@@ -590,7 +583,7 @@ class HybridTextExtractor:
 
     def _merge_extraction_results(
         self,
-        results: List[Dict[str, Any]],
+        results: list[dict[str, Any]],
         strategy: str = "smart"
     ) -> str:
         """
@@ -613,12 +606,11 @@ class HybridTextExtractor:
 
         if strategy == "sequential":
             return self._merge_sequential(results)
-        elif strategy == "smart":
+        if strategy == "smart":
             return self._merge_smart(results)
-        else:
-            return self._merge_sequential(results)
+        return self._merge_sequential(results)
 
-    def _merge_sequential(self, results: List[Dict[str, Any]]) -> str:
+    def _merge_sequential(self, results: list[dict[str, Any]]) -> str:
         """Merge results in sequential order with clear page separators"""
         merged_parts = []
 
@@ -633,7 +625,7 @@ class HybridTextExtractor:
 
         return "\n".join(merged_parts)
 
-    def _merge_smart(self, results: List[Dict[str, Any]]) -> str:
+    def _merge_smart(self, results: list[dict[str, Any]]) -> str:
         """Intelligently merge results with context awareness and medical structure"""
         if len(results) == 1:
             return results[0]['text']
@@ -745,10 +737,7 @@ class HybridTextExtractor:
             return True
 
         # Examination continuing to lab values
-        if prev_section == 'examination' and current_section == 'lab_values':
-            return True
-
-        return False
+        return bool(prev_section == "examination" and current_section == "lab_values")
 
     def _is_table_continuation(self, prev_text: str, current_text: str) -> bool:
         """Check if current text continues a table from previous text"""

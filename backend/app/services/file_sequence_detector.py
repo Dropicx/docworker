@@ -3,12 +3,11 @@ File Sequence Detector for Logical Page Ordering
 Analyzes multiple files to determine the logical order for medical documents
 """
 
-import os
-import re
-import logging
-from typing import List, Dict, Any, Tuple, Optional
-from datetime import datetime
 from dataclasses import dataclass
+from datetime import datetime
+import logging
+import re
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -58,10 +57,10 @@ class PageInfo:
     file_type: str
 
     # Content analysis
-    extracted_text: Optional[str] = None
-    page_number: Optional[int] = None
-    dates: List[datetime] = None
-    sections: List[str] = None
+    extracted_text: str | None = None
+    page_number: int | None = None
+    dates: list[datetime] = None
+    sections: list[str] = None
 
     # Structural indicators
     starts_with_header: bool = False
@@ -201,8 +200,8 @@ class FileSequenceDetector:
 
     async def detect_sequence(
         self,
-        files: List[Tuple[bytes, str, str]]
-    ) -> List[Tuple[bytes, str, str]]:
+        files: list[tuple[bytes, str, str]]
+    ) -> list[tuple[bytes, str, str]]:
         """Analyze and reorder files into logical medical document sequence.
 
         Main entry point for sequence detection. Performs three-stage process:
@@ -313,7 +312,7 @@ class FileSequenceDetector:
             # Step 3: Reorder files
             ordered_files = [files[i] for i in ordered_indices]
 
-            logger.info(f"🎯 Sequence detection complete:")
+            logger.info("🎯 Sequence detection complete:")
             logger.info(f"   - Original order: {[f[2] for f in files]}")
             logger.info(f"   - Detected order: {[f[2] for f in ordered_files]}")
             logger.info(f"   - Reordering applied: {ordered_indices != list(range(len(files)))}")
@@ -331,6 +330,7 @@ class FileSequenceDetector:
             if file_type == "pdf":
                 # Quick PDF text extraction
                 from io import BytesIO
+
                 import PyPDF2
 
                 pdf_file = BytesIO(content)
@@ -381,7 +381,7 @@ class FileSequenceDetector:
         # Calculate confidence
         page_info.confidence = self._calculate_analysis_confidence(page_info, text)
 
-    def _extract_page_number(self, text: str) -> Optional[int]:
+    def _extract_page_number(self, text: str) -> int | None:
         """Extract page number from text"""
         for pattern in self.page_patterns:
             matches = re.findall(pattern, text, re.IGNORECASE)
@@ -393,7 +393,7 @@ class FileSequenceDetector:
                     continue
         return None
 
-    def _extract_dates(self, text: str) -> List[datetime]:
+    def _extract_dates(self, text: str) -> list[datetime]:
         """Extract dates from text"""
         dates = []
 
@@ -415,11 +415,11 @@ class FileSequenceDetector:
 
         return dates
 
-    def _detect_sections(self, text_lower: str) -> List[str]:
+    def _detect_sections(self, text_lower: str) -> list[str]:
         """Detect document sections"""
         sections = []
 
-        for section_name, patterns in self.section_patterns.items():
+        for section_name, _patterns in self.section_patterns.items():
             if self._has_pattern(text_lower, section_name):
                 sections.append(section_name)
 
@@ -429,11 +429,7 @@ class FileSequenceDetector:
         """Check if text contains patterns from a group"""
         patterns = self.section_patterns.get(pattern_group, [])
 
-        for pattern in patterns:
-            if re.search(pattern, text_lower):
-                return True
-
-        return False
+        return any(re.search(pattern, text_lower) for pattern in patterns)
 
     def _starts_with_header(self, text_lower: str) -> bool:
         """Check if page starts with a header"""
@@ -466,11 +462,7 @@ class FileSequenceDetector:
         # Similar to table start but look at end of text
         lines = text.split('\n')[-10:]  # Last 10 lines
 
-        for line in lines:
-            if '|' in line or '\t' in line:
-                return True
-
-        return False
+        return any("|" in line or "\t" in line for line in lines)
 
     def _calculate_analysis_confidence(self, page_info: PageInfo, text: str) -> float:
         """Calculate confidence in the analysis"""
@@ -490,7 +482,7 @@ class FileSequenceDetector:
 
         return min(confidence, 1.0)
 
-    def _determine_sequence(self, page_infos: List[PageInfo]) -> List[int]:
+    def _determine_sequence(self, page_infos: list[PageInfo]) -> list[int]:
         """Determine the logical sequence of pages"""
 
         # Strategy 1: Use explicit page numbers if available
@@ -504,19 +496,18 @@ class FileSequenceDetector:
         logger.info("📊 Using medical document structure for sequence detection")
         return self._order_by_medical_structure(page_infos)
 
-    def _order_by_page_numbers(self, page_infos: List[PageInfo]) -> List[int]:
+    def _order_by_page_numbers(self, page_infos: list[PageInfo]) -> list[int]:
         """Order by explicit page numbers"""
         # Sort by page number, with None values at the end
         def sort_key(page_info):
             if page_info.page_number is not None:
                 return (0, page_info.page_number)  # Priority 0 for numbered pages
-            else:
-                return (1, page_info.index)  # Priority 1 for unnumbered, use original order
+            return (1, page_info.index)  # Priority 1 for unnumbered, use original order
 
         sorted_pages = sorted(page_infos, key=sort_key)
         return [p.index for p in sorted_pages]
 
-    def _order_by_medical_structure(self, page_infos: List[PageInfo]) -> List[int]:
+    def _order_by_medical_structure(self, page_infos: list[PageInfo]) -> list[int]:
         """Order pages by typical medical document structure and content flow.
 
         Implements content-based sequencing using medical domain knowledge.
@@ -575,7 +566,7 @@ class FileSequenceDetector:
         # 5. Treatment / Medication
         # 6. Continuation pages
 
-        def medical_priority(page_info: PageInfo) -> Tuple[int, int]:
+        def medical_priority(page_info: PageInfo) -> tuple[int, int]:
             """Calculate priority for medical document ordering"""
 
             # Primary priority (document structure)
@@ -610,9 +601,9 @@ class FileSequenceDetector:
 
     def analyze_sequence_quality(
         self,
-        original_order: List[str],
-        detected_order: List[str]
-    ) -> Dict[str, Any]:
+        original_order: list[str],
+        detected_order: list[str]
+    ) -> dict[str, Any]:
         """Analyze quality and impact of sequence detection for validation.
 
         Compares original vs. detected ordering to quantify reordering decisions.

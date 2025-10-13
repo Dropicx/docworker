@@ -55,13 +55,14 @@ Example Cost Calculation:
     Total: $0.00243
 """
 
-import logging
-from typing import Optional, Dict, Any
 from datetime import datetime
+import logging
+from typing import Any
+
 from sqlalchemy.orm import Session
 
-from app.database.unified_models import AILogInteractionDB
 from app.database.modular_pipeline_models import AvailableModelDB
+from app.database.unified_models import AILogInteractionDB
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +141,7 @@ class AICostTracker:
         self.session = session
         self._pricing_cache = {}  # Cache pricing to avoid repeated DB queries
 
-    def _get_model_pricing(self, model_name: str) -> Dict[str, float]:
+    def _get_model_pricing(self, model_name: str) -> dict[str, float]:
         """Fetch model pricing from database with caching for performance.
 
         Queries available_models table for per-1M-token pricing, converts to
@@ -202,14 +203,13 @@ class AICostTracker:
                 # Cache for future use
                 self._pricing_cache[model_name] = pricing
                 return pricing
-            else:
-                logger.warning(
-                    f"No pricing found for model '{model_name}' in database, using default"
-                )
-                # Default to Llama 3.3 70B pricing if not found
-                default_pricing = {"input": 0.00054, "output": 0.00081}
-                self._pricing_cache[model_name] = default_pricing
-                return default_pricing
+            logger.warning(
+                f"No pricing found for model '{model_name}' in database, using default"
+            )
+            # Default to Llama 3.3 70B pricing if not found
+            default_pricing = {"input": 0.00054, "output": 0.00081}
+            self._pricing_cache[model_name] = default_pricing
+            return default_pricing
 
         except Exception as e:
             logger.error(f"Error fetching model pricing: {e}")
@@ -224,10 +224,10 @@ class AICostTracker:
         output_tokens: int,
         model_provider: str = "OVH",
         model_name: str = "Meta-Llama-3.3-70B-Instruct",
-        processing_time_seconds: Optional[float] = None,
-        confidence_score: Optional[float] = None,
-        document_type: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        processing_time_seconds: float | None = None,
+        confidence_score: float | None = None,
+        document_type: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ):
         """Log AI API call with automatic cost calculation and database persistence.
 
@@ -346,10 +346,10 @@ class AICostTracker:
 
     def get_total_cost(
         self,
-        processing_id: Optional[str] = None,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
-    ) -> Dict[str, Any]:
+        processing_id: str | None = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+    ) -> dict[str, Any]:
         """Calculate total costs and token usage with flexible filtering.
 
         Aggregates AI interaction logs to provide summary statistics for cost
@@ -446,8 +446,8 @@ class AICostTracker:
             }
 
     def get_cost_breakdown(
-        self, start_date: Optional[datetime] = None, end_date: Optional[datetime] = None
-    ) -> Dict[str, Any]:
+        self, start_date: datetime | None = None, end_date: datetime | None = None
+    ) -> dict[str, Any]:
         """Generate detailed cost breakdown for optimization and analysis.
 
         Provides two-dimensional cost analysis: by AI model and by pipeline step.

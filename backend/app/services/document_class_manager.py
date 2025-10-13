@@ -92,16 +92,14 @@ Note:
     4. Delete when no longer needed (hard delete)
 """
 
-import logging
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
+import logging
+from typing import Any
 
-from app.database.modular_pipeline_models import (
-    DocumentClassDB,
-    DynamicPipelineStepDB
-)
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from app.database.modular_pipeline_models import DocumentClassDB, DynamicPipelineStepDB
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +177,7 @@ class DocumentClassManager:
 
     # ==================== READ OPERATIONS ====================
 
-    def get_all_classes(self, enabled_only: bool = False) -> List[DocumentClassDB]:
+    def get_all_classes(self, enabled_only: bool = False) -> list[DocumentClassDB]:
         """
         Get all document classes.
 
@@ -204,7 +202,7 @@ class DocumentClassManager:
             logger.error(f"❌ Failed to get document classes: {e}")
             return []
 
-    def get_class(self, class_id: int) -> Optional[DocumentClassDB]:
+    def get_class(self, class_id: int) -> DocumentClassDB | None:
         """
         Get a single document class by ID.
 
@@ -228,7 +226,7 @@ class DocumentClassManager:
             logger.error(f"❌ Failed to get document class {class_id}: {e}")
             return None
 
-    def get_class_by_key(self, class_key: str) -> Optional[DocumentClassDB]:
+    def get_class_by_key(self, class_key: str) -> DocumentClassDB | None:
         """
         Get a document class by its unique key.
 
@@ -252,7 +250,7 @@ class DocumentClassManager:
             logger.error(f"❌ Failed to get document class by key '{class_key}': {e}")
             return None
 
-    def get_enabled_classes(self) -> List[DocumentClassDB]:
+    def get_enabled_classes(self) -> list[DocumentClassDB]:
         """
         Get all enabled document classes.
 
@@ -263,7 +261,7 @@ class DocumentClassManager:
 
     # ==================== CREATE OPERATIONS ====================
 
-    def create_class(self, class_data: Dict[str, Any]) -> Optional[DocumentClassDB]:
+    def create_class(self, class_data: dict[str, Any]) -> DocumentClassDB | None:
         """
         Create a new document class.
 
@@ -305,7 +303,7 @@ class DocumentClassManager:
         except IntegrityError as e:
             self.session.rollback()
             logger.error(f"❌ Integrity error creating document class: {e}")
-            raise ValueError(f"Document class with this key already exists")
+            raise ValueError("Document class with this key already exists")
 
         except Exception as e:
             self.session.rollback()
@@ -314,7 +312,7 @@ class DocumentClassManager:
 
     # ==================== UPDATE OPERATIONS ====================
 
-    def update_class(self, class_id: int, class_data: Dict[str, Any]) -> Optional[DocumentClassDB]:
+    def update_class(self, class_id: int, class_data: dict[str, Any]) -> DocumentClassDB | None:
         """
         Update an existing document class.
 
@@ -480,7 +478,7 @@ class DocumentClassManager:
             )
 
         # Generate prompt template
-        prompt_template = f"""Analyze the following medical document and classify it into one of these categories:
+        return f"""Analyze the following medical document and classify it into one of these categories:
 
 {chr(10).join(class_descriptions)}
 
@@ -494,9 +492,8 @@ Document to classify:
 {{input_text}}
 """
 
-        return prompt_template
 
-    def _format_classification_indicators(self, classes: List[DocumentClassDB]) -> str:
+    def _format_classification_indicators(self, classes: list[DocumentClassDB]) -> str:
         """Format classification indicators for all classes"""
         indicators = []
 
@@ -515,7 +512,7 @@ Document to classify:
 
         return "\n".join(indicators)
 
-    def get_class_statistics(self) -> Dict[str, Any]:
+    def get_class_statistics(self) -> dict[str, Any]:
         """
         Get statistics about document classes.
 

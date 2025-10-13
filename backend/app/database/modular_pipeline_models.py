@@ -6,10 +6,23 @@ Users can configure OCR engines, create custom pipeline steps, manage available 
 and define custom document classes with their own pipeline branches.
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, JSON, Enum as SQLEnum, ForeignKey, LargeBinary
-from sqlalchemy.orm import relationship
-from sqlalchemy.sql import func
 from enum import Enum
+
+from sqlalchemy import (
+    JSON,
+    Boolean,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    LargeBinary,
+    String,
+    Text,
+)
+from sqlalchemy import Enum as SQLEnum
+from sqlalchemy.sql import func
+
 from app.database.unified_models import Base
 
 # ==================== ENUMS ====================

@@ -1,24 +1,24 @@
 import asyncio
+from contextlib import asynccontextmanager, suppress
+from datetime import datetime
 import logging
 import sys
-from contextlib import asynccontextmanager
-from datetime import datetime
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from app.core.config import settings
-from app.routers import upload, process, health
-from app.routers.settings_auth import router as settings_auth_router
-from app.routers.process_multi_file import router as multi_file_router
-from app.routers.modular_pipeline import router as modular_pipeline_router
-from app.routers.admin.config import router as admin_config_router
-from app.services.cleanup import cleanup_temp_files
 from app.database.init_db import init_database
+from app.routers import health, process, upload
+from app.routers.admin.config import router as admin_config_router
+from app.routers.modular_pipeline import router as modular_pipeline_router
+from app.routers.process_multi_file import router as multi_file_router
+from app.routers.settings_auth import router as settings_auth_router
+from app.services.cleanup import cleanup_temp_files
 
 # Configure logging with centralized settings
 logging.basicConfig(
@@ -65,17 +65,15 @@ async def lifespan(app: FastAPI):
     # Cleanup task - runs every 30 seconds
     cleanup_task = asyncio.create_task(periodic_cleanup())
     logger.info("✅ Started periodic cleanup task (30s interval)")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("🔄 Shutting down...")
     cleanup_task.cancel()
-    try:
+    with suppress(asyncio.CancelledError):
         await cleanup_task
-    except asyncio.CancelledError:
-        pass
-    
+
     # Final cleanup
     await cleanup_temp_files()
     logger.info("✅ Shutdown complete")
@@ -162,7 +160,7 @@ async def log_requests(request: Request, call_next):
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
-    
+
     # Security headers
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
@@ -177,7 +175,7 @@ async def add_security_headers(request: Request, call_next):
             "img-src 'self' data:; "
             "connect-src 'self'"
         )
-    
+
     return response
 
 # Router einbinden
@@ -211,4 +209,4 @@ if __name__ == "__main__":
         limit_concurrency=100,
         # Set to 50MB for large image uploads
         h11_max_incomplete_event_size=settings.max_file_size_bytes
-    ) 
+    )

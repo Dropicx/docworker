@@ -31,19 +31,17 @@ Module-level Constants:
     MAX_DATA_AGE (timedelta): Memory store retention (30 minutes)
     DB_RETENTION_HOURS (int): Database job retention from env (default 24h)
 """
+from datetime import datetime, timedelta
+import gc
+import logging
 import os
 import tempfile
-import asyncio
-import shutil
-import logging
-from datetime import datetime, timedelta
-from typing import Dict, Any
-import gc
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
 # Globaler In-Memory Store für Verarbeitungsdaten
-processing_store: Dict[str, Dict[str, Any]] = {}
+processing_store: dict[str, dict[str, Any]] = {}
 
 # Maximale Lebenszeit für temporäre Daten (30 Minuten)
 MAX_DATA_AGE = timedelta(minutes=30)
@@ -115,9 +113,9 @@ async def cleanup_system_temp_files():
     try:
         temp_dir = tempfile.gettempdir()
         current_time = datetime.now()
-        
+
         # Suche nach medizinischen Dokumenten-Dateien
-        for root, dirs, files in os.walk(temp_dir):
+        for root, _dirs, files in os.walk(temp_dir):
             for file in files:
                 if file.startswith(('medical_', 'uploaded_', 'processed_')):
                     file_path = os.path.join(root, file)
@@ -131,9 +129,9 @@ async def cleanup_system_temp_files():
                     except (OSError, FileNotFoundError):
                         # Datei bereits gelöscht oder nicht zugreifbar
                         continue
-        
+
         return files_removed
-                        
+
     except Exception as e:
         logger.error(f"❌ System-Temp-Cleanup Fehler: {e}")
         return files_removed
@@ -245,16 +243,16 @@ async def cleanup_old_database_jobs():
         logger.error(f"❌ Database cleanup error: {e}")
         return jobs_removed
 
-def add_to_processing_store(processing_id: str, data: Dict[str, Any]):
+def add_to_processing_store(processing_id: str, data: dict[str, Any]):
     """Fügt Daten zum Processing Store hinzu"""
     data['created_at'] = datetime.now()
     processing_store[processing_id] = data
 
-def get_from_processing_store(processing_id: str) -> Dict[str, Any]:
+def get_from_processing_store(processing_id: str) -> dict[str, Any]:
     """Holt Daten aus dem Processing Store"""
     return processing_store.get(processing_id, {})
 
-def update_processing_store(processing_id: str, updates: Dict[str, Any]):
+def update_processing_store(processing_id: str, updates: dict[str, Any]):
     """Aktualisiert Daten im Processing Store"""
     if processing_id in processing_store:
         processing_store[processing_id].update(updates)
@@ -314,12 +312,12 @@ async def create_secure_temp_file(prefix: str = "medical_", suffix: str = "") ->
     try:
         fd, temp_path = tempfile.mkstemp(prefix=prefix, suffix=suffix)
         os.close(fd)  # Dateideskriptor schließen
-        
+
         # Berechtigungen setzen (nur Besitzer kann lesen/schreiben)
         os.chmod(temp_path, 0o600)
-        
+
         return temp_path
-        
+
     except Exception as e:
         logger.error(f"❌ Temp-Datei-Erstellung Fehler: {e}")
         raise
@@ -373,21 +371,21 @@ async def secure_delete_file(file_path: str):
             # Datei überschreiben vor dem Löschen (einfache Sicherung)
             with open(file_path, "wb") as f:
                 f.write(os.urandom(os.path.getsize(file_path)))
-            
+
             # Datei löschen
             os.remove(file_path)
             logger.debug(f"🔒 Datei sicher gelöscht: {os.path.basename(file_path)}")
-            
+
     except Exception as e:
         logger.error(f"❌ Sicheres Löschen fehlgeschlagen: {e}")
 
-def get_memory_usage() -> Dict[str, Any]:
+def get_memory_usage() -> dict[str, Any]:
     """Gibt Speichernutzung zurück"""
     try:
         import psutil
         process = psutil.Process()
         memory_info = process.memory_info()
-        
+
         return {
             "rss": memory_info.rss,  # Resident Set Size
             "vms": memory_info.vms,  # Virtual Memory Size
@@ -503,4 +501,4 @@ async def cleanup_all_completed_jobs():
 
     except Exception as e:
         logger.error(f"❌ Emergency database cleanup error: {e}")
-        return jobs_removed 
+        return jobs_removed

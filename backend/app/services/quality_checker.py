@@ -1,6 +1,6 @@
 import logging
-import re
-from typing import Tuple, Optional, Dict, Any
+from typing import Any
+
 from app.models.document_types import DocumentClass
 
 logger = logging.getLogger(__name__)
@@ -24,8 +24,8 @@ class QualityChecker:
         self,
         text: str,
         document_type: DocumentClass,
-        fact_check_prompt: Optional[str] = None
-    ) -> Tuple[str, Dict[str, Any]]:
+        fact_check_prompt: str | None = None
+    ) -> tuple[str, dict[str, Any]]:
         """
         Check medical facts in the translated text.
 
@@ -78,8 +78,8 @@ class QualityChecker:
         self,
         text: str,
         language: str = "de",
-        grammar_check_prompt: Optional[str] = None
-    ) -> Tuple[str, Dict[str, Any]]:
+        grammar_check_prompt: str | None = None
+    ) -> tuple[str, dict[str, Any]]:
         """
         Check and correct grammar in the text.
 
@@ -132,8 +132,8 @@ class QualityChecker:
         self,
         text: str,
         document_type: DocumentClass,
-        final_check_prompt: Optional[str] = None
-    ) -> Tuple[str, float]:
+        final_check_prompt: str | None = None
+    ) -> tuple[str, float]:
         """
         Perform final quality check and scoring.
 
@@ -192,7 +192,7 @@ class QualityChecker:
             logger.error(f"Final quality check failed: {e}")
             return text, base_score
 
-    def _analyze_changes(self, original: str, modified: str) -> Dict[str, Any]:
+    def _analyze_changes(self, original: str, modified: str) -> dict[str, Any]:
         """
         Analyze changes between original and modified text.
 
@@ -231,7 +231,7 @@ class QualityChecker:
 
         return changes
 
-    def _calculate_quality_metrics(self, text: str) -> Dict[str, Any]:
+    def _calculate_quality_metrics(self, text: str) -> dict[str, Any]:
         """
         Calculate basic quality metrics without AI.
 
@@ -295,7 +295,7 @@ TEXT:
 
 KORRIGIERTER TEXT:"""
 
-        elif document_type == DocumentClass.BEFUNDBERICHT:
+        if document_type == DocumentClass.BEFUNDBERICHT:
             return """Prüfe diesen Befundbericht auf medizinische Korrektheit:
 1. Sind anatomische Begriffe richtig?
 2. Stimmen Größenangaben und Lokalisationen?
@@ -308,8 +308,8 @@ TEXT:
 
 KORRIGIERTER TEXT:"""
 
-        else:  # ARZTBRIEF
-            return """Prüfe diesen Arztbrief auf Korrektheit:
+        # ARZTBRIEF
+        return """Prüfe diesen Arztbrief auf Korrektheit:
 1. Stimmen Medikamentendosierungen?
 2. Sind Diagnosen korrekt wiedergegeben?
 3. Stimmen Termine und Empfehlungen?
@@ -336,8 +336,7 @@ TEXT:
 
 KORRIGIERTER TEXT:"""
 
-        else:
-            return f"""Correct ONLY grammar and spelling in this {language} text.
+        return f"""Correct ONLY grammar and spelling in this {language} text.
 Do NOT change:
 - Medical information
 - Formatting

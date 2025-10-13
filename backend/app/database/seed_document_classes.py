@@ -10,7 +10,9 @@ These are marked as system classes and cannot be deleted.
 """
 
 import logging
+
 from sqlalchemy.orm import Session
+
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import DocumentClassDB
 

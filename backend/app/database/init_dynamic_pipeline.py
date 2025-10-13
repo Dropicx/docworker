@@ -9,9 +9,11 @@ Run this script to set up the dynamic pipeline database structure.
 """
 
 import logging
+
 from sqlalchemy import inspect
+
 from app.database.connection import engine, get_session
-from app.database.modular_pipeline_models import Base, DocumentClassDB, DynamicPipelineStepDB
+from app.database.modular_pipeline_models import Base
 from app.database.seed_document_classes import seed_document_classes
 
 logger = logging.getLogger(__name__)

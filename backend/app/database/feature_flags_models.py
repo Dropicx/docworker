@@ -3,7 +3,8 @@ Database models for feature flags and dynamic configuration.
 """
 
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Boolean, Text, DateTime, JSON
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()

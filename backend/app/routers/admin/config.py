@@ -16,16 +16,17 @@ All endpoints require SETTINGS_ACCESS_CODE header for authentication.
 """
 
 import logging
-from typing import Dict, Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, Header, status
-from fastapi.responses import JSONResponse
-from sqlalchemy.orm import Session
-from pydantic import BaseModel, Field
+from typing import Any
 
+from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
+
+from app.core.config import Settings, get_settings, settings
 from app.database.connection import get_session
-from app.core.config import settings, Settings, get_settings
-from app.services.feature_flags import FeatureFlags, Feature, get_enabled_features
 from app.repositories.feature_flags_repository import FeatureFlagsRepository
+from app.services.feature_flags import Feature, FeatureFlags
 
 logger = logging.getLogger(__name__)
 
@@ -60,13 +61,13 @@ class ValidationResponse(BaseModel):
 class FeatureFlagUpdate(BaseModel):
     """Feature flag update request."""
     enabled: bool
-    description: Optional[str] = None
+    description: str | None = None
     rollout_percentage: int = Field(default=100, ge=0, le=100)
 
 
 class FeatureFlagsResponse(BaseModel):
     """Feature flags status response."""
-    flags: Dict[str, bool]
+    flags: dict[str, bool]
     total_count: int
     enabled_count: int
 
@@ -83,7 +84,7 @@ class ReloadResponse(BaseModel):
 # ==================
 
 def verify_access_code(
-    x_access_code: Optional[str] = Header(None, alias="X-Access-Code")
+    x_access_code: str | None = Header(None, alias="X-Access-Code")
 ) -> bool:
     """
     Verify admin access code from header.
@@ -247,7 +248,7 @@ async def update_feature_flag(
 
     # Validate flag name exists
     try:
-        feature = Feature(flag_name)
+        Feature(flag_name)
     except ValueError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -307,12 +308,6 @@ async def reload_configuration(
     reloaded = []
 
     # Settings that can be safely hot-reloaded
-    safe_settings = [
-        "log_level",
-        "max_file_size_mb",
-        "ai_timeout_seconds",
-        "rate_limit_per_minute"
-    ]
 
     # Update logging level if changed
     if hasattr(app_settings, "log_level"):
@@ -334,7 +329,7 @@ async def reload_configuration(
 @router.get("/health")
 async def config_health(
     authenticated: bool = Depends(verify_access_code)
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Check health of configuration management system.
 

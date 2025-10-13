@@ -3,20 +3,18 @@ Multi-File Processing Router
 Handles batch upload and processing of multiple medical document files
 """
 
-import os
-import logging
-import asyncio
-from typing import List, Optional, Dict, Any
 from datetime import datetime
-
-from fastapi import APIRouter, UploadFile, File, Form, HTTPException, Depends
-from fastapi.responses import JSONResponse
+import logging
+import os
+from typing import Any
 import uuid
 
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+
+from app.models.document import CustomPrompts, DocumentType, ProcessingResponse
+from app.services.file_validator import FileValidator
 from app.services.hybrid_text_extractor import HybridTextExtractor
 from app.services.ovh_client import OVHClient
-from app.services.file_validator import FileValidator
-from app.models.document import ProcessingResponse, ProcessingStatus, DocumentType, CustomPrompts
 
 logger = logging.getLogger(__name__)
 
@@ -54,12 +52,12 @@ MAX_TOTAL_SIZE = int(os.getenv("MAX_TOTAL_BATCH_SIZE", "50000000"))  # 50MB
 
 @router.post("/process-multi-file", response_model=ProcessingResponse)
 async def process_multiple_files(
-    files: List[UploadFile] = File(...),
+    files: list[UploadFile] = File(...),
     document_type: str = Form("universal"),
-    target_language: Optional[str] = Form(None),
+    target_language: str | None = Form(None),
     merge_strategy: str = Form("smart"),
     enable_preprocessing: bool = Form(True),
-    custom_prompts: Optional[str] = Form(None)
+    custom_prompts: str | None = Form(None)
 ):
     """
     Process multiple medical document files as a single cohesive document
@@ -143,7 +141,7 @@ async def process_multiple_files(
                 detail=f"Text extraction failed: {extracted_text}"
             )
 
-        logger.info(f"✅ Text extraction successful:")
+        logger.info("✅ Text extraction successful:")
         logger.info(f"   - Extracted: {len(extracted_text):,} characters")
         logger.info(f"   - Confidence: {extraction_confidence:.1%}")
 
@@ -246,7 +244,7 @@ async def process_multiple_files(
         logger.info("=" * 80)
         logger.info("🎯 MULTI-FILE PROCESSING COMPLETED")
         logger.info("=" * 80)
-        logger.info(f"📊 Results:")
+        logger.info("📊 Results:")
         logger.info(f"   - Files processed: {len(files)}")
         logger.info(f"   - Total time: {processing_time:.1f}s")
         logger.info(f"   - Final confidence: {final_confidence:.1%}")
@@ -274,7 +272,7 @@ async def process_multiple_files(
             error_details=str(e)
         )
 
-async def _validate_multi_file_request(files: List[UploadFile]):
+async def _validate_multi_file_request(files: list[UploadFile]):
     """Validate the multi-file request"""
 
     if not files:
@@ -301,7 +299,7 @@ async def _validate_multi_file_request(files: List[UploadFile]):
             detail=f"Total file size too large. Maximum allowed: {MAX_TOTAL_SIZE:,} bytes"
         )
 
-    logger.info(f"✅ Multi-file request validation passed:")
+    logger.info("✅ Multi-file request validation passed:")
     logger.info(f"   - File count: {len(files)}")
     logger.info(f"   - Estimated total size: {total_size:,} bytes")
 
@@ -317,7 +315,7 @@ async def get_multi_file_limits():
     }
 
 @router.post("/process-multi-file/batch-status")
-async def get_batch_processing_status(session_ids: List[str]):
+async def get_batch_processing_status(session_ids: list[str]):
     """Get status for multiple processing sessions (future implementation)"""
     # This would integrate with a job queue system for tracking long-running processes
     return {
@@ -326,7 +324,7 @@ async def get_batch_processing_status(session_ids: List[str]):
     }
 
 @router.post("/analyze-files")
-async def analyze_files_strategy(files: List[UploadFile] = File(...)):
+async def analyze_files_strategy(files: list[UploadFile] = File(...)):
     """
     Analyze files to determine optimal processing strategy without processing
 
@@ -366,7 +364,7 @@ async def analyze_files_strategy(files: List[UploadFile] = File(...)):
         # Analyze files
         analysis = await hybrid_extractor.quality_detector.analyze_multiple_files(file_tuples)
 
-        logger.info(f"✅ File analysis complete:")
+        logger.info("✅ File analysis complete:")
         logger.info(f"   - Recommended strategy: {analysis['recommended_strategy']}")
         logger.info(f"   - Complexity: {analysis['recommended_complexity']}")
 
@@ -390,7 +388,7 @@ async def analyze_files_strategy(files: List[UploadFile] = File(...)):
             detail=f"File analysis error: {str(e)}"
         )
 
-def _estimate_processing_time(analysis: Dict[str, Any]) -> str:
+def _estimate_processing_time(analysis: dict[str, Any]) -> str:
     """Estimate processing time based on analysis"""
     file_count = analysis.get("file_count", 1)
     strategy = analysis.get("recommended_strategy", "vision_llm")
@@ -407,34 +405,31 @@ def _estimate_processing_time(analysis: Dict[str, Any]) -> str:
     total_time = file_count * base_time
     return f"{total_time}-{total_time * 2} seconds"
 
-def _estimate_accuracy(analysis: Dict[str, Any]) -> str:
+def _estimate_accuracy(analysis: dict[str, Any]) -> str:
     """Estimate accuracy based on analysis"""
     strategy = analysis.get("recommended_strategy", "vision_llm")
     complexity = analysis.get("recommended_complexity", "complex")
 
     if strategy == "local_text":
         return "95-99% (clean embedded text)"
-    elif strategy == "vision_llm":
+    if strategy == "vision_llm":
         if complexity == "simple":
             return "90-95% (high quality vision OCR)"
-        elif complexity == "complex":
+        if complexity == "complex":
             return "80-90% (complex layout, good context understanding)"
-        else:
-            return "70-85% (very complex, challenging content)"
-    else:
-        return "75-90% (mixed approach)"
+        return "70-85% (very complex, challenging content)"
+    return "75-90% (mixed approach)"
 
-def _estimate_cost(analysis: Dict[str, Any]) -> str:
+def _estimate_cost(analysis: dict[str, Any]) -> str:
     """Estimate processing cost based on analysis"""
     strategy = analysis.get("recommended_strategy", "vision_llm")
     file_count = analysis.get("file_count", 1)
 
     if strategy == "local_text" or strategy == "local_ocr":
         return "Free (local processing)"
-    elif strategy == "vision_llm":
+    if strategy == "vision_llm":
         # Rough estimate based on OVH pricing
         cost_per_file = 0.01  # Rough estimate
         total_cost = file_count * cost_per_file
         return f"~${total_cost:.2f} (vision model usage)"
-    else:
-        return "Mixed (free + paid components)"
+    return "Mixed (free + paid components)"

@@ -5,10 +5,9 @@ All application settings, environment variables, and configuration options
 are defined here using Pydantic for type safety and validation.
 """
 
-import os
 import logging
-from typing import List, Optional
-from pydantic import Field, field_validator, SecretStr
+
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
@@ -56,7 +55,7 @@ class Settings(BaseSettings):
     # ==================
     # Redis Settings (for Celery)
     # ==================
-    redis_url: Optional[str] = Field(
+    redis_url: str | None = Field(
         default=None,
         description="Redis connection string for Celery"
     )
@@ -104,7 +103,7 @@ class Settings(BaseSettings):
     # ==================
     # Security Settings
     # ==================
-    secret_key: Optional[SecretStr] = Field(
+    secret_key: SecretStr | None = Field(
         default=None,
         description="Secret key for session encryption"
     )
@@ -113,11 +112,11 @@ class Settings(BaseSettings):
         description="Access code for settings UI",
         validation_alias="SETTINGS_ACCESS_CODE"  # Keep backward compatibility with Railway env var
     )
-    allowed_origins: List[str] = Field(
+    allowed_origins: list[str] = Field(
         default_factory=lambda: ["*"],
         description="CORS allowed origins"
     )
-    trusted_hosts: List[str] = Field(
+    trusted_hosts: list[str] = Field(
         default_factory=lambda: ["*"],
         description="Trusted host headers"
     )
@@ -129,7 +128,7 @@ class Settings(BaseSettings):
         default=50,
         description="Maximum upload file size in MB"
     )
-    allowed_file_types: List[str] = Field(
+    allowed_file_types: list[str] = Field(
         default_factory=lambda: [".pdf", ".docx", ".txt", ".jpg", ".jpeg", ".png"],
         description="Allowed file extensions"
     )
@@ -185,11 +184,11 @@ class Settings(BaseSettings):
     # ==================
     # Railway Settings
     # ==================
-    railway_environment: Optional[str] = Field(
+    railway_environment: str | None = Field(
         default=None,
         description="Railway environment name"
     )
-    railway_project_id: Optional[str] = Field(
+    railway_project_id: str | None = Field(
         default=None,
         description="Railway project ID"
     )

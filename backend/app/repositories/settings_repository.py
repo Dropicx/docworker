@@ -5,11 +5,12 @@ Provides type-safe access to system configuration stored in database.
 """
 
 import logging
-from typing import Optional, List, Any
+from typing import Any
+
 from sqlalchemy.orm import Session
 
-from app.repositories.base_repository import BaseRepository
 from app.database.unified_models import SystemSettingsDB
+from app.repositories.base_repository import BaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +21,7 @@ class SettingsRepository(BaseRepository[SystemSettingsDB]):
     def __init__(self, db: Session):
         super().__init__(db, SystemSettingsDB)
 
-    def get_by_key(self, key: str) -> Optional[SystemSettingsDB]:
+    def get_by_key(self, key: str) -> SystemSettingsDB | None:
         """Get setting by key."""
         return self.get_one({"key": key})
 
@@ -105,12 +106,12 @@ class SettingsRepository(BaseRepository[SystemSettingsDB]):
         """
         if value_type == "int":
             return int(value)
-        elif value_type == "float":
+        if value_type == "float":
             return float(value)
-        elif value_type == "bool":
+        if value_type == "bool":
             return value.lower() in ("true", "1", "yes", "on")
-        elif value_type == "json":
+        if value_type == "json":
             import json
             return json.loads(value)
-        else:  # string
-            return value
+        # string
+        return value

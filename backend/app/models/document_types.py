@@ -1,7 +1,9 @@
-from enum import Enum
-from typing import Optional, Dict, Any
-from pydantic import BaseModel, Field
 from datetime import datetime
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field
+
 
 class DocumentClass(str, Enum):
     """
@@ -39,7 +41,7 @@ class DocumentPrompts(BaseModel):
     formatting_prompt: str = Field(..., description="Prompt for text formatting and structure")
 
     # Pipeline step configuration - CORRECTED ORDER
-    pipeline_steps: Dict[str, PipelineStepConfig] = Field(
+    pipeline_steps: dict[str, PipelineStepConfig] = Field(
         default_factory=lambda: {
             "TEXT_EXTRACTION": PipelineStepConfig(enabled=True, order=0, name="Text Extraction (OCR)", description="Extract text from images/PDFs using conditional OCR strategy"),
             "MEDICAL_VALIDATION": PipelineStepConfig(enabled=True, order=1, name="Medical Content Validation", description="Validate if document contains medical content"),
@@ -58,7 +60,7 @@ class DocumentPrompts(BaseModel):
     # Metadata
     version: int = Field(default=1, description="Version number of the prompt set")
     last_modified: datetime = Field(default_factory=datetime.now, description="Last modification timestamp")
-    modified_by: Optional[str] = Field(None, description="User who last modified the prompts")
+    modified_by: str | None = Field(None, description="User who last modified the prompts")
 
 class DocumentClassificationResult(BaseModel):
     """
@@ -67,7 +69,7 @@ class DocumentClassificationResult(BaseModel):
     document_class: DocumentClass = Field(..., description="Detected document class")
     confidence: float = Field(ge=0, le=1, description="Confidence score of classification")
     method: str = Field(..., description="Classification method used (pattern|ai)")
-    processing_hints: Optional[Dict[str, Any]] = Field(None, description="Hints for processing based on document type")
+    processing_hints: dict[str, Any] | None = Field(None, description="Hints for processing based on document type")
 
 class PromptTestRequest(BaseModel):
     """
@@ -75,7 +77,7 @@ class PromptTestRequest(BaseModel):
     """
     prompt: str = Field(..., description="The prompt to test")
     sample_text: str = Field(..., description="Sample text to test the prompt with")
-    model: Optional[str] = Field(None, description="Specific model to use for testing")
+    model: str | None = Field(None, description="Specific model to use for testing")
     temperature: float = Field(default=0.3, ge=0, le=1, description="Temperature for generation")
     max_tokens: int = Field(default=1000, ge=100, le=4000, description="Maximum tokens to generate")
 
@@ -84,7 +86,7 @@ class PromptTestResponse(BaseModel):
     Response from prompt testing
     """
     result: str = Field(..., description="Generated result from the prompt")
-    tokens_used: Optional[int] = Field(None, description="Number of tokens used")
+    tokens_used: int | None = Field(None, description="Number of tokens used")
     processing_time: float = Field(..., description="Processing time in seconds")
     model_used: str = Field(..., description="Model that was used")
 

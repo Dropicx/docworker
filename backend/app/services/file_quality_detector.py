@@ -3,15 +3,14 @@ File Quality Detector for Conditional OCR Routing
 Analyzes documents to determine the best text extraction strategy
 """
 
-import os
-import logging
-from typing import Tuple, Dict, Any, Optional
-from io import BytesIO
 from enum import Enum
+from io import BytesIO
+import logging
+from typing import Any
 
-import PyPDF2
 import pdfplumber
 from PIL import Image
+import PyPDF2
 
 # Optional OpenCV import - graceful fallback if not available
 try:
@@ -95,7 +94,7 @@ class FileQualityDetector:
     def __init__(self):
         self.tesseract_available = self._check_tesseract_available()
         self.opencv_available = OPENCV_AVAILABLE
-        logger.info(f"🔍 File Quality Detector initialized:")
+        logger.info("🔍 File Quality Detector initialized:")
         logger.info(f"   - Tesseract: {'✅' if self.tesseract_available else '❌'}")
         logger.info(f"   - OpenCV: {'✅' if self.opencv_available else '❌'}")
 
@@ -113,7 +112,7 @@ class FileQualityDetector:
         file_content: bytes,
         file_type: str,
         filename: str
-    ) -> Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
+    ) -> tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
         """Analyze document and recommend optimal text extraction strategy.
 
         Main entry point for document analysis. Performs comprehensive content evaluation
@@ -177,13 +176,12 @@ class FileQualityDetector:
 
         if file_type == "pdf":
             return await self._analyze_pdf(file_content, filename)
-        elif file_type == "image":
+        if file_type == "image":
             return await self._analyze_image(file_content, filename)
-        else:
-            # Default to vision LLM for unknown types
-            return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX, {"reason": "unknown_file_type"}
+        # Default to vision LLM for unknown types
+        return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX, {"reason": "unknown_file_type"}
 
-    async def _analyze_pdf(self, content: bytes, filename: str) -> Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
+    async def _analyze_pdf(self, content: bytes, filename: str) -> tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
         """Perform comprehensive PDF analysis for optimal extraction strategy.
 
         Analyzes PDF structure, embedded text quality, table presence, and medical
@@ -274,7 +272,7 @@ class FileQualityDetector:
                 # Analyze first 5 pages for performance
                 pages_to_check = min(5, len(pdf.pages))
 
-                for i, page in enumerate(pdf.pages[:pages_to_check]):
+                for _i, page in enumerate(pdf.pages[:pages_to_check]):
                     page_text = page.extract_text()
 
                     if page_text and len(page_text.strip()) > 20:
@@ -472,15 +470,15 @@ class FileQualityDetector:
 
     def _analyze_character_alignment(self, chars, page_text: str) -> float:
         """Analyze character alignment patterns with improved precision"""
-        from collections import Counter, defaultdict
+        from collections import defaultdict
 
         # Group characters by vertical position (rows) with tighter clustering
-        y_positions = [char['y0'] for char in chars]
-        x_positions = [char['x0'] for char in chars]
+        [char['y0'] for char in chars]
+        [char['x0'] for char in chars]
 
         # More precise grouping for row detection
         y_groups = defaultdict(list)
-        for i, char in enumerate(chars):
+        for _i, char in enumerate(chars):
             y_key = round(char['y0'] / 3) * 3  # Group by 3px for rows
             y_groups[y_key].append(char)
 
@@ -641,7 +639,7 @@ class FileQualityDetector:
 
         return min(quality_score, 1.0)
 
-    def _determine_pdf_strategy(self, analysis: Dict[str, Any]) -> Tuple[ExtractionStrategy, DocumentComplexity]:
+    def _determine_pdf_strategy(self, analysis: dict[str, Any]) -> tuple[ExtractionStrategy, DocumentComplexity]:
         """Apply cost-optimized decision tree to select PDF extraction strategy.
 
         Implements prioritized decision logic that balances cost efficiency with
@@ -728,8 +726,7 @@ class FileQualityDetector:
             analysis["reasons"].append("tables_detected_require_vision_llm")
             if text_coverage >= 0.8 and text_quality >= 0.6:
                 return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
-            else:
-                return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX
+            return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX
 
         # PRIORITY 2: High-quality embedded text WITHOUT tables - use local extraction (cost-effective)
         if text_coverage >= 0.9 and text_quality >= 0.7:
@@ -758,29 +755,25 @@ class FileQualityDetector:
             analysis["reasons"].append("moderate_embedded_text")
             if not has_tables and self.tesseract_available:
                 return ExtractionStrategy.LOCAL_OCR, DocumentComplexity.MODERATE
-            elif not has_tables:
+            if not has_tables:
                 return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.MODERATE  # Try local first
-            else:
-                # Only use Vision LLM if quality is not high enough for local extraction
-                if text_quality >= 0.7:
-                    analysis["reasons"].append("moderate_coverage_decent_quality_try_local")
-                    return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.MODERATE
-                else:
-                    return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
+            # Only use Vision LLM if quality is not high enough for local extraction
+            if text_quality >= 0.7:
+                analysis["reasons"].append("moderate_coverage_decent_quality_try_local")
+                return ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.MODERATE
+            return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
 
         # Poor or no embedded text - likely scanned
         analysis["reasons"].append("poor_or_no_embedded_text")
         if has_tables or has_images:
             analysis["reasons"].append("complex_layout_detected")
             return ExtractionStrategy.VISION_LLM, DocumentComplexity.VERY_COMPLEX
-        else:
-            # Simple scanned document
-            if self.tesseract_available:
-                return ExtractionStrategy.LOCAL_OCR, DocumentComplexity.MODERATE
-            else:
-                return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
+        # Simple scanned document
+        if self.tesseract_available:
+            return ExtractionStrategy.LOCAL_OCR, DocumentComplexity.MODERATE
+        return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
 
-    async def _analyze_image(self, content: bytes, filename: str) -> Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
+    async def _analyze_image(self, content: bytes, filename: str) -> tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
         """Analyze image quality and content for optimal OCR strategy selection.
 
         Performs computer vision analysis using PIL and OpenCV (if available) to assess
@@ -925,9 +918,8 @@ class FileQualityDetector:
             contrast = gray.std() / 255.0
 
             # Overall quality score
-            quality = (sharpness_score + contrast) / 2
+            return (sharpness_score + contrast) / 2
 
-            return quality
 
         except Exception:
             return 0.5  # Default medium quality
@@ -1009,14 +1001,13 @@ class FileQualityDetector:
             text_pixels = cv2.countNonZero(binary)
             total_pixels = binary.shape[0] * binary.shape[1]
 
-            density = text_pixels / total_pixels
+            return text_pixels / total_pixels
 
-            return density
 
         except Exception:
             return 0.1  # Default low density
 
-    def _determine_image_strategy(self, analysis: Dict[str, Any]) -> Tuple[ExtractionStrategy, DocumentComplexity]:
+    def _determine_image_strategy(self, analysis: dict[str, Any]) -> tuple[ExtractionStrategy, DocumentComplexity]:
         """Determine the best strategy based on image analysis"""
 
         image_quality = analysis.get("image_quality", 0.0)
@@ -1034,8 +1025,7 @@ class FileQualityDetector:
             analysis["reasons"].append("high_quality_with_text")
             if self.tesseract_available:
                 return ExtractionStrategy.LOCAL_OCR, DocumentComplexity.SIMPLE
-            else:
-                return ExtractionStrategy.VISION_LLM, DocumentComplexity.SIMPLE
+            return ExtractionStrategy.VISION_LLM, DocumentComplexity.SIMPLE
 
         # Moderate quality
         if image_quality >= 0.4 and text_density >= 0.02:
@@ -1049,7 +1039,7 @@ class FileQualityDetector:
     async def analyze_multiple_files(
         self,
         files: list[tuple[bytes, str, str]]
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Analyze document sequence and provide consolidated extraction strategy.
 
         Performs individual analysis of each file, then consolidates results to
@@ -1133,7 +1123,7 @@ class FileQualityDetector:
             "reasons": self._get_consolidation_reasons(strategies, complexities)
         }
 
-        logger.info(f"📊 Multi-file analysis complete:")
+        logger.info("📊 Multi-file analysis complete:")
         logger.info(f"   - Files: {len(files)}")
         logger.info(f"   - Recommended strategy: {consolidated_strategy.value}")
         logger.info(f"   - Complexity: {consolidated_complexity.value}")

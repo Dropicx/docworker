@@ -5,7 +5,7 @@ This module contains database models for system settings and logging.
 Legacy prompt models have been removed - use modular_pipeline_models instead.
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Float, JSON
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Integer, String, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.sql import func
 

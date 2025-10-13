@@ -5,26 +5,24 @@ Worker-ready service for executing user-configured pipeline steps.
 Designed to be stateless and compatible with Redis queue workers.
 """
 
+from datetime import datetime
 import logging
 import time
-import uuid
-from datetime import datetime
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Any
+
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 
 from app.database.modular_pipeline_models import (
-    DynamicPipelineStepDB,
     AvailableModelDB,
+    DynamicPipelineStepDB,
     OCRConfigurationDB,
     PipelineJobDB,
     PipelineStepExecutionDB,
     StepExecutionStatus,
-    DocumentClassDB
 )
-from app.services.ovh_client import OVHClient
-from app.services.document_class_manager import DocumentClassManager
 from app.services.ai_cost_tracker import AICostTracker
+from app.services.document_class_manager import DocumentClassManager
+from app.services.ovh_client import OVHClient
 
 logger = logging.getLogger(__name__)
 
@@ -55,7 +53,7 @@ class ModularPipelineExecutor:
 
     # ==================== CONFIGURATION LOADING ====================
 
-    def load_pipeline_steps(self) -> List[DynamicPipelineStepDB]:
+    def load_pipeline_steps(self) -> list[DynamicPipelineStepDB]:
         """
         Load all enabled pipeline steps from database, ordered by execution order.
 
@@ -73,7 +71,7 @@ class ModularPipelineExecutor:
             logger.error(f"❌ Failed to load pipeline steps: {e}")
             return []
 
-    def load_universal_steps(self) -> List[DynamicPipelineStepDB]:
+    def load_universal_steps(self) -> list[DynamicPipelineStepDB]:
         """
         Load pre-branching universal pipeline steps (document_class_id = NULL, post_branching = FALSE).
         These steps run for all documents BEFORE document-specific processing.
@@ -94,7 +92,7 @@ class ModularPipelineExecutor:
             logger.error(f"❌ Failed to load universal pipeline steps: {e}")
             return []
 
-    def load_post_branching_steps(self) -> List[DynamicPipelineStepDB]:
+    def load_post_branching_steps(self) -> list[DynamicPipelineStepDB]:
         """
         Load post-branching universal pipeline steps (document_class_id = NULL, post_branching = TRUE).
         These steps run for all documents AFTER document-specific processing.
@@ -115,7 +113,7 @@ class ModularPipelineExecutor:
             logger.error(f"❌ Failed to load post-branching pipeline steps: {e}")
             return []
 
-    def load_steps_by_document_class(self, document_class_id: int) -> List[DynamicPipelineStepDB]:
+    def load_steps_by_document_class(self, document_class_id: int) -> list[DynamicPipelineStepDB]:
         """
         Load pipeline steps specific to a document class.
 
@@ -137,7 +135,7 @@ class ModularPipelineExecutor:
             logger.error(f"❌ Failed to load steps for document class {document_class_id}: {e}")
             return []
 
-    def find_branching_step(self, steps: List[DynamicPipelineStepDB]) -> Optional[DynamicPipelineStepDB]:
+    def find_branching_step(self, steps: list[DynamicPipelineStepDB]) -> DynamicPipelineStepDB | None:
         """
         Find the branching/classification step in the pipeline.
 
@@ -155,7 +153,7 @@ class ModularPipelineExecutor:
         logger.warning("⚠️ No branching step found in pipeline")
         return None
 
-    def check_stop_condition(self, step: DynamicPipelineStepDB, output_text: str) -> Optional[Dict[str, Any]]:
+    def check_stop_condition(self, step: DynamicPipelineStepDB, output_text: str) -> dict[str, Any] | None:
         """
         Check if step output matches termination condition.
 
@@ -219,10 +217,10 @@ class ModularPipelineExecutor:
         step: DynamicPipelineStepDB,
         status: StepExecutionStatus,
         input_text: str,
-        output_text: Optional[str],
+        output_text: str | None,
         step_start_time: float,
-        error: Optional[str] = None,
-        metadata: Optional[Dict] = None
+        error: str | None = None,
+        metadata: dict | None = None
     ) -> None:
         """
         Centralized step execution logging.
@@ -265,9 +263,9 @@ class ModularPipelineExecutor:
         step_start_time: float,
         step_execution_time: float,
         pipeline_start_time: float,
-        execution_metadata: Dict,
+        execution_metadata: dict,
         success: bool = True
-    ) -> Tuple[bool, str, Dict]:
+    ) -> tuple[bool, str, dict]:
         """
         Check and handle stop conditions for a step.
 
@@ -331,7 +329,7 @@ class ModularPipelineExecutor:
         logger.info(f"🛑 Pipeline terminated at step '{step.name}': {stop_info['termination_reason']}")
         return True, current_output, execution_metadata
 
-    def extract_branch_value(self, output_text: str, branching_field: str = "document_type") -> Optional[Dict[str, Any]]:
+    def extract_branch_value(self, output_text: str, branching_field: str = "document_type") -> dict[str, Any] | None:
         """
         Extract the branch value from step output with DYNAMIC BRANCHING SUPPORT.
 
@@ -384,38 +382,36 @@ class ModularPipelineExecutor:
                     "target_key": doc_class.class_key,
                     "target_display_name": doc_class.display_name
                 }
-            else:
-                logger.warning(f"⚠️ Unknown document class: {branch_value}")
-                return {
-                    "field": branching_field,
-                    "value": branch_value,
-                    "type": "document_class",
-                    "target_id": None,
-                    "target_key": branch_value,
-                    "target_display_name": "Unknown"
-                }
-        else:
-            # Generic branching (boolean, enum, quality level, etc.)
-            # Determine subtype based on common patterns
-            branch_type = "generic"
-            if branch_value in ["TRUE", "FALSE", "YES", "NO", "JA", "NEIN"]:
-                branch_type = "boolean"
-            elif branch_value in ["MEDIZINISCH", "NICHT_MEDIZINISCH"]:
-                branch_type = "boolean"  # Medical validation boolean
-            elif branch_value in ["HIGH", "MEDIUM", "LOW", "HOCH", "MITTEL", "NIEDRIG"]:
-                branch_type = "enum"  # Quality level enum
-
-            logger.info(f"✅ Generic branching ({branch_type}): {branching_field} = {branch_value}")
+            logger.warning(f"⚠️ Unknown document class: {branch_value}")
             return {
                 "field": branching_field,
                 "value": branch_value,
-                "type": branch_type,
+                "type": "document_class",
                 "target_id": None,
-                "target_key": None,
-                "target_display_name": None
+                "target_key": branch_value,
+                "target_display_name": "Unknown"
             }
+        # Generic branching (boolean, enum, quality level, etc.)
+        # Determine subtype based on common patterns
+        branch_type = "generic"
+        if branch_value in ["TRUE", "FALSE", "YES", "NO", "JA", "NEIN"]:
+            branch_type = "boolean"
+        elif branch_value in ["MEDIZINISCH", "NICHT_MEDIZINISCH"]:
+            branch_type = "boolean"  # Medical validation boolean
+        elif branch_value in ["HIGH", "MEDIUM", "LOW", "HOCH", "MITTEL", "NIEDRIG"]:
+            branch_type = "enum"  # Quality level enum
 
-    def load_ocr_configuration(self) -> Optional[OCRConfigurationDB]:
+        logger.info(f"✅ Generic branching ({branch_type}): {branching_field} = {branch_value}")
+        return {
+            "field": branching_field,
+            "value": branch_value,
+            "type": branch_type,
+            "target_id": None,
+            "target_key": None,
+            "target_display_name": None
+        }
+
+    def load_ocr_configuration(self) -> OCRConfigurationDB | None:
         """
         Load OCR configuration from database.
 
@@ -431,7 +427,7 @@ class ModularPipelineExecutor:
             logger.error(f"❌ Failed to load OCR configuration: {e}")
             return None
 
-    def get_model_info(self, model_id: int) -> Optional[AvailableModelDB]:
+    def get_model_info(self, model_id: int) -> AvailableModelDB | None:
         """
         Get model information from database.
 
@@ -442,11 +438,10 @@ class ModularPipelineExecutor:
             Model information or None if not found
         """
         try:
-            model = self.session.query(AvailableModelDB).filter_by(
+            return self.session.query(AvailableModelDB).filter_by(
                 id=model_id,
                 is_enabled=True
             ).first()
-            return model
         except Exception as e:
             logger.error(f"❌ Failed to load model info for ID {model_id}: {e}")
             return None
@@ -457,10 +452,10 @@ class ModularPipelineExecutor:
         self,
         step: DynamicPipelineStepDB,
         input_text: str,
-        context: Dict[str, Any] = None,
+        context: dict[str, Any] = None,
         processing_id: str = None,
         document_type: str = None
-    ) -> Tuple[bool, str, Optional[str]]:
+    ) -> tuple[bool, str, str | None]:
         """
         Execute a single pipeline step.
 
@@ -571,8 +566,8 @@ class ModularPipelineExecutor:
         self,
         processing_id: str,
         input_text: str,
-        context: Dict[str, Any] = None
-    ) -> Tuple[bool, str, Dict[str, Any]]:
+        context: dict[str, Any] = None
+    ) -> tuple[bool, str, dict[str, Any]]:
         """
         Execute complete AI pipeline on input text.
 
@@ -648,7 +643,7 @@ class ModularPipelineExecutor:
             all_steps.append(step)
 
             # Update job progress
-            total_steps_so_far = len(all_steps)
+            len(all_steps)
             progress_percent = int((idx / max(len(universal_steps), 1)) * 50)  # First 50% is universal steps
             job.progress_percent = progress_percent
             job.current_step_id = step.id
@@ -763,7 +758,7 @@ class ModularPipelineExecutor:
                         # Generic branching (boolean, enum, etc.) - just log the decision
                         logger.info(f"🔀 Generic branch decision: {branch_metadata['field']} = {branch_metadata['value']}")
                 else:
-                    logger.warning(f"⚠️ Failed to extract branch value from output")
+                    logger.warning("⚠️ Failed to extract branch value from output")
 
             # Check for stop conditions (early termination)
             should_terminate, current_output, execution_metadata = self._handle_stop_condition(
@@ -1079,7 +1074,7 @@ class ModularPipelineExecutor:
 
     # ==================== HELPER METHODS ====================
 
-    def _serialize_pipeline_config(self) -> Dict[str, Any]:
+    def _serialize_pipeline_config(self) -> dict[str, Any]:
         """Serialize current pipeline configuration for job record."""
         steps = self.load_pipeline_steps()
         return {
@@ -1094,7 +1089,7 @@ class ModularPipelineExecutor:
             ]
         }
 
-    def _serialize_ocr_config(self) -> Dict[str, Any]:
+    def _serialize_ocr_config(self) -> dict[str, Any]:
         """Serialize current OCR configuration for job record."""
         config = self.load_ocr_configuration()
         if not config:
@@ -1120,17 +1115,17 @@ class ModularPipelineManager:
 
     # ==================== PIPELINE STEP CRUD ====================
 
-    def get_all_steps(self) -> List[DynamicPipelineStepDB]:
+    def get_all_steps(self) -> list[DynamicPipelineStepDB]:
         """Get all pipeline steps (enabled and disabled)."""
         return self.session.query(DynamicPipelineStepDB).order_by(
             DynamicPipelineStepDB.order
         ).all()
 
-    def get_step(self, step_id: int) -> Optional[DynamicPipelineStepDB]:
+    def get_step(self, step_id: int) -> DynamicPipelineStepDB | None:
         """Get a single pipeline step by ID."""
         return self.session.query(DynamicPipelineStepDB).filter_by(id=step_id).first()
 
-    def create_step(self, step_data: Dict[str, Any]) -> DynamicPipelineStepDB:
+    def create_step(self, step_data: dict[str, Any]) -> DynamicPipelineStepDB:
         """Create a new pipeline step."""
         step = DynamicPipelineStepDB(**step_data)
         self.session.add(step)
@@ -1138,7 +1133,7 @@ class ModularPipelineManager:
         self.session.refresh(step)
         return step
 
-    def update_step(self, step_id: int, step_data: Dict[str, Any]) -> Optional[DynamicPipelineStepDB]:
+    def update_step(self, step_id: int, step_data: dict[str, Any]) -> DynamicPipelineStepDB | None:
         """Update an existing pipeline step."""
         step = self.get_step(step_id)
         if not step:
@@ -1163,7 +1158,7 @@ class ModularPipelineManager:
         self.session.commit()
         return True
 
-    def reorder_steps(self, step_order: List[int]) -> bool:
+    def reorder_steps(self, step_order: list[int]) -> bool:
         """
         Reorder pipeline steps.
 
@@ -1189,11 +1184,11 @@ class ModularPipelineManager:
 
     # ==================== OCR CONFIGURATION ====================
 
-    def get_ocr_config(self) -> Optional[OCRConfigurationDB]:
+    def get_ocr_config(self) -> OCRConfigurationDB | None:
         """Get current OCR configuration."""
         return self.session.query(OCRConfigurationDB).first()
 
-    def update_ocr_config(self, config_data: Dict[str, Any]) -> Optional[OCRConfigurationDB]:
+    def update_ocr_config(self, config_data: dict[str, Any]) -> OCRConfigurationDB | None:
         """Update OCR configuration."""
         config = self.get_ocr_config()
         if not config:
@@ -1211,13 +1206,13 @@ class ModularPipelineManager:
 
     # ==================== AVAILABLE MODELS ====================
 
-    def get_all_models(self, enabled_only: bool = False) -> List[AvailableModelDB]:
+    def get_all_models(self, enabled_only: bool = False) -> list[AvailableModelDB]:
         """Get all available AI models."""
         query = self.session.query(AvailableModelDB)
         if enabled_only:
             query = query.filter_by(is_enabled=True)
         return query.all()
 
-    def get_model(self, model_id: int) -> Optional[AvailableModelDB]:
+    def get_model(self, model_id: int) -> AvailableModelDB | None:
         """Get a single model by ID."""
         return self.session.query(AvailableModelDB).filter_by(id=model_id).first()

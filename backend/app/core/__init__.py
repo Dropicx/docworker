@@ -9,7 +9,7 @@ Import it directly when needed:
     from app.core.feature_flags import feature_flags
 """
 
-from app.core.config import settings, Settings, get_settings
+from app.core.config import Settings, get_settings, settings
 
 __all__ = [
     "settings",

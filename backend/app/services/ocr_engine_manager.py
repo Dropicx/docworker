@@ -5,11 +5,12 @@ Worker-ready service for managing OCR engine selection and configuration.
 Supports multiple OCR engines based on database configuration.
 """
 
-import logging
 import json
+import logging
 import os
+from typing import Any
+
 import httpx
-from typing import Tuple, Optional, Dict, Any
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import OCRConfigurationDB, OCREngineEnum
@@ -117,7 +118,7 @@ class OCREngineManager:
 
     # ==================== CONFIGURATION ====================
 
-    def load_ocr_config(self) -> Optional[OCRConfigurationDB]:
+    def load_ocr_config(self) -> OCRConfigurationDB | None:
         """
         Load OCR configuration from database.
 
@@ -133,7 +134,7 @@ class OCREngineManager:
             logger.error(f"❌ Failed to load OCR config: {e}")
             return None
 
-    def get_engine_config(self, engine: OCREngineEnum) -> Dict[str, Any]:
+    def get_engine_config(self, engine: OCREngineEnum) -> dict[str, Any]:
         """
         Get configuration for specific OCR engine.
 
@@ -172,8 +173,8 @@ class OCREngineManager:
         file_content: bytes,
         file_type: str,
         filename: str,
-        override_engine: Optional[OCREngineEnum] = None
-    ) -> Tuple[str, float]:
+        override_engine: OCREngineEnum | None = None
+    ) -> tuple[str, float]:
         """Extract text from document using database-configured OCR engine.
 
         Loads OCR configuration from database and dispatches to the appropriate
@@ -236,17 +237,16 @@ class OCREngineManager:
                 # Use hybrid extractor (current production system)
                 return await self._extract_with_hybrid(file_content, file_type, filename)
 
-            elif selected_engine == OCREngineEnum.VISION_LLM:
+            if selected_engine == OCREngineEnum.VISION_LLM:
                 # Force Vision LLM
                 return await self._extract_with_vision_llm(file_content, file_type, filename)
 
-            elif selected_engine == OCREngineEnum.PADDLEOCR:
+            if selected_engine == OCREngineEnum.PADDLEOCR:
                 # PaddleOCR (future implementation)
                 return await self._extract_with_paddleocr(file_content, file_type, filename)
 
-            else:
-                logger.warning(f"⚠️ Unknown engine {selected_engine}, falling back to HYBRID")
-                return await self._extract_with_hybrid(file_content, file_type, filename)
+            logger.warning(f"⚠️ Unknown engine {selected_engine}, falling back to HYBRID")
+            return await self._extract_with_hybrid(file_content, file_type, filename)
 
         except Exception as e:
             logger.error(f"❌ OCR extraction failed: {e}")
@@ -259,7 +259,7 @@ class OCREngineManager:
         file_content: bytes,
         file_type: str,
         filename: str
-    ) -> Tuple[str, float]:
+    ) -> tuple[str, float]:
         """
         Extract text using hybrid strategy (intelligent routing).
 
@@ -274,7 +274,7 @@ class OCREngineManager:
         file_content: bytes,
         file_type: str,
         filename: str
-    ) -> Tuple[str, float]:
+    ) -> tuple[str, float]:
         """
         Extract text using Vision Language Model (Qwen 2.5 VL).
 
@@ -299,7 +299,7 @@ class OCREngineManager:
         file_content: bytes,
         file_type: str,
         filename: str
-    ) -> Tuple[str, float]:
+    ) -> tuple[str, float]:
         """
         Extract text using PaddleOCR microservice.
 
@@ -333,9 +333,8 @@ class OCREngineManager:
 
                     return extracted_text, confidence
 
-                else:
-                    logger.error(f"❌ PaddleOCR service error: {response.status_code}")
-                    raise Exception(f"PaddleOCR service returned {response.status_code}")
+                logger.error(f"❌ PaddleOCR service error: {response.status_code}")
+                raise Exception(f"PaddleOCR service returned {response.status_code}")
 
         except httpx.TimeoutException:
             logger.error("❌ PaddleOCR service timeout (60s)")
@@ -395,28 +394,27 @@ class OCREngineManager:
 
                     is_available = data.get("paddleocr_available", False)
                     if is_available:
-                        logger.info(f"✅ PaddleOCR service is available and ready")
+                        logger.info("✅ PaddleOCR service is available and ready")
                     else:
-                        logger.warning(f"⚠️ PaddleOCR service responded but paddleocr_available=False")
+                        logger.warning("⚠️ PaddleOCR service responded but paddleocr_available=False")
                     return is_available
-                else:
-                    logger.warning(f"⚠️ PaddleOCR service returned status {response.status_code}")
-                    logger.warning(f"⚠️ Response content: {response.text[:200]}")
-                    return False
+                logger.warning(f"⚠️ PaddleOCR service returned status {response.status_code}")
+                logger.warning(f"⚠️ Response content: {response.text[:200]}")
+                return False
 
         except httpx.ConnectError as e:
             logger.error(f"❌ Cannot connect to PaddleOCR service: {str(e)}")
             logger.error(f"❌ Connection error type: {type(e).__name__}")
             logger.error(f"❌ Full error details: {repr(e)}")
         except httpx.TimeoutException:
-            logger.error(f"❌ PaddleOCR service timeout (10s)")
+            logger.error("❌ PaddleOCR service timeout (10s)")
         except Exception as e:
             logger.error(f"❌ PaddleOCR health check failed: {str(e)}")
             logger.error(f"❌ Error type: {type(e).__name__}")
             logger.error(f"❌ Full error details: {repr(e)}")
         return False
 
-    def get_available_engines(self) -> Dict[str, Dict[str, Any]]:
+    def get_available_engines(self) -> dict[str, dict[str, Any]]:
         """Get comprehensive information about all OCR engines and their availability.
 
         Checks real-time availability of each engine by testing connections
@@ -504,7 +502,7 @@ class OCREngineManager:
             }
         }
 
-    def get_engine_status(self, engine: OCREngineEnum) -> Dict[str, Any]:
+    def get_engine_status(self, engine: OCREngineEnum) -> dict[str, Any]:
         """
         Get detailed status of a specific OCR engine.
 

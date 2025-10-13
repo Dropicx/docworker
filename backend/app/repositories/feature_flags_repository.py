@@ -5,11 +5,11 @@ Provides access to feature flag configuration.
 """
 
 import logging
-from typing import Optional, List
+
 from sqlalchemy.orm import Session
 
-from app.repositories.base_repository import BaseRepository
 from app.database.feature_flags_models import FeatureFlag
+from app.repositories.base_repository import BaseRepository
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +20,7 @@ class FeatureFlagsRepository(BaseRepository[FeatureFlag]):
     def __init__(self, db: Session):
         super().__init__(db, FeatureFlag)
 
-    def get_by_name(self, name: str) -> Optional[FeatureFlag]:
+    def get_by_name(self, name: str) -> FeatureFlag | None:
         """Get feature flag by name."""
         return self.get_one({"name": name})
 
@@ -79,7 +79,7 @@ class FeatureFlagsRepository(BaseRepository[FeatureFlag]):
 
         return flag
 
-    def get_all_enabled(self) -> List[FeatureFlag]:
+    def get_all_enabled(self) -> list[FeatureFlag]:
         """Get all enabled feature flags."""
         return self.get_all(filters={"enabled": True}, limit=1000)
 

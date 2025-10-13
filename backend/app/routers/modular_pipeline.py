@@ -8,27 +8,20 @@ API endpoints for managing user-configurable pipeline:
 - Step reordering
 """
 
-import logging
-from typing import List, Optional, Dict, Any
 from datetime import datetime
+import logging
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, validator
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_session
-from app.database.modular_pipeline_models import (
-    OCRConfigurationDB,
-    DynamicPipelineStepDB,
-    AvailableModelDB,
-    DocumentClassDB,
-    OCREngineEnum,
-    ModelProvider
-)
+from app.database.modular_pipeline_models import DynamicPipelineStepDB, OCREngineEnum
+from app.routers.settings_auth import verify_session_token
+from app.services.document_class_manager import DocumentClassManager
 from app.services.modular_pipeline_executor import ModularPipelineManager
 from app.services.ocr_engine_manager import OCREngineManager
-from app.services.document_class_manager import DocumentClassManager
-from app.routers.settings_auth import verify_session_token
 
 logger = logging.getLogger(__name__)
 
@@ -39,18 +32,18 @@ router = APIRouter(prefix="/api/pipeline", tags=["pipeline"])
 class OCRConfigRequest(BaseModel):
     """Request model for OCR configuration update"""
     selected_engine: OCREngineEnum
-    paddleocr_config: Optional[Dict[str, Any]] = None
-    vision_llm_config: Optional[Dict[str, Any]] = None
-    hybrid_config: Optional[Dict[str, Any]] = None
-    pii_removal_enabled: Optional[bool] = True
+    paddleocr_config: dict[str, Any] | None = None
+    vision_llm_config: dict[str, Any] | None = None
+    hybrid_config: dict[str, Any] | None = None
+    pii_removal_enabled: bool | None = True
 
 class OCRConfigResponse(BaseModel):
     """Response model for OCR configuration"""
     id: int
     selected_engine: str
-    paddleocr_config: Optional[Dict[str, Any]]
-    vision_llm_config: Optional[Dict[str, Any]]
-    hybrid_config: Optional[Dict[str, Any]]
+    paddleocr_config: dict[str, Any] | None
+    vision_llm_config: dict[str, Any] | None
+    hybrid_config: dict[str, Any] | None
     pii_removal_enabled: bool
     last_modified: datetime
 
@@ -61,39 +54,39 @@ class OCRConfigResponse(BaseModel):
 class PipelineStepRequest(BaseModel):
     """Request model for creating/updating pipeline step"""
     name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
+    description: str | None = None
     order: int = Field(..., ge=1)
     enabled: bool = True
     prompt_template: str = Field(..., min_length=1)
     selected_model_id: int
-    temperature: Optional[float] = Field(0.7, ge=0.0, le=2.0)
-    max_tokens: Optional[int] = Field(None, ge=100, le=16000)
+    temperature: float | None = Field(0.7, ge=0.0, le=2.0)
+    max_tokens: int | None = Field(None, ge=100, le=16000)
     retry_on_failure: bool = True
     max_retries: int = Field(3, ge=0, le=10)
     input_from_previous_step: bool = True
-    output_format: Optional[str] = Field("text", pattern="^(text|json|markdown)$")
+    output_format: str | None = Field("text", pattern="^(text|json|markdown)$")
 
     # Pipeline branching fields
-    document_class_id: Optional[int] = None
+    document_class_id: int | None = None
     is_branching_step: bool = False
-    branching_field: Optional[str] = "document_type"
+    branching_field: str | None = "document_type"
     post_branching: bool = False  # NEW: Runs after document-specific processing
 
     # Conditional execution
-    required_context_variables: Optional[List[str]] = None
+    required_context_variables: list[str] | None = None
 
     # Stop conditions (early termination)
-    stop_conditions: Optional[Dict[str, Any]] = None
+    stop_conditions: dict[str, Any] | None = None
 
     @validator('prompt_template')
-    def validate_prompt(cls, v):
+    def validate_prompt(self, v):
         """Validate prompt template contains {input_text} placeholder"""
         if '{input_text}' not in v:
             raise ValueError('Prompt template must contain {input_text} placeholder')
         return v
 
     @validator('stop_conditions')
-    def validate_stop_conditions(cls, v):
+    def validate_stop_conditions(self, v):
         """Validate stop_conditions structure"""
         if v is None:
             return v
@@ -131,32 +124,32 @@ class PipelineStepResponse(BaseModel):
     """Response model for pipeline step"""
     id: int
     name: str
-    description: Optional[str]
+    description: str | None
     order: int
     enabled: bool
     prompt_template: str
     selected_model_id: int
-    temperature: Optional[float]
-    max_tokens: Optional[int]
+    temperature: float | None
+    max_tokens: int | None
     retry_on_failure: bool
     max_retries: int
     input_from_previous_step: bool
-    output_format: Optional[str]
+    output_format: str | None
     created_at: datetime
     last_modified: datetime
-    modified_by: Optional[str]
+    modified_by: str | None
 
     # Pipeline branching fields
-    document_class_id: Optional[int]
+    document_class_id: int | None
     is_branching_step: bool
-    branching_field: Optional[str]
+    branching_field: str | None
     post_branching: bool  # NEW: Runs after document-specific processing
 
     # Conditional execution
-    required_context_variables: Optional[List[str]]
+    required_context_variables: list[str] | None
 
     # Stop conditions (early termination)
-    stop_conditions: Optional[Dict[str, Any]]
+    stop_conditions: dict[str, Any] | None
 
     class Config:
         from_attributes = True
@@ -168,8 +161,8 @@ class ModelResponse(BaseModel):
     name: str
     display_name: str
     provider: str
-    description: Optional[str]
-    max_tokens: Optional[int]
+    description: str | None
+    max_tokens: int | None
     supports_vision: bool
     is_enabled: bool
 
@@ -179,7 +172,7 @@ class ModelResponse(BaseModel):
 
 class StepReorderRequest(BaseModel):
     """Request model for reordering steps"""
-    step_ids: List[int] = Field(..., min_items=1)
+    step_ids: list[int] = Field(..., min_items=1)
 
 
 class EngineStatusResponse(BaseModel):
@@ -190,18 +183,18 @@ class EngineStatusResponse(BaseModel):
     speed: str
     accuracy: str
     cost: str
-    configuration: Dict[str, Any]
+    configuration: dict[str, Any]
 
 
 class DocumentClassRequest(BaseModel):
     """Request model for creating/updating document class"""
     class_key: str = Field(..., min_length=1, max_length=100)
     display_name: str = Field(..., min_length=1, max_length=255)
-    description: Optional[str] = None
-    icon: Optional[str] = Field(None, max_length=10)
-    examples: Optional[List[str]] = None
-    strong_indicators: Optional[List[str]] = None
-    weak_indicators: Optional[List[str]] = None
+    description: str | None = None
+    icon: str | None = Field(None, max_length=10)
+    examples: list[str] | None = None
+    strong_indicators: list[str] | None = None
+    weak_indicators: list[str] | None = None
     is_enabled: bool = True
 
 
@@ -210,16 +203,16 @@ class DocumentClassResponse(BaseModel):
     id: int
     class_key: str
     display_name: str
-    description: Optional[str]
-    icon: Optional[str]
-    examples: Optional[List[str]]
-    strong_indicators: Optional[List[str]]
-    weak_indicators: Optional[List[str]]
+    description: str | None
+    icon: str | None
+    examples: list[str] | None
+    strong_indicators: list[str] | None
+    weak_indicators: list[str] | None
     is_enabled: bool
     is_system_class: bool
     created_at: datetime
     last_modified: datetime
-    created_by: Optional[str]
+    created_by: str | None
 
     class Config:
         from_attributes = True
@@ -280,7 +273,7 @@ async def update_ocr_config(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.get("/ocr-engines", response_model=Dict[str, EngineStatusResponse])
+@router.get("/ocr-engines", response_model=dict[str, EngineStatusResponse])
 async def get_available_engines(
     db: Session = Depends(get_session),
     authenticated: bool = Depends(verify_session_token)
@@ -295,8 +288,7 @@ async def get_available_engines(
     ocr_manager = OCREngineManager(db)
 
     try:
-        engines = ocr_manager.get_available_engines()
-        return engines
+        return ocr_manager.get_available_engines()
 
     except Exception as e:
         logger.error(f"❌ Failed to get OCR engines: {e}")
@@ -319,8 +311,7 @@ async def get_engine_status(
     ocr_manager = OCREngineManager(db)
 
     try:
-        status_info = ocr_manager.get_engine_status(engine)
-        return status_info
+        return ocr_manager.get_engine_status(engine)
 
     except Exception as e:
         logger.error(f"❌ Failed to get engine status: {e}")
@@ -329,7 +320,7 @@ async def get_engine_status(
 
 # ==================== PIPELINE STEPS ENDPOINTS ====================
 
-@router.get("/steps", response_model=List[PipelineStepResponse])
+@router.get("/steps", response_model=list[PipelineStepResponse])
 async def get_all_steps(
     db: Session = Depends(get_session),
     authenticated: bool = Depends(verify_session_token)
@@ -344,8 +335,7 @@ async def get_all_steps(
     manager = ModularPipelineManager(db)
 
     try:
-        steps = manager.get_all_steps()
-        return steps
+        return manager.get_all_steps()
 
     except Exception as e:
         logger.error(f"❌ Failed to get pipeline steps: {e}")
@@ -457,7 +447,7 @@ async def delete_step(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found")
 
     logger.info(f"✅ Deleted pipeline step ID: {step_id}")
-    return None
+    return
 
 
 @router.post("/steps/reorder")
@@ -489,7 +479,7 @@ async def reorder_steps(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.get("/steps/universal", response_model=List[PipelineStepResponse])
+@router.get("/steps/universal", response_model=list[PipelineStepResponse])
 async def get_universal_steps(
     db: Session = Depends(get_session),
     authenticated: bool = Depends(verify_session_token)
@@ -515,7 +505,7 @@ async def get_universal_steps(
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
 
 
-@router.get("/steps/by-class/{class_id}", response_model=List[PipelineStepResponse])
+@router.get("/steps/by-class/{class_id}", response_model=list[PipelineStepResponse])
 async def get_steps_by_document_class(
     class_id: int,
     db: Session = Depends(get_session),
@@ -626,7 +616,7 @@ async def get_pipeline_visualization(
 
 # ==================== AVAILABLE MODELS ENDPOINTS ====================
 
-@router.get("/models", response_model=List[ModelResponse])
+@router.get("/models", response_model=list[ModelResponse])
 async def get_available_models(
     enabled_only: bool = False,
     db: Session = Depends(get_session),
@@ -645,8 +635,7 @@ async def get_available_models(
     manager = ModularPipelineManager(db)
 
     try:
-        models = manager.get_all_models(enabled_only=enabled_only)
-        return models
+        return manager.get_all_models(enabled_only=enabled_only)
 
     except Exception as e:
         logger.error(f"❌ Failed to get available models: {e}")
@@ -677,7 +666,7 @@ async def get_model(
 
 # ==================== DOCUMENT CLASS ENDPOINTS ====================
 
-@router.get("/document-classes", response_model=List[DocumentClassResponse])
+@router.get("/document-classes", response_model=list[DocumentClassResponse])
 async def get_all_document_classes(
     enabled_only: bool = False,
     db: Session = Depends(get_session),
@@ -696,8 +685,7 @@ async def get_all_document_classes(
     doc_class_manager = DocumentClassManager(db)
 
     try:
-        classes = doc_class_manager.get_all_classes(enabled_only=enabled_only)
-        return classes
+        return doc_class_manager.get_all_classes(enabled_only=enabled_only)
 
     except Exception as e:
         logger.error(f"❌ Failed to get document classes: {e}")
@@ -822,7 +810,7 @@ async def delete_document_class(
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found")
 
         logger.info(f"✅ Deleted document class ID: {class_id}")
-        return None
+        return
 
     except ValueError as e:
         # Cannot delete (system class or has steps)
@@ -848,8 +836,7 @@ async def get_document_class_statistics(
     doc_class_manager = DocumentClassManager(db)
 
     try:
-        stats = doc_class_manager.get_class_statistics()
-        return stats
+        return doc_class_manager.get_class_statistics()
 
     except Exception as e:
         logger.error(f"❌ Failed to get document class statistics: {e}")

@@ -6,9 +6,8 @@ All pipeline configuration now handled by modular_pipeline.py router.
 """
 
 import logging
-from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Depends, status, Header
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.core.config import settings
@@ -25,11 +24,11 @@ class AuthRequest(BaseModel):
 class AuthResponse(BaseModel):
     success: bool
     message: str
-    session_token: Optional[str] = None
+    session_token: str | None = None
 
 # ==================== AUTHENTICATION ====================
 
-def verify_session_token(authorization: Optional[str] = Header(None)) -> bool:
+def verify_session_token(authorization: str | None = Header(None)) -> bool:
     """Verify session token from Authorization header."""
     if not authorization:
         return False
@@ -69,12 +68,11 @@ async def authenticate(auth_request: AuthRequest):
                 message="Authentifizierung erfolgreich",
                 session_token=session_token
             )
-        else:
-            logger.warning("Settings authentication failed - invalid code")
-            return AuthResponse(
-                success=False,
-                message="Ungültiger Zugangscode"
-            )
+        logger.warning("Settings authentication failed - invalid code")
+        return AuthResponse(
+            success=False,
+            message="Ungültiger Zugangscode"
+        )
 
     except Exception as e:
         logger.error(f"Authentication error: {e}")

@@ -2,11 +2,12 @@
 Optimized database models for universal vs document-specific prompts
 """
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Float, JSON, Enum as SQLEnum
+
+from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-from enum import Enum
 
 from app.models.document_types import DocumentClassEnum, ProcessingStepEnum
 

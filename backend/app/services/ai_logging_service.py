@@ -75,12 +75,13 @@ Note:
     complete observability: text logging for debugging + cost tracking for budget.
 """
 
-import logging
-import time
-from typing import Optional, Dict, Any
-from sqlalchemy.orm import Session
 from contextlib import contextmanager
 from datetime import datetime
+import logging
+import time
+from typing import Any
+
+from sqlalchemy.orm import Session
 
 from app.database.unified_models import AILogInteractionDB
 
@@ -144,19 +145,19 @@ class AILoggingService:
         self,
         processing_id: str,
         step_name: str,
-        input_text: Optional[str] = None,
-        output_text: Optional[str] = None,
-        processing_time_ms: Optional[int] = None,
+        input_text: str | None = None,
+        output_text: str | None = None,
+        processing_time_ms: int | None = None,
         status: str = "success",
-        error_message: Optional[str] = None,
-        document_type: Optional[str] = None,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        request_id: Optional[str] = None,
-        confidence_score: Optional[float] = None,
-        model_name: Optional[str] = None,
-        input_metadata: Optional[Dict[str, Any]] = None,
-        output_metadata: Optional[Dict[str, Any]] = None
+        error_message: str | None = None,
+        document_type: str | None = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        request_id: str | None = None,
+        confidence_score: float | None = None,
+        model_name: str | None = None,
+        input_metadata: dict[str, Any] | None = None,
+        output_metadata: dict[str, Any] | None = None
     ):
         """Log AI interaction to database"""
         try:
@@ -178,10 +179,10 @@ class AILoggingService:
                 output_metadata=output_metadata,
                 created_at=datetime.now()
             )
-            
+
             self.session.add(log_entry)
             self.session.commit()
-            
+
         except Exception as e:
             logger.error(f"Failed to log AI interaction: {e}")
             self.session.rollback()
@@ -191,10 +192,10 @@ class AILoggingService:
         self,
         processing_id: str,
         step_name: str,
-        document_type: Optional[str] = None,
-        user_id: Optional[str] = None,
-        session_id: Optional[str] = None,
-        request_id: Optional[str] = None
+        document_type: str | None = None,
+        user_id: str | None = None,
+        session_id: str | None = None,
+        request_id: str | None = None
     ):
         """Context manager for automatic AI interaction logging with timing.
 
@@ -272,31 +273,31 @@ class AILoggingService:
         output_text = None
         error_message = None
         status = "success"
-        
+
         try:
             yield {
                 "set_input": lambda text: setattr(self, '_input_text', text),
                 "set_output": lambda text: setattr(self, '_output_text', text),
                 "set_error": lambda error: setattr(self, '_error_message', error)
             }
-            
+
             # Get values from context
             input_text = getattr(self, '_input_text', None)
             output_text = getattr(self, '_output_text', None)
             error_message = getattr(self, '_error_message', None)
-            
+
             if error_message:
                 status = "error"
-                
+
         except Exception as e:
             status = "error"
             error_message = str(e)
             logger.error(f"Error in AI interaction logging: {e}")
-            
+
         finally:
             # Calculate processing time
             processing_time_ms = int((time.time() - start_time) * 1000)
-            
+
             # Log to database
             self._log_ai_interaction(
                 processing_id=processing_id,
@@ -319,7 +320,7 @@ class AILoggingService:
         is_medical: bool,
         confidence: float,
         method: str,
-        document_type: Optional[str] = None
+        document_type: str | None = None
     ):
         """Log medical validation step"""
         self._log_ai_interaction(
@@ -362,7 +363,7 @@ class AILoggingService:
         output_text: str,
         confidence: float,
         model_name: str,
-        document_type: Optional[str] = None
+        document_type: str | None = None
     ):
         """Log translation step"""
         self._log_ai_interaction(
@@ -384,7 +385,7 @@ class AILoggingService:
         input_text: str,
         output_text: str,
         changes_made: int,
-        document_type: Optional[str] = None
+        document_type: str | None = None
     ):
         """Log quality check step (fact check, grammar check, etc.)"""
         self._log_ai_interaction(
@@ -404,7 +405,7 @@ class AILoggingService:
         output_text: str,
         document_type: str,
         status: str,
-        details: Optional[Dict[str, Any]] = None
+        details: dict[str, Any] | None = None
     ):
         """Log fact check step"""
         self._log_ai_interaction(
@@ -424,7 +425,7 @@ class AILoggingService:
         output_text: str,
         document_type: str,
         status: str,
-        details: Optional[Dict[str, Any]] = None
+        details: dict[str, Any] | None = None
     ):
         """Log grammar check step"""
         self._log_ai_interaction(
@@ -469,10 +470,10 @@ class AILoggingService:
 
     def get_analytics(
         self,
-        start_date: Optional[str] = None,
-        end_date: Optional[str] = None,
-        document_type: Optional[str] = None
-    ) -> Dict[str, Any]:
+        start_date: str | None = None,
+        end_date: str | None = None,
+        document_type: str | None = None
+    ) -> dict[str, Any]:
         """Generate comprehensive analytics from AI interaction logs.
 
         Aggregates log data to provide insights into system health, success rates,
@@ -547,31 +548,31 @@ class AILoggingService:
         """
         try:
             query = self.session.query(AILogInteractionDB)
-            
+
             if start_date:
                 start_dt = datetime.fromisoformat(start_date)
                 query = query.filter(AILogInteractionDB.created_at >= start_dt)
-            
+
             if end_date:
                 end_dt = datetime.fromisoformat(end_date)
                 query = query.filter(AILogInteractionDB.created_at <= end_dt)
-            
+
             if document_type:
                 query = query.filter(AILogInteractionDB.document_type == document_type)
-            
+
             logs = query.all()
-            
+
             # Basic analytics
             total_interactions = len(logs)
             success_count = len([log for log in logs if log.status == "success"])
             error_count = len([log for log in logs if log.status == "error"])
-            
+
             # Group by step
             step_counts = {}
             for log in logs:
                 step = log.step_name
                 step_counts[step] = step_counts.get(step, 0) + 1
-            
+
             return {
                 "total_interactions": total_interactions,
                 "success_count": success_count,

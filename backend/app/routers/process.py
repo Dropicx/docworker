@@ -1,36 +1,23 @@
-import asyncio
-import logging
-import time
 from datetime import datetime, timedelta
-from typing import Optional
+import logging
+import os
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Request, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
 from slowapi.util import get_remote_address
+from sqlalchemy.orm import Session
 
-from app.models.document import (
-    ProcessingProgress, 
-    TranslationResult, 
-    ProcessingStatus,
-    ProcessingOptions,
-    SupportedLanguage,
-    ErrorResponse,
-    LANGUAGE_NAMES
-)
-from app.services.cleanup import (
-    get_from_processing_store,
-    update_processing_store,
-    remove_from_processing_store
-)
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
-from app.services.ovh_client import OVHClient
-from app.services.ai_logging_service import AILoggingService
-from app.services.hybrid_text_extractor import HybridTextExtractor
-from sqlalchemy.orm import Session
-import os
+from app.models.document import (
+    LANGUAGE_NAMES,
+    ProcessingOptions,
+    ProcessingProgress,
+    ProcessingStatus,
+    SupportedLanguage,
+    TranslationResult,
+)
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -71,7 +58,7 @@ async def start_processing(
     processing_id: str,
     request: Request,
     background_tasks: BackgroundTasks,
-    options: Optional[ProcessingOptions] = None,
+    options: ProcessingOptions | None = None,
     db: Session = Depends(get_session)
 ):
     """
@@ -236,12 +223,12 @@ async def get_active_processes(request: Request):
     """
     Gibt Übersicht über aktive Verarbeitungen zurück (für Debugging)
     """
-    
+
     try:
         from app.services.cleanup import processing_store
-        
+
         active_processes = []
-        
+
         for proc_id, data in processing_store.items():
             active_processes.append({
                 "processing_id": proc_id[:8] + "...",  # Verkürzt für Privatsphäre
@@ -251,13 +238,13 @@ async def get_active_processes(request: Request):
                 "created_at": data.get("created_at"),
                 "filename": data.get("filename", "").split("/")[-1] if data.get("filename") else None  # Nur Dateiname
             })
-        
+
         return {
             "active_count": len(active_processes),
             "processes": active_processes,
             "timestamp": datetime.now()
         }
-        
+
     except Exception as e:
         return {
             "error": str(e),
@@ -282,10 +269,14 @@ async def get_pipeline_stats(
 
     try:
         # Get real statistics from database (MODULAR PIPELINE)
+        from sqlalchemy import desc, func
+
         from app.database.connection import get_session
-        from app.database.modular_pipeline_models import DynamicPipelineStepDB, PipelineStepExecutionDB
-        from app.database.unified_models import SystemSettingsDB, AILogInteractionDB
-        from sqlalchemy import func, desc
+        from app.database.modular_pipeline_models import (
+            DynamicPipelineStepDB,
+            PipelineStepExecutionDB,
+        )
+        from app.database.unified_models import SystemSettingsDB
 
         db = next(get_session())
         # Get current time for calculations
@@ -536,7 +527,7 @@ async def get_available_models():
     """
     Gibt verfügbare OVH-Modelle zurück
     """
-    
+
     # OVH verwendet feste Modelle die in den Umgebungsvariablen konfiguriert sind
     return {
         "connected": True,
@@ -555,7 +546,7 @@ async def get_available_languages():
     """
     Gibt verfügbare Sprachen für die Übersetzung zurück
     """
-    
+
     try:
         # Sehr gut unterstützte Sprachen (beste Llama 3.3 Performance)
         best_supported = [
@@ -567,7 +558,7 @@ async def get_available_languages():
             SupportedLanguage.PORTUGUESE,
             SupportedLanguage.DUTCH
         ]
-        
+
         # Gut unterstützte Sprachen
         well_supported = [
             SupportedLanguage.RUSSIAN,
@@ -583,10 +574,10 @@ async def get_available_languages():
             SupportedLanguage.NORWEGIAN,
             SupportedLanguage.DANISH
         ]
-        
+
         # Alle verfügbaren Sprachen
         all_languages = []
-        
+
         # Zuerst sehr gut unterstützte Sprachen
         for lang in best_supported:
             all_languages.append({
@@ -595,7 +586,7 @@ async def get_available_languages():
                 "popular": True,
                 "quality": "excellent"
             })
-        
+
         # Dann gut unterstützte Sprachen
         for lang in well_supported:
             all_languages.append({
@@ -604,7 +595,7 @@ async def get_available_languages():
                 "popular": False,
                 "quality": "good"
             })
-        
+
         return {
             "languages": all_languages,
             "total_count": len(all_languages),
@@ -612,7 +603,7 @@ async def get_available_languages():
             "well_supported_count": len(well_supported),
             "timestamp": datetime.now()
         }
-        
+
     except Exception as e:
         return {
             "error": str(e),

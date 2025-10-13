@@ -11,7 +11,9 @@ This migration adds columns for storing uploaded documents directly in the datab
 """
 
 import logging
+
 from sqlalchemy import create_engine, text
+
 from app.core.config import settings
 
 logger = logging.getLogger(__name__)

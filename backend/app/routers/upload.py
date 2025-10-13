@@ -1,23 +1,19 @@
-import uuid
-import time
-import logging
-import json
-import os
 from datetime import datetime
-from typing import Optional
+import logging
+import os
+import uuid
 
-from fastapi import APIRouter, UploadFile, File, HTTPException, Depends, Request
-from fastapi.responses import JSONResponse
-from slowapi import Limiter, _rate_limit_exceeded_handler
-from slowapi.util import get_remote_address
 from celery import Celery
+from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
+from shared.task_queue import check_workers_available
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
-from app.models.document import UploadResponse, ProcessingStatus, DocumentType, ErrorResponse
-from app.services.file_validator import FileValidator
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
-from shared.task_queue import check_workers_available
+from app.models.document import DocumentType, ProcessingStatus, UploadResponse
+from app.services.file_validator import FileValidator
 
 logger = logging.getLogger(__name__)
 
@@ -39,24 +35,24 @@ async def upload_document(
     logger.info(upload_log)
     """
     Lädt ein medizinisches Dokument hoch und startet die Verarbeitung
-    
+
     - **file**: Medizinisches Dokument (PDF, JPG, PNG)
     - **max_size**: 50MB (für Handyfotos optimiert)
     - **formats**: PDF, JPEG, PNG
     - **OCR**: Automatische Texterkennung für gescannte Dokumente
     """
-    
+
     try:
         logger.debug(f"🔍 Upload-Request erhalten: {file.filename}, Content-Type: {file.content_type}")
-        
+
         # Grundlegende Validierung
         if not file.filename:
-            logger.error(f"❌ Dateiname fehlt!")
+            logger.error("❌ Dateiname fehlt!")
             raise HTTPException(
                 status_code=400,
                 detail="Dateiname fehlt"
             )
-        
+
         # Dateivalidierung
         logger.debug(f"🔍 Validiere Datei: {file.filename}")
         is_valid, error_message = await FileValidator.validate_file(file)
@@ -154,7 +150,7 @@ async def upload_document(
         # It will be enqueued when frontend calls /process/{id} with options (target_language, etc.)
         # This allows frontend to set language selection BEFORE processing starts
         logger.info(f"📝 Job created and ready: {job_id[:8]} (status: PENDING, waiting for /process call)")
-        
+
         # Response erstellen
         response = UploadResponse(
             processing_id=processing_id,
@@ -164,13 +160,13 @@ async def upload_document(
             status=ProcessingStatus.PENDING,
             message="Datei erfolgreich hochgeladen und in Warteschlange eingereiht"
         )
-        
+
         success_log = f"📄 Datei hochgeladen: {file.filename} ({file_size} bytes) - ID: {processing_id[:8]}"
         print(success_log, flush=True)
         logger.info(success_log)
-        
+
         return response
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -190,34 +186,34 @@ async def cancel_processing(
 ):
     """
     Bricht die Verarbeitung ab und löscht alle zugehörigen Daten
-    
+
     - **processing_id**: ID der zu stornierenden Verarbeitung
     """
-    
+
     try:
         from app.services.cleanup import get_from_processing_store, remove_from_processing_store
-        
+
         # Verarbeitung finden
         processing_data = get_from_processing_store(processing_id)
-        
+
         if not processing_data:
             raise HTTPException(
                 status_code=404,
                 detail="Verarbeitung nicht gefunden"
             )
-        
+
         # Verarbeitung stoppen und Daten löschen
         remove_from_processing_store(processing_id)
-        
+
         cancel_log = f"🚫 Verarbeitung abgebrochen: {processing_id[:8]}"
         print(cancel_log, flush=True)
         logger.info(cancel_log)
-        
+
         return {
             "message": "Verarbeitung erfolgreich abgebrochen",
             "processing_id": processing_id
         }
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -232,7 +228,7 @@ async def get_upload_limits():
     """
     Gibt die aktuellen Upload-Limits und -Regeln zurück
     """
-    
+
     return {
         "max_file_size_mb": 50,
         "allowed_formats": ["PDF", "JPG", "JPEG", "PNG"],
@@ -250,22 +246,22 @@ async def upload_health_check():
     """
     Überprüft die Gesundheit des Upload-Systems
     """
-    
+
     try:
         from app.services.cleanup import get_memory_usage, processing_store
-        
+
         memory_info = get_memory_usage()
         active_uploads = len(processing_store)
-        
+
         # Warnung bei hoher Speichernutzung
         memory_warning = False
         if "percent" in memory_info and memory_info["percent"] > 80:
             memory_warning = True
-        
+
         status = "healthy"
         if memory_warning or active_uploads > 100:
             status = "warning"
-        
+
         return {
             "status": status,
             "active_uploads": active_uploads,
@@ -276,10 +272,10 @@ async def upload_health_check():
             },
             "timestamp": datetime.now()
         }
-        
+
     except Exception as e:
         return {
             "status": "error",
             "error": str(e),
             "timestamp": datetime.now()
-        } 
+        }

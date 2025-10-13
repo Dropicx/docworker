@@ -26,17 +26,19 @@ Three-tier priority system: environment variables → database → config defaul
     ...     result = await ovh_client.extract_text_with_vision(image)
 """
 
-import os
-import logging
 from enum import Enum
+import logging
+import os
 from typing import Optional
+
 from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
 # Import Settings for config defaults
 try:
-    from app.core.config import Settings, settings as global_settings
+    from app.core.config import Settings
+    from app.core.config import settings as global_settings
 except ImportError:
     # Fallback if config not available (shouldn't happen in production)
     Settings = None
@@ -137,7 +139,7 @@ class FeatureFlags:
 
     def __init__(
         self,
-        session: Optional[Session] = None,
+        session: Session | None = None,
         settings: Optional["Settings"] = None
     ):
         """
@@ -310,7 +312,7 @@ class FeatureFlags:
 
 def is_feature_enabled(
     feature: Feature,
-    session: Optional[Session] = None,
+    session: Session | None = None,
     settings: Optional["Settings"] = None
 ) -> bool:
     """
@@ -335,7 +337,7 @@ def is_feature_enabled(
 
 
 def get_enabled_features(
-    session: Optional[Session] = None,
+    session: Session | None = None,
     settings: Optional["Settings"] = None
 ) -> list[str]:
     """

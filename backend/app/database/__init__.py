@@ -3,7 +3,8 @@ Database package initialization
 """
 
 from .connection import get_engine, get_session
-from .models import Base, AIInteractionLog
+from .models import AIInteractionLog, Base
+
 # DocumentPromptsDB and PipelineStepConfigDB removed - using unified system instead
 
 __all__ = [

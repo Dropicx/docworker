@@ -1,11 +1,11 @@
-import re
 import logging
-from typing import Optional, Dict, Any, Tuple
+from typing import Any
+
 from app.models.document_types import (
+    CLASSIFICATION_PATTERNS,
+    DOCUMENT_TYPE_DESCRIPTIONS,
     DocumentClass,
     DocumentClassificationResult,
-    CLASSIFICATION_PATTERNS,
-    DOCUMENT_TYPE_DESCRIPTIONS
 )
 
 logger = logging.getLogger(__name__)
@@ -223,7 +223,7 @@ KLASSIFIZIERUNG:"""
                 processing_hints={}
             )
 
-    def _get_processing_hints(self, doc_class: DocumentClass) -> Dict[str, Any]:
+    def _get_processing_hints(self, doc_class: DocumentClass) -> dict[str, Any]:
         """
         Get processing hints based on document class.
 
@@ -278,7 +278,7 @@ KLASSIFIZIERUNG:"""
 
         return hints
 
-    def get_document_type_info(self, doc_class: DocumentClass) -> Dict[str, Any]:
+    def get_document_type_info(self, doc_class: DocumentClass) -> dict[str, Any]:
         """
         Get information about a document type.
 

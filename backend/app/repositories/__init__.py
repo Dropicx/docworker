@@ -17,8 +17,8 @@ Usage:
 """
 
 from app.repositories.base_repository import BaseRepository
-from app.repositories.settings_repository import SettingsRepository
 from app.repositories.feature_flags_repository import FeatureFlagsRepository
+from app.repositories.settings_repository import SettingsRepository
 
 __all__ = [
     "BaseRepository",

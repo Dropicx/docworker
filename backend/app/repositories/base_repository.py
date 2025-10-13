@@ -6,9 +6,9 @@ All specific repositories should inherit from BaseRepository.
 """
 
 import logging
-from typing import Generic, TypeVar, Type, List, Optional, Dict, Any
+from typing import Any, Generic, TypeVar
+
 from sqlalchemy.orm import Session
-from sqlalchemy import select, update, delete
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class BaseRepository(Generic[ModelType]):
                 super().__init__(db, User)
     """
 
-    def __init__(self, db: Session, model: Type[ModelType]):
+    def __init__(self, db: Session, model: type[ModelType]):
         """
         Initialize repository with database session and model class.
 
@@ -37,7 +37,7 @@ class BaseRepository(Generic[ModelType]):
         self.db = db
         self.model = model
 
-    def get_by_id(self, id: Any) -> Optional[ModelType]:
+    def get_by_id(self, id: Any) -> ModelType | None:
         """Get entity by primary key."""
         try:
             return self.db.query(self.model).filter(
@@ -51,8 +51,8 @@ class BaseRepository(Generic[ModelType]):
         self,
         skip: int = 0,
         limit: int = 100,
-        filters: Optional[Dict[str, Any]] = None
-    ) -> List[ModelType]:
+        filters: dict[str, Any] | None = None
+    ) -> list[ModelType]:
         """
         Get all entities with optional filtering and pagination.
 
@@ -74,7 +74,7 @@ class BaseRepository(Generic[ModelType]):
             logger.error(f"Error getting all {self.model.__name__}: {e}")
             raise
 
-    def get_one(self, filters: Dict[str, Any]) -> Optional[ModelType]:
+    def get_one(self, filters: dict[str, Any]) -> ModelType | None:
         """
         Get single entity by filters.
 
@@ -113,7 +113,7 @@ class BaseRepository(Generic[ModelType]):
             logger.error(f"Error creating {self.model.__name__}: {e}")
             raise
 
-    def update(self, id: Any, **kwargs) -> Optional[ModelType]:
+    def update(self, id: Any, **kwargs) -> ModelType | None:
         """
         Update entity by primary key.
 
@@ -167,7 +167,7 @@ class BaseRepository(Generic[ModelType]):
             logger.error(f"Error deleting {self.model.__name__} id={id}: {e}")
             raise
 
-    def count(self, filters: Optional[Dict[str, Any]] = None) -> int:
+    def count(self, filters: dict[str, Any] | None = None) -> int:
         """
         Count entities with optional filtering.
 
@@ -187,7 +187,7 @@ class BaseRepository(Generic[ModelType]):
             logger.error(f"Error counting {self.model.__name__}: {e}")
             raise
 
-    def exists(self, filters: Dict[str, Any]) -> bool:
+    def exists(self, filters: dict[str, Any]) -> bool:
         """
         Check if entity exists with given filters.
 

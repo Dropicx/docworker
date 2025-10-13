@@ -1,14 +1,16 @@
 from datetime import datetime
+import logging
+import os
+import shutil
+import tempfile
+
 from fastapi import APIRouter, Request
+from shared.redis_client import get_redis
+from shared.task_queue import check_workers_available
+
 from app.models.document import HealthCheck
 from app.services.cleanup import get_memory_usage
 from app.services.ovh_client import OVHClient
-from shared.redis_client import get_redis
-from shared.task_queue import check_workers_available
-import tempfile
-import os
-import shutil
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +21,7 @@ def check_ocr_capabilities() -> dict:
     NOTE: OCR processing now happens in the WORKER service, not backend.
     Backend no longer requires OCR dependencies (PaddleOCR runs in worker).
     """
-    ocr_info = {
+    return {
         "ocr_location": "worker_service",
         "backend_ocr": False,
         "available_engines": ["PADDLEOCR", "VISION_LLM", "HYBRID"],
@@ -28,7 +30,6 @@ def check_ocr_capabilities() -> dict:
         "note": "OCR handled by Celery worker with PaddleOCR, Vision LLM, and Hybrid engines"
     }
 
-    return ocr_info
 
 router = APIRouter()
 
@@ -40,12 +41,12 @@ async def health_check(request: Request = None):
 
     # Debug: Log health check request
     if request:
-        print(f"🔍 === HEALTH REQUEST DEBUG ===")
+        print("🔍 === HEALTH REQUEST DEBUG ===")
         print(f"🔍 Method: {request.method}")
         print(f"🔍 URL: {request.url}")
         print(f"🔍 Headers: {dict(request.headers)}")
         print(f"🔍 Client: {request.client}")
-        print(f"🔍 === END HEALTH DEBUG ===")
+        print("🔍 === END HEALTH DEBUG ===")
 
     try:
         services = {}
@@ -106,15 +107,12 @@ async def health_check(request: Request = None):
 
         # PIL/Pillow prüfen
         try:
-            from PIL import Image
             services["image_processing"] = "healthy"
         except Exception:
             services["image_processing"] = "error"
 
         # PDF-Verarbeitung prüfen
         try:
-            import PyPDF2
-            import pdfplumber
             services["pdf_processing"] = "healthy"
         except Exception:
             services["pdf_processing"] = "error"
@@ -159,16 +157,16 @@ async def detailed_health_check():
     """
     Detaillierter Gesundheitscheck mit zusätzlichen Informationen
     """
-    
+
     try:
         from app.services.cleanup import processing_store
-        
+
         # Basis-Gesundheitscheck
         basic_health = await health_check()
-        
+
         # OCR capability check
         ocr_status = check_ocr_capabilities()
-        
+
         # Zusätzliche Details
         details = {
             "active_processes": len(processing_store),
@@ -178,14 +176,14 @@ async def detailed_health_check():
             "process_id": os.getpid(),
             "ocr_capabilities": ocr_status
         }
-        
+
         # Disk Space Check
         temp_space_gb = details["temp_space_available"] / (1024**3)
         if temp_space_gb < 1:  # Weniger als 1GB frei
             basic_health.services["disk_space"] = "warning"
         else:
             basic_health.services["disk_space"] = "healthy"
-        
+
         # Model availability prüfen - OVH models are configured via environment
         ovh_models = [
             os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct"),
@@ -195,12 +193,12 @@ async def detailed_health_check():
         details["available_models"] = list(set(ovh_models))  # Remove duplicates
         details["model_count"] = len(details["available_models"])
         details["api_mode"] = "OVH AI Endpoints"
-        
+
         return {
             **basic_health.dict(),
             "details": details
         }
-        
+
     except Exception as e:
         return {
             "status": "error",
@@ -216,15 +214,15 @@ async def test_markdown_format():
     """
     Testet die neue Markdown-Formatierung mit Sublisten
     """
-    
+
     # Test mit problematischem Text
     test_cases = {
         "simple_bullet_arrow": """• Sie haben Atemnot. → Bedeutung: Sie kommen schnell außer Atem.
 • Sie haben Brustschmerzen. → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
-        
+
         "multiple_arrows": """• Ramipril 5mg. → Wofür: Senkt Ihren Blutdruck. → Einnahme: 1x morgens.
 • Metformin 1000mg. → Wofür: Hilft bei der Zuckerverarbeitung. → Einnahme: 2x täglich zum Essen.""",
-        
+
         "mixed_content": """## 💊 Behandlung & Medikamente
 
 • Ramipril 5mg. → Wofür: Senkt Ihren Blutdruck. → Einnahme: 1x morgens.
@@ -235,11 +233,11 @@ async def test_markdown_format():
 • Blutdruck: 140/90 mmHg → Bedeutung: Leicht erhöht, sollte gesenkt werden.
 • Blutzucker: 7.8% HbA1c → Bedeutung: Über dem Zielwert, besser kontrollieren."""
     }
-    
+
     # Teste unsere neue Formatierung
     from app.services.ovh_client import OVHClient
     client = OVHClient()
-    
+
     formatted_results = {}
     for name, text in test_cases.items():
         formatted = client._improve_formatting(text)
@@ -253,7 +251,7 @@ async def test_markdown_format():
             "bullet_count": formatted.count('•'),
             "sublist_count": formatted.count('  - ')
         }
-    
+
     return {
         "test_results": formatted_results,
         "formatting_info": {
@@ -278,16 +276,16 @@ async def test_formatting_live():
 
 • Ramipril 5mg. → Wofür: Senkt Ihren Blutdruck. → Einnahme: 1x morgens.
 • Metformin 1000mg. → Wofür: Hilft bei der Zuckerverarbeitung. → Einnahme: 2x täglich zum Essen."""
-    
+
     from app.services.ovh_client import OVHClient
     client = OVHClient()
-    
+
     # Formatierung anwenden
     formatted = client._improve_formatting(problem_text)
-    
+
     # HTML-Version für Browser-Anzeige erstellen
     html_display = formatted.replace('\n', '<br>').replace('  ', '&nbsp;&nbsp;')
-    
+
     return {
         "original": problem_text,
         "formatted": formatted,
@@ -309,8 +307,8 @@ async def test_formatting():
     """
     Testet die Formatierungsfunktion
     """
-    use_ovh_only = os.getenv("USE_OVH_ONLY", "true").lower() == "true"
-    
+    os.getenv("USE_OVH_ONLY", "true").lower() == "true"
+
     # Test text mit problematischen Formatierungen
     test_text = """## 📊 Zusammenfassung
 ### Was wurde gemacht?
@@ -320,31 +318,31 @@ async def test_formatting():
 • Sie haben Atemnot bereits bei geringer körperlicher Anstrengung (NYHA II-III). → Bedeutung: Das bedeutet, dass Sie schnell außer Atem kommen, wenn Sie sich anstrengen.
 • Sie haben gelegentliche retrosternale Druckgefühle in der Brust. → Bedeutung: Das bedeutet, dass Sie manchmal ein Druckgefühl in der Brust verspüren.
 • Ihr Blutdruck ist normal. → Bedeutung: Das bedeutet, dass Ihr Blutdruck im normalen Bereich liegt."""
-    
+
     from app.services.ovh_client import OVHClient
     client = OVHClient()
-    
+
     # Schritt für Schritt debuggen
     import re
-    
+
     steps = []
     step1 = test_text
     steps.append({"step": "original", "text": step1})
-    
+
     # Schritt 1: Bullet Points auf neue Zeilen
     step2 = re.sub(r'([^\n])(•)', r'\1\n•', step1)
     steps.append({"step": "bullets_on_newlines", "text": step2})
-    
+
     # Schritt 2: Pfeile auf neue Zeilen
     step3 = re.sub(r'([^^\n])(\s*→\s*)', r'\1\n  → ', step2)
     steps.append({"step": "arrows_on_newlines", "text": step3})
-    
+
     formatted_text = client._improve_formatting(test_text)
-    
+
     # Zeige auch die Zeilen einzeln für besseres Debugging
     lines_original = test_text.split('\n')
     lines_formatted = formatted_text.split('\n')
-    
+
     return {
         "original": test_text,
         "formatted": formatted_text,
@@ -363,35 +361,35 @@ async def check_dependencies():
     """
     Prüft alle wichtigen Abhängigkeiten
     """
-    
+
     dependencies = {}
-    
+
     # Python-Pakete
     packages = [
-        "fastapi", "uvicorn", "pydantic", "httpx", 
+        "fastapi", "uvicorn", "pydantic", "httpx",
         "PIL", "pytesseract", "PyPDF2", "pdfplumber"
     ]
-    
+
     for package in packages:
         try:
             __import__(package)
             dependencies[package] = "installed"
         except ImportError:
             dependencies[package] = "missing"
-    
+
     # System-Kommandos
     system_commands = ["tesseract"]
-    
+
     for cmd in system_commands:
         try:
             import subprocess
-            result = subprocess.run([cmd, "--version"], 
-                                 capture_output=True, 
+            result = subprocess.run([cmd, "--version"],
+                                 capture_output=True,
                                  timeout=5)
             dependencies[f"system_{cmd}"] = "available" if result.returncode == 0 else "error"
         except Exception:
             dependencies[f"system_{cmd}"] = "missing"
-    
+
     # Externe Services - OVH API Service
     try:
         from app.services.ovh_client import OVHClient
@@ -400,15 +398,15 @@ async def check_dependencies():
         dependencies["ovh_api_service"] = "connected" if ovh_status else f"disconnected: {error_msg[:50]}"
     except Exception as e:
         dependencies["ovh_api_service"] = f"error: {str(e)}"
-    
+
     # Zusammenfassung
-    missing_deps = [name for name, status in dependencies.items() 
+    missing_deps = [name for name, status in dependencies.items()
                    if status in ["missing", "error", "disconnected"]]
-    
+
     return {
         "dependencies": dependencies,
         "missing_count": len(missing_deps),
         "missing_dependencies": missing_deps,
         "status": "healthy" if not missing_deps else "degraded",
         "timestamp": datetime.now()
-    } 
+    }

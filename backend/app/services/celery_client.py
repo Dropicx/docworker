@@ -82,9 +82,10 @@ Note:
     **Shared Redis**: Backend and worker must connect to same Redis instance
     for task queue to function. Verify REDIS_URL matches across services.
 """
-import os
 import logging
-from typing import Optional, Dict, Any
+import os
+from typing import Any
+
 from celery import Celery
 
 logger = logging.getLogger(__name__)
@@ -111,7 +112,7 @@ celery_client.conf.update(
 logger.info(f"🔗 Celery client configured with Redis: {REDIS_URL.split('@')[0]}...")
 
 
-def enqueue_document_processing(processing_id: str, options: Optional[Dict[str, Any]] = None) -> str:
+def enqueue_document_processing(processing_id: str, options: dict[str, Any] | None = None) -> str:
     """Enqueue asynchronous document processing task to worker via Redis.
 
     Sends document processing request to Celery worker through Redis message queue.
@@ -195,7 +196,7 @@ def enqueue_document_processing(processing_id: str, options: Optional[Dict[str, 
         raise
 
 
-def get_task_status(task_id: str) -> Dict[str, Any]:
+def get_task_status(task_id: str) -> dict[str, Any]:
     """Query current status and result of Celery task from Redis.
 
     Retrieves task state, progress information, and results/errors from Redis

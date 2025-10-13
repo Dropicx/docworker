@@ -11,7 +11,7 @@ Usage:
 """
 
 import logging
-from typing import Optional
+
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_session
@@ -35,7 +35,7 @@ class FeatureFlagsService:
     def is_enabled(
         self,
         feature_name: str,
-        user_id: Optional[str] = None,
+        user_id: str | None = None,
         default: bool = False
     ) -> bool:
         """
@@ -63,7 +63,7 @@ class FeatureFlagsService:
                 # If fully enabled or disabled
                 if feature.rollout_percentage == 100:
                     return feature.enabled
-                elif feature.rollout_percentage == 0:
+                if feature.rollout_percentage == 0:
                     return False
 
                 # Gradual rollout: use user_id hash to determine if enabled
@@ -92,7 +92,7 @@ class FeatureFlagsService:
         db: Session,
         feature_name: str,
         enabled: bool,
-        rollout_percentage: Optional[int] = None
+        rollout_percentage: int | None = None
     ) -> FeatureFlag:
         """
         Set a feature flag value.

@@ -1,11 +1,12 @@
-import httpx
-import logging
 import base64
-from typing import Optional, Dict, Any, AsyncGenerator, Union, List
-from openai import AsyncOpenAI
-import json
-from PIL import Image
+from collections.abc import AsyncGenerator
 from io import BytesIO
+import logging
+from typing import Any
+
+import httpx
+from openai import AsyncOpenAI
+from PIL import Image
 
 from app.core.config import settings
 
@@ -82,7 +83,7 @@ class OVHClient:
 
         # Debug logging for configuration (only if debug enabled)
         if logger.isEnabledFor(logging.DEBUG):
-            logger.debug(f"🔍 OVH Client Initialization:")
+            logger.debug("🔍 OVH Client Initialization:")
             logger.debug(f"   - Access Token: {'✅ Set' if self.access_token else '❌ NOT SET'}")
             logger.debug(f"   - Token Length: {len(self.access_token) if self.access_token else 0} chars")
             logger.debug(f"   - Base URL: {self.base_url}")
@@ -116,7 +117,7 @@ class OVHClient:
 
         # Alternative HTTP client for direct API calls
         self.timeout = settings.ai_timeout_seconds
-        
+
     async def check_connection(self) -> tuple[bool, str]:
         """Verify connectivity and authentication with OVH AI Endpoints.
 
@@ -147,17 +148,17 @@ class OVHClient:
             logger.error(f"❌ {error}")
             logger.error("   Please ensure the environment variable is set in Railway")
             return False, error
-        
+
         if not self.client:
             error = "OVH client not initialized"
             logger.error(f"❌ {error}")
             return False, error
-            
+
         try:
             logger.debug(f"🔄 Testing OVH connection to {self.base_url}")
             logger.debug(f"   Using model: {self.main_model}")
             logger.debug(f"   Token (last 8 chars): ...{self.access_token[-8:] if self.access_token else 'NOT SET'}")
-            
+
             # Try a simple completion to test connection
             response = await self.client.chat.completions.create(
                 model=self.main_model,
@@ -165,20 +166,19 @@ class OVHClient:
                 max_tokens=10,
                 temperature=0
             )
-            
+
             if response and response.choices:
                 logger.info("✅ OVH AI Endpoints connection successful")
                 logger.info(f"   Response: {response.choices[0].message.content[:50]}")
                 return True, "Connection successful"
-            else:
-                error = "Empty response from OVH API"
-                logger.error(f"❌ {error}")
-                return False, error
-                
+            error = "Empty response from OVH API"
+            logger.error(f"❌ {error}")
+            return False, error
+
         except Exception as e:
             error_msg = str(e)
             logger.error(f"❌ OVH AI Endpoints connection failed: {error_msg}")
-            
+
             # Provide specific guidance based on error
             if "401" in error_msg or "unauthorized" in error_msg.lower():
                 error = f"Invalid API token (401 Unauthorized). Token last 8 chars: ...{self.access_token[-8:] if self.access_token else 'NOT SET'}"
@@ -192,7 +192,7 @@ class OVHClient:
             else:
                 error = f"Unexpected error: {error_msg[:200]}"
                 logger.error(f"   → {error}")
-            
+
             return False, error
 
     def should_use_fast_model(self, prompt_type: str = None, task_description: str = None) -> bool:
@@ -220,7 +220,7 @@ class OVHClient:
         temperature: float = 0.3,
         max_tokens: int = 4000,
         use_fast_model: bool = False
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Process medical text using AI with intelligent model selection.
 
         Sends a complete prompt to OVH AI and returns the processed result along
@@ -302,7 +302,7 @@ class OVHClient:
             total_tokens = getattr(usage, 'total_tokens', 0) if usage else 0
 
             if not usage:
-                logger.warning(f"⚠️ API response has no usage data")
+                logger.warning("⚠️ API response has no usage data")
 
             logger.debug(f"✅ OVH processing successful with {model_to_use} ({model_type}) - {total_tokens} tokens")
 
@@ -347,7 +347,7 @@ class OVHClient:
         )
 
     async def process_medical_text(
-        self, 
+        self,
         text: str,
         instruction: str = "Process this medical text",
         temperature: float = 0.3,
@@ -355,23 +355,23 @@ class OVHClient:
     ) -> str:
         """
         Process medical text using Meta-Llama-3.3-70B-Instruct
-        
+
         Args:
             text: The medical text to process
             instruction: Processing instruction
             temperature: Model temperature (0-1)
             max_tokens: Maximum tokens to generate
-            
+
         Returns:
             Processed text from the model
         """
         if not self.access_token:
             logger.error("❌ OVH API token not configured")
             return "Error: OVH API token not configured. Please set OVH_AI_ENDPOINTS_ACCESS_TOKEN in .env"
-        
+
         try:
             logger.debug(f"🚀 Processing with OVH {self.main_model}")
-            
+
             # Prepare the message
             messages = [
                 {
@@ -383,7 +383,7 @@ class OVHClient:
                     "content": f"{instruction}\n\nText to process:\n{text}"
                 }
             ]
-            
+
             # Make the API call using OpenAI client
             response = await self.client.chat.completions.create(
                 model=self.main_model,
@@ -392,15 +392,15 @@ class OVHClient:
                 max_tokens=max_tokens,
                 top_p=0.9
             )
-            
+
             result = response.choices[0].message.content
-            logger.debug(f"✅ OVH processing successful")
+            logger.debug("✅ OVH processing successful")
             return result.strip()
-            
+
         except Exception as e:
             logger.error(f"❌ OVH API error: {e}")
             return f"Error processing with OVH API: {str(e)}"
-    
+
     async def preprocess_medical_text(
         self,
         text: str,
@@ -414,27 +414,27 @@ class OVHClient:
         logger.info("=" * 80)
         logger.info("📄 PREPROCESSING PIPELINE STARTED")
         logger.info("=" * 80)
-        logger.info(f"📥 [1/3] ORIGINAL EXTRACTED TEXT (first 1000 chars):")
+        logger.info("📥 [1/3] ORIGINAL EXTRACTED TEXT (first 1000 chars):")
         logger.info("-" * 40)
         logger.info(text[:1000] + "..." if len(text) > 1000 else text)
         logger.info(f"   Length: {len(text)} characters")
         logger.info("-" * 40)
-        
+
         # ⚡ PII REMOVAL NOW HAPPENS IN WORKER (before pipeline)
         # This preprocessing step no longer needs to remove PII
         # Text arrives here already cleaned by OptimizedPrivacyFilter in worker
         logger.info("ℹ️  [2/3] Text already PII-filtered by worker (OptimizedPrivacyFilter)")
         cleaned_text = text
-        
+
         # SCHRITT 2: Optional zusätzliche Bereinigung mit OVH (wenn API verfügbar)
         # Dies ist jetzt optional - wenn OVH nicht verfügbar, verwenden wir nur lokale Bereinigung
         if not self.access_token:
             logger.debug("ℹ️ OVH API not configured, using local PII removal only")
             return cleaned_text  # Return locally cleaned text
-        
+
         try:
             logger.debug(f"🔧 Additional preprocessing with OVH {self.preprocessing_model}")
-            
+
             preprocess_prompt = """Du bist ein medizinischer Dokumentenbereiniger für Datenschutz und Übersichtlichkeit.
 
 🚨 KRITISCHE REGEL: BEHALTE ABSOLUT ALLE MEDIZINISCHEN INFORMATIONEN!
@@ -459,7 +459,7 @@ ENTFERNE NUR (komplett löschen):
 ✅ ALLE Verweise auf Anhänge (z.B. "siehe Anhang", "Laborwerte im Anhang")
 ✅ KOMPLETTE Anhänge mit Laborwerten, auch wenn sie am Ende stehen
 ✅ ALLE Diagnosen und Befunde
-✅ ALLE Medikamente und Dosierungen  
+✅ ALLE Medikamente und Dosierungen
 ✅ ALLE medizinischen Daten und Termine
 ✅ ALLE Untersuchungsergebnisse
 ✅ Krankenhaus-/Abteilungsnamen
@@ -478,9 +478,9 @@ ORIGINALTEXT:
 {text}
 
 BEREINIGTER TEXT (nur medizinische Inhalte):"""
-            
+
             full_prompt = preprocess_prompt.format(text=cleaned_text)
-            
+
             # Use preprocessing model
             messages = [
                 {
@@ -488,7 +488,7 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
                     "content": full_prompt
                 }
             ]
-            
+
             response = await self.client.chat.completions.create(
                 model=self.preprocessing_model,
                 messages=messages,
@@ -496,41 +496,41 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
                 max_tokens=max_tokens,
                 top_p=0.9
             )
-            
+
             result = response.choices[0].message.content
-            
+
             # Log the OVH-preprocessed text
-            logger.info(f"🤖 [3/3] OVH-PREPROCESSED TEXT (first 1000 chars):")
+            logger.info("🤖 [3/3] OVH-PREPROCESSED TEXT (first 1000 chars):")
             logger.info("-" * 40)
             logger.info(result[:1000] + "..." if len(result) > 1000 else result)
             logger.info(f"   Length: {len(result)} characters")
             logger.info(f"   Total reduction from original: {len(text) - len(result)} characters")
             logger.info("-" * 40)
-            
+
             logger.debug(f"✅ OVH preprocessing successful with {self.preprocessing_model}")
             logger.info("=" * 80)
             logger.info("📄 PREPROCESSING PIPELINE COMPLETED")
             logger.info("=" * 80)
-            
+
             # Clean up formatting
             import re
             result = re.sub(r'^\s*\d+[.)]\s*([•\-\*])', r'\1', result, flags=re.MULTILINE)
             result = re.sub(r'^([•\-\*])\s*[•\-\*]+\s*', r'\1 ', result, flags=re.MULTILINE)
             result = re.sub(r'([•\-\*])\s*\1+', r'\1', result)
-            
+
             return result.strip() if result else text
-            
+
         except Exception as e:
             logger.error(f"❌ OVH preprocessing error: {e}")
             return text  # Return original text on error
-    
+
     async def translate_to_language(
         self,
         simplified_text: str,
         target_language: str,
         temperature: float = 0.3,
         max_tokens: int = 4000,
-        custom_prompt: Optional[str] = None
+        custom_prompt: str | None = None
     ) -> tuple[str, float]:
         """Translate simplified medical text to target language with quality scoring.
 
@@ -575,14 +575,14 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         if not self.access_token:
             logger.error("❌ OVH API token not configured")
             return simplified_text, 0.0
-        
+
         try:
             logger.debug(f"🌐 Translating to {target_language} with OVH {self.translation_model}")
-            
+
             if custom_prompt:
                 # Use custom prompt and replace placeholders
                 translation_prompt = custom_prompt.replace("{language}", target_language).replace("{text}", simplified_text)
-                logger.info(f"📝 Using custom language translation prompt")
+                logger.info("📝 Using custom language translation prompt")
             else:
                 translation_prompt = f"""Übersetze den folgenden Text EXAKT in {target_language}.
 
@@ -597,15 +597,15 @@ TEXT ZUM ÜBERSETZEN:
 {simplified_text}
 
 ÜBERSETZUNG:"""
-                logger.info(f"📝 Using default language translation prompt")
-            
+                logger.info("📝 Using default language translation prompt")
+
             messages = [
                 {
                     "role": "user",
                     "content": translation_prompt
                 }
             ]
-            
+
             response = await self.client.chat.completions.create(
                 model=self.translation_model,
                 messages=messages,
@@ -613,52 +613,52 @@ TEXT ZUM ÜBERSETZEN:
                 max_tokens=max_tokens,
                 top_p=0.9
             )
-            
+
             result = response.choices[0].message.content
-            logger.debug(f"✅ OVH language translation successful")
-            
+            logger.debug("✅ OVH language translation successful")
+
             # Improve formatting for bullet points and arrows
             result = self._improve_formatting(result)
-            
+
             # Evaluate quality
             confidence = self._evaluate_language_translation_quality(simplified_text, result)
-            
+
             return result.strip(), confidence
-            
+
         except Exception as e:
             logger.error(f"❌ OVH language translation error: {e}")
             return simplified_text, 0.0
-    
+
     def _evaluate_language_translation_quality(self, original: str, translated: str) -> float:
         """
         Evaluate the quality of language translation
         """
         if not translated or translated.startswith("Error"):
             return 0.0
-        
+
         confidence = 0.6  # Base confidence for OVH model
-        
+
         # Length check
         if len(translated) > 50:
             confidence += 0.1
-        
+
         # Ratio check
         length_ratio = len(translated) / max(len(original), 1)
         if 0.7 <= length_ratio <= 1.5:
             confidence += 0.1
-        
+
         # Structure preservation (emojis)
         import re
         emoji_pattern = r'[😀-🿿]|[\U0001F300-\U0001F5FF]|[\U0001F600-\U0001F64F]|[\U0001F680-\U0001F6FF]'
         original_emojis = len(re.findall(emoji_pattern, original))
         translated_emojis = len(re.findall(emoji_pattern, translated))
-        
+
         if original_emojis > 0:
             emoji_retention = min(translated_emojis / original_emojis, 1.0)
             confidence += emoji_retention * 0.1
-        
+
         return min(confidence, 1.0)
-    
+
     async def generate_streaming(
         self,
         prompt: str,
@@ -671,7 +671,7 @@ TEXT ZUM ÜBERSETZEN:
         if not self.access_token:
             yield "Error: OVH API token not configured"
             return
-        
+
         try:
             stream = await self.client.chat.completions.create(
                 model=self.main_model,
@@ -682,24 +682,24 @@ TEXT ZUM ÜBERSETZEN:
                 max_tokens=max_tokens,
                 stream=True
             )
-            
+
             async for chunk in stream:
                 if chunk.choices[0].delta.content:
                     yield chunk.choices[0].delta.content
-                    
+
         except Exception as e:
             logger.error(f"❌ OVH streaming error: {e}")
             yield f"Streaming error: {str(e)}"
-    
+
     async def translate_medical_document(
         self,
         text: str,
         document_type: str = "universal",
-        custom_prompts: Optional[Any] = None
+        custom_prompts: Any | None = None
     ) -> tuple[str, str, float, str]:
         """
         Main processing using OVH Meta-Llama-3.3-70B for medical document translation
-        
+
         Returns:
             tuple[str, str, float, str]: (translated_text, doc_type, confidence, cleaned_original)
         """
@@ -707,14 +707,14 @@ TEXT ZUM ÜBERSETZEN:
             logger.info("=" * 80)
             logger.info("🌍 TRANSLATION PIPELINE STARTED")
             logger.info("=" * 80)
-            logger.info(f"📥 INPUT TEXT FOR TRANSLATION (first 1000 chars):")
+            logger.info("📥 INPUT TEXT FOR TRANSLATION (first 1000 chars):")
             logger.info("-" * 40)
             logger.info(text[:1000] + "..." if len(text) > 1000 else text)
             logger.info(f"   Length: {len(text)} characters")
             logger.info("-" * 40)
-            
+
             logger.info("🏥 Starting medical document processing with OVH AI")
-            
+
             # Create the comprehensive instruction for medical translation (in German)
             if custom_prompts and hasattr(custom_prompts, 'translation_prompt'):
                 instruction = custom_prompts.translation_prompt
@@ -722,7 +722,7 @@ TEXT ZUM ÜBERSETZEN:
             else:
                 instruction = self._get_medical_translation_instruction()
                 logger.info(f"📝 Using default translation prompt for {document_type}")
-            
+
             # Format the complete prompt
             full_prompt = f"""{instruction}
 
@@ -730,7 +730,7 @@ ORIGINAL MEDIZINISCHER TEXT:
 {text}
 
 ÜBERSETZUNG IN EINFACHER SPRACHE:"""
-            
+
             # Process with OVH API using the formatted prompt (main translation - use high-quality model)
             translated_text = await self.process_medical_text_with_prompt(
                 full_prompt=full_prompt,
@@ -738,34 +738,34 @@ ORIGINAL MEDIZINISCHER TEXT:
                 max_tokens=4000,
                 use_fast_model=False  # Main translation needs quality
             )
-            
+
             # Log the translated text
-            logger.info(f"📤 TRANSLATED TEXT (first 1000 chars):")
+            logger.info("📤 TRANSLATED TEXT (first 1000 chars):")
             logger.info("-" * 40)
             logger.info(translated_text[:1000] + "..." if len(translated_text) > 1000 else translated_text)
             logger.info(f"   Length: {len(translated_text)} characters")
             logger.info("-" * 40)
-            
+
             # Improve formatting for bullet points and arrows
             translated_text = self._improve_formatting(translated_text)
-            
+
             # Evaluate quality
             confidence = self._evaluate_translation_quality(text, translated_text)
-            
+
             logger.info(f"📊 Translation confidence: {confidence:.2%}")
             logger.info("=" * 80)
             logger.info("🌍 TRANSLATION PIPELINE COMPLETED")
             logger.info("=" * 80)
-            
+
             return translated_text, document_type, confidence, text
-            
+
         except Exception as e:
             logger.error(f"❌ OVH translation failed: {e}")
             return f"Translation error: {str(e)}", "error", 0.0, text
-    
+
     def _get_medical_translation_instruction(self) -> str:
         """Get the comprehensive medical translation instruction"""
-        
+
         base_instruction = """Du bist ein hochspezialisierter medizinischer Übersetzer. Deine Aufgabe ist es, medizinische Dokumente vollständig und präzise in patientenfreundliche Sprache zu übersetzen.
 
 KRITISCHE ANTI-HALLUZINATIONS-REGELN:
@@ -867,7 +867,7 @@ EINHEITLICHES ÜBERSETZUNGSFORMAT FÜR ALLE DOKUMENTTYPEN:
 ## 🔢 Medizinische Codes erklärt (falls vorhanden)
 ### ICD-Codes (Diagnose-Schlüssel):
 - **[ICD-Code]**: [Vollständige Erklärung was diese Diagnose bedeutet]
-  
+
 ### OPS-Codes (Behandlungs-Schlüssel):
 - **[OPS-Code]**: [Vollständige Erklärung welche Behandlung durchgeführt wurde]
 
@@ -878,7 +878,7 @@ Bei Notfällen: 112 anrufen
 
 ---
 """
-        
+
         # UNIVERSELLE Anleitung für ALLE medizinischen Dokumente
         universal_instruction = """
 DIESES DOKUMENT KANN ENTHALTEN:
@@ -897,45 +897,44 @@ BEHANDLE JEDEN INHALT ANGEMESSEN:
 - Bei Bildgebung: Beschreibe was untersucht wurde und was gefunden wurde
 - Bei Empfehlungen: Mache klar was der Patient tun soll
 - Bei medizinischen Codes (ICD, OPS): ERKLÄRE immer was der Code bedeutet! Nicht nur auflisten!
-  
+
   ICD-Beispiele (Diagnose-Codes):
   • "ICD I10.90" → "I10.90 - Bluthochdruck ohne bekannte Ursache (Ihr Blutdruck ist dauerhaft zu hoch)"
   • "ICD E11.9" → "E11.9 - Diabetes Typ 2 (Zuckerkrankheit, die meist im Erwachsenenalter auftritt)"
   • "ICD J44.0" → "J44.0 - COPD mit akuter Verschlechterung (chronische Lungenerkrankung mit plötzlicher Verschlimmerung)"
   • "ICD M54.5" → "M54.5 - Kreuzschmerzen (Schmerzen im unteren Rückenbereich)"
-  
+
   OPS-Beispiele (Behandlungs-Codes):
   • "OPS 5-511.11" → "5-511.11 - Entfernung der Gallenblase durch Bauchspiegelung (minimal-invasive Operation)"
   • "OPS 3-035" → "3-035 - MRT des Kopfes (Kernspintomographie zur Untersuchung des Gehirns)"
   • "OPS 1-632.0" → "1-632.0 - Magenspiegelung mit Gewebeentnahme (Untersuchung des Magens mit einer Kamera)"
   • "OPS 8-931.0" → "8-931.0 - Überwachung auf der Intensivstation (engmaschige medizinische Betreuung)"
-  
+
   WICHTIG: Codes IMMER mit verständlicher Erklärung versehen! Der Patient muss verstehen, was gemeint ist!
 
 Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."""
-        
-        instruction = base_instruction + universal_instruction
-        
-        return instruction
-    
+
+        return base_instruction + universal_instruction
+
+
     def _evaluate_translation_quality(self, original: str, translated: str) -> float:
         """Evaluate the quality of the translation"""
         if not translated or translated.startswith("Error"):
             return 0.0
-        
+
         confidence = 0.6  # Base confidence for OVH model
-        
+
         # Length check
         if len(translated) > 100:
             confidence += 0.1
         if len(translated) > 500:
             confidence += 0.1
-        
+
         # Ratio check
         length_ratio = len(translated) / max(len(original), 1)
         if 0.5 <= length_ratio <= 2.0:
             confidence += 0.1
-        
+
         # Simple language indicators
         simple_indicators = [
             "this means", "simply put", "in other words",
@@ -944,27 +943,27 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         translated_lower = translated.lower()
         found_indicators = sum(1 for indicator in simple_indicators if indicator in translated_lower)
         confidence += min(found_indicators * 0.05, 0.1)
-        
+
         return min(confidence, 1.0)
-    
+
     def _improve_formatting(self, text: str) -> str:
         """
         Minimale Formatierung - konvertiert Bullet Points zu Standard Markdown
         """
         import re
-        
+
         # Ersetze alle Bullet-Symbole (•) durch Standard Markdown (-)
         text = re.sub(r'^•', '-', text, flags=re.MULTILINE)
         text = re.sub(r'\n•', '\n-', text)
-        
+
         # Stelle sicher dass Unterpunkte korrekt formatiert sind
         text = re.sub(r'^  →', '  - →', text, flags=re.MULTILINE)
-        
+
         # Entferne mehrfache Leerzeilen
         text = re.sub(r'\n{3,}', '\n\n', text)
-        
+
         return text.strip()
-    
+
     async def format_text(self, text: str, formatting_prompt: str) -> str:
         """
         Format text using AI with a specific formatting prompt.
@@ -973,7 +972,7 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         try:
             if not text or not formatting_prompt:
                 return text
-            
+
             # Create full prompt for formatting
             full_prompt = f"{formatting_prompt}\n\nTEXT TO FORMAT:\n{text}"
 
@@ -984,12 +983,11 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                 max_tokens=4000,
                 use_fast_model=True  # Formatting is routine task - use fast model
             )
-            
+
             # Apply additional formatting improvements
-            formatted_text = self._improve_formatting(formatted_text)
-            
-            return formatted_text
-            
+            return self._improve_formatting(formatted_text)
+
+
         except Exception as e:
             logger.error(f"Error formatting text: {e}")
             # Return original text with basic formatting if AI formatting fails
@@ -997,7 +995,7 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
 
     async def extract_text_with_vision(
         self,
-        image_data: Union[bytes, Image.Image],
+        image_data: bytes | Image.Image,
         file_type: str = "image",
         confidence_threshold: float = 0.7
     ) -> tuple[str, float]:
@@ -1048,7 +1046,6 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             logger.info(f"🔍 Starting vision OCR with Qwen 2.5 VL for {file_type}")
 
             # Convert image to base64 with proper MIME type detection (like OVH example)
-            import mimetypes
 
             if isinstance(image_data, Image.Image):
                 # Convert PIL Image to bytes
@@ -1250,7 +1247,7 @@ Begin text extraction with perfect structure preservation:"""
 
     async def process_multiple_images_ocr(
         self,
-        images: List[Union[bytes, Image.Image]],
+        images: list[bytes | Image.Image],
         merge_strategy: str = "sequential"
     ) -> tuple[str, float]:
         """Process multiple images with parallel OCR and intelligent merging.
@@ -1310,7 +1307,7 @@ Begin text extraction with perfect structure preservation:"""
         # Limit concurrent API calls to prevent overwhelming OVH servers
         semaphore = asyncio.Semaphore(2)  # Max 2 concurrent vision API calls for stability
 
-        async def process_single_image(i: int, image: Union[bytes, Image.Image]) -> dict:
+        async def process_single_image(i: int, image: bytes | Image.Image) -> dict:
             """Process a single image with retry logic and concurrency control"""
             async with semaphore:  # Limit concurrent API calls
                 logger.info(f"📄 Processing image {i}/{len(images)} in parallel")
@@ -1332,7 +1329,7 @@ Begin text extraction with perfect structure preservation:"""
                                 'confidence': confidence,
                                 'success': True
                             }
-                        elif attempt < max_retries:
+                        if attempt < max_retries:
                             # Failed but can retry
                             logger.warning(f"⚠️ Image {i} attempt {attempt + 1} failed: {text[:100]}... - retrying in {retry_delay}s")
                             await asyncio.sleep(retry_delay)
@@ -1360,6 +1357,7 @@ Begin text extraction with perfect structure preservation:"""
                                 'confidence': 0.0,
                                 'success': False
                             }
+                return None
 
         # Create tasks for all images
         tasks = [
@@ -1416,7 +1414,7 @@ Begin text extraction with perfect structure preservation:"""
 
         return merged_text, avg_confidence
 
-    def _merge_sequential(self, ocr_results: List[Dict]) -> str:
+    def _merge_sequential(self, ocr_results: list[dict]) -> str:
         """
         Merge OCR results in sequential order with page separators
         """
@@ -1433,7 +1431,7 @@ Begin text extraction with perfect structure preservation:"""
 
         return "\n".join(merged_parts)
 
-    def _merge_smart(self, ocr_results: List[Dict]) -> str:
+    def _merge_smart(self, ocr_results: list[dict]) -> str:
         """
         Intelligently merge OCR results with context awareness
         """

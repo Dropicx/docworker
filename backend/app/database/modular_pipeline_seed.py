@@ -4,9 +4,11 @@ Modular Pipeline Database Seeding
 This module seeds the database with default configuration for the modular pipeline system.
 """
 
-import logging
 import json
+import logging
+
 from sqlalchemy import text
+
 from app.database.connection import get_engine
 
 logger = logging.getLogger(__name__)
@@ -31,11 +33,6 @@ def seed_modular_pipeline():
             logger.info("🔍 Inserting default OCR configuration...")
 
             # Default OCR configuration: Tesseract (current production setup)
-            tesseract_config = {
-                "lang": "deu+eng",
-                "psm": 3,  # Automatic page segmentation
-                "oem": 3   # Default OCR Engine Mode
-            }
 
             paddleocr_config = {
                 "use_gpu": True,

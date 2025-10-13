@@ -10,13 +10,14 @@ Design Pattern:
 - RedisTaskQueue: Queue-based execution with workers (future)
 """
 
-import logging
-import asyncio
-import uuid
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, Callable, Awaitable
+import asyncio
+from collections.abc import Awaitable, Callable
 from datetime import datetime
 from enum import Enum
+import logging
+from typing import Any
+import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +42,7 @@ class TaskQueue(ABC):
     async def enqueue(
         self,
         task_name: str,
-        task_data: Dict[str, Any],
+        task_data: dict[str, Any],
         priority: int = 0
     ) -> str:
         """
@@ -58,7 +59,7 @@ class TaskQueue(ABC):
         pass
 
     @abstractmethod
-    async def get_job_status(self, job_id: str) -> Optional[Dict[str, Any]]:
+    async def get_job_status(self, job_id: str) -> dict[str, Any] | None:
         """
         Get status of a queued job.
 
@@ -71,7 +72,7 @@ class TaskQueue(ABC):
         pass
 
     @abstractmethod
-    async def get_job_result(self, job_id: str) -> Optional[Any]:
+    async def get_job_result(self, job_id: str) -> Any | None:
         """
         Get result of a completed job.
 
@@ -112,15 +113,15 @@ class InMemoryTaskQueue(TaskQueue):
 
     def __init__(self):
         """Initialize in-memory task queue."""
-        self.jobs: Dict[str, Dict[str, Any]] = {}
-        self.task_handlers: Dict[str, Callable[[Dict[str, Any]], Awaitable[Any]]] = {}
+        self.jobs: dict[str, dict[str, Any]] = {}
+        self.task_handlers: dict[str, Callable[[dict[str, Any]], Awaitable[Any]]] = {}
 
         logger.info("📦 InMemoryTaskQueue initialized (direct execution mode)")
 
     def register_task_handler(
         self,
         task_name: str,
-        handler: Callable[[Dict[str, Any]], Awaitable[Any]]
+        handler: Callable[[dict[str, Any]], Awaitable[Any]]
     ):
         """
         Register a task handler function.
@@ -135,7 +136,7 @@ class InMemoryTaskQueue(TaskQueue):
     async def enqueue(
         self,
         task_name: str,
-        task_data: Dict[str, Any],
+        task_data: dict[str, Any],
         priority: int = 0
     ) -> str:
         """
@@ -226,7 +227,7 @@ class InMemoryTaskQueue(TaskQueue):
             job["completed_at"] = datetime.now()
             job["error"] = error
 
-    async def get_job_status(self, job_id: str) -> Optional[Dict[str, Any]]:
+    async def get_job_status(self, job_id: str) -> dict[str, Any] | None:
         """
         Get status of a job.
 
@@ -250,7 +251,7 @@ class InMemoryTaskQueue(TaskQueue):
             "error": job["error"]
         }
 
-    async def get_job_result(self, job_id: str) -> Optional[Any]:
+    async def get_job_result(self, job_id: str) -> Any | None:
         """
         Get result of a completed job.
 
@@ -405,14 +406,13 @@ def create_task_queue(queue_type: str = "memory", **kwargs) -> TaskQueue:
     #     if not redis_url:
     #         raise ValueError("redis_url required for Redis task queue")
     #     return RedisTaskQueue(redis_url)
-    else:
-        raise ValueError(f"Unknown queue type: {queue_type}")
+    raise ValueError(f"Unknown queue type: {queue_type}")
 
 
 # ==================== GLOBAL TASK QUEUE INSTANCE ====================
 
 # Global task queue instance (can be switched via environment variable)
-_task_queue: Optional[TaskQueue] = None
+_task_queue: TaskQueue | None = None
 
 
 def get_task_queue() -> TaskQueue:
