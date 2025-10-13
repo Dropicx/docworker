@@ -14,6 +14,7 @@ import httpx
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import OCRConfigurationDB, OCREngineEnum
+from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
 from app.services.hybrid_text_extractor import HybridTextExtractor
 
 logger = logging.getLogger(__name__)
@@ -107,26 +108,32 @@ class OCREngineManager:
         without service restarts.
     """
 
-    def __init__(self, session: Session) -> None:
+    def __init__(
+        self,
+        session: Session,
+        config_repository: OCRConfigurationRepository | None = None
+    ) -> None:
         """Initialize OCR Engine Manager with database session.
 
         Args:
-            session: SQLAlchemy session for loading OCR configuration from database
+            session: SQLAlchemy session (kept for backward compatibility)
+            config_repository: OCR configuration repository (injected for clean architecture)
         """
         self.session = session
+        self.config_repository = config_repository or OCRConfigurationRepository(session)
         self.hybrid_extractor = HybridTextExtractor()
 
     # ==================== CONFIGURATION ====================
 
     def load_ocr_config(self) -> OCRConfigurationDB | None:
         """
-        Load OCR configuration from database.
+        Load OCR configuration from database using repository pattern.
 
         Returns:
             OCR configuration or None if not found
         """
         try:
-            config = self.session.query(OCRConfigurationDB).first()
+            config = self.config_repository.get_config()
             if config:
                 logger.info(f"🔍 Loaded OCR config: {config.selected_engine}")
             return config

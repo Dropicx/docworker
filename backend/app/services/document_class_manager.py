@@ -100,6 +100,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import DocumentClassDB, DynamicPipelineStepDB
+from app.repositories.document_class_repository import DocumentClassRepository
+from app.repositories.pipeline_step_repository import PipelineStepRepository
 
 logger = logging.getLogger(__name__)
 
@@ -167,19 +169,28 @@ class DocumentClassManager:
         pipeline steps. Must orphan/delete steps first.
     """
 
-    def __init__(self, session: Session):
-        """Initialize Document Class Manager with database session.
+    def __init__(
+        self,
+        session: Session,
+        class_repository: DocumentClassRepository | None = None,
+        step_repository: PipelineStepRepository | None = None
+    ):
+        """Initialize Document Class Manager with database session and repositories.
 
         Args:
-            session: SQLAlchemy session for database CRUD operations
+            session: SQLAlchemy session (kept for backward compatibility)
+            class_repository: Document class repository (injected for clean architecture)
+            step_repository: Pipeline step repository (injected for clean architecture)
         """
         self.session = session
+        self.class_repository = class_repository or DocumentClassRepository(session)
+        self.step_repository = step_repository or PipelineStepRepository(session)
 
     # ==================== READ OPERATIONS ====================
 
     def get_all_classes(self, enabled_only: bool = False) -> list[DocumentClassDB]:
         """
-        Get all document classes.
+        Get all document classes using repository pattern.
 
         Args:
             enabled_only: If True, only return enabled classes
@@ -188,12 +199,10 @@ class DocumentClassManager:
             List of document classes ordered by display_name
         """
         try:
-            query = self.session.query(DocumentClassDB)
-
             if enabled_only:
-                query = query.filter_by(is_enabled=True)
-
-            classes = query.order_by(DocumentClassDB.display_name).all()
+                classes = self.class_repository.get_enabled_classes()
+            else:
+                classes = self.class_repository.get_all()
 
             logger.info(f"📋 Retrieved {len(classes)} document classes (enabled_only={enabled_only})")
             return classes
@@ -204,7 +213,7 @@ class DocumentClassManager:
 
     def get_class(self, class_id: int) -> DocumentClassDB | None:
         """
-        Get a single document class by ID.
+        Get a single document class by ID using repository pattern.
 
         Args:
             class_id: Database ID of the class
@@ -213,7 +222,7 @@ class DocumentClassManager:
             Document class or None if not found
         """
         try:
-            doc_class = self.session.query(DocumentClassDB).filter_by(id=class_id).first()
+            doc_class = self.class_repository.get(class_id)
 
             if doc_class:
                 logger.debug(f"Found document class: {doc_class.class_key}")
@@ -228,7 +237,7 @@ class DocumentClassManager:
 
     def get_class_by_key(self, class_key: str) -> DocumentClassDB | None:
         """
-        Get a document class by its unique key.
+        Get a document class by its unique key using repository pattern.
 
         Args:
             class_key: Unique class key (e.g., "ARZTBRIEF")
@@ -237,7 +246,7 @@ class DocumentClassManager:
             Document class or None if not found
         """
         try:
-            doc_class = self.session.query(DocumentClassDB).filter_by(class_key=class_key).first()
+            doc_class = self.class_repository.get_by_class_key(class_key)
 
             if doc_class:
                 logger.debug(f"Found document class: {doc_class.class_key}")
@@ -392,12 +401,12 @@ class DocumentClassManager:
             if doc_class.is_system_class:
                 raise ValueError(f"Cannot delete system document class '{doc_class.class_key}'")
 
-            # Check if class has associated pipeline steps
-            step_count = self.session.query(DynamicPipelineStepDB).filter_by(
-                document_class_id=class_id
-            ).count()
-
-            if step_count > 0:
+            # Check if class has associated pipeline steps using repository
+            has_steps = self.class_repository.has_associated_steps(class_id)
+            if has_steps:
+                # Get count for error message
+                steps = self.step_repository.get_steps_by_document_class(class_id)
+                step_count = len(steps)
                 raise ValueError(
                     f"Cannot delete document class '{doc_class.class_key}' because it has {step_count} "
                     f"associated pipeline steps. Please delete or reassign those steps first."
@@ -430,14 +439,14 @@ class DocumentClassManager:
         logger.info("🔄 Updating classification prompts for all branching steps...")
 
         try:
-            # Find all branching/classification steps
-            branching_steps = self.session.query(DynamicPipelineStepDB).filter_by(
-                is_branching_step=True
-            ).all()
+            # Find all branching/classification steps using repository
+            branching_step = self.step_repository.get_branching_step()
 
-            if not branching_steps:
+            if not branching_step:
                 logger.info("   ℹ️  No branching steps found to update")
                 return
+
+            branching_steps = [branching_step]  # Convert to list for iteration
 
             # Generate new classification prompt template
             new_prompt_template = self.get_classification_prompt_template()
@@ -514,22 +523,21 @@ Document to classify:
 
     def get_class_statistics(self) -> dict[str, Any]:
         """
-        Get statistics about document classes.
+        Get statistics about document classes using repository pattern.
 
         Returns:
             Dictionary with class statistics
         """
         try:
-            total_classes = self.session.query(DocumentClassDB).count()
-            enabled_classes = self.session.query(DocumentClassDB).filter_by(is_enabled=True).count()
-            system_classes = self.session.query(DocumentClassDB).filter_by(is_system_class=True).count()
-            custom_classes = total_classes - system_classes
+            # Use repository method to get all statistics
+            stats = self.class_repository.get_class_statistics()
 
+            # Ensure all required keys are present
             return {
-                "total_classes": total_classes,
-                "enabled_classes": enabled_classes,
-                "system_classes": system_classes,
-                "custom_classes": custom_classes
+                "total_classes": stats.get("total_classes", 0),
+                "enabled_classes": stats.get("enabled_classes", 0),
+                "system_classes": stats.get("system_classes", 0),
+                "custom_classes": stats.get("user_classes", 0)  # Map user_classes to custom_classes
             }
 
         except Exception as e:

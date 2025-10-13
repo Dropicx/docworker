@@ -69,6 +69,8 @@ from app.repositories.pipeline_job_repository import PipelineJobRepository
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.repositories.document_class_repository import DocumentClassRepository
 from app.repositories.system_settings_repository import SystemSettingsRepository
+from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
+from app.repositories.available_model_repository import AvailableModelRepository
 
 
 def get_pipeline_job_repository(
@@ -129,3 +131,33 @@ def get_system_settings_repository(
         SystemSettingsRepository instance
     """
     return SystemSettingsRepository(db)
+
+
+def get_ocr_configuration_repository(
+    db: Session = Depends(get_session)
+) -> OCRConfigurationRepository:
+    """
+    Dependency injection factory for OCRConfigurationRepository.
+
+    Args:
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        OCRConfigurationRepository instance
+    """
+    return OCRConfigurationRepository(db)
+
+
+def get_available_model_repository(
+    db: Session = Depends(get_session)
+) -> AvailableModelRepository:
+    """
+    Dependency injection factory for AvailableModelRepository.
+
+    Args:
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        AvailableModelRepository instance
+    """
+    return AvailableModelRepository(db)

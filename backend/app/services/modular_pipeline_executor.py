@@ -20,6 +20,10 @@ from app.database.modular_pipeline_models import (
     PipelineStepExecutionDB,
     StepExecutionStatus,
 )
+from app.repositories.pipeline_job_repository import PipelineJobRepository
+from app.repositories.pipeline_step_repository import PipelineStepRepository
+from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
+from app.repositories.available_model_repository import AvailableModelRepository
 from app.services.ai_cost_tracker import AICostTracker
 from app.services.document_class_manager import DocumentClassManager
 from app.services.ovh_client import OVHClient
@@ -38,14 +42,29 @@ class ModularPipelineExecutor:
     - Retry-Aware: Handles retries per step configuration
     """
 
-    def __init__(self, session: Session):
+    def __init__(
+        self,
+        session: Session,
+        job_repository: PipelineJobRepository | None = None,
+        step_repository: PipelineStepRepository | None = None,
+        ocr_config_repository: OCRConfigurationRepository | None = None,
+        model_repository: AvailableModelRepository | None = None
+    ):
         """
-        Initialize executor with database session.
+        Initialize executor with database session and repositories.
 
         Args:
-            session: SQLAlchemy session for database access
+            session: SQLAlchemy session (kept for backward compatibility)
+            job_repository: Pipeline job repository (injected for clean architecture)
+            step_repository: Pipeline step repository (injected for clean architecture)
+            ocr_config_repository: OCR configuration repository (injected for clean architecture)
+            model_repository: Available model repository (injected for clean architecture)
         """
         self.session = session
+        self.job_repository = job_repository or PipelineJobRepository(session)
+        self.step_repository = step_repository or PipelineStepRepository(session)
+        self.ocr_config_repository = ocr_config_repository or OCRConfigurationRepository(session)
+        self.model_repository = model_repository or AvailableModelRepository(session)
         self.ovh_client = OVHClient()
         self.doc_class_manager = DocumentClassManager(session)
         self.cost_tracker = AICostTracker(session)
@@ -55,15 +74,13 @@ class ModularPipelineExecutor:
 
     def load_pipeline_steps(self) -> list[DynamicPipelineStepDB]:
         """
-        Load all enabled pipeline steps from database, ordered by execution order.
+        Load all enabled pipeline steps from database using repository pattern.
 
         Returns:
             List of pipeline steps ordered by 'order' field
         """
         try:
-            steps = self.session.query(DynamicPipelineStepDB).filter_by(
-                enabled=True
-            ).order_by(DynamicPipelineStepDB.order).all()
+            steps = self.step_repository.get_enabled_steps()
 
             logger.info(f"📋 Loaded {len(steps)} enabled pipeline steps")
             return steps
@@ -80,11 +97,9 @@ class ModularPipelineExecutor:
             List of pre-branching universal pipeline steps ordered by execution order
         """
         try:
-            steps = self.session.query(DynamicPipelineStepDB).filter_by(
-                enabled=True,
-                document_class_id=None,
-                post_branching=False
-            ).order_by(DynamicPipelineStepDB.order).all()
+            # Get universal steps and filter for pre-branching
+            universal_steps = self.step_repository.get_universal_steps()
+            steps = [s for s in universal_steps if s.enabled and not s.post_branching]
 
             logger.info(f"📋 Loaded {len(steps)} pre-branching universal pipeline steps")
             return steps
@@ -101,11 +116,7 @@ class ModularPipelineExecutor:
             List of post-branching universal pipeline steps ordered by execution order
         """
         try:
-            steps = self.session.query(DynamicPipelineStepDB).filter_by(
-                enabled=True,
-                document_class_id=None,
-                post_branching=True
-            ).order_by(DynamicPipelineStepDB.order).all()
+            steps = self.step_repository.get_post_branching_steps()
 
             logger.info(f"📋 Loaded {len(steps)} post-branching universal pipeline steps")
             return steps
@@ -115,7 +126,7 @@ class ModularPipelineExecutor:
 
     def load_steps_by_document_class(self, document_class_id: int) -> list[DynamicPipelineStepDB]:
         """
-        Load pipeline steps specific to a document class.
+        Load pipeline steps specific to a document class using repository pattern.
 
         Args:
             document_class_id: ID of the document class
@@ -124,13 +135,12 @@ class ModularPipelineExecutor:
             List of document-specific pipeline steps ordered by execution order
         """
         try:
-            steps = self.session.query(DynamicPipelineStepDB).filter_by(
-                enabled=True,
-                document_class_id=document_class_id
-            ).order_by(DynamicPipelineStepDB.order).all()
+            steps = self.step_repository.get_steps_by_document_class(document_class_id)
+            # Filter for enabled steps only
+            enabled_steps = [s for s in steps if s.enabled]
 
-            logger.info(f"📋 Loaded {len(steps)} steps for document class ID {document_class_id}")
-            return steps
+            logger.info(f"📋 Loaded {len(enabled_steps)} steps for document class ID {document_class_id}")
+            return enabled_steps
         except Exception as e:
             logger.error(f"❌ Failed to load steps for document class {document_class_id}: {e}")
             return []
@@ -413,13 +423,13 @@ class ModularPipelineExecutor:
 
     def load_ocr_configuration(self) -> OCRConfigurationDB | None:
         """
-        Load OCR configuration from database.
+        Load OCR configuration from database using repository pattern.
 
         Returns:
             OCR configuration or None if not found
         """
         try:
-            config = self.session.query(OCRConfigurationDB).first()
+            config = self.ocr_config_repository.get_config()
             if config:
                 logger.info(f"🔍 Loaded OCR configuration: {config.selected_engine}")
             return config
@@ -429,7 +439,7 @@ class ModularPipelineExecutor:
 
     def get_model_info(self, model_id: int) -> AvailableModelDB | None:
         """
-        Get model information from database.
+        Get model information from database using repository pattern.
 
         Args:
             model_id: Database ID of the model
@@ -438,10 +448,7 @@ class ModularPipelineExecutor:
             Model information or None if not found
         """
         try:
-            return self.session.query(AvailableModelDB).filter_by(
-                id=model_id,
-                is_enabled=True
-            ).first()
+            return self.model_repository.get_enabled_model_by_id(model_id)
         except Exception as e:
             logger.error(f"❌ Failed to load model info for ID {model_id}: {e}")
             return None
@@ -595,8 +602,8 @@ class ModularPipelineExecutor:
 
         logger.info(f"🚀 Starting modular pipeline execution with branching support: {processing_id[:8]}")
 
-        # Load job (must exist - created by upload endpoint)
-        job = self.session.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+        # Load job using repository (must exist - created by upload endpoint)
+        job = self.job_repository.get_by_processing_id(processing_id)
 
         if not job:
             error_msg = f"Job not found for processing_id: {processing_id}"
@@ -1110,20 +1117,36 @@ class ModularPipelineManager:
     Used by API endpoints for pipeline configuration.
     """
 
-    def __init__(self, session: Session):
+    def __init__(
+        self,
+        session: Session,
+        step_repository: PipelineStepRepository | None = None,
+        ocr_config_repository: OCRConfigurationRepository | None = None,
+        model_repository: AvailableModelRepository | None = None
+    ):
+        """
+        Initialize manager with database session and repositories.
+
+        Args:
+            session: SQLAlchemy session (kept for backward compatibility)
+            step_repository: Pipeline step repository (injected for clean architecture)
+            ocr_config_repository: OCR configuration repository (injected for clean architecture)
+            model_repository: Available model repository (injected for clean architecture)
+        """
         self.session = session
+        self.step_repository = step_repository or PipelineStepRepository(session)
+        self.ocr_config_repository = ocr_config_repository or OCRConfigurationRepository(session)
+        self.model_repository = model_repository or AvailableModelRepository(session)
 
     # ==================== PIPELINE STEP CRUD ====================
 
     def get_all_steps(self) -> list[DynamicPipelineStepDB]:
-        """Get all pipeline steps (enabled and disabled)."""
-        return self.session.query(DynamicPipelineStepDB).order_by(
-            DynamicPipelineStepDB.order
-        ).all()
+        """Get all pipeline steps (enabled and disabled) using repository pattern."""
+        return self.step_repository.get_all_ordered()
 
     def get_step(self, step_id: int) -> DynamicPipelineStepDB | None:
-        """Get a single pipeline step by ID."""
-        return self.session.query(DynamicPipelineStepDB).filter_by(id=step_id).first()
+        """Get a single pipeline step by ID using repository pattern."""
+        return self.step_repository.get(step_id)
 
     def create_step(self, step_data: dict[str, Any]) -> DynamicPipelineStepDB:
         """Create a new pipeline step."""
@@ -1185,8 +1208,8 @@ class ModularPipelineManager:
     # ==================== OCR CONFIGURATION ====================
 
     def get_ocr_config(self) -> OCRConfigurationDB | None:
-        """Get current OCR configuration."""
-        return self.session.query(OCRConfigurationDB).first()
+        """Get current OCR configuration using repository pattern."""
+        return self.ocr_config_repository.get_config()
 
     def update_ocr_config(self, config_data: dict[str, Any]) -> OCRConfigurationDB | None:
         """Update OCR configuration."""
@@ -1207,12 +1230,11 @@ class ModularPipelineManager:
     # ==================== AVAILABLE MODELS ====================
 
     def get_all_models(self, enabled_only: bool = False) -> list[AvailableModelDB]:
-        """Get all available AI models."""
-        query = self.session.query(AvailableModelDB)
+        """Get all available AI models using repository pattern."""
         if enabled_only:
-            query = query.filter_by(is_enabled=True)
-        return query.all()
+            return self.model_repository.get_enabled_models()
+        return self.model_repository.get_all()
 
     def get_model(self, model_id: int) -> AvailableModelDB | None:
-        """Get a single model by ID."""
-        return self.session.query(AvailableModelDB).filter_by(id=model_id).first()
+        """Get a single model by ID using repository pattern."""
+        return self.model_repository.get(model_id)
