@@ -84,6 +84,7 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.database.unified_models import AILogInteractionDB
+from app.repositories.ai_log_interaction_repository import AILogInteractionRepository
 
 logger = logging.getLogger(__name__)
 
@@ -103,6 +104,7 @@ class AILoggingService:
 
     Attributes:
         session (Session): SQLAlchemy database session for writing logs
+        log_repository (AILogInteractionRepository): Repository for log queries
 
     Example:
         >>> logger = AILoggingService(session=db)
@@ -133,13 +135,19 @@ class AILoggingService:
         for high-throughput scenarios.
     """
 
-    def __init__(self, session: Session):
+    def __init__(
+        self,
+        session: Session,
+        log_repository: AILogInteractionRepository | None = None
+    ):
         """Initialize logging service with database session.
 
         Args:
             session: SQLAlchemy database session for writing to ai_interaction_logs
+            log_repository: Optional repository for log queries (for DI)
         """
         self.session = session
+        self.log_repository = log_repository or AILogInteractionRepository(session)
 
     def _log_ai_interaction(
         self,
@@ -460,9 +468,7 @@ class AILoggingService:
     def get_processing_logs(self, processing_id: str) -> list:
         """Get all logs for a processing ID"""
         try:
-            logs = self.session.query(AILogInteractionDB).filter(
-                AILogInteractionDB.processing_id == processing_id
-            ).order_by(AILogInteractionDB.created_at).all()
+            logs = self.log_repository.get_by_processing_id(processing_id)
             return [log.__dict__ for log in logs]
         except Exception as e:
             logger.error(f"Failed to get processing logs: {e}")
@@ -547,20 +553,16 @@ class AILoggingService:
             No database aggregation - suitable for reports, not real-time queries.
         """
         try:
-            query = self.session.query(AILogInteractionDB)
+            # Convert date strings to datetime objects
+            start_dt = datetime.fromisoformat(start_date) if start_date else None
+            end_dt = datetime.fromisoformat(end_date) if end_date else None
 
-            if start_date:
-                start_dt = datetime.fromisoformat(start_date)
-                query = query.filter(AILogInteractionDB.created_at >= start_dt)
-
-            if end_date:
-                end_dt = datetime.fromisoformat(end_date)
-                query = query.filter(AILogInteractionDB.created_at <= end_dt)
-
-            if document_type:
-                query = query.filter(AILogInteractionDB.document_type == document_type)
-
-            logs = query.all()
+            # Get filtered logs using repository
+            logs = self.log_repository.get_filtered(
+                start_date=start_dt,
+                end_date=end_dt,
+                document_type=document_type
+            )
 
             # Basic analytics
             total_interactions = len(logs)

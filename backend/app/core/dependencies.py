@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.database.connection import get_session
 from app.services.processing_service import ProcessingService
 from app.services.statistics_service import StatisticsService
+from app.services.ai_cost_tracker import AICostTracker
 
 
 # ==================== Service Factories ====================
@@ -62,6 +63,29 @@ def get_statistics_service(
     return StatisticsService(db)
 
 
+def get_ai_cost_tracker(
+    db: Session = Depends(get_session)
+) -> AICostTracker:
+    """
+    Dependency injection factory for AICostTracker.
+
+    Args:
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        AICostTracker instance
+
+    Usage:
+        @router.get("/costs")
+        async def get_costs(
+            tracker: AICostTracker = Depends(get_ai_cost_tracker)
+        ):
+            costs = tracker.get_total_cost()
+            return costs
+    """
+    return AICostTracker(db)
+
+
 # ==================== Repository Factories ====================
 # Add repository factories here as needed for direct access
 
@@ -72,6 +96,7 @@ from app.repositories.document_class_repository import DocumentClassRepository
 from app.repositories.system_settings_repository import SystemSettingsRepository
 from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
 from app.repositories.available_model_repository import AvailableModelRepository
+from app.repositories.ai_log_interaction_repository import AILogInteractionRepository
 
 
 def get_pipeline_job_repository(
@@ -177,3 +202,18 @@ def get_available_model_repository(
         AvailableModelRepository instance
     """
     return AvailableModelRepository(db)
+
+
+def get_ai_log_interaction_repository(
+    db: Session = Depends(get_session)
+) -> AILogInteractionRepository:
+    """
+    Dependency injection factory for AILogInteractionRepository.
+
+    Args:
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        AILogInteractionRepository instance
+    """
+    return AILogInteractionRepository(db)

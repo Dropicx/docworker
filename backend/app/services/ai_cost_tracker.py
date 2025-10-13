@@ -61,8 +61,9 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
-from app.database.modular_pipeline_models import AvailableModelDB
 from app.database.unified_models import AILogInteractionDB
+from app.repositories.available_model_repository import AvailableModelRepository
+from app.repositories.ai_log_interaction_repository import AILogInteractionRepository
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +91,8 @@ class AICostTracker:
 
     Attributes:
         session (Session): SQLAlchemy database session for queries and inserts
+        model_repository (AvailableModelRepository): Repository for model pricing queries
+        log_repository (AILogInteractionRepository): Repository for log queries
         _pricing_cache (dict): In-memory cache of model pricing (model_name → pricing dict)
 
     Example:
@@ -131,14 +134,23 @@ class AICostTracker:
         consider periodic recreation to pick up pricing changes.
     """
 
-    def __init__(self, session: Session):
+    def __init__(
+        self,
+        session: Session,
+        model_repository: AvailableModelRepository | None = None,
+        log_repository: AILogInteractionRepository | None = None
+    ):
         """Initialize cost tracker with database session.
 
         Args:
             session: SQLAlchemy database session for accessing available_models
                 and writing to ai_interaction_logs table
+            model_repository: Optional repository for model pricing (for DI)
+            log_repository: Optional repository for log queries (for DI)
         """
         self.session = session
+        self.model_repository = model_repository or AvailableModelRepository(session)
+        self.log_repository = log_repository or AILogInteractionRepository(session)
         self._pricing_cache = {}  # Cache pricing to avoid repeated DB queries
 
     def _get_model_pricing(self, model_name: str) -> dict[str, float]:
@@ -189,10 +201,8 @@ class AICostTracker:
             return self._pricing_cache[model_name]
 
         try:
-            # Query database for model pricing
-            model = self.session.query(AvailableModelDB).filter(
-                AvailableModelDB.name == model_name
-            ).first()
+            # Query database for model pricing using repository
+            model = self.model_repository.get_by_name(model_name)
 
             if model and model.price_input_per_1m_tokens and model.price_output_per_1m_tokens:
                 # Convert from per 1M tokens to per 1K tokens
@@ -409,16 +419,12 @@ class AICostTracker:
             - No filters: Full table scan (use with caution on large datasets)
         """
         try:
-            query = self.session.query(AILogInteractionDB)
-
-            if processing_id:
-                query = query.filter(AILogInteractionDB.processing_id == processing_id)
-            if start_date:
-                query = query.filter(AILogInteractionDB.created_at >= start_date)
-            if end_date:
-                query = query.filter(AILogInteractionDB.created_at <= end_date)
-
-            logs = query.all()
+            # Query logs using repository with filtering
+            logs = self.log_repository.get_filtered(
+                processing_id=processing_id,
+                start_date=start_date,
+                end_date=end_date
+            )
 
             total_cost = sum(log.total_cost_usd or 0 for log in logs)
             total_tokens = sum(log.total_tokens or 0 for log in logs)
@@ -521,14 +527,11 @@ class AICostTracker:
             Typical: <1s for 10K logs, ~10s for 1M logs.
         """
         try:
-            query = self.session.query(AILogInteractionDB)
-
-            if start_date:
-                query = query.filter(AILogInteractionDB.created_at >= start_date)
-            if end_date:
-                query = query.filter(AILogInteractionDB.created_at <= end_date)
-
-            logs = query.all()
+            # Query logs using repository with date filtering
+            logs = self.log_repository.get_by_date_range(
+                start_date=start_date,
+                end_date=end_date
+            )
 
             # Group by model
             by_model = {}

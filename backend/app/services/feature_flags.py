@@ -33,6 +33,8 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from app.repositories.system_settings_repository import SystemSettingsRepository
+
 logger = logging.getLogger(__name__)
 
 # Import Settings for config defaults
@@ -92,8 +94,8 @@ class FeatureFlags:
 
     Attributes:
         session: SQLAlchemy database session for configuration lookup
+        settings_repository: Repository for system settings queries
         settings: Application settings for config defaults
-        _cache: In-memory cache of feature states (refreshed every 60 seconds)
 
     Example:
         >>> from app.core.config import settings
@@ -140,7 +142,8 @@ class FeatureFlags:
     def __init__(
         self,
         session: Session | None = None,
-        settings: Optional["Settings"] = None
+        settings: Optional["Settings"] = None,
+        settings_repository: SystemSettingsRepository | None = None
     ):
         """
         Initialize feature flag service.
@@ -150,8 +153,12 @@ class FeatureFlags:
                      If None, only environment variables and config defaults will be used.
             settings: Optional Settings instance for config defaults.
                      If None, will use global settings or hardcoded defaults.
+            settings_repository: Optional repository for system settings (for DI).
         """
         self.session = session
+        self.settings_repository = settings_repository or (
+            SystemSettingsRepository(session) if session else None
+        )
         self.settings = settings if settings is not None else global_settings
         logger.debug("🚩 Feature Flags service initialized")
 
@@ -186,14 +193,10 @@ class FeatureFlags:
             logger.debug(f"🚩 Feature '{feature.value}' from env: {is_enabled}")
             return is_enabled
 
-        # 2. Check database if session available
-        if self.session:
+        # 2. Check database if repository available
+        if self.settings_repository:
             try:
-                from app.database.unified_models import SystemSettingsDB
-
-                setting = self.session.query(SystemSettingsDB).filter_by(
-                    key=feature.value
-                ).first()
+                setting = self.settings_repository.get_by_key(feature.value)
 
                 if setting:
                     is_enabled = setting.value.lower() in ("true", "1", "yes", "on")
