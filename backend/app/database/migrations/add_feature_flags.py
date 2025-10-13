@@ -61,15 +61,36 @@ def upgrade():
 
         logger.info("Seeding default feature flags...")
 
-        # Seed default feature flags
+        # Seed default feature flags (matching Feature enum in app.services.feature_flags)
         conn.execute(text("""
             INSERT INTO feature_flags (name, enabled, description, rollout_percentage)
             VALUES
+                -- OCR and Text Extraction
+                ('vision_llm_fallback_enabled', TRUE, 'Allow fallback to Vision LLM when local OCR fails', 100),
+                ('multi_file_processing_enabled', TRUE, 'Enable multi-file document processing', 100),
+
+                -- Privacy and Security
+                ('advanced_privacy_filter_enabled', TRUE, 'Use advanced privacy filtering', 100),
+                ('pii_removal_enabled', TRUE, 'Enable PII removal in preprocessing', 100),
+
+                -- Performance and Monitoring
+                ('cost_tracking_enabled', TRUE, 'Enable AI cost tracking and logging', 100),
+                ('ai_logging_enabled', TRUE, 'Enable detailed AI interaction logging', 100),
+                ('parallel_step_execution_enabled', FALSE, 'Execute independent pipeline steps in parallel', 0),
+
+                -- Pipeline Features
+                ('dynamic_branching_enabled', TRUE, 'Enable dynamic pipeline branching based on document type', 100),
+                ('stop_conditions_enabled', TRUE, 'Enable pipeline stop conditions', 100),
+                ('retry_on_failure_enabled', TRUE, 'Retry failed pipeline steps automatically', 100),
+
+                -- Experimental Features
+                ('hybrid_ocr_strategy_enabled', FALSE, 'Use hybrid OCR strategy (experimental)', 0),
+                ('auto_quality_detection_enabled', FALSE, 'Automatic document quality detection (experimental)', 0),
+
+                -- Legacy flags (backward compatibility)
                 ('enable_ocr', TRUE, 'Enable OCR text extraction from images', 100),
                 ('enable_privacy_filter', TRUE, 'Enable PII privacy filtering', 100),
-                ('enable_multi_file', TRUE, 'Enable multi-file batch processing', 100),
-                ('new_ui_redesign', FALSE, 'Enable new UI redesign (beta)', 0),
-                ('advanced_analytics', FALSE, 'Enable advanced analytics dashboard', 0)
+                ('enable_multi_file', TRUE, 'Enable multi-file batch processing', 100)
             ON CONFLICT (name) DO NOTHING;
         """))
 
