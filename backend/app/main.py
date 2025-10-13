@@ -16,6 +16,7 @@ from app.routers import upload, process, health
 from app.routers.settings_auth import router as settings_auth_router
 from app.routers.process_multi_file import router as multi_file_router
 from app.routers.modular_pipeline import router as modular_pipeline_router
+from app.routers.admin.config import router as admin_config_router
 from app.services.cleanup import cleanup_temp_files
 from app.database.init_db import init_database
 
@@ -186,6 +187,7 @@ app.include_router(multi_file_router, prefix="/api", tags=["multi-file"])
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(settings_auth_router, tags=["settings"])  # Minimal auth for settings UI
 app.include_router(modular_pipeline_router, tags=["pipeline"])  # Modular pipeline has its own prefix
+app.include_router(admin_config_router, tags=["admin"])  # Admin configuration management
 
 @app.get("/")
 async def root():
