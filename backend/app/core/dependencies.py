@@ -5,6 +5,7 @@ Provides FastAPI dependency factories for services and repositories.
 Enables clean dependency injection throughout the application.
 """
 
+from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_session
@@ -16,7 +17,7 @@ from app.services.statistics_service import StatisticsService
 
 
 def get_processing_service(
-    db: Session = get_session()
+    db: Session = Depends(get_session)
 ) -> ProcessingService:
     """
     Dependency injection factory for ProcessingService.
@@ -39,7 +40,7 @@ def get_processing_service(
 
 
 def get_statistics_service(
-    db: Session = get_session()
+    db: Session = Depends(get_session)
 ) -> StatisticsService:
     """
     Dependency injection factory for StatisticsService.
@@ -71,7 +72,7 @@ from app.repositories.system_settings_repository import SystemSettingsRepository
 
 
 def get_pipeline_job_repository(
-    db: Session = get_session()
+    db: Session = Depends(get_session)
 ) -> PipelineJobRepository:
     """
     Dependency injection factory for PipelineJobRepository.
@@ -86,7 +87,7 @@ def get_pipeline_job_repository(
 
 
 def get_pipeline_step_repository(
-    db: Session = get_session()
+    db: Session = Depends(get_session)
 ) -> PipelineStepRepository:
     """
     Dependency injection factory for PipelineStepRepository.
@@ -101,7 +102,7 @@ def get_pipeline_step_repository(
 
 
 def get_document_class_repository(
-    db: Session = get_session()
+    db: Session = Depends(get_session)
 ) -> DocumentClassRepository:
     """
     Dependency injection factory for DocumentClassRepository.
@@ -116,7 +117,7 @@ def get_document_class_repository(
 
 
 def get_system_settings_repository(
-    db: Session = get_session()
+    db: Session = Depends(get_session)
 ) -> SystemSettingsRepository:
     """
     Dependency injection factory for SystemSettingsRepository.
