@@ -87,7 +87,7 @@ class ProcessingService:
 
         except Exception as queue_error:
             logger.error(f"❌ Failed to queue task: {queue_error}")
-            raise RuntimeError(f"Failed to queue processing task: {str(queue_error)}")
+            raise RuntimeError(f"Failed to queue processing task: {str(queue_error)}") from queue_error
 
     def get_processing_status(self, processing_id: str) -> dict[str, Any]:
         """

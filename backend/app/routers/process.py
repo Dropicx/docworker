@@ -71,15 +71,15 @@ async def start_processing(
         return service.start_processing(processing_id, options_dict)
 
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     except Exception as e:
         logger.error(f"❌ Start-Verarbeitung Fehler: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Fehler beim Starten der Verarbeitung: {str(e)}"
-        )
+        ) from e
 
 @router.get("/process/{processing_id}/status", response_model=ProcessingProgress)
 async def get_processing_status(
@@ -96,13 +96,13 @@ async def get_processing_status(
         return ProcessingProgress(**status_dict)
 
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.error(f"❌ Status-Abfrage Fehler: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Fehler beim Abrufen des Status: {str(e)}"
-        )
+        ) from e
 
 @router.get("/process/{processing_id}/result", response_model=TranslationResult)
 async def get_processing_result(
@@ -121,14 +121,14 @@ async def get_processing_result(
     except ValueError as e:
         # Service raises ValueError for both not-found and not-completed
         if "not found" in str(e).lower():
-            raise HTTPException(status_code=404, detail=str(e))
-        raise HTTPException(status_code=409, detail=str(e))
+            raise HTTPException(status_code=404, detail=str(e)) from e
+        raise HTTPException(status_code=409, detail=str(e)) from e
     except Exception as e:
         logger.error(f"❌ Ergebnis-Abfrage Fehler: {e}")
         raise HTTPException(
             status_code=500,
             detail=f"Fehler beim Abrufen des Ergebnisses: {str(e)}"
-        )
+        ) from e
 
 @router.get("/process/active")
 @limiter.limit("30/minute")
@@ -171,7 +171,7 @@ async def get_pipeline_stats(
         raise HTTPException(
             status_code=500,
             detail=f"Failed to retrieve pipeline statistics: {str(e)}"
-        )
+        ) from e
 
 @router.post("/process/clear-cache")
 async def clear_pipeline_cache(

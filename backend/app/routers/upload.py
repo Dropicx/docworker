@@ -176,7 +176,7 @@ async def upload_document(
         raise HTTPException(
             status_code=500,
             detail=f"Interner Server-Fehler beim Upload: {str(e)}"
-        )
+        ) from e
 
 @router.delete("/upload/{processing_id}")
 @limiter.limit("10/minute")
@@ -221,7 +221,7 @@ async def cancel_processing(
         raise HTTPException(
             status_code=500,
             detail=f"Fehler beim Abbrechen der Verarbeitung: {str(e)}"
-        )
+        ) from e
 
 @router.get("/upload/limits")
 async def get_upload_limits():

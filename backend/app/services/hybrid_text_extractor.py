@@ -21,8 +21,6 @@ from app.services.ovh_client import OVHClient
 
 # Optional imports for local OCR (fallback gracefully if not available)
 try:
-    import pytesseract
-
     from app.services.text_extractor_ocr import TextExtractorWithOCR
     LOCAL_OCR_AVAILABLE = True
 except ImportError:

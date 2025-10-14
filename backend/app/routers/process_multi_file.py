@@ -386,7 +386,7 @@ async def analyze_files_strategy(files: list[UploadFile] = File(...)):
         raise HTTPException(
             status_code=500,
             detail=f"File analysis error: {str(e)}"
-        )
+        ) from e
 
 def _estimate_processing_time(analysis: dict[str, Any]) -> str:
     """Estimate processing time based on analysis"""

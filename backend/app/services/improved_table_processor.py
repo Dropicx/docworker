@@ -73,7 +73,7 @@ class ImprovedTableProcessor:
 
             # Only use position data if confidence is good
             return avg_confidence > 60
-        except:
+        except Exception:
             return False
 
     def _process_with_position_data(self, text: str, ocr_data: dict) -> str:
@@ -376,12 +376,9 @@ class ImprovedTableProcessor:
 
             # Don't treat everything as a table
             # Only if we have clear multi-column structure
-            if non_empty < 10:
-                return False
-
             # Check for multiple columns of aligned data
             # (This is simplified - the main improvement is in processing)
-            return True
+            return non_empty >= 10
 
         except Exception as e:
             logger.debug(f"Table detection error: {e}")

@@ -35,6 +35,7 @@ from datetime import datetime, timedelta
 import gc
 import logging
 import os
+from pathlib import Path
 import tempfile
 from typing import Any
 
@@ -118,12 +119,12 @@ async def cleanup_system_temp_files():
         for root, _dirs, files in os.walk(temp_dir):
             for file in files:
                 if file.startswith(('medical_', 'uploaded_', 'processed_')):
-                    file_path = os.path.join(root, file)
+                    file_path = Path(root) / file
                     try:
                         # Datei älter als 1 Stunde?
-                        file_time = datetime.fromtimestamp(os.path.getctime(file_path))
+                        file_time = datetime.fromtimestamp(file_path.stat().st_ctime)
                         if current_time - file_time > timedelta(hours=1):
-                            os.remove(file_path)
+                            file_path.unlink()
                             files_removed += 1
                             logger.debug(f"🗑️ Temporäre Datei gelöscht: {file}")
                     except (OSError, FileNotFoundError):
@@ -314,7 +315,7 @@ async def create_secure_temp_file(prefix: str = "medical_", suffix: str = "") ->
         os.close(fd)  # Dateideskriptor schließen
 
         # Berechtigungen setzen (nur Besitzer kann lesen/schreiben)
-        os.chmod(temp_path, 0o600)
+        Path(temp_path).chmod(0o600)
 
         return temp_path
 
@@ -367,14 +368,15 @@ async def secure_delete_file(file_path: str):
         Consider async execution for large files to avoid blocking.
     """
     try:
-        if os.path.exists(file_path):
+        path = Path(file_path)
+        if path.exists():
             # Datei überschreiben vor dem Löschen (einfache Sicherung)
-            with open(file_path, "wb") as f:
-                f.write(os.urandom(os.path.getsize(file_path)))
+            file_size = path.stat().st_size
+            path.write_bytes(os.urandom(file_size))
 
             # Datei löschen
-            os.remove(file_path)
-            logger.debug(f"🔒 Datei sicher gelöscht: {os.path.basename(file_path)}")
+            path.unlink()
+            logger.debug(f"🔒 Datei sicher gelöscht: {path.name}")
 
     except Exception as e:
         logger.error(f"❌ Sicheres Löschen fehlgeschlagen: {e}")

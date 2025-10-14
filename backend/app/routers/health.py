@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 import os
+from pathlib import Path
 import shutil
 import tempfile
 
@@ -96,11 +97,10 @@ async def health_check(request: Request = None):
 
         # Temporäres Verzeichnis prüfen
         try:
-            temp_dir = tempfile.gettempdir()
-            test_file = os.path.join(temp_dir, "health_check_test")
-            with open(test_file, 'w') as f:
-                f.write("test")
-            os.remove(test_file)
+            temp_dir = Path(tempfile.gettempdir())
+            test_file = temp_dir / "health_check_test"
+            test_file.write_text("test")
+            test_file.unlink()
             services["filesystem"] = "healthy"
         except Exception:
             services["filesystem"] = "error"

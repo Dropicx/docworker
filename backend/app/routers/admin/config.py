@@ -249,12 +249,12 @@ async def update_feature_flag(
     # Validate flag name exists
     try:
         Feature(flag_name)
-    except ValueError:
+    except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Feature flag '{flag_name}' not found. "
                    f"Valid flags: {[f.value for f in Feature]}"
-        )
+        ) from e
 
     # Update in database
     repo = FeatureFlagsRepository(db)

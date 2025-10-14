@@ -79,7 +79,7 @@ async def authenticate(auth_request: AuthRequest):
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Authentication error"
-        )
+        ) from e
 
 @router.get("/check-auth")
 async def check_auth(authenticated: bool = Depends(verify_session_token)):

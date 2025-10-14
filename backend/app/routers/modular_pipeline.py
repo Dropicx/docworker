@@ -274,7 +274,7 @@ async def update_ocr_config(
 
     except Exception as e:
         logger.error(f"❌ Failed to update OCR config: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/ocr-engines", response_model=dict[str, EngineStatusResponse])
@@ -296,7 +296,7 @@ async def get_available_engines(
 
     except Exception as e:
         logger.error(f"❌ Failed to get OCR engines: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/ocr-engines/{engine}", response_model=EngineStatusResponse)
@@ -319,7 +319,7 @@ async def get_engine_status(
 
     except Exception as e:
         logger.error(f"❌ Failed to get engine status: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 # ==================== PIPELINE STEPS ENDPOINTS ====================
@@ -343,7 +343,7 @@ async def get_all_steps(
 
     except Exception as e:
         logger.error(f"❌ Failed to get pipeline steps: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/steps/{step_id}", response_model=PipelineStepResponse)
@@ -394,7 +394,7 @@ async def create_step(
 
     except Exception as e:
         logger.error(f"❌ Failed to create pipeline step: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.put("/steps/{step_id}", response_model=PipelineStepResponse)
@@ -427,7 +427,7 @@ async def update_step(
 
     except Exception as e:
         logger.error(f"❌ Failed to update pipeline step: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.delete("/steps/{step_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -480,7 +480,7 @@ async def reorder_steps(
 
     except Exception as e:
         logger.error(f"❌ Failed to reorder steps: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/steps/universal", response_model=list[PipelineStepResponse])
@@ -503,7 +503,7 @@ async def get_universal_steps(
 
     except Exception as e:
         logger.error(f"❌ Failed to get universal steps: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/steps/by-class/{class_id}", response_model=list[PipelineStepResponse])
@@ -533,7 +533,7 @@ async def get_steps_by_document_class(
 
     except Exception as e:
         logger.error(f"❌ Failed to get steps for class {class_id}: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/visualization")
@@ -603,7 +603,7 @@ async def get_pipeline_visualization(
 
     except Exception as e:
         logger.error(f"❌ Failed to get pipeline visualization: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 # ==================== AVAILABLE MODELS ENDPOINTS ====================
@@ -631,7 +631,7 @@ async def get_available_models(
 
     except Exception as e:
         logger.error(f"❌ Failed to get available models: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/models/{model_id}", response_model=ModelResponse)
@@ -681,7 +681,7 @@ async def get_all_document_classes(
 
     except Exception as e:
         logger.error(f"❌ Failed to get document classes: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/document-classes/{class_id}", response_model=DocumentClassResponse)
@@ -736,11 +736,11 @@ async def create_document_class(
 
     except ValueError as e:
         # Validation errors (duplicate key, etc.)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
     except Exception as e:
         logger.error(f"❌ Failed to create document class: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.put("/document-classes/{class_id}", response_model=DocumentClassResponse)
@@ -772,11 +772,11 @@ async def update_document_class(
 
     except ValueError as e:
         # Validation errors
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
     except Exception as e:
         logger.error(f"❌ Failed to update document class: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.delete("/document-classes/{class_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -806,11 +806,11 @@ async def delete_document_class(
 
     except ValueError as e:
         # Cannot delete (system class or has steps)
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
 
     except Exception as e:
         logger.error(f"❌ Failed to delete document class: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/document-classes/statistics/summary")
@@ -832,4 +832,4 @@ async def get_document_class_statistics(
 
     except Exception as e:
         logger.error(f"❌ Failed to get document class statistics: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e

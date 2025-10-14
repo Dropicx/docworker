@@ -312,7 +312,7 @@ class DocumentClassManager:
         except IntegrityError as e:
             self.session.rollback()
             logger.error(f"❌ Integrity error creating document class: {e}")
-            raise ValueError("Document class with this key already exists")
+            raise ValueError("Document class with this key already exists") from e
 
         except Exception as e:
             self.session.rollback()

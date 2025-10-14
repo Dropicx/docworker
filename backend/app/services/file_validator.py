@@ -1,5 +1,5 @@
 import logging
-import os
+from pathlib import Path
 
 from fastapi import UploadFile
 import magic
@@ -124,7 +124,7 @@ class FileValidator:
 
             # Dateiendung prüfen
             filename_lower = file.filename.lower() if file.filename else ""
-            file_extension = os.path.splitext(filename_lower)[1]
+            file_extension = Path(filename_lower).suffix
 
             # MIME-Type validieren (mit Fallback-Unterstützung)
             mime_valid = False
@@ -224,7 +224,7 @@ class FileValidator:
                     text = page.extract_text()
                     if text and text.strip():
                         break
-                except:
+                except Exception:
                     continue
 
             return True, None
@@ -326,7 +326,7 @@ class FileValidator:
         if not filename:
             return "unknown"
 
-        extension = os.path.splitext(filename.lower())[1]
+        extension = Path(filename.lower()).suffix
 
         if extension == ".pdf":
             return "pdf"
