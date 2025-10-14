@@ -44,13 +44,13 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
           setError(metadata.message);
 
           // Pass structured metadata to parent for specialized UI
-          onError(metadata.message, metadata);
+          onError(metadata.message, metadata as unknown as Record<string, unknown>);
         }
       } catch (err) {
-        console.error('Status polling error:', err);
-        setError(err.message);
+        console.error('Status polling error:', err as Error);
+        setError((err as Error).message);
         setIsPolling(false);
-        onError(err.message);
+        onError((err as Error).message);
       }
     };
 
@@ -72,8 +72,8 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
       setIsPolling(false);
       onCancel?.();
     } catch (err) {
-      console.error('Cancel error:', err);
-      setError(err.message);
+      console.error('Cancel error:', err as Error);
+      setError((err as Error).message);
     }
   };
 

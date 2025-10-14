@@ -71,7 +71,7 @@ const DocumentClassManager: React.FC = () => {
       const classesData = await pipelineApi.getAllDocumentClasses(false);
       setClasses(classesData);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -156,7 +156,7 @@ const DocumentClassManager: React.FC = () => {
       await loadStatistics();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -183,7 +183,7 @@ const DocumentClassManager: React.FC = () => {
       await loadStatistics();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }

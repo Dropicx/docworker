@@ -401,8 +401,8 @@ function App() {
               {errorMetadata?.isTermination ? (
                 <TerminationCard
                   message={error || 'Verarbeitung wurde gestoppt'}
-                  reason={errorMetadata.reason}
-                  step={errorMetadata.step}
+                  reason={errorMetadata.reason as string | undefined}
+                  step={errorMetadata.step as string | undefined}
                   onReset={handleNewTranslation}
                 />
               ) : (

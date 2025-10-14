@@ -81,7 +81,7 @@ class SettingsService {
 
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Authentication failed'
       );
@@ -120,7 +120,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to load prompts'
       );
@@ -156,7 +156,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to update prompts'
       );
@@ -175,7 +175,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to reset prompts'
       );
@@ -194,7 +194,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Prompt test failed'
       );
@@ -212,7 +212,7 @@ class SettingsService {
       );
       return response.data.document_types;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to load document types'
       );
@@ -234,7 +234,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to export prompts'
       );
@@ -253,7 +253,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to import prompts'
       );
@@ -360,7 +360,7 @@ class SettingsService {
       );
       return response.data.settings;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get pipeline settings'
       );
@@ -379,7 +379,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to update pipeline settings'
       );
@@ -397,7 +397,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get pipeline statistics'
       );
@@ -416,7 +416,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to clear pipeline cache'
       );
@@ -436,7 +436,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get global prompts'
       );
@@ -455,7 +455,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to update global prompts'
       );
@@ -474,7 +474,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to reset global prompts'
       );
@@ -492,7 +492,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to export global prompts'
       );
@@ -511,7 +511,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to import global prompts'
       );
@@ -530,7 +530,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Global prompt test failed'
       );
@@ -553,7 +553,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get model configuration'
       );
@@ -573,7 +573,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get OCR settings'
       );
@@ -592,7 +592,7 @@ class SettingsService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<unknown>;
+      const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to update OCR settings'
       );

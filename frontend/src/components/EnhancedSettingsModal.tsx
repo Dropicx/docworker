@@ -56,7 +56,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
         setAuthError(response.message || 'Authentifizierung fehlgeschlagen');
       }
     } catch (error) {
-      setAuthError(error.message || 'Authentifizierung fehlgeschlagen');
+      setAuthError((error as Error).message || 'Authentifizierung fehlgeschlagen');
     } finally {
       setIsLoading(false);
     }

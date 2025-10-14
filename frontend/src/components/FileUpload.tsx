@@ -91,7 +91,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       // Immediately proceed on mobile for better UX
       onUploadSuccess(response);
     } catch (error) {
-      const errorMessage = error.message || 'Upload fehlgeschlagen';
+      const errorMessage = (error as Error).message || 'Upload fehlgeschlagen';
       setValidationError(errorMessage);
       onUploadError(errorMessage);
       setIsUploading(false);

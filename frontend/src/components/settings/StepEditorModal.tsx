@@ -226,7 +226,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
 
       onSave();
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setSaving(false);
     }

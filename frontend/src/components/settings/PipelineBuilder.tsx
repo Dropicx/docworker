@@ -107,7 +107,7 @@ const PipelineBuilder: React.FC = () => {
       setSelectedEngine(config.selected_engine as OCREngineEnum);
       setPiiRemovalEnabled(config.pii_removal_enabled ?? true); // Load PII toggle state
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setOcrLoading(false);
     }
@@ -118,7 +118,7 @@ const PipelineBuilder: React.FC = () => {
       const enginesData = await pipelineApi.getAvailableEngines();
       setEngines(enginesData);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     }
   };
 
@@ -128,7 +128,7 @@ const PipelineBuilder: React.FC = () => {
       const stepsData = await pipelineApi.getAllSteps();
       setSteps(stepsData);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setStepsLoading(false);
     }
@@ -140,7 +140,7 @@ const PipelineBuilder: React.FC = () => {
       const modelsData = await pipelineApi.getAvailableModels(true);
       setModels(modelsData);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setModelsLoading(false);
     }
@@ -152,7 +152,7 @@ const PipelineBuilder: React.FC = () => {
       const classesData = await pipelineApi.getAllDocumentClasses(true); // Only enabled classes
       setDocumentClasses(classesData);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setClassesLoading(false);
     }
@@ -183,7 +183,7 @@ const PipelineBuilder: React.FC = () => {
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
     } finally {
       setOcrSaving(false);
     }
@@ -261,7 +261,7 @@ const PipelineBuilder: React.FC = () => {
 
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
       // Reload on error to restore correct state
       await loadSteps();
     }
@@ -298,11 +298,11 @@ const PipelineBuilder: React.FC = () => {
       // Persist to backend (no await to keep UI responsive)
       pipelineApi.updateStep(step.id, updatedStep).catch((err) => {
         // If API fails, reload to get correct state
-        setError(err.message);
+        setError((err as Error).message);
         loadSteps();
       });
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
       await loadSteps();
     }
   };
@@ -388,14 +388,14 @@ const PipelineBuilder: React.FC = () => {
       // Call API to persist the change (no await needed for UI responsiveness)
       pipelineApi.reorderSteps(newOrderIds).catch((err) => {
         // If API fails, reload to get correct state
-        setError(err.message);
+        setError((err as Error).message);
         loadSteps();
       });
 
       setSuccess('Schritte erfolgreich neu geordnet!');
       setTimeout(() => setSuccess(''), 2000);
     } catch (err) {
-      setError(err.message);
+      setError((err as Error).message);
       // Reload on error to restore correct state
       await loadSteps();
     } finally {
