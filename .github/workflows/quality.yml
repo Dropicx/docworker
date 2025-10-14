@@ -77,39 +77,30 @@ jobs:
       run:
         working-directory: ./backend
 
+    # Service containers run as Kubernetes pods when using containerMode: kubernetes
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: doctranslator_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/doctranslator_test
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/doctranslator_test
       OVH_AI_ENDPOINTS_ACCESS_TOKEN: test-token
       ENVIRONMENT: test
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Start PostgreSQL container
-        run: |
-          docker run -d \
-            --name postgres \
-            -e POSTGRES_USER=postgres \
-            -e POSTGRES_PASSWORD=postgres \
-            -e POSTGRES_DB=doctranslator_test \
-            -p 5432:5432 \
-            --health-cmd pg_isready \
-            --health-interval 10s \
-            --health-timeout 5s \
-            --health-retries 5 \
-            postgres:14
-
-          # Wait for PostgreSQL to be ready
-          echo "Waiting for PostgreSQL to be ready..."
-          for i in {1..30}; do
-            if docker exec postgres pg_isready -U postgres > /dev/null 2>&1; then
-              echo "PostgreSQL is ready!"
-              break
-            fi
-            echo "Waiting... ($i/30)"
-            sleep 2
-          done
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -143,12 +134,6 @@ jobs:
           name: pytest-results
           path: backend/pytest-report.xml
           retention-days: 30
-
-      - name: Stop PostgreSQL container
-        if: always()
-        run: |
-          docker stop postgres || true
-          docker rm postgres || true
 
   # ==========================================
   # Frontend Code Quality
