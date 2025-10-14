@@ -17,7 +17,7 @@ jobs:
   # ==========================================
   backend-quality:
     name: Backend Quality Checks
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
     defaults:
       run:
         working-directory: ./backend
@@ -72,7 +72,7 @@ jobs:
   # ==========================================
   backend-tests:
     name: Backend Tests
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
     defaults:
       run:
         working-directory: ./backend
@@ -139,7 +139,7 @@ jobs:
   # ==========================================
   frontend-quality:
     name: Frontend Quality Checks
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
     defaults:
       run:
         working-directory: ./frontend
@@ -175,7 +175,7 @@ jobs:
   # ==========================================
   frontend-build:
     name: Frontend Build Test
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
     defaults:
       run:
         working-directory: ./frontend
@@ -211,7 +211,7 @@ jobs:
   # ==========================================
   security-audit:
     name: Security Audit
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
 
     steps:
       - name: Checkout code
@@ -260,7 +260,7 @@ jobs:
   # ==========================================
   quality-gate:
     name: Quality Gate
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
     needs: [backend-quality, backend-tests, frontend-quality, frontend-build]
     if: always()
 
