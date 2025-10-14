@@ -99,7 +99,7 @@ from typing import Any
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.database.modular_pipeline_models import DocumentClassDB, DynamicPipelineStepDB
+from app.database.modular_pipeline_models import DocumentClassDB
 from app.repositories.document_class_repository import DocumentClassRepository
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 

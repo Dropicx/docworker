@@ -18,7 +18,7 @@ from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_pipeline_step_repository
 from app.database.connection import get_session
-from app.database.modular_pipeline_models import DynamicPipelineStepDB, OCREngineEnum
+from app.database.modular_pipeline_models import OCREngineEnum
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.routers.settings_auth import verify_session_token
 from app.services.document_class_manager import DocumentClassManager

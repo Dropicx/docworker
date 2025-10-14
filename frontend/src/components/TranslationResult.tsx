@@ -493,7 +493,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                 <Eye className="w-8 h-8 text-primary-500" />
               </div>
               <p className="text-primary-600">
-                Klicken Sie auf "Anzeigen", um den Originaltext zu sehen
+                Klicken Sie auf &quot;Anzeigen&quot;, um den Originaltext zu sehen
               </p>
             </div>
           )}

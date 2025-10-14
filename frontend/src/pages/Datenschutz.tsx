@@ -82,10 +82,10 @@ const Datenschutz: React.FC = () => {
 
                 <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">SSL- bzw. TLS-Verschlüsselung</h3>
                 <p className="mb-4">
-                  Diese Seite nutzt aus Sicherheitsgründen und zum Schutz der Übertragung vertraulicher 
-                  Inhalte, wie zum Beispiel medizinischer Dokumente, die Sie an uns senden, eine SSL- bzw. 
-                  TLS-Verschlüsselung. Eine verschlüsselte Verbindung erkennen Sie daran, dass die 
-                  Adresszeile des Browsers von "http://" auf "https://" wechselt und an dem Schloss-Symbol 
+                  Diese Seite nutzt aus Sicherheitsgründen und zum Schutz der Übertragung vertraulicher
+                  Inhalte, wie zum Beispiel medizinischer Dokumente, die Sie an uns senden, eine SSL- bzw.
+                  TLS-Verschlüsselung. Eine verschlüsselte Verbindung erkennen Sie daran, dass die
+                  Adresszeile des Browsers von &quot;http://&quot; auf &quot;https://&quot; wechselt und an dem Schloss-Symbol
                   in Ihrer Browserzeile.
                 </p>
               </section>
@@ -95,7 +95,7 @@ const Datenschutz: React.FC = () => {
                 
                 <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">Cookies</h3>
                 <p className="mb-4">
-                  Unsere Internetseiten verwenden so genannte "Cookies". Cookies sind kleine Datenpakete 
+                  Unsere Internetseiten verwenden so genannte &quot;Cookies&quot;. Cookies sind kleine Datenpakete 
                   und richten auf Ihrem Endgerät keinen Schaden an. Sie werden entweder vorübergehend für 
                   die Dauer einer Sitzung (Session-Cookies) oder dauerhaft (permanente Cookies) auf Ihrem 
                   Endgerät gespeichert. Session-Cookies werden nach Ende Ihres Besuchs automatisch gelöscht.

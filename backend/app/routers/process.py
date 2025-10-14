@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 import os
 
@@ -6,15 +6,12 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
 from slowapi.util import get_remote_address
-from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_processing_service, get_statistics_service
-from app.database.connection import get_session
 from app.models.document import (
     LANGUAGE_NAMES,
     ProcessingOptions,
     ProcessingProgress,
-    ProcessingStatus,
     SupportedLanguage,
     TranslationResult,
 )
@@ -71,8 +68,7 @@ async def start_processing(
     """
     try:
         options_dict = options.dict() if options else {}
-        result = service.start_processing(processing_id, options_dict)
-        return result
+        return service.start_processing(processing_id, options_dict)
 
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
@@ -126,8 +122,7 @@ async def get_processing_result(
         # Service raises ValueError for both not-found and not-completed
         if "not found" in str(e).lower():
             raise HTTPException(status_code=404, detail=str(e))
-        else:
-            raise HTTPException(status_code=409, detail=str(e))
+        raise HTTPException(status_code=409, detail=str(e))
     except Exception as e:
         logger.error(f"❌ Ergebnis-Abfrage Fehler: {e}")
         raise HTTPException(

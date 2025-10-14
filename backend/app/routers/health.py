@@ -307,8 +307,6 @@ async def test_formatting():
     """
     Testet die Formatierungsfunktion
     """
-    os.getenv("USE_OVH_ONLY", "true").lower() == "true"
-
     # Test text mit problematischen Formatierungen
     test_text = """## 📊 Zusammenfassung
 ### Was wurde gemacht?

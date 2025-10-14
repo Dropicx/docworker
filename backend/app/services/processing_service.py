@@ -160,8 +160,9 @@ class ProcessingService:
         Returns:
             Dictionary with active process information
         """
-        from app.services.cleanup import processing_store
         from datetime import datetime
+
+        from app.services.cleanup import processing_store
 
         active_processes = []
 
@@ -212,8 +213,8 @@ class ProcessingService:
         """
         if job.status == StepExecutionStatus.RUNNING:
             return f"Verarbeite Schritt {job.progress_percent}%"
-        elif job.status == StepExecutionStatus.COMPLETED:
+        if job.status == StepExecutionStatus.COMPLETED:
             return "Verarbeitung abgeschlossen"
-        elif job.status == StepExecutionStatus.FAILED:
+        if job.status == StepExecutionStatus.FAILED:
             return "Fehler bei Verarbeitung"
         return "Warten auf Verarbeitung..."

@@ -9,10 +9,17 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 from app.database.connection import get_session
+from app.repositories.ai_log_interaction_repository import AILogInteractionRepository
+from app.repositories.available_model_repository import AvailableModelRepository
+from app.repositories.document_class_repository import DocumentClassRepository
+from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
+from app.repositories.pipeline_job_repository import PipelineJobRepository
+from app.repositories.pipeline_step_execution_repository import PipelineStepExecutionRepository
+from app.repositories.pipeline_step_repository import PipelineStepRepository
+from app.repositories.system_settings_repository import SystemSettingsRepository
+from app.services.ai_cost_tracker import AICostTracker
 from app.services.processing_service import ProcessingService
 from app.services.statistics_service import StatisticsService
-from app.services.ai_cost_tracker import AICostTracker
-
 
 # ==================== Service Factories ====================
 
@@ -88,15 +95,6 @@ def get_ai_cost_tracker(
 
 # ==================== Repository Factories ====================
 # Add repository factories here as needed for direct access
-
-from app.repositories.pipeline_job_repository import PipelineJobRepository
-from app.repositories.pipeline_step_repository import PipelineStepRepository
-from app.repositories.pipeline_step_execution_repository import PipelineStepExecutionRepository
-from app.repositories.document_class_repository import DocumentClassRepository
-from app.repositories.system_settings_repository import SystemSettingsRepository
-from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
-from app.repositories.available_model_repository import AvailableModelRepository
-from app.repositories.ai_log_interaction_repository import AILogInteractionRepository
 
 
 def get_pipeline_job_repository(

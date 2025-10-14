@@ -465,7 +465,7 @@ const DocumentClassManager: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Class Key * <span className="text-xs text-gray-500">(z.B. "ARZTBRIEF")</span>
+                    Class Key * <span className="text-xs text-gray-500">(z.B. &quot;ARZTBRIEF&quot;)</span>
                   </label>
                   <input
                     type="text"

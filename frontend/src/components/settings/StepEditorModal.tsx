@@ -601,7 +601,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                     placeholder="document_type"
                   />
                   <p className="text-xs text-brand-600 mt-1">
-                    Das Feld in der Ausgabe, das den Klassenschlüssel enthält (Standard: "document_type")
+                    Das Feld in der Ausgabe, das den Klassenschlüssel enthält (Standard: &quot;document_type&quot;)
                   </p>
                 </div>
               )}
@@ -872,7 +872,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                           💡 Best Practice: Konfigurieren Sie Ihren Prompt so, dass der Stop-Wert das ERSTE WORT ist
                         </p>
                         <p className="text-xs text-blue-600 mt-1">
-                          Beispiel: "Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH"
+                          Beispiel: &quot;Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH&quot;
                         </p>
                       </div>
                     </div>
@@ -897,7 +897,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                     <div className="text-xs text-brand-700">
                       <p className="font-semibold mb-1">💡 Beispiel-Anwendung</p>
                       <p>
-                        Wenn dieser Schritt "NICHT_MEDIZINISCH" ausgibt, wird die Pipeline sofort gestoppt.
+                        Wenn dieser Schritt &quot;NICHT_MEDIZINISCH&quot; ausgibt, wird die Pipeline sofort gestoppt.
                         Der Benutzer sieht eine Warnung und kann ein anderes Dokument hochladen.
                         Dies spart API-Kosten und verbessert die Benutzererfahrung.
                       </p>

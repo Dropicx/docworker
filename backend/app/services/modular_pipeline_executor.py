@@ -16,14 +16,13 @@ from app.database.modular_pipeline_models import (
     AvailableModelDB,
     DynamicPipelineStepDB,
     OCRConfigurationDB,
-    PipelineJobDB,
     PipelineStepExecutionDB,
     StepExecutionStatus,
 )
+from app.repositories.available_model_repository import AvailableModelRepository
+from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
 from app.repositories.pipeline_job_repository import PipelineJobRepository
 from app.repositories.pipeline_step_repository import PipelineStepRepository
-from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
-from app.repositories.available_model_repository import AvailableModelRepository
 from app.services.ai_cost_tracker import AICostTracker
 from app.services.document_class_manager import DocumentClassManager
 from app.services.ovh_client import OVHClient

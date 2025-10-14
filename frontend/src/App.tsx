@@ -309,7 +309,7 @@ function App() {
                 
                 {allLanguages.length === 0 && languageSearchTerm && (
                   <div className="text-center py-4 text-sm text-neutral-500">
-                    Keine Sprachen gefunden für "{languageSearchTerm}"
+                    Keine Sprachen gefunden für &quot;{languageSearchTerm}&quot;
                   </div>
                 )}
               </div>

@@ -144,9 +144,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
 
         matching = []
         for doc_class in classes:
-            if doc_class.strong_indicators and indicator in doc_class.strong_indicators:
-                matching.append(doc_class)
-            elif doc_class.weak_indicators and indicator in doc_class.weak_indicators:
+            if doc_class.strong_indicators and indicator in doc_class.strong_indicators or doc_class.weak_indicators and indicator in doc_class.weak_indicators:
                 matching.append(doc_class)
 
         return matching

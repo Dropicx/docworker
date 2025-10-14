@@ -657,7 +657,7 @@ const PipelineBuilder: React.FC = () => {
               <>
                 <p>Keine Pre-Branching Schritte konfiguriert.</p>
                 <p className="text-sm mt-2">Diese Schritte laufen VOR der dokumentspezifischen Verarbeitung.</p>
-                <p className="text-sm">Klicken Sie auf "Schritt hinzufügen", um zu beginnen.</p>
+                <p className="text-sm">Klicken Sie auf &quot;Schritt hinzufügen&quot;, um zu beginnen.</p>
               </>
             ) : activePipelineTab === 'post-branching' ? (
               <>
@@ -668,7 +668,7 @@ const PipelineBuilder: React.FC = () => {
             ) : (
               <>
                 <p>Keine Schritte für {getDocumentClassName(activePipelineTab)} konfiguriert.</p>
-                <p className="text-sm mt-2">Klicken Sie auf "Schritt hinzufügen", um klassenspezifische Verarbeitung zu erstellen.</p>
+                <p className="text-sm mt-2">Klicken Sie auf &quot;Schritt hinzufügen&quot;, um klassenspezifische Verarbeitung zu erstellen.</p>
               </>
             )}
           </div>

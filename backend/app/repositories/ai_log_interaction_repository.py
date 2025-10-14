@@ -5,6 +5,7 @@ Handles database operations for AI interaction logs and cost tracking.
 """
 
 from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.database.unified_models import AILogInteractionDB

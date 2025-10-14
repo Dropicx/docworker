@@ -4,18 +4,13 @@ Statistics Service
 Handles business logic for pipeline statistics and performance metrics.
 """
 
-import logging
 from datetime import datetime, timedelta
+import logging
 
 from sqlalchemy.orm import Session
 
-from app.database.modular_pipeline_models import (
-    DynamicPipelineStepDB,
-    PipelineStepExecutionDB,
-)
-from app.database.unified_models import SystemSettingsDB
-from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.repositories.pipeline_step_execution_repository import PipelineStepExecutionRepository
+from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.repositories.system_settings_repository import SystemSettingsRepository
 
 logger = logging.getLogger(__name__)

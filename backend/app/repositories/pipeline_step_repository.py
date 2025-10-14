@@ -233,7 +233,7 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
             return None
 
         # Create new step with copied attributes
-        new_step = self.create(
+        return self.create(
             name=new_name,
             description=original.description,
             order=original.order + 1,  # Place after original
@@ -255,7 +255,6 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
             modified_by="system_duplicate"
         )
 
-        return new_step
 
     def get_step_statistics(self) -> dict:
         """

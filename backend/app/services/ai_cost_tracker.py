@@ -62,8 +62,8 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.database.unified_models import AILogInteractionDB
-from app.repositories.available_model_repository import AvailableModelRepository
 from app.repositories.ai_log_interaction_repository import AILogInteractionRepository
+from app.repositories.available_model_repository import AvailableModelRepository
 
 logger = logging.getLogger(__name__)
 

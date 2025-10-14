@@ -19,8 +19,8 @@ const Nutzungsbedingungen: React.FC = () => {
               <section>
                 <h2 className="text-xl font-semibold text-primary-900 mb-3">§ 1 Geltungsbereich</h2>
                 <p className="mb-4">
-                  (1) Diese Nutzungsbedingungen gelten für die Nutzung des medizinischen 
-                  Dokumentenübersetzungsdienstes (nachfolgend "Dienst" genannt) auf dieser Website.
+                  (1) Diese Nutzungsbedingungen gelten für die Nutzung des medizinischen
+                  Dokumentenübersetzungsdienstes (nachfolgend &quot;Dienst&quot; genannt) auf dieser Website.
                 </p>
                 <p className="mb-4">
                   (2) Mit der Nutzung des Dienstes erklären Sie sich mit diesen Nutzungsbedingungen 

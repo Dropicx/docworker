@@ -39,8 +39,8 @@ def get_engine():
 def get_session() -> Generator[Session, None, None]:
     """Get database session"""
     engine = get_engine()
-    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-    session = SessionLocal()
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = session_local()
     try:
         yield session
     finally:

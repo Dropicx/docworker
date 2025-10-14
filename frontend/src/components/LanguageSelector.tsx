@@ -228,7 +228,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                 {/* No results */}
                 {filteredLanguages.length === 0 && (
                   <div className="px-6 py-4 text-center text-sm text-neutral-500">
-                    Keine Sprachen gefunden für "{searchTerm}"
+                    Keine Sprachen gefunden für &quot;{searchTerm}&quot;
                   </div>
                 )}
               </div>
