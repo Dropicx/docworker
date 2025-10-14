@@ -9,6 +9,7 @@ class DocumentType(str, Enum):
     PDF = "pdf"
     IMAGE = "image"
 
+
 class ProcessingStatus(str, Enum):
     PENDING = "pending"
     QUEUED = "queued"  # In queue, waiting for worker
@@ -21,6 +22,7 @@ class ProcessingStatus(str, Enum):
     CANCELLED = "cancelled"  # User cancelled processing
     TIMEOUT = "timeout"  # Processing exceeded time limit
     NON_MEDICAL_CONTENT = "non_medical_content"
+
 
 class SupportedLanguage(str, Enum):
     # Sehr gut unterstützte Sprachen (beste Performance mit Llama 3.3)
@@ -46,6 +48,7 @@ class SupportedLanguage(str, Enum):
     NORWEGIAN = "no"
     DANISH = "da"
 
+
 # Sprachname-Mapping für die UI
 LANGUAGE_NAMES = {
     # Sehr gut unterstützte Sprachen
@@ -56,7 +59,6 @@ LANGUAGE_NAMES = {
     SupportedLanguage.ITALIAN: "Italienisch",
     SupportedLanguage.PORTUGUESE: "Portugiesisch",
     SupportedLanguage.DUTCH: "Niederländisch",
-
     # Gut unterstützte Sprachen
     SupportedLanguage.RUSSIAN: "Russisch",
     SupportedLanguage.CHINESE_SIMPLIFIED: "Chinesisch (Vereinfacht)",
@@ -69,11 +71,15 @@ LANGUAGE_NAMES = {
     SupportedLanguage.CZECH: "Tschechisch",
     SupportedLanguage.SWEDISH: "Schwedisch",
     SupportedLanguage.NORWEGIAN: "Norwegisch",
-    SupportedLanguage.DANISH: "Dänisch"
+    SupportedLanguage.DANISH: "Dänisch",
 }
 
+
 class ProcessingOptions(BaseModel):
-    target_language: SupportedLanguage | None = Field(None, description="Zielsprache für Übersetzung (optional)")
+    target_language: SupportedLanguage | None = Field(
+        None, description="Zielsprache für Übersetzung (optional)"
+    )
+
 
 class UploadResponse(BaseModel):
     processing_id: str = Field(..., description="Eindeutige ID für die Verarbeitung")
@@ -82,6 +88,7 @@ class UploadResponse(BaseModel):
     file_size: int = Field(..., description="Dateigröße in Bytes")
     status: ProcessingStatus = Field(default=ProcessingStatus.PENDING)
     message: str = Field(default="Datei erfolgreich hochgeladen")
+
 
 class ProcessingProgress(BaseModel):
     processing_id: str
@@ -92,29 +99,45 @@ class ProcessingProgress(BaseModel):
     error: str | None = None
     timestamp: datetime = Field(default_factory=datetime.now)
 
+
 class TranslationResult(BaseModel):
     processing_id: str
     original_text: str = Field(..., description="Ursprünglicher extrahierter Text")
     translated_text: str = Field(..., description="Übersetzter Text in einfacher Sprache")
-    language_translated_text: str | None = Field(None, description="In andere Sprache übersetzter Text")
-    target_language: SupportedLanguage | None = Field(None, description="Zielsprache der Übersetzung")
+    language_translated_text: str | None = Field(
+        None, description="In andere Sprache übersetzter Text"
+    )
+    target_language: SupportedLanguage | None = Field(
+        None, description="Zielsprache der Übersetzung"
+    )
     document_type_detected: str | None = Field(None, description="Erkannter Dokumenttyp")
     confidence_score: float = Field(ge=0, le=1, description="Vertrauensgrad der Übersetzung")
-    language_confidence_score: float | None = Field(None, description="Vertrauensgrad der Sprachübersetzung")
+    language_confidence_score: float | None = Field(
+        None, description="Vertrauensgrad der Sprachübersetzung"
+    )
     processing_time_seconds: float = Field(..., description="Verarbeitungszeit in Sekunden")
     timestamp: datetime = Field(default_factory=datetime.now)
 
     # NEW: Dynamic branching metadata
-    branching_path: list[dict[str, Any]] | None = Field(default=[], description="Complete decision tree of branching steps")
-    document_class: dict[str, Any] | None = Field(None, description="Document classification details")
+    branching_path: list[dict[str, Any]] | None = Field(
+        default=[], description="Complete decision tree of branching steps"
+    )
+    document_class: dict[str, Any] | None = Field(
+        None, description="Document classification details"
+    )
     total_steps: int | None = Field(None, description="Total pipeline steps executed")
-    pipeline_execution_time: float | None = Field(None, description="Pipeline execution time in seconds")
+    pipeline_execution_time: float | None = Field(
+        None, description="Pipeline execution time in seconds"
+    )
     ocr_time_seconds: float | None = Field(None, description="OCR processing time in seconds")
-    ai_processing_time_seconds: float | None = Field(None, description="AI pipeline processing time in seconds")
+    ai_processing_time_seconds: float | None = Field(
+        None, description="AI pipeline processing time in seconds"
+    )
 
     class Config:
         # Allow extra fields (forward compatibility)
         extra = "allow"
+
 
 class ErrorResponse(BaseModel):
     error: str
@@ -122,14 +145,17 @@ class ErrorResponse(BaseModel):
     processing_id: str | None = None
     timestamp: datetime = Field(default_factory=datetime.now)
 
+
 class HealthCheck(BaseModel):
     status: str
     timestamp: datetime = Field(default_factory=datetime.now)
     services: dict[str, str] = Field(default_factory=dict)
     memory_usage: dict[str, Any] | None = None
 
+
 class ProcessingResponse(BaseModel):
     """Response model for multi-file processing results"""
+
     processing_id: str = Field(..., description="Unique processing identifier")
     status: ProcessingStatus = Field(..., description="Current processing status")
     files_processed: int = Field(..., description="Number of files processed")
@@ -139,22 +165,36 @@ class ProcessingResponse(BaseModel):
     confidence_score: float | None = Field(None, description="Overall confidence score", ge=0, le=1)
     processing_time_seconds: float | None = Field(None, description="Total processing time")
     error_message: str | None = Field(None, description="Error message if processing failed")
-    file_details: list[dict[str, Any]] | None = Field(None, description="Details about each processed file")
+    file_details: list[dict[str, Any]] | None = Field(
+        None, description="Details about each processed file"
+    )
     timestamp: datetime = Field(default_factory=datetime.now)
+
 
 class CustomPrompts(BaseModel):
     """Custom prompts for document processing - aligned with unified system"""
+
     # Universal prompts (same for all document types)
-    medical_validation_prompt: str | None = Field(None, description="Prompt for medical content validation")
-    classification_prompt: str | None = Field(None, description="Prompt for document classification")
+    medical_validation_prompt: str | None = Field(
+        None, description="Prompt for medical content validation"
+    )
+    classification_prompt: str | None = Field(
+        None, description="Prompt for document classification"
+    )
     preprocessing_prompt: str | None = Field(None, description="Prompt for text preprocessing")
-    language_translation_prompt: str | None = Field(None, description="Prompt for language translation")
-    ocr_preprocessing_prompt: str | None = Field(None, description="Prompt for OCR text cleaning and preprocessing")
+    language_translation_prompt: str | None = Field(
+        None, description="Prompt for language translation"
+    )
+    ocr_preprocessing_prompt: str | None = Field(
+        None, description="Prompt for OCR text cleaning and preprocessing"
+    )
 
     # Document-specific prompts (vary by document type)
     translation_prompt: str | None = Field(None, description="Document-specific translation prompt")
     fact_check_prompt: str | None = Field(None, description="Medical fact checking prompt")
-    grammar_check_prompt: str | None = Field(None, description="Grammar and spelling correction prompt")
+    grammar_check_prompt: str | None = Field(
+        None, description="Grammar and spelling correction prompt"
+    )
     final_check_prompt: str | None = Field(None, description="Final quality check prompt")
     formatting_prompt: str | None = Field(None, description="Document formatting prompt")
 

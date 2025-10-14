@@ -22,11 +22,13 @@ from app.services.ovh_client import OVHClient
 # Optional imports for local OCR (fallback gracefully if not available)
 try:
     from app.services.text_extractor_ocr import TextExtractorWithOCR
+
     LOCAL_OCR_AVAILABLE = True
 except ImportError:
     LOCAL_OCR_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
+
 
 class HybridTextExtractor:
     """Intelligent text extractor with adaptive strategy selection.
@@ -87,10 +89,7 @@ class HybridTextExtractor:
         return raw_text
 
     async def extract_text(
-        self,
-        file_content: bytes,
-        file_type: str,
-        filename: str
+        self, file_content: bytes, file_type: str, filename: str
     ) -> tuple[str, float]:
         """Extract text from a single file using optimal strategy.
 
@@ -153,9 +152,7 @@ class HybridTextExtractor:
             return f"Hybrid extraction error: {str(e)}", 0.0
 
     async def extract_from_multiple_files(
-        self,
-        files: list[tuple[bytes, str, str]],
-        merge_strategy: str = "smart"
+        self, files: list[tuple[bytes, str, str]], merge_strategy: str = "smart"
     ) -> tuple[str, float]:
         """Extract and intelligently merge text from multiple related files.
 
@@ -213,12 +210,16 @@ class HybridTextExtractor:
                 logger.info("📄 Files already in logical order")
 
             # Step 2: Analyze all files to determine consolidated strategy
-            consolidated_analysis = await self.quality_detector.analyze_multiple_files(ordered_files)
+            consolidated_analysis = await self.quality_detector.analyze_multiple_files(
+                ordered_files
+            )
 
             strategy = ExtractionStrategy(consolidated_analysis["recommended_strategy"])
             complexity = DocumentComplexity(consolidated_analysis["recommended_complexity"])
 
-            logger.info(f"🎯 Multi-file strategy: {strategy.value} (complexity: {complexity.value})")
+            logger.info(
+                f"🎯 Multi-file strategy: {strategy.value} (complexity: {complexity.value})"
+            )
 
             # Step 3: Extract text from each file using the same strategy for consistency
             extraction_results = []
@@ -238,14 +239,18 @@ class HybridTextExtractor:
                     text, confidence = await self._extract_with_vision_llm(content, file_type, {})
 
                 if text and not text.startswith("Error"):
-                    extraction_results.append({
-                        'filename': filename,
-                        'text': text,
-                        'confidence': confidence,
-                        'file_index': i
-                    })
+                    extraction_results.append(
+                        {
+                            "filename": filename,
+                            "text": text,
+                            "confidence": confidence,
+                            "file_index": i,
+                        }
+                    )
                     total_confidence += confidence
-                    logger.info(f"✅ File {i} processed: {len(text)} chars, confidence: {confidence:.2%}")
+                    logger.info(
+                        f"✅ File {i} processed: {len(text)} chars, confidence: {confidence:.2%}"
+                    )
                 else:
                     logger.warning(f"⚠️ File {i} failed: {text}")
 
@@ -268,10 +273,7 @@ class HybridTextExtractor:
             return f"Multi-file extraction error: {str(e)}", 0.0
 
     async def _extract_with_local_text(
-        self,
-        content: bytes,
-        file_type: str,
-        analysis: dict[str, Any]
+        self, content: bytes, file_type: str, analysis: dict[str, Any]
     ) -> tuple[str, float]:
         """Extract text using local PDF parsing (no OCR).
 
@@ -289,7 +291,9 @@ class HybridTextExtractor:
         """
 
         if file_type != "pdf":
-            logger.warning("⚠️ Local text extraction only works with PDFs, falling back to vision LLM")
+            logger.warning(
+                "⚠️ Local text extraction only works with PDFs, falling back to vision LLM"
+            )
             return await self._extract_with_vision_llm(content, file_type, analysis)
 
         try:
@@ -304,9 +308,13 @@ class HybridTextExtractor:
                 confidence = self._evaluate_local_extraction_quality(text)
 
                 if confidence >= 0.7:  # Good quality local extraction
-                    logger.info(f"✅ pdfplumber successful: {len(text)} characters, confidence: {confidence:.2%}")
+                    logger.info(
+                        f"✅ pdfplumber successful: {len(text)} characters, confidence: {confidence:.2%}"
+                    )
                     return text.strip(), confidence
-                logger.info(f"⚠️ pdfplumber low quality (confidence: {confidence:.2%}), trying PyPDF2")
+                logger.info(
+                    f"⚠️ pdfplumber low quality (confidence: {confidence:.2%}), trying PyPDF2"
+                )
 
             # Fallback to PyPDF2
             text = await self._extract_pdf_with_pypdf2(content)
@@ -315,12 +323,18 @@ class HybridTextExtractor:
                 confidence = self._evaluate_local_extraction_quality(text)
 
                 if confidence >= 0.6:  # Reasonable quality
-                    logger.info(f"✅ PyPDF2 successful: {len(text)} characters, confidence: {confidence:.2%}")
+                    logger.info(
+                        f"✅ PyPDF2 successful: {len(text)} characters, confidence: {confidence:.2%}"
+                    )
                     return text.strip(), confidence
-                logger.info(f"⚠️ PyPDF2 low quality (confidence: {confidence:.2%}), falling back to vision LLM")
+                logger.info(
+                    f"⚠️ PyPDF2 low quality (confidence: {confidence:.2%}), falling back to vision LLM"
+                )
 
             # If local extraction quality is poor, fallback to vision LLM
-            logger.warning("⚠️ Local text extraction quality insufficient, falling back to vision LLM")
+            logger.warning(
+                "⚠️ Local text extraction quality insufficient, falling back to vision LLM"
+            )
             return await self._extract_with_vision_llm(content, file_type, analysis)
 
         except Exception as e:
@@ -342,9 +356,19 @@ class HybridTextExtractor:
 
         # Medical content indicators
         medical_terms = [
-            'patient', 'arzt', 'diagnose', 'behandlung', 'medizin',
-            'befund', 'labor', 'wert', 'normal', 'untersuchung',
-            'datum', 'geburtsdatum', 'versicherung'
+            "patient",
+            "arzt",
+            "diagnose",
+            "behandlung",
+            "medizin",
+            "befund",
+            "labor",
+            "wert",
+            "normal",
+            "untersuchung",
+            "datum",
+            "geburtsdatum",
+            "versicherung",
         ]
 
         text_lower = text.lower()
@@ -353,14 +377,15 @@ class HybridTextExtractor:
 
         # Structure indicators (proper sentences, punctuation)
         import re
-        sentences = len(re.findall(r'[.!?]+', text))
+
+        sentences = len(re.findall(r"[.!?]+", text))
         if sentences > 5:
             confidence += 0.05
         if sentences > 15:
             confidence += 0.05
 
         # Check for garbage characters (indicates poor extraction)
-        garbage_patterns = ['���', '□', '▢', '※', '◦']
+        garbage_patterns = ["���", "□", "▢", "※", "◦"]
         has_garbage = any(pattern in text for pattern in garbage_patterns)
         if has_garbage:
             confidence -= 0.2
@@ -376,7 +401,7 @@ class HybridTextExtractor:
                 confidence += 0.05
 
         # Check for medical numbers and units (lab values, measurements)
-        medical_numbers = re.findall(r'\d+[.,]?\d*\s*(mg|ml|mmol|µg|ng|u/l|iu/l|%|cm|kg)', text)
+        medical_numbers = re.findall(r"\d+[.,]?\d*\s*(mg|ml|mmol|µg|ng|u/l|iu/l|%|cm|kg)", text)
         if len(medical_numbers) > 0:
             confidence += min(len(medical_numbers) * 0.01, 0.1)
 
@@ -411,9 +436,13 @@ class HybridTextExtractor:
                                     # Format table as markdown-like structure
                                     table_text = f"\n--- Tabelle {i+1} ---\n"
                                     for row in table_data:
-                                        if row and any(cell for cell in row if cell):  # Skip empty rows
+                                        if row and any(
+                                            cell for cell in row if cell
+                                        ):  # Skip empty rows
                                             # Join non-empty cells with " | "
-                                            cells = [str(cell).strip() if cell else "" for cell in row]
+                                            cells = [
+                                                str(cell).strip() if cell else "" for cell in row
+                                            ]
                                             table_text += " | ".join(cells) + "\n"
 
                                     page_content.append(table_text)
@@ -455,10 +484,7 @@ class HybridTextExtractor:
             return None
 
     async def _extract_with_local_ocr(
-        self,
-        content: bytes,
-        file_type: str,
-        analysis: dict[str, Any]
+        self, content: bytes, file_type: str, analysis: dict[str, Any]
     ) -> tuple[str, float]:
         """Extract text using local OCR (Tesseract)"""
 
@@ -473,11 +499,15 @@ class HybridTextExtractor:
             text, confidence = await self.local_ocr.extract_text(content, file_type, "temp_file")
 
             if text and len(text.strip()) > 20 and not text.startswith("Error"):
-                logger.info(f"✅ Local OCR successful: {len(text)} characters, confidence: {confidence:.2%}")
+                logger.info(
+                    f"✅ Local OCR successful: {len(text)} characters, confidence: {confidence:.2%}"
+                )
                 # Apply OCR preprocessing using unified prompt system
                 processed_text = await self._apply_ocr_preprocessing(text)
                 return processed_text, confidence
-            logger.warning("⚠️ Local OCR failed or returned poor results, falling back to vision LLM")
+            logger.warning(
+                "⚠️ Local OCR failed or returned poor results, falling back to vision LLM"
+            )
             return await self._extract_with_vision_llm(content, file_type, analysis)
 
         except Exception as e:
@@ -485,10 +515,7 @@ class HybridTextExtractor:
             return await self._extract_with_vision_llm(content, file_type, analysis)
 
     async def _extract_with_vision_llm(
-        self,
-        content: bytes,
-        file_type: str,
-        analysis: dict[str, Any]
+        self, content: bytes, file_type: str, analysis: dict[str, Any]
     ) -> tuple[str, float]:
         """Extract text using Vision LLM (Qwen 2.5 VL)"""
 
@@ -512,7 +539,9 @@ class HybridTextExtractor:
                         )
 
                         if text and len(text.strip()) > 20 and not text.startswith("Error"):
-                            logger.info(f"✅ Vision LLM PDF processing successful: {len(text)} characters")
+                            logger.info(
+                                f"✅ Vision LLM PDF processing successful: {len(text)} characters"
+                            )
                             # Apply OCR preprocessing using unified prompt system
                             processed_text = await self._apply_ocr_preprocessing(text)
                             return processed_text, confidence
@@ -528,7 +557,9 @@ class HybridTextExtractor:
                 text, confidence = await self.ovh_client.extract_text_with_vision(image, file_type)
 
                 if text and len(text.strip()) > 10 and not text.startswith("Error"):
-                    logger.info(f"✅ Vision LLM image processing successful: {len(text)} characters")
+                    logger.info(
+                        f"✅ Vision LLM image processing successful: {len(text)} characters"
+                    )
                     # Apply OCR preprocessing using unified prompt system
                     processed_text = await self._apply_ocr_preprocessing(text)
                     return processed_text, confidence
@@ -542,10 +573,7 @@ class HybridTextExtractor:
             return f"Vision LLM Fehler: {str(e)}", 0.0
 
     async def _extract_with_hybrid(
-        self,
-        content: bytes,
-        file_type: str,
-        analysis: dict[str, Any]
+        self, content: bytes, file_type: str, analysis: dict[str, Any]
     ) -> tuple[str, float]:
         """Extract text using a hybrid approach"""
 
@@ -566,7 +594,9 @@ class HybridTextExtractor:
 
             # Otherwise, try vision LLM
             logger.info("⚠️ Hybrid: Local method insufficient, trying vision LLM")
-            vision_text, vision_confidence = await self._extract_with_vision_llm(content, file_type, analysis)
+            vision_text, vision_confidence = await self._extract_with_vision_llm(
+                content, file_type, analysis
+            )
 
             # Compare results and choose the best one
             if vision_confidence > confidence:
@@ -580,9 +610,7 @@ class HybridTextExtractor:
             return f"Hybrid extraction error: {str(e)}", 0.0
 
     def _merge_extraction_results(
-        self,
-        results: list[dict[str, Any]],
-        strategy: str = "smart"
+        self, results: list[dict[str, Any]], strategy: str = "smart"
     ) -> str:
         """
         Merge extraction results from multiple files
@@ -598,7 +626,7 @@ class HybridTextExtractor:
             return ""
 
         if len(results) == 1:
-            return results[0]['text']
+            return results[0]["text"]
 
         logger.info(f"🔧 Merging {len(results)} extraction results using '{strategy}' strategy")
 
@@ -612,9 +640,9 @@ class HybridTextExtractor:
         """Merge results in sequential order with clear page separators"""
         merged_parts = []
 
-        for result in sorted(results, key=lambda x: x['file_index']):
-            filename = result['filename']
-            text = result['text']
+        for result in sorted(results, key=lambda x: x["file_index"]):
+            filename = result["filename"]
+            text = result["text"]
 
             # Add file header
             merged_parts.append(f"=== {filename} ===")
@@ -626,23 +654,23 @@ class HybridTextExtractor:
     def _merge_smart(self, results: list[dict[str, Any]]) -> str:
         """Intelligently merge results with context awareness and medical structure"""
         if len(results) == 1:
-            return results[0]['text']
+            return results[0]["text"]
 
         logger.info(f"🧠 Smart merging {len(results)} extraction results")
 
         merged_parts = []
         previous_section_type = None
 
-        for i, result in enumerate(sorted(results, key=lambda x: x['file_index'])):
-            text = result['text'].strip()
-            filename = result['filename']
+        for i, result in enumerate(sorted(results, key=lambda x: x["file_index"])):
+            text = result["text"].strip()
+            filename = result["filename"]
 
             # Analyze current text to understand its medical content type
             current_section_type = self._identify_medical_section_type(text)
 
             if i == 0:
                 # First file - add as is with potential header
-                if current_section_type in ['patient_info', 'header']:
+                if current_section_type in ["patient_info", "header"]:
                     merged_parts.append(text)
                 else:
                     # Add a document header if first page doesn't have one
@@ -653,7 +681,9 @@ class HybridTextExtractor:
                 # Subsequent files - intelligent merging
                 prev_text = merged_parts[-1] if merged_parts else ""
 
-                if self._should_merge_seamlessly(prev_text, text, previous_section_type, current_section_type):
+                if self._should_merge_seamlessly(
+                    prev_text, text, previous_section_type, current_section_type
+                ):
                     # Seamless continuation
                     merged_parts.append(f"\n{text}")
                     logger.info(f"📄 File {i+1}: Seamless merge (type: {current_section_type})")
@@ -663,7 +693,10 @@ class HybridTextExtractor:
                     merged_parts.append(f"\n{text}")
                     logger.info(f"📄 File {i+1}: Table continuation")
 
-                elif current_section_type == 'lab_values' and previous_section_type in ['lab_values', 'examination']:
+                elif current_section_type == "lab_values" and previous_section_type in [
+                    "lab_values",
+                    "examination",
+                ]:
                     # Lab values continuation
                     merged_parts.append(f"\n## Laborwerte (Fortsetzung)\n\n{text}")
                     logger.info(f"📄 File {i+1}: Lab values continuation")
@@ -688,42 +721,53 @@ class HybridTextExtractor:
         text_lower = text.lower()
 
         # Patient information patterns
-        if any(pattern in text_lower for pattern in ['patient', 'name:', 'geburtsdatum', 'versicherten']):
-            return 'patient_info'
+        if any(
+            pattern in text_lower
+            for pattern in ["patient", "name:", "geburtsdatum", "versicherten"]
+        ):
+            return "patient_info"
 
         # Lab values patterns
-        if any(pattern in text_lower for pattern in ['laborwerte', 'blutwerte', 'mg/dl', 'mmol/l', 'referenzbereich']):
-            return 'lab_values'
+        if any(
+            pattern in text_lower
+            for pattern in ["laborwerte", "blutwerte", "mg/dl", "mmol/l", "referenzbereich"]
+        ):
+            return "lab_values"
 
         # Diagnosis patterns
-        if any(pattern in text_lower for pattern in ['diagnose', 'befund', 'beurteilung', 'icd']):
-            return 'diagnosis'
+        if any(pattern in text_lower for pattern in ["diagnose", "befund", "beurteilung", "icd"]):
+            return "diagnosis"
 
         # Medication patterns
-        if any(pattern in text_lower for pattern in ['medikation', 'therapie', 'einnahme', 'mg täglich']):
-            return 'medication'
+        if any(
+            pattern in text_lower
+            for pattern in ["medikation", "therapie", "einnahme", "mg täglich"]
+        ):
+            return "medication"
 
         # Header/title patterns
-        if any(pattern in text_lower for pattern in ['arztbrief', 'entlassungsbrief', 'klinik', 'krankenhaus']):
-            return 'header'
+        if any(
+            pattern in text_lower
+            for pattern in ["arztbrief", "entlassungsbrief", "klinik", "krankenhaus"]
+        ):
+            return "header"
 
         # Examination patterns
-        if any(pattern in text_lower for pattern in ['untersuchung', 'röntgen', 'mrt', 'ct', 'ultraschall']):
-            return 'examination'
+        if any(
+            pattern in text_lower
+            for pattern in ["untersuchung", "röntgen", "mrt", "ct", "ultraschall"]
+        ):
+            return "examination"
 
-        return 'general'
+        return "general"
 
     def _should_merge_seamlessly(
-        self,
-        prev_text: str,
-        current_text: str,
-        prev_section: str,
-        current_section: str
+        self, prev_text: str, current_text: str, prev_section: str, current_section: str
     ) -> bool:
         """Determine if texts should be merged seamlessly without headers"""
 
         # Same section type - likely continuation
-        if prev_section == current_section and prev_section != 'general':
+        if prev_section == current_section and prev_section != "general":
             return True
 
         # Check for explicit continuation indicators
@@ -731,7 +775,7 @@ class HybridTextExtractor:
             return True
 
         # Patient info continuing to examination/diagnosis
-        if prev_section == 'patient_info' and current_section in ['examination', 'diagnosis']:
+        if prev_section == "patient_info" and current_section in ["examination", "diagnosis"]:
             return True
 
         # Examination continuing to lab values
@@ -741,12 +785,12 @@ class HybridTextExtractor:
         """Check if current text continues a table from previous text"""
 
         # Check if previous text ends with table indicators
-        prev_lines = prev_text.strip().split('\n')[-3:]  # Last 3 lines
-        current_lines = current_text.strip().split('\n')[:3]  # First 3 lines
+        prev_lines = prev_text.strip().split("\n")[-3:]  # Last 3 lines
+        current_lines = current_text.strip().split("\n")[:3]  # First 3 lines
 
         # Look for table patterns (pipes, tabs, aligned columns)
-        prev_has_table = any('|' in line or '\t' in line for line in prev_lines)
-        current_has_table = any('|' in line or '\t' in line for line in current_lines)
+        prev_has_table = any("|" in line or "\t" in line for line in prev_lines)
+        current_has_table = any("|" in line or "\t" in line for line in current_lines)
 
         # If both have table indicators, likely continuation
         if prev_has_table and current_has_table:
@@ -754,8 +798,13 @@ class HybridTextExtractor:
 
         # Check for numeric patterns (lab values)
         import re
-        prev_has_numbers = any(re.search(r'\d+[.,]\d*\s*(mg|ml|mmol|µg|ng|u/l)', line) for line in prev_lines)
-        current_has_numbers = any(re.search(r'\d+[.,]\d*\s*(mg|ml|mmol|µg|ng|u/l)', line) for line in current_lines)
+
+        prev_has_numbers = any(
+            re.search(r"\d+[.,]\d*\s*(mg|ml|mmol|µg|ng|u/l)", line) for line in prev_lines
+        )
+        current_has_numbers = any(
+            re.search(r"\d+[.,]\d*\s*(mg|ml|mmol|µg|ng|u/l)", line) for line in current_lines
+        )
 
         return prev_has_numbers and current_has_numbers
 
@@ -763,32 +812,33 @@ class HybridTextExtractor:
         """Get appropriate section header based on content type"""
 
         headers = {
-            'patient_info': '## Patienteninformationen',
-            'lab_values': '## Laborwerte',
-            'diagnosis': '## Diagnosen und Befunde',
-            'medication': '## Medikation und Therapie',
-            'examination': '## Untersuchungsergebnisse',
-            'header': '## Dokumentenkopf',
-            'general': f'## {filename}'
+            "patient_info": "## Patienteninformationen",
+            "lab_values": "## Laborwerte",
+            "diagnosis": "## Diagnosen und Befunde",
+            "medication": "## Medikation und Therapie",
+            "examination": "## Untersuchungsergebnisse",
+            "header": "## Dokumentenkopf",
+            "general": f"## {filename}",
         }
 
-        return headers.get(section_type, f'## {filename}')
+        return headers.get(section_type, f"## {filename}")
 
     def _post_process_merged_text(self, text: str) -> str:
         """Post-process merged text for better readability"""
 
         # Remove excessive blank lines
         import re
-        text = re.sub(r'\n{4,}', '\n\n\n', text)
+
+        text = re.sub(r"\n{4,}", "\n\n\n", text)
 
         # Fix spacing around headers
-        text = re.sub(r'\n(##[^\n]+)\n{1,2}', r'\n\n\1\n\n', text)
+        text = re.sub(r"\n(##[^\n]+)\n{1,2}", r"\n\n\1\n\n", text)
 
         # Ensure proper spacing before new sections
-        text = re.sub(r'([^\n])\n(##)', r'\1\n\n\2', text)
+        text = re.sub(r"([^\n])\n(##)", r"\1\n\n\2", text)
 
         # Clean up redundant section headers
-        text = re.sub(r'(##[^\n]+)\n+\1', r'\1', text)
+        text = re.sub(r"(##[^\n]+)\n+\1", r"\1", text)
 
         return text.strip()
 
@@ -801,8 +851,18 @@ class HybridTextExtractor:
         # Check if previous text ends with continuation indicators
         prev_endings = prev_text.rstrip().lower()
         continuation_indicators = [
-            ',', '-', 'und', 'oder', 'sowie', 'mit', 'bei', 'für',
-            'siehe', 'fortsetzung', 'weiter', 'nächste seite'
+            ",",
+            "-",
+            "und",
+            "oder",
+            "sowie",
+            "mit",
+            "bei",
+            "für",
+            "siehe",
+            "fortsetzung",
+            "weiter",
+            "nächste seite",
         ]
 
         for indicator in continuation_indicators:
@@ -812,8 +872,15 @@ class HybridTextExtractor:
         # Check if current text starts with continuation indicators
         current_start = current_text.lstrip().lower()
         start_indicators = [
-            'fortsetzung', 'weiter', '- ', '• ', 'und ', 'oder ',
-            'sowie ', 'außerdem', 'darüber hinaus'
+            "fortsetzung",
+            "weiter",
+            "- ",
+            "• ",
+            "und ",
+            "oder ",
+            "sowie ",
+            "außerdem",
+            "darüber hinaus",
         ]
 
         for indicator in start_indicators:
@@ -822,12 +889,14 @@ class HybridTextExtractor:
 
         # Check for numbered lists continuation
         import re
-        if re.match(r'^\s*\d+[.)]\s', current_text):
+
+        if re.match(r"^\s*\d+[.)]\s", current_text):
             # Current starts with number - check if previous had numbers
-            if re.search(r'\d+[.)]\s', prev_text):
+            if re.search(r"\d+[.)]\s", prev_text):
                 return True
 
         return False
+
 
 # Factory function for backward compatibility
 def get_hybrid_text_extractor():

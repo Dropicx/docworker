@@ -43,7 +43,9 @@ class SettingsRepository(BaseRepository[SystemSettingsDB]):
 
         return self._convert_value(setting.value, setting.value_type)
 
-    def set_value(self, key: str, value: Any, value_type: str = "string", description: str = "") -> SystemSettingsDB:
+    def set_value(
+        self, key: str, value: Any, value_type: str = "string", description: str = ""
+    ) -> SystemSettingsDB:
         """
         Set setting value (create or update).
 
@@ -73,7 +75,7 @@ class SettingsRepository(BaseRepository[SystemSettingsDB]):
                 value=value_str,
                 value_type=value_type,
                 description=description,
-                is_encrypted=False
+                is_encrypted=False,
             )
             logger.info(f"Created setting '{key}' = {value}")
 
@@ -112,6 +114,7 @@ class SettingsRepository(BaseRepository[SystemSettingsDB]):
             return value.lower() in ("true", "1", "yes", "on")
         if value_type == "json":
             import json
+
             return json.loads(value)
         # string
         return value

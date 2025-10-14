@@ -31,22 +31,22 @@ def _normalize_paddleocr_url(url: str) -> str:
         return "http://paddleocr.railway.internal:9123"
 
     # Remove trailing slashes to prevent double slashes in paths
-    url = url.rstrip('/')
+    url = url.rstrip("/")
 
     # Add http:// if missing
-    if not url.startswith(('http://', 'https://')):
+    if not url.startswith(("http://", "https://")):
         url = f"http://{url}"
 
     # Check if we have a bare IPv6 address (contains : but not wrapped in [])
     # Format: http://ipv6:port needs to become http://[ipv6]:port
-    if url.startswith('http://') and ':' in url:
+    if url.startswith("http://") and ":" in url:
         # Extract the part after http://
         rest = url[7:]  # Remove 'http://'
 
         # Check if it's IPv6 (multiple colons and not already bracketed)
-        if rest.count(':') > 1 and not rest.startswith('['):
+        if rest.count(":") > 1 and not rest.startswith("["):
             # Split on last colon to separate address from port
-            parts = rest.rsplit(':', 1)
+            parts = rest.rsplit(":", 1)
             if len(parts) == 2:
                 ipv6_addr, port = parts
                 # Rebuild with brackets around IPv6
@@ -57,10 +57,7 @@ def _normalize_paddleocr_url(url: str) -> str:
 
 
 # PaddleOCR microservice URL (Railway internal networking)
-_raw_url = os.getenv(
-    "PADDLEOCR_SERVICE_URL",
-    "http://paddleocr.railway.internal:9123"
-)
+_raw_url = os.getenv("PADDLEOCR_SERVICE_URL", "http://paddleocr.railway.internal:9123")
 
 # Debug: Log raw environment variable value
 logger.info(f"🔍 Raw PADDLEOCR_SERVICE_URL env var: {repr(_raw_url)}")
@@ -109,9 +106,7 @@ class OCREngineManager:
     """
 
     def __init__(
-        self,
-        session: Session,
-        config_repository: OCRConfigurationRepository | None = None
+        self, session: Session, config_repository: OCRConfigurationRepository | None = None
     ) -> None:
         """Initialize OCR Engine Manager with database session.
 
@@ -158,7 +153,7 @@ class OCREngineManager:
         config_map = {
             OCREngineEnum.PADDLEOCR: config.paddleocr_config,
             OCREngineEnum.VISION_LLM: config.vision_llm_config,
-            OCREngineEnum.HYBRID: config.hybrid_config
+            OCREngineEnum.HYBRID: config.hybrid_config,
         }
 
         engine_config = config_map.get(engine)
@@ -180,7 +175,7 @@ class OCREngineManager:
         file_content: bytes,
         file_type: str,
         filename: str,
-        override_engine: OCREngineEnum | None = None
+        override_engine: OCREngineEnum | None = None,
     ) -> tuple[str, float]:
         """Extract text from document using database-configured OCR engine.
 
@@ -235,7 +230,9 @@ class OCREngineManager:
         """
         # Determine which engine to use
         config = self.load_ocr_config()
-        selected_engine = override_engine or (config.selected_engine if config else OCREngineEnum.HYBRID)
+        selected_engine = override_engine or (
+            config.selected_engine if config else OCREngineEnum.HYBRID
+        )
 
         logger.info(f"🔍 Starting OCR with engine: {selected_engine}")
 
@@ -262,10 +259,7 @@ class OCREngineManager:
     # ==================== ENGINE-SPECIFIC EXTRACTION ====================
 
     async def _extract_with_hybrid(
-        self,
-        file_content: bytes,
-        file_type: str,
-        filename: str
+        self, file_content: bytes, file_type: str, filename: str
     ) -> tuple[str, float]:
         """
         Extract text using hybrid strategy (intelligent routing).
@@ -277,10 +271,7 @@ class OCREngineManager:
         return await self.hybrid_extractor.extract_text(file_content, file_type, filename)
 
     async def _extract_with_vision_llm(
-        self,
-        file_content: bytes,
-        file_type: str,
-        filename: str
+        self, file_content: bytes, file_type: str, filename: str
     ) -> tuple[str, float]:
         """
         Extract text using Vision Language Model (Qwen 2.5 VL).
@@ -302,10 +293,7 @@ class OCREngineManager:
             return await self._extract_with_hybrid(file_content, file_type, filename)
 
     async def _extract_with_paddleocr(
-        self,
-        file_content: bytes,
-        file_type: str,
-        filename: str
+        self, file_content: bytes, file_type: str, filename: str
     ) -> tuple[str, float]:
         """
         Extract text using PaddleOCR microservice.
@@ -319,24 +307,21 @@ class OCREngineManager:
             # Check if PaddleOCR service is available
             async with httpx.AsyncClient(timeout=60.0) as client:
                 # Prepare multipart form data
-                files = {
-                    'file': (filename, file_content, f'image/{file_type}')
-                }
+                files = {"file": (filename, file_content, f"image/{file_type}")}
 
                 # Call PaddleOCR microservice
-                response = await client.post(
-                    f"{PADDLEOCR_SERVICE_URL}/extract",
-                    files=files
-                )
+                response = await client.post(f"{PADDLEOCR_SERVICE_URL}/extract", files=files)
 
                 if response.status_code == 200:
                     result = response.json()
-                    extracted_text = result.get('text', '')
-                    confidence = result.get('confidence', 0.0)
-                    processing_time = result.get('processing_time', 0.0)
+                    extracted_text = result.get("text", "")
+                    confidence = result.get("confidence", 0.0)
+                    processing_time = result.get("processing_time", 0.0)
 
                     logger.info(f"✅ PaddleOCR extraction completed in {processing_time:.2f}s")
-                    logger.info(f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars")
+                    logger.info(
+                        f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars"
+                    )
 
                     return extracted_text, confidence
 
@@ -403,7 +388,9 @@ class OCREngineManager:
                     if is_available:
                         logger.info("✅ PaddleOCR service is available and ready")
                     else:
-                        logger.warning("⚠️ PaddleOCR service responded but paddleocr_available=False")
+                        logger.warning(
+                            "⚠️ PaddleOCR service responded but paddleocr_available=False"
+                        )
                     return is_available
                 logger.warning(f"⚠️ PaddleOCR service returned status {response.status_code}")
                 logger.warning(f"⚠️ Response content: {response.text[:200]}")
@@ -464,10 +451,10 @@ class OCREngineManager:
         vision_available = False
         try:
             vision_available = (
-                hasattr(self.hybrid_extractor, 'ovh_client') and
-                self.hybrid_extractor.ovh_client is not None and
-                hasattr(self.hybrid_extractor.ovh_client, 'vision_client') and
-                self.hybrid_extractor.ovh_client.vision_client is not None
+                hasattr(self.hybrid_extractor, "ovh_client")
+                and self.hybrid_extractor.ovh_client is not None
+                and hasattr(self.hybrid_extractor.ovh_client, "vision_client")
+                and self.hybrid_extractor.ovh_client.vision_client is not None
             )
         except Exception as e:
             logger.warning(f"⚠️ Could not check Vision LLM availability: {e}")
@@ -485,7 +472,7 @@ class OCREngineManager:
                 "accuracy": "Excellent",
                 "available": paddleocr_available,
                 "cost": "Free (CPU-based microservice)",
-                "configuration": self.get_engine_config(OCREngineEnum.PADDLEOCR)
+                "configuration": self.get_engine_config(OCREngineEnum.PADDLEOCR),
             },
             "VISION_LLM": {
                 "engine": "VISION_LLM",
@@ -495,7 +482,7 @@ class OCREngineManager:
                 "accuracy": "Excellent",
                 "available": vision_available,
                 "cost": "OVH AI Endpoints pricing",
-                "configuration": self.get_engine_config(OCREngineEnum.VISION_LLM)
+                "configuration": self.get_engine_config(OCREngineEnum.VISION_LLM),
             },
             "HYBRID": {
                 "engine": "HYBRID",
@@ -505,8 +492,8 @@ class OCREngineManager:
                 "accuracy": "Optimal",
                 "available": True,
                 "cost": "Variable",
-                "configuration": self.get_engine_config(OCREngineEnum.HYBRID)
-            }
+                "configuration": self.get_engine_config(OCREngineEnum.HYBRID),
+            },
         }
 
     def get_engine_status(self, engine: OCREngineEnum) -> dict[str, Any]:
@@ -531,5 +518,5 @@ class OCREngineManager:
             "speed": engine_info.get("speed", "Unknown"),
             "accuracy": engine_info.get("accuracy", "Unknown"),
             "cost": engine_info.get("cost", "Unknown"),
-            "configuration": config
+            "configuration": config,
         }

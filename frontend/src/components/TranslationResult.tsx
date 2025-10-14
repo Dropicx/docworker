@@ -1,5 +1,16 @@
 import React, { useState } from 'react';
-import { Copy, Download, Eye, EyeOff, CheckCircle, FileText, Clock, Sparkles, RefreshCw, Globe } from 'lucide-react';
+import {
+  Copy,
+  Download,
+  Eye,
+  EyeOff,
+  CheckCircle,
+  FileText,
+  Clock,
+  Sparkles,
+  RefreshCw,
+  Globe,
+} from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ReactDOM from 'react-dom/client';
@@ -12,10 +23,7 @@ interface TranslationResultProps {
   onNewTranslation: () => void;
 }
 
-const TranslationResult: React.FC<TranslationResultProps> = ({
-  result,
-  onNewTranslation
-}) => {
+const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTranslation }) => {
   const [showOriginal, setShowOriginal] = useState(false);
   const [copiedText, setCopiedText] = useState<'original' | 'translated' | 'language' | null>(null);
   // Wenn eine Sprachübersetzung vorhanden ist, zeige direkt den Sprach-Tab
@@ -38,12 +46,12 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
       // Bestimme welcher Text exportiert werden soll
       const textToExport = getDisplayedText();
       const isLanguageExport = activeTab === 'language' && result.language_translated_text;
-      
+
       // Generiere Dateinamen
       const timestamp = new Date().toISOString().split('T')[0];
       const languageSuffix = isLanguageExport ? `_${result.target_language}` : '_DE';
       const filename = `medizinische_uebersetzung_${timestamp}${languageSuffix}.pdf`;
-      
+
       // Erstelle temporäres Element mit PDF-Version des Texts
       const tempDiv = document.createElement('div');
       tempDiv.id = 'pdf-export-content-temp';
@@ -51,49 +59,49 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
       tempDiv.style.left = '-9999px';
       tempDiv.className = 'markdown-content';
       document.body.appendChild(tempDiv);
-      
+
       // Rendere ReactMarkdown in das temporäre Element
       const root = ReactDOM.createRoot(tempDiv);
       root.render(
-        <ReactMarkdown 
+        <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
-            h1: ({children}) => <h1>{children}</h1>,
-            h2: ({children}) => <h2>{children}</h2>,
-            h3: ({children}) => <h3>{children}</h3>,
-            p: ({children}) => <p>{children}</p>,
-            ul: ({children}) => <ul>{children}</ul>,
-            li: ({children}) => {
+            h1: ({ children }) => <h1>{children}</h1>,
+            h2: ({ children }) => <h2>{children}</h2>,
+            h3: ({ children }) => <h3>{children}</h3>,
+            p: ({ children }) => <p>{children}</p>,
+            ul: ({ children }) => <ul>{children}</ul>,
+            li: ({ children }) => {
               const text = String(children);
               const isSubItem = text.includes('→');
-              
+
               if (isSubItem) {
                 return <li className="sub-item">{children}</li>;
               }
-              
+
               return <li>{children}</li>;
             },
-            strong: ({children}) => <strong>{children}</strong>,
+            strong: ({ children }) => <strong>{children}</strong>,
           }}
         >
           {textToExport}
         </ReactMarkdown>
       );
-      
+
       // Warte kurz auf das Rendering
       setTimeout(async () => {
         // Exportiere als PDF
         await exportToPDF('pdf-export-content-temp', filename, {
-          title: isLanguageExport 
-            ? `Übersetzung (${result.target_language?.toUpperCase()})` 
+          title: isLanguageExport
+            ? `Übersetzung (${result.target_language?.toUpperCase()})`
             : 'Verständliche Übersetzung',
           content: textToExport,
           isTranslation: true,
           language: isLanguageExport ? result.target_language : 'Deutsch',
           processingTime: result.processing_time_seconds,
-          documentType: result.document_type_detected
+          documentType: result.document_type_detected,
         });
-        
+
         // Cleanup
         root.unmount();
         document.body.removeChild(tempDiv);
@@ -146,16 +154,15 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
             <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
           </div>
         </div>
-        
+
         <div className="space-y-2 px-4 sm:px-0">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary-900 via-brand-700 to-success-700 bg-clip-text text-transparent">
             Übersetzung abgeschlossen
           </h2>
           <p className="text-base sm:text-lg text-primary-600 max-w-3xl mx-auto">
-            {result.language_translated_text 
+            {result.language_translated_text
               ? 'Ihr medizinisches Dokument wurde vereinfacht und übersetzt'
-              : 'Ihr medizinisches Dokument wurde erfolgreich in verständliche Sprache übersetzt'
-            }
+              : 'Ihr medizinisches Dokument wurde erfolgreich in verständliche Sprache übersetzt'}
           </p>
         </div>
       </div>
@@ -169,7 +176,9 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                 <Globe className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
               <div className="flex-1">
-                <div className="text-xs sm:text-sm font-medium text-primary-600 mb-1">Zielsprache</div>
+                <div className="text-xs sm:text-sm font-medium text-primary-600 mb-1">
+                  Zielsprache
+                </div>
                 <div className="font-bold text-primary-900 text-base sm:text-lg">
                   {result.target_language.toUpperCase()}
                 </div>
@@ -232,28 +241,40 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
           {/* Translation Content - Mobile Optimized */}
           <div className="relative">
             <div className="glass-card p-4 sm:p-6 md:p-8 lg:p-10">
-              <div 
-                id={activeTab === 'language' ? 'translation-content-language' : 'translation-content-simplified'}
+              <div
+                id={
+                  activeTab === 'language'
+                    ? 'translation-content-language'
+                    : 'translation-content-simplified'
+                }
                 className="medical-text-formatted text-primary-800 leading-relaxed markdown-content"
               >
-                <ReactMarkdown 
+                <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   className="prose prose-sm max-w-none"
                   components={{
-                    h1: ({children}) => <h1 className="text-xl font-bold text-gray-900 mb-3 mt-4">{children}</h1>,
-                    h2: ({children}) => <h2 className="text-lg font-bold text-gray-900 mb-2 mt-3">{children}</h2>,
-                    h3: ({children}) => <h3 className="text-base font-semibold text-gray-800 mb-2 mt-2">{children}</h3>,
-                    p: ({children}) => <p className="mb-2 text-gray-700 leading-relaxed">{children}</p>,
-                    ul: ({children}) => (
-                      <ul className="list-none pl-0 mb-3 space-y-0.5">
-                        {children}
-                      </ul>
+                    h1: ({ children }) => (
+                      <h1 className="text-xl font-bold text-gray-900 mb-3 mt-4">{children}</h1>
                     ),
-                    li: ({children, ..._props}) => {
+                    h2: ({ children }) => (
+                      <h2 className="text-lg font-bold text-gray-900 mb-2 mt-3">{children}</h2>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 className="text-base font-semibold text-gray-800 mb-2 mt-2">
+                        {children}
+                      </h3>
+                    ),
+                    p: ({ children }) => (
+                      <p className="mb-2 text-gray-700 leading-relaxed">{children}</p>
+                    ),
+                    ul: ({ children }) => (
+                      <ul className="list-none pl-0 mb-3 space-y-0.5">{children}</ul>
+                    ),
+                    li: ({ children, ..._props }) => {
                       // Prüfe die Tiefe der Liste anhand der Klasse oder anderen Props
                       const text = String(children);
                       const isSubItem = text.includes('→');
-                      
+
                       if (isSubItem) {
                         return (
                           <li className="ml-6 pl-3 py-1 border-l-2 border-gray-300 bg-gray-50 text-gray-600 text-sm">
@@ -261,7 +282,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                           </li>
                         );
                       }
-                      
+
                       return (
                         <li className="flex items-start text-gray-800">
                           <span className="text-blue-500 mr-2 mt-0.5">•</span>
@@ -269,14 +290,16 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         </li>
                       );
                     },
-                    strong: ({children}) => <strong className="font-semibold text-gray-900">{children}</strong>,
-                    em: ({children}) => <em className="italic text-gray-600">{children}</em>,
-                    blockquote: ({children}) => (
+                    strong: ({ children }) => (
+                      <strong className="font-semibold text-gray-900">{children}</strong>
+                    ),
+                    em: ({ children }) => <em className="italic text-gray-600">{children}</em>,
+                    blockquote: ({ children }) => (
                       <blockquote className="border-l-4 border-brand-400 pl-4 py-2 my-4 bg-brand-50/50 rounded-r-lg">
                         {children}
                       </blockquote>
                     ),
-                    code: ({children, className}) => {
+                    code: ({ children, className }) => {
                       const isInline = !className?.includes('language-');
                       return isInline ? (
                         <code className="bg-primary-100 text-primary-800 px-1.5 py-0.5 rounded text-sm font-mono">
@@ -289,45 +312,46 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                       );
                     },
                     hr: () => <hr className="my-6 border-primary-200" />,
-                    table: ({children}) => (
+                    table: ({ children }) => (
                       <div className="overflow-x-auto mb-4">
-                        <table className="min-w-full divide-y divide-primary-200">
-                          {children}
-                        </table>
+                        <table className="min-w-full divide-y divide-primary-200">{children}</table>
                       </div>
                     ),
-                    thead: ({children}) => <thead className="bg-primary-50">{children}</thead>,
-                    tbody: ({children}) => <tbody className="divide-y divide-primary-100">{children}</tbody>,
-                    tr: ({children}) => <tr>{children}</tr>,
-                    th: ({children}) => (
+                    thead: ({ children }) => <thead className="bg-primary-50">{children}</thead>,
+                    tbody: ({ children }) => (
+                      <tbody className="divide-y divide-primary-100">{children}</tbody>
+                    ),
+                    tr: ({ children }) => <tr>{children}</tr>,
+                    th: ({ children }) => (
                       <th className="px-4 py-2 text-left text-xs font-medium text-primary-700 uppercase tracking-wider">
                         {children}
                       </th>
                     ),
-                    td: ({children}) => (
-                      <td className="px-4 py-2 text-sm text-primary-600">
-                        {children}
-                      </td>
+                    td: ({ children }) => (
+                      <td className="px-4 py-2 text-sm text-primary-600">{children}</td>
                     ),
                   }}
                 >
                   {getDisplayedText()}
                 </ReactMarkdown>
-                
+
                 {/* PDF Footer with Date - wird nur im Export angezeigt */}
                 <div className="mt-8 pt-4 border-t border-primary-200 text-center text-sm text-primary-600">
-                  <p>Übersetzung erstellt am: {new Date().toLocaleDateString('de-DE', { 
-                    day: '2-digit', 
-                    month: '2-digit', 
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}</p>
+                  <p>
+                    Übersetzung erstellt am:{' '}
+                    {new Date().toLocaleDateString('de-DE', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </p>
                   <p className="text-xs mt-1">HealthLingo - Medizinische Dokumente verstehen</p>
                 </div>
               </div>
             </div>
-            
+
             {/* Decorative elements */}
             <div className="absolute -top-2 -left-2 w-6 h-6 bg-gradient-to-br from-brand-400 to-brand-500 rounded-full opacity-60"></div>
             <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-gradient-to-br from-accent-400 to-accent-500 rounded-full opacity-60"></div>
@@ -347,10 +371,15 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex flex-row space-x-2 sm:space-x-3 w-full sm:w-auto">
                 <button
-                  onClick={() => handleCopy(getDisplayedText(), activeTab === 'language' ? 'language' : 'translated')}
+                  onClick={() =>
+                    handleCopy(
+                      getDisplayedText(),
+                      activeTab === 'language' ? 'language' : 'translated'
+                    )
+                  }
                   className="btn-secondary group flex-1 sm:flex-initial"
                   disabled={copiedText === (activeTab === 'language' ? 'language' : 'translated')}
                 >
@@ -368,7 +397,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                     </>
                   )}
                 </button>
-                
+
                 <button
                   onClick={handleDownload}
                   className="btn-primary group flex-1 sm:flex-initial"
@@ -391,11 +420,9 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
               <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg sm:rounded-xl flex items-center justify-center">
                 <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-primary-900">
-                Originaltext
-              </h3>
+              <h3 className="text-lg sm:text-xl font-bold text-primary-900">Originaltext</h3>
             </div>
-            
+
             <div className="flex space-x-2 sm:space-x-3">
               <button
                 onClick={() => setShowOriginal(!showOriginal)}
@@ -415,7 +442,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                   </>
                 )}
               </button>
-              
+
               {showOriginal && (
                 <button
                   onClick={() => handleCopy(result.original_text, 'original')}
@@ -443,31 +470,37 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
           {showOriginal && (
             <div className="animate-slide-down">
               <div className="text-result bg-gradient-to-br from-neutral-50 to-primary-50/30 markdown-content">
-                <ReactMarkdown 
+                <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
                   components={{
-                    h1: ({children}) => <h1 className="text-2xl font-bold text-primary-900 mb-4 mt-3">{children}</h1>,
-                    h2: ({children}) => <h2 className="text-xl font-bold text-primary-900 mb-3 mt-4">{children}</h2>,
-                    h3: ({children}) => <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">{children}</h3>,
-                    p: ({children}) => <p className="mb-3 text-primary-700 leading-relaxed">{children}</p>,
-                    ul: ({children}) => (
-                      <ul className="mb-3 space-y-2 text-primary-700">
-                        {children}
-                      </ul>
+                    h1: ({ children }) => (
+                      <h1 className="text-2xl font-bold text-primary-900 mb-4 mt-3">{children}</h1>
                     ),
-                    ol: ({children}) => (
+                    h2: ({ children }) => (
+                      <h2 className="text-xl font-bold text-primary-900 mb-3 mt-4">{children}</h2>
+                    ),
+                    h3: ({ children }) => (
+                      <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">
+                        {children}
+                      </h3>
+                    ),
+                    p: ({ children }) => (
+                      <p className="mb-3 text-primary-700 leading-relaxed">{children}</p>
+                    ),
+                    ul: ({ children }) => (
+                      <ul className="mb-3 space-y-2 text-primary-700">{children}</ul>
+                    ),
+                    ol: ({ children }) => (
                       <ol className="list-decimal ml-6 mb-3 space-y-2 text-primary-700">
                         {children}
                       </ol>
                     ),
-                    li: ({children}) => (
-                      <li className="pl-2 leading-relaxed">
-                        {children}
-                      </li>
+                    li: ({ children }) => <li className="pl-2 leading-relaxed">{children}</li>,
+                    strong: ({ children }) => (
+                      <strong className="font-semibold text-primary-900">{children}</strong>
                     ),
-                    strong: ({children}) => <strong className="font-semibold text-primary-900">{children}</strong>,
-                    em: ({children}) => <em className="italic text-primary-600">{children}</em>,
-                    code: ({children, className}) => {
+                    em: ({ children }) => <em className="italic text-primary-600">{children}</em>,
+                    code: ({ children, className }) => {
                       const isInline = !className?.includes('language-');
                       return isInline ? (
                         <code className="bg-primary-100 text-primary-800 px-1 py-0.5 rounded text-xs font-mono">
@@ -486,7 +519,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
               </div>
             </div>
           )}
-          
+
           {!showOriginal && (
             <div className="text-center py-8">
               <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -502,10 +535,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
 
       {/* Action Button - Centered */}
       <div className="flex justify-center pt-6">
-        <button
-          onClick={onNewTranslation}
-          className="btn-primary group"
-        >
+        <button onClick={onNewTranslation} className="btn-primary group">
           <RefreshCw className="w-5 h-5 transition-transform duration-200 group-hover:rotate-180 flex-shrink-0" />
           <span>Neues Dokument übersetzen</span>
         </button>
@@ -520,9 +550,10 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
           <div>
             <h4 className="font-semibold text-warning-900 mb-2">Wichtiger Hinweis</h4>
             <p className="text-warning-800 text-sm leading-relaxed">
-              Diese Übersetzung wurde automatisch erstellt und dient nur zur Orientierung. 
-              Sie ersetzt nicht die professionelle medizinische Beratung, Diagnose oder Behandlung. 
-              Wenden Sie sich bei Fragen immer an Ihren Arzt oder andere qualifizierte Gesundheitsdienstleister.
+              Diese Übersetzung wurde automatisch erstellt und dient nur zur Orientierung. Sie
+              ersetzt nicht die professionelle medizinische Beratung, Diagnose oder Behandlung.
+              Wenden Sie sich bei Fragen immer an Ihren Arzt oder andere qualifizierte
+              Gesundheitsdienstleister.
             </p>
           </div>
         </div>
@@ -531,4 +562,4 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
   );
 };
 
-export default TranslationResult; 
+export default TranslationResult;

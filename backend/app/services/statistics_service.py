@@ -29,7 +29,7 @@ class StatisticsService:
         db: Session,
         step_repository: PipelineStepRepository | None = None,
         execution_repository: PipelineStepExecutionRepository | None = None,
-        settings_repository: SystemSettingsRepository | None = None
+        settings_repository: SystemSettingsRepository | None = None,
     ):
         """
         Initialize statistics service.
@@ -74,7 +74,9 @@ class StatisticsService:
             system_health = self._get_system_health()
 
             # Get cache statistics
-            cache_stats = self._get_cache_statistics(ai_stats["total_interactions"], ai_stats["last_24h_interactions"])
+            cache_stats = self._get_cache_statistics(
+                ai_stats["total_interactions"], ai_stats["last_24h_interactions"]
+            )
 
             # Get performance improvements
             performance_metrics = self._get_performance_metrics(ai_stats, pipeline_config)
@@ -87,7 +89,7 @@ class StatisticsService:
                 "pipeline_configuration": pipeline_config,
                 "prompt_configuration": prompt_config,
                 "system_health": system_health,
-                "performance_improvements": performance_metrics
+                "performance_improvements": performance_metrics,
             }
 
         except Exception as e:
@@ -132,9 +134,11 @@ class StatisticsService:
             "total_interactions": total_interactions,
             "last_24h_interactions": recent_interactions,
             "last_7d_interactions": weekly_interactions,
-            "avg_processing_time_ms": round(avg_processing_time_ms, 2) if avg_processing_time_ms else 0,
+            "avg_processing_time_ms": round(avg_processing_time_ms, 2)
+            if avg_processing_time_ms
+            else 0,
             "success_rate_percent": round(success_rate, 1),
-            "most_used_step": most_used_step
+            "most_used_step": most_used_step,
         }
 
     def _get_pipeline_configuration(self) -> dict:
@@ -153,7 +157,7 @@ class StatisticsService:
             "enabled_steps": len(enabled_steps),
             "disabled_steps": len(disabled_steps),
             "enabled_step_names": [step.name for step in enabled_steps],
-            "disabled_step_names": [step.name for step in disabled_steps]
+            "disabled_step_names": [step.name for step in disabled_steps],
         }
 
     def _get_prompt_configuration(self) -> dict:
@@ -167,7 +171,7 @@ class StatisticsService:
 
         return {
             "dynamic_pipeline_steps": total_pipeline_steps,
-            "total_prompts_configured": total_pipeline_steps
+            "total_prompts_configured": total_pipeline_steps,
         }
 
     def _get_system_health(self) -> dict:
@@ -178,20 +182,17 @@ class StatisticsService:
             Dictionary with system health metrics
         """
         # Get feature flag settings
-        system_settings = self.settings_repository.get_settings_by_prefix('enable_')
-        enabled_features = sum(
-            1 for setting in system_settings
-            if setting.value.lower() == 'true'
-        )
+        system_settings = self.settings_repository.get_settings_by_prefix("enable_")
+        enabled_features = sum(1 for setting in system_settings if setting.value.lower() == "true")
         total_features = len(system_settings)
 
         return {
             "enabled_features": enabled_features,
             "total_features": total_features,
-            "feature_adoption_percent": round(
-                (enabled_features / total_features * 100), 1
-            ) if total_features > 0 else 0,
-            "database_status": "operational"
+            "feature_adoption_percent": round((enabled_features / total_features * 100), 1)
+            if total_features > 0
+            else 0,
+            "database_status": "operational",
         }
 
     def _get_cache_statistics(self, total: int, recent: int) -> dict:
@@ -207,15 +208,14 @@ class StatisticsService:
         """
         # Get cache timeout from settings
         cache_timeout = self.settings_repository.get_int_value(
-            'pipeline_cache_timeout',
-            default=3600
+            "pipeline_cache_timeout", default=3600
         )
 
         return {
             "total_entries": total,
             "active_entries": recent,
             "expired_entries": max(0, total - recent),
-            "cache_timeout_seconds": cache_timeout
+            "cache_timeout_seconds": cache_timeout,
         }
 
     def _get_performance_metrics(self, ai_stats: dict, pipeline_config: dict) -> dict:
@@ -232,18 +232,28 @@ class StatisticsService:
         metrics = {}
 
         if ai_stats["total_interactions"] > 0:
-            metrics["avg_processing_time"] = f"{ai_stats['avg_processing_time_ms']:.0f}ms average processing time"
+            metrics["avg_processing_time"] = (
+                f"{ai_stats['avg_processing_time_ms']:.0f}ms average processing time"
+            )
             metrics["success_rate"] = f"{ai_stats['success_rate_percent']:.1f}% success rate"
-            metrics["daily_throughput"] = f"{ai_stats['last_24h_interactions']} interactions in last 24h"
-            metrics["weekly_volume"] = f"{ai_stats['last_7d_interactions']} interactions in last 7 days"
+            metrics["daily_throughput"] = (
+                f"{ai_stats['last_24h_interactions']} interactions in last 24h"
+            )
+            metrics["weekly_volume"] = (
+                f"{ai_stats['last_7d_interactions']} interactions in last 7 days"
+            )
         else:
             metrics["status"] = "No AI interactions recorded yet"
 
         if pipeline_config["enabled_steps"] > 0:
-            metrics["active_pipeline_steps"] = f"{pipeline_config['enabled_steps']}/{pipeline_config['total_steps']} pipeline steps enabled"
+            metrics["active_pipeline_steps"] = (
+                f"{pipeline_config['enabled_steps']}/{pipeline_config['total_steps']} pipeline steps enabled"
+            )
             metrics["most_used_step"] = f"Most used: {ai_stats['most_used_step']}"
 
-        metrics["configuration_completeness"] = f"{pipeline_config['total_steps']} dynamic pipeline steps configured"
+        metrics["configuration_completeness"] = (
+            f"{pipeline_config['total_steps']} dynamic pipeline steps configured"
+        )
 
         return metrics
 
@@ -257,8 +267,7 @@ class StatisticsService:
         # Try to get cache timeout even in error case
         try:
             cache_timeout = self.settings_repository.get_int_value(
-                'pipeline_cache_timeout',
-                default=3600
+                "pipeline_cache_timeout", default=3600
             )
         except Exception:
             cache_timeout = 3600
@@ -271,7 +280,7 @@ class StatisticsService:
                 "total_entries": 0,
                 "active_entries": 0,
                 "expired_entries": 0,
-                "cache_timeout_seconds": cache_timeout
+                "cache_timeout_seconds": cache_timeout,
             },
             "ai_interaction_statistics": {
                 "total_interactions": 0,
@@ -279,29 +288,27 @@ class StatisticsService:
                 "last_7d_interactions": 0,
                 "avg_processing_time_ms": 0,
                 "success_rate_percent": 0,
-                "most_used_step": "N/A"
+                "most_used_step": "N/A",
             },
             "pipeline_configuration": {
                 "total_steps": 0,
                 "enabled_steps": 0,
                 "disabled_steps": 0,
                 "enabled_step_names": [],
-                "disabled_step_names": []
+                "disabled_step_names": [],
             },
             "prompt_configuration": {
                 "universal_prompts": 0,
                 "document_specific_prompts": 0,
-                "total_prompts_configured": 0
+                "total_prompts_configured": 0,
             },
             "system_health": {
                 "enabled_features": 0,
                 "total_features": 0,
                 "feature_adoption_percent": 0,
-                "database_status": "error"
+                "database_status": "error",
             },
-            "performance_improvements": {
-                "error": "Unable to calculate performance metrics"
-            }
+            "performance_improvements": {"error": "Unable to calculate performance metrics"},
         }
 
     def get_performance_comparison(self) -> dict:
@@ -320,14 +327,14 @@ class StatisticsService:
                     "Async AI API calls",
                     "Smart error fallbacks",
                     "AI-based medical validation",
-                    "AI-based text formatting"
+                    "AI-based text formatting",
                 ],
                 "expected_improvements": {
                     "speed": "40-60% faster processing",
                     "database_calls": "90% reduction via caching",
                     "ai_api_efficiency": "2-3x better throughput with parallel calls",
-                    "reliability": "Better error handling and fallbacks"
-                }
+                    "reliability": "Better error handling and fallbacks",
+                },
             },
             "legacy_pipeline": {
                 "features": [
@@ -335,17 +342,17 @@ class StatisticsService:
                     "Database call per document",
                     "Hardcoded medical validation",
                     "Hardcoded text formatting",
-                    "No parallel operations"
+                    "No parallel operations",
                 ],
                 "limitations": [
                     "Slower due to sequential processing",
                     "More database load",
                     "Less flexible validation",
-                    "Fixed formatting logic"
-                ]
+                    "Fixed formatting logic",
+                ],
             },
             "recommendation": "Use optimized pipeline for better performance and flexibility",
-            "toggle_method": "Set USE_OPTIMIZED_PIPELINE environment variable"
+            "toggle_method": "Set USE_OPTIMIZED_PIPELINE environment variable",
         }
 
     def clear_cache(self) -> dict:
@@ -361,5 +368,5 @@ class StatisticsService:
         return {
             "success": True,
             "message": "Unified system uses database storage - no cache to clear",
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }

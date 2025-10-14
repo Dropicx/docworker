@@ -13,6 +13,7 @@ from app.database.unified_models import Base
 
 logger = logging.getLogger(__name__)
 
+
 def init_database():
     """Initialize database tables and seed initial data"""
     try:
@@ -25,18 +26,22 @@ def init_database():
         # Seed modular pipeline configuration
         try:
             from app.database.modular_pipeline_seed import seed_modular_pipeline
+
             if seed_modular_pipeline():
                 logger.info("Database seeded with modular pipeline configuration successfully")
             else:
                 logger.warning("Failed to seed modular pipeline configuration")
         except Exception as e:
             logger.error(f"Error during modular pipeline seeding: {e}")
-            logger.warning("Continuing without modular pipeline seeding - modular pipeline tables may be empty")
+            logger.warning(
+                "Continuing without modular pipeline seeding - modular pipeline tables may be empty"
+            )
 
         return True
     except Exception as e:
         logger.error(f"Failed to initialize database: {e}")
         return False
+
 
 def drop_database():
     """Drop all database tables (use with caution!)"""
@@ -51,6 +56,7 @@ def drop_database():
     except Exception as e:
         logger.error(f"Failed to drop database: {e}")
         return False
+
 
 if __name__ == "__main__":
     import sys

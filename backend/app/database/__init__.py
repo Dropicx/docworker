@@ -7,9 +7,4 @@ from .models import AIInteractionLog, Base
 
 # DocumentPromptsDB and PipelineStepConfigDB removed - using unified system instead
 
-__all__ = [
-    "get_engine",
-    "get_session",
-    "Base",
-    "AIInteractionLog"
-]
+__all__ = ["get_engine", "get_session", "Base", "AIInteractionLog"]

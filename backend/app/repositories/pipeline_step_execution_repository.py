@@ -40,9 +40,9 @@ class PipelineStepExecutionRepository(BaseRepository[PipelineStepExecutionDB]):
         Returns:
             List of step executions ordered by step order
         """
-        return self.db.query(self.model).filter_by(
-            job_id=job_id
-        ).order_by(self.model.step_order).all()
+        return (
+            self.db.query(self.model).filter_by(job_id=job_id).order_by(self.model.step_order).all()
+        )
 
     def get_recent_executions(self, limit: int = 100) -> list[PipelineStepExecutionDB]:
         """
@@ -54,9 +54,7 @@ class PipelineStepExecutionRepository(BaseRepository[PipelineStepExecutionDB]):
         Returns:
             List of recent executions ordered by started_at descending
         """
-        return self.db.query(self.model).order_by(
-            desc(self.model.started_at)
-        ).limit(limit).all()
+        return self.db.query(self.model).order_by(desc(self.model.started_at)).limit(limit).all()
 
     def get_executions_since(self, since: datetime) -> list[PipelineStepExecutionDB]:
         """
@@ -68,9 +66,7 @@ class PipelineStepExecutionRepository(BaseRepository[PipelineStepExecutionDB]):
         Returns:
             List of executions since the timestamp
         """
-        return self.db.query(self.model).filter(
-            self.model.started_at >= since
-        ).all()
+        return self.db.query(self.model).filter(self.model.started_at >= since).all()
 
     def count_since(self, since: datetime) -> int:
         """
@@ -82,9 +78,7 @@ class PipelineStepExecutionRepository(BaseRepository[PipelineStepExecutionDB]):
         Returns:
             Count of executions
         """
-        return self.db.query(self.model).filter(
-            self.model.started_at >= since
-        ).count()
+        return self.db.query(self.model).filter(self.model.started_at >= since).count()
 
     def get_average_execution_time(self, limit: int = 100) -> float:
         """
@@ -96,11 +90,12 @@ class PipelineStepExecutionRepository(BaseRepository[PipelineStepExecutionDB]):
         Returns:
             Average execution time in seconds, or 0 if no data
         """
-        avg_time = self.db.query(
-            func.avg(self.model.execution_time_seconds)
-        ).filter(
-            self.model.execution_time_seconds.isnot(None)
-        ).limit(limit).scalar()
+        avg_time = (
+            self.db.query(func.avg(self.model.execution_time_seconds))
+            .filter(self.model.execution_time_seconds.isnot(None))
+            .limit(limit)
+            .scalar()
+        )
 
         return float(avg_time) if avg_time else 0.0
 
@@ -111,14 +106,12 @@ class PipelineStepExecutionRepository(BaseRepository[PipelineStepExecutionDB]):
         Returns:
             List of tuples (step_id, count) ordered by count descending
         """
-        return self.db.query(
-            self.model.step_id,
-            func.count(self.model.step_id).label('count')
-        ).group_by(
-            self.model.step_id
-        ).order_by(
-            desc('count')
-        ).all()
+        return (
+            self.db.query(self.model.step_id, func.count(self.model.step_id).label("count"))
+            .group_by(self.model.step_id)
+            .order_by(desc("count"))
+            .all()
+        )
 
     def get_most_used_step_id(self) -> int | None:
         """
@@ -127,14 +120,12 @@ class PipelineStepExecutionRepository(BaseRepository[PipelineStepExecutionDB]):
         Returns:
             Step ID or None if no executions
         """
-        result = self.db.query(
-            self.model.step_id,
-            func.count(self.model.step_id).label('count')
-        ).group_by(
-            self.model.step_id
-        ).order_by(
-            desc('count')
-        ).first()
+        result = (
+            self.db.query(self.model.step_id, func.count(self.model.step_id).label("count"))
+            .group_by(self.model.step_id)
+            .order_by(desc("count"))
+            .first()
+        )
 
         return result.step_id if result else None
 
@@ -160,11 +151,13 @@ class PipelineStepExecutionRepository(BaseRepository[PipelineStepExecutionDB]):
         Returns:
             List of failed executions ordered by started_at descending
         """
-        return self.db.query(self.model).filter_by(
-            status="FAILED"
-        ).order_by(
-            desc(self.model.started_at)
-        ).limit(limit).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(status="FAILED")
+            .order_by(desc(self.model.started_at))
+            .limit(limit)
+            .all()
+        )
 
     def get_success_rate(self, limit: int = 100) -> float:
         """
@@ -194,9 +187,7 @@ class PipelineStepExecutionRepository(BaseRepository[PipelineStepExecutionDB]):
             Number of deleted records
         """
         try:
-            deleted = self.db.query(self.model).filter(
-                self.model.started_at < older_than
-            ).delete()
+            deleted = self.db.query(self.model).filter(self.model.started_at < older_than).delete()
             self.db.commit()
             return deleted
         except Exception:

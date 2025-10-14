@@ -11,6 +11,7 @@ from sqlalchemy.sql import func
 
 Base = declarative_base()
 
+
 class AILogInteractionDB(Base):
     """
     Database model for AI interaction logging with token usage and cost tracking.
@@ -18,6 +19,7 @@ class AILogInteractionDB(Base):
     IMPORTANT: Does NOT store input/output text to keep database lean.
     Only tracks tokens and costs for analytics.
     """
+
     __tablename__ = "ai_interaction_logs"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -49,10 +51,12 @@ class AILogInteractionDB(Base):
     # Optional metadata (temperature, max_tokens, etc.)
     log_metadata = Column(JSON, nullable=True)
 
+
 class SystemSettingsDB(Base):
     """
     Database model for system-wide settings.
     """
+
     __tablename__ = "system_settings"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -65,10 +69,12 @@ class SystemSettingsDB(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
     updated_by = Column(String(255), nullable=True)
 
+
 class UserSessionDB(Base):
     """
     Database model for user sessions.
     """
+
     __tablename__ = "user_sessions"
 
     id = Column(Integer, primary_key=True, index=True)

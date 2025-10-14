@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 # Authentication setup
 security = HTTPBearer()
 
+
 def verify_session_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> bool:
     """
     Verify session token for pipeline statistics access.
@@ -32,15 +33,16 @@ def verify_session_token(credentials: HTTPAuthorizationCredentials = Depends(sec
     token = credentials.credentials
     # Simple token validation - check if token matches access code hash
     import hashlib
-    expected_token = hashlib.sha256(os.getenv("SETTINGS_ACCESS_CODE", "admin123").encode()).hexdigest()
+
+    expected_token = hashlib.sha256(
+        os.getenv("SETTINGS_ACCESS_CODE", "admin123").encode()
+    ).hexdigest()
 
     if token == expected_token:
         return True
 
-    raise HTTPException(
-        status_code=401,
-        detail="Invalid or expired session token"
-    )
+    raise HTTPException(status_code=401, detail="Invalid or expired session token")
+
 
 # ==================== TEXT EXTRACTION ====================
 # NOTE: OCR and text extraction now happen in the WORKER service, not backend
@@ -51,6 +53,7 @@ print("📄 Backend service initialized (OCR handled by worker)", flush=True)
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
+
 @router.post("/process/{processing_id}")
 @limiter.limit("3/minute")  # Maximal 3 Verarbeitungen pro Minute
 async def start_processing(
@@ -58,7 +61,7 @@ async def start_processing(
     request: Request,
     background_tasks: BackgroundTasks,
     options: ProcessingOptions | None = None,
-    service: ProcessingService = Depends(get_processing_service)
+    service: ProcessingService = Depends(get_processing_service),
 ):
     """
     Startet die Verarbeitung eines hochgeladenen Dokuments
@@ -77,14 +80,13 @@ async def start_processing(
     except Exception as e:
         logger.error(f"❌ Start-Verarbeitung Fehler: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Fehler beim Starten der Verarbeitung: {str(e)}"
+            status_code=500, detail=f"Fehler beim Starten der Verarbeitung: {str(e)}"
         ) from e
+
 
 @router.get("/process/{processing_id}/status", response_model=ProcessingProgress)
 async def get_processing_status(
-    processing_id: str,
-    service: ProcessingService = Depends(get_processing_service)
+    processing_id: str, service: ProcessingService = Depends(get_processing_service)
 ):
     """
     Gibt den aktuellen Verarbeitungsstatus zurück (aus Datenbank)
@@ -100,14 +102,13 @@ async def get_processing_status(
     except Exception as e:
         logger.error(f"❌ Status-Abfrage Fehler: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Fehler beim Abrufen des Status: {str(e)}"
+            status_code=500, detail=f"Fehler beim Abrufen des Status: {str(e)}"
         ) from e
+
 
 @router.get("/process/{processing_id}/result", response_model=TranslationResult)
 async def get_processing_result(
-    processing_id: str,
-    service: ProcessingService = Depends(get_processing_service)
+    processing_id: str, service: ProcessingService = Depends(get_processing_service)
 ):
     """
     Gibt das Verarbeitungsergebnis zurück (aus Datenbank)
@@ -126,15 +127,14 @@ async def get_processing_result(
     except Exception as e:
         logger.error(f"❌ Ergebnis-Abfrage Fehler: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Fehler beim Abrufen des Ergebnisses: {str(e)}"
+            status_code=500, detail=f"Fehler beim Abrufen des Ergebnisses: {str(e)}"
         ) from e
+
 
 @router.get("/process/active")
 @limiter.limit("30/minute")
 async def get_active_processes(
-    request: Request,
-    service: ProcessingService = Depends(get_processing_service)
+    request: Request, service: ProcessingService = Depends(get_processing_service)
 ):
     """
     Gibt Übersicht über aktive Verarbeitungen zurück (für Debugging)
@@ -142,17 +142,16 @@ async def get_active_processes(
     try:
         return service.get_active_processes()
     except Exception as e:
-        return {
-            "error": str(e),
-            "timestamp": datetime.now()
-        }
+        return {"error": str(e), "timestamp": datetime.now()}
+
 
 # Global optimized pipeline instance removed - now using unified system
+
 
 @router.get("/process/pipeline-stats")
 async def get_pipeline_stats(
     authenticated: bool = Depends(verify_session_token),
-    service: StatisticsService = Depends(get_statistics_service)
+    service: StatisticsService = Depends(get_statistics_service),
 ):
     """
     Get comprehensive pipeline performance statistics from actual database data
@@ -160,8 +159,7 @@ async def get_pipeline_stats(
     """
     if not authenticated:
         raise HTTPException(
-            status_code=401,
-            detail="Authentication required to access pipeline statistics"
+            status_code=401, detail="Authentication required to access pipeline statistics"
         )
 
     try:
@@ -169,33 +167,28 @@ async def get_pipeline_stats(
     except Exception as e:
         logger.error(f"Failed to get pipeline statistics: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to retrieve pipeline statistics: {str(e)}"
+            status_code=500, detail=f"Failed to retrieve pipeline statistics: {str(e)}"
         ) from e
 
+
 @router.post("/process/clear-cache")
-async def clear_pipeline_cache(
-    service: StatisticsService = Depends(get_statistics_service)
-):
+async def clear_pipeline_cache(service: StatisticsService = Depends(get_statistics_service)):
     """
     Clear the pipeline prompt cache (unified system)
     """
     try:
         return service.clear_cache()
     except Exception as e:
-        return {
-            "error": str(e),
-            "timestamp": datetime.now()
-        }
+        return {"error": str(e), "timestamp": datetime.now()}
+
 
 @router.get("/process/performance-comparison")
-async def get_performance_comparison(
-    service: StatisticsService = Depends(get_statistics_service)
-):
+async def get_performance_comparison(service: StatisticsService = Depends(get_statistics_service)):
     """
     Get performance comparison between optimized and legacy pipeline
     """
     return service.get_performance_comparison()
+
 
 @router.get("/process/models")
 async def get_available_models():
@@ -209,12 +202,13 @@ async def get_available_models():
         "models": [
             os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct"),
             os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407"),
-            os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
+            os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct"),
         ],
         "recommended": os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct"),
         "api_mode": "OVH AI Endpoints",
-        "timestamp": datetime.now()
+        "timestamp": datetime.now(),
     }
+
 
 @router.get("/process/languages")
 async def get_available_languages():
@@ -231,7 +225,7 @@ async def get_available_languages():
             SupportedLanguage.SPANISH,
             SupportedLanguage.ITALIAN,
             SupportedLanguage.PORTUGUESE,
-            SupportedLanguage.DUTCH
+            SupportedLanguage.DUTCH,
         ]
 
         # Gut unterstützte Sprachen
@@ -247,7 +241,7 @@ async def get_available_languages():
             SupportedLanguage.CZECH,
             SupportedLanguage.SWEDISH,
             SupportedLanguage.NORWEGIAN,
-            SupportedLanguage.DANISH
+            SupportedLanguage.DANISH,
         ]
 
         # Alle verfügbaren Sprachen
@@ -255,33 +249,33 @@ async def get_available_languages():
 
         # Zuerst sehr gut unterstützte Sprachen
         for lang in best_supported:
-            all_languages.append({
-                "code": lang.value,
-                "name": LANGUAGE_NAMES[lang],
-                "popular": True,
-                "quality": "excellent"
-            })
+            all_languages.append(
+                {
+                    "code": lang.value,
+                    "name": LANGUAGE_NAMES[lang],
+                    "popular": True,
+                    "quality": "excellent",
+                }
+            )
 
         # Dann gut unterstützte Sprachen
         for lang in well_supported:
-            all_languages.append({
-                "code": lang.value,
-                "name": LANGUAGE_NAMES[lang],
-                "popular": False,
-                "quality": "good"
-            })
+            all_languages.append(
+                {
+                    "code": lang.value,
+                    "name": LANGUAGE_NAMES[lang],
+                    "popular": False,
+                    "quality": "good",
+                }
+            )
 
         return {
             "languages": all_languages,
             "total_count": len(all_languages),
             "best_supported_count": len(best_supported),
             "well_supported_count": len(well_supported),
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }
 
     except Exception as e:
-        return {
-            "error": str(e),
-            "languages": [],
-            "timestamp": datetime.now()
-        }
+        return {"error": str(e), "languages": [], "timestamp": datetime.now()}

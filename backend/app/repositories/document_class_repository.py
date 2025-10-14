@@ -38,9 +38,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
         Returns:
             Document class instance or None if not found
         """
-        return self.db.query(self.model).filter_by(
-            class_key=class_key
-        ).first()
+        return self.db.query(self.model).filter_by(class_key=class_key).first()
 
     def get_enabled_classes(self) -> list[DocumentClassDB]:
         """
@@ -49,9 +47,12 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
         Returns:
             List of enabled document classes
         """
-        return self.db.query(self.model).filter_by(
-            is_enabled=True
-        ).order_by(self.model.display_name).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(is_enabled=True)
+            .order_by(self.model.display_name)
+            .all()
+        )
 
     def get_disabled_classes(self) -> list[DocumentClassDB]:
         """
@@ -60,9 +61,12 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
         Returns:
             List of disabled document classes
         """
-        return self.db.query(self.model).filter_by(
-            is_enabled=False
-        ).order_by(self.model.display_name).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(is_enabled=False)
+            .order_by(self.model.display_name)
+            .all()
+        )
 
     def get_system_classes(self) -> list[DocumentClassDB]:
         """
@@ -73,9 +77,12 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
         Returns:
             List of system document classes
         """
-        return self.db.query(self.model).filter_by(
-            is_system_class=True
-        ).order_by(self.model.display_name).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(is_system_class=True)
+            .order_by(self.model.display_name)
+            .all()
+        )
 
     def get_user_classes(self) -> list[DocumentClassDB]:
         """
@@ -84,9 +91,12 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
         Returns:
             List of user-created document classes
         """
-        return self.db.query(self.model).filter_by(
-            is_system_class=False
-        ).order_by(self.model.display_name).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(is_system_class=False)
+            .order_by(self.model.display_name)
+            .all()
+        )
 
     def class_key_exists(self, class_key: str, exclude_id: int | None = None) -> bool:
         """
@@ -144,7 +154,12 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
 
         matching = []
         for doc_class in classes:
-            if doc_class.strong_indicators and indicator in doc_class.strong_indicators or doc_class.weak_indicators and indicator in doc_class.weak_indicators:
+            if (
+                doc_class.strong_indicators
+                and indicator in doc_class.strong_indicators
+                or doc_class.weak_indicators
+                and indicator in doc_class.weak_indicators
+            ):
                 matching.append(doc_class)
 
         return matching
@@ -162,7 +177,8 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
         classes = self.get_all()
 
         return [
-            doc_class for doc_class in classes
+            doc_class
+            for doc_class in classes
             if doc_class.examples and example_text in doc_class.examples
         ]
 
@@ -186,7 +202,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
 
         if example not in doc_class.examples:
             doc_class.examples.append(example)
-            flag_modified(doc_class, 'examples')
+            flag_modified(doc_class, "examples")
             self.db.commit()
             self.db.refresh(doc_class)
 
@@ -209,7 +225,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
 
         if example in doc_class.examples:
             doc_class.examples.remove(example)
-            flag_modified(doc_class, 'examples')
+            flag_modified(doc_class, "examples")
             self.db.commit()
             self.db.refresh(doc_class)
 
@@ -235,7 +251,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
 
         if indicator not in doc_class.strong_indicators:
             doc_class.strong_indicators.append(indicator)
-            flag_modified(doc_class, 'strong_indicators')
+            flag_modified(doc_class, "strong_indicators")
             self.db.commit()
             self.db.refresh(doc_class)
 
@@ -261,7 +277,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
 
         if indicator not in doc_class.weak_indicators:
             doc_class.weak_indicators.append(indicator)
-            flag_modified(doc_class, 'weak_indicators')
+            flag_modified(doc_class, "weak_indicators")
             self.db.commit()
             self.db.refresh(doc_class)
 
@@ -279,9 +295,7 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
         """
         from app.database.modular_pipeline_models import DynamicPipelineStepDB
 
-        count = self.db.query(DynamicPipelineStepDB).filter_by(
-            document_class_id=class_id
-        ).count()
+        count = self.db.query(DynamicPipelineStepDB).filter_by(document_class_id=class_id).count()
 
         return count > 0
 
@@ -315,9 +329,11 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
         Returns:
             List of matching document classes
         """
-        return self.db.query(self.model).filter(
-            self.model.display_name.ilike(f"%{search_term}%")
-        ).all()
+        return (
+            self.db.query(self.model)
+            .filter(self.model.display_name.ilike(f"%{search_term}%"))
+            .all()
+        )
 
     def search_by_description(self, search_term: str) -> list[DocumentClassDB]:
         """
@@ -329,6 +345,6 @@ class DocumentClassRepository(BaseRepository[DocumentClassDB]):
         Returns:
             List of matching document classes
         """
-        return self.db.query(self.model).filter(
-            self.model.description.ilike(f"%{search_term}%")
-        ).all()
+        return (
+            self.db.query(self.model).filter(self.model.description.ilike(f"%{search_term}%")).all()
+        )

@@ -5,9 +5,9 @@
 // ==================== ENUMS ====================
 
 export enum OCREngineEnum {
-  PADDLEOCR = 'PADDLEOCR',     // Fast CPU-based OCR
-  VISION_LLM = 'VISION_LLM',   // Slow but accurate (Qwen 2.5 VL)
-  HYBRID = 'HYBRID'            // Intelligent routing
+  PADDLEOCR = 'PADDLEOCR', // Fast CPU-based OCR
+  VISION_LLM = 'VISION_LLM', // Slow but accurate (Qwen 2.5 VL)
+  HYBRID = 'HYBRID', // Intelligent routing
   // TESSERACT removed - poor quality
 }
 
@@ -15,7 +15,7 @@ export enum ModelProvider {
   OVH = 'OVH',
   OPENAI = 'OPENAI',
   ANTHROPIC = 'ANTHROPIC',
-  LOCAL = 'LOCAL'
+  LOCAL = 'LOCAL',
 }
 
 // ==================== OCR CONFIGURATION ====================
@@ -42,7 +42,7 @@ export interface OCRConfiguration {
   vision_llm_config: OCRConfig | null;
   hybrid_config: OCRConfig | null;
   last_modified: string;
-  pii_removal_enabled: boolean;  // NEW: Global PII removal toggle
+  pii_removal_enabled: boolean; // NEW: Global PII removal toggle
 }
 
 export interface OCRConfigRequest {
@@ -50,7 +50,7 @@ export interface OCRConfigRequest {
   paddleocr_config?: OCRConfig | null;
   vision_llm_config?: OCRConfig | null;
   hybrid_config?: OCRConfig | null;
-  pii_removal_enabled?: boolean;  // NEW: Global PII removal toggle
+  pii_removal_enabled?: boolean; // NEW: Global PII removal toggle
 }
 
 // ==================== PIPELINE STEPS ====================
@@ -77,10 +77,10 @@ export interface PipelineStep {
   document_class_id: number | null;
   is_branching_step: boolean;
   branching_field: string | null;
-  post_branching: boolean;  // NEW: Runs after document-specific processing
+  post_branching: boolean; // NEW: Runs after document-specific processing
 
   // Conditional execution
-  required_context_variables: string[] | null;  // NEW: Step will be skipped if these variables are missing
+  required_context_variables: string[] | null; // NEW: Step will be skipped if these variables are missing
 
   // Stop conditions (early termination)
   stop_conditions: {
@@ -108,10 +108,10 @@ export interface PipelineStepRequest {
   document_class_id?: number | null;
   is_branching_step?: boolean;
   branching_field?: string | null;
-  post_branching?: boolean;  // NEW: Runs after document-specific processing
+  post_branching?: boolean; // NEW: Runs after document-specific processing
 
   // Conditional execution
-  required_context_variables?: string[] | null;  // NEW: Step will be skipped if these variables are missing
+  required_context_variables?: string[] | null; // NEW: Step will be skipped if these variables are missing
 
   // Stop conditions (early termination)
   stop_conditions?: {
@@ -215,10 +215,10 @@ export interface PipelineBranch {
 }
 
 export interface PipelineVisualization {
-  pre_branching_steps: PipelineStep[];  // NEW: Pre-branching universal steps
+  pre_branching_steps: PipelineStep[]; // NEW: Pre-branching universal steps
   branching_step: PipelineStep | null;
   branches: {
     [classKey: string]: PipelineBranch;
   };
-  post_branching_steps: PipelineStep[];  // NEW: Post-branching universal steps
+  post_branching_steps: PipelineStep[]; // NEW: Post-branching universal steps
 }

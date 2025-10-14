@@ -24,7 +24,7 @@ import {
   Image as ImageIcon,
   Boxes,
   RefreshCw,
-  Shield
+  Shield,
 } from 'lucide-react';
 import { pipelineApi } from '../../services/pipelineApi';
 import {
@@ -34,7 +34,7 @@ import {
   AIModel,
   EngineStatusMap,
   PipelineStepRequest,
-  DocumentClass
+  DocumentClass,
 } from '../../types/pipeline';
 import StepEditorModal from './StepEditorModal';
 
@@ -69,7 +69,9 @@ const PipelineBuilder: React.FC = () => {
   const [expandedSteps, setExpandedSteps] = useState<Set<number>>(new Set());
 
   // Pipeline Tab State (NEW)
-  const [activePipelineTab, setActivePipelineTab] = useState<'pre-branching' | 'post-branching' | number>('pre-branching');
+  const [activePipelineTab, setActivePipelineTab] = useState<
+    'pre-branching' | 'post-branching' | number
+  >('pre-branching');
 
   // Track previous document class count for notifications (NEW)
   const [prevClassCount, setPrevClassCount] = useState<number>(0);
@@ -91,7 +93,9 @@ const PipelineBuilder: React.FC = () => {
   useEffect(() => {
     if (prevClassCount > 0 && documentClasses.length > prevClassCount) {
       const newClassCount = documentClasses.length - prevClassCount;
-      setSuccess(`✨ ${newClassCount} neue Dokumentklasse${newClassCount > 1 ? 'n' : ''} hinzugefügt! Neue Tabs sind jetzt verfügbar.`);
+      setSuccess(
+        `✨ ${newClassCount} neue Dokumentklasse${newClassCount > 1 ? 'n' : ''} hinzugefügt! Neue Tabs sind jetzt verfügbar.`
+      );
       setTimeout(() => setSuccess(''), 5000);
     }
     setPrevClassCount(documentClasses.length);
@@ -175,7 +179,7 @@ const PipelineBuilder: React.FC = () => {
         paddleocr_config: ocrConfig?.paddleocr_config || null,
         vision_llm_config: ocrConfig?.vision_llm_config || null,
         hybrid_config: ocrConfig?.hybrid_config || null,
-        pii_removal_enabled: piiRemovalEnabled
+        pii_removal_enabled: piiRemovalEnabled,
       });
 
       setSuccess('OCR-Konfiguration erfolgreich gespeichert!');
@@ -223,16 +227,24 @@ const PipelineBuilder: React.FC = () => {
   // Get filtered steps based on active tab
   const getDisplayedSteps = (): PipelineStep[] => {
     if (activePipelineTab === 'pre-branching') {
-      return steps.filter(s => s.document_class_id === null && !s.post_branching).sort((a, b) => a.order - b.order);
+      return steps
+        .filter(s => s.document_class_id === null && !s.post_branching)
+        .sort((a, b) => a.order - b.order);
     } else if (activePipelineTab === 'post-branching') {
-      return steps.filter(s => s.document_class_id === null && s.post_branching).sort((a, b) => a.order - b.order);
+      return steps
+        .filter(s => s.document_class_id === null && s.post_branching)
+        .sort((a, b) => a.order - b.order);
     } else {
-      return steps.filter(s => s.document_class_id === activePipelineTab).sort((a, b) => a.order - b.order);
+      return steps
+        .filter(s => s.document_class_id === activePipelineTab)
+        .sort((a, b) => a.order - b.order);
     }
   };
 
   // Get document class name by ID or context
-  const getDocumentClassName = (classId: number | null | 'pre-branching' | 'post-branching' | 'universal'): string => {
+  const getDocumentClassName = (
+    classId: number | null | 'pre-branching' | 'post-branching' | 'universal'
+  ): string => {
     if (classId === null || classId === 'universal') return 'Universal';
     if (classId === 'pre-branching') return 'Pre-Branching';
     if (classId === 'post-branching') return 'Post-Branching';
@@ -286,17 +298,15 @@ const PipelineBuilder: React.FC = () => {
         document_class_id: step.document_class_id,
         is_branching_step: step.is_branching_step,
         branching_field: step.branching_field,
-        post_branching: step.post_branching
+        post_branching: step.post_branching,
       };
 
       // Optimistically update local state first
-      const newSteps = steps.map(s =>
-        s.id === step.id ? { ...s, enabled: !s.enabled } : s
-      );
+      const newSteps = steps.map(s => (s.id === step.id ? { ...s, enabled: !s.enabled } : s));
       setSteps(newSteps);
 
       // Persist to backend (no await to keep UI responsive)
-      pipelineApi.updateStep(step.id, updatedStep).catch((err) => {
+      pipelineApi.updateStep(step.id, updatedStep).catch(err => {
         // If API fails, reload to get correct state
         setError((err as Error).message);
         loadSteps();
@@ -377,7 +387,7 @@ const PipelineBuilder: React.FC = () => {
       // Update the order values in the reordered steps
       const updatedReorderedSteps = reorderedSteps.map((step, index) => ({
         ...step,
-        order: index + 1
+        order: index + 1,
       }));
 
       // Update the global steps array by replacing the affected steps
@@ -386,7 +396,7 @@ const PipelineBuilder: React.FC = () => {
       setSteps(newSteps);
 
       // Call API to persist the change (no await needed for UI responsiveness)
-      pipelineApi.reorderSteps(newOrderIds).catch((err) => {
+      pipelineApi.reorderSteps(newOrderIds).catch(err => {
         // If API fails, reload to get correct state
         setError((err as Error).message);
         loadSteps();
@@ -475,43 +485,44 @@ const PipelineBuilder: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {engines && Object.entries(engines).map(([engineKey, engineInfo]) => {
-              const isSelected = selectedEngine === engineKey;
-              const isAvailable = engineInfo.available;
+            {engines &&
+              Object.entries(engines).map(([engineKey, engineInfo]) => {
+                const isSelected = selectedEngine === engineKey;
+                const isAvailable = engineInfo.available;
 
-              return (
-                <button
-                  key={engineKey}
-                  onClick={() => handleEngineChange(engineKey as OCREngineEnum)}
-                  disabled={!isAvailable}
-                  className={`p-4 rounded-lg border-2 transition-all text-left ${
-                    isSelected
-                      ? 'border-brand-500 bg-brand-50'
-                      : isAvailable
-                      ? 'border-primary-200 hover:border-brand-300 hover:bg-brand-50/50'
-                      : 'border-primary-100 bg-neutral-50 opacity-50 cursor-not-allowed'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <div className={`${isSelected ? 'text-brand-600' : 'text-primary-600'}`}>
-                      {getEngineIcon(engineKey)}
+                return (
+                  <button
+                    key={engineKey}
+                    onClick={() => handleEngineChange(engineKey as OCREngineEnum)}
+                    disabled={!isAvailable}
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      isSelected
+                        ? 'border-brand-500 bg-brand-50'
+                        : isAvailable
+                          ? 'border-primary-200 hover:border-brand-300 hover:bg-brand-50/50'
+                          : 'border-primary-100 bg-neutral-50 opacity-50 cursor-not-allowed'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <div className={`${isSelected ? 'text-brand-600' : 'text-primary-600'}`}>
+                        {getEngineIcon(engineKey)}
+                      </div>
+                      {!isAvailable && (
+                        <span className="text-xs px-2 py-1 bg-neutral-200 text-neutral-600 rounded">
+                          Nicht verfügbar
+                        </span>
+                      )}
                     </div>
-                    {!isAvailable && (
-                      <span className="text-xs px-2 py-1 bg-neutral-200 text-neutral-600 rounded">
-                        Nicht verfügbar
-                      </span>
-                    )}
-                  </div>
-                  <h4 className="font-semibold text-primary-900 mb-1">{engineInfo.engine}</h4>
-                  <p className="text-xs text-primary-600 mb-2">{engineInfo.description}</p>
-                  <div className="space-y-1 text-xs text-primary-500">
-                    <div>⚡ {engineInfo.speed}</div>
-                    <div>🎯 {engineInfo.accuracy}</div>
-                    <div>💰 {engineInfo.cost}</div>
-                  </div>
-                </button>
-              );
-            })}
+                    <h4 className="font-semibold text-primary-900 mb-1">{engineInfo.engine}</h4>
+                    <p className="text-xs text-primary-600 mb-2">{engineInfo.description}</p>
+                    <div className="space-y-1 text-xs text-primary-500">
+                      <div>⚡ {engineInfo.speed}</div>
+                      <div>🎯 {engineInfo.accuracy}</div>
+                      <div>💰 {engineInfo.cost}</div>
+                    </div>
+                  </button>
+                );
+              })}
           </div>
         )}
 
@@ -524,14 +535,15 @@ const PipelineBuilder: React.FC = () => {
                 <span>PII-Entfernung nach OCR</span>
               </h4>
               <p className="text-sm text-primary-600">
-                Entfernt automatisch personenbezogene Daten (Namen, Adressen, etc.) nach der Texterkennung - lokal und datenschutzkonform
+                Entfernt automatisch personenbezogene Daten (Namen, Adressen, etc.) nach der
+                Texterkennung - lokal und datenschutzkonform
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer ml-4">
               <input
                 type="checkbox"
                 checked={piiRemovalEnabled}
-                onChange={(e) => setPiiRemovalEnabled(e.target.checked)}
+                onChange={e => setPiiRemovalEnabled(e.target.checked)}
                 className="sr-only peer"
               />
               <div className="w-11 h-6 bg-neutral-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-brand-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-neutral-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-brand-600"></div>
@@ -568,10 +580,7 @@ const PipelineBuilder: React.FC = () => {
             >
               <RefreshCw className={`w-4 h-4 ${classesLoading ? 'animate-spin' : ''}`} />
             </button>
-            <button
-              onClick={handleAddStep}
-              className="btn-primary flex items-center space-x-2"
-            >
+            <button onClick={handleAddStep} className="btn-primary flex items-center space-x-2">
               <Plus className="w-4 h-4" />
               <span>Schritt hinzufügen</span>
             </button>
@@ -592,17 +601,19 @@ const PipelineBuilder: React.FC = () => {
             >
               <Settings className="w-4 h-4" />
               <span>Pre-Branching</span>
-              <span className={`px-2 py-0.5 text-xs rounded ${
-                activePipelineTab === 'pre-branching'
-                  ? 'bg-brand-100 text-brand-700'
-                  : 'bg-primary-100 text-primary-600'
-              }`}>
+              <span
+                className={`px-2 py-0.5 text-xs rounded ${
+                  activePipelineTab === 'pre-branching'
+                    ? 'bg-brand-100 text-brand-700'
+                    : 'bg-primary-100 text-primary-600'
+                }`}
+              >
                 {getStepCount('pre-branching')}
               </span>
             </button>
 
             {/* Dynamic Document Class Tabs */}
-            {documentClasses.map((docClass) => (
+            {documentClasses.map(docClass => (
               <button
                 key={docClass.id}
                 onClick={() => setActivePipelineTab(docClass.id)}
@@ -614,11 +625,13 @@ const PipelineBuilder: React.FC = () => {
               >
                 <span className="text-xl">{docClass.icon}</span>
                 <span>{docClass.display_name}</span>
-                <span className={`px-2 py-0.5 text-xs rounded ${
-                  activePipelineTab === docClass.id
-                    ? 'bg-brand-100 text-brand-700'
-                    : 'bg-primary-100 text-primary-600'
-                }`}>
+                <span
+                  className={`px-2 py-0.5 text-xs rounded ${
+                    activePipelineTab === docClass.id
+                      ? 'bg-brand-100 text-brand-700'
+                      : 'bg-primary-100 text-primary-600'
+                  }`}
+                >
                   {getStepCount(docClass.id)}
                 </span>
               </button>
@@ -635,11 +648,13 @@ const PipelineBuilder: React.FC = () => {
             >
               <Boxes className="w-4 h-4" />
               <span>Post-Branching</span>
-              <span className={`px-2 py-0.5 text-xs rounded ${
-                activePipelineTab === 'post-branching'
-                  ? 'bg-brand-100 text-brand-700'
-                  : 'bg-primary-100 text-primary-600'
-              }`}>
+              <span
+                className={`px-2 py-0.5 text-xs rounded ${
+                  activePipelineTab === 'post-branching'
+                    ? 'bg-brand-100 text-brand-700'
+                    : 'bg-primary-100 text-primary-600'
+                }`}
+              >
                 {getStepCount('post-branching')}
               </span>
             </button>
@@ -655,43 +670,54 @@ const PipelineBuilder: React.FC = () => {
             {activePipelineTab === 'pre-branching' ? (
               <>
                 <p>Keine Pre-Branching Schritte konfiguriert.</p>
-                <p className="text-sm mt-2">Diese Schritte laufen VOR der dokumentspezifischen Verarbeitung.</p>
-                <p className="text-sm">Klicken Sie auf &quot;Schritt hinzufügen&quot;, um zu beginnen.</p>
+                <p className="text-sm mt-2">
+                  Diese Schritte laufen VOR der dokumentspezifischen Verarbeitung.
+                </p>
+                <p className="text-sm">
+                  Klicken Sie auf &quot;Schritt hinzufügen&quot;, um zu beginnen.
+                </p>
               </>
             ) : activePipelineTab === 'post-branching' ? (
               <>
                 <p>Keine Post-Branching Schritte konfiguriert.</p>
-                <p className="text-sm mt-2">Diese Schritte laufen NACH der dokumentspezifischen Verarbeitung.</p>
-                <p className="text-sm">Ideal für universelle Aufgaben wie Übersetzung oder Formatierung.</p>
+                <p className="text-sm mt-2">
+                  Diese Schritte laufen NACH der dokumentspezifischen Verarbeitung.
+                </p>
+                <p className="text-sm">
+                  Ideal für universelle Aufgaben wie Übersetzung oder Formatierung.
+                </p>
               </>
             ) : (
               <>
                 <p>Keine Schritte für {getDocumentClassName(activePipelineTab)} konfiguriert.</p>
-                <p className="text-sm mt-2">Klicken Sie auf &quot;Schritt hinzufügen&quot;, um klassenspezifische Verarbeitung zu erstellen.</p>
+                <p className="text-sm mt-2">
+                  Klicken Sie auf &quot;Schritt hinzufügen&quot;, um klassenspezifische Verarbeitung
+                  zu erstellen.
+                </p>
               </>
             )}
           </div>
         ) : (
           <div className="space-y-3">
-            {getDisplayedSteps().map((step) => {
+            {getDisplayedSteps().map(step => {
               const isExpanded = expandedSteps.has(step.id);
 
               return (
                 <div
                   key={step.id}
                   draggable={true}
-                  onDragStart={(e) => handleDragStart(e, step)}
+                  onDragStart={e => handleDragStart(e, step)}
                   onDragEnd={handleDragEnd}
-                  onDragOver={(e) => handleDragOver(e, step)}
-                  onDrop={(e) => handleDrop(e, step)}
+                  onDragOver={e => handleDragOver(e, step)}
+                  onDrop={e => handleDrop(e, step)}
                   className={`border rounded-lg transition-all cursor-grab active:cursor-grabbing ${
                     draggedOverStep?.id === step.id
                       ? 'border-brand-500 border-2 bg-brand-50 shadow-lg scale-105'
                       : step.is_branching_step
-                      ? 'border-orange-300 bg-gradient-to-r from-amber-50/50 to-orange-50/50 shadow-md'
-                      : step.enabled
-                      ? 'border-primary-200 bg-white'
-                      : 'border-neutral-200 bg-neutral-50'
+                        ? 'border-orange-300 bg-gradient-to-r from-amber-50/50 to-orange-50/50 shadow-md'
+                        : step.enabled
+                          ? 'border-primary-200 bg-white'
+                          : 'border-neutral-200 bg-neutral-50'
                   }`}
                 >
                   {/* Step Header */}
@@ -702,15 +728,21 @@ const PipelineBuilder: React.FC = () => {
                       </div>
 
                       <div className="flex items-center space-x-3">
-                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
-                          step.enabled ? 'bg-brand-100 text-brand-700' : 'bg-neutral-200 text-neutral-600'
-                        }`}>
+                        <div
+                          className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold ${
+                            step.enabled
+                              ? 'bg-brand-100 text-brand-700'
+                              : 'bg-neutral-200 text-neutral-600'
+                          }`}
+                        >
                           {step.order}
                         </div>
 
                         <div>
                           <div className="flex items-center space-x-2 flex-wrap">
-                            <h4 className={`font-semibold ${step.enabled ? 'text-primary-900' : 'text-neutral-600'}`}>
+                            <h4
+                              className={`font-semibold ${step.enabled ? 'text-primary-900' : 'text-neutral-600'}`}
+                            >
                               {step.name}
                             </h4>
                             {!step.enabled && (
@@ -726,11 +758,12 @@ const PipelineBuilder: React.FC = () => {
                               </span>
                             )}
                             {/* Document Class Label (if different from active tab) */}
-                            {step.document_class_id !== null && step.document_class_id !== activePipelineTab && (
-                              <span className="text-xs px-2 py-1 bg-brand-100 text-brand-700 border border-brand-300 rounded">
-                                {getDocumentClassName(step.document_class_id)}
-                              </span>
-                            )}
+                            {step.document_class_id !== null &&
+                              step.document_class_id !== activePipelineTab && (
+                                <span className="text-xs px-2 py-1 bg-brand-100 text-brand-700 border border-brand-300 rounded">
+                                  {getDocumentClassName(step.document_class_id)}
+                                </span>
+                              )}
                           </div>
                           <p className="text-sm text-primary-500 mt-1">{step.description}</p>
                           <div className="flex items-center space-x-4 mt-2 text-xs text-primary-500">
@@ -746,7 +779,7 @@ const PipelineBuilder: React.FC = () => {
                       <button
                         onClick={() => toggleStepExpansion(step.id)}
                         className="p-2 hover:bg-primary-100 rounded-lg transition-colors"
-                        title={isExpanded ? "Einklappen" : "Aufklappen"}
+                        title={isExpanded ? 'Einklappen' : 'Aufklappen'}
                       >
                         {isExpanded ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                       </button>
@@ -755,14 +788,18 @@ const PipelineBuilder: React.FC = () => {
                       <button
                         onClick={() => handleToggleStep(step)}
                         className="relative inline-flex items-center"
-                        title={step.enabled ? "Schritt deaktivieren" : "Schritt aktivieren"}
+                        title={step.enabled ? 'Schritt deaktivieren' : 'Schritt aktivieren'}
                       >
-                        <div className={`w-11 h-6 rounded-full transition-colors ${
-                          step.enabled ? 'bg-success-500' : 'bg-neutral-300'
-                        }`}>
-                          <div className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
-                            step.enabled ? 'translate-x-5' : 'translate-x-0'
-                          }`} />
+                        <div
+                          className={`w-11 h-6 rounded-full transition-colors ${
+                            step.enabled ? 'bg-success-500' : 'bg-neutral-300'
+                          }`}
+                        >
+                          <div
+                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
+                              step.enabled ? 'translate-x-5' : 'translate-x-0'
+                            }`}
+                          />
                         </div>
                       </button>
 
@@ -787,7 +824,9 @@ const PipelineBuilder: React.FC = () => {
                   {/* Expanded Details */}
                   {isExpanded && (
                     <div className="border-t border-primary-200 p-4 bg-neutral-50">
-                      <h5 className="font-semibold text-sm text-primary-900 mb-2">Prompt Template:</h5>
+                      <h5 className="font-semibold text-sm text-primary-900 mb-2">
+                        Prompt Template:
+                      </h5>
                       <pre className="text-xs bg-white border border-primary-200 rounded p-3 overflow-x-auto whitespace-pre-wrap text-primary-700">
                         {step.prompt_template}
                       </pre>

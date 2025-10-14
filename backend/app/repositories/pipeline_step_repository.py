@@ -34,9 +34,7 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             List of steps sorted by order field
         """
-        return self.db.query(self.model).order_by(
-            self.model.order
-        ).all()
+        return self.db.query(self.model).order_by(self.model.order).all()
 
     def get_enabled_steps(self) -> list[DynamicPipelineStepDB]:
         """
@@ -45,9 +43,7 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             List of enabled steps sorted by order
         """
-        return self.db.query(self.model).filter_by(
-            enabled=True
-        ).order_by(self.model.order).all()
+        return self.db.query(self.model).filter_by(enabled=True).order_by(self.model.order).all()
 
     def get_disabled_steps(self) -> list[DynamicPipelineStepDB]:
         """
@@ -56,9 +52,7 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             List of disabled steps
         """
-        return self.db.query(self.model).filter_by(
-            enabled=False
-        ).order_by(self.model.order).all()
+        return self.db.query(self.model).filter_by(enabled=False).order_by(self.model.order).all()
 
     def get_universal_steps(self) -> list[DynamicPipelineStepDB]:
         """
@@ -69,9 +63,12 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             List of universal steps ordered by execution order
         """
-        return self.db.query(self.model).filter(
-            self.model.document_class_id.is_(None)
-        ).order_by(self.model.order).all()
+        return (
+            self.db.query(self.model)
+            .filter(self.model.document_class_id.is_(None))
+            .order_by(self.model.order)
+            .all()
+        )
 
     def get_steps_by_document_class(self, document_class_id: int) -> list[DynamicPipelineStepDB]:
         """
@@ -83,9 +80,12 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             List of steps for the document class ordered by execution order
         """
-        return self.db.query(self.model).filter_by(
-            document_class_id=document_class_id
-        ).order_by(self.model.order).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(document_class_id=document_class_id)
+            .order_by(self.model.order)
+            .all()
+        )
 
     def get_branching_step(self) -> DynamicPipelineStepDB | None:
         """
@@ -94,9 +94,7 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             The branching step or None if not configured
         """
-        return self.db.query(self.model).filter_by(
-            is_branching_step=True
-        ).first()
+        return self.db.query(self.model).filter_by(is_branching_step=True).first()
 
     def get_post_branching_steps(self) -> list[DynamicPipelineStepDB]:
         """
@@ -105,9 +103,12 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             List of post-branching steps ordered by execution order
         """
-        return self.db.query(self.model).filter_by(
-            post_branching=True
-        ).order_by(self.model.order).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(post_branching=True)
+            .order_by(self.model.order)
+            .all()
+        )
 
     def get_step_by_name(self, name: str) -> DynamicPipelineStepDB | None:
         """
@@ -131,9 +132,7 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             List of steps using the model
         """
-        return self.db.query(self.model).filter_by(
-            selected_model_id=model_id
-        ).all()
+        return self.db.query(self.model).filter_by(selected_model_id=model_id).all()
 
     def enable_step(self, step_id: int) -> DynamicPipelineStepDB | None:
         """
@@ -192,13 +191,16 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             List of steps requiring the variable
         """
-        steps = self.db.query(self.model).filter(
-            self.model.required_context_variables.isnot(None)
-        ).all()
+        steps = (
+            self.db.query(self.model)
+            .filter(self.model.required_context_variables.isnot(None))
+            .all()
+        )
 
         # Filter steps that have the variable in their requirements
         return [
-            step for step in steps
+            step
+            for step in steps
             if step.required_context_variables and variable_name in step.required_context_variables
         ]
 
@@ -212,10 +214,7 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         steps = self.get_all()
 
         # Filter steps that have actual stop conditions (not None, not empty)
-        return [
-            step for step in steps
-            if step.stop_conditions
-        ]
+        return [step for step in steps if step.stop_conditions]
 
     def duplicate_step(self, step_id: int, new_name: str) -> DynamicPipelineStepDB | None:
         """
@@ -252,9 +251,8 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
             post_branching=original.post_branching,
             required_context_variables=original.required_context_variables,
             stop_conditions=original.stop_conditions,
-            modified_by="system_duplicate"
+            modified_by="system_duplicate",
         )
-
 
     def get_step_statistics(self) -> dict:
         """

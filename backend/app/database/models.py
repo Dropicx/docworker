@@ -11,14 +11,18 @@ from sqlalchemy.sql import func
 
 Base = declarative_base()
 
+
 class DocumentClassEnum(str, Enum):
     """Document class enumeration for database"""
+
     ARZTBRIEF = "ARZTBRIEF"
     BEFUNDBERICHT = "BEFUNDBERICHT"
     LABORWERTE = "LABORWERTE"
 
+
 class ProcessingStepEnum(str, Enum):
     """Processing step enumeration for database"""
+
     TEXT_EXTRACTION = "TEXT_EXTRACTION"  # Enhanced OCR with conditional routing - STEP 0
     MEDICAL_VALIDATION = "MEDICAL_VALIDATION"  # STEP 1
     CLASSIFICATION = "CLASSIFICATION"  # STEP 2
@@ -30,11 +34,14 @@ class ProcessingStepEnum(str, Enum):
     FINAL_CHECK = "FINAL_CHECK"  # STEP 8
     FORMATTING = "FORMATTING"  # STEP 9
 
+
 # DocumentPromptsDB and PipelineStepConfigDB removed - replaced by unified system
 # Use DocumentSpecificPromptsDB and UniversalPipelineStepConfigDB from app.database.unified_models instead
 
+
 class AIInteractionLog(Base):
     """Database model for comprehensive AI interaction logging"""
+
     __tablename__ = "ai_interaction_logs"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -76,14 +83,18 @@ class AIInteractionLog(Base):
     session_id = Column(String(255), nullable=True, index=True)
     request_id = Column(String(255), nullable=True, index=True)
 
+
 class SystemSettingsDB(Base):
     """Database model for system-wide settings"""
+
     __tablename__ = "system_settings"
 
     id = Column(Integer, primary_key=True, index=True)
     key = Column(String(255), unique=True, nullable=False, index=True)
     value = Column(Text, nullable=True)
-    value_type = Column(String(50), nullable=False, default="string")  # string, int, float, bool, json
+    value_type = Column(
+        String(50), nullable=False, default="string"
+    )  # string, int, float, bool, json
     description = Column(Text, nullable=True)
     is_encrypted = Column(Boolean, default=False, nullable=False)
 
@@ -92,8 +103,10 @@ class SystemSettingsDB(Base):
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
     updated_by = Column(String(255), nullable=True)
 
+
 class UserSessionsDB(Base):
     """Database model for user authentication sessions"""
+
     __tablename__ = "user_sessions"
 
     id = Column(Integer, primary_key=True, index=True)

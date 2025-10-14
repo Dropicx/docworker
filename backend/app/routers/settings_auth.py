@@ -18,15 +18,19 @@ router = APIRouter(prefix="/api/settings", tags=["settings"])
 
 # ==================== PYDANTIC MODELS ====================
 
+
 class AuthRequest(BaseModel):
     password: str = Field(..., description="Access code for settings")
+
 
 class AuthResponse(BaseModel):
     success: bool
     message: str
     session_token: str | None = None
 
+
 # ==================== AUTHENTICATION ====================
+
 
 def verify_session_token(authorization: str | None = Header(None)) -> bool:
     """Verify session token from Authorization header."""
@@ -42,6 +46,7 @@ def verify_session_token(authorization: str | None = Header(None)) -> bool:
         # Simple token validation - in production use JWT
         # For now, just check if token matches access code hash
         import hashlib
+
         expected_token = hashlib.sha256(settings.admin_access_code.encode()).hexdigest()
 
         return token == expected_token
@@ -49,6 +54,7 @@ def verify_session_token(authorization: str | None = Header(None)) -> bool:
     except Exception as e:
         logger.error(f"Token verification failed: {e}")
         return False
+
 
 @router.post("/auth", response_model=AuthResponse)
 async def authenticate(auth_request: AuthRequest):
@@ -60,34 +66,27 @@ async def authenticate(auth_request: AuthRequest):
         if auth_request.password == settings.admin_access_code:
             # Generate session token
             import hashlib
+
             session_token = hashlib.sha256(settings.admin_access_code.encode()).hexdigest()
 
             logger.info("Settings authentication successful")
             return AuthResponse(
-                success=True,
-                message="Authentifizierung erfolgreich",
-                session_token=session_token
+                success=True, message="Authentifizierung erfolgreich", session_token=session_token
             )
         logger.warning("Settings authentication failed - invalid code")
-        return AuthResponse(
-            success=False,
-            message="Ungültiger Zugangscode"
-        )
+        return AuthResponse(success=False, message="Ungültiger Zugangscode")
 
     except Exception as e:
         logger.error(f"Authentication error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication error"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Authentication error"
         ) from e
+
 
 @router.get("/check-auth")
 async def check_auth(authenticated: bool = Depends(verify_session_token)):
     """Check if current session is authenticated."""
     if not authenticated:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     return {"authenticated": True, "message": "Session valid"}

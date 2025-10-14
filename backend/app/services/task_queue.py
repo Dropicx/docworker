@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class JobStatus(str, Enum):
     """Job status enumeration"""
+
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     COMPLETED = "COMPLETED"
@@ -39,12 +40,7 @@ class TaskQueue(ABC):
     """
 
     @abstractmethod
-    async def enqueue(
-        self,
-        task_name: str,
-        task_data: dict[str, Any],
-        priority: int = 0
-    ) -> str:
+    async def enqueue(self, task_name: str, task_data: dict[str, Any], priority: int = 0) -> str:
         """
         Enqueue a task for processing.
 
@@ -119,9 +115,7 @@ class InMemoryTaskQueue(TaskQueue):
         logger.info("📦 InMemoryTaskQueue initialized (direct execution mode)")
 
     def register_task_handler(
-        self,
-        task_name: str,
-        handler: Callable[[dict[str, Any]], Awaitable[Any]]
+        self, task_name: str, handler: Callable[[dict[str, Any]], Awaitable[Any]]
     ):
         """
         Register a task handler function.
@@ -133,12 +127,7 @@ class InMemoryTaskQueue(TaskQueue):
         self.task_handlers[task_name] = handler
         logger.debug(f"✅ Registered handler for task: {task_name}")
 
-    async def enqueue(
-        self,
-        task_name: str,
-        task_data: dict[str, Any],
-        priority: int = 0
-    ) -> str:
+    async def enqueue(self, task_name: str, task_data: dict[str, Any], priority: int = 0) -> str:
         """
         Enqueue and immediately execute a task.
 
@@ -163,7 +152,7 @@ class InMemoryTaskQueue(TaskQueue):
             "started_at": None,
             "completed_at": None,
             "result": None,
-            "error": None
+            "error": None,
         }
 
         logger.info(f"📋 Task '{task_name}' enqueued with job_id: {job_id[:8]}...")
@@ -212,7 +201,9 @@ class InMemoryTaskQueue(TaskQueue):
             job["result"] = result
 
             execution_time = (job["completed_at"] - job["started_at"]).total_seconds()
-            logger.info(f"✅ Task '{task_name}' completed in {execution_time:.2f}s (job: {job_id[:8]}...)")
+            logger.info(
+                f"✅ Task '{task_name}' completed in {execution_time:.2f}s (job: {job_id[:8]}...)"
+            )
 
         except Exception as e:
             error = str(e)
@@ -248,7 +239,7 @@ class InMemoryTaskQueue(TaskQueue):
             "created_at": job["created_at"].isoformat(),
             "started_at": job["started_at"].isoformat() if job["started_at"] else None,
             "completed_at": job["completed_at"].isoformat() if job["completed_at"] else None,
-            "error": job["error"]
+            "error": job["error"],
         }
 
     async def get_job_result(self, job_id: str) -> Any | None:
@@ -388,6 +379,7 @@ class InMemoryTaskQueue(TaskQueue):
 
 # ==================== TASK QUEUE FACTORY ====================
 
+
 def create_task_queue(queue_type: str = "memory", **kwargs) -> TaskQueue:
     """
     Factory function to create appropriate task queue.
@@ -427,6 +419,7 @@ def get_task_queue() -> TaskQueue:
     if _task_queue is None:
         # Determine queue type from environment
         import os
+
         use_redis = os.getenv("USE_REDIS_QUEUE", "false").lower() == "true"
 
         if use_redis:

@@ -17,6 +17,7 @@ from app.core.config import settings
 # Setup logger
 logger = logging.getLogger(__name__)
 
+
 class OVHClient:
     """OVH AI Endpoints client for medical text processing and vision OCR.
 
@@ -71,11 +72,11 @@ class OVHClient:
 
         # Define which prompt types should use fast model for speed optimization
         self.fast_model_prompt_types = {
-            'preprocessing_prompt',
-            'language_translation_prompt',
-            'grammar_check_prompt',
-            'final_check_prompt',
-            'formatting_prompt'
+            "preprocessing_prompt",
+            "language_translation_prompt",
+            "grammar_check_prompt",
+            "final_check_prompt",
+            "formatting_prompt",
         }
 
         # ⚡ NOTE: PII filtering now happens in worker before pipeline execution
@@ -85,7 +86,9 @@ class OVHClient:
         if logger.isEnabledFor(logging.DEBUG):
             logger.debug("🔍 OVH Client Initialization:")
             logger.debug(f"   - Access Token: {'✅ Set' if self.access_token else '❌ NOT SET'}")
-            logger.debug(f"   - Token Length: {len(self.access_token) if self.access_token else 0} chars")
+            logger.debug(
+                f"   - Token Length: {len(self.access_token) if self.access_token else 0} chars"
+            )
             logger.debug(f"   - Base URL: {self.base_url}")
             logger.debug(f"   - Main Model: {self.main_model}")
             logger.debug(f"   - Vision Model: {self.vision_model}")
@@ -102,13 +105,12 @@ class OVHClient:
         try:
             self.client = AsyncOpenAI(
                 base_url=self.base_url,
-                api_key=self.access_token or "dummy-key-not-set"  # Use dummy key if not set
+                api_key=self.access_token or "dummy-key-not-set",  # Use dummy key if not set
             )
 
             # Initialize separate client for vision model
             self.vision_client = AsyncOpenAI(
-                base_url=self.vision_base_url,
-                api_key=self.access_token or "dummy-key-not-set"
+                base_url=self.vision_base_url, api_key=self.access_token or "dummy-key-not-set"
             )
         except Exception as e:
             logger.error(f"Failed to initialize OVH clients: {e}")
@@ -144,7 +146,9 @@ class OVHClient:
             - Timeout: Network connectivity issues
         """
         if not self.access_token:
-            error = "OVH API token not configured - OVH_AI_ENDPOINTS_ACCESS_TOKEN is empty or not set"
+            error = (
+                "OVH API token not configured - OVH_AI_ENDPOINTS_ACCESS_TOKEN is empty or not set"
+            )
             logger.error(f"❌ {error}")
             logger.error("   Please ensure the environment variable is set in Railway")
             return False, error
@@ -157,14 +161,16 @@ class OVHClient:
         try:
             logger.debug(f"🔄 Testing OVH connection to {self.base_url}")
             logger.debug(f"   Using model: {self.main_model}")
-            logger.debug(f"   Token (last 8 chars): ...{self.access_token[-8:] if self.access_token else 'NOT SET'}")
+            logger.debug(
+                f"   Token (last 8 chars): ...{self.access_token[-8:] if self.access_token else 'NOT SET'}"
+            )
 
             # Try a simple completion to test connection
             response = await self.client.chat.completions.create(
                 model=self.main_model,
                 messages=[{"role": "user", "content": "Say 'OK' if you can read this"}],
                 max_tokens=10,
-                temperature=0
+                temperature=0,
             )
 
             if response and response.choices:
@@ -207,8 +213,15 @@ class OVHClient:
         if task_description:
             task_lower = task_description.lower()
             speed_optimized_keywords = [
-                'grammar', 'formatting', 'format', 'structure', 'layout',
-                'final check', 'validation', 'template', 'language_translation'
+                "grammar",
+                "formatting",
+                "format",
+                "structure",
+                "layout",
+                "final check",
+                "validation",
+                "template",
+                "language_translation",
             ]
             return any(keyword in task_lower for keyword in speed_optimized_keywords)
 
@@ -219,7 +232,7 @@ class OVHClient:
         full_prompt: str,
         temperature: float = 0.3,
         max_tokens: int = 4000,
-        use_fast_model: bool = False
+        use_fast_model: bool = False,
     ) -> dict[str, Any]:
         """Process medical text using AI with intelligent model selection.
 
@@ -266,7 +279,7 @@ class OVHClient:
                 "input_tokens": 0,
                 "output_tokens": 0,
                 "total_tokens": 0,
-                "model": None
+                "model": None,
             }
 
         # Choose model based on task type
@@ -277,12 +290,7 @@ class OVHClient:
             logger.debug(f"🚀 Processing with OVH {model_to_use} ({model_type})")
 
             # Use simple user message with the full prompt
-            messages = [
-                {
-                    "role": "user",
-                    "content": full_prompt
-                }
-            ]
+            messages = [{"role": "user", "content": full_prompt}]
 
             # Make the API call using OpenAI client
             response = await self.client.chat.completions.create(
@@ -290,28 +298,30 @@ class OVHClient:
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                top_p=0.9
+                top_p=0.9,
             )
 
             result = response.choices[0].message.content
 
             # ✨ NEW: Extract token usage from response
-            usage = getattr(response, 'usage', None)
-            input_tokens = getattr(usage, 'prompt_tokens', 0) if usage else 0
-            output_tokens = getattr(usage, 'completion_tokens', 0) if usage else 0
-            total_tokens = getattr(usage, 'total_tokens', 0) if usage else 0
+            usage = getattr(response, "usage", None)
+            input_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
+            output_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
+            total_tokens = getattr(usage, "total_tokens", 0) if usage else 0
 
             if not usage:
                 logger.warning("⚠️ API response has no usage data")
 
-            logger.debug(f"✅ OVH processing successful with {model_to_use} ({model_type}) - {total_tokens} tokens")
+            logger.debug(
+                f"✅ OVH processing successful with {model_to_use} ({model_type}) - {total_tokens} tokens"
+            )
 
             return {
                 "text": result.strip(),
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
                 "total_tokens": total_tokens,
-                "model": model_to_use
+                "model": model_to_use,
             }
 
         except Exception as e:
@@ -321,7 +331,7 @@ class OVHClient:
                 "input_tokens": 0,
                 "output_tokens": 0,
                 "total_tokens": 0,
-                "model": model_to_use
+                "model": model_to_use,
             }
 
     async def process_prompt_with_optimization(
@@ -329,7 +339,7 @@ class OVHClient:
         full_prompt: str,
         prompt_type: str = None,
         temperature: float = 0.3,
-        max_tokens: int = 4000
+        max_tokens: int = 4000,
     ) -> str:
         """
         Process a prompt with automatic model optimization based on prompt type.
@@ -337,13 +347,15 @@ class OVHClient:
         """
         use_fast = self.should_use_fast_model(prompt_type=prompt_type)
 
-        logger.info(f"🔄 Processing prompt type '{prompt_type}' with {'fast' if use_fast else 'high-quality'} model")
+        logger.info(
+            f"🔄 Processing prompt type '{prompt_type}' with {'fast' if use_fast else 'high-quality'} model"
+        )
 
         return await self.process_medical_text_with_prompt(
             full_prompt=full_prompt,
             temperature=temperature,
             max_tokens=max_tokens,
-            use_fast_model=use_fast
+            use_fast_model=use_fast,
         )
 
     async def process_medical_text(
@@ -351,7 +363,7 @@ class OVHClient:
         text: str,
         instruction: str = "Process this medical text",
         temperature: float = 0.3,
-        max_tokens: int = 4000
+        max_tokens: int = 4000,
     ) -> str:
         """
         Process medical text using Meta-Llama-3.3-70B-Instruct
@@ -376,12 +388,9 @@ class OVHClient:
             messages = [
                 {
                     "role": "system",
-                    "content": "Du bist ein hochspezialisierter medizinischer Textverarbeiter. Befolge die Anweisungen präzise. Antworte IMMER in der gleichen Sprache wie der Eingabetext."
+                    "content": "Du bist ein hochspezialisierter medizinischer Textverarbeiter. Befolge die Anweisungen präzise. Antworte IMMER in der gleichen Sprache wie der Eingabetext.",
                 },
-                {
-                    "role": "user",
-                    "content": f"{instruction}\n\nText to process:\n{text}"
-                }
+                {"role": "user", "content": f"{instruction}\n\nText to process:\n{text}"},
             ]
 
             # Make the API call using OpenAI client
@@ -390,7 +399,7 @@ class OVHClient:
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                top_p=0.9
+                top_p=0.9,
             )
 
             result = response.choices[0].message.content
@@ -402,10 +411,7 @@ class OVHClient:
             return f"Error processing with OVH API: {str(e)}"
 
     async def preprocess_medical_text(
-        self,
-        text: str,
-        temperature: float = 0.3,
-        max_tokens: int = 4000
+        self, text: str, temperature: float = 0.3, max_tokens: int = 4000
     ) -> str:
         """
         Preprocess medical text - first removes PII locally, then optionally uses OVH
@@ -482,19 +488,14 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
             full_prompt = preprocess_prompt.format(text=cleaned_text)
 
             # Use preprocessing model
-            messages = [
-                {
-                    "role": "user",
-                    "content": full_prompt
-                }
-            ]
+            messages = [{"role": "user", "content": full_prompt}]
 
             response = await self.client.chat.completions.create(
                 model=self.preprocessing_model,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                top_p=0.9
+                top_p=0.9,
             )
 
             result = response.choices[0].message.content
@@ -514,9 +515,10 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
 
             # Clean up formatting
             import re
-            result = re.sub(r'^\s*\d+[.)]\s*([•\-\*])', r'\1', result, flags=re.MULTILINE)
-            result = re.sub(r'^([•\-\*])\s*[•\-\*]+\s*', r'\1 ', result, flags=re.MULTILINE)
-            result = re.sub(r'([•\-\*])\s*\1+', r'\1', result)
+
+            result = re.sub(r"^\s*\d+[.)]\s*([•\-\*])", r"\1", result, flags=re.MULTILINE)
+            result = re.sub(r"^([•\-\*])\s*[•\-\*]+\s*", r"\1 ", result, flags=re.MULTILINE)
+            result = re.sub(r"([•\-\*])\s*\1+", r"\1", result)
 
             return result.strip() if result else text
 
@@ -530,7 +532,7 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
         target_language: str,
         temperature: float = 0.3,
         max_tokens: int = 4000,
-        custom_prompt: str | None = None
+        custom_prompt: str | None = None,
     ) -> tuple[str, float]:
         """Translate simplified medical text to target language with quality scoring.
 
@@ -581,7 +583,9 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
 
             if custom_prompt:
                 # Use custom prompt and replace placeholders
-                translation_prompt = custom_prompt.replace("{language}", target_language).replace("{text}", simplified_text)
+                translation_prompt = custom_prompt.replace("{language}", target_language).replace(
+                    "{text}", simplified_text
+                )
                 logger.info("📝 Using custom language translation prompt")
             else:
                 translation_prompt = f"""Übersetze den folgenden Text EXAKT in {target_language}.
@@ -599,19 +603,14 @@ TEXT ZUM ÜBERSETZEN:
 ÜBERSETZUNG:"""
                 logger.info("📝 Using default language translation prompt")
 
-            messages = [
-                {
-                    "role": "user",
-                    "content": translation_prompt
-                }
-            ]
+            messages = [{"role": "user", "content": translation_prompt}]
 
             response = await self.client.chat.completions.create(
                 model=self.translation_model,
                 messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
-                top_p=0.9
+                top_p=0.9,
             )
 
             result = response.choices[0].message.content
@@ -649,7 +648,10 @@ TEXT ZUM ÜBERSETZEN:
 
         # Structure preservation (emojis)
         import re
-        emoji_pattern = r'[😀-🿿]|[\U0001F300-\U0001F5FF]|[\U0001F600-\U0001F64F]|[\U0001F680-\U0001F6FF]'
+
+        emoji_pattern = (
+            r"[😀-🿿]|[\U0001F300-\U0001F5FF]|[\U0001F600-\U0001F64F]|[\U0001F680-\U0001F6FF]"
+        )
         original_emojis = len(re.findall(emoji_pattern, original))
         translated_emojis = len(re.findall(emoji_pattern, translated))
 
@@ -660,10 +662,7 @@ TEXT ZUM ÜBERSETZEN:
         return min(confidence, 1.0)
 
     async def generate_streaming(
-        self,
-        prompt: str,
-        temperature: float = 0.3,
-        max_tokens: int = 4000
+        self, prompt: str, temperature: float = 0.3, max_tokens: int = 4000
     ) -> AsyncGenerator[str, None]:
         """
         Generate streaming response from OVH API
@@ -675,12 +674,10 @@ TEXT ZUM ÜBERSETZEN:
         try:
             stream = await self.client.chat.completions.create(
                 model=self.main_model,
-                messages=[
-                    {"role": "user", "content": prompt}
-                ],
+                messages=[{"role": "user", "content": prompt}],
                 temperature=temperature,
                 max_tokens=max_tokens,
-                stream=True
+                stream=True,
             )
 
             async for chunk in stream:
@@ -692,10 +689,7 @@ TEXT ZUM ÜBERSETZEN:
             yield f"Streaming error: {str(e)}"
 
     async def translate_medical_document(
-        self,
-        text: str,
-        document_type: str = "universal",
-        custom_prompts: Any | None = None
+        self, text: str, document_type: str = "universal", custom_prompts: Any | None = None
     ) -> tuple[str, str, float, str]:
         """
         Main processing using OVH Meta-Llama-3.3-70B for medical document translation
@@ -716,7 +710,7 @@ TEXT ZUM ÜBERSETZEN:
             logger.info("🏥 Starting medical document processing with OVH AI")
 
             # Create the comprehensive instruction for medical translation (in German)
-            if custom_prompts and hasattr(custom_prompts, 'translation_prompt'):
+            if custom_prompts and hasattr(custom_prompts, "translation_prompt"):
                 instruction = custom_prompts.translation_prompt
                 logger.info(f"📝 Using custom translation prompt for {document_type}")
             else:
@@ -736,13 +730,15 @@ ORIGINAL MEDIZINISCHER TEXT:
                 full_prompt=full_prompt,
                 temperature=0.3,
                 max_tokens=4000,
-                use_fast_model=False  # Main translation needs quality
+                use_fast_model=False,  # Main translation needs quality
             )
 
             # Log the translated text
             logger.info("📤 TRANSLATED TEXT (first 1000 chars):")
             logger.info("-" * 40)
-            logger.info(translated_text[:1000] + "..." if len(translated_text) > 1000 else translated_text)
+            logger.info(
+                translated_text[:1000] + "..." if len(translated_text) > 1000 else translated_text
+            )
             logger.info(f"   Length: {len(translated_text)} characters")
             logger.info("-" * 40)
 
@@ -916,7 +912,6 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
 
         return base_instruction + universal_instruction
 
-
     def _evaluate_translation_quality(self, original: str, translated: str) -> float:
         """Evaluate the quality of the translation"""
         if not translated or translated.startswith("Error"):
@@ -937,11 +932,17 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
 
         # Simple language indicators
         simple_indicators = [
-            "this means", "simply put", "in other words",
-            "das bedeutet", "einfach gesagt", "mit anderen worten"
+            "this means",
+            "simply put",
+            "in other words",
+            "das bedeutet",
+            "einfach gesagt",
+            "mit anderen worten",
         ]
         translated_lower = translated.lower()
-        found_indicators = sum(1 for indicator in simple_indicators if indicator in translated_lower)
+        found_indicators = sum(
+            1 for indicator in simple_indicators if indicator in translated_lower
+        )
         confidence += min(found_indicators * 0.05, 0.1)
 
         return min(confidence, 1.0)
@@ -953,14 +954,14 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         import re
 
         # Ersetze alle Bullet-Symbole (•) durch Standard Markdown (-)
-        text = re.sub(r'^•', '-', text, flags=re.MULTILINE)
-        text = re.sub(r'\n•', '\n-', text)
+        text = re.sub(r"^•", "-", text, flags=re.MULTILINE)
+        text = re.sub(r"\n•", "\n-", text)
 
         # Stelle sicher dass Unterpunkte korrekt formatiert sind
-        text = re.sub(r'^  →', '  - →', text, flags=re.MULTILINE)
+        text = re.sub(r"^  →", "  - →", text, flags=re.MULTILINE)
 
         # Entferne mehrfache Leerzeilen
-        text = re.sub(r'\n{3,}', '\n\n', text)
+        text = re.sub(r"\n{3,}", "\n\n", text)
 
         return text.strip()
 
@@ -981,12 +982,11 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                 full_prompt=full_prompt,
                 temperature=0.3,
                 max_tokens=4000,
-                use_fast_model=True  # Formatting is routine task - use fast model
+                use_fast_model=True,  # Formatting is routine task - use fast model
             )
 
             # Apply additional formatting improvements
             return self._improve_formatting(formatted_text)
-
 
         except Exception as e:
             logger.error(f"Error formatting text: {e}")
@@ -997,7 +997,7 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         self,
         image_data: bytes | Image.Image,
         file_type: str = "image",
-        confidence_threshold: float = 0.7
+        confidence_threshold: float = 0.7,
     ) -> tuple[str, float]:
         """Extract text from images using Qwen 2.5 VL vision model with OCR.
 
@@ -1060,7 +1060,9 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                 mime_type = "image/png"  # Default for PDF->image conversion
 
             # Encode to base64 exactly like OVH example
-            encoded_image = f"data:{mime_type};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
+            encoded_image = (
+                f"data:{mime_type};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
+            )
 
             # Create medical OCR prompt
             ocr_prompt = self._get_medical_ocr_prompt()
@@ -1070,17 +1072,9 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                 {
                     "role": "user",
                     "content": [
-                        {
-                            "type": "text",
-                            "text": ocr_prompt
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": encoded_image
-                            }
-                        }
-                    ]
+                        {"type": "text", "text": ocr_prompt},
+                        {"type": "image_url", "image_url": {"url": encoded_image}},
+                    ],
                 }
             ]
 
@@ -1093,7 +1087,7 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             async with httpx.AsyncClient(timeout=vision_timeout) as client:
                 headers = {
                     "Authorization": f"Bearer {self.access_token}",
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 }
 
                 # Payload structure exactly matching OVH example
@@ -1101,7 +1095,7 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                     "max_tokens": 4000,
                     "messages": messages,
                     "model": self.vision_model,
-                    "temperature": 0.1
+                    "temperature": 0.1,
                 }
 
                 # Use the correct OVH vision endpoint only
@@ -1119,8 +1113,8 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
                     raise Exception(f"Vision API error {response.status_code}: {error_text}")
 
             # Parse response from the successful endpoint call
-            if 'choices' in response_data and len(response_data['choices']) > 0:
-                extracted_text = response_data['choices'][0]['message']['content']
+            if "choices" in response_data and len(response_data["choices"]) > 0:
+                extracted_text = response_data["choices"][0]["message"]["content"]
             else:
                 logger.error(f"❌ Unexpected response format: {response_data}")
                 extracted_text = "Unerwartetes Antwortformat vom Vision-API."
@@ -1132,7 +1126,9 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             # Calculate confidence based on text quality
             confidence = self._calculate_vision_ocr_confidence(extracted_text)
 
-            logger.info(f"✅ Vision OCR successful: {len(extracted_text)} characters, confidence: {confidence:.2%}")
+            logger.info(
+                f"✅ Vision OCR successful: {len(extracted_text)} characters, confidence: {confidence:.2%}"
+            )
             logger.info(f"📄 Extracted text preview: {extracted_text[:500]}...")
 
             return extracted_text.strip(), confidence
@@ -1146,7 +1142,9 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             if "timeout" in error_msg.lower() or "TimeoutError" in str(type(e)):
                 error_text = "Vision OCR timeout - document may be too complex or server overloaded"
             elif "404" in error_msg or "Not Found" in error_msg:
-                error_text = "Vision API endpoint not found - service may be temporarily unavailable"
+                error_text = (
+                    "Vision API endpoint not found - service may be temporarily unavailable"
+                )
             elif "401" in error_msg or "unauthorized" in error_msg.lower():
                 error_text = "Vision API authentication failed - token may be invalid"
             elif "429" in error_msg or "rate" in error_msg.lower():
@@ -1212,10 +1210,27 @@ Begin text extraction with perfect structure preservation:"""
 
         # Medical content indicators
         medical_terms = [
-            'laborwerte', 'befund', 'diagnose', 'patient', 'arzt',
-            'blutbild', 'urin', 'röntgen', 'mrt', 'ct', 'ultraschall',
-            'mg/dl', 'mmol/l', 'µg/ml', 'ng/ml', 'u/l', 'iu/l',
-            'normal', 'pathologisch', 'auffällig', 'unauffällig'
+            "laborwerte",
+            "befund",
+            "diagnose",
+            "patient",
+            "arzt",
+            "blutbild",
+            "urin",
+            "röntgen",
+            "mrt",
+            "ct",
+            "ultraschall",
+            "mg/dl",
+            "mmol/l",
+            "µg/ml",
+            "ng/ml",
+            "u/l",
+            "iu/l",
+            "normal",
+            "pathologisch",
+            "auffällig",
+            "unauffällig",
         ]
 
         text_lower = text.lower()
@@ -1226,29 +1241,33 @@ Begin text extraction with perfect structure preservation:"""
         import re
 
         # Reward proper table formatting with pipes
-        table_rows = len(re.findall(r'\|.*\|.*\|', text))
+        table_rows = len(re.findall(r"\|.*\|.*\|", text))
         if table_rows >= 2:  # At least header + one data row
             confidence += min(table_rows * 0.01, 0.1)  # Up to 0.1 bonus for well-formatted tables
-            logger.debug(f"📊 Found {table_rows} properly formatted table rows, confidence boost: +{min(table_rows * 0.01, 0.1):.3f}")
+            logger.debug(
+                f"📊 Found {table_rows} properly formatted table rows, confidence boost: +{min(table_rows * 0.01, 0.1):.3f}"
+            )
 
         # Basic structure indicators
-        if '|' in text or '- ' in text or '## ' in text:
+        if "|" in text or "- " in text or "## " in text:
             confidence += 0.02
 
         # Number indicators (likely measurements) - more weight for medical values
-        numbers_with_units = len(re.findall(r'\d+[.,]?\d*\s*(mg/dl|mmol/l|µg/l|ng/ml|u/l|iu/l|g/l|%|/µl)', text, re.IGNORECASE))
+        numbers_with_units = len(
+            re.findall(
+                r"\d+[.,]?\d*\s*(mg/dl|mmol/l|µg/l|ng/ml|u/l|iu/l|g/l|%|/µl)", text, re.IGNORECASE
+            )
+        )
         confidence += min(numbers_with_units * 0.008, 0.08)  # Higher reward for medical units
 
         # Penalize weird line breaks (common OCR issue)
-        excessive_breaks = len(re.findall(r'\n\s*\n\s*\n', text))  # 3+ consecutive line breaks
+        excessive_breaks = len(re.findall(r"\n\s*\n\s*\n", text))  # 3+ consecutive line breaks
         confidence -= min(excessive_breaks * 0.02, 0.05)  # Penalty for formatting issues
 
         return min(confidence, 0.95)  # Cap at 95%
 
     async def process_multiple_images_ocr(
-        self,
-        images: list[bytes | Image.Image],
-        merge_strategy: str = "sequential"
+        self, images: list[bytes | Image.Image], merge_strategy: str = "sequential"
     ) -> tuple[str, float]:
         """Process multiple images with parallel OCR and intelligent merging.
 
@@ -1302,6 +1321,7 @@ Begin text extraction with perfect structure preservation:"""
 
         # Process all images in parallel for much faster performance
         import asyncio
+
         logger.info("🚀 Starting parallel OCR processing for all images")
 
         # Limit concurrent API calls to prevent overwhelming OVH servers
@@ -1321,49 +1341,61 @@ Begin text extraction with perfect structure preservation:"""
                         text, confidence = await self.extract_text_with_vision(image, f"image_{i}")
 
                         # Check for successful extraction
-                        if text and len(text.strip()) > 20 and not text.startswith("Vision OCR error"):
-                            logger.info(f"✅ Image {i} processed: {len(text)} chars, confidence: {confidence:.2%}")
+                        if (
+                            text
+                            and len(text.strip()) > 20
+                            and not text.startswith("Vision OCR error")
+                        ):
+                            logger.info(
+                                f"✅ Image {i} processed: {len(text)} chars, confidence: {confidence:.2%}"
+                            )
                             return {
-                                'page': i,
-                                'text': text,
-                                'confidence': confidence,
-                                'success': True
+                                "page": i,
+                                "text": text,
+                                "confidence": confidence,
+                                "success": True,
                             }
                         if attempt < max_retries:
                             # Failed but can retry
-                            logger.warning(f"⚠️ Image {i} attempt {attempt + 1} failed: {text[:100]}... - retrying in {retry_delay}s")
+                            logger.warning(
+                                f"⚠️ Image {i} attempt {attempt + 1} failed: {text[:100]}... - retrying in {retry_delay}s"
+                            )
                             await asyncio.sleep(retry_delay)
                             retry_delay *= 1.5  # Exponential backoff
                         else:
                             # Final attempt failed
-                            logger.error(f"❌ Image {i} failed after {max_retries + 1} attempts: {text}")
+                            logger.error(
+                                f"❌ Image {i} failed after {max_retries + 1} attempts: {text}"
+                            )
                             return {
-                                'page': i,
-                                'text': text or f"Vision OCR failed after {max_retries + 1} attempts",
-                                'confidence': 0.0,
-                                'success': False
+                                "page": i,
+                                "text": text
+                                or f"Vision OCR failed after {max_retries + 1} attempts",
+                                "confidence": 0.0,
+                                "success": False,
                             }
 
                     except Exception as e:
                         if attempt < max_retries:
-                            logger.warning(f"⚠️ Image {i} attempt {attempt + 1} exception: {e} - retrying in {retry_delay}s")
+                            logger.warning(
+                                f"⚠️ Image {i} attempt {attempt + 1} exception: {e} - retrying in {retry_delay}s"
+                            )
                             await asyncio.sleep(retry_delay)
                             retry_delay *= 1.5
                         else:
-                            logger.error(f"❌ Image {i} failed after {max_retries + 1} attempts with exception: {e}")
+                            logger.error(
+                                f"❌ Image {i} failed after {max_retries + 1} attempts with exception: {e}"
+                            )
                             return {
-                                'page': i,
-                                'text': f"Vision OCR exception after {max_retries + 1} attempts: {e}",
-                                'confidence': 0.0,
-                                'success': False
+                                "page": i,
+                                "text": f"Vision OCR exception after {max_retries + 1} attempts: {e}",
+                                "confidence": 0.0,
+                                "success": False,
                             }
                 return None
 
         # Create tasks for all images
-        tasks = [
-            process_single_image(i, image)
-            for i, image in enumerate(images, 1)
-        ]
+        tasks = [process_single_image(i, image) for i, image in enumerate(images, 1)]
 
         # Process all images concurrently
         parallel_results = await asyncio.gather(*tasks, return_exceptions=True)
@@ -1375,22 +1407,26 @@ Begin text extraction with perfect structure preservation:"""
                 logger.error(f"❌ Parallel OCR task failed: {result}")
                 continue
 
-            if result['success']:
-                ocr_results.append({
-                    'page': result['page'],
-                    'text': result['text'],
-                    'confidence': result['confidence']
-                })
-                total_confidence += result['confidence']
+            if result["success"]:
+                ocr_results.append(
+                    {
+                        "page": result["page"],
+                        "text": result["text"],
+                        "confidence": result["confidence"],
+                    }
+                )
+                total_confidence += result["confidence"]
             else:
                 # Keep track of failed pages for reporting
-                failed_pages.append(result['page'])
+                failed_pages.append(result["page"])
                 # Add placeholder text for failed pages to maintain page order
-                ocr_results.append({
-                    'page': result['page'],
-                    'text': f"[ERROR: Page {result['page']} extraction failed - {result['text']}]",
-                    'confidence': 0.0
-                })
+                ocr_results.append(
+                    {
+                        "page": result["page"],
+                        "text": f"[ERROR: Page {result['page']} extraction failed - {result['text']}]",
+                        "confidence": 0.0,
+                    }
+                )
 
         if not ocr_results:
             return "Failed to extract text from any image", 0.0
@@ -1398,7 +1434,9 @@ Begin text extraction with perfect structure preservation:"""
         # Log partial failures
         if failed_pages:
             logger.warning(f"⚠️ Failed to extract from {len(failed_pages)} pages: {failed_pages}")
-            logger.warning(f"✅ Successfully extracted from {len(ocr_results) - len(failed_pages)} pages")
+            logger.warning(
+                f"✅ Successfully extracted from {len(ocr_results) - len(failed_pages)} pages"
+            )
 
         # Merge results based on strategy
         if merge_strategy == "sequential":
@@ -1410,7 +1448,9 @@ Begin text extraction with perfect structure preservation:"""
 
         avg_confidence = total_confidence / len(ocr_results)
 
-        logger.info(f"🎯 Multi-image OCR complete: {len(merged_text)} total chars, avg confidence: {avg_confidence:.2%}")
+        logger.info(
+            f"🎯 Multi-image OCR complete: {len(merged_text)} total chars, avg confidence: {avg_confidence:.2%}"
+        )
 
         return merged_text, avg_confidence
 
@@ -1420,9 +1460,9 @@ Begin text extraction with perfect structure preservation:"""
         """
         merged_parts = []
 
-        for result in sorted(ocr_results, key=lambda x: x['page']):
-            page_text = result['text']
-            page_num = result['page']
+        for result in sorted(ocr_results, key=lambda x: x["page"]):
+            page_text = result["text"]
+            page_num = result["page"]
 
             # Add page header
             merged_parts.append(f"--- Seite {page_num} ---")
@@ -1436,12 +1476,12 @@ Begin text extraction with perfect structure preservation:"""
         Intelligently merge OCR results with context awareness
         """
         if len(ocr_results) == 1:
-            return ocr_results[0]['text']
+            return ocr_results[0]["text"]
 
         merged_parts = []
 
-        for i, result in enumerate(sorted(ocr_results, key=lambda x: x['page'])):
-            page_text = result['text'].strip()
+        for i, result in enumerate(sorted(ocr_results, key=lambda x: x["page"])):
+            page_text = result["text"].strip()
 
             if i == 0:
                 # First page - add as is
@@ -1451,7 +1491,7 @@ Begin text extraction with perfect structure preservation:"""
                 prev_text = merged_parts[-1] if merged_parts else ""
 
                 # Simple heuristic: if previous page ends mid-sentence, continue
-                if prev_text.rstrip().endswith((',', '-', 'und', 'oder', 'sowie')):
+                if prev_text.rstrip().endswith((",", "-", "und", "oder", "sowie")):
                     # Likely continuation - merge without page break
                     merged_parts.append(page_text)
                 else:

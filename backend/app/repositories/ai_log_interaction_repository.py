@@ -39,14 +39,15 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
         Returns:
             List of AI interaction logs for the processing, ordered chronologically
         """
-        return self.db.query(self.model).filter_by(
-            processing_id=processing_id
-        ).order_by(self.model.created_at).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(processing_id=processing_id)
+            .order_by(self.model.created_at)
+            .all()
+        )
 
     def get_by_date_range(
-        self,
-        start_date: datetime | None = None,
-        end_date: datetime | None = None
+        self, start_date: datetime | None = None, end_date: datetime | None = None
     ) -> list[AILogInteractionDB]:
         """
         Get AI logs within a date range.
@@ -72,7 +73,7 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
         processing_id: str | None = None,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-        document_type: str | None = None
+        document_type: str | None = None,
     ) -> list[AILogInteractionDB]:
         """
         Get AI logs with multiple filters.
@@ -109,9 +110,7 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
         Returns:
             List of AI interaction logs for the step
         """
-        return self.db.query(self.model).filter_by(
-            step_name=step_name
-        ).all()
+        return self.db.query(self.model).filter_by(step_name=step_name).all()
 
     def get_by_model(self, model_name: str) -> list[AILogInteractionDB]:
         """
@@ -123,9 +122,7 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
         Returns:
             List of AI interaction logs for the model
         """
-        return self.db.query(self.model).filter_by(
-            model_name=model_name
-        ).all()
+        return self.db.query(self.model).filter_by(model_name=model_name).all()
 
     def get_by_document_type(self, document_type: str) -> list[AILogInteractionDB]:
         """
@@ -137,15 +134,13 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
         Returns:
             List of AI interaction logs for the document type
         """
-        return self.db.query(self.model).filter_by(
-            document_type=document_type
-        ).all()
+        return self.db.query(self.model).filter_by(document_type=document_type).all()
 
     def get_total_cost(
         self,
         processing_id: str | None = None,
         start_date: datetime | None = None,
-        end_date: datetime | None = None
+        end_date: datetime | None = None,
     ) -> float:
         """
         Calculate total cost for filtered logs.
@@ -165,7 +160,7 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
         self,
         processing_id: str | None = None,
         start_date: datetime | None = None,
-        end_date: datetime | None = None
+        end_date: datetime | None = None,
     ) -> int:
         """
         Calculate total tokens for filtered logs.
@@ -185,7 +180,7 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
         self,
         processing_id: str | None = None,
         start_date: datetime | None = None,
-        end_date: datetime | None = None
+        end_date: datetime | None = None,
     ) -> int:
         """
         Count API calls for filtered logs.
@@ -212,9 +207,7 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
             Number of deleted records
         """
         try:
-            deleted = self.db.query(self.model).filter(
-                self.model.created_at < older_than
-            ).delete()
+            deleted = self.db.query(self.model).filter(self.model.created_at < older_than).delete()
             self.db.commit()
             return deleted
         except Exception:

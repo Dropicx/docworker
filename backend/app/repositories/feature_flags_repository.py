@@ -41,11 +41,7 @@ class FeatureFlagsRepository(BaseRepository[FeatureFlag]):
         return flag.enabled
 
     def set_flag(
-        self,
-        name: str,
-        enabled: bool,
-        description: str = "",
-        rollout_percentage: int = 100
+        self, name: str, enabled: bool, description: str = "", rollout_percentage: int = 100
     ) -> FeatureFlag:
         """
         Set feature flag (create or update).
@@ -73,7 +69,7 @@ class FeatureFlagsRepository(BaseRepository[FeatureFlag]):
                 name=name,
                 enabled=enabled,
                 description=description,
-                rollout_percentage=rollout_percentage
+                rollout_percentage=rollout_percentage,
             )
             logger.info(f"Created feature flag '{name}' = {enabled}")
 

@@ -20,7 +20,7 @@ import {
   GlobalPromptUpdateRequest,
   OCRSettings,
   OCRSettingsResponse,
-  OCRSettingsUpdateRequest
+  OCRSettingsUpdateRequest,
 } from '../types/settings';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -43,8 +43,8 @@ class SettingsService {
       throw new Error('Not authenticated');
     }
     return {
-      'Authorization': `Bearer ${this.token}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${this.token}`,
+      'Content-Type': 'application/json',
     };
   }
 
@@ -70,10 +70,9 @@ class SettingsService {
    */
   async authenticate(code: string): Promise<AuthResponse> {
     try {
-      const response = await axios.post<AuthResponse>(
-        `${SETTINGS_BASE_URL}/auth`,
-        { password: code } as AuthRequest
-      );
+      const response = await axios.post<AuthResponse>(`${SETTINGS_BASE_URL}/auth`, {
+        password: code,
+      } as AuthRequest);
 
       if (response.data.success && response.data.session_token) {
         this.saveToken(response.data.session_token);
@@ -82,9 +81,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Authentication failed'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Authentication failed');
     }
   }
 
@@ -96,12 +93,11 @@ class SettingsService {
     if (!this.token) {
       return false;
     }
-    
+
     try {
-      const response = await axios.get(
-        `${SETTINGS_BASE_URL}/check-auth`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get(`${SETTINGS_BASE_URL}/check-auth`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data.authenticated;
     } catch {
       this.clearToken();
@@ -121,9 +117,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to load prompts'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to load prompts');
     }
   }
 
@@ -146,7 +140,7 @@ class SettingsService {
         grammar_check_prompt: prompts.grammar_check_prompt,
         language_translation_prompt: prompts.language_translation_prompt,
         final_check_prompt: prompts.final_check_prompt,
-        formatting_prompt: prompts.formatting_prompt
+        formatting_prompt: prompts.formatting_prompt,
       };
 
       const response = await axios.put(
@@ -157,9 +151,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to update prompts'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to update prompts');
     }
   }
 
@@ -176,9 +168,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to reset prompts'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to reset prompts');
     }
   }
 
@@ -195,9 +185,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Prompt test failed'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Prompt test failed');
     }
   }
 
@@ -213,9 +201,7 @@ class SettingsService {
       return response.data.document_types;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to load document types'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to load document types');
     }
   }
 
@@ -228,16 +214,11 @@ class SettingsService {
         ? `${SETTINGS_BASE_URL}/export?document_type=${documentType}`
         : `${SETTINGS_BASE_URL}/export`;
 
-      const response = await axios.get<ExportData>(
-        url,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get<ExportData>(url, { headers: this.getAuthHeaders() });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to export prompts'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to export prompts');
     }
   }
 
@@ -254,9 +235,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to import prompts'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to import prompts');
     }
   }
 
@@ -282,7 +261,7 @@ class SettingsService {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
 
-      reader.onload = (e) => {
+      reader.onload = e => {
         try {
           const data = JSON.parse(e.target?.result as string);
 
@@ -309,10 +288,9 @@ class SettingsService {
 
   async getPipelineSteps(_documentType: DocumentClass): Promise<Record<string, unknown>> {
     try {
-      const response = await axios.get(
-        `${SETTINGS_BASE_URL}/pipeline-steps`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get(`${SETTINGS_BASE_URL}/pipeline-steps`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data.pipeline_steps;
     } catch (error) {
       console.error('Failed to get pipeline steps:', error);
@@ -330,7 +308,7 @@ class SettingsService {
         `${SETTINGS_BASE_URL}/pipeline-steps`,
         {
           step_name: stepName,
-          enabled: enabled
+          enabled: enabled,
         },
         { headers: this.getAuthHeaders() }
       );
@@ -361,16 +339,16 @@ class SettingsService {
       return response.data.settings;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get pipeline settings'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get pipeline settings');
     }
   }
 
   /**
    * Update pipeline settings
    */
-  async updatePipelineSettings(settings: Partial<PipelineSettings>): Promise<PipelineSettingsResponse> {
+  async updatePipelineSettings(
+    settings: Partial<PipelineSettings>
+  ): Promise<PipelineSettingsResponse> {
     try {
       const response = await axios.put<PipelineSettingsResponse>(
         `${SETTINGS_BASE_URL}/pipeline-settings`,
@@ -380,9 +358,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to update pipeline settings'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to update pipeline settings');
     }
   }
 
@@ -398,9 +374,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get pipeline statistics'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get pipeline statistics');
     }
   }
 
@@ -417,9 +391,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to clear pipeline cache'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to clear pipeline cache');
     }
   }
 
@@ -437,28 +409,24 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get global prompts'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get global prompts');
     }
   }
 
   /**
    * Update global/universal prompts
    */
-  async updateGlobalPrompts(prompts: GlobalPromptUpdateRequest): Promise<{ success: boolean; message: string; version: number }> {
+  async updateGlobalPrompts(
+    prompts: GlobalPromptUpdateRequest
+  ): Promise<{ success: boolean; message: string; version: number }> {
     try {
-      const response = await axios.put(
-        `${SETTINGS_BASE_URL}/universal-prompts`,
-        prompts,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.put(`${SETTINGS_BASE_URL}/universal-prompts`, prompts, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to update global prompts'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to update global prompts');
     }
   }
 
@@ -475,9 +443,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to reset global prompts'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to reset global prompts');
     }
   }
 
@@ -486,16 +452,13 @@ class SettingsService {
    */
   async exportGlobalPrompts(): Promise<unknown> {
     try {
-      const response = await axios.get(
-        `${SETTINGS_BASE_URL}/global-prompts/export`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get(`${SETTINGS_BASE_URL}/global-prompts/export`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to export global prompts'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to export global prompts');
     }
   }
 
@@ -512,9 +475,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to import global prompts'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to import global prompts');
     }
   }
 
@@ -531,9 +492,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Global prompt test failed'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Global prompt test failed');
     }
   }
 
@@ -547,16 +506,13 @@ class SettingsService {
     model_descriptions: Record<string, string>;
   }> {
     try {
-      const response = await axios.get(
-        `${SETTINGS_BASE_URL}/model-configuration`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get(`${SETTINGS_BASE_URL}/model-configuration`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get model configuration'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get model configuration');
     }
   }
 
@@ -567,16 +523,13 @@ class SettingsService {
    */
   async getOCRSettings(): Promise<OCRSettings> {
     try {
-      const response = await axios.get<OCRSettings>(
-        `${SETTINGS_BASE_URL}/ocr-settings`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get<OCRSettings>(`${SETTINGS_BASE_URL}/ocr-settings`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get OCR settings'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get OCR settings');
     }
   }
 
@@ -593,9 +546,7 @@ class SettingsService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to update OCR settings'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to update OCR settings');
     }
   }
 }

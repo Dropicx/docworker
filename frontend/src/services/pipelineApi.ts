@@ -22,7 +22,7 @@ import {
   DocumentClass,
   DocumentClassRequest,
   DocumentClassStatistics,
-  PipelineVisualization
+  PipelineVisualization,
 } from '../types/pipeline';
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || '/api';
@@ -45,8 +45,8 @@ class PipelineApiService {
       throw new Error('Not authenticated');
     }
     return {
-      'Authorization': `Bearer ${this.token}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${this.token}`,
+      'Content-Type': 'application/json',
     };
   }
 
@@ -67,16 +67,13 @@ class PipelineApiService {
    */
   async getOCRConfig(): Promise<OCRConfiguration> {
     try {
-      const response = await axios.get<OCRConfiguration>(
-        `${PIPELINE_BASE_URL}/ocr-config`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get<OCRConfiguration>(`${PIPELINE_BASE_URL}/ocr-config`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get OCR configuration'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get OCR configuration');
     }
   }
 
@@ -93,9 +90,7 @@ class PipelineApiService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to update OCR configuration'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to update OCR configuration');
     }
   }
 
@@ -104,16 +99,13 @@ class PipelineApiService {
    */
   async getAvailableEngines(): Promise<EngineStatusMap> {
     try {
-      const response = await axios.get<EngineStatusMap>(
-        `${PIPELINE_BASE_URL}/ocr-engines`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get<EngineStatusMap>(`${PIPELINE_BASE_URL}/ocr-engines`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get available engines'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get available engines');
     }
   }
 
@@ -122,16 +114,13 @@ class PipelineApiService {
    */
   async getEngineStatus(engine: OCREngineEnum): Promise<EngineStatus> {
     try {
-      const response = await axios.get<EngineStatus>(
-        `${PIPELINE_BASE_URL}/ocr-engines/${engine}`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get<EngineStatus>(`${PIPELINE_BASE_URL}/ocr-engines/${engine}`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || `Failed to get ${engine} status`
-      );
+      throw new Error(axiosError.response?.data?.detail || `Failed to get ${engine} status`);
     }
   }
 
@@ -142,16 +131,13 @@ class PipelineApiService {
    */
   async getAllSteps(): Promise<PipelineStep[]> {
     try {
-      const response = await axios.get<PipelineStep[]>(
-        `${PIPELINE_BASE_URL}/steps`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get<PipelineStep[]>(`${PIPELINE_BASE_URL}/steps`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get pipeline steps'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get pipeline steps');
     }
   }
 
@@ -160,16 +146,13 @@ class PipelineApiService {
    */
   async getStep(stepId: number): Promise<PipelineStep> {
     try {
-      const response = await axios.get<PipelineStep>(
-        `${PIPELINE_BASE_URL}/steps/${stepId}`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get<PipelineStep>(`${PIPELINE_BASE_URL}/steps/${stepId}`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || `Failed to get step ${stepId}`
-      );
+      throw new Error(axiosError.response?.data?.detail || `Failed to get step ${stepId}`);
     }
   }
 
@@ -178,17 +161,13 @@ class PipelineApiService {
    */
   async createStep(step: PipelineStepRequest): Promise<PipelineStep> {
     try {
-      const response = await axios.post<PipelineStep>(
-        `${PIPELINE_BASE_URL}/steps`,
-        step,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.post<PipelineStep>(`${PIPELINE_BASE_URL}/steps`, step, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to create pipeline step'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to create pipeline step');
     }
   }
 
@@ -197,17 +176,13 @@ class PipelineApiService {
    */
   async updateStep(stepId: number, step: PipelineStepRequest): Promise<PipelineStep> {
     try {
-      const response = await axios.put<PipelineStep>(
-        `${PIPELINE_BASE_URL}/steps/${stepId}`,
-        step,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.put<PipelineStep>(`${PIPELINE_BASE_URL}/steps/${stepId}`, step, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || `Failed to update step ${stepId}`
-      );
+      throw new Error(axiosError.response?.data?.detail || `Failed to update step ${stepId}`);
     }
   }
 
@@ -216,15 +191,12 @@ class PipelineApiService {
    */
   async deleteStep(stepId: number): Promise<void> {
     try {
-      await axios.delete(
-        `${PIPELINE_BASE_URL}/steps/${stepId}`,
-        { headers: this.getAuthHeaders() }
-      );
+      await axios.delete(`${PIPELINE_BASE_URL}/steps/${stepId}`, {
+        headers: this.getAuthHeaders(),
+      });
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || `Failed to delete step ${stepId}`
-      );
+      throw new Error(axiosError.response?.data?.detail || `Failed to delete step ${stepId}`);
     }
   }
 
@@ -241,9 +213,7 @@ class PipelineApiService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to reorder steps'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to reorder steps');
     }
   }
 
@@ -254,19 +224,14 @@ class PipelineApiService {
    */
   async getAvailableModels(enabledOnly: boolean = false): Promise<AIModel[]> {
     try {
-      const response = await axios.get<AIModel[]>(
-        `${PIPELINE_BASE_URL}/models`,
-        {
-          headers: this.getAuthHeaders(),
-          params: { enabled_only: enabledOnly }
-        }
-      );
+      const response = await axios.get<AIModel[]>(`${PIPELINE_BASE_URL}/models`, {
+        headers: this.getAuthHeaders(),
+        params: { enabled_only: enabledOnly },
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get available models'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get available models');
     }
   }
 
@@ -275,16 +240,13 @@ class PipelineApiService {
    */
   async getModel(modelId: number): Promise<AIModel> {
     try {
-      const response = await axios.get<AIModel>(
-        `${PIPELINE_BASE_URL}/models/${modelId}`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get<AIModel>(`${PIPELINE_BASE_URL}/models/${modelId}`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || `Failed to get model ${modelId}`
-      );
+      throw new Error(axiosError.response?.data?.detail || `Failed to get model ${modelId}`);
     }
   }
 
@@ -295,16 +257,13 @@ class PipelineApiService {
    */
   async getUniversalSteps(): Promise<PipelineStep[]> {
     try {
-      const response = await axios.get<PipelineStep[]>(
-        `${PIPELINE_BASE_URL}/steps/universal`,
-        { headers: this.getAuthHeaders() }
-      );
+      const response = await axios.get<PipelineStep[]>(`${PIPELINE_BASE_URL}/steps/universal`, {
+        headers: this.getAuthHeaders(),
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get universal steps'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get universal steps');
     }
   }
 
@@ -338,9 +297,7 @@ class PipelineApiService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get pipeline visualization'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get pipeline visualization');
     }
   }
 
@@ -351,19 +308,14 @@ class PipelineApiService {
    */
   async getAllDocumentClasses(enabledOnly: boolean = false): Promise<DocumentClass[]> {
     try {
-      const response = await axios.get<DocumentClass[]>(
-        `${PIPELINE_BASE_URL}/document-classes`,
-        {
-          headers: this.getAuthHeaders(),
-          params: { enabled_only: enabledOnly }
-        }
-      );
+      const response = await axios.get<DocumentClass[]>(`${PIPELINE_BASE_URL}/document-classes`, {
+        headers: this.getAuthHeaders(),
+        params: { enabled_only: enabledOnly },
+      });
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get document classes'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to get document classes');
     }
   }
 
@@ -398,16 +350,17 @@ class PipelineApiService {
       return response.data;
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to create document class'
-      );
+      throw new Error(axiosError.response?.data?.detail || 'Failed to create document class');
     }
   }
 
   /**
    * Update an existing document class
    */
-  async updateDocumentClass(classId: number, documentClass: DocumentClassRequest): Promise<DocumentClass> {
+  async updateDocumentClass(
+    classId: number,
+    documentClass: DocumentClassRequest
+  ): Promise<DocumentClass> {
     try {
       const response = await axios.put<DocumentClass>(
         `${PIPELINE_BASE_URL}/document-classes/${classId}`,
@@ -428,10 +381,9 @@ class PipelineApiService {
    */
   async deleteDocumentClass(classId: number): Promise<void> {
     try {
-      await axios.delete(
-        `${PIPELINE_BASE_URL}/document-classes/${classId}`,
-        { headers: this.getAuthHeaders() }
-      );
+      await axios.delete(`${PIPELINE_BASE_URL}/document-classes/${classId}`, {
+        headers: this.getAuthHeaders(),
+      });
     } catch (error) {
       const axiosError = error as AxiosError<{ detail?: string }>;
       throw new Error(

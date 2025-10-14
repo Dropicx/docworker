@@ -24,17 +24,18 @@ from app.services.cleanup import cleanup_temp_files
 logging.basicConfig(
     level=getattr(logging, settings.log_level),
     format=settings.log_format,
-    datefmt='%Y-%m-%d %H:%M:%S',
+    datefmt="%Y-%m-%d %H:%M:%S",
     handlers=[
         logging.StreamHandler(sys.stdout)  # Force output to stdout for Railway
     ],
-    force=True  # Override any existing configuration
+    force=True,  # Override any existing configuration
 )
 logger = logging.getLogger(__name__)
 logger.info("🔧 Logging configured for Railway deployment")
 
 # Rate limiting
 limiter = Limiter(key_func=get_remote_address)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -78,6 +79,7 @@ async def lifespan(app: FastAPI):
     await cleanup_temp_files()
     logger.info("✅ Shutdown complete")
 
+
 async def periodic_cleanup():
     """Periodische Bereinigung temporärer Dateien"""
     cleanup_count = 0
@@ -97,6 +99,7 @@ async def periodic_cleanup():
         except Exception as e:
             logger.error(f"❌ Cleanup error: {e}")
 
+
 # FastAPI App
 app = FastAPI(
     title=settings.app_name,
@@ -104,7 +107,7 @@ app = FastAPI(
     version="1.0.0",
     docs_url="/docs" if settings.is_development else None,
     redoc_url="/redoc" if settings.is_development else None,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Rate limiting
@@ -112,10 +115,7 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Security Middleware
-app.add_middleware(
-    TrustedHostMiddleware,
-    allowed_hosts=settings.trusted_hosts
-)
+app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
 
 # CORS Middleware
 app.add_middleware(
@@ -125,6 +125,7 @@ app.add_middleware(
     allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
+
 
 # Request Logging Middleware
 @app.middleware("http")
@@ -149,12 +150,15 @@ async def log_requests(request: Request, call_next):
 
     # Only log errors or slow requests
     if should_log and (response.status_code >= 400 or process_time > 1.0):
-        logger.warning(f"📤 {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s")
+        logger.warning(
+            f"📤 {request.method} {request.url.path} - Status: {response.status_code} - Time: {process_time:.2f}s"
+        )
 
     # Add processing time header
     response.headers["X-Process-Time"] = str(process_time)
 
     return response
+
 
 # Security Headers Middleware
 @app.middleware("http")
@@ -178,14 +182,18 @@ async def add_security_headers(request: Request, call_next):
 
     return response
 
+
 # Router einbinden
 app.include_router(upload.router, prefix="/api", tags=["upload"])
 app.include_router(process.router, prefix="/api", tags=["process"])
 app.include_router(multi_file_router, prefix="/api", tags=["multi-file"])
 app.include_router(health.router, prefix="/api", tags=["health"])
 app.include_router(settings_auth_router, tags=["settings"])  # Minimal auth for settings UI
-app.include_router(modular_pipeline_router, tags=["pipeline"])  # Modular pipeline has its own prefix
+app.include_router(
+    modular_pipeline_router, tags=["pipeline"]
+)  # Modular pipeline has its own prefix
 app.include_router(admin_config_router, tags=["admin"])  # Admin configuration management
+
 
 @app.get("/")
 async def root():
@@ -193,8 +201,9 @@ async def root():
         "message": settings.app_name,
         "version": "1.0.0",
         "status": "running",
-        "environment": settings.environment
+        "environment": settings.environment,
     }
+
 
 if __name__ == "__main__":
     import uvicorn
@@ -208,5 +217,5 @@ if __name__ == "__main__":
         limit_max_requests=1000,
         limit_concurrency=100,
         # Set to 50MB for large image uploads
-        h11_max_incomplete_event_size=settings.max_file_size_bytes
+        h11_max_incomplete_event_size=settings.max_file_size_bytes,
     )

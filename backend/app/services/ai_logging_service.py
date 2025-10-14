@@ -88,6 +88,7 @@ from app.repositories.ai_log_interaction_repository import AILogInteractionRepos
 
 logger = logging.getLogger(__name__)
 
+
 class AILoggingService:
     """Comprehensive AI interaction logging service with full text capture.
 
@@ -135,11 +136,7 @@ class AILoggingService:
         for high-throughput scenarios.
     """
 
-    def __init__(
-        self,
-        session: Session,
-        log_repository: AILogInteractionRepository | None = None
-    ):
+    def __init__(self, session: Session, log_repository: AILogInteractionRepository | None = None):
         """Initialize logging service with database session.
 
         Args:
@@ -165,7 +162,7 @@ class AILoggingService:
         confidence_score: float | None = None,
         model_name: str | None = None,
         input_metadata: dict[str, Any] | None = None,
-        output_metadata: dict[str, Any] | None = None
+        output_metadata: dict[str, Any] | None = None,
     ):
         """Log AI interaction to database"""
         try:
@@ -185,7 +182,7 @@ class AILoggingService:
                 model_name=model_name,
                 input_metadata=input_metadata,
                 output_metadata=output_metadata,
-                created_at=datetime.now()
+                created_at=datetime.now(),
             )
 
             self.session.add(log_entry)
@@ -203,7 +200,7 @@ class AILoggingService:
         document_type: str | None = None,
         user_id: str | None = None,
         session_id: str | None = None,
-        request_id: str | None = None
+        request_id: str | None = None,
     ):
         """Context manager for automatic AI interaction logging with timing.
 
@@ -284,15 +281,15 @@ class AILoggingService:
 
         try:
             yield {
-                "set_input": lambda text: setattr(self, '_input_text', text),
-                "set_output": lambda text: setattr(self, '_output_text', text),
-                "set_error": lambda error: setattr(self, '_error_message', error)
+                "set_input": lambda text: setattr(self, "_input_text", text),
+                "set_output": lambda text: setattr(self, "_output_text", text),
+                "set_error": lambda error: setattr(self, "_error_message", error),
             }
 
             # Get values from context
-            input_text = getattr(self, '_input_text', None)
-            output_text = getattr(self, '_output_text', None)
-            error_message = getattr(self, '_error_message', None)
+            input_text = getattr(self, "_input_text", None)
+            output_text = getattr(self, "_output_text", None)
+            error_message = getattr(self, "_error_message", None)
 
             if error_message:
                 status = "error"
@@ -318,7 +315,7 @@ class AILoggingService:
                 document_type=document_type,
                 user_id=user_id,
                 session_id=session_id,
-                request_id=request_id
+                request_id=request_id,
             )
 
     def log_medical_validation(
@@ -328,7 +325,7 @@ class AILoggingService:
         is_medical: bool,
         confidence: float,
         method: str,
-        document_type: str | None = None
+        document_type: str | None = None,
     ):
         """Log medical validation step"""
         self._log_ai_interaction(
@@ -340,7 +337,7 @@ class AILoggingService:
             status="success" if is_medical else "non_medical",
             document_type=document_type,
             input_metadata={"method": method},
-            output_metadata={"is_medical": is_medical, "confidence": confidence}
+            output_metadata={"is_medical": is_medical, "confidence": confidence},
         )
 
     def log_classification(
@@ -349,7 +346,7 @@ class AILoggingService:
         input_text: str,
         document_type: str,
         confidence: float,
-        method: str
+        method: str,
     ):
         """Log document classification step"""
         self._log_ai_interaction(
@@ -361,7 +358,7 @@ class AILoggingService:
             status="success",
             document_type=document_type,
             input_metadata={"method": method},
-            output_metadata={"document_type": document_type, "confidence": confidence}
+            output_metadata={"document_type": document_type, "confidence": confidence},
         )
 
     def log_translation(
@@ -371,7 +368,7 @@ class AILoggingService:
         output_text: str,
         confidence: float,
         model_name: str,
-        document_type: str | None = None
+        document_type: str | None = None,
     ):
         """Log translation step"""
         self._log_ai_interaction(
@@ -383,7 +380,7 @@ class AILoggingService:
             model_name=model_name,
             status="success",
             document_type=document_type,
-            output_metadata={"confidence": confidence, "model": model_name}
+            output_metadata={"confidence": confidence, "model": model_name},
         )
 
     def log_quality_check(
@@ -393,7 +390,7 @@ class AILoggingService:
         input_text: str,
         output_text: str,
         changes_made: int,
-        document_type: str | None = None
+        document_type: str | None = None,
     ):
         """Log quality check step (fact check, grammar check, etc.)"""
         self._log_ai_interaction(
@@ -403,7 +400,7 @@ class AILoggingService:
             output_text=output_text,
             status="success",
             document_type=document_type,
-            output_metadata={"changes_made": changes_made}
+            output_metadata={"changes_made": changes_made},
         )
 
     def log_fact_check(
@@ -413,7 +410,7 @@ class AILoggingService:
         output_text: str,
         document_type: str,
         status: str,
-        details: dict[str, Any] | None = None
+        details: dict[str, Any] | None = None,
     ):
         """Log fact check step"""
         self._log_ai_interaction(
@@ -423,7 +420,7 @@ class AILoggingService:
             output_text=output_text,
             status=status,
             document_type=document_type,
-            output_metadata={"details": details}
+            output_metadata={"details": details},
         )
 
     def log_grammar_check(
@@ -433,7 +430,7 @@ class AILoggingService:
         output_text: str,
         document_type: str,
         status: str,
-        details: dict[str, Any] | None = None
+        details: dict[str, Any] | None = None,
     ):
         """Log grammar check step"""
         self._log_ai_interaction(
@@ -443,7 +440,7 @@ class AILoggingService:
             output_text=output_text,
             status=status,
             document_type=document_type,
-            output_metadata={"details": details}
+            output_metadata={"details": details},
         )
 
     def log_language_translation(
@@ -452,7 +449,7 @@ class AILoggingService:
         input_text: str,
         output_text: str,
         target_language: str,
-        confidence: float
+        confidence: float,
     ):
         """Log language translation step"""
         self._log_ai_interaction(
@@ -462,7 +459,7 @@ class AILoggingService:
             output_text=output_text,
             confidence_score=confidence,
             status="success",
-            output_metadata={"target_language": target_language, "confidence": confidence}
+            output_metadata={"target_language": target_language, "confidence": confidence},
         )
 
     def get_processing_logs(self, processing_id: str) -> list:
@@ -478,7 +475,7 @@ class AILoggingService:
         self,
         start_date: str | None = None,
         end_date: str | None = None,
-        document_type: str | None = None
+        document_type: str | None = None,
     ) -> dict[str, Any]:
         """Generate comprehensive analytics from AI interaction logs.
 
@@ -559,9 +556,7 @@ class AILoggingService:
 
             # Get filtered logs using repository
             logs = self.log_repository.get_filtered(
-                start_date=start_dt,
-                end_date=end_dt,
-                document_type=document_type
+                start_date=start_dt, end_date=end_dt, document_type=document_type
             )
 
             # Basic analytics
@@ -581,10 +576,7 @@ class AILoggingService:
                 "error_count": error_count,
                 "success_rate": success_count / total_interactions if total_interactions > 0 else 0,
                 "step_counts": step_counts,
-                "date_range": {
-                    "start": start_date,
-                    "end": end_date
-                }
+                "date_range": {"start": start_date, "end": end_date},
             }
         except Exception as e:
             logger.error(f"Failed to get analytics: {e}")
@@ -594,5 +586,5 @@ class AILoggingService:
                 "error_count": 0,
                 "success_rate": 0,
                 "step_counts": {},
-                "error": str(e)
+                "error": str(e),
             }

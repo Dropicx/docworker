@@ -17,6 +17,7 @@ class FeatureFlag(Base):
     Allows enabling/disabling features without deployment.
     Supports gradual rollout with rollout_percentage.
     """
+
     __tablename__ = "feature_flags"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -38,6 +39,7 @@ class Configuration(Base):
     Allows updating configuration without redeployment.
     Supports JSONB for complex configuration values.
     """
+
     __tablename__ = "configuration"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

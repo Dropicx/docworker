@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 ALLOWED_MIME_TYPES = {
     "application/pdf": [".pdf"],
     "image/jpeg": [".jpg", ".jpeg"],
-    "image/png": [".png"]
+    "image/png": [".png"],
 }
 
 # Fallback MIME-Types (manchmal erkennt magic library nicht korrekt)
@@ -20,11 +20,12 @@ FALLBACK_MIME_TYPES = {
     "text/plain": [".pdf", ".jpg", ".jpeg", ".png"],  # Magic erkennt manchmal falsch
     "application/octet-stream": [".pdf", ".jpg", ".jpeg", ".png"],  # Generischer binary type
     "image/x-png": [".png"],  # Alternative PNG-Erkennung
-    "image/pjpeg": [".jpg", ".jpeg"]  # Alternative JPEG-Erkennung
+    "image/pjpeg": [".jpg", ".jpeg"],  # Alternative JPEG-Erkennung
 }
 
 MAX_FILE_SIZE = 50 * 1024 * 1024  # 50MB für Handyfotos
 MIN_FILE_SIZE = 1024  # 1KB
+
 
 class FileValidator:
     """Comprehensive file validation service for medical document uploads.
@@ -135,13 +136,17 @@ class FileValidator:
                 allowed_extensions = ALLOWED_MIME_TYPES[detected_mime]
                 if file_extension in allowed_extensions:
                     mime_valid = True
-                    logger.debug(f"✅ Direct MIME type match: {detected_mime} with extension {file_extension}")
+                    logger.debug(
+                        f"✅ Direct MIME type match: {detected_mime} with extension {file_extension}"
+                    )
             elif detected_mime in FALLBACK_MIME_TYPES:
                 # Fallback-Match basierend auf Dateiendung
                 allowed_extensions = FALLBACK_MIME_TYPES[detected_mime]
                 if file_extension in allowed_extensions:
                     mime_valid = True
-                    logger.debug(f"⚠️ Fallback MIME type match: {detected_mime} with extension {file_extension}")
+                    logger.debug(
+                        f"⚠️ Fallback MIME type match: {detected_mime} with extension {file_extension}"
+                    )
                     # Bestimme den eigentlichen MIME-Type basierend auf Endung
                     if file_extension == ".pdf":
                         used_mime_type = "application/pdf"
@@ -151,10 +156,15 @@ class FileValidator:
                         used_mime_type = "image/png"
 
             if not mime_valid:
-                logger.warning(f"❌ Unsupported MIME type/extension: {detected_mime} with {file_extension}")
+                logger.warning(
+                    f"❌ Unsupported MIME type/extension: {detected_mime} with {file_extension}"
+                )
                 logger.debug(f"Allowed MIME types: {list(ALLOWED_MIME_TYPES.keys())}")
                 logger.debug(f"Fallback MIME types: {list(FALLBACK_MIME_TYPES.keys())}")
-                return False, f"Dateityp nicht unterstützt: {detected_mime} mit Endung {file_extension}"
+                return (
+                    False,
+                    f"Dateityp nicht unterstützt: {detected_mime} mit Endung {file_extension}",
+                )
 
             # Spezifische Validierung nach erkanntem Dateityp
             if used_mime_type == "application/pdf":
@@ -207,6 +217,7 @@ class FileValidator:
         """
         try:
             from io import BytesIO
+
             pdf_file = BytesIO(content)
             pdf_reader = PyPDF2.PdfReader(pdf_file)
 
@@ -269,11 +280,12 @@ class FileValidator:
         """
         try:
             from io import BytesIO
+
             image_file = BytesIO(content)
 
             with Image.open(image_file) as img:
                 # Bildformat prüfen
-                if img.format not in ['JPEG', 'PNG']:
+                if img.format not in ["JPEG", "PNG"]:
                     return False, f"Bildformat '{img.format}' nicht unterstützt"
 
                 # Bildgröße prüfen

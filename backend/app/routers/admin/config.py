@@ -30,18 +30,17 @@ from app.services.feature_flags import Feature, FeatureFlags
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(
-    prefix="/api/admin/config",
-    tags=["admin", "configuration"]
-)
+router = APIRouter(prefix="/api/admin/config", tags=["admin", "configuration"])
 
 
 # ==================
 # Pydantic Models
 # ==================
 
+
 class ConfigResponse(BaseModel):
     """Configuration response model."""
+
     app_name: str
     environment: str
     debug: bool
@@ -53,6 +52,7 @@ class ConfigResponse(BaseModel):
 
 class ValidationResponse(BaseModel):
     """Configuration validation response."""
+
     valid: bool
     errors: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
@@ -60,6 +60,7 @@ class ValidationResponse(BaseModel):
 
 class FeatureFlagUpdate(BaseModel):
     """Feature flag update request."""
+
     enabled: bool
     description: str | None = None
     rollout_percentage: int = Field(default=100, ge=0, le=100)
@@ -67,6 +68,7 @@ class FeatureFlagUpdate(BaseModel):
 
 class FeatureFlagsResponse(BaseModel):
     """Feature flags status response."""
+
     flags: dict[str, bool]
     total_count: int
     enabled_count: int
@@ -74,6 +76,7 @@ class FeatureFlagsResponse(BaseModel):
 
 class ReloadResponse(BaseModel):
     """Configuration reload response."""
+
     success: bool
     reloaded_settings: list[str] = Field(default_factory=list)
     message: str
@@ -83,9 +86,8 @@ class ReloadResponse(BaseModel):
 # Authentication
 # ==================
 
-def verify_access_code(
-    x_access_code: str | None = Header(None, alias="X-Access-Code")
-) -> bool:
+
+def verify_access_code(x_access_code: str | None = Header(None, alias="X-Access-Code")) -> bool:
     """
     Verify admin access code from header.
 
@@ -101,15 +103,12 @@ def verify_access_code(
     if not x_access_code:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Access code required. Provide X-Access-Code header."
+            detail="Access code required. Provide X-Access-Code header.",
         )
 
     if x_access_code != settings.admin_access_code:
         logger.warning("Invalid access code attempt")
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Invalid access code"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid access code")
 
     return True
 
@@ -118,10 +117,11 @@ def verify_access_code(
 # Endpoints
 # ==================
 
+
 @router.get("/", response_model=ConfigResponse)
 async def get_configuration(
     authenticated: bool = Depends(verify_access_code),
-    app_settings: Settings = Depends(get_settings)
+    app_settings: Settings = Depends(get_settings),
 ) -> ConfigResponse:
     """
     Get current application configuration (non-sensitive values only).
@@ -139,14 +139,14 @@ async def get_configuration(
         max_file_size_mb=app_settings.max_file_size_mb,
         database_connected=bool(app_settings.database_url),
         ovh_configured=bool(app_settings.ovh_api_token),
-        redis_configured=bool(app_settings.redis_url)
+        redis_configured=bool(app_settings.redis_url),
     )
 
 
 @router.get("/validation", response_model=ValidationResponse)
 async def validate_configuration(
     authenticated: bool = Depends(verify_access_code),
-    app_settings: Settings = Depends(get_settings)
+    app_settings: Settings = Depends(get_settings),
 ) -> ValidationResponse:
     """
     Validate current configuration and check for issues.
@@ -187,18 +187,14 @@ async def validate_configuration(
     else:
         logger.warning(f"❌ Configuration validation failed with {len(errors)} errors")
 
-    return ValidationResponse(
-        valid=valid,
-        errors=errors,
-        warnings=warnings
-    )
+    return ValidationResponse(valid=valid, errors=errors, warnings=warnings)
 
 
 @router.get("/feature-flags", response_model=FeatureFlagsResponse)
 async def get_feature_flags(
     authenticated: bool = Depends(verify_access_code),
     db: Session = Depends(get_session),
-    app_settings: Settings = Depends(get_settings)
+    app_settings: Settings = Depends(get_settings),
 ) -> FeatureFlagsResponse:
     """
     Get status of all feature flags.
@@ -219,9 +215,7 @@ async def get_feature_flags(
     enabled_count = sum(1 for enabled in flags_status.values() if enabled)
 
     return FeatureFlagsResponse(
-        flags=flags_status,
-        total_count=len(flags_status),
-        enabled_count=enabled_count
+        flags=flags_status, total_count=len(flags_status), enabled_count=enabled_count
     )
 
 
@@ -230,7 +224,7 @@ async def update_feature_flag(
     flag_name: str,
     update: FeatureFlagUpdate,
     authenticated: bool = Depends(verify_access_code),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ) -> JSONResponse:
     """
     Update a feature flag in the database.
@@ -253,7 +247,7 @@ async def update_feature_flag(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"Feature flag '{flag_name}' not found. "
-                   f"Valid flags: {[f.value for f in Feature]}"
+            f"Valid flags: {[f.value for f in Feature]}",
         ) from e
 
     # Update in database
@@ -262,7 +256,7 @@ async def update_feature_flag(
         name=flag_name,
         enabled=update.enabled,
         description=update.description or "",
-        rollout_percentage=update.rollout_percentage
+        rollout_percentage=update.rollout_percentage,
     )
 
     logger.info(f"✅ Feature flag '{flag_name}' updated to {update.enabled}")
@@ -276,16 +270,16 @@ async def update_feature_flag(
                 "name": flag.name,
                 "enabled": flag.enabled,
                 "description": flag.description,
-                "rollout_percentage": flag.rollout_percentage
-            }
-        }
+                "rollout_percentage": flag.rollout_percentage,
+            },
+        },
     )
 
 
 @router.post("/reload", response_model=ReloadResponse)
 async def reload_configuration(
     authenticated: bool = Depends(verify_access_code),
-    app_settings: Settings = Depends(get_settings)
+    app_settings: Settings = Depends(get_settings),
 ) -> ReloadResponse:
     """
     Hot reload configuration (safe settings only).
@@ -322,14 +316,12 @@ async def reload_configuration(
         success=True,
         reloaded_settings=reloaded,
         message=f"Successfully reloaded {len(reloaded)} settings. "
-                f"Critical settings require application restart."
+        f"Critical settings require application restart.",
     )
 
 
 @router.get("/health")
-async def config_health(
-    authenticated: bool = Depends(verify_access_code)
-) -> dict[str, Any]:
+async def config_health(authenticated: bool = Depends(verify_access_code)) -> dict[str, Any]:
     """
     Check health of configuration management system.
 
@@ -341,5 +333,5 @@ async def config_health(
         "status": "healthy",
         "config_loaded": settings is not None,
         "environment": settings.environment if settings else "unknown",
-        "timestamp": "2025-01-13T00:00:00Z"
+        "timestamp": "2025-01-13T00:00:00Z",
     }

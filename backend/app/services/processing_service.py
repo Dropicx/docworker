@@ -26,11 +26,7 @@ class ProcessingService:
     external services like Celery workers.
     """
 
-    def __init__(
-        self,
-        db: Session,
-        job_repository: PipelineJobRepository | None = None
-    ):
+    def __init__(self, db: Session, job_repository: PipelineJobRepository | None = None):
         """
         Initialize processing service.
 
@@ -41,11 +37,7 @@ class ProcessingService:
         self.db = db
         self.job_repository = job_repository or PipelineJobRepository(db)
 
-    def start_processing(
-        self,
-        processing_id: str,
-        options: dict[str, Any]
-    ) -> dict[str, Any]:
+    def start_processing(self, processing_id: str, options: dict[str, Any]) -> dict[str, Any]:
         """
         Start document processing with given options.
 
@@ -74,6 +66,7 @@ class ProcessingService:
         # Enqueue to Celery worker
         try:
             from app.services.celery_client import enqueue_document_processing
+
             task_id = enqueue_document_processing(processing_id, options=options)
             logger.info(f"📤 Job queued to Redis: {processing_id[:8]} (task_id: {task_id})")
 
@@ -82,12 +75,14 @@ class ProcessingService:
                 "processing_id": processing_id,
                 "status": "QUEUED",
                 "task_id": task_id,
-                "target_language": options.get('target_language')
+                "target_language": options.get("target_language"),
             }
 
         except Exception as queue_error:
             logger.error(f"❌ Failed to queue task: {queue_error}")
-            raise RuntimeError(f"Failed to queue processing task: {str(queue_error)}") from queue_error
+            raise RuntimeError(
+                f"Failed to queue processing task: {str(queue_error)}"
+            ) from queue_error
 
     def get_processing_status(self, processing_id: str) -> dict[str, Any]:
         """
@@ -119,7 +114,7 @@ class ProcessingService:
             "progress_percent": job.progress_percent,
             "current_step": current_step,
             "message": None,
-            "error": job.error_message
+            "error": job.error_message,
         }
 
     def get_processing_result(self, processing_id: str) -> dict[str, Any]:
@@ -142,9 +137,7 @@ class ProcessingService:
 
         # Check if job is completed
         if job.status != StepExecutionStatus.COMPLETED:
-            raise ValueError(
-                f"Processing not completed yet. Status: {job.status}"
-            )
+            raise ValueError(f"Processing not completed yet. Status: {job.status}")
 
         # Get result data
         result_data = job.result_data
@@ -167,19 +160,23 @@ class ProcessingService:
         active_processes = []
 
         for proc_id, data in processing_store.items():
-            active_processes.append({
-                "processing_id": proc_id[:8] + "...",  # Shortened for privacy
-                "status": data.get("status"),
-                "progress_percent": data.get("progress_percent", 0),
-                "current_step": data.get("current_step"),
-                "created_at": data.get("created_at"),
-                "filename": data.get("filename", "").split("/")[-1] if data.get("filename") else None
-            })
+            active_processes.append(
+                {
+                    "processing_id": proc_id[:8] + "...",  # Shortened for privacy
+                    "status": data.get("status"),
+                    "progress_percent": data.get("progress_percent", 0),
+                    "current_step": data.get("current_step"),
+                    "created_at": data.get("created_at"),
+                    "filename": data.get("filename", "").split("/")[-1]
+                    if data.get("filename")
+                    else None,
+                }
+            )
 
         return {
             "active_count": len(active_processes),
             "processes": active_processes,
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }
 
     def _map_status_to_api(self, db_status: StepExecutionStatus) -> ProcessingStatus:
@@ -197,7 +194,7 @@ class ProcessingService:
             StepExecutionStatus.RUNNING: ProcessingStatus.PROCESSING,
             StepExecutionStatus.COMPLETED: ProcessingStatus.COMPLETED,
             StepExecutionStatus.FAILED: ProcessingStatus.ERROR,
-            StepExecutionStatus.SKIPPED: ProcessingStatus.ERROR
+            StepExecutionStatus.SKIPPED: ProcessingStatus.ERROR,
         }
         return status_mapping.get(db_status, ProcessingStatus.PENDING)
 

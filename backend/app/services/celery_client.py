@@ -82,6 +82,7 @@ Note:
     **Shared Redis**: Backend and worker must connect to same Redis instance
     for task queue to function. Verify REDIS_URL matches across services.
 """
+
 import logging
 import os
 from typing import Any
@@ -91,20 +92,16 @@ from celery import Celery
 logger = logging.getLogger(__name__)
 
 # Create Celery client (connects to same Redis as worker)
-REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
-celery_client = Celery(
-    'doctranslator_backend',
-    broker=REDIS_URL,
-    backend=REDIS_URL
-)
+celery_client = Celery("doctranslator_backend", broker=REDIS_URL, backend=REDIS_URL)
 
 # Configure client
 celery_client.conf.update(
-    task_serializer='json',
-    accept_content=['json'],
-    result_serializer='json',
-    timezone='Europe/Berlin',
+    task_serializer="json",
+    accept_content=["json"],
+    result_serializer="json",
+    timezone="Europe/Berlin",
     enable_utc=True,
     result_expires=3600,  # Task results expire after 1 hour
 )
@@ -183,9 +180,7 @@ def enqueue_document_processing(processing_id: str, options: dict[str, Any] | No
 
         # Send task to worker
         result = celery_client.send_task(
-            'process_medical_document',
-            args=(processing_id,),
-            kwargs={'options': options or {}}
+            "process_medical_document", args=(processing_id,), kwargs={"options": options or {}}
         )
 
         logger.info(f"✅ Task enqueued: {processing_id} (task_id: {result.id})")
@@ -269,23 +264,23 @@ def get_task_status(task_id: str) -> dict[str, Any]:
     result = AsyncResult(task_id, app=celery_client)
 
     status_info = {
-        'task_id': task_id,
-        'status': result.status,
-        'ready': result.ready(),
-        'successful': result.successful() if result.ready() else None,
-        'failed': result.failed() if result.ready() else None,
+        "task_id": task_id,
+        "status": result.status,
+        "ready": result.ready(),
+        "successful": result.successful() if result.ready() else None,
+        "failed": result.failed() if result.ready() else None,
     }
 
     # Add result or error if complete
     if result.ready():
         if result.successful():
-            status_info['result'] = result.result
+            status_info["result"] = result.result
         elif result.failed():
-            status_info['error'] = str(result.info)
+            status_info["error"] = str(result.info)
     else:
         # Get progress info if available
         if result.info:
-            status_info['info'] = result.info
+            status_info["info"] = result.info
 
     return status_info
 

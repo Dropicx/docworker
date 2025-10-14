@@ -173,7 +173,7 @@ class DocumentClassManager:
         self,
         session: Session,
         class_repository: DocumentClassRepository | None = None,
-        step_repository: PipelineStepRepository | None = None
+        step_repository: PipelineStepRepository | None = None,
     ):
         """Initialize Document Class Manager with database session and repositories.
 
@@ -204,7 +204,9 @@ class DocumentClassManager:
             else:
                 classes = self.class_repository.get_all()
 
-            logger.info(f"📋 Retrieved {len(classes)} document classes (enabled_only={enabled_only})")
+            logger.info(
+                f"📋 Retrieved {len(classes)} document classes (enabled_only={enabled_only})"
+            )
             return classes
 
         except Exception as e:
@@ -302,7 +304,9 @@ class DocumentClassManager:
             self.session.commit()
             self.session.refresh(doc_class)
 
-            logger.info(f"✅ Created document class: {doc_class.class_key} - {doc_class.display_name}")
+            logger.info(
+                f"✅ Created document class: {doc_class.class_key} - {doc_class.display_name}"
+            )
 
             # Trigger classification prompt update
             self._trigger_classification_prompt_update()
@@ -353,11 +357,13 @@ class DocumentClassManager:
                 if class_data["class_key"] != doc_class.class_key:
                     existing = self.get_class_by_key(class_data["class_key"])
                     if existing:
-                        raise ValueError(f"Document class '{class_data['class_key']}' already exists")
+                        raise ValueError(
+                            f"Document class '{class_data['class_key']}' already exists"
+                        )
 
             # Update fields
             for key, value in class_data.items():
-                if hasattr(doc_class, key) and key not in ['id', 'created_at', 'created_by']:
+                if hasattr(doc_class, key) and key not in ["id", "created_at", "created_by"]:
                     setattr(doc_class, key, value)
 
             doc_class.last_modified = datetime.now()
@@ -460,7 +466,9 @@ class DocumentClassManager:
 
             self.session.commit()
 
-            logger.info(f"   ✅ Updated {updated_count} classification step(s) with new document classes")
+            logger.info(
+                f"   ✅ Updated {updated_count} classification step(s) with new document classes"
+            )
 
         except Exception as e:
             logger.error(f"   ❌ Failed to update classification prompts: {e}")
@@ -501,7 +509,6 @@ Document to classify:
 {{input_text}}
 """
 
-
     def _format_classification_indicators(self, classes: list[DocumentClassDB]) -> str:
         """Format classification indicators for all classes"""
         indicators = []
@@ -537,7 +544,9 @@ Document to classify:
                 "total_classes": stats.get("total_classes", 0),
                 "enabled_classes": stats.get("enabled_classes", 0),
                 "system_classes": stats.get("system_classes", 0),
-                "custom_classes": stats.get("user_classes", 0)  # Map user_classes to custom_classes
+                "custom_classes": stats.get(
+                    "user_classes", 0
+                ),  # Map user_classes to custom_classes
             }
 
         except Exception as e:
@@ -546,5 +555,5 @@ Document to classify:
                 "total_classes": 0,
                 "enabled_classes": 0,
                 "system_classes": 0,
-                "custom_classes": 0
+                "custom_classes": 0,
             }

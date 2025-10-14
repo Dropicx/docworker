@@ -26,8 +26,7 @@ class Settings(BaseSettings):
     # ==================
     app_name: str = Field(default="DocTranslator", description="Application name")
     environment: str = Field(
-        default="development",
-        description="Environment: development, staging, production"
+        default="development", description="Environment: development, staging, production"
     )
     debug: bool = Field(default=False, description="Enable debug mode")
     port: int = Field(default=9122, description="Server port")
@@ -37,169 +36,113 @@ class Settings(BaseSettings):
     # ==================
     database_url: str = Field(
         ...,  # Required
-        description="PostgreSQL connection string"
+        description="PostgreSQL connection string",
     )
-    db_pool_size: int = Field(
-        default=20,
-        description="Database connection pool size"
-    )
-    db_max_overflow: int = Field(
-        default=40,
-        description="Maximum overflow connections"
-    )
-    db_pool_timeout: int = Field(
-        default=30,
-        description="Connection pool timeout in seconds"
-    )
+    db_pool_size: int = Field(default=20, description="Database connection pool size")
+    db_max_overflow: int = Field(default=40, description="Maximum overflow connections")
+    db_pool_timeout: int = Field(default=30, description="Connection pool timeout in seconds")
 
     # ==================
     # Redis Settings (for Celery)
     # ==================
-    redis_url: str | None = Field(
-        default=None,
-        description="Redis connection string for Celery"
-    )
-    redis_max_connections: int = Field(
-        default=50,
-        description="Maximum Redis connections"
-    )
+    redis_url: str | None = Field(default=None, description="Redis connection string for Celery")
+    redis_max_connections: int = Field(default=50, description="Maximum Redis connections")
 
     # ==================
     # OVH AI Endpoints
     # ==================
     ovh_ai_endpoints_access_token: SecretStr = Field(
         ...,  # Required
-        description="OVH AI Endpoints access token"
+        description="OVH AI Endpoints access token",
     )
     ovh_ai_base_url: str = Field(
-        default="https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
-        description="OVH AI base URL"
+        default="https://oai.endpoints.kepler.ai.cloud.ovh.net/v1", description="OVH AI base URL"
     )
     ovh_main_model: str = Field(
-        default="Meta-Llama-3_3-70B-Instruct",
-        description="Main LLM model for processing"
+        default="Meta-Llama-3_3-70B-Instruct", description="Main LLM model for processing"
     )
     ovh_preprocessing_model: str = Field(
-        default="Mistral-Nemo-Instruct-2407",
-        description="Fast model for preprocessing tasks"
+        default="Mistral-Nemo-Instruct-2407", description="Fast model for preprocessing tasks"
     )
     ovh_translation_model: str = Field(
-        default="Meta-Llama-3_3-70B-Instruct",
-        description="Model for translation tasks"
+        default="Meta-Llama-3_3-70B-Instruct", description="Model for translation tasks"
     )
     ovh_vision_model: str = Field(
-        default="Qwen2.5-VL-72B-Instruct",
-        description="Vision model for OCR tasks"
+        default="Qwen2.5-VL-72B-Instruct", description="Vision model for OCR tasks"
     )
     ovh_vision_base_url: str = Field(
         default="https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net",
-        description="OVH Vision model base URL"
+        description="OVH Vision model base URL",
     )
     use_ovh_only: bool = Field(
-        default=True,
-        description="Use only OVH AI endpoints (disable fallbacks)"
+        default=True, description="Use only OVH AI endpoints (disable fallbacks)"
     )
 
     # ==================
     # Security Settings
     # ==================
     secret_key: SecretStr | None = Field(
-        default=None,
-        description="Secret key for session encryption"
+        default=None, description="Secret key for session encryption"
     )
     admin_access_code: str = Field(
         default="admin123",
         description="Access code for settings UI",
-        validation_alias="SETTINGS_ACCESS_CODE"  # Keep backward compatibility with Railway env var
+        validation_alias="SETTINGS_ACCESS_CODE",  # Keep backward compatibility with Railway env var
     )
     allowed_origins: list[str] = Field(
-        default_factory=lambda: ["*"],
-        description="CORS allowed origins"
+        default_factory=lambda: ["*"], description="CORS allowed origins"
     )
     trusted_hosts: list[str] = Field(
-        default_factory=lambda: ["*"],
-        description="Trusted host headers"
+        default_factory=lambda: ["*"], description="Trusted host headers"
     )
 
     # ==================
     # File Processing Settings
     # ==================
-    max_file_size_mb: int = Field(
-        default=50,
-        description="Maximum upload file size in MB"
-    )
+    max_file_size_mb: int = Field(default=50, description="Maximum upload file size in MB")
     allowed_file_types: list[str] = Field(
         default_factory=lambda: [".pdf", ".docx", ".txt", ".jpg", ".jpeg", ".png"],
-        description="Allowed file extensions"
+        description="Allowed file extensions",
     )
-    temp_dir: str = Field(
-        default="/tmp",
-        description="Temporary file storage directory"
-    )
+    temp_dir: str = Field(default="/tmp", description="Temporary file storage directory")
 
     # ==================
     # Feature Flags
     # ==================
-    enable_ocr: bool = Field(
-        default=True,
-        description="Enable OCR text extraction"
-    )
-    enable_privacy_filter: bool = Field(
-        default=True,
-        description="Enable PII privacy filtering"
-    )
-    enable_multi_file: bool = Field(
-        default=True,
-        description="Enable multi-file processing"
-    )
+    enable_ocr: bool = Field(default=True, description="Enable OCR text extraction")
+    enable_privacy_filter: bool = Field(default=True, description="Enable PII privacy filtering")
+    enable_multi_file: bool = Field(default=True, description="Enable multi-file processing")
 
     # ==================
     # AI Processing Settings
     # ==================
-    ai_timeout_seconds: int = Field(
-        default=300,
-        description="AI request timeout in seconds"
-    )
-    ai_max_retries: int = Field(
-        default=3,
-        description="Maximum AI request retries"
-    )
+    ai_timeout_seconds: int = Field(default=300, description="AI request timeout in seconds")
+    ai_max_retries: int = Field(default=3, description="Maximum AI request retries")
     ai_request_delay_ms: int = Field(
-        default=100,
-        description="Delay between AI requests in milliseconds"
+        default=100, description="Delay between AI requests in milliseconds"
     )
 
     # ==================
     # Logging Settings
     # ==================
     log_level: str = Field(
-        default="INFO",
-        description="Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL"
+        default="INFO", description="Logging level: DEBUG, INFO, WARNING, ERROR, CRITICAL"
     )
     log_format: str = Field(
         default="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        description="Log message format"
+        description="Log message format",
     )
 
     # ==================
     # Railway Settings
     # ==================
-    railway_environment: str | None = Field(
-        default=None,
-        description="Railway environment name"
-    )
-    railway_project_id: str | None = Field(
-        default=None,
-        description="Railway project ID"
-    )
+    railway_environment: str | None = Field(default=None, description="Railway environment name")
+    railway_project_id: str | None = Field(default=None, description="Railway project ID")
 
     # ==================
     # Rate Limiting
     # ==================
-    rate_limit_per_minute: int = Field(
-        default=60,
-        description="API rate limit per minute"
-    )
+    rate_limit_per_minute: int = Field(default=60, description="API rate limit per minute")
 
     # ==================
     # Pydantic Configuration
@@ -208,7 +151,7 @@ class Settings(BaseSettings):
         env_file=".env",
         env_file_encoding="utf-8",
         case_sensitive=False,
-        extra="ignore"  # Ignore extra environment variables
+        extra="ignore",  # Ignore extra environment variables
     )
 
     # ==================
@@ -249,8 +192,7 @@ class Settings(BaseSettings):
         v_upper = v.upper()
         if v_upper not in allowed:
             logger.warning(
-                f"Invalid log level '{v}', must be one of {allowed}. "
-                f"Defaulting to 'INFO'."
+                f"Invalid log level '{v}', must be one of {allowed}. " f"Defaulting to 'INFO'."
             )
             return "INFO"
         return v_upper
@@ -332,6 +274,7 @@ except Exception as e:
 # ==================
 # Helper Functions
 # ==================
+
 
 def get_settings() -> Settings:
     """

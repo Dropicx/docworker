@@ -46,10 +46,7 @@ class OCRConfigurationRepository(BaseRepository[OCRConfigurationDB]):
         """
         config = self.get_config()
         if not config:
-            config = self.create(
-                selected_engine=OCREngineEnum.HYBRID,
-                pii_removal_enabled=True
-            )
+            config = self.create(selected_engine=OCREngineEnum.HYBRID, pii_removal_enabled=True)
         return config
 
     def update_selected_engine(self, engine: OCREngineEnum) -> OCRConfigurationDB | None:
@@ -68,7 +65,9 @@ class OCRConfigurationRepository(BaseRepository[OCRConfigurationDB]):
 
         return self.update(config.id, selected_engine=engine)
 
-    def update_engine_config(self, engine: OCREngineEnum, config_data: dict) -> OCRConfigurationDB | None:
+    def update_engine_config(
+        self, engine: OCREngineEnum, config_data: dict
+    ) -> OCRConfigurationDB | None:
         """
         Update configuration for a specific OCR engine.
 
@@ -86,7 +85,7 @@ class OCRConfigurationRepository(BaseRepository[OCRConfigurationDB]):
         config_field_map = {
             OCREngineEnum.PADDLEOCR: "paddleocr_config",
             OCREngineEnum.VISION_LLM: "vision_llm_config",
-            OCREngineEnum.HYBRID: "hybrid_config"
+            OCREngineEnum.HYBRID: "hybrid_config",
         }
 
         field_name = config_field_map.get(engine)

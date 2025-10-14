@@ -31,6 +31,7 @@ Module-level Constants:
     MAX_DATA_AGE (timedelta): Memory store retention (30 minutes)
     DB_RETENTION_HOURS (int): Database job retention from env (default 24h)
 """
+
 from datetime import datetime, timedelta
 import gc
 import logging
@@ -48,7 +49,8 @@ processing_store: dict[str, dict[str, Any]] = {}
 MAX_DATA_AGE = timedelta(minutes=30)
 
 # Database retention period (24 hours for development, configurable via env)
-DB_RETENTION_HOURS = int(os.getenv('DB_RETENTION_HOURS', '24'))
+DB_RETENTION_HOURS = int(os.getenv("DB_RETENTION_HOURS", "24"))
+
 
 async def cleanup_temp_files():
     """Orchestrate comprehensive cleanup across all domains.
@@ -100,13 +102,16 @@ async def cleanup_temp_files():
         gc.collect()
 
         if files_removed > 0 or items_removed > 0 or jobs_removed > 0:
-            logger.info(f"🧹 Cleanup: {files_removed} files, {items_removed} memory items, {jobs_removed} database jobs removed")
+            logger.info(
+                f"🧹 Cleanup: {files_removed} files, {items_removed} memory items, {jobs_removed} database jobs removed"
+            )
 
         return files_removed
 
     except Exception as e:
         logger.error(f"❌ Cleanup-Fehler: {e}")
         return 0
+
 
 async def cleanup_system_temp_files():
     """Bereinigt temporäre Dateien im Systemverzeichnis"""
@@ -118,7 +123,7 @@ async def cleanup_system_temp_files():
         # Suche nach medizinischen Dokumenten-Dateien
         for root, _dirs, files in os.walk(temp_dir):
             for file in files:
-                if file.startswith(('medical_', 'uploaded_', 'processed_')):
+                if file.startswith(("medical_", "uploaded_", "processed_")):
                     file_path = Path(root) / file
                     try:
                         # Datei älter als 1 Stunde?
@@ -137,6 +142,7 @@ async def cleanup_system_temp_files():
         logger.error(f"❌ System-Temp-Cleanup Fehler: {e}")
         return files_removed
 
+
 async def cleanup_memory_store():
     """Bereinigt den In-Memory Store von alten Daten"""
     items_removed = 0
@@ -145,7 +151,7 @@ async def cleanup_memory_store():
         expired_keys = []
 
         for processing_id, data in processing_store.items():
-            created_time = data.get('created_at', current_time)
+            created_time = data.get("created_at", current_time)
 
             # Daten älter als MAX_DATA_AGE?
             if current_time - created_time > MAX_DATA_AGE:
@@ -217,16 +223,16 @@ async def cleanup_old_database_jobs():
             cutoff_time = datetime.now() - timedelta(hours=DB_RETENTION_HOURS)
 
             # Find jobs older than retention period
-            old_jobs = db.query(PipelineJobDB).filter(
-                PipelineJobDB.uploaded_at < cutoff_time
-            ).all()
+            old_jobs = db.query(PipelineJobDB).filter(PipelineJobDB.uploaded_at < cutoff_time).all()
 
             if old_jobs:
                 logger.info(f"🗑️ Found {len(old_jobs)} jobs older than {DB_RETENTION_HOURS} hours")
 
                 for job in old_jobs:
                     job_age_hours = (datetime.now() - job.uploaded_at).total_seconds() / 3600
-                    logger.debug(f"   Deleting job {job.processing_id} (age: {job_age_hours:.1f}h, status: {job.status})")
+                    logger.debug(
+                        f"   Deleting job {job.processing_id} (age: {job_age_hours:.1f}h, status: {job.status})"
+                    )
                     db.delete(job)
                     jobs_removed += 1
 
@@ -244,25 +250,30 @@ async def cleanup_old_database_jobs():
         logger.error(f"❌ Database cleanup error: {e}")
         return jobs_removed
 
+
 def add_to_processing_store(processing_id: str, data: dict[str, Any]):
     """Fügt Daten zum Processing Store hinzu"""
-    data['created_at'] = datetime.now()
+    data["created_at"] = datetime.now()
     processing_store[processing_id] = data
+
 
 def get_from_processing_store(processing_id: str) -> dict[str, Any]:
     """Holt Daten aus dem Processing Store"""
     return processing_store.get(processing_id, {})
+
 
 def update_processing_store(processing_id: str, updates: dict[str, Any]):
     """Aktualisiert Daten im Processing Store"""
     if processing_id in processing_store:
         processing_store[processing_id].update(updates)
 
+
 def remove_from_processing_store(processing_id: str):
     """Entfernt Daten aus dem Processing Store"""
     if processing_id in processing_store:
         del processing_store[processing_id]
         logger.debug(f"🗑️ Verarbeitungsdaten manuell gelöscht: {processing_id}")
+
 
 async def create_secure_temp_file(prefix: str = "medical_", suffix: str = "") -> str:
     """Create secure temporary file with restricted permissions for medical data.
@@ -323,6 +334,7 @@ async def create_secure_temp_file(prefix: str = "medical_", suffix: str = "") ->
         logger.error(f"❌ Temp-Datei-Erstellung Fehler: {e}")
         raise
 
+
 async def secure_delete_file(file_path: str):
     """Securely delete file by overwriting before removal.
 
@@ -381,10 +393,12 @@ async def secure_delete_file(file_path: str):
     except Exception as e:
         logger.error(f"❌ Sicheres Löschen fehlgeschlagen: {e}")
 
+
 def get_memory_usage() -> dict[str, Any]:
     """Gibt Speichernutzung zurück"""
     try:
         import psutil
+
         process = psutil.Process()
         memory_info = process.memory_info()
 
@@ -392,13 +406,14 @@ def get_memory_usage() -> dict[str, Any]:
             "rss": memory_info.rss,  # Resident Set Size
             "vms": memory_info.vms,  # Virtual Memory Size
             "percent": process.memory_percent(),
-            "processing_store_size": len(processing_store)
+            "processing_store_size": len(processing_store),
         }
     except ImportError:
         return {
             "processing_store_size": len(processing_store),
-            "note": "psutil nicht verfügbar für detaillierte Speicherinfo"
+            "note": "psutil nicht verfügbar für detaillierte Speicherinfo",
         }
+
 
 async def emergency_cleanup():
     """Emergency cleanup for critical memory/disk situations.
@@ -485,9 +500,11 @@ async def cleanup_all_completed_jobs():
 
         try:
             # Delete all completed jobs
-            completed_jobs = db.query(PipelineJobDB).filter(
-                PipelineJobDB.status == StepExecutionStatus.COMPLETED
-            ).all()
+            completed_jobs = (
+                db.query(PipelineJobDB)
+                .filter(PipelineJobDB.status == StepExecutionStatus.COMPLETED)
+                .all()
+            )
 
             for job in completed_jobs:
                 db.delete(job)

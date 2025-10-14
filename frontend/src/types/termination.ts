@@ -13,5 +13,7 @@ export interface TerminationInfo {
 }
 
 export const isTerminated = (result: unknown): result is TerminationInfo => {
-  return typeof result === 'object' && result !== null && (result as TerminationInfo).terminated === true;
+  return (
+    typeof result === 'object' && result !== null && (result as TerminationInfo).terminated === true
+  );
 };

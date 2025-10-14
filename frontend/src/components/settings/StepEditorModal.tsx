@@ -20,7 +20,7 @@ import {
   Loader2,
   GitBranch,
   Tag,
-  Boxes
+  Boxes,
 } from 'lucide-react';
 import { pipelineApi } from '../../services/pipelineApi';
 import { PipelineStep, AIModel, PipelineStepRequest, DocumentClass } from '../../types/pipeline';
@@ -46,7 +46,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   pipelineContext,
   isOpen,
   onClose,
-  onSave
+  onSave,
 }) => {
   // Form State
   const [name, setName] = useState('');
@@ -122,7 +122,9 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setDescription('');
       setOrder(1);
       setEnabled(true);
-      setPromptTemplate('Bearbeiten Sie den folgenden Text:\n\n{input_text}\n\nGeben Sie das Ergebnis zurück.');
+      setPromptTemplate(
+        'Bearbeiten Sie den folgenden Text:\n\n{input_text}\n\nGeben Sie das Ergebnis zurück.'
+      );
       setSelectedModelId(models.length > 0 ? models[0].id : null);
       setTemperature(0.7);
       setMaxTokens(null);
@@ -207,13 +209,17 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
         branching_field: isBranchingStep ? branchingField : null,
         post_branching: postBranching, // NEW: Post-branching flag
         // NEW: Conditional execution
-        required_context_variables: requiredContextVariables.length > 0 ? requiredContextVariables : null,
+        required_context_variables:
+          requiredContextVariables.length > 0 ? requiredContextVariables : null,
         // NEW: Stop conditions
-        stop_conditions: stopOnValues.length > 0 ? {
-          stop_on_values: stopOnValues,
-          termination_reason: terminationReason || 'Pipeline stopped',
-          termination_message: terminationMessage || 'Die Verarbeitung wurde gestoppt.'
-        } : null
+        stop_conditions:
+          stopOnValues.length > 0
+            ? {
+                stop_on_values: stopOnValues,
+                termination_reason: terminationReason || 'Pipeline stopped',
+                termination_message: terminationMessage || 'Die Verarbeitung wurde gestoppt.',
+              }
+            : null,
       };
 
       if (step) {
@@ -237,10 +243,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative w-full max-w-4xl bg-white rounded-2xl shadow-2xl border border-primary-200 max-h-[90vh] overflow-hidden flex flex-col">
@@ -259,7 +262,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   'Konfigurieren Sie einen Pipeline-Verarbeitungsschritt'
                 ) : pipelineContext ? (
                   <>
-                    Erstelle Schritt für: <span className="font-semibold text-brand-700">{pipelineContext} Pipeline</span>
+                    Erstelle Schritt für:{' '}
+                    <span className="font-semibold text-brand-700">{pipelineContext} Pipeline</span>
                   </>
                 ) : (
                   'Konfigurieren Sie einen Pipeline-Verarbeitungsschritt'
@@ -288,13 +292,11 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-primary-700 mb-2">
-                Name *
-              </label>
+              <label className="block text-sm font-medium text-primary-700 mb-2">Name *</label>
               <input
                 type="text"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={e => setName(e.target.value)}
                 className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                 placeholder="z.B. Medical Validation"
                 required
@@ -308,7 +310,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
               <input
                 type="number"
                 value={order}
-                onChange={(e) => setOrder(parseInt(e.target.value) || 1)}
+                onChange={e => setOrder(parseInt(e.target.value) || 1)}
                 min="1"
                 className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                 required
@@ -317,13 +319,11 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-primary-700 mb-2">
-              Beschreibung
-            </label>
+            <label className="block text-sm font-medium text-primary-700 mb-2">Beschreibung</label>
             <input
               type="text"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
               placeholder="Kurze Beschreibung des Schritts"
             />
@@ -337,7 +337,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
             </label>
             <textarea
               value={promptTemplate}
-              onChange={(e) => setPromptTemplate(e.target.value)}
+              onChange={e => setPromptTemplate(e.target.value)}
               rows={10}
               className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none font-mono text-sm"
               placeholder="Ihr Prompt hier... Verwenden Sie {input_text} für den Eingabetext."
@@ -347,19 +347,33 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
               <p className="text-xs font-semibold text-brand-900 mb-2">📝 Verfügbare Variablen:</p>
               <div className="grid grid-cols-1 gap-2 text-xs text-brand-700">
                 <div>
-                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{input_text}'}</code>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">
+                    {'{input_text}'}
+                  </code>
                   <span className="ml-2">Ausgabe des vorherigen Schritts (wird überschrieben)</span>
                 </div>
                 <div>
-                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{original_text}'}</code> / <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{ocr_text}'}</code>
-                  <span className="ml-2">🔒 OCR-Text nach PII-Entfernung (datenschutzsicher, bleibt immer verfügbar)</span>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">
+                    {'{original_text}'}
+                  </code>{' '}
+                  /{' '}
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">
+                    {'{ocr_text}'}
+                  </code>
+                  <span className="ml-2">
+                    🔒 OCR-Text nach PII-Entfernung (datenschutzsicher, bleibt immer verfügbar)
+                  </span>
                 </div>
                 <div>
-                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{target_language}'}</code>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">
+                    {'{target_language}'}
+                  </code>
                   <span className="ml-2">Zielsprache (falls vom Benutzer angegeben)</span>
                 </div>
                 <div>
-                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">{'{document_type}'}</code>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">
+                    {'{document_type}'}
+                  </code>
                   <span className="ml-2">Dokumenttyp (nach Klassifizierungs-Schritt)</span>
                 </div>
               </div>
@@ -374,12 +388,12 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
             </label>
             <select
               value={selectedModelId || ''}
-              onChange={(e) => setSelectedModelId(parseInt(e.target.value))}
+              onChange={e => setSelectedModelId(parseInt(e.target.value))}
               className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
               required
             >
               <option value="">Modell auswählen...</option>
-              {models.map((model) => (
+              {models.map(model => (
                 <option key={model.id} value={model.id}>
                   {model.display_name} ({model.provider})
                   {model.max_tokens && ` - Max: ${model.max_tokens} tokens`}
@@ -401,7 +415,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                 max="2"
                 step="0.1"
                 value={temperature}
-                onChange={(e) => setTemperature(parseFloat(e.target.value))}
+                onChange={e => setTemperature(parseFloat(e.target.value))}
                 className="w-full"
               />
               <div className="flex justify-between text-xs text-primary-500 mt-1">
@@ -417,7 +431,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
               <input
                 type="number"
                 value={maxTokens || ''}
-                onChange={(e) => setMaxTokens(e.target.value ? parseInt(e.target.value) : null)}
+                onChange={e => setMaxTokens(e.target.value ? parseInt(e.target.value) : null)}
                 min="100"
                 max="16000"
                 className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
@@ -436,7 +450,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   <input
                     type="checkbox"
                     checked={enabled}
-                    onChange={(e) => setEnabled(e.target.checked)}
+                    onChange={e => setEnabled(e.target.checked)}
                     className="w-4 h-4 text-brand-600 border-primary-300 rounded focus:ring-brand-500"
                   />
                   <span className="text-sm font-medium text-primary-700">Schritt aktiviert</span>
@@ -448,10 +462,12 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   <input
                     type="checkbox"
                     checked={retryOnFailure}
-                    onChange={(e) => setRetryOnFailure(e.target.checked)}
+                    onChange={e => setRetryOnFailure(e.target.checked)}
                     className="w-4 h-4 text-brand-600 border-primary-300 rounded focus:ring-brand-500"
                   />
-                  <span className="text-sm font-medium text-primary-700">Bei Fehler wiederholen</span>
+                  <span className="text-sm font-medium text-primary-700">
+                    Bei Fehler wiederholen
+                  </span>
                 </label>
               </div>
 
@@ -463,7 +479,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   <input
                     type="number"
                     value={maxRetries}
-                    onChange={(e) => setMaxRetries(parseInt(e.target.value) || 0)}
+                    onChange={e => setMaxRetries(parseInt(e.target.value) || 0)}
                     min="0"
                     max="10"
                     className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
@@ -477,7 +493,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                 </label>
                 <select
                   value={outputFormat}
-                  onChange={(e) => setOutputFormat(e.target.value)}
+                  onChange={e => setOutputFormat(e.target.value)}
                   className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                 >
                   <option value="text">Text</option>
@@ -502,31 +518,37 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   <Tag className="w-4 h-4" />
                   <span>Dokumentenklasse</span>
                   {step && (
-                    <span className="text-xs text-warning-600 font-normal">(Änderung nicht empfohlen)</span>
+                    <span className="text-xs text-warning-600 font-normal">
+                      (Änderung nicht empfohlen)
+                    </span>
                   )}
                 </label>
                 <select
                   value={documentClassId || ''}
-                  onChange={(e) => setDocumentClassId(e.target.value ? parseInt(e.target.value) : null)}
+                  onChange={e =>
+                    setDocumentClassId(e.target.value ? parseInt(e.target.value) : null)
+                  }
                   disabled={step !== null}
                   className={`w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none ${
                     step !== null ? 'bg-neutral-100 cursor-not-allowed opacity-75' : ''
                   }`}
-                  title={step ? 'Dokumentenklasse kann bei bestehenden Schritten nicht geändert werden' : ''}
+                  title={
+                    step
+                      ? 'Dokumentenklasse kann bei bestehenden Schritten nicht geändert werden'
+                      : ''
+                  }
                 >
                   <option value="">Universal (für alle Dokumenttypen)</option>
-                  {documentClasses.map((docClass) => (
+                  {documentClasses.map(docClass => (
                     <option key={docClass.id} value={docClass.id}>
                       {docClass.icon} {docClass.display_name} ({docClass.class_key})
                     </option>
                   ))}
                 </select>
                 <p className="text-xs text-primary-500 mt-1">
-                  {step ? (
-                    '⚠️ Die Dokumentenklasse ist bei bestehenden Schritten fixiert, um Pipeline-Konsistenz zu gewährleisten'
-                  ) : (
-                    'Wählen Sie eine Dokumentenklasse für klassenspezifische Schritte oder lassen Sie es leer für universelle Schritte'
-                  )}
+                  {step
+                    ? '⚠️ Die Dokumentenklasse ist bei bestehenden Schritten fixiert, um Pipeline-Konsistenz zu gewährleisten'
+                    : 'Wählen Sie eine Dokumentenklasse für klassenspezifische Schritte oder lassen Sie es leer für universelle Schritte'}
                 </p>
               </div>
 
@@ -536,7 +558,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   <input
                     type="checkbox"
                     checked={isBranchingStep}
-                    onChange={(e) => setIsBranchingStep(e.target.checked)}
+                    onChange={e => setIsBranchingStep(e.target.checked)}
                     className="w-4 h-4 text-brand-600 border-primary-300 rounded focus:ring-brand-500"
                   />
                   <span className="text-sm font-medium text-primary-700 flex items-center space-x-2">
@@ -545,7 +567,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   </span>
                 </label>
                 <p className="text-xs text-primary-500 mt-1 ml-7">
-                  Aktivieren Sie dies für den Schritt, der die Dokumentklasse bestimmt und die Pipeline verzweigt
+                  Aktivieren Sie dies für den Schritt, der die Dokumentklasse bestimmt und die
+                  Pipeline verzweigt
                 </p>
 
                 {/* Warning for universal step as branching point */}
@@ -555,9 +578,13 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                     <div className="text-xs text-warning-700">
                       <p className="font-semibold mb-1">⚠️ Verzweigungs-Schritt ist universal</p>
                       <p>
-                        Dieser Schritt läuft für <strong>alle Dokumenttypen</strong> und leitet dann zu klassenspezifischen Schritten weiter.
-                        Stellen Sie sicher, dass Ihr Prompt das Feld <code className="px-1 py-0.5 bg-warning-100 rounded font-mono">{branchingField}</code> mit
-                        einem gültigen Klassenschlüssel zurückgibt.
+                        Dieser Schritt läuft für <strong>alle Dokumenttypen</strong> und leitet dann
+                        zu klassenspezifischen Schritten weiter. Stellen Sie sicher, dass Ihr Prompt
+                        das Feld{' '}
+                        <code className="px-1 py-0.5 bg-warning-100 rounded font-mono">
+                          {branchingField}
+                        </code>{' '}
+                        mit einem gültigen Klassenschlüssel zurückgibt.
                       </p>
                     </div>
                   </div>
@@ -571,7 +598,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                     <input
                       type="checkbox"
                       checked={postBranching}
-                      onChange={(e) => setPostBranching(e.target.checked)}
+                      onChange={e => setPostBranching(e.target.checked)}
                       className="w-4 h-4 text-brand-600 border-primary-300 rounded focus:ring-brand-500"
                     />
                     <span className="text-sm font-medium text-primary-700 flex items-center space-x-2">
@@ -580,7 +607,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                     </span>
                   </label>
                   <p className="text-xs text-primary-500 mt-1 ml-7">
-                    Aktivieren Sie dies für universelle Schritte, die NACH der dokumentspezifischen Verarbeitung laufen sollen (z.B. Übersetzung, Formatierung)
+                    Aktivieren Sie dies für universelle Schritte, die NACH der dokumentspezifischen
+                    Verarbeitung laufen sollen (z.B. Übersetzung, Formatierung)
                   </p>
                 </div>
               )}
@@ -594,12 +622,13 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   <input
                     type="text"
                     value={branchingField}
-                    onChange={(e) => setBranchingField(e.target.value)}
+                    onChange={e => setBranchingField(e.target.value)}
                     className="w-full px-3 py-2 border border-brand-300 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none font-mono text-sm"
                     placeholder="document_type"
                   />
                   <p className="text-xs text-brand-600 mt-1">
-                    Das Feld in der Ausgabe, das den Klassenschlüssel enthält (Standard: &quot;document_type&quot;)
+                    Das Feld in der Ausgabe, das den Klassenschlüssel enthält (Standard:
+                    &quot;document_type&quot;)
                   </p>
                 </div>
               )}
@@ -616,8 +645,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-primary-600 mb-3">
-                  Definieren Sie Kontextvariablen, die vorhanden sein müssen, damit dieser Schritt ausgeführt wird.
-                  Wenn eine Variable fehlt, wird der Schritt übersprungen.
+                  Definieren Sie Kontextvariablen, die vorhanden sein müssen, damit dieser Schritt
+                  ausgeführt wird. Wenn eine Variable fehlt, wird der Schritt übersprungen.
                 </p>
 
                 {/* List of required variables */}
@@ -648,8 +677,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   <input
                     type="text"
                     value={newVariable}
-                    onChange={(e) => setNewVariable(e.target.value)}
-                    onKeyDown={(e) => {
+                    onChange={e => setNewVariable(e.target.value)}
+                    onKeyDown={e => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         const trimmed = newVariable.trim();
@@ -670,7 +699,9 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                         setNewVariable('');
                       }
                     }}
-                    disabled={!newVariable.trim() || requiredContextVariables.includes(newVariable.trim())}
+                    disabled={
+                      !newVariable.trim() || requiredContextVariables.includes(newVariable.trim())
+                    }
                     className="px-4 py-2 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Variable hinzufügen"
                   >
@@ -680,18 +711,26 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
 
                 {/* Help text */}
                 <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-xs font-semibold text-blue-900 mb-2">💡 Verfügbare Kontextvariablen:</p>
+                  <p className="text-xs font-semibold text-blue-900 mb-2">
+                    💡 Verfügbare Kontextvariablen:
+                  </p>
                   <div className="grid grid-cols-1 gap-2 text-xs text-blue-700">
                     <div>
-                      <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">target_language</code>
+                      <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">
+                        target_language
+                      </code>
                       <span className="ml-2">Zielsprache für Übersetzung</span>
                     </div>
                     <div>
-                      <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">document_type</code>
+                      <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">
+                        document_type
+                      </code>
                       <span className="ml-2">Dokumenttyp (nach Klassifizierung)</span>
                     </div>
                     <div>
-                      <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">original_text</code>
+                      <code className="px-1.5 py-0.5 bg-blue-100 rounded font-mono">
+                        original_text
+                      </code>
                       <span className="ml-2">OCR-Text (immer verfügbar)</span>
                     </div>
                   </div>
@@ -704,8 +743,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                     <div className="text-xs text-brand-700">
                       <p className="font-semibold mb-1">ℹ️ Hinweis</p>
                       <p>
-                        Dieser Schritt wird übersprungen, wenn der Benutzer keine Zielsprache auswählt.
-                        Der Schritt wird im Audit-Log als SKIPPED markiert.
+                        Dieser Schritt wird übersprungen, wenn der Benutzer keine Zielsprache
+                        auswählt. Der Schritt wird im Audit-Log als SKIPPED markiert.
                       </p>
                     </div>
                   </div>
@@ -724,8 +763,9 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
             <div className="space-y-4">
               <div>
                 <p className="text-sm text-primary-600 mb-3">
-                  Definieren Sie Ausgabewerte, die die Pipeline sofort beenden sollen (z.B. NICHT_MEDIZINISCH).
-                  Die Pipeline wird gestoppt und der Benutzer erhält eine benutzerdefinierte Nachricht.
+                  Definieren Sie Ausgabewerte, die die Pipeline sofort beenden sollen (z.B.
+                  NICHT_MEDIZINISCH). Die Pipeline wird gestoppt und der Benutzer erhält eine
+                  benutzerdefinierte Nachricht.
                 </p>
 
                 {/* List of stop values */}
@@ -756,8 +796,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   <input
                     type="text"
                     value={newStopValue}
-                    onChange={(e) => setNewStopValue(e.target.value)}
-                    onKeyDown={(e) => {
+                    onChange={e => setNewStopValue(e.target.value)}
+                    onKeyDown={e => {
                       if (e.key === 'Enter') {
                         e.preventDefault();
                         const trimmed = newStopValue.trim().toUpperCase();
@@ -778,7 +818,10 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                         setNewStopValue('');
                       }
                     }}
-                    disabled={!newStopValue.trim() || stopOnValues.includes(newStopValue.trim().toUpperCase())}
+                    disabled={
+                      !newStopValue.trim() ||
+                      stopOnValues.includes(newStopValue.trim().toUpperCase())
+                    }
                     className="px-4 py-2 bg-error-600 text-white rounded-lg hover:bg-error-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     title="Wert hinzufügen"
                   >
@@ -796,13 +839,11 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                       <input
                         type="text"
                         value={terminationReason}
-                        onChange={(e) => setTerminationReason(e.target.value)}
+                        onChange={e => setTerminationReason(e.target.value)}
                         className="w-full px-3 py-2 border border-error-300 rounded-lg focus:border-error-500 focus:ring-2 focus:ring-error-100 focus:outline-none"
                         placeholder="z.B. Non-medical content detected"
                       />
-                      <p className="text-xs text-error-600 mt-1">
-                        Wird im Audit-Log gespeichert
-                      </p>
+                      <p className="text-xs text-error-600 mt-1">Wird im Audit-Log gespeichert</p>
                     </div>
 
                     <div>
@@ -811,7 +852,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                       </label>
                       <textarea
                         value={terminationMessage}
-                        onChange={(e) => setTerminationMessage(e.target.value)}
+                        onChange={e => setTerminationMessage(e.target.value)}
                         rows={3}
                         className="w-full px-3 py-2 border border-error-300 rounded-lg focus:border-error-500 focus:ring-2 focus:ring-error-100 focus:outline-none"
                         placeholder="z.B. Das hochgeladene Dokument enthält keinen medizinischen Inhalt. Bitte laden Sie ein medizinisches Dokument hoch."
@@ -836,7 +877,10 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                         </p>
                         <div className="flex flex-wrap gap-1">
                           {stopOnValues.map((value, idx) => (
-                            <code key={idx} className="px-2 py-0.5 bg-blue-100 border border-blue-300 rounded text-xs font-mono text-blue-800">
+                            <code
+                              key={idx}
+                              className="px-2 py-0.5 bg-blue-100 border border-blue-300 rounded text-xs font-mono text-blue-800"
+                            >
                               {value}
                             </code>
                           ))}
@@ -848,26 +892,36 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                           <li className="flex items-start space-x-2">
                             <span className="text-green-600 font-bold">✓</span>
                             <span>
-                              <code className="bg-green-50 px-1 rounded">{stopOnValues[0] || 'STOP_VALUE'}</code> → Pipeline stoppt
+                              <code className="bg-green-50 px-1 rounded">
+                                {stopOnValues[0] || 'STOP_VALUE'}
+                              </code>{' '}
+                              → Pipeline stoppt
                             </span>
                           </li>
                           <li className="flex items-start space-x-2">
                             <span className="text-green-600 font-bold">✓</span>
                             <span>
-                              <code className="bg-green-50 px-1 rounded">{stopOnValues[0] || 'STOP_VALUE'} - Details hier</code> → Pipeline stoppt
+                              <code className="bg-green-50 px-1 rounded">
+                                {stopOnValues[0] || 'STOP_VALUE'} - Details hier
+                              </code>{' '}
+                              → Pipeline stoppt
                             </span>
                           </li>
                           <li className="flex items-start space-x-2">
                             <span className="text-red-600 font-bold">✗</span>
                             <span>
-                              <code className="bg-red-50 px-1 rounded">Der Text ist {stopOnValues[0] || 'STOP_VALUE'}</code> → Pipeline läuft weiter
+                              <code className="bg-red-50 px-1 rounded">
+                                Der Text ist {stopOnValues[0] || 'STOP_VALUE'}
+                              </code>{' '}
+                              → Pipeline läuft weiter
                             </span>
                           </li>
                         </ul>
                       </div>
                       <div className="border-t border-blue-200 pt-2">
                         <p className="text-xs text-blue-800 font-medium">
-                          💡 Best Practice: Konfigurieren Sie Ihren Prompt so, dass der Stop-Wert das ERSTE WORT ist
+                          💡 Best Practice: Konfigurieren Sie Ihren Prompt so, dass der Stop-Wert
+                          das ERSTE WORT ist
                         </p>
                         <p className="text-xs text-blue-600 mt-1">
                           Beispiel: &quot;Antworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH&quot;
@@ -895,9 +949,10 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                     <div className="text-xs text-brand-700">
                       <p className="font-semibold mb-1">💡 Beispiel-Anwendung</p>
                       <p>
-                        Wenn dieser Schritt &quot;NICHT_MEDIZINISCH&quot; ausgibt, wird die Pipeline sofort gestoppt.
-                        Der Benutzer sieht eine Warnung und kann ein anderes Dokument hochladen.
-                        Dies spart API-Kosten und verbessert die Benutzererfahrung.
+                        Wenn dieser Schritt &quot;NICHT_MEDIZINISCH&quot; ausgibt, wird die Pipeline
+                        sofort gestoppt. Der Benutzer sieht eine Warnung und kann ein anderes
+                        Dokument hochladen. Dies spart API-Kosten und verbessert die
+                        Benutzererfahrung.
                       </p>
                     </div>
                   </div>
@@ -920,11 +975,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
             disabled={saving}
             className="btn-primary flex items-center space-x-2"
           >
-            {saving ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4" />
-            )}
+            {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
             <span>{step ? 'Speichern' : 'Erstellen'}</span>
           </button>
         </div>

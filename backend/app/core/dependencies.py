@@ -24,9 +24,7 @@ from app.services.statistics_service import StatisticsService
 # ==================== Service Factories ====================
 
 
-def get_processing_service(
-    db: Session = Depends(get_session)
-) -> ProcessingService:
+def get_processing_service(db: Session = Depends(get_session)) -> ProcessingService:
     """
     Dependency injection factory for ProcessingService.
 
@@ -47,9 +45,7 @@ def get_processing_service(
     return ProcessingService(db)
 
 
-def get_statistics_service(
-    db: Session = Depends(get_session)
-) -> StatisticsService:
+def get_statistics_service(db: Session = Depends(get_session)) -> StatisticsService:
     """
     Dependency injection factory for StatisticsService.
 
@@ -70,9 +66,7 @@ def get_statistics_service(
     return StatisticsService(db)
 
 
-def get_ai_cost_tracker(
-    db: Session = Depends(get_session)
-) -> AICostTracker:
+def get_ai_cost_tracker(db: Session = Depends(get_session)) -> AICostTracker:
     """
     Dependency injection factory for AICostTracker.
 
@@ -97,9 +91,7 @@ def get_ai_cost_tracker(
 # Add repository factories here as needed for direct access
 
 
-def get_pipeline_job_repository(
-    db: Session = Depends(get_session)
-) -> PipelineJobRepository:
+def get_pipeline_job_repository(db: Session = Depends(get_session)) -> PipelineJobRepository:
     """
     Dependency injection factory for PipelineJobRepository.
 
@@ -112,9 +104,7 @@ def get_pipeline_job_repository(
     return PipelineJobRepository(db)
 
 
-def get_pipeline_step_repository(
-    db: Session = Depends(get_session)
-) -> PipelineStepRepository:
+def get_pipeline_step_repository(db: Session = Depends(get_session)) -> PipelineStepRepository:
     """
     Dependency injection factory for PipelineStepRepository.
 
@@ -128,7 +118,7 @@ def get_pipeline_step_repository(
 
 
 def get_pipeline_step_execution_repository(
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ) -> PipelineStepExecutionRepository:
     """
     Dependency injection factory for PipelineStepExecutionRepository.
@@ -142,9 +132,7 @@ def get_pipeline_step_execution_repository(
     return PipelineStepExecutionRepository(db)
 
 
-def get_document_class_repository(
-    db: Session = Depends(get_session)
-) -> DocumentClassRepository:
+def get_document_class_repository(db: Session = Depends(get_session)) -> DocumentClassRepository:
     """
     Dependency injection factory for DocumentClassRepository.
 
@@ -157,9 +145,7 @@ def get_document_class_repository(
     return DocumentClassRepository(db)
 
 
-def get_system_settings_repository(
-    db: Session = Depends(get_session)
-) -> SystemSettingsRepository:
+def get_system_settings_repository(db: Session = Depends(get_session)) -> SystemSettingsRepository:
     """
     Dependency injection factory for SystemSettingsRepository.
 
@@ -173,7 +159,7 @@ def get_system_settings_repository(
 
 
 def get_ocr_configuration_repository(
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ) -> OCRConfigurationRepository:
     """
     Dependency injection factory for OCRConfigurationRepository.
@@ -187,9 +173,7 @@ def get_ocr_configuration_repository(
     return OCRConfigurationRepository(db)
 
 
-def get_available_model_repository(
-    db: Session = Depends(get_session)
-) -> AvailableModelRepository:
+def get_available_model_repository(db: Session = Depends(get_session)) -> AvailableModelRepository:
     """
     Dependency injection factory for AvailableModelRepository.
 
@@ -203,7 +187,7 @@ def get_available_model_repository(
 
 
 def get_ai_log_interaction_repository(
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ) -> AILogInteractionRepository:
     """
     Dependency injection factory for AILogInteractionRepository.

@@ -2,7 +2,6 @@
 Optimized database models for universal vs document-specific prompts
 """
 
-
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy import Enum as SQLEnum
 from sqlalchemy.ext.declarative import declarative_base
@@ -13,11 +12,13 @@ from app.models.document_types import DocumentClassEnum, ProcessingStepEnum
 
 Base = declarative_base()
 
+
 class UniversalPromptsDB(Base):
     """
     Database model for universal prompts used across all document types.
     These prompts are used for steps that should be the same regardless of document type.
     """
+
     __tablename__ = "universal_prompts"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -27,7 +28,9 @@ class UniversalPromptsDB(Base):
     classification_prompt = Column(Text, nullable=False)
     preprocessing_prompt = Column(Text, nullable=False)
     grammar_check_prompt = Column(Text, nullable=False)  # Usually same for all
-    language_translation_prompt = Column(Text, nullable=False)  # Template with {language} placeholder
+    language_translation_prompt = Column(
+        Text, nullable=False
+    )  # Template with {language} placeholder
 
     # Metadata
     version = Column(Integer, default=1, nullable=False)
@@ -35,11 +38,13 @@ class UniversalPromptsDB(Base):
     modified_by = Column(String(255), nullable=True)
     is_active = Column(Boolean, default=True, nullable=False)
 
+
 class DocumentSpecificPromptsDB(Base):
     """
     Database model for document-type-specific prompts.
     These prompts are tailored to specific document types.
     """
+
     __tablename__ = "document_specific_prompts"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -47,9 +52,9 @@ class DocumentSpecificPromptsDB(Base):
 
     # Document-specific prompts - tailored to each document type
     translation_prompt = Column(Text, nullable=False)  # Different complexity levels per doc type
-    fact_check_prompt = Column(Text, nullable=False)   # Domain-specific medical validation
+    fact_check_prompt = Column(Text, nullable=False)  # Domain-specific medical validation
     final_check_prompt = Column(Text, nullable=False)  # Type-specific quality criteria
-    formatting_prompt = Column(Text, nullable=False)   # Type-specific formatting rules
+    formatting_prompt = Column(Text, nullable=False)  # Type-specific formatting rules
 
     # Metadata
     version = Column(Integer, default=1, nullable=False)
@@ -57,19 +62,27 @@ class DocumentSpecificPromptsDB(Base):
     modified_by = Column(String(255), nullable=True)
 
     # Relationships
-    pipeline_steps = relationship("OptimizedPipelineStepDB", back_populates="document_prompts", cascade="all, delete-orphan")
+    pipeline_steps = relationship(
+        "OptimizedPipelineStepDB", back_populates="document_prompts", cascade="all, delete-orphan"
+    )
+
 
 class OptimizedPipelineStepDB(Base):
     """
     Optimized pipeline step configuration with universal/specific designation
     """
+
     __tablename__ = "optimized_pipeline_steps"
 
     id = Column(Integer, primary_key=True, index=True)
-    document_prompts_id = Column(Integer, ForeignKey("document_specific_prompts.id"), nullable=True)  # Null for universal steps
+    document_prompts_id = Column(
+        Integer, ForeignKey("document_specific_prompts.id"), nullable=True
+    )  # Null for universal steps
 
     step_name = Column(SQLEnum(ProcessingStepEnum), nullable=False)
-    is_universal = Column(Boolean, nullable=False)  # True for universal steps, False for doc-specific
+    is_universal = Column(
+        Boolean, nullable=False
+    )  # True for universal steps, False for doc-specific
     enabled = Column(Boolean, default=True, nullable=False)
     order = Column(Integer, nullable=False)
     name = Column(String(255), nullable=False)
@@ -83,10 +96,12 @@ class OptimizedPipelineStepDB(Base):
     # Relationships
     document_prompts = relationship("DocumentSpecificPromptsDB", back_populates="pipeline_steps")
 
+
 class PipelineConfigurationDB(Base):
     """
     Central pipeline configuration managing the flow
     """
+
     __tablename__ = "pipeline_configurations"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -112,11 +127,13 @@ class PipelineConfigurationDB(Base):
     last_modified = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
     modified_by = Column(String(255), nullable=True)
 
+
 # Migration helper for existing data
 class LegacyDocumentPromptsDB(Base):
     """
     Legacy model for backward compatibility during migration
     """
+
     __tablename__ = "legacy_document_prompts"
 
     id = Column(Integer, primary_key=True, index=True)

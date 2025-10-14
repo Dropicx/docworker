@@ -46,9 +46,12 @@ class AvailableModelRepository(BaseRepository[AvailableModelDB]):
         Returns:
             List of enabled models
         """
-        return self.db.query(self.model).filter_by(
-            is_enabled=True
-        ).order_by(self.model.display_name).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(is_enabled=True)
+            .order_by(self.model.display_name)
+            .all()
+        )
 
     def get_disabled_models(self) -> list[AvailableModelDB]:
         """
@@ -57,9 +60,12 @@ class AvailableModelRepository(BaseRepository[AvailableModelDB]):
         Returns:
             List of disabled models
         """
-        return self.db.query(self.model).filter_by(
-            is_enabled=False
-        ).order_by(self.model.display_name).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(is_enabled=False)
+            .order_by(self.model.display_name)
+            .all()
+        )
 
     def get_enabled_model_by_id(self, model_id: int) -> AvailableModelDB | None:
         """
@@ -71,10 +77,7 @@ class AvailableModelRepository(BaseRepository[AvailableModelDB]):
         Returns:
             Model instance if found and enabled, None otherwise
         """
-        return self.db.query(self.model).filter_by(
-            id=model_id,
-            is_enabled=True
-        ).first()
+        return self.db.query(self.model).filter_by(id=model_id, is_enabled=True).first()
 
     def get_models_by_provider(self, provider: str) -> list[AvailableModelDB]:
         """
@@ -86,9 +89,12 @@ class AvailableModelRepository(BaseRepository[AvailableModelDB]):
         Returns:
             List of models from the provider
         """
-        return self.db.query(self.model).filter_by(
-            provider=provider
-        ).order_by(self.model.display_name).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(provider=provider)
+            .order_by(self.model.display_name)
+            .all()
+        )
 
     def enable_model(self, model_id: int) -> AvailableModelDB | None:
         """

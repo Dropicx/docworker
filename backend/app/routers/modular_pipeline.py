@@ -31,16 +31,20 @@ router = APIRouter(prefix="/api/pipeline", tags=["pipeline"])
 
 # ==================== PYDANTIC MODELS ====================
 
+
 class OCRConfigRequest(BaseModel):
     """Request model for OCR configuration update"""
+
     selected_engine: OCREngineEnum
     paddleocr_config: dict[str, Any] | None = None
     vision_llm_config: dict[str, Any] | None = None
     hybrid_config: dict[str, Any] | None = None
     pii_removal_enabled: bool | None = True
 
+
 class OCRConfigResponse(BaseModel):
     """Response model for OCR configuration"""
+
     id: int
     selected_engine: str
     paddleocr_config: dict[str, Any] | None
@@ -55,6 +59,7 @@ class OCRConfigResponse(BaseModel):
 
 class PipelineStepRequest(BaseModel):
     """Request model for creating/updating pipeline step"""
+
     name: str = Field(..., min_length=1, max_length=255)
     description: str | None = None
     order: int = Field(..., ge=1)
@@ -80,15 +85,15 @@ class PipelineStepRequest(BaseModel):
     # Stop conditions (early termination)
     stop_conditions: dict[str, Any] | None = None
 
-    @field_validator('prompt_template')
+    @field_validator("prompt_template")
     @classmethod
     def validate_prompt(cls, v):
         """Validate prompt template contains {input_text} placeholder"""
-        if '{input_text}' not in v:
-            raise ValueError('Prompt template must contain {input_text} placeholder')
+        if "{input_text}" not in v:
+            raise ValueError("Prompt template must contain {input_text} placeholder")
         return v
 
-    @field_validator('stop_conditions')
+    @field_validator("stop_conditions")
     @classmethod
     def validate_stop_conditions(cls, v):
         """Validate stop_conditions structure"""
@@ -97,35 +102,36 @@ class PipelineStepRequest(BaseModel):
 
         # Ensure it's a dictionary
         if not isinstance(v, dict):
-            raise ValueError('stop_conditions must be a dictionary')
+            raise ValueError("stop_conditions must be a dictionary")
 
         # Validate stop_on_values exists and is a non-empty list
-        if 'stop_on_values' not in v:
-            raise ValueError('stop_conditions must contain stop_on_values')
+        if "stop_on_values" not in v:
+            raise ValueError("stop_conditions must contain stop_on_values")
 
-        if not isinstance(v['stop_on_values'], list):
-            raise ValueError('stop_on_values must be a list')
+        if not isinstance(v["stop_on_values"], list):
+            raise ValueError("stop_on_values must be a list")
 
-        if len(v['stop_on_values']) == 0:
-            raise ValueError('stop_on_values cannot be empty')
+        if len(v["stop_on_values"]) == 0:
+            raise ValueError("stop_on_values cannot be empty")
 
         # Ensure all values are strings
-        if not all(isinstance(val, str) for val in v['stop_on_values']):
-            raise ValueError('All stop_on_values must be strings')
+        if not all(isinstance(val, str) for val in v["stop_on_values"]):
+            raise ValueError("All stop_on_values must be strings")
 
         # Ensure termination_message exists
-        if not v.get('termination_message'):
-            raise ValueError('termination_message is required when stop_conditions is set')
+        if not v.get("termination_message"):
+            raise ValueError("termination_message is required when stop_conditions is set")
 
         # Provide default for termination_reason if not set
-        if not v.get('termination_reason'):
-            v['termination_reason'] = 'Pipeline stopped'
+        if not v.get("termination_reason"):
+            v["termination_reason"] = "Pipeline stopped"
 
         return v
 
 
 class PipelineStepResponse(BaseModel):
     """Response model for pipeline step"""
+
     id: int
     name: str
     description: str | None
@@ -161,6 +167,7 @@ class PipelineStepResponse(BaseModel):
 
 class ModelResponse(BaseModel):
     """Response model for available model"""
+
     id: int
     name: str
     display_name: str
@@ -176,11 +183,13 @@ class ModelResponse(BaseModel):
 
 class StepReorderRequest(BaseModel):
     """Request model for reordering steps"""
+
     step_ids: list[int] = Field(..., min_items=1)
 
 
 class EngineStatusResponse(BaseModel):
     """Response model for OCR engine status"""
+
     engine: str
     available: bool
     description: str
@@ -192,6 +201,7 @@ class EngineStatusResponse(BaseModel):
 
 class DocumentClassRequest(BaseModel):
     """Request model for creating/updating document class"""
+
     class_key: str = Field(..., min_length=1, max_length=100)
     display_name: str = Field(..., min_length=1, max_length=255)
     description: str | None = None
@@ -204,6 +214,7 @@ class DocumentClassRequest(BaseModel):
 
 class DocumentClassResponse(BaseModel):
     """Response model for document class"""
+
     id: int
     class_key: str
     display_name: str
@@ -224,10 +235,10 @@ class DocumentClassResponse(BaseModel):
 
 # ==================== OCR CONFIGURATION ENDPOINTS ====================
 
+
 @router.get("/ocr-config", response_model=OCRConfigResponse)
 async def get_ocr_config(
-    db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    db: Session = Depends(get_session), authenticated: bool = Depends(verify_session_token)
 ):
     """
     Get current OCR engine configuration.
@@ -240,7 +251,9 @@ async def get_ocr_config(
     config = manager.get_ocr_config()
 
     if not config:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="OCR configuration not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="OCR configuration not found"
+        )
 
     return config
 
@@ -249,7 +262,7 @@ async def get_ocr_config(
 async def update_ocr_config(
     config_request: OCRConfigRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Update OCR engine configuration.
@@ -267,7 +280,10 @@ async def update_ocr_config(
         config = manager.update_ocr_config(config_data)
 
         if not config:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update OCR configuration")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to update OCR configuration",
+            )
 
         logger.info(f"✅ OCR configuration updated: {config.selected_engine}")
         return config
@@ -279,8 +295,7 @@ async def update_ocr_config(
 
 @router.get("/ocr-engines", response_model=dict[str, EngineStatusResponse])
 async def get_available_engines(
-    db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    db: Session = Depends(get_session), authenticated: bool = Depends(verify_session_token)
 ):
     """
     Get information about available OCR engines.
@@ -303,7 +318,7 @@ async def get_available_engines(
 async def get_engine_status(
     engine: OCREngineEnum,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Get detailed status of a specific OCR engine.
@@ -324,10 +339,10 @@ async def get_engine_status(
 
 # ==================== PIPELINE STEPS ENDPOINTS ====================
 
+
 @router.get("/steps", response_model=list[PipelineStepResponse])
 async def get_all_steps(
-    db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    db: Session = Depends(get_session), authenticated: bool = Depends(verify_session_token)
 ):
     """
     Get all pipeline steps (enabled and disabled).
@@ -350,7 +365,7 @@ async def get_all_steps(
 async def get_step(
     step_id: int,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Get a single pipeline step by ID.
@@ -363,7 +378,9 @@ async def get_step(
 
     step = manager.get_step(step_id)
     if not step:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
+        )
 
     return step
 
@@ -372,7 +389,7 @@ async def get_step(
 async def create_step(
     step_request: PipelineStepRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Create a new pipeline step.
@@ -402,7 +419,7 @@ async def update_step(
     step_id: int,
     step_request: PipelineStepRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Update an existing pipeline step.
@@ -420,7 +437,9 @@ async def update_step(
         step = manager.update_step(step_id, step_data)
 
         if not step:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
+            )
 
         logger.info(f"✅ Updated pipeline step: {step.name} (ID: {step_id})")
         return step
@@ -434,7 +453,7 @@ async def update_step(
 async def delete_step(
     step_id: int,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Delete a pipeline step.
@@ -448,7 +467,9 @@ async def delete_step(
     success = manager.delete_step(step_id)
 
     if not success:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
+        )
 
     logger.info(f"✅ Deleted pipeline step ID: {step_id}")
     return
@@ -458,7 +479,7 @@ async def delete_step(
 async def reorder_steps(
     reorder_request: StepReorderRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Reorder pipeline steps.
@@ -473,7 +494,9 @@ async def reorder_steps(
         success = manager.reorder_steps(reorder_request.step_ids)
 
         if not success:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to reorder steps")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to reorder steps"
+            )
 
         logger.info(f"✅ Reordered pipeline steps: {reorder_request.step_ids}")
         return {"success": True, "message": "Steps reordered successfully"}
@@ -486,7 +509,7 @@ async def reorder_steps(
 @router.get("/steps/universal", response_model=list[PipelineStepResponse])
 async def get_universal_steps(
     authenticated: bool = Depends(verify_session_token),
-    step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository)
+    step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository),
 ):
     """
     Get universal pipeline steps (document_class_id = NULL).
@@ -511,7 +534,7 @@ async def get_steps_by_document_class(
     class_id: int,
     authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_session),
-    step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository)
+    step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository),
 ):
     """
     Get pipeline steps for a specific document class.
@@ -524,7 +547,9 @@ async def get_steps_by_document_class(
     doc_class_manager = DocumentClassManager(db)
     doc_class = doc_class_manager.get_class(class_id)
     if not doc_class:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found"
+        )
 
     try:
         steps = step_repository.get_steps_by_document_class(class_id)
@@ -540,7 +565,7 @@ async def get_steps_by_document_class(
 async def get_pipeline_visualization(
     authenticated: bool = Depends(verify_session_token),
     db: Session = Depends(get_session),
-    step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository)
+    step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository),
 ):
     """
     Get complete pipeline structure showing universal steps and class-specific branches.
@@ -587,18 +612,22 @@ async def get_pipeline_visualization(
                     "description": doc_class.description,
                     "icon": doc_class.icon,
                     "is_enabled": doc_class.is_enabled,
-                    "is_system_class": doc_class.is_system_class
+                    "is_system_class": doc_class.is_system_class,
                 },
-                "steps": [PipelineStepResponse.from_orm(step) for step in class_steps]
+                "steps": [PipelineStepResponse.from_orm(step) for step in class_steps],
             }
 
         result = {
             "universal_steps": [PipelineStepResponse.from_orm(step) for step in universal_steps],
-            "branching_step": PipelineStepResponse.from_orm(branching_step) if branching_step else None,
-            "branches": branches
+            "branching_step": PipelineStepResponse.from_orm(branching_step)
+            if branching_step
+            else None,
+            "branches": branches,
         }
 
-        logger.info(f"📊 Pipeline visualization: {len(universal_steps)} universal steps, {len(branches)} branches")
+        logger.info(
+            f"📊 Pipeline visualization: {len(universal_steps)} universal steps, {len(branches)} branches"
+        )
         return result
 
     except Exception as e:
@@ -608,11 +637,12 @@ async def get_pipeline_visualization(
 
 # ==================== AVAILABLE MODELS ENDPOINTS ====================
 
+
 @router.get("/models", response_model=list[ModelResponse])
 async def get_available_models(
     enabled_only: bool = False,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Get all available AI models.
@@ -638,7 +668,7 @@ async def get_available_models(
 async def get_model(
     model_id: int,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Get a single model by ID.
@@ -651,18 +681,21 @@ async def get_model(
 
     model = manager.get_model(model_id)
     if not model:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Model {model_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Model {model_id} not found"
+        )
 
     return model
 
 
 # ==================== DOCUMENT CLASS ENDPOINTS ====================
 
+
 @router.get("/document-classes", response_model=list[DocumentClassResponse])
 async def get_all_document_classes(
     enabled_only: bool = False,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Get all document classes.
@@ -688,7 +721,7 @@ async def get_all_document_classes(
 async def get_document_class(
     class_id: int,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Get a single document class by ID.
@@ -701,16 +734,20 @@ async def get_document_class(
 
     doc_class = doc_class_manager.get_class(class_id)
     if not doc_class:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found"
+        )
 
     return doc_class
 
 
-@router.post("/document-classes", response_model=DocumentClassResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/document-classes", response_model=DocumentClassResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_document_class(
     class_request: DocumentClassRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Create a new document class.
@@ -729,7 +766,10 @@ async def create_document_class(
         doc_class = doc_class_manager.create_class(class_data)
 
         if not doc_class:
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create document class")
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create document class",
+            )
 
         logger.info(f"✅ Created document class: {doc_class.class_key}")
         return doc_class
@@ -748,7 +788,7 @@ async def update_document_class(
     class_id: int,
     class_request: DocumentClassRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Update an existing document class.
@@ -765,7 +805,9 @@ async def update_document_class(
         doc_class = doc_class_manager.update_class(class_id, class_data)
 
         if not doc_class:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found"
+            )
 
         logger.info(f"✅ Updated document class: {doc_class.class_key}")
         return doc_class
@@ -783,7 +825,7 @@ async def update_document_class(
 async def delete_document_class(
     class_id: int,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
 ):
     """
     Delete a document class.
@@ -799,7 +841,9 @@ async def delete_document_class(
         success = doc_class_manager.delete_class(class_id)
 
         if not success:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found")
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found"
+            )
 
         logger.info(f"✅ Deleted document class ID: {class_id}")
         return
@@ -815,8 +859,7 @@ async def delete_document_class(
 
 @router.get("/document-classes/statistics/summary")
 async def get_document_class_statistics(
-    db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token)
+    db: Session = Depends(get_session), authenticated: bool = Depends(verify_session_token)
 ):
     """
     Get statistics about document classes.

@@ -55,6 +55,7 @@ class Feature(str, Enum):
     Each feature can be controlled via environment variables or database configuration.
     Environment variables take precedence over database settings.
     """
+
     # OCR and Text Extraction
     VISION_LLM_FALLBACK = "vision_llm_fallback_enabled"
     MULTI_FILE_PROCESSING = "multi_file_processing_enabled"
@@ -119,21 +120,17 @@ class FeatureFlags:
         # OCR - enabled by default
         Feature.VISION_LLM_FALLBACK: True,
         Feature.MULTI_FILE_PROCESSING: True,
-
         # Privacy - enabled by default for GDPR compliance
         Feature.ADVANCED_PRIVACY_FILTER: True,
         Feature.PII_REMOVAL_ENABLED: True,
-
         # Monitoring - enabled by default
         Feature.COST_TRACKING: True,
         Feature.AI_LOGGING: True,
         Feature.PARALLEL_STEP_EXECUTION: False,  # Disabled until thoroughly tested
-
         # Pipeline features - enabled by default
         Feature.DYNAMIC_BRANCHING: True,
         Feature.STOP_CONDITIONS: True,
         Feature.RETRY_ON_FAILURE: True,
-
         # Experimental - disabled by default
         Feature.HYBRID_OCR_STRATEGY: False,
         Feature.AUTO_QUALITY_DETECTION: False,
@@ -143,7 +140,7 @@ class FeatureFlags:
         self,
         session: Session | None = None,
         settings: Optional["Settings"] = None,
-        settings_repository: SystemSettingsRepository | None = None
+        settings_repository: SystemSettingsRepository | None = None,
     ):
         """
         Initialize feature flag service.
@@ -313,10 +310,9 @@ class FeatureFlags:
 
 # Global helper functions for convenience
 
+
 def is_feature_enabled(
-    feature: Feature,
-    session: Session | None = None,
-    settings: Optional["Settings"] = None
+    feature: Feature, session: Session | None = None, settings: Optional["Settings"] = None
 ) -> bool:
     """
     Global helper function to check if a feature is enabled.
@@ -340,8 +336,7 @@ def is_feature_enabled(
 
 
 def get_enabled_features(
-    session: Session | None = None,
-    settings: Optional["Settings"] = None
+    session: Session | None = None, settings: Optional["Settings"] = None
 ) -> list[str]:
     """
     Global helper function to get all enabled features.

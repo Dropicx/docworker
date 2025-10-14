@@ -16,8 +16,8 @@ from .improved_table_processor import ImprovedTableProcessor
 
 logger = logging.getLogger(__name__)
 
-class TextExtractorWithOCR:
 
+class TextExtractorWithOCR:
     def __init__(self):
         # Check if Tesseract is available
         self.ocr_available = self._check_tesseract()
@@ -35,10 +35,12 @@ class TextExtractorWithOCR:
             # Special config for tables with better structure preservation
             # PSM 6 = Uniform block of text - better for tables
             # Added more table-specific parameters for better row/column detection
-            self.tesseract_table_config = '--oem 1 --psm 6 -l deu+eng -c preserve_interword_spaces=1 -c textord_tabfind_vertical_text=0 -c textord_tablefind_recognize_tables=1 -c textord_tabfind_force_vertical_text=0 -c textord_tabfind_vertical_horizontal_mix=1'
+            self.tesseract_table_config = "--oem 1 --psm 6 -l deu+eng -c preserve_interword_spaces=1 -c textord_tabfind_vertical_text=0 -c textord_tablefind_recognize_tables=1 -c textord_tabfind_force_vertical_text=0 -c textord_tabfind_vertical_horizontal_mix=1"
 
             # Config for sparse text (like forms)
-            self.tesseract_sparse_config = '--oem 1 --psm 11 -l deu+eng -c preserve_interword_spaces=1'
+            self.tesseract_sparse_config = (
+                "--oem 1 --psm 11 -l deu+eng -c preserve_interword_spaces=1"
+            )
         else:
             logger.warning("⚠️ Tesseract not found - OCR disabled")
 
@@ -54,7 +56,9 @@ class TextExtractorWithOCR:
             logger.warning(f"❌ Tesseract check failed: {e}")
             return False
 
-    async def extract_text(self, file_content: bytes, file_type: str, filename: str) -> tuple[str, float]:
+    async def extract_text(
+        self, file_content: bytes, file_type: str, filename: str
+    ) -> tuple[str, float]:
         """
         Extrahiert Text aus Datei basierend auf Typ
 
@@ -106,7 +110,7 @@ class TextExtractorWithOCR:
                 "⚠️ Dieses PDF enthält keinen extrahierbaren Text.\n\n"
                 "Das PDF scheint gescannt zu sein, aber OCR ist nicht verfügbar.\n"
                 "Bitte verwenden Sie ein PDF mit eingebettetem Text.",
-                0.1
+                0.1,
             )
 
         except Exception as e:
@@ -175,7 +179,11 @@ class TextExtractorWithOCR:
                 # Perform OCR with Tesseract
                 try:
                     # Get text with confidence scores and structure data
-                    data = pytesseract.image_to_data(image, config=self.tesseract_table_config, output_type=pytesseract.Output.DICT)
+                    data = pytesseract.image_to_data(
+                        image,
+                        config=self.tesseract_table_config,
+                        output_type=pytesseract.Output.DICT,
+                    )
 
                     # Detect if page contains tables using enhanced detection
                     has_table_structure = self.table_processor.detect_table_structure(data)
@@ -185,8 +193,12 @@ class TextExtractorWithOCR:
 
                     # Extract text - use table config if table detected, normal otherwise
                     if has_table_structure:
-                        logger.info(f"📊 Page {i}: Medical table/form detected - optimizing extraction")
-                        page_text = pytesseract.image_to_string(image, config=self.tesseract_table_config)
+                        logger.info(
+                            f"📊 Page {i}: Medical table/form detected - optimizing extraction"
+                        )
+                        page_text = pytesseract.image_to_string(
+                            image, config=self.tesseract_table_config
+                        )
                     else:
                         page_text = pytesseract.image_to_string(image, config=self.tesseract_config)
 
@@ -199,17 +211,21 @@ class TextExtractorWithOCR:
                     page_text = self._enhance_lab_value_formatting(page_text)
 
                     # Calculate average confidence for non-empty text
-                    confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
+                    confidences = [int(conf) for conf in data["conf"] if int(conf) > 0]
                     page_confidence = sum(confidences) / len(confidences) if confidences else 0
                     total_confidence += page_confidence
 
                     if page_text.strip():
                         text_parts.append(f"--- Seite {i} (OCR) ---\n{page_text}")
-                        logger.info(f"✅ Page {i} OCR complete: {len(page_text)} chars, confidence: {page_confidence:.1f}%")
+                        logger.info(
+                            f"✅ Page {i} OCR complete: {len(page_text)} chars, confidence: {page_confidence:.1f}%"
+                        )
                         # Log first 1500 chars for debugging
                         preview = page_text[:1500] if len(page_text) > 1500 else page_text
                         logger.info(f"📄 Page {i} content preview (first 1500 chars):\n{preview}")
-                        print(f"📄 Page {i} extracted text preview:\n{preview[:1000]}...", flush=True)
+                        print(
+                            f"📄 Page {i} extracted text preview:\n{preview[:1000]}...", flush=True
+                        )
                     else:
                         logger.warning(f"⚠️ Page {i}: No text detected")
 
@@ -220,7 +236,9 @@ class TextExtractorWithOCR:
             if text_parts:
                 avg_confidence = (total_confidence / len(images)) / 100.0
                 final_text = "\n\n".join(text_parts)
-                logger.info(f"✅ OCR completed: {len(final_text)} total characters, avg confidence: {avg_confidence:.2f}")
+                logger.info(
+                    f"✅ OCR completed: {len(final_text)} total characters, avg confidence: {avg_confidence:.2f}"
+                )
                 print(f"✅ OCR completed for {filename}: {len(final_text)} characters", flush=True)
                 return final_text, max(0.5, min(0.9, avg_confidence))
             return "OCR konnte keinen Text aus dem PDF extrahieren.", 0.1
@@ -233,7 +251,7 @@ class TextExtractorWithOCR:
                 return (
                     "❌ PDF-zu-Bild-Konvertierung fehlgeschlagen.\n"
                     "Poppler-utils scheint nicht korrekt installiert zu sein.",
-                    0.0
+                    0.0,
                 )
             return f"OCR-Fehler: {str(e)}", 0.0
 
@@ -243,7 +261,7 @@ class TextExtractorWithOCR:
             return (
                 "⚠️ OCR ist nicht verfügbar.\n\n"
                 "Tesseract OCR ist nicht installiert oder nicht korrekt konfiguriert.",
-                0.0
+                0.0,
             )
 
         try:
@@ -258,7 +276,9 @@ class TextExtractorWithOCR:
 
             # Check if image might contain tables (based on structure detection)
             # Try with table-optimized config first
-            data = pytesseract.image_to_data(image, config=self.tesseract_table_config, output_type=pytesseract.Output.DICT)
+            data = pytesseract.image_to_data(
+                image, config=self.tesseract_table_config, output_type=pytesseract.Output.DICT
+            )
 
             # Detect if there might be table structures using enhanced detection
             has_table_structure = self.table_processor.detect_table_structure(data)
@@ -282,11 +302,13 @@ class TextExtractorWithOCR:
             text = self._enhance_lab_value_formatting(text)
 
             # Calculate confidence
-            confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
+            confidences = [int(conf) for conf in data["conf"] if int(conf) > 0]
             avg_confidence = sum(confidences) / len(confidences) if confidences else 0
 
             if text and len(text.strip()) > 10:
-                logger.info(f"✅ OCR successful: {len(text)} characters, confidence: {avg_confidence:.1f}%")
+                logger.info(
+                    f"✅ OCR successful: {len(text)} characters, confidence: {avg_confidence:.1f}%"
+                )
                 # Log first 1500 chars for debugging
                 preview = text[:1500] if len(text) > 1500 else text
                 logger.info(f"📄 Image OCR content preview (first 1500 chars):\n{preview}")
@@ -313,14 +335,19 @@ class TextExtractorWithOCR:
                 scale = min(max_dimension / width, max_dimension / height)
                 new_width = int(width * scale)
                 new_height = int(height * scale)
-                logger.info(f"📱 Resizing large image from {width}x{height} to {new_width}x{new_height}")
-                print(f"📱 Resizing large phone photo: {width}x{height} → {new_width}x{new_height}", flush=True)
+                logger.info(
+                    f"📱 Resizing large image from {width}x{height} to {new_width}x{new_height}"
+                )
+                print(
+                    f"📱 Resizing large phone photo: {width}x{height} → {new_width}x{new_height}",
+                    flush=True,
+                )
                 image = image.resize((new_width, new_height), Image.Resampling.LANCZOS)
                 width, height = new_width, new_height
 
             # Convert to grayscale if not already
-            if image.mode != 'L':
-                image = image.convert('L')
+            if image.mode != "L":
+                image = image.convert("L")
 
             # Ensure minimum size for OCR (but not if already large enough)
             min_width = 1000
@@ -342,7 +369,6 @@ class TextExtractorWithOCR:
             enhancer = ImageEnhance.Sharpness(image)
             return enhancer.enhance(1.1)
 
-
         except Exception as e:
             logger.warning(f"Image preprocessing failed: {e}")
             return image
@@ -351,26 +377,28 @@ class TextExtractorWithOCR:
         """Detect if the OCR data suggests a table structure"""
         try:
             # Analyze word positions to detect columnar structure
-            if not ocr_data or 'text' not in ocr_data:
+            if not ocr_data or "text" not in ocr_data:
                 return False
 
             # Get words with positions
             words = []
-            for i in range(len(ocr_data['text'])):
-                if ocr_data['text'][i].strip():
-                    words.append({
-                        'text': ocr_data['text'][i],
-                        'left': ocr_data['left'][i],
-                        'top': ocr_data['top'][i],
-                        'width': ocr_data['width'][i],
-                        'height': ocr_data['height'][i]
-                    })
+            for i in range(len(ocr_data["text"])):
+                if ocr_data["text"][i].strip():
+                    words.append(
+                        {
+                            "text": ocr_data["text"][i],
+                            "left": ocr_data["left"][i],
+                            "top": ocr_data["top"][i],
+                            "width": ocr_data["width"][i],
+                            "height": ocr_data["height"][i],
+                        }
+                    )
 
             if len(words) < 10:
                 return False
 
             # Check for aligned columns (words with similar x-positions)
-            x_positions = [w['left'] for w in words]
+            x_positions = [w["left"] for w in words]
             x_clusters = []
             tolerance = 20  # pixels tolerance for column alignment
 
@@ -396,7 +424,7 @@ class TextExtractorWithOCR:
     def _format_table_text(self, text: str) -> str:
         """Format text to better preserve table structure"""
         try:
-            lines = text.split('\n')
+            lines = text.split("\n")
             formatted_lines = []
 
             for line in lines:
@@ -405,7 +433,7 @@ class TextExtractorWithOCR:
                 import re
 
                 # Replace multiple spaces with a tab-like separator
-                line = re.sub(r'  +', ' | ', line)
+                line = re.sub(r"  +", " | ", line)
 
                 # Clean up line
                 line = line.strip()
@@ -414,16 +442,15 @@ class TextExtractorWithOCR:
                     formatted_lines.append(line)
 
             # Join lines and add table markers for common patterns
-            result = '\n'.join(formatted_lines)
+            result = "\n".join(formatted_lines)
 
             # Detect common lab value patterns and format them
             # Pattern: Parameter Name    Value    Unit    Reference
             return re.sub(
-                r'([A-Za-zÄÖÜäöüß\-]+)\s*\|\s*([\d,\.]+)\s*\|\s*([A-Za-z/%]+)\s*\|\s*([\d,\.\-\s]+)',
-                r'\1: \2 \3 (Referenz: \4)',
-                result
+                r"([A-Za-zÄÖÜäöüß\-]+)\s*\|\s*([\d,\.]+)\s*\|\s*([A-Za-z/%]+)\s*\|\s*([\d,\.\-\s]+)",
+                r"\1: \2 \3 (Referenz: \4)",
+                result,
             )
-
 
         except Exception as e:
             logger.debug(f"Table formatting failed: {e}")
@@ -436,56 +463,51 @@ class TextExtractorWithOCR:
         # Common OCR character substitutions
         corrections = {
             # Number/Letter confusions
-            r'\b0(?=[a-zäöüß])': 'O',  # 0 -> O before lowercase letters
-            r'(?<=[a-zäöüß])0\b': 'o',  # 0 -> o after lowercase letters
-            r'\b1(?=[a-zäöüß]{2,})': 'I',  # 1 -> I at word start
-            r'(?<=[a-zäöüß])1(?=[a-zäöüß])': 'i',  # 1 -> i in middle of word
-            r'(?<=[a-zäöüß])1\b': 'l',  # 1 -> l at word end
-            r'\bI(?=\d)': '1',  # I -> 1 before numbers
-            r'(?<=\d)O(?=\d)': '0',  # O -> 0 between numbers
-            r'(?<=\d)o(?=\d)': '0',  # o -> 0 between numbers
-
+            r"\b0(?=[a-zäöüß])": "O",  # 0 -> O before lowercase letters
+            r"(?<=[a-zäöüß])0\b": "o",  # 0 -> o after lowercase letters
+            r"\b1(?=[a-zäöüß]{2,})": "I",  # 1 -> I at word start
+            r"(?<=[a-zäöüß])1(?=[a-zäöüß])": "i",  # 1 -> i in middle of word
+            r"(?<=[a-zäöüß])1\b": "l",  # 1 -> l at word end
+            r"\bI(?=\d)": "1",  # I -> 1 before numbers
+            r"(?<=\d)O(?=\d)": "0",  # O -> 0 between numbers
+            r"(?<=\d)o(?=\d)": "0",  # o -> 0 between numbers
             # German special characters
-            r'ii': 'ü',  # Common OCR error for ü
-            r'ae': 'ä',  # If OCR misses umlauts
-            r'oe': 'ö',
-            r'ue': 'ü',
-            r'ss': 'ß',  # In certain contexts
-
+            r"ii": "ü",  # Common OCR error for ü
+            r"ae": "ä",  # If OCR misses umlauts
+            r"oe": "ö",
+            r"ue": "ü",
+            r"ss": "ß",  # In certain contexts
             # Medical terms commonly misread
-            r'\bHamoglobin\b': 'Hämoglobin',
-            r'\bErythrozyten\b': 'Erythrozyten',
-            r'\bLeukozyten\b': 'Leukozyten',
-            r'\bThrombocyten\b': 'Thrombozyten',
-            r'\bKreatinin\b': 'Kreatinin',
-            r'\bBilirubin\b': 'Bilirubin',
-            r'\bCholesterin\b': 'Cholesterin',
-            r'\bGlukose\b': 'Glucose',
-            r'\bNatrium\b': 'Natrium',
-            r'\bKalium\b': 'Kalium',
-            r'\bCalcium\b': 'Calcium',
-            r'\bPhosphat\b': 'Phosphat',
-
+            r"\bHamoglobin\b": "Hämoglobin",
+            r"\bErythrozyten\b": "Erythrozyten",
+            r"\bLeukozyten\b": "Leukozyten",
+            r"\bThrombocyten\b": "Thrombozyten",
+            r"\bKreatinin\b": "Kreatinin",
+            r"\bBilirubin\b": "Bilirubin",
+            r"\bCholesterin\b": "Cholesterin",
+            r"\bGlukose\b": "Glucose",
+            r"\bNatrium\b": "Natrium",
+            r"\bKalium\b": "Kalium",
+            r"\bCalcium\b": "Calcium",
+            r"\bPhosphat\b": "Phosphat",
             # Common German medical abbreviations
-            r'\bmg/d1\b': 'mg/dl',
-            r'\bmmol/1\b': 'mmol/l',
-            r'\bµmol/1\b': 'µmol/l',
-            r'\bg/d1\b': 'g/dl',
-            r'\bU/1\b': 'U/l',
-            r'\bmU/1\b': 'mU/l',
-            r'\bpg/m1\b': 'pg/ml',
-            r'\bng/m1\b': 'ng/ml',
-            r'\bµg/m1\b': 'µg/ml',
-
+            r"\bmg/d1\b": "mg/dl",
+            r"\bmmol/1\b": "mmol/l",
+            r"\bµmol/1\b": "µmol/l",
+            r"\bg/d1\b": "g/dl",
+            r"\bU/1\b": "U/l",
+            r"\bmU/1\b": "mU/l",
+            r"\bpg/m1\b": "pg/ml",
+            r"\bng/m1\b": "ng/ml",
+            r"\bµg/m1\b": "µg/ml",
             # Fix spacing around units
-            r'(\d)\s*mg\b': r'\1 mg',
-            r'(\d)\s*ml\b': r'\1 ml',
-            r'(\d)\s*mmol\b': r'\1 mmol',
-            r'(\d)\s*%': r'\1%',
-
+            r"(\d)\s*mg\b": r"\1 mg",
+            r"(\d)\s*ml\b": r"\1 ml",
+            r"(\d)\s*mmol\b": r"\1 mmol",
+            r"(\d)\s*%": r"\1%",
             # Fix decimal points/commas
-            r'(\d)\.(\d{3})\b': r'\1,\2',  # German uses comma for decimals
-            r'(\d{1,3}),(\d{3})': r'\1.\2',  # But thousand separator is period
+            r"(\d)\.(\d{3})\b": r"\1,\2",  # German uses comma for decimals
+            r"(\d{1,3}),(\d{3})": r"\1.\2",  # But thousand separator is period
         }
 
         # Apply corrections
@@ -494,16 +516,15 @@ class TextExtractorWithOCR:
 
         # Fix common medical value patterns
         # Pattern: number-unit without space
-        text = re.sub(r'(\d+)([a-zA-Z]+)', r'\1 \2', text)
+        text = re.sub(r"(\d+)([a-zA-Z]+)", r"\1 \2", text)
 
         # Fix reference ranges
-        text = re.sub(r'(\d+)\s*-\s*(\d+)', r'\1-\2', text)
-        text = re.sub(r'(\d+,\d+)\s*-\s*(\d+,\d+)', r'\1-\2', text)
+        text = re.sub(r"(\d+)\s*-\s*(\d+)", r"\1-\2", text)
+        text = re.sub(r"(\d+,\d+)\s*-\s*(\d+,\d+)", r"\1-\2", text)
 
         # Clean up excessive whitespace
-        text = re.sub(r' {2,}', ' ', text)
-        return re.sub(r'\n{3,}', '\n\n', text)
-
+        text = re.sub(r" {2,}", " ", text)
+        return re.sub(r"\n{3,}", "\n\n", text)
 
     def _apply_medical_dictionary_correction(self, text: str) -> str:
         """Apply medical dictionary-based corrections for German medical terms"""
@@ -512,33 +533,95 @@ class TextExtractorWithOCR:
         # Common medical terms dictionary (correct spelling)
         medical_terms = {
             # Organs
-            'Herz', 'Lunge', 'Leber', 'Niere', 'Magen', 'Darm', 'Gehirn',
-            'Pankreas', 'Milz', 'Schilddrüse', 'Nebenniere', 'Hypophyse',
-
+            "Herz",
+            "Lunge",
+            "Leber",
+            "Niere",
+            "Magen",
+            "Darm",
+            "Gehirn",
+            "Pankreas",
+            "Milz",
+            "Schilddrüse",
+            "Nebenniere",
+            "Hypophyse",
             # Conditions
-            'Diabetes', 'Hypertonie', 'Hypotonie', 'Anämie', 'Leukämie',
-            'Pneumonie', 'Bronchitis', 'Gastritis', 'Hepatitis', 'Nephritis',
-            'Arthritis', 'Arthrose', 'Osteoporose', 'Thrombose', 'Embolie',
-            'Infarkt', 'Apoplex', 'Epilepsie', 'Migräne', 'Depression',
-
+            "Diabetes",
+            "Hypertonie",
+            "Hypotonie",
+            "Anämie",
+            "Leukämie",
+            "Pneumonie",
+            "Bronchitis",
+            "Gastritis",
+            "Hepatitis",
+            "Nephritis",
+            "Arthritis",
+            "Arthrose",
+            "Osteoporose",
+            "Thrombose",
+            "Embolie",
+            "Infarkt",
+            "Apoplex",
+            "Epilepsie",
+            "Migräne",
+            "Depression",
             # Lab parameters
-            'Hämoglobin', 'Hämatokrit', 'Erythrozyten', 'Leukozyten',
-            'Thrombozyten', 'Kreatinin', 'Harnstoff', 'Harnsäure',
-            'Bilirubin', 'Albumin', 'Globulin', 'Cholesterin', 'Triglyzeride',
-            'Glucose', 'Lactat', 'Pyruvat', 'Amylase', 'Lipase',
-
+            "Hämoglobin",
+            "Hämatokrit",
+            "Erythrozyten",
+            "Leukozyten",
+            "Thrombozyten",
+            "Kreatinin",
+            "Harnstoff",
+            "Harnsäure",
+            "Bilirubin",
+            "Albumin",
+            "Globulin",
+            "Cholesterin",
+            "Triglyzeride",
+            "Glucose",
+            "Lactat",
+            "Pyruvat",
+            "Amylase",
+            "Lipase",
             # Medications
-            'Aspirin', 'Paracetamol', 'Ibuprofen', 'Diclofenac', 'Metamizol',
-            'Omeprazol', 'Pantoprazol', 'Simvastatin', 'Atorvastatin',
-            'Metformin', 'Insulin', 'Levothyroxin', 'Prednisolon',
-            'Amoxicillin', 'Ciprofloxacin', 'Metoprolol', 'Bisoprolol',
-            'Ramipril', 'Enalapril', 'Amlodipine', 'Hydrochlorothiazid',
-
+            "Aspirin",
+            "Paracetamol",
+            "Ibuprofen",
+            "Diclofenac",
+            "Metamizol",
+            "Omeprazol",
+            "Pantoprazol",
+            "Simvastatin",
+            "Atorvastatin",
+            "Metformin",
+            "Insulin",
+            "Levothyroxin",
+            "Prednisolon",
+            "Amoxicillin",
+            "Ciprofloxacin",
+            "Metoprolol",
+            "Bisoprolol",
+            "Ramipril",
+            "Enalapril",
+            "Amlodipine",
+            "Hydrochlorothiazid",
             # Procedures
-            'Endoskopie', 'Koloskopie', 'Gastroskopie', 'Bronchoskopie',
-            'Biopsie', 'Punktion', 'Sonographie', 'Echokardiographie',
-            'Angiographie', 'Szintigraphie', 'Elektrokardiogramm',
-            'Elektroenzephalogramm', 'Spirometrie', 'Ergometrie'
+            "Endoskopie",
+            "Koloskopie",
+            "Gastroskopie",
+            "Bronchoskopie",
+            "Biopsie",
+            "Punktion",
+            "Sonographie",
+            "Echokardiographie",
+            "Angiographie",
+            "Szintigraphie",
+            "Elektrokardiogramm",
+            "Elektroenzephalogramm",
+            "Spirometrie",
+            "Ergometrie",
         }
 
         # Create a case-insensitive replacement function
@@ -559,7 +642,7 @@ class TextExtractorWithOCR:
         for term in medical_terms:
             # Create pattern for fuzzy matching (allow 1-2 character differences)
             # This is simplified - in production, use Levenshtein distance
-            pattern = r'\b' + re.escape(term) + r'\b'
+            pattern = r"\b" + re.escape(term) + r"\b"
             text = re.sub(pattern, correct_term, text, flags=re.IGNORECASE)
 
         return text
@@ -572,19 +655,19 @@ class TextExtractorWithOCR:
         # Pattern: Parameter: number unit (reference)
         lab_patterns = [
             # Hämoglobin: 14.5 g/dl (12-16)
-            (r'(Hämoglobin|Hb):?\s*(\d+[,.]?\d*)\s*(g/dl)?', r'Hämoglobin: \2 g/dl'),
+            (r"(Hämoglobin|Hb):?\s*(\d+[,.]?\d*)\s*(g/dl)?", r"Hämoglobin: \2 g/dl"),
             # Leukozyten: 8500 /µl (4000-10000)
-            (r'(Leukozyten|Leukos?):?\s*(\d+)\s*(/µl)?', r'Leukozyten: \2 /µl'),
+            (r"(Leukozyten|Leukos?):?\s*(\d+)\s*(/µl)?", r"Leukozyten: \2 /µl"),
             # Glucose: 95 mg/dl (70-110)
-            (r'(Glucose|Glukose|BZ):?\s*(\d+)\s*(mg/dl)?', r'Glucose: \2 mg/dl'),
+            (r"(Glucose|Glukose|BZ):?\s*(\d+)\s*(mg/dl)?", r"Glucose: \2 mg/dl"),
             # Kreatinin: 0.9 mg/dl (0.5-1.2)
-            (r'(Kreatinin|Krea):?\s*(\d+[,.]?\d*)\s*(mg/dl)?', r'Kreatinin: \2 mg/dl'),
+            (r"(Kreatinin|Krea):?\s*(\d+[,.]?\d*)\s*(mg/dl)?", r"Kreatinin: \2 mg/dl"),
             # Cholesterin: 180 mg/dl (<200)
-            (r'(Cholesterin|Chol):?\s*(\d+)\s*(mg/dl)?', r'Cholesterin: \2 mg/dl'),
+            (r"(Cholesterin|Chol):?\s*(\d+)\s*(mg/dl)?", r"Cholesterin: \2 mg/dl"),
             # TSH: 2.5 mU/l (0.4-4.0)
-            (r'(TSH):?\s*(\d+[,.]?\d*)\s*(mU/l)?', r'TSH: \2 mU/l'),
+            (r"(TSH):?\s*(\d+[,.]?\d*)\s*(mU/l)?", r"TSH: \2 mU/l"),
             # CRP: 0.5 mg/l (<5)
-            (r'(CRP|C-reaktives? Protein):?\s*(\d+[,.]?\d*)\s*(mg/l)?', r'CRP: \2 mg/l'),
+            (r"(CRP|C-reaktives? Protein):?\s*(\d+[,.]?\d*)\s*(mg/l)?", r"CRP: \2 mg/l"),
         ]
 
         for pattern, replacement in lab_patterns:
@@ -592,8 +675,7 @@ class TextExtractorWithOCR:
 
         # Add reference range formatting
         return re.sub(
-            r'(\d+[,.]?\d*\s*[a-z/]+)\s*\((\d+[,.]?\d*\s*-\s*\d+[,.]?\d*)\)',
-            r'\1 (Referenz: \2)',
-            text
+            r"(\d+[,.]?\d*\s*[a-z/]+)\s*\((\d+[,.]?\d*\s*-\s*\d+[,.]?\d*)\)",
+            r"\1 (Referenz: \2)",
+            text,
         )
-

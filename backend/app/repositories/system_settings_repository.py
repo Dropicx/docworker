@@ -134,15 +134,14 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
         else:
             # Create new
             setting = self.create(
-                key=key,
-                value=value,
-                value_type="string",
-                description=description or ""
+                key=key, value=value, value_type="string", description=description or ""
             )
 
         return setting
 
-    def set_bool_value(self, key: str, value: bool, description: str | None = None) -> SystemSettingsDB:
+    def set_bool_value(
+        self, key: str, value: bool, description: str | None = None
+    ) -> SystemSettingsDB:
         """
         Set a boolean setting value.
 
@@ -156,7 +155,9 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
         """
         return self.set_value(key, "true" if value else "false", description)
 
-    def set_int_value(self, key: str, value: int, description: str | None = None) -> SystemSettingsDB:
+    def set_int_value(
+        self, key: str, value: int, description: str | None = None
+    ) -> SystemSettingsDB:
         """
         Set an integer setting value.
 
@@ -170,7 +171,9 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
         """
         return self.set_value(key, str(value), description)
 
-    def set_float_value(self, key: str, value: float, description: str | None = None) -> SystemSettingsDB:
+    def set_float_value(
+        self, key: str, value: float, description: str | None = None
+    ) -> SystemSettingsDB:
         """
         Set a float setting value.
 
@@ -216,9 +219,7 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
         Returns:
             List of matching settings
         """
-        return self.db.query(self.model).filter(
-            self.model.key.like(f"{prefix}%")
-        ).all()
+        return self.db.query(self.model).filter(self.model.key.like(f"{prefix}%")).all()
 
     def get_feature_flags(self) -> dict[str, bool]:
         """
@@ -228,10 +229,7 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
             Dictionary mapping feature flag keys to boolean values
         """
         flags = self.get_settings_by_prefix("enable_")
-        return {
-            flag.key: flag.value.lower() in ("true", "1", "yes", "on")
-            for flag in flags
-        }
+        return {flag.key: flag.value.lower() in ("true", "1", "yes", "on") for flag in flags}
 
     def delete_by_key(self, key: str) -> bool:
         """
@@ -282,7 +280,9 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
                 "value": setting.value,
                 "description": setting.description,
                 "created_at": setting.created_at.isoformat() if setting.created_at else None,
-                "last_modified": setting.last_modified.isoformat() if setting.last_modified else None,
+                "last_modified": setting.last_modified.isoformat()
+                if setting.last_modified
+                else None,
             }
             for setting in settings
         }
@@ -298,11 +298,7 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
         Returns:
             Dictionary with import statistics
         """
-        stats = {
-            "imported": 0,
-            "skipped": 0,
-            "updated": 0
-        }
+        stats = {"imported": 0, "skipped": 0, "updated": 0}
 
         for key, value in settings.items():
             if self.key_exists(key):
@@ -327,10 +323,14 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
         Returns:
             List of matching settings
         """
-        return self.db.query(self.model).filter(
-            (self.model.key.ilike(f"%{search_term}%")) |
-            (self.model.description.ilike(f"%{search_term}%"))
-        ).all()
+        return (
+            self.db.query(self.model)
+            .filter(
+                (self.model.key.ilike(f"%{search_term}%"))
+                | (self.model.description.ilike(f"%{search_term}%"))
+            )
+            .all()
+        )
 
     def get_settings_statistics(self) -> dict:
         """
@@ -346,15 +346,10 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
             "total_settings": len(settings),
             "feature_flags": len(feature_flags),
             "enabled_features": sum(
-                1 for f in feature_flags
-                if f.value.lower() in ("true", "1", "yes", "on")
+                1 for f in feature_flags if f.value.lower() in ("true", "1", "yes", "on")
             ),
             "boolean_settings": sum(
-                1 for s in settings
-                if s.value.lower() in ("true", "false", "1", "0", "yes", "no")
+                1 for s in settings if s.value.lower() in ("true", "false", "1", "0", "yes", "no")
             ),
-            "numeric_settings": sum(
-                1 for s in settings
-                if s.value.isdigit()
-            ),
+            "numeric_settings": sum(1 for s in settings if s.value.isdigit()),
         }

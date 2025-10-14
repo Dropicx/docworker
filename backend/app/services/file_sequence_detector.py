@@ -11,6 +11,7 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+
 @dataclass
 class PageInfo:
     """Metadata container for individual page analysis in sequence detection.
@@ -51,6 +52,7 @@ class PageInfo:
         >>> page.has_lab_values = True
         >>> page.confidence = 0.85
     """
+
     index: int
     filename: str
     file_content: bytes
@@ -82,6 +84,7 @@ class PageInfo:
             self.dates = []
         if self.sections is None:
             self.sections = []
+
 
 class FileSequenceDetector:
     """Intelligent page sequencer for multi-file medical document submissions.
@@ -158,49 +161,80 @@ class FileSequenceDetector:
 
         # Medical document section patterns
         self.section_patterns = {
-            'patient_info': [
-                r'patient.*(?:name|nummer)', r'(?:vor|nach)name', r'geburtsdatum',
-                r'versicherten.*nummer', r'krankenversicherung', r'adresse'
+            "patient_info": [
+                r"patient.*(?:name|nummer)",
+                r"(?:vor|nach)name",
+                r"geburtsdatum",
+                r"versicherten.*nummer",
+                r"krankenversicherung",
+                r"adresse",
             ],
-            'header': [
-                r'(?:arzt|kranken|klinik).*brief', r'entlassungsbrief', r'befundbericht',
-                r'laborwerte', r'blutwerte', r'befund', r'diagnose'
+            "header": [
+                r"(?:arzt|kranken|klinik).*brief",
+                r"entlassungsbrief",
+                r"befundbericht",
+                r"laborwerte",
+                r"blutwerte",
+                r"befund",
+                r"diagnose",
             ],
-            'lab_values': [
-                r'laborwerte', r'blutwerte', r'laborergebnis', r'parameter',
-                r'\d+[.,]\d*\s*(?:mg/dl|mmol/l|µg/ml|ng/ml|u/l|iu/l)',
-                r'referenzbereich', r'normwert'
+            "lab_values": [
+                r"laborwerte",
+                r"blutwerte",
+                r"laborergebnis",
+                r"parameter",
+                r"\d+[.,]\d*\s*(?:mg/dl|mmol/l|µg/ml|ng/ml|u/l|iu/l)",
+                r"referenzbereich",
+                r"normwert",
             ],
-            'diagnosis': [
-                r'diagnose', r'verdachtsdiagnose', r'hauptdiagnose', r'nebendiagnose',
-                r'icd.*\d+', r'befund', r'beurteilung'
+            "diagnosis": [
+                r"diagnose",
+                r"verdachtsdiagnose",
+                r"hauptdiagnose",
+                r"nebendiagnose",
+                r"icd.*\d+",
+                r"befund",
+                r"beurteilung",
             ],
-            'medication': [
-                r'medikation', r'therapie', r'verschreibung', r'einnahme',
-                r'\d+\s*mg', r'täglich', r'morgens', r'abends'
+            "medication": [
+                r"medikation",
+                r"therapie",
+                r"verschreibung",
+                r"einnahme",
+                r"\d+\s*mg",
+                r"täglich",
+                r"morgens",
+                r"abends",
             ],
-            'continuation': [
-                r'fortsetzung', r'siehe.*(?:nächste|folgende)', r'weiter auf',
-                r'anhang', r'anlage', r'siehe.*(?:rückseite|blatt)'
-            ]
+            "continuation": [
+                r"fortsetzung",
+                r"siehe.*(?:nächste|folgende)",
+                r"weiter auf",
+                r"anhang",
+                r"anlage",
+                r"siehe.*(?:rückseite|blatt)",
+            ],
         }
 
         # Page number patterns
         self.page_patterns = [
-            r'seite\s*(\d+)', r'page\s*(\d+)', r'(\d+)\s*/\s*\d+',
-            r'blatt\s*(\d+)', r'-\s*(\d+)\s*-', r'^\s*(\d+)\s*$'
+            r"seite\s*(\d+)",
+            r"page\s*(\d+)",
+            r"(\d+)\s*/\s*\d+",
+            r"blatt\s*(\d+)",
+            r"-\s*(\d+)\s*-",
+            r"^\s*(\d+)\s*$",
         ]
 
         # Date patterns
         self.date_patterns = [
-            r'(\d{1,2})[./](\d{1,2})[./](\d{4})',
-            r'(\d{4})-(\d{1,2})-(\d{1,2})',
-            r'(\d{1,2})\.\s*(\w+)\s*(\d{4})'
+            r"(\d{1,2})[./](\d{1,2})[./](\d{4})",
+            r"(\d{4})-(\d{1,2})-(\d{1,2})",
+            r"(\d{1,2})\.\s*(\w+)\s*(\d{4})",
         ]
 
     async def detect_sequence(
-        self,
-        files: list[tuple[bytes, str, str]]
+        self, files: list[tuple[bytes, str, str]]
     ) -> list[tuple[bytes, str, str]]:
         """Analyze and reorder files into logical medical document sequence.
 
@@ -285,10 +319,7 @@ class FileSequenceDetector:
                 logger.info(f"📄 Analyzing file {i+1}: {filename}")
 
                 page_info = PageInfo(
-                    index=i,
-                    filename=filename,
-                    file_content=content,
-                    file_type=file_type
+                    index=i, filename=filename, file_content=content, file_type=file_type
                 )
 
                 # Extract basic text for analysis
@@ -367,10 +398,10 @@ class FileSequenceDetector:
         page_info.sections = self._detect_sections(text_lower)
 
         # Detect medical content types
-        page_info.has_patient_info = self._has_pattern(text_lower, 'patient_info')
-        page_info.has_lab_values = self._has_pattern(text_lower, 'lab_values')
-        page_info.has_diagnosis = self._has_pattern(text_lower, 'diagnosis')
-        page_info.has_medication = self._has_pattern(text_lower, 'medication')
+        page_info.has_patient_info = self._has_pattern(text_lower, "patient_info")
+        page_info.has_lab_values = self._has_pattern(text_lower, "lab_values")
+        page_info.has_diagnosis = self._has_pattern(text_lower, "diagnosis")
+        page_info.has_medication = self._has_pattern(text_lower, "medication")
 
         # Detect structural indicators
         page_info.starts_with_header = self._starts_with_header(text_lower)
@@ -435,23 +466,23 @@ class FileSequenceDetector:
         """Check if page starts with a header"""
         # Check first 200 characters
         start_text = text_lower[:200]
-        return self._has_pattern(start_text, 'header')
+        return self._has_pattern(start_text, "header")
 
     def _ends_with_continuation(self, text_lower: str) -> bool:
         """Check if page ends with continuation indicator"""
         # Check last 200 characters
         end_text = text_lower[-200:]
-        return self._has_pattern(end_text, 'continuation')
+        return self._has_pattern(end_text, "continuation")
 
     def _has_table_start(self, text: str) -> bool:
         """Detect if page has table start indicators"""
         # Look for table-like structures
-        lines = text.split('\n')
+        lines = text.split("\n")
 
         for line in lines:
             # Check for header-like lines with multiple columns
-            if '|' in line or '\t' in line:
-                parts = re.split(r'[|\t]', line)
+            if "|" in line or "\t" in line:
+                parts = re.split(r"[|\t]", line)
                 if len(parts) >= 3:  # At least 3 columns
                     return True
 
@@ -460,7 +491,7 @@ class FileSequenceDetector:
     def _has_table_end(self, text: str) -> bool:
         """Detect if page has table end indicators"""
         # Similar to table start but look at end of text
-        lines = text.split('\n')[-10:]  # Last 10 lines
+        lines = text.split("\n")[-10:]  # Last 10 lines
 
         return any("|" in line or "\t" in line for line in lines)
 
@@ -498,6 +529,7 @@ class FileSequenceDetector:
 
     def _order_by_page_numbers(self, page_infos: list[PageInfo]) -> list[int]:
         """Order by explicit page numbers"""
+
         # Sort by page number, with None values at the end
         def sort_key(page_info):
             if page_info.page_number is not None:
@@ -600,9 +632,7 @@ class FileSequenceDetector:
         return [p.index for p in sorted_pages]
 
     def analyze_sequence_quality(
-        self,
-        original_order: list[str],
-        detected_order: list[str]
+        self, original_order: list[str], detected_order: list[str]
     ) -> dict[str, Any]:
         """Analyze quality and impact of sequence detection for validation.
 
@@ -666,7 +696,7 @@ class FileSequenceDetector:
             "reordering_applied": reordered,
             "original_order": original_order,
             "detected_order": detected_order,
-            "confidence": "high" if not reordered else "medium"
+            "confidence": "high" if not reordered else "medium",
         }
 
         if reordered:

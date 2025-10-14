@@ -54,18 +54,13 @@ class BaseRepository(Generic[ModelType]):
     def get_by_id(self, record_id: Any) -> ModelType | None:
         """Get entity by primary key."""
         try:
-            return self.db.query(self.model).filter(
-                self.model.id == record_id
-            ).first()
+            return self.db.query(self.model).filter(self.model.id == record_id).first()
         except Exception as e:
             logger.error(f"Error getting {self.model.__name__} by id={record_id}: {e}")
             raise
 
     def get_all(
-        self,
-        skip: int = 0,
-        limit: int = 100,
-        filters: dict[str, Any] | None = None
+        self, skip: int = 0, limit: int = 100, filters: dict[str, Any] | None = None
     ) -> list[ModelType]:
         """
         Get all entities with optional filtering and pagination.

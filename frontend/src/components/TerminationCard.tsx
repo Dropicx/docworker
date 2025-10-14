@@ -17,12 +17,7 @@ interface TerminationCardProps {
  * This is distinct from error states which indicate system failures.
  * Termination is a graceful, expected outcome for certain inputs.
  */
-const TerminationCard: React.FC<TerminationCardProps> = ({
-  message,
-  reason,
-  step,
-  onReset
-}) => {
+const TerminationCard: React.FC<TerminationCardProps> = ({ message, reason, step, onReset }) => {
   const [showDetails, setShowDetails] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -55,9 +50,7 @@ const TerminationCard: React.FC<TerminationCardProps> = ({
                 <h3 className="text-xl sm:text-2xl font-bold text-warning-900 mb-2">
                   Verarbeitung gestoppt
                 </h3>
-                <p className="text-warning-800 text-base sm:text-lg leading-relaxed">
-                  {message}
-                </p>
+                <p className="text-warning-800 text-base sm:text-lg leading-relaxed">{message}</p>
               </div>
             </div>
 
@@ -86,17 +79,13 @@ const TerminationCard: React.FC<TerminationCardProps> = ({
                     <dl className="space-y-2 text-sm">
                       {step && (
                         <div>
-                          <dt className="font-semibold text-warning-900">
-                            Schritt:
-                          </dt>
+                          <dt className="font-semibold text-warning-900">Schritt:</dt>
                           <dd className="text-warning-700 ml-4">{step}</dd>
                         </div>
                       )}
                       {reason && (
                         <div>
-                          <dt className="font-semibold text-warning-900">
-                            Grund:
-                          </dt>
+                          <dt className="font-semibold text-warning-900">Grund:</dt>
                           <dd className="text-warning-700 ml-4">{reason}</dd>
                         </div>
                       )}
@@ -120,9 +109,7 @@ const TerminationCard: React.FC<TerminationCardProps> = ({
 
             {/* Helpful Tips */}
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="text-sm font-semibold text-blue-900 mb-2">
-                💡 Hinweis
-              </h4>
+              <h4 className="text-sm font-semibold text-blue-900 mb-2">💡 Hinweis</h4>
               <p className="text-sm text-blue-800 leading-relaxed">
                 Dieses Tool ist speziell für medizinische Dokumente entwickelt, wie:
               </p>

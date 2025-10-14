@@ -29,12 +29,13 @@ def get_engine():
         pool_size=settings.db_pool_size,
         max_overflow=settings.db_max_overflow,
         pool_timeout=settings.db_pool_timeout,
-        pool_recycle=300  # Recycle connections after 5 minutes
+        pool_recycle=300,  # Recycle connections after 5 minutes
     )
 
     logger.info(f"Database engine created with pool_size={settings.db_pool_size}")
 
     return engine
+
 
 def get_session() -> Generator[Session, None, None]:
     """Get database session"""
@@ -46,12 +47,14 @@ def get_session() -> Generator[Session, None, None]:
     finally:
         session.close()
 
+
 def get_db_session() -> Generator[Session, None, None]:
     """
     Get database session (alias for get_session for compatibility).
     Returns a generator that yields a SQLAlchemy Session.
     """
     return get_session()
+
 
 # Global engine instance
 engine = get_engine()

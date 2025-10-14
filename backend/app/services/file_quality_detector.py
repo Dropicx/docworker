@@ -16,6 +16,7 @@ import PyPDF2
 try:
     import cv2
     import numpy as np
+
     OPENCV_AVAILABLE = True
 except ImportError:
     OPENCV_AVAILABLE = False
@@ -24,19 +25,24 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+
 class ExtractionStrategy(Enum):
     """Enumeration of available text extraction strategies"""
-    LOCAL_TEXT = "local_text"          # Use pdfplumber/PyPDF2 for clean PDFs
-    LOCAL_OCR = "local_ocr"            # Use Tesseract for moderate quality
-    VISION_LLM = "vision_llm"          # Use Qwen 2.5 VL for complex/poor quality
-    HYBRID = "hybrid"                  # Use combination of methods
+
+    LOCAL_TEXT = "local_text"  # Use pdfplumber/PyPDF2 for clean PDFs
+    LOCAL_OCR = "local_ocr"  # Use Tesseract for moderate quality
+    VISION_LLM = "vision_llm"  # Use Qwen 2.5 VL for complex/poor quality
+    HYBRID = "hybrid"  # Use combination of methods
+
 
 class DocumentComplexity(Enum):
     """Document complexity levels"""
-    SIMPLE = "simple"                  # Clean text, simple layout
-    MODERATE = "moderate"              # Some formatting, tables
-    COMPLEX = "complex"                # Complex layouts, forms, tables
-    VERY_COMPLEX = "very_complex"      # Handwritten, poor quality, complex forms
+
+    SIMPLE = "simple"  # Clean text, simple layout
+    MODERATE = "moderate"  # Some formatting, tables
+    COMPLEX = "complex"  # Complex layouts, forms, tables
+    VERY_COMPLEX = "very_complex"  # Handwritten, poor quality, complex forms
+
 
 class FileQualityDetector:
     """Intelligent document analyzer for optimal OCR strategy selection.
@@ -102,16 +108,14 @@ class FileQualityDetector:
         """Check if Tesseract OCR is available"""
         try:
             import pytesseract
+
             pytesseract.get_tesseract_version()
             return True
         except Exception:
             return False
 
     async def analyze_file(
-        self,
-        file_content: bytes,
-        file_type: str,
-        filename: str
+        self, file_content: bytes, file_type: str, filename: str
     ) -> tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
         """Analyze document and recommend optimal text extraction strategy.
 
@@ -179,9 +183,15 @@ class FileQualityDetector:
         if file_type == "image":
             return await self._analyze_image(file_content, filename)
         # Default to vision LLM for unknown types
-        return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX, {"reason": "unknown_file_type"}
+        return (
+            ExtractionStrategy.VISION_LLM,
+            DocumentComplexity.COMPLEX,
+            {"reason": "unknown_file_type"},
+        )
 
-    async def _analyze_pdf(self, content: bytes, filename: str) -> tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
+    async def _analyze_pdf(
+        self, content: bytes, filename: str
+    ) -> tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
         """Perform comprehensive PDF analysis for optimal extraction strategy.
 
         Analyzes PDF structure, embedded text quality, table presence, and medical
@@ -257,7 +267,7 @@ class FileQualityDetector:
             "has_images": False,
             "has_tables": False,
             "text_quality_score": 0.0,
-            "reasons": []
+            "reasons": [],
         }
 
         try:
@@ -291,7 +301,9 @@ class FileQualityDetector:
                 # Calculate text coverage
                 if pages_to_check > 0:
                     analysis["text_coverage"] = pages_with_text / pages_to_check
-                    analysis["avg_text_per_page"] = total_text_length / pages_to_check if pages_to_check > 0 else 0
+                    analysis["avg_text_per_page"] = (
+                        total_text_length / pages_to_check if pages_to_check > 0 else 0
+                    )
 
             # Step 2: Analyze text quality
             if analysis["has_embedded_text"]:
@@ -381,7 +393,9 @@ class FileQualityDetector:
                         valid_tables += 1
 
                 if valid_tables > 0:
-                    logger.debug(f"📊 Found {valid_tables}/{len(tables)} valid table structures using pdfplumber")
+                    logger.debug(
+                        f"📊 Found {valid_tables}/{len(tables)} valid table structures using pdfplumber"
+                    )
                     return True
 
             # Method 2: Enhanced character alignment analysis with stricter criteria
@@ -405,12 +419,16 @@ class FileQualityDetector:
 
             # Combined decision with higher thresholds to reduce false positives
             is_table = (
-                table_score >= 0.7 or  # Strong structural evidence (raised from mixed criteria)
-                (table_score >= 0.4 and medical_table_score >= 0.6)  # Moderate structure + strong medical indicators
+                table_score >= 0.7  # Strong structural evidence (raised from mixed criteria)
+                or (
+                    table_score >= 0.4 and medical_table_score >= 0.6
+                )  # Moderate structure + strong medical indicators
             )
 
             if is_table:
-                logger.debug(f"📊 Table detected - Structure Score: {table_score:.2f}, Medical Score: {medical_table_score:.2f}")
+                logger.debug(
+                    f"📊 Table detected - Structure Score: {table_score:.2f}, Medical Score: {medical_table_score:.2f}"
+                )
 
             return is_table
 
@@ -453,18 +471,19 @@ class FileQualityDetector:
 
         # Count sentences vs. short fragments
         import re
-        sentences = re.split(r'[.!?]+\s+', text)
+
+        sentences = re.split(r"[.!?]+\s+", text)
         long_sentences = [s for s in sentences if len(s.strip()) > 30]
 
         # Count paragraph indicators
-        paragraphs = text.count('\n\n')
+        paragraphs = text.count("\n\n")
 
         # Narrative text typically has longer sentences and paragraph breaks
         narrative_indicators = len(long_sentences) >= 3 or paragraphs >= 2
 
         # Check for absence of table-like patterns
-        has_few_numbers = len(re.findall(r'\d+[.,]\d+', text)) < 5
-        has_few_separators = text.count('|') < 3 and text.count('\t') < 5
+        has_few_numbers = len(re.findall(r"\d+[.,]\d+", text)) < 5
+        has_few_separators = text.count("|") < 3 and text.count("\t") < 5
 
         return narrative_indicators and has_few_numbers and has_few_separators
 
@@ -473,13 +492,13 @@ class FileQualityDetector:
         from collections import defaultdict
 
         # Group characters by vertical position (rows) with tighter clustering
-        [char['y0'] for char in chars]
-        [char['x0'] for char in chars]
+        [char["y0"] for char in chars]
+        [char["x0"] for char in chars]
 
         # More precise grouping for row detection
         y_groups = defaultdict(list)
         for _i, char in enumerate(chars):
-            y_key = round(char['y0'] / 3) * 3  # Group by 3px for rows
+            y_key = round(char["y0"] / 3) * 3  # Group by 3px for rows
             y_groups[y_key].append(char)
 
         # Analyze each row for column structure
@@ -496,7 +515,7 @@ class FileQualityDetector:
                 continue
 
             # Extract x-positions for this row
-            row_x_positions = [char['x0'] for char in row_chars]
+            row_x_positions = [char["x0"] for char in row_chars]
             row_x_positions.sort()
 
             # Group x-positions into columns (more precise grouping)
@@ -526,7 +545,8 @@ class FileQualityDetector:
 
         # Bonus for medical lab value patterns
         import re
-        lab_patterns = len(re.findall(r'\d+[.,]\d+\s*(mg|ml|mmol|µg|ng|u/l|iu/l|%)', page_text))
+
+        lab_patterns = len(re.findall(r"\d+[.,]\d+\s*(mg|ml|mmol|µg|ng|u/l|iu/l|%)", page_text))
         lab_bonus = min(lab_patterns * 0.1, 0.3)  # Up to 0.3 bonus
 
         structure_score = (row_consistency * 0.7) + (min(column_count / 5, 1.0) * 0.3) + lab_bonus
@@ -543,11 +563,25 @@ class FileQualityDetector:
 
         # Medical lab terms (strong indicators)
         lab_terms = [
-            'laborwerte', 'blutwerte', 'laborergebnisse', 'befund',
-            'referenzbereich', 'normalwert', 'grenzwert',
-            'hämoglobin', 'leukozyten', 'thrombozyten', 'erythrozyten',
-            'glukose', 'cholesterin', 'kreatinin', 'harnstoff',
-            'bilirubin', 'albumin', 'protein', 'calcium'
+            "laborwerte",
+            "blutwerte",
+            "laborergebnisse",
+            "befund",
+            "referenzbereich",
+            "normalwert",
+            "grenzwert",
+            "hämoglobin",
+            "leukozyten",
+            "thrombozyten",
+            "erythrozyten",
+            "glukose",
+            "cholesterin",
+            "kreatinin",
+            "harnstoff",
+            "bilirubin",
+            "albumin",
+            "protein",
+            "calcium",
         ]
 
         lab_term_matches = sum(1 for term in lab_terms if term in text_lower)
@@ -555,15 +589,18 @@ class FileQualityDetector:
 
         # Medical units (very strong indicators for lab tables)
         import re
-        medical_units = re.findall(r'\d+[.,]\d*\s*(mg/dl|mmol/l|µg/l|ng/ml|u/l|iu/l|g/l|%|/µl)', text_lower)
+
+        medical_units = re.findall(
+            r"\d+[.,]\d*\s*(mg/dl|mmol/l|µg/l|ng/ml|u/l|iu/l|g/l|%|/µl)", text_lower
+        )
         score += min(len(medical_units) * 0.1, 0.4)  # Max 0.4 for units
 
         # Table structure indicators
-        separators = text.count('|') + text.count('\t') + len(re.findall(r'\s{3,}', text))
+        separators = text.count("|") + text.count("\t") + len(re.findall(r"\s{3,}", text))
         score += min(separators * 0.02, 0.2)  # Max 0.2 for separators
 
         # Reference ranges (typical in lab tables)
-        reference_patterns = len(re.findall(r'\d+[.,]\d*\s*[-–]\s*\d+[.,]\d*', text))
+        reference_patterns = len(re.findall(r"\d+[.,]\d*\s*[-–]\s*\d+[.,]\d*", text))
         score += min(reference_patterns * 0.05, 0.2)  # Max 0.2 for ranges
 
         return min(score, 1.0)
@@ -625,7 +662,7 @@ class FileQualityDetector:
 
         # Character distribution (letters vs. noise)
         letters = sum(1 for c in text if c.isalpha())
-        total_chars = len(text.replace(' ', '').replace('\n', ''))
+        total_chars = len(text.replace(" ", "").replace("\n", ""))
 
         if total_chars > 0:
             letter_ratio = letters / total_chars
@@ -633,13 +670,16 @@ class FileQualityDetector:
 
         # Word-like patterns
         import re
-        words = re.findall(r'\b[a-zA-ZäöüÄÖÜß]{3,}\b', text)
+
+        words = re.findall(r"\b[a-zA-ZäöüÄÖÜß]{3,}\b", text)
         if len(words) > 10:
             quality_score += 0.2
 
         return min(quality_score, 1.0)
 
-    def _determine_pdf_strategy(self, analysis: dict[str, Any]) -> tuple[ExtractionStrategy, DocumentComplexity]:
+    def _determine_pdf_strategy(
+        self, analysis: dict[str, Any]
+    ) -> tuple[ExtractionStrategy, DocumentComplexity]:
         """Apply cost-optimized decision tree to select PDF extraction strategy.
 
         Implements prioritized decision logic that balances cost efficiency with
@@ -773,7 +813,9 @@ class FileQualityDetector:
             return ExtractionStrategy.LOCAL_OCR, DocumentComplexity.MODERATE
         return ExtractionStrategy.VISION_LLM, DocumentComplexity.MODERATE
 
-    async def _analyze_image(self, content: bytes, filename: str) -> tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
+    async def _analyze_image(
+        self, content: bytes, filename: str
+    ) -> tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
         """Analyze image quality and content for optimal OCR strategy selection.
 
         Performs computer vision analysis using PIL and OpenCV (if available) to assess
@@ -851,7 +893,7 @@ class FileQualityDetector:
             "has_tables": False,
             "has_forms": False,
             "image_quality": 0.0,
-            "reasons": []
+            "reasons": [],
         }
 
         try:
@@ -893,8 +935,8 @@ class FileQualityDetector:
         if not OPENCV_AVAILABLE:
             return None
 
-        if pil_image.mode != 'RGB':
-            pil_image = pil_image.convert('RGB')
+        if pil_image.mode != "RGB":
+            pil_image = pil_image.convert("RGB")
 
         open_cv_image = np.array(pil_image)
         return cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
@@ -920,7 +962,6 @@ class FileQualityDetector:
             # Overall quality score
             return (sharpness_score + contrast) / 2
 
-
         except Exception:
             return 0.5  # Default medium quality
 
@@ -943,11 +984,17 @@ class FileQualityDetector:
             vertical_lines = cv2.morphologyEx(binary, cv2.MORPH_OPEN, vertical_kernel)
 
             # Count significant lines
-            h_lines = cv2.HoughLinesP(horizontal_lines, 1, np.pi/180, threshold=50, minLineLength=100, maxLineGap=10)
-            v_lines = cv2.HoughLinesP(vertical_lines, 1, np.pi/180, threshold=50, minLineLength=100, maxLineGap=10)
+            h_lines = cv2.HoughLinesP(
+                horizontal_lines, 1, np.pi / 180, threshold=50, minLineLength=100, maxLineGap=10
+            )
+            v_lines = cv2.HoughLinesP(
+                vertical_lines, 1, np.pi / 180, threshold=50, minLineLength=100, maxLineGap=10
+            )
 
             # If we have both horizontal and vertical lines, likely a table
-            return (h_lines is not None and len(h_lines) >= 3) and (v_lines is not None and len(v_lines) >= 2)
+            return (h_lines is not None and len(h_lines) >= 3) and (
+                v_lines is not None and len(v_lines) >= 2
+            )
 
         except Exception:
             return False
@@ -1003,11 +1050,12 @@ class FileQualityDetector:
 
             return text_pixels / total_pixels
 
-
         except Exception:
             return 0.1  # Default low density
 
-    def _determine_image_strategy(self, analysis: dict[str, Any]) -> tuple[ExtractionStrategy, DocumentComplexity]:
+    def _determine_image_strategy(
+        self, analysis: dict[str, Any]
+    ) -> tuple[ExtractionStrategy, DocumentComplexity]:
         """Determine the best strategy based on image analysis"""
 
         image_quality = analysis.get("image_quality", 0.0)
@@ -1036,10 +1084,7 @@ class FileQualityDetector:
         analysis["reasons"].append("poor_quality_or_low_text")
         return ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX
 
-    async def analyze_multiple_files(
-        self,
-        files: list[tuple[bytes, str, str]]
-    ) -> dict[str, Any]:
+    async def analyze_multiple_files(self, files: list[tuple[bytes, str, str]]) -> dict[str, Any]:
         """Analyze document sequence and provide consolidated extraction strategy.
 
         Performs individual analysis of each file, then consolidates results to
@@ -1094,7 +1139,10 @@ class FileQualityDetector:
             Returns default VISION_LLM + COMPLEX if files list is empty.
         """
         if not files:
-            return {"strategy": ExtractionStrategy.VISION_LLM, "complexity": DocumentComplexity.COMPLEX}
+            return {
+                "strategy": ExtractionStrategy.VISION_LLM,
+                "complexity": DocumentComplexity.COMPLEX,
+            }
 
         logger.info(f"🔍 Analyzing {len(files)} files for multi-file strategy")
 
@@ -1120,7 +1168,7 @@ class FileQualityDetector:
             "complexities": [c.value for c in complexities],
             "recommended_strategy": consolidated_strategy.value,
             "recommended_complexity": consolidated_complexity.value,
-            "reasons": self._get_consolidation_reasons(strategies, complexities)
+            "reasons": self._get_consolidation_reasons(strategies, complexities),
         }
 
         logger.info("📊 Multi-file analysis complete:")
@@ -1144,7 +1192,9 @@ class FileQualityDetector:
         # Otherwise, local text extraction is sufficient
         return ExtractionStrategy.LOCAL_TEXT
 
-    def _consolidate_complexities(self, complexities: list[DocumentComplexity]) -> DocumentComplexity:
+    def _consolidate_complexities(
+        self, complexities: list[DocumentComplexity]
+    ) -> DocumentComplexity:
         """Consolidate multiple complexities into one level"""
 
         # Take the highest complexity level
@@ -1152,7 +1202,7 @@ class FileQualityDetector:
             DocumentComplexity.SIMPLE,
             DocumentComplexity.MODERATE,
             DocumentComplexity.COMPLEX,
-            DocumentComplexity.VERY_COMPLEX
+            DocumentComplexity.VERY_COMPLEX,
         ]
 
         max_complexity = DocumentComplexity.SIMPLE
@@ -1163,9 +1213,7 @@ class FileQualityDetector:
         return max_complexity
 
     def _get_consolidation_reasons(
-        self,
-        strategies: list[ExtractionStrategy],
-        complexities: list[DocumentComplexity]
+        self, strategies: list[ExtractionStrategy], complexities: list[DocumentComplexity]
     ) -> list[str]:
         """Get reasons for the consolidation decision"""
 

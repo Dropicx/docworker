@@ -33,10 +33,7 @@ class FeatureFlagsService:
         self._cache_ttl = 60  # Cache for 60 seconds
 
     def is_enabled(
-        self,
-        feature_name: str,
-        user_id: str | None = None,
-        default: bool = False
+        self, feature_name: str, user_id: str | None = None, default: bool = False
     ) -> bool:
         """
         Check if a feature flag is enabled.
@@ -52,12 +49,12 @@ class FeatureFlagsService:
         try:
             # Get feature flag from database
             with next(get_session()) as db:
-                feature = db.query(FeatureFlag).filter(
-                    FeatureFlag.name == feature_name
-                ).first()
+                feature = db.query(FeatureFlag).filter(FeatureFlag.name == feature_name).first()
 
                 if not feature:
-                    logger.warning(f"Feature flag '{feature_name}' not found, using default={default}")
+                    logger.warning(
+                        f"Feature flag '{feature_name}' not found, using default={default}"
+                    )
                     return default
 
                 # If fully enabled or disabled
@@ -88,11 +85,7 @@ class FeatureFlagsService:
             return []
 
     def set_flag(
-        self,
-        db: Session,
-        feature_name: str,
-        enabled: bool,
-        rollout_percentage: int | None = None
+        self, db: Session, feature_name: str, enabled: bool, rollout_percentage: int | None = None
     ) -> FeatureFlag:
         """
         Set a feature flag value.
@@ -106,16 +99,14 @@ class FeatureFlagsService:
         Returns:
             Updated feature flag
         """
-        feature = db.query(FeatureFlag).filter(
-            FeatureFlag.name == feature_name
-        ).first()
+        feature = db.query(FeatureFlag).filter(FeatureFlag.name == feature_name).first()
 
         if not feature:
             # Create new feature flag
             feature = FeatureFlag(
                 name=feature_name,
                 enabled=enabled,
-                rollout_percentage=rollout_percentage or (100 if enabled else 0)
+                rollout_percentage=rollout_percentage or (100 if enabled else 0),
             )
             db.add(feature)
         else:
@@ -127,7 +118,9 @@ class FeatureFlagsService:
         db.commit()
         db.refresh(feature)
 
-        logger.info(f"Feature flag '{feature_name}' set to enabled={enabled}, rollout={feature.rollout_percentage}%")
+        logger.info(
+            f"Feature flag '{feature_name}' set to enabled={enabled}, rollout={feature.rollout_percentage}%"
+        )
         return feature
 
 

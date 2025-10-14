@@ -39,9 +39,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             Job instance or None if not found
         """
-        return self.db.query(self.model).filter_by(
-            processing_id=processing_id
-        ).first()
+        return self.db.query(self.model).filter_by(processing_id=processing_id).first()
 
     def get_active_jobs(self) -> list[PipelineJobDB]:
         """
@@ -50,9 +48,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             List of jobs with RUNNING status
         """
-        return self.db.query(self.model).filter_by(
-            status=StepExecutionStatus.RUNNING
-        ).all()
+        return self.db.query(self.model).filter_by(status=StepExecutionStatus.RUNNING).all()
 
     def get_pending_jobs(self) -> list[PipelineJobDB]:
         """
@@ -61,14 +57,10 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             List of jobs with PENDING status
         """
-        return self.db.query(self.model).filter_by(
-            status=StepExecutionStatus.PENDING
-        ).all()
+        return self.db.query(self.model).filter_by(status=StepExecutionStatus.PENDING).all()
 
     def get_completed_jobs(
-        self,
-        limit: int | None = None,
-        since: datetime | None = None
+        self, limit: int | None = None, since: datetime | None = None
     ) -> list[PipelineJobDB]:
         """
         Get completed jobs with optional filters.
@@ -80,9 +72,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             List of completed jobs
         """
-        query = self.db.query(self.model).filter_by(
-            status=StepExecutionStatus.COMPLETED
-        )
+        query = self.db.query(self.model).filter_by(status=StepExecutionStatus.COMPLETED)
 
         if since:
             query = query.filter(self.model.updated_at >= since)
@@ -95,9 +85,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         return query.all()
 
     def get_failed_jobs(
-        self,
-        limit: int | None = None,
-        since: datetime | None = None
+        self, limit: int | None = None, since: datetime | None = None
     ) -> list[PipelineJobDB]:
         """
         Get failed jobs with optional filters.
@@ -109,9 +97,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         Returns:
             List of failed jobs
         """
-        query = self.db.query(self.model).filter_by(
-            status=StepExecutionStatus.FAILED
-        )
+        query = self.db.query(self.model).filter_by(status=StepExecutionStatus.FAILED)
 
         if since:
             query = query.filter(self.model.updated_at >= since)
@@ -147,9 +133,11 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
             List of recent jobs
         """
         since = datetime.now() - timedelta(hours=hours)
-        query = self.db.query(self.model).filter(
-            self.model.created_at >= since
-        ).order_by(self.model.created_at.desc())
+        query = (
+            self.db.query(self.model)
+            .filter(self.model.created_at >= since)
+            .order_by(self.model.created_at.desc())
+        )
 
         if limit:
             query = query.limit(limit)
@@ -157,10 +145,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         return query.all()
 
     def update_job_status(
-        self,
-        processing_id: str,
-        status: StepExecutionStatus,
-        error_message: str | None = None
+        self, processing_id: str, status: StepExecutionStatus, error_message: str | None = None
     ) -> PipelineJobDB | None:
         """
         Update job status and optional error message.
@@ -188,10 +173,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         return job
 
     def update_job_progress(
-        self,
-        processing_id: str,
-        progress_percent: int,
-        current_step: str | None = None
+        self, processing_id: str, progress_percent: int, current_step: str | None = None
     ) -> PipelineJobDB | None:
         """
         Update job progress information.
@@ -222,7 +204,7 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         self,
         processing_id: str,
         result_data: dict,
-        status: StepExecutionStatus = StepExecutionStatus.COMPLETED
+        status: StepExecutionStatus = StepExecutionStatus.COMPLETED,
     ) -> PipelineJobDB | None:
         """
         Set job result data and mark as completed.
@@ -259,9 +241,9 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
             Number of jobs deleted
         """
         cutoff_date = datetime.now() - timedelta(days=days)
-        jobs_to_delete = self.session.query(self.model).filter(
-            self.model.created_at < cutoff_date
-        ).all()
+        jobs_to_delete = (
+            self.session.query(self.model).filter(self.model.created_at < cutoff_date).all()
+        )
 
         count = len(jobs_to_delete)
 

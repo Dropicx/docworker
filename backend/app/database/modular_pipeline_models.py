@@ -27,15 +27,19 @@ from app.database.unified_models import Base
 
 # ==================== ENUMS ====================
 
+
 class OCREngineEnum(str, Enum):
     """Available OCR engines"""
+
     PADDLEOCR = "PADDLEOCR"  # Fast CPU-based OCR
     VISION_LLM = "VISION_LLM"  # Slow but accurate (Qwen 2.5 VL)
     HYBRID = "HYBRID"  # Intelligent routing based on document quality
     # TESSERACT removed - poor quality
 
+
 class StepExecutionStatus(str, Enum):
     """Pipeline step execution status"""
+
     PENDING = "PENDING"
     QUEUED = "QUEUED"  # In Redis queue, waiting for worker
     RUNNING = "RUNNING"
@@ -46,26 +50,33 @@ class StepExecutionStatus(str, Enum):
     TIMEOUT = "TIMEOUT"  # Processing exceeded time limit
     TERMINATED = "TERMINATED"  # Pipeline stopped early due to stop condition
 
+
 class ModelProvider(str, Enum):
     """AI model providers"""
+
     OVH = "OVH"  # OVH AI Endpoints
     OPENAI = "OPENAI"  # Future: OpenAI API
     ANTHROPIC = "ANTHROPIC"  # Future: Claude API
     LOCAL = "LOCAL"  # Future: Local models
 
+
 # ==================== DATABASE MODELS ====================
+
 
 class OCRConfigurationDB(Base):
     """
     OCR engine configuration (global setting).
     Users can select which OCR engine to use for text extraction.
     """
+
     __tablename__ = "ocr_configuration"
 
     id = Column(Integer, primary_key=True, index=True)
 
     # OCR engine selection
-    selected_engine = Column(SQLEnum(OCREngineEnum), default=OCREngineEnum.PADDLEOCR, nullable=False)
+    selected_engine = Column(
+        SQLEnum(OCREngineEnum), default=OCREngineEnum.PADDLEOCR, nullable=False
+    )
 
     # Engine-specific settings (JSON for flexibility)
     # tesseract_config removed - Tesseract OCR deprecated
@@ -90,6 +101,7 @@ class DocumentClassDB(Base):
     Users can define custom document classes (e.g., ARZTBRIEF, BEFUNDBERICHT, LABORWERTE)
     and create separate pipeline branches for each class.
     """
+
     __tablename__ = "document_classes"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -107,7 +119,9 @@ class DocumentClassDB(Base):
 
     # Status and permissions
     is_enabled = Column(Boolean, default=True, nullable=False)
-    is_system_class = Column(Boolean, default=False, nullable=False)  # Prevent deletion of core classes
+    is_system_class = Column(
+        Boolean, default=False, nullable=False
+    )  # Prevent deletion of core classes
 
     # Metadata
     created_at = Column(DateTime, default=func.now(), nullable=False)
@@ -115,7 +129,9 @@ class DocumentClassDB(Base):
     created_by = Column(String(255), nullable=True)
 
     def __repr__(self):
-        return f"<DocumentClassDB(class_key='{self.class_key}', display_name='{self.display_name}')>"
+        return (
+            f"<DocumentClassDB(class_key='{self.class_key}', display_name='{self.display_name}')>"
+        )
 
 
 class AvailableModelDB(Base):
@@ -124,12 +140,15 @@ class AvailableModelDB(Base):
     Users can select from these models when creating pipeline steps.
     Includes pricing information for cost tracking.
     """
+
     __tablename__ = "available_models"
 
     id = Column(Integer, primary_key=True, index=True)
 
     # Model identification
-    name = Column(String(255), nullable=False, unique=True, index=True)  # e.g., "Meta-Llama-3_3-70B-Instruct"
+    name = Column(
+        String(255), nullable=False, unique=True, index=True
+    )  # e.g., "Meta-Llama-3_3-70B-Instruct"
     display_name = Column(String(255), nullable=False)  # e.g., "Llama 3.3 70B (Main Model)"
     provider = Column(SQLEnum(ModelProvider), nullable=False)
 
@@ -139,8 +158,12 @@ class AvailableModelDB(Base):
     supports_vision = Column(Boolean, default=False, nullable=False)
 
     # Pricing (USD per 1M tokens)
-    price_input_per_1m_tokens = Column(Float, nullable=True)  # e.g., 0.54 (= $0.54 per 1M input tokens)
-    price_output_per_1m_tokens = Column(Float, nullable=True)  # e.g., 0.81 (= $0.81 per 1M output tokens)
+    price_input_per_1m_tokens = Column(
+        Float, nullable=True
+    )  # e.g., 0.54 (= $0.54 per 1M input tokens)
+    price_output_per_1m_tokens = Column(
+        Float, nullable=True
+    )  # e.g., 0.81 (= $0.81 per 1M output tokens)
 
     # Model configuration
     model_config = Column(JSON, nullable=True)  # e.g., {"temperature": 0.7, "top_p": 0.9}
@@ -169,6 +192,7 @@ class DynamicPipelineStepDB(Base):
     - is_branching_step = True: Step that determines which branch to follow
     - post_branching = True: Universal step that runs AFTER document-specific processing
     """
+
     __tablename__ = "dynamic_pipeline_steps"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -182,10 +206,16 @@ class DynamicPipelineStepDB(Base):
     enabled = Column(Boolean, default=True, nullable=False)
 
     # Pipeline branching
-    document_class_id = Column(Integer, ForeignKey('document_classes.id'), nullable=True, index=True)
+    document_class_id = Column(
+        Integer, ForeignKey("document_classes.id"), nullable=True, index=True
+    )
     is_branching_step = Column(Boolean, default=False, nullable=False)
-    branching_field = Column(String(100), nullable=True)  # Field to extract from output (e.g., "document_type")
-    post_branching = Column(Boolean, default=False, nullable=False, index=True)  # Runs after doc-specific steps
+    branching_field = Column(
+        String(100), nullable=True
+    )  # Field to extract from output (e.g., "document_type")
+    post_branching = Column(
+        Boolean, default=False, nullable=False, index=True
+    )  # Runs after doc-specific steps
 
     # Step configuration
     prompt_template = Column(Text, nullable=False)  # Custom prompt for this step
@@ -202,10 +232,14 @@ class DynamicPipelineStepDB(Base):
     output_format = Column(String(50), nullable=True)  # e.g., "json", "markdown", "text"
 
     # Early termination conditions
-    stop_conditions = Column(JSON, nullable=True)  # e.g., {"stop_on_values": ["NICHT_MEDIZINISCH"], "termination_reason": "Non-medical content detected", "termination_message": "Das hochgeladene Dokument enthält keinen medizinischen Inhalt."}
+    stop_conditions = Column(
+        JSON, nullable=True
+    )  # e.g., {"stop_on_values": ["NICHT_MEDIZINISCH"], "termination_reason": "Non-medical content detected", "termination_message": "Das hochgeladene Dokument enthält keinen medizinischen Inhalt."}
 
     # Conditional execution
-    required_context_variables = Column(JSON, nullable=True)  # e.g., ["target_language"] - step will be skipped if these variables are not in context
+    required_context_variables = Column(
+        JSON, nullable=True
+    )  # e.g., ["target_language"] - step will be skipped if these variables are not in context
 
     # Metadata
     created_at = Column(DateTime, default=func.now(), nullable=False)
@@ -222,6 +256,7 @@ class PipelineJobDB(Base):
     Tracks individual pipeline executions for monitoring and debugging.
     Worker-ready: designed for Redis queue integration.
     """
+
     __tablename__ = "pipeline_jobs"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -241,14 +276,21 @@ class PipelineJobDB(Base):
     uploaded_at = Column(DateTime, default=func.now(), nullable=False)
 
     # Job status
-    status = Column(SQLEnum(StepExecutionStatus), default=StepExecutionStatus.PENDING, nullable=False, index=True)
+    status = Column(
+        SQLEnum(StepExecutionStatus),
+        default=StepExecutionStatus.PENDING,
+        nullable=False,
+        index=True,
+    )
     current_step_id = Column(Integer, nullable=True)  # Current pipeline step being executed
     progress_percent = Column(Integer, default=0, nullable=False)
 
     # Job configuration (worker-serializable)
     pipeline_config = Column(JSON, nullable=False)  # Snapshot of pipeline steps at job creation
     ocr_config = Column(JSON, nullable=False)  # Snapshot of OCR config at job creation
-    processing_options = Column(JSON, nullable=True, default={})  # Processing options (target_language, etc.)
+    processing_options = Column(
+        JSON, nullable=True, default={}
+    )  # Processing options (target_language, etc.)
 
     # Execution details
     started_at = Column(DateTime, nullable=True)
@@ -282,6 +324,7 @@ class PipelineStepExecutionDB(Base):
     Individual step execution tracking within a pipeline job.
     Provides detailed logs for each step's execution.
     """
+
     __tablename__ = "pipeline_step_executions"
 
     id = Column(Integer, primary_key=True, index=True)
@@ -295,7 +338,9 @@ class PipelineStepExecutionDB(Base):
     step_order = Column(Integer, nullable=False)
 
     # Execution status
-    status = Column(SQLEnum(StepExecutionStatus), default=StepExecutionStatus.PENDING, nullable=False)
+    status = Column(
+        SQLEnum(StepExecutionStatus), default=StepExecutionStatus.PENDING, nullable=False
+    )
 
     # Input/Output
     input_text = Column(Text, nullable=True)
@@ -320,7 +365,9 @@ class PipelineStepExecutionDB(Base):
     retry_count = Column(Integer, default=0, nullable=False)
 
     # Step-specific metadata (branching decisions, custom data)
-    step_metadata = Column(JSON, nullable=True)  # Stores branching info, decisions, and step-specific data
+    step_metadata = Column(
+        JSON, nullable=True
+    )  # Stores branching info, decisions, and step-specific data
 
     # Metadata
     created_at = Column(DateTime, default=func.now(), nullable=False)

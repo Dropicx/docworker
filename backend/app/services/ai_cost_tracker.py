@@ -138,7 +138,7 @@ class AICostTracker:
         self,
         session: Session,
         model_repository: AvailableModelRepository | None = None,
-        log_repository: AILogInteractionRepository | None = None
+        log_repository: AILogInteractionRepository | None = None,
     ):
         """Initialize cost tracker with database session.
 
@@ -213,9 +213,7 @@ class AICostTracker:
                 # Cache for future use
                 self._pricing_cache[model_name] = pricing
                 return pricing
-            logger.warning(
-                f"No pricing found for model '{model_name}' in database, using default"
-            )
+            logger.warning(f"No pricing found for model '{model_name}' in database, using default")
             # Default to Llama 3.3 70B pricing if not found
             default_pricing = {"input": 0.00054, "output": 0.00081}
             self._pricing_cache[model_name] = default_pricing
@@ -421,9 +419,7 @@ class AICostTracker:
         try:
             # Query logs using repository with filtering
             logs = self.log_repository.get_filtered(
-                processing_id=processing_id,
-                start_date=start_date,
-                end_date=end_date
+                processing_id=processing_id, start_date=start_date, end_date=end_date
             )
 
             total_cost = sum(log.total_cost_usd or 0 for log in logs)
@@ -528,10 +524,7 @@ class AICostTracker:
         """
         try:
             # Query logs using repository with date filtering
-            logs = self.log_repository.get_by_date_range(
-                start_date=start_date,
-                end_date=end_date
-            )
+            logs = self.log_repository.get_by_date_range(start_date=start_date, end_date=end_date)
 
             # Group by model
             by_model = {}

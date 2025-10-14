@@ -25,12 +25,14 @@ hybrid_extractor = None
 ovh_client = None
 file_validator = None
 
+
 def get_hybrid_extractor():
     """Get or initialize hybrid text extractor"""
     global hybrid_extractor
     if hybrid_extractor is None:
         hybrid_extractor = HybridTextExtractor()
     return hybrid_extractor
+
 
 def get_ovh_client():
     """Get or initialize OVH client"""
@@ -39,6 +41,7 @@ def get_ovh_client():
         ovh_client = OVHClient()
     return ovh_client
 
+
 def get_file_validator():
     """Get or initialize file validator"""
     global file_validator
@@ -46,9 +49,11 @@ def get_file_validator():
         file_validator = FileValidator()
     return file_validator
 
+
 # Configuration
 MAX_FILES = int(os.getenv("MAX_FILES_PER_BATCH", "10"))
 MAX_TOTAL_SIZE = int(os.getenv("MAX_TOTAL_BATCH_SIZE", "50000000"))  # 50MB
+
 
 @router.post("/process-multi-file", response_model=ProcessingResponse)
 async def process_multiple_files(
@@ -57,7 +62,7 @@ async def process_multiple_files(
     target_language: str | None = Form(None),
     merge_strategy: str = Form("smart"),
     enable_preprocessing: bool = Form(True),
-    custom_prompts: str | None = Form(None)
+    custom_prompts: str | None = Form(None),
 ):
     """
     Process multiple medical document files as a single cohesive document
@@ -109,15 +114,17 @@ async def process_multiple_files(
             if not is_valid:
                 raise HTTPException(
                     status_code=400,
-                    detail=f"File {i} ({file.filename}) validation failed: {error_message}"
+                    detail=f"File {i} ({file.filename}) validation failed: {error_message}",
                 )
 
-            validated_files.append({
-                'content': file_content,
-                'filename': file.filename,
-                'file_type': file_type,
-                'size': file_size
-            })
+            validated_files.append(
+                {
+                    "content": file_content,
+                    "filename": file.filename,
+                    "file_type": file_type,
+                    "size": file_size,
+                }
+            )
 
             logger.info(f"✅ File {i} validated: {file_type}, {file_size:,} bytes")
 
@@ -126,20 +133,14 @@ async def process_multiple_files(
         # Step 3: Extract text using hybrid approach
         logger.info("🔍 Starting hybrid text extraction...")
 
-        file_tuples = [
-            (f['content'], f['file_type'], f['filename'])
-            for f in validated_files
-        ]
+        file_tuples = [(f["content"], f["file_type"], f["filename"]) for f in validated_files]
 
         extracted_text, extraction_confidence = await hybrid_extractor.extract_from_multiple_files(
             file_tuples, merge_strategy=merge_strategy
         )
 
         if not extracted_text or extracted_text.startswith("Error"):
-            raise HTTPException(
-                status_code=500,
-                detail=f"Text extraction failed: {extracted_text}"
-            )
+            raise HTTPException(status_code=500, detail=f"Text extraction failed: {extracted_text}")
 
         logger.info("✅ Text extraction successful:")
         logger.info(f"   - Extracted: {len(extracted_text):,} characters")
@@ -150,9 +151,7 @@ async def process_multiple_files(
             logger.info("🔧 Applying preprocessing...")
             try:
                 preprocessed_text = await ovh_client.preprocess_medical_text(
-                    extracted_text,
-                    temperature=0.3,
-                    max_tokens=4000
+                    extracted_text, temperature=0.3, max_tokens=4000
                 )
 
                 if preprocessed_text and not preprocessed_text.startswith("Error"):
@@ -172,40 +171,42 @@ async def process_multiple_files(
         if custom_prompts:
             try:
                 import json
+
                 prompts = CustomPrompts(**json.loads(custom_prompts))
             except Exception as e:
                 logger.warning(f"⚠️ Invalid custom prompts: {e}")
 
         # Process with OVH
-        translated_text, final_doc_type, processing_confidence, cleaned_original = await ovh_client.translate_medical_document(
-            text=extracted_text,
-            document_type=document_type,
-            custom_prompts=prompts
+        (
+            translated_text,
+            final_doc_type,
+            processing_confidence,
+            cleaned_original,
+        ) = await ovh_client.translate_medical_document(
+            text=extracted_text, document_type=document_type, custom_prompts=prompts
         )
 
         if not translated_text or translated_text.startswith("Error"):
             raise HTTPException(
-                status_code=500,
-                detail=f"Medical processing failed: {translated_text}"
+                status_code=500, detail=f"Medical processing failed: {translated_text}"
             )
 
         # Step 6: Optional language translation
         final_text = translated_text
         translation_confidence = processing_confidence
 
-        if target_language and target_language.lower() not in ['german', 'deutsch', 'de']:
+        if target_language and target_language.lower() not in ["german", "deutsch", "de"]:
             logger.info(f"🌐 Translating to {target_language}...")
 
             try:
                 final_text, translation_confidence = await ovh_client.translate_to_language(
-                    translated_text,
-                    target_language,
-                    temperature=0.3,
-                    max_tokens=4000
+                    translated_text, target_language, temperature=0.3, max_tokens=4000
                 )
 
                 if final_text and not final_text.startswith("Error"):
-                    logger.info(f"✅ Language translation successful: {len(final_text):,} characters")
+                    logger.info(
+                        f"✅ Language translation successful: {len(final_text):,} characters"
+                    )
                 else:
                     logger.warning("⚠️ Language translation failed, using original")
                     final_text = translated_text
@@ -219,9 +220,7 @@ async def process_multiple_files(
 
         # Weighted confidence score
         final_confidence = (
-            extraction_confidence * 0.4 +
-            processing_confidence * 0.4 +
-            translation_confidence * 0.2
+            extraction_confidence * 0.4 + processing_confidence * 0.4 + translation_confidence * 0.2
         )
 
         # Step 8: Create response
@@ -238,7 +237,7 @@ async def process_multiple_files(
             total_characters=len(final_text),
             session_id=session_id,
             target_language=target_language,
-            merge_strategy=merge_strategy
+            merge_strategy=merge_strategy,
         )
 
         logger.info("=" * 80)
@@ -269,39 +268,35 @@ async def process_multiple_files(
             extraction_method="error",
             file_count=len(files),
             session_id=session_id,
-            error_details=str(e)
+            error_details=str(e),
         )
+
 
 async def _validate_multi_file_request(files: list[UploadFile]):
     """Validate the multi-file request"""
 
     if not files:
-        raise HTTPException(
-            status_code=400,
-            detail="No files provided"
-        )
+        raise HTTPException(status_code=400, detail="No files provided")
 
     if len(files) > MAX_FILES:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Too many files. Maximum allowed: {MAX_FILES}"
-        )
+        raise HTTPException(status_code=400, detail=f"Too many files. Maximum allowed: {MAX_FILES}")
 
     # Check total size (approximate)
     total_size = 0
     for file in files:
-        if hasattr(file, 'size') and file.size:
+        if hasattr(file, "size") and file.size:
             total_size += file.size
 
     if total_size > MAX_TOTAL_SIZE:
         raise HTTPException(
             status_code=400,
-            detail=f"Total file size too large. Maximum allowed: {MAX_TOTAL_SIZE:,} bytes"
+            detail=f"Total file size too large. Maximum allowed: {MAX_TOTAL_SIZE:,} bytes",
         )
 
     logger.info("✅ Multi-file request validation passed:")
     logger.info(f"   - File count: {len(files)}")
     logger.info(f"   - Estimated total size: {total_size:,} bytes")
+
 
 @router.get("/multi-file/limits")
 async def get_multi_file_limits():
@@ -311,17 +306,16 @@ async def get_multi_file_limits():
         "max_total_size": MAX_TOTAL_SIZE,
         "supported_formats": ["pdf", "jpg", "jpeg", "png", "tiff", "bmp"],
         "merge_strategies": ["smart", "sequential"],
-        "max_file_size": int(os.getenv("MAX_FILE_SIZE", "10000000"))  # Individual file limit
+        "max_file_size": int(os.getenv("MAX_FILE_SIZE", "10000000")),  # Individual file limit
     }
+
 
 @router.post("/process-multi-file/batch-status")
 async def get_batch_processing_status(session_ids: list[str]):
     """Get status for multiple processing sessions (future implementation)"""
     # This would integrate with a job queue system for tracking long-running processes
-    return {
-        "message": "Batch status tracking not yet implemented",
-        "session_ids": session_ids
-    }
+    return {"message": "Batch status tracking not yet implemented", "session_ids": session_ids}
+
 
 @router.post("/analyze-files")
 async def analyze_files_strategy(files: list[UploadFile] = File(...)):
@@ -339,8 +333,7 @@ async def analyze_files_strategy(files: list[UploadFile] = File(...)):
 
         if len(files) > MAX_FILES:
             raise HTTPException(
-                status_code=400,
-                detail=f"Too many files for analysis. Maximum: {MAX_FILES}"
+                status_code=400, detail=f"Too many files for analysis. Maximum: {MAX_FILES}"
             )
 
         # Validate and prepare files
@@ -354,10 +347,7 @@ async def analyze_files_strategy(files: list[UploadFile] = File(...)):
             )
 
             if not is_valid:
-                raise HTTPException(
-                    status_code=400,
-                    detail=f"File {i} validation failed: {error}"
-                )
+                raise HTTPException(status_code=400, detail=f"File {i} validation failed: {error}")
 
             file_tuples.append((file_content, file_type, file.filename))
 
@@ -375,18 +365,16 @@ async def analyze_files_strategy(files: list[UploadFile] = File(...)):
             "recommendations": {
                 "processing_time_estimate": _estimate_processing_time(analysis),
                 "expected_accuracy": _estimate_accuracy(analysis),
-                "cost_estimate": _estimate_cost(analysis)
-            }
+                "cost_estimate": _estimate_cost(analysis),
+            },
         }
 
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"❌ File analysis failed: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"File analysis error: {str(e)}"
-        ) from e
+        raise HTTPException(status_code=500, detail=f"File analysis error: {str(e)}") from e
+
 
 def _estimate_processing_time(analysis: dict[str, Any]) -> str:
     """Estimate processing time based on analysis"""
@@ -405,6 +393,7 @@ def _estimate_processing_time(analysis: dict[str, Any]) -> str:
     total_time = file_count * base_time
     return f"{total_time}-{total_time * 2} seconds"
 
+
 def _estimate_accuracy(analysis: dict[str, Any]) -> str:
     """Estimate accuracy based on analysis"""
     strategy = analysis.get("recommended_strategy", "vision_llm")
@@ -419,6 +408,7 @@ def _estimate_accuracy(analysis: dict[str, Any]) -> str:
             return "80-90% (complex layout, good context understanding)"
         return "70-85% (very complex, challenging content)"
     return "75-90% (mixed approach)"
+
 
 def _estimate_cost(analysis: dict[str, Any]) -> str:
     """Estimate processing cost based on analysis"""

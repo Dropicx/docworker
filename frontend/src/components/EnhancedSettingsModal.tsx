@@ -106,22 +106,28 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                   <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto">
                     <Settings className="w-8 h-8 text-brand-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-primary-900">Authentifizierung erforderlich</h3>
+                  <h3 className="text-xl font-bold text-primary-900">
+                    Authentifizierung erforderlich
+                  </h3>
                   <p className="text-sm text-primary-600">
-                    Bitte geben Sie den Zugangscode ein, um auf die Pipeline-Einstellungen zuzugreifen
+                    Bitte geben Sie den Zugangscode ein, um auf die Pipeline-Einstellungen
+                    zuzugreifen
                   </p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
-                    <label htmlFor="accessCode" className="block text-sm font-medium text-primary-700 mb-2">
+                    <label
+                      htmlFor="accessCode"
+                      className="block text-sm font-medium text-primary-700 mb-2"
+                    >
                       Zugangscode
                     </label>
                     <input
                       id="accessCode"
                       type="password"
                       value={accessCode}
-                      onChange={(e) => setAccessCode(e.target.value)}
+                      onChange={e => setAccessCode(e.target.value)}
                       className="w-full px-4 py-3 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                       placeholder="Geben Sie den Zugangscode ein"
                       required

@@ -5,6 +5,7 @@ from app.models.document_types import DocumentClass
 
 logger = logging.getLogger(__name__)
 
+
 class QualityChecker:
     """
     Service for checking the quality of translated medical documents.
@@ -21,10 +22,7 @@ class QualityChecker:
         self.ovh_client = ovh_client
 
     async def fact_check(
-        self,
-        text: str,
-        document_type: DocumentClass,
-        fact_check_prompt: str | None = None
+        self, text: str, document_type: DocumentClass, fact_check_prompt: str | None = None
     ) -> tuple[str, dict[str, Any]]:
         """
         Check medical facts in the translated text.
@@ -56,7 +54,7 @@ class QualityChecker:
                 text=text,
                 instruction=prompt,
                 temperature=0.1,  # Very low temperature for accuracy
-                max_tokens=4000
+                max_tokens=4000,
             )
 
             # Analyze changes
@@ -67,7 +65,7 @@ class QualityChecker:
             return checked_text, {
                 "status": "completed",
                 "changes": changes,
-                "document_type": document_type.value
+                "document_type": document_type.value,
             }
 
         except Exception as e:
@@ -75,10 +73,7 @@ class QualityChecker:
             return text, {"status": "error", "error": str(e)}
 
     async def grammar_check(
-        self,
-        text: str,
-        language: str = "de",
-        grammar_check_prompt: str | None = None
+        self, text: str, language: str = "de", grammar_check_prompt: str | None = None
     ) -> tuple[str, dict[str, Any]]:
         """
         Check and correct grammar in the text.
@@ -110,7 +105,7 @@ class QualityChecker:
                 text=text,
                 instruction=prompt,
                 temperature=0.2,  # Low temperature for consistency
-                max_tokens=4000
+                max_tokens=4000,
             )
 
             # Analyze changes
@@ -118,21 +113,14 @@ class QualityChecker:
 
             logger.info(f"✅ Grammar check completed: {changes['change_count']} corrections")
 
-            return corrected_text, {
-                "status": "completed",
-                "language": language,
-                "changes": changes
-            }
+            return corrected_text, {"status": "completed", "language": language, "changes": changes}
 
         except Exception as e:
             logger.error(f"Grammar check failed: {e}")
             return text, {"status": "error", "error": str(e)}
 
     async def final_quality_check(
-        self,
-        text: str,
-        document_type: DocumentClass,
-        final_check_prompt: str | None = None
+        self, text: str, document_type: DocumentClass, final_check_prompt: str | None = None
     ) -> tuple[str, float]:
         """
         Perform final quality check and scoring.
@@ -167,10 +155,7 @@ class QualityChecker:
 
             # Perform final check using OVH
             final_text = await self.ovh_client.process_medical_text(
-                text=text,
-                instruction=prompt,
-                temperature=0.3,
-                max_tokens=4000
+                text=text, instruction=prompt, temperature=0.3, max_tokens=4000
             )
 
             # Calculate final quality score
@@ -206,14 +191,14 @@ class QualityChecker:
         changes = {
             "change_count": 0,
             "length_diff": len(modified) - len(original),
-            "significant_change": False
+            "significant_change": False,
         }
 
         # Simple change detection
         if original != modified:
             # Count line differences
-            original_lines = original.split('\n')
-            modified_lines = modified.split('\n')
+            original_lines = original.split("\n")
+            modified_lines = modified.split("\n")
 
             # Count changed lines
             max_lines = max(len(original_lines), len(modified_lines))
@@ -246,7 +231,7 @@ class QualityChecker:
             "has_structure": False,
             "has_sections": False,
             "has_formatting": False,
-            "base_score": 0.5
+            "base_score": 0.5,
         }
 
         # Check for structure elements
@@ -264,7 +249,7 @@ class QualityChecker:
             metrics["base_score"] += 0.1
 
         # Check for structure
-        if text.count('\n') > 10:
+        if text.count("\n") > 10:
             metrics["has_structure"] = True
             metrics["base_score"] += 0.1
 

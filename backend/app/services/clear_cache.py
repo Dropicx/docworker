@@ -30,5 +30,6 @@ async def clear_all_cache():
 
     print("✅ Cache cleared successfully!")
 
+
 if __name__ == "__main__":
     asyncio.run(clear_all_cache())
