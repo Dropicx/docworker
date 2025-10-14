@@ -38,18 +38,35 @@ class TestFileValidator:
     @pytest.fixture
     def valid_pdf_content(self):
         """Create valid PDF content for testing using PyPDF2."""
-        from PyPDF2 import PdfWriter
+        from PyPDF2 import PdfWriter, PdfReader
         from io import BytesIO
 
+        # Create a larger PDF with some content
+        # We'll use a simple trick: create multiple pages to exceed 1KB
         buffer = BytesIO()
         writer = PdfWriter()
 
-        # Add a blank page to make it valid
-        writer.add_blank_page(width=612, height=792)  # Standard letter size
+        # Add multiple blank pages to make PDF larger than 1KB (MIN_FILE_SIZE)
+        for _ in range(5):
+            writer.add_blank_page(width=612, height=792)
 
         writer.write(buffer)
         buffer.seek(0)
-        return buffer.read()
+        content = buffer.read()
+
+        # If still too small, pad with metadata
+        if len(content) < MIN_FILE_SIZE:
+            # Re-create with metadata to make it larger
+            buffer = BytesIO()
+            writer = PdfWriter()
+            for _ in range(10):
+                writer.add_blank_page(width=612, height=792)
+            writer.add_metadata({"/Title": "Test PDF Document " * 50})  # Add metadata to increase size
+            writer.write(buffer)
+            buffer.seek(0)
+            content = buffer.read()
+
+        return content
 
     @pytest.fixture
     def valid_jpeg_content(self):
@@ -515,7 +532,7 @@ class TestFileValidator:
         # Too small
         tiny_file = create_upload_file("test.pdf", b"x" * 10)
         with patch('app.services.file_validator.magic.from_buffer', return_value="application/pdf"):
-            is_valid, error = await tiny_file.validate_file(file)
+            is_valid, error = await FileValidator.validate_file(tiny_file)
             assert is_valid is False
             assert "klein" in error.lower()
 
