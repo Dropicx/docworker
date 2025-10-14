@@ -34,7 +34,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
         // Sync token with pipeline API
         pipelineApi.updateToken(localStorage.getItem('settings_auth_token'));
       }
-    } catch (error: any) {
+    } catch (error) {
       setIsAuthenticated(false);
     }
   };
@@ -55,7 +55,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
       } else {
         setAuthError(response.message || 'Authentifizierung fehlgeschlagen');
       }
-    } catch (error: any) {
+    } catch (error) {
       setAuthError(error.message || 'Authentifizierung fehlgeschlagen');
     } finally {
       setIsLoading(false);

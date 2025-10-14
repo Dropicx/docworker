@@ -73,7 +73,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get OCR configuration'
       );
@@ -92,7 +92,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to update OCR configuration'
       );
@@ -110,7 +110,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get available engines'
       );
@@ -128,7 +128,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || `Failed to get ${engine} status`
       );
@@ -148,7 +148,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get pipeline steps'
       );
@@ -166,7 +166,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || `Failed to get step ${stepId}`
       );
@@ -185,7 +185,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to create pipeline step'
       );
@@ -204,7 +204,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || `Failed to update step ${stepId}`
       );
@@ -221,7 +221,7 @@ class PipelineApiService {
         { headers: this.getAuthHeaders() }
       );
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || `Failed to delete step ${stepId}`
       );
@@ -240,7 +240,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to reorder steps'
       );
@@ -263,7 +263,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get available models'
       );
@@ -281,7 +281,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || `Failed to get model ${modelId}`
       );
@@ -301,7 +301,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get universal steps'
       );
@@ -319,7 +319,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || `Failed to get steps for class ${classId}`
       );
@@ -337,7 +337,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get pipeline visualization'
       );
@@ -360,7 +360,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get document classes'
       );
@@ -378,7 +378,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || `Failed to get document class ${classId}`
       );
@@ -397,7 +397,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to create document class'
       );
@@ -416,7 +416,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || `Failed to update document class ${classId}`
       );
@@ -433,7 +433,7 @@ class PipelineApiService {
         { headers: this.getAuthHeaders() }
       );
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || `Failed to delete document class ${classId}`
       );
@@ -451,7 +451,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<any>;
+      const axiosError = error as AxiosError<unknown>;
       throw new Error(
         axiosError.response?.data?.detail || 'Failed to get document class statistics'
       );

@@ -491,7 +491,7 @@ class FileQualityDetector:
 
         # Check each row for consistent column structure
         column_positions = set()
-        for y_key, row_chars in y_groups.items():
+        for _y_key, row_chars in y_groups.items():
             if len(row_chars) < 4:  # Skip rows with too few characters
                 continue
 

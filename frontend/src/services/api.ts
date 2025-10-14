@@ -25,6 +25,7 @@ const api = axios.create({
 
 // Request interceptor for logging
 api.interceptors.request.use((config) => {
+  // eslint-disable-next-line no-console
   console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
   return config;
 });
@@ -32,6 +33,7 @@ api.interceptors.request.use((config) => {
 // Response interceptor for error handling
 api.interceptors.response.use(
   (response) => {
+    // eslint-disable-next-line no-console
     console.log(`✅ API Response: ${response.status} ${response.config.url}`);
     return response;
   },
@@ -101,12 +103,12 @@ export class ApiService {
     return response.data;
   }
 
-  static async getDetailedHealth(): Promise<any> {
+  static async getDetailedHealth(): Promise<unknown> {
     const response = await api.get('/health/detailed');
     return response.data;
   }
 
-  static async checkDependencies(): Promise<any> {
+  static async checkDependencies(): Promise<unknown> {
     const response = await api.get('/health/dependencies');
     return response.data;
   }
@@ -117,7 +119,7 @@ export class ApiService {
     return response.data;
   }
 
-  static async getUploadHealth(): Promise<any> {
+  static async getUploadHealth(): Promise<unknown> {
     const response = await api.get('/upload/health');
     return response.data;
   }

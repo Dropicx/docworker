@@ -7,7 +7,7 @@ import { isTerminated, getTerminationMetadata } from '../utils/termination';
 interface ProcessingStatusProps {
   processingId: string;
   onComplete: () => void;
-  onError: (error: string, metadata?: any) => void;
+  onError: (error: string, metadata?: Record<string, unknown>) => void;
   onCancel?: () => void;
 }
 
@@ -46,7 +46,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
           // Pass structured metadata to parent for specialized UI
           onError(metadata.message, metadata);
         }
-      } catch (err: any) {
+      } catch (err) {
         console.error('Status polling error:', err);
         setError(err.message);
         setIsPolling(false);
@@ -71,7 +71,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
       await ApiService.cancelProcessing(processingId);
       setIsPolling(false);
       onCancel?.();
-    } catch (err: any) {
+    } catch (err) {
       console.error('Cancel error:', err);
       setError(err.message);
     }

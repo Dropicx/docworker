@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap, Globe, ChevronDown, Search, Settings } from 'lucide-react';
 import FileUpload from './components/FileUpload';
@@ -21,7 +21,7 @@ function App() {
   const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null);
   const [translationResult, setTranslationResult] = useState<TranslationData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [errorMetadata, setErrorMetadata] = useState<any>(null);
+  const [errorMetadata, setErrorMetadata] = useState<Record<string, unknown> | null>(null);
   const [health, setHealth] = useState<HealthCheck | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [availableLanguages, setAvailableLanguages] = useState<SupportedLanguage[]>([]);
@@ -94,8 +94,8 @@ function App() {
       
       await ApiService.startProcessing(response.processing_id, options);
       setAppState('processing');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten');
       setAppState('error');
     }
   };
@@ -128,13 +128,13 @@ function App() {
       // Normal completion
       setTranslationResult(result);
       setAppState('result');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten');
       setAppState('error');
     }
   };
 
-  const handleProcessingError = (errorMessage: string, metadata?: any) => {
+  const handleProcessingError = (errorMessage: string, metadata?: Record<string, unknown>) => {
     setError(errorMessage);
     setErrorMetadata(metadata || null);
     setAppState('error');

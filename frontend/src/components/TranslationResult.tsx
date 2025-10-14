@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Copy, Download, Eye, EyeOff, CheckCircle, FileText, Clock, Star, Sparkles, RefreshCw, ArrowLeft, Globe } from 'lucide-react';
+import React, { useState } from 'react';
+import { Copy, Download, Eye, EyeOff, CheckCircle, FileText, Clock, Sparkles, RefreshCw, Globe } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ReactDOM from 'react-dom/client';
@@ -104,19 +104,19 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
     }
   };
 
-  const getConfidenceColor = (score: number) => {
+  const _getConfidenceColor = (score: number) => {
     if (score >= 0.8) return 'text-success-700 bg-success-100 ring-success-200';
     if (score >= 0.6) return 'text-warning-700 bg-warning-100 ring-warning-200';
     return 'text-error-700 bg-error-100 ring-error-200';
   };
 
-  const getConfidenceText = (score: number) => {
+  const _getConfidenceText = (score: number) => {
     if (score >= 0.8) return 'Sehr gut';
     if (score >= 0.6) return 'Gut';
     return 'Überprüfen';
   };
 
-  const getConfidenceIcon = (score: number) => {
+  const _getConfidenceIcon = (score: number) => {
     if (score >= 0.8) return '✨';
     if (score >= 0.6) return '⭐';
     return '⚠️';
@@ -130,7 +130,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
     return result.translated_text;
   };
 
-  const getDisplayedConfidence = () => {
+  const _getDisplayedConfidence = () => {
     if (activeTab === 'language' && result.language_confidence_score) {
       return result.language_confidence_score;
     }
@@ -249,7 +249,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({
                         {children}
                       </ul>
                     ),
-                    li: ({children, ...props}) => {
+                    li: ({children, ..._props}) => {
                       // Prüfe die Tiefe der Liste anhand der Klasse oder anderen Props
                       const text = String(children);
                       const isSubItem = text.includes('→');

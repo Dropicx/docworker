@@ -13,7 +13,7 @@ export interface PDFExportOptions {
 /**
  * Konvertiert HTML-Element zu PDF mit schöner Formatierung
  */
-export const exportToPDF = async (elementId: string, filename: string, options?: PDFExportOptions) => {
+export const exportToPDF = async (elementId: string, filename: string, _options?: PDFExportOptions) => {
   try {
     const element = document.getElementById(elementId);
     if (!element) {

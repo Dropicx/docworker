@@ -66,8 +66,8 @@ async def upload_document(
         # Worker-Verfügbarkeit prüfen
         logger.debug("🔍 Prüfe Worker-Verfügbarkeit...")
         try:
-            REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-            celery_app = Celery(broker=REDIS_URL, backend=REDIS_URL)
+            redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+            celery_app = Celery(broker=redis_url, backend=redis_url)
             worker_status = check_workers_available(celery_app, timeout=1.0)
 
             if not worker_status['available']:

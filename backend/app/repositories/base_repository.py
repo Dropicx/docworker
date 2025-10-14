@@ -37,28 +37,28 @@ class BaseRepository(Generic[ModelType]):
         self.db = db
         self.model = model
 
-    def get(self, id: Any) -> ModelType | None:
+    def get(self, record_id: Any) -> ModelType | None:
         """
         Get entity by primary key (convenience method).
 
         Alias for get_by_id() for shorter syntax.
 
         Args:
-            id: Primary key value
+            record_id: Primary key value
 
         Returns:
             Entity instance or None if not found
         """
-        return self.get_by_id(id)
+        return self.get_by_id(record_id)
 
-    def get_by_id(self, id: Any) -> ModelType | None:
+    def get_by_id(self, record_id: Any) -> ModelType | None:
         """Get entity by primary key."""
         try:
             return self.db.query(self.model).filter(
-                self.model.id == id
+                self.model.id == record_id
             ).first()
         except Exception as e:
-            logger.error(f"Error getting {self.model.__name__} by id={id}: {e}")
+            logger.error(f"Error getting {self.model.__name__} by id={record_id}: {e}")
             raise
 
     def get_all(
@@ -127,18 +127,18 @@ class BaseRepository(Generic[ModelType]):
             logger.error(f"Error creating {self.model.__name__}: {e}")
             raise
 
-    def update(self, id: Any, **kwargs) -> ModelType | None:
+    def update(self, record_id: Any, **kwargs) -> ModelType | None:
         """
         Update entity by primary key.
 
         Args:
-            id: Primary key value
+            record_id: Primary key value
             **kwargs: Fields to update
         """
         try:
-            entity = self.get_by_id(id)
+            entity = self.get_by_id(record_id)
             if not entity:
-                logger.warning(f"{self.model.__name__} with id={id} not found")
+                logger.warning(f"{self.model.__name__} with id={record_id} not found")
                 return None
 
             for key, value in kwargs.items():
@@ -148,37 +148,37 @@ class BaseRepository(Generic[ModelType]):
             self.db.commit()
             self.db.refresh(entity)
 
-            logger.info(f"Updated {self.model.__name__} with id={id}")
+            logger.info(f"Updated {self.model.__name__} with id={record_id}")
             return entity
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Error updating {self.model.__name__} id={id}: {e}")
+            logger.error(f"Error updating {self.model.__name__} id={record_id}: {e}")
             raise
 
-    def delete(self, id: Any) -> bool:
+    def delete(self, record_id: Any) -> bool:
         """
         Delete entity by primary key.
 
         Args:
-            id: Primary key value
+            record_id: Primary key value
 
         Returns:
             True if deleted, False if not found
         """
         try:
-            entity = self.get_by_id(id)
+            entity = self.get_by_id(record_id)
             if not entity:
-                logger.warning(f"{self.model.__name__} with id={id} not found")
+                logger.warning(f"{self.model.__name__} with id={record_id} not found")
                 return False
 
             self.db.delete(entity)
             self.db.commit()
 
-            logger.info(f"Deleted {self.model.__name__} with id={id}")
+            logger.info(f"Deleted {self.model.__name__} with id={record_id}")
             return True
         except Exception as e:
             self.db.rollback()
-            logger.error(f"Error deleting {self.model.__name__} id={id}: {e}")
+            logger.error(f"Error deleting {self.model.__name__} id={record_id}: {e}")
             raise
 
     def count(self, filters: dict[str, Any] | None = None) -> int:

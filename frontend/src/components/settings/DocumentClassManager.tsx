@@ -19,11 +19,8 @@ import {
   CheckCircle,
   Loader2,
   Shield,
-  Tag,
-  Hash,
   List,
-  Star,
-  Archive
+  Star
 } from 'lucide-react';
 import { pipelineApi } from '../../services/pipelineApi';
 import {
@@ -73,7 +70,7 @@ const DocumentClassManager: React.FC = () => {
     try {
       const classesData = await pipelineApi.getAllDocumentClasses(false);
       setClasses(classesData);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
@@ -84,7 +81,7 @@ const DocumentClassManager: React.FC = () => {
     try {
       const stats = await pipelineApi.getDocumentClassStatistics();
       setStatistics(stats);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load statistics:', err);
     }
   };
@@ -158,7 +155,7 @@ const DocumentClassManager: React.FC = () => {
       await loadClasses();
       await loadStatistics();
       setTimeout(() => setSuccess(''), 3000);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
@@ -185,7 +182,7 @@ const DocumentClassManager: React.FC = () => {
       await loadClasses();
       await loadStatistics();
       setTimeout(() => setSuccess(''), 3000);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);

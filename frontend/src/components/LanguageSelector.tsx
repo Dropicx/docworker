@@ -30,7 +30,7 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
       setError(null);
       const response = await ApiService.getAvailableLanguages();
       setLanguages(response.languages);
-    } catch (error: any) {
+    } catch (error) {
       console.error('Fehler beim Laden der Sprachen:', error);
       setError('Sprachen konnten nicht geladen werden');
     } finally {

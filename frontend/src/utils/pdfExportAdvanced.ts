@@ -314,7 +314,7 @@ export const exportToPDFAdvanced = async (elementId: string, filename: string, o
 /**
  * Einfache Fallback-Methode für PDF-Export
  */
-const exportSimplePDF = async (elementId: string, filename: string, options?: PDFExportOptions) => {
+const exportSimplePDF = async (elementId: string, filename: string, _options?: PDFExportOptions) => {
   try {
     const element = document.getElementById(elementId);
     if (!element) return false;

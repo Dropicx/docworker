@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, FileText, Image, AlertCircle, CheckCircle, Sparkles, Play, Shield } from 'lucide-react';
+import { Upload, X, FileText, Image, AlertCircle, Play, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ApiService from '../services/api';
 import { UploadResponse } from '../types/api';
@@ -90,7 +90,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       
       // Immediately proceed on mobile for better UX
       onUploadSuccess(response);
-    } catch (error: any) {
+    } catch (error) {
       const errorMessage = error.message || 'Upload fehlgeschlagen';
       setValidationError(errorMessage);
       onUploadError(errorMessage);

@@ -135,7 +135,7 @@ export class ApiError extends Error {
   constructor(
     message: string,
     public status: number,
-    public response?: any
+    public response?: unknown
   ) {
     super(message);
     this.name = 'ApiError';

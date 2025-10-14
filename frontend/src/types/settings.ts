@@ -83,7 +83,7 @@ export interface DocumentTypeInfo {
 export interface ExportData {
   export_date: string;
   version: number;
-  prompts: Record<string, any>;
+  prompts: Record<string, unknown>;
 }
 
 export interface ImportRequest {
@@ -126,7 +126,7 @@ export interface GlobalPromptsMetadata {
 export interface GlobalPromptsResponse {
   global_prompts: GlobalPrompts;
   metadata: GlobalPromptsMetadata;
-  statistics: Record<string, any>;
+  statistics: Record<string, unknown>;
 }
 
 export interface GlobalPromptUpdateRequest {

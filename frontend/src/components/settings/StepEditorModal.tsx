@@ -17,8 +17,6 @@ import {
   Brain,
   Thermometer,
   FileText,
-  ToggleLeft,
-  ToggleRight,
   Loader2,
   GitBranch,
   Tag,
@@ -227,7 +225,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       }
 
       onSave();
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setSaving(false);

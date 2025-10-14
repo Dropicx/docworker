@@ -19,7 +19,6 @@ import {
   CheckCircle,
   Loader2,
   Save,
-  RotateCcw,
   Zap,
   Brain,
   Image as ImageIcon,
@@ -54,7 +53,7 @@ const PipelineBuilder: React.FC = () => {
 
   // AI Models State
   const [models, setModels] = useState<AIModel[]>([]);
-  const [modelsLoading, setModelsLoading] = useState(false);
+  const [_modelsLoading, setModelsLoading] = useState(false);
 
   // Document Classes State (NEW)
   const [documentClasses, setDocumentClasses] = useState<DocumentClass[]>([]);
@@ -96,7 +95,7 @@ const PipelineBuilder: React.FC = () => {
       setTimeout(() => setSuccess(''), 5000);
     }
     setPrevClassCount(documentClasses.length);
-  }, [documentClasses.length]);
+  }, [documentClasses.length, prevClassCount]);
 
   // ==================== DATA LOADING ====================
 
@@ -107,7 +106,7 @@ const PipelineBuilder: React.FC = () => {
       setOcrConfig(config);
       setSelectedEngine(config.selected_engine as OCREngineEnum);
       setPiiRemovalEnabled(config.pii_removal_enabled ?? true); // Load PII toggle state
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setOcrLoading(false);
@@ -118,7 +117,7 @@ const PipelineBuilder: React.FC = () => {
     try {
       const enginesData = await pipelineApi.getAvailableEngines();
       setEngines(enginesData);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     }
   };
@@ -128,7 +127,7 @@ const PipelineBuilder: React.FC = () => {
     try {
       const stepsData = await pipelineApi.getAllSteps();
       setSteps(stepsData);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setStepsLoading(false);
@@ -140,7 +139,7 @@ const PipelineBuilder: React.FC = () => {
     try {
       const modelsData = await pipelineApi.getAvailableModels(true);
       setModels(modelsData);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setModelsLoading(false);
@@ -152,7 +151,7 @@ const PipelineBuilder: React.FC = () => {
     try {
       const classesData = await pipelineApi.getAllDocumentClasses(true); // Only enabled classes
       setDocumentClasses(classesData);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setClassesLoading(false);
@@ -183,7 +182,7 @@ const PipelineBuilder: React.FC = () => {
       await loadOCRConfig();
 
       setTimeout(() => setSuccess(''), 3000);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
     } finally {
       setOcrSaving(false);
@@ -261,7 +260,7 @@ const PipelineBuilder: React.FC = () => {
       setSuccess('Schritt erfolgreich gelöscht!');
 
       setTimeout(() => setSuccess(''), 3000);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       // Reload on error to restore correct state
       await loadSteps();
@@ -302,7 +301,7 @@ const PipelineBuilder: React.FC = () => {
         setError(err.message);
         loadSteps();
       });
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       await loadSteps();
     }
@@ -395,7 +394,7 @@ const PipelineBuilder: React.FC = () => {
 
       setSuccess('Schritte erfolgreich neu geordnet!');
       setTimeout(() => setSuccess(''), 2000);
-    } catch (err: any) {
+    } catch (err) {
       setError(err.message);
       // Reload on error to restore correct state
       await loadSteps();
