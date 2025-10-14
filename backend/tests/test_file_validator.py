@@ -37,17 +37,17 @@ class TestFileValidator:
 
     @pytest.fixture
     def valid_pdf_content(self):
-        """Create valid PDF content for testing."""
-        from reportlab.pdfgen import canvas
-        from reportlab.lib.pagesizes import letter
+        """Create valid PDF content for testing using PyPDF2."""
+        from PyPDF2 import PdfWriter
+        from io import BytesIO
 
         buffer = BytesIO()
-        c = canvas.Canvas(buffer, pagesize=letter)
-        c.drawString(100, 750, "Test PDF Document")
-        c.drawString(100, 730, "This is a test page with some content.")
-        c.showPage()
-        c.save()
+        writer = PdfWriter()
 
+        # Add a blank page to make it valid
+        writer.add_blank_page(width=612, height=792)  # Standard letter size
+
+        writer.write(buffer)
         buffer.seek(0)
         return buffer.read()
 
