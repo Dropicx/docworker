@@ -120,6 +120,73 @@ git push origin feature/your-feature-name
 # Create Pull Request to dev branch (not main!)
 ```
 
+## Continuous Integration (CI/CD)
+
+### GitHub Actions Workflow
+
+Every push to `dev` or `main` branches triggers automated quality checks:
+
+**Backend Checks:**
+- ✅ Ruff linting (code quality)
+- ✅ Ruff formatting (code style)
+- ✅ MyPy type checking
+- ✅ Bandit security scanning
+- ✅ Pytest with coverage reporting
+
+**Frontend Checks:**
+- ✅ ESLint linting
+- ✅ Prettier formatting
+- ✅ TypeScript type checking
+- ✅ Build verification
+
+**Security Audit:**
+- ✅ pip-audit (Python dependencies)
+- ✅ npm audit (Node dependencies)
+
+### Self-Hosted Runners (ARC on Kubernetes)
+
+The project uses Actions Runner Controller (ARC) on Kubernetes for CI/CD:
+
+**Requirements:**
+- Docker daemon access for backend tests (PostgreSQL container)
+- Python 3.11+ environment
+- Node.js 18+ environment
+
+**Configuration:**
+```yaml
+# ARC RunnerDeployment must have Docker access
+spec:
+  template:
+    spec:
+      containers:
+      - name: runner
+        volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+      volumes:
+      - name: docker-sock
+        hostPath:
+          path: /var/run/docker.sock
+```
+
+### Fixing CI Failures
+
+If the quality gate fails:
+
+1. **Check the workflow run:** `gh run list`
+2. **View failed logs:** `gh run view <run-id> --log-failed`
+3. **Fix issues locally:**
+   ```bash
+   # Auto-fix formatting
+   python -m ruff format backend/app/
+   npm run format --prefix frontend
+
+   # Check for remaining issues
+   python -m ruff check backend/app/
+   npm run lint --prefix frontend
+   ```
+4. **Commit and push fixes**
+
 ## Project Structure
 
 ```
@@ -161,13 +228,52 @@ npm test
 ### Check Code Quality
 
 ```bash
-# Python linting
+# Python linting with Ruff
 cd backend
-flake8 app/
+python -m ruff check app/
 
-# TypeScript checking
+# Python formatting with Ruff
+python -m ruff format app/ --check
+
+# Python type checking with MyPy
+python -m mypy app/ --config-file=pyproject.toml
+
+# Frontend linting with ESLint
 cd frontend
-npm run build  # Checks types during build
+npm run lint
+
+# Frontend formatting with Prettier
+npm run format:check
+
+# Frontend type checking
+npm run type-check
+
+# Frontend build test
+npm run build
+```
+
+### Run CI/CD Checks Locally
+
+Before pushing, run the same checks that GitHub Actions will run:
+
+```bash
+# Backend quality checks
+cd backend
+python -m ruff check app/ --output-format=github
+python -m ruff format app/ --check
+python -m mypy app/ --config-file=pyproject.toml
+
+# Backend tests
+pytest --cov=app --cov-report=xml --cov-report=term-missing
+
+# Frontend quality checks
+cd frontend
+npm run lint
+npm run format:check
+npm run type-check
+
+# Frontend build
+npm run build
 ```
 
 ### Database Operations
