@@ -147,6 +147,8 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for complete local setup guide.
 - Railway - Cloud platform
 - Docker - Containerization
 - nginx - Reverse proxy
+- GitHub Actions - CI/CD pipeline
+- Actions Runner Controller (ARC) - Self-hosted Kubernetes runners
 
 ## 🔐 Security & Privacy
 
@@ -266,16 +268,25 @@ Hooks automatically run on every commit:
 
 ### CI/CD Pipeline
 
-Every push and pull request triggers automated quality checks:
+Every push and pull request triggers automated quality checks on self-hosted ARC runners:
 
-- ✅ **Backend Quality** - Ruff, MyPy, Bandit
-- ✅ **Backend Tests** - pytest with PostgreSQL service
-- ✅ **Frontend Quality** - ESLint, Prettier, TypeScript
-- ✅ **Frontend Build** - Production build verification
-- ✅ **Security Audit** - pip-audit and npm audit
+**Quality Checks:**
+- ✅ **Backend Quality** - Ruff linting & formatting, MyPy type checking, Bandit security scan
+- ✅ **Backend Tests** - pytest with PostgreSQL (Docker-in-Docker on Kubernetes)
+- ✅ **Frontend Quality** - ESLint, Prettier, TypeScript strict mode
+- ✅ **Frontend Build** - Production build verification with Vite
+- ✅ **Security Audit** - pip-audit and npm audit for dependency vulnerabilities
 - ✅ **Quality Gate** - All checks must pass for PR merge
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for code style guidelines.
+**Self-Hosted Runners:**
+- Runs on Actions Runner Controller (ARC) in Kubernetes cluster
+- Docker daemon access for service containers (PostgreSQL for tests)
+- Python 3.11 and Node.js 18 environments pre-configured
+- Faster builds with internal network access and better resource control
+
+**Workflow Configuration:** `.github/workflows/quality.yml`
+
+See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for detailed CI/CD setup and [CONTRIBUTING.md](./CONTRIBUTING.md) for code style guidelines.
 
 ## 🤝 Contributing
 

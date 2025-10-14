@@ -489,9 +489,106 @@ git push
 # Railway auto-deploys on push
 ```
 
+## CI/CD with GitHub Actions
+
+### Self-Hosted ARC Runners on Kubernetes
+
+The project uses Actions Runner Controller (ARC) for CI/CD, running on a Kubernetes cluster.
+
+#### Runner Requirements
+
+- **Docker daemon access** - Required for PostgreSQL service containers in backend tests
+- **Python 3.11+** - Backend quality checks and tests
+- **Node.js 18+** - Frontend quality checks and builds
+- **Network access** - For pulling dependencies and Docker images
+
+#### ARC RunnerDeployment Configuration
+
+```yaml
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: arc-runner-set
+spec:
+  replicas: 2
+  template:
+    spec:
+      repository: your-org/doctranslator
+      labels:
+        - arc-runner-set
+      dockerdWithinRunnerContainer: true
+      # OR use host Docker socket:
+      volumes:
+        - name: docker-sock
+          hostPath:
+            path: /var/run/docker.sock
+      volumeMounts:
+        - name: docker-sock
+          mountPath: /var/run/docker.sock
+```
+
+#### Workflow Jobs
+
+Every push to `dev` or `main` triggers:
+
+1. **Backend Quality Checks** - Ruff linting/formatting, MyPy, Bandit security scan
+2. **Backend Tests** - pytest with PostgreSQL container
+3. **Frontend Quality Checks** - ESLint, Prettier, TypeScript
+4. **Frontend Build** - Production build verification
+5. **Security Audit** - pip-audit and npm audit
+6. **Quality Gate** - All must pass
+
+#### Troubleshooting CI/CD
+
+**Docker daemon not available:**
+```bash
+# Verify Docker socket access in runner pod
+kubectl exec -it <runner-pod> -- docker ps
+
+# Check ARC runner logs
+kubectl logs -l app=arc-runner-set -f
+```
+
+**PostgreSQL container fails to start:**
+- Ensure runner has privileged container support or Docker socket mounted
+- Check runner has sufficient resources (memory, CPU)
+- Verify network policies allow container-to-container communication
+
+**Quality checks fail:**
+```bash
+# Run locally before pushing
+cd backend
+python -m ruff check app/
+python -m ruff format app/ --check
+pytest
+
+cd ../frontend
+npm run lint
+npm run format:check
+npm run type-check
+npm run build
+```
+
+#### Monitoring CI/CD
+
+```bash
+# View recent workflow runs
+gh run list --limit 10
+
+# Watch current run
+gh run watch
+
+# View failed job logs
+gh run view <run-id> --log-failed
+
+# Re-run failed jobs
+gh run rerun <run-id> --failed
+```
+
 ## Support Resources
 
 - **Railway**: [Railway Discord](https://discord.gg/railway)
 - **OVH AI**: [Documentation](https://endpoints.ai.cloud.ovh.net/docs)
+- **GitHub Actions**: [ARC Documentation](https://github.com/actions/actions-runner-controller)
 - **Project Issues**: GitHub Issues
-- **Logs**: Railway Dashboard
+- **Logs**: Railway Dashboard, GitHub Actions logs
