@@ -277,7 +277,7 @@ def test_update_job_status(repository: PipelineJobRepository, sample_job: Pipeli
     new_status = StepExecutionStatus.COMPLETED
 
     # Act
-    updated_job = repository.update_job_status(sample_job.id, new_status)
+    updated_job = repository.update_job_status(sample_job.processing_id, new_status)
 
     # Assert
     assert updated_job is not None
@@ -290,7 +290,7 @@ def test_update_job_progress(repository: PipelineJobRepository, sample_job: Pipe
     new_progress = 75
 
     # Act
-    updated_job = repository.update_job_progress(sample_job.id, new_progress)
+    updated_job = repository.update_job_progress(sample_job.processing_id, new_progress)
 
     # Assert
     assert updated_job is not None
@@ -300,10 +300,10 @@ def test_update_job_progress(repository: PipelineJobRepository, sample_job: Pipe
 def test_update_job_progress_invalid(repository: PipelineJobRepository, sample_job: PipelineJobDB):
     """Test updating job progress with invalid value."""
     # Act & Assert - should clamp to 0-100
-    job = repository.update_job_progress(sample_job.id, 150)
+    job = repository.update_job_progress(sample_job.processing_id, 150)
     assert job.progress_percent <= 100
 
-    job = repository.update_job_progress(sample_job.id, -10)
+    job = repository.update_job_progress(sample_job.processing_id, -10)
     assert job.progress_percent >= 0
 
 
@@ -317,7 +317,7 @@ def test_set_job_result(repository: PipelineJobRepository, sample_job: PipelineJ
     }
 
     # Act
-    updated_job = repository.set_job_result(sample_job.id, result_data)
+    updated_job = repository.set_job_result(sample_job.processing_id, result_data)
 
     # Assert
     assert updated_job is not None
@@ -331,7 +331,7 @@ def test_set_job_error(repository: PipelineJobRepository, sample_job: PipelineJo
     error_message = "Translation failed: Connection timeout"
 
     # Act
-    updated_job = repository.set_job_error(sample_job.id, error_message)
+    updated_job = repository.set_job_error(sample_job.processing_id, error_message)
 
     # Assert
     assert updated_job is not None
@@ -514,9 +514,9 @@ def test_update_nonexistent_job(repository: PipelineJobRepository):
 def test_concurrent_updates(repository: PipelineJobRepository, sample_job: PipelineJobDB):
     """Test that updates are handled correctly."""
     # Act - Simulate concurrent updates
-    repository.update_job_progress(sample_job.id, 25)
-    repository.update_job_progress(sample_job.id, 50)
-    repository.update_job_progress(sample_job.id, 75)
+    repository.update_job_progress(sample_job.processing_id, 25)
+    repository.update_job_progress(sample_job.processing_id, 50)
+    repository.update_job_progress(sample_job.processing_id, 75)
 
     # Assert
     final_job = repository.get(sample_job.id)
@@ -526,7 +526,7 @@ def test_concurrent_updates(repository: PipelineJobRepository, sample_job: Pipel
 def test_empty_result_data(repository: PipelineJobRepository, sample_job: PipelineJobDB):
     """Test setting empty result data."""
     # Act
-    updated_job = repository.set_job_result(sample_job.id, {})
+    updated_job = repository.set_job_result(sample_job.processing_id, {})
 
     # Assert
     assert updated_job is not None
@@ -537,7 +537,7 @@ def test_empty_result_data(repository: PipelineJobRepository, sample_job: Pipeli
 def test_null_error_message(repository: PipelineJobRepository, sample_job: PipelineJobDB):
     """Test setting null error message."""
     # Act
-    updated_job = repository.set_job_error(sample_job.id, None)
+    updated_job = repository.set_job_error(sample_job.processing_id, None)
 
     # Assert
     assert updated_job is not None

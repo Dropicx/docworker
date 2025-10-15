@@ -230,6 +230,50 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         self.db.refresh(job)
         return job
 
+    def set_job_error(
+        self,
+        processing_id: str,
+        error_message: str | None,
+    ) -> PipelineJobDB | None:
+        """
+        Set job error message and mark as failed.
+
+        Args:
+            processing_id: Job processing ID
+            error_message: Error message describing the failure
+
+        Returns:
+            Updated job or None if not found
+        """
+        job = self.get_by_processing_id(processing_id)
+        if not job:
+            return None
+
+        job.error_message = error_message
+        job.status = StepExecutionStatus.FAILED
+        job.updated_at = datetime.now()
+
+        self.db.commit()
+        self.db.refresh(job)
+        return job
+
+    def count_by_status(self) -> dict[StepExecutionStatus, int]:
+        """
+        Count jobs grouped by status.
+
+        Returns:
+            Dictionary mapping status to count
+        """
+        from collections import defaultdict
+
+        jobs = self.db.query(self.model).all()
+        counts = defaultdict(int)
+
+        for job in jobs:
+            counts[job.status] += 1
+
+        return dict(counts)
+
     def delete_old_jobs(self, days: int = 7) -> int:
         """
         Delete jobs older than specified days.
