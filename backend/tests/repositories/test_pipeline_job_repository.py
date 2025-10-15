@@ -44,6 +44,7 @@ def repository(db_session: Session) -> PipelineJobRepository:
 def sample_job(db_session: Session) -> PipelineJobDB:
     """Create a sample pipeline job for testing."""
     job = PipelineJobDB(
+        job_id="job-test-123",
         processing_id="test-123",
         filename="test_document.pdf",
         status=StepExecutionStatus.PENDING,
@@ -63,11 +64,13 @@ def sample_job(db_session: Session) -> PipelineJobDB:
 def test_create_job(repository: PipelineJobRepository):
     """Test creating a new pipeline job."""
     # Arrange
+    job_id = "job-create-test-123"
     processing_id = "create-test-123"
     filename = "new_document.pdf"
 
     # Act
     job = repository.create(
+        job_id=job_id,
         processing_id=processing_id,
         filename=filename,
         status=StepExecutionStatus.PENDING,
@@ -76,6 +79,7 @@ def test_create_job(repository: PipelineJobRepository):
 
     # Assert
     assert job.id is not None
+    assert job.job_id == job_id
     assert job.processing_id == processing_id
     assert job.filename == filename
     assert job.status == StepExecutionStatus.PENDING
@@ -107,6 +111,7 @@ def test_get_all_jobs(repository: PipelineJobRepository, db_session: Session):
     # Arrange - Create multiple jobs
     for i in range(3):
         job = PipelineJobDB(
+            job_id=f"job-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             status=StepExecutionStatus.PENDING,
@@ -196,6 +201,7 @@ def test_get_active_jobs(repository: PipelineJobRepository, db_session: Session)
 
     for i, status in enumerate(statuses):
         job = PipelineJobDB(
+            job_id=f"job-active-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             status=status,
@@ -224,6 +230,7 @@ def test_get_pending_jobs(repository: PipelineJobRepository, db_session: Session
 
     for i, status in enumerate(statuses):
         job = PipelineJobDB(
+            job_id=f"job-pending-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             status=status,
@@ -314,6 +321,7 @@ def test_get_jobs_by_status(repository: PipelineJobRepository, db_session: Sessi
     for i in range(5):
         status = StepExecutionStatus.COMPLETED if i % 2 == 0 else StepExecutionStatus.FAILED
         job = PipelineJobDB(
+            job_id=f"job-status-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             status=status,
@@ -336,6 +344,7 @@ def test_get_recent_jobs(repository: PipelineJobRepository, db_session: Session)
     now = datetime.now()
     for i in range(5):
         job = PipelineJobDB(
+            job_id=f"job-recent-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             status=StepExecutionStatus.COMPLETED,
@@ -363,6 +372,7 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
 
     # Old completed job (should be deleted)
     old_job = PipelineJobDB(
+        job_id="job-old-job",
         processing_id="old-job",
         filename="old.pdf",
         status=StepExecutionStatus.COMPLETED,
@@ -372,6 +382,7 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
 
     # Recent completed job (should be kept)
     recent_job = PipelineJobDB(
+        job_id="job-recent-job",
         processing_id="recent-job",
         filename="recent.pdf",
         status=StepExecutionStatus.COMPLETED,
@@ -381,6 +392,7 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
 
     # Old failed job (should be kept - only clean completed jobs)
     old_failed_job = PipelineJobDB(
+        job_id="job-old-failed",
         processing_id="old-failed",
         filename="old-failed.pdf",
         status=StepExecutionStatus.FAILED,
@@ -416,6 +428,7 @@ def test_count_by_status(repository: PipelineJobRepository, db_session: Session)
 
     for i, status in enumerate(statuses):
         job = PipelineJobDB(
+            job_id=f"job-count-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             status=status,
