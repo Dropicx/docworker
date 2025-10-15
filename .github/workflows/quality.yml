@@ -73,48 +73,33 @@ jobs:
   backend-tests:
     name: Backend Tests
     runs-on: arc-runner-set
-
-    # Job container required for using services in Kubernetes mode
-    # Using Node.js base image (has node for GitHub Actions) + install Python
-    container:
-      image: node:20-bookworm
-
-    # Service containers run as separate Kubernetes pods
-    services:
-      postgres:
-        image: postgres:14
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: doctranslator_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        # No ports mapping needed - pod-to-pod communication via service DNS
+    defaults:
+      run:
+        working-directory: ./backend
 
     env:
-      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/doctranslator_test
       OVH_AI_ENDPOINTS_ACCESS_TOKEN: test-token
       ENVIRONMENT: test
-      DEBIAN_FRONTEND: noninteractive
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install Python and dependencies
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
         run: |
-          apt-get update
-          apt-get install -y python3.11 python3-pip python3.11-venv
-          python3.11 -m pip install --upgrade pip
-          python3.11 -m pip install -r backend/requirements.txt
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
 
       - name: Run pytest
-        working-directory: ./backend
         run: |
-          python3.11 -m pytest --cov=app --cov-report=xml --cov-report=term-missing --junitxml=pytest-report.xml
+          pytest --cov=app --cov-report=xml --cov-report=term-missing --junitxml=pytest-report.xml
         continue-on-error: false
 
       - name: Upload coverage to Codecov
