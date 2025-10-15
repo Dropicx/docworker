@@ -8,6 +8,7 @@ import sys
 import time
 from datetime import datetime
 from celery import Task
+from celery.exceptions import SoftTimeLimitExceeded
 from worker.worker import celery_app
 
 # Add backend to path
@@ -142,6 +143,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         # Step 2: Execute pipeline steps
         logger.info("🔄 Starting pipeline execution...")
+        logger.info(f"   Document: {job.filename} ({len(extracted_text)} characters)")
         self.update_state(
             state='PROCESSING',
             meta={'progress': 20, 'status': 'pipeline', 'current_step': 'Pipeline-Verarbeitung'}
@@ -156,6 +158,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         pipeline_context['ocr_text'] = extracted_text  # Alias for clarity
 
         # Execute pipeline (async method, need to await)
+        logger.info(f"⏱️  Pipeline execution timeout: 18 minutes (soft limit)")
         success, final_output, metadata = await_sync(
             executor.execute_pipeline(
                 processing_id=processing_id,
@@ -270,6 +273,40 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                 'pipeline_time': job.ai_processing_time_seconds,
                 'total_time': job.total_execution_time_seconds
             }
+        }
+
+    except SoftTimeLimitExceeded:
+        # Handle timeout gracefully
+        logger.error(f"⏱️ Processing timeout for document {processing_id} (exceeded soft time limit)")
+
+        # Update job status to FAILED with timeout message
+        if 'job' in locals():
+            job.status = StepExecutionStatus.FAILED
+            job.failed_at = datetime.now()
+            job.error_message = (
+                "Processing timeout: Document processing took too long (>18 minutes). "
+                "This may happen with very large or complex documents. "
+                "Please try with a smaller document or contact support."
+            )
+            db.commit()
+
+        # Update Celery state with proper serializable error
+        self.update_state(
+            state='FAILURE',
+            meta={
+                'error': 'Processing timeout exceeded',
+                'error_type': 'timeout',
+                'processing_id': processing_id,
+                'message': 'Document processing took too long. Please try with a smaller document.'
+            }
+        )
+
+        # Don't re-raise - return failure status instead to avoid serialization issues
+        return {
+            'status': 'failed',
+            'processing_id': processing_id,
+            'error': 'Processing timeout exceeded',
+            'error_type': 'timeout'
         }
 
     except Exception as e:

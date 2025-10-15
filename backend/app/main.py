@@ -12,6 +12,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
 from app.core.config import settings
+from app.core.error_middleware import register_error_handlers
 from app.database.init_db import init_database
 from app.routers import health, process, upload
 from app.routers.admin.config import router as admin_config_router
@@ -109,6 +110,9 @@ app = FastAPI(
     redoc_url="/redoc" if settings.is_development else None,
     lifespan=lifespan,
 )
+
+# Register error handlers for standardized error responses
+register_error_handlers(app)
 
 # Rate limiting
 app.state.limiter = limiter

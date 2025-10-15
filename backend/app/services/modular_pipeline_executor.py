@@ -530,9 +530,8 @@ class ModularPipelineExecutor:
                 logger.info(
                     f"🔄 Executing step '{step.name}' (attempt {attempt + 1}/{max_retries})"
                 )
-                logger.debug(f"   Model: {model.name}")
-                logger.debug(f"   Temperature: {step.temperature}")
-                logger.debug(f"   Max Tokens: {step.max_tokens or model.max_tokens}")
+                logger.info(f"   Model: {model.name} | Temp: {step.temperature} | Max Tokens: {step.max_tokens or model.max_tokens}")
+                logger.info(f"   Input length: {len(input_text)} characters")
 
                 # Call AI model
                 start_time = time.time()

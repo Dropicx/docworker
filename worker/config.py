@@ -12,9 +12,9 @@ REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
 WORKER_CONCURRENCY = int(os.getenv('WORKER_CONCURRENCY', '2'))
 WORKER_MAX_TASKS_PER_CHILD = int(os.getenv('WORKER_MAX_TASKS_PER_CHILD', '50'))
 
-# Task timeouts
-TASK_TIME_LIMIT = int(os.getenv('TASK_TIME_LIMIT', '600'))  # 10 minutes
-TASK_SOFT_TIME_LIMIT = int(os.getenv('TASK_SOFT_TIME_LIMIT', '540'))  # 9 minutes
+# Task timeouts (increased for complex medical documents like lab reports)
+TASK_TIME_LIMIT = int(os.getenv('TASK_TIME_LIMIT', '1200'))  # 20 minutes hard limit
+TASK_SOFT_TIME_LIMIT = int(os.getenv('TASK_SOFT_TIME_LIMIT', '1080'))  # 18 minutes soft limit
 
 # Celery beat schedule (for periodic tasks)
 CELERYBEAT_SCHEDULE = {

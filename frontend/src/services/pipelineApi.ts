@@ -31,6 +31,42 @@ const PIPELINE_BASE_URL = `${API_BASE_URL}/pipeline`;
 // Token management (shared with settings service)
 const TOKEN_KEY = 'settings_auth_token';
 
+/**
+ * Extract error message from various API response formats
+ * Handles both FastAPI default format and our custom error middleware format
+ */
+function extractErrorMessage(error: AxiosError, fallback: string): string {
+  const data = error.response?.data as any;
+
+  // Format 1: Our custom error middleware {error: {message: "...", code: "..."}}
+  if (data?.error?.message) {
+    return data.error.message;
+  }
+
+  // Format 2: FastAPI default {detail: "..."}
+  if (data?.detail) {
+    return typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
+  }
+
+  // Format 3: Direct message field {message: "..."}
+  if (data?.message) {
+    return data.message;
+  }
+
+  // Format 4: HTTP status text
+  if (error.response?.statusText) {
+    return error.response.statusText;
+  }
+
+  // Format 5: Error message from Error object
+  if (error.message) {
+    return error.message;
+  }
+
+  // Fallback
+  return fallback;
+}
+
 class PipelineApiService {
   private token: string | null = null;
 
@@ -72,8 +108,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to get OCR configuration');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to get OCR configuration'));
     }
   }
 
@@ -89,8 +124,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to update OCR configuration');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to update OCR configuration'));
     }
   }
 
@@ -104,8 +138,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to get available engines');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to get available engines'));
     }
   }
 
@@ -119,8 +152,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || `Failed to get ${engine} status`);
+      throw new Error(extractErrorMessage(error as AxiosError, `Failed to get ${engine} status`));
     }
   }
 
@@ -136,8 +168,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to get pipeline steps');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to get pipeline steps'));
     }
   }
 
@@ -151,8 +182,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || `Failed to get step ${stepId}`);
+      throw new Error(extractErrorMessage(error as AxiosError, `Failed to get step ${stepId}`));
     }
   }
 
@@ -166,8 +196,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to create pipeline step');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to create pipeline step'));
     }
   }
 
@@ -181,8 +210,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || `Failed to update step ${stepId}`);
+      throw new Error(extractErrorMessage(error as AxiosError, `Failed to update step ${stepId}`));
     }
   }
 
@@ -195,8 +223,7 @@ class PipelineApiService {
         headers: this.getAuthHeaders(),
       });
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || `Failed to delete step ${stepId}`);
+      throw new Error(extractErrorMessage(error as AxiosError, `Failed to delete step ${stepId}`));
     }
   }
 
@@ -212,8 +239,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to reorder steps');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to reorder steps'));
     }
   }
 
@@ -230,8 +256,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to get available models');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to get available models'));
     }
   }
 
@@ -245,8 +270,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || `Failed to get model ${modelId}`);
+      throw new Error(extractErrorMessage(error as AxiosError, `Failed to get model ${modelId}`));
     }
   }
 
@@ -262,8 +286,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to get universal steps');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to get universal steps'));
     }
   }
 
@@ -278,10 +301,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || `Failed to get steps for class ${classId}`
-      );
+      throw new Error(extractErrorMessage(error as AxiosError, `Failed to get steps for class ${classId}`));
     }
   }
 
@@ -296,8 +316,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to get pipeline visualization');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to get pipeline visualization'));
     }
   }
 
@@ -314,8 +333,7 @@ class PipelineApiService {
       });
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to get document classes');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to get document classes'));
     }
   }
 
@@ -330,10 +348,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || `Failed to get document class ${classId}`
-      );
+      throw new Error(extractErrorMessage(error as AxiosError, `Failed to get document class ${classId}`));
     }
   }
 
@@ -349,8 +364,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(axiosError.response?.data?.detail || 'Failed to create document class');
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to create document class'));
     }
   }
 
@@ -369,10 +383,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || `Failed to update document class ${classId}`
-      );
+      throw new Error(extractErrorMessage(error as AxiosError, `Failed to update document class ${classId}`));
     }
   }
 
@@ -385,10 +396,7 @@ class PipelineApiService {
         headers: this.getAuthHeaders(),
       });
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || `Failed to delete document class ${classId}`
-      );
+      throw new Error(extractErrorMessage(error as AxiosError, `Failed to delete document class ${classId}`));
     }
   }
 
@@ -403,10 +411,7 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      const axiosError = error as AxiosError<{ detail?: string }>;
-      throw new Error(
-        axiosError.response?.data?.detail || 'Failed to get document class statistics'
-      );
+      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to get document class statistics'));
     }
   }
 }
