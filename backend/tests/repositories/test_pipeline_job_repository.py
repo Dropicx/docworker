@@ -48,9 +48,12 @@ def sample_job(db_session: Session) -> PipelineJobDB:
         processing_id="test-123",
         filename="test_document.pdf",
         file_type="pdf",
+        file_size=1024,
+        file_content=b"test content",
+        pipeline_config={"steps": []},
+        ocr_config={"enabled": True},
         status=StepExecutionStatus.PENDING,
         progress_percent=0,
-        created_at=datetime.now(),
         result_data=None,
         error_message=None
     )
@@ -75,6 +78,10 @@ def test_create_job(repository: PipelineJobRepository):
         processing_id=processing_id,
         filename=filename,
         file_type="pdf",
+        file_size=2048,
+        file_content=b"test file content",
+        pipeline_config={"steps": []},
+        ocr_config={"enabled": True},
         status=StepExecutionStatus.PENDING,
         progress_percent=0
     )
@@ -117,6 +124,10 @@ def test_get_all_jobs(repository: PipelineJobRepository, db_session: Session):
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             file_type="pdf",
+            file_size=1024,
+            file_content=b"test content",
+            pipeline_config={"steps": []},
+            ocr_config={"enabled": True},
             status=StepExecutionStatus.PENDING,
             progress_percent=0
         )
@@ -208,6 +219,10 @@ def test_get_active_jobs(repository: PipelineJobRepository, db_session: Session)
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             file_type="pdf",
+            file_size=1024,
+            file_content=b"test content",
+            pipeline_config={"steps": []},
+            ocr_config={"enabled": True},
             status=status,
             progress_percent=0
         )
@@ -238,6 +253,10 @@ def test_get_pending_jobs(repository: PipelineJobRepository, db_session: Session
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             file_type="pdf",
+            file_size=1024,
+            file_content=b"test content",
+            pipeline_config={"steps": []},
+            ocr_config={"enabled": True},
             status=status,
             progress_percent=0
         )
@@ -330,6 +349,10 @@ def test_get_jobs_by_status(repository: PipelineJobRepository, db_session: Sessi
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             file_type="pdf",
+            file_size=1024,
+            file_content=b"test content",
+            pipeline_config={"steps": []},
+            ocr_config={"enabled": True},
             status=status,
             progress_percent=100 if status == StepExecutionStatus.COMPLETED else 50
         )
@@ -354,9 +377,12 @@ def test_get_recent_jobs(repository: PipelineJobRepository, db_session: Session)
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             file_type="pdf",
+            file_size=1024,
+            file_content=b"test content",
+            pipeline_config={"steps": []},
+            ocr_config={"enabled": True},
             status=StepExecutionStatus.COMPLETED,
-            progress_percent=100,
-            created_at=now - timedelta(days=i)
+            progress_percent=100
         )
         db_session.add(job)
     db_session.commit()
@@ -383,6 +409,10 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
         processing_id="old-job",
         filename="old.pdf",
         file_type="pdf",
+        file_size=1024,
+        file_content=b"old content",
+        pipeline_config={"steps": []},
+        ocr_config={"enabled": True},
         status=StepExecutionStatus.COMPLETED,
         progress_percent=100,
         created_at=old_date
@@ -394,6 +424,10 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
         processing_id="recent-job",
         filename="recent.pdf",
         file_type="pdf",
+        file_size=1024,
+        file_content=b"recent content",
+        pipeline_config={"steps": []},
+        ocr_config={"enabled": True},
         status=StepExecutionStatus.COMPLETED,
         progress_percent=100,
         created_at=recent_date
@@ -405,6 +439,10 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
         processing_id="old-failed",
         filename="old-failed.pdf",
         file_type="pdf",
+        file_size=1024,
+        file_content=b"failed content",
+        pipeline_config={"steps": []},
+        ocr_config={"enabled": True},
         status=StepExecutionStatus.FAILED,
         progress_percent=50,
         created_at=old_date
@@ -442,6 +480,10 @@ def test_count_by_status(repository: PipelineJobRepository, db_session: Session)
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
             file_type="pdf",
+            file_size=1024,
+            file_content=b"test content",
+            pipeline_config={"steps": []},
+            ocr_config={"enabled": True},
             status=status,
             progress_percent=0
         )
