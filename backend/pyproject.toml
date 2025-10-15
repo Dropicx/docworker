@@ -221,6 +221,7 @@ markers = [
     "integration: marks tests as integration tests",
     "unit: marks tests as unit tests",
     "api: marks tests as API tests",
+    "e2e: marks tests as end-to-end tests",
 ]
 
 # ==========================================
