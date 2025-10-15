@@ -31,17 +31,38 @@ const PIPELINE_BASE_URL = `${API_BASE_URL}/pipeline`;
 // Token management (shared with settings service)
 const TOKEN_KEY = 'settings_auth_token';
 
+// Type definitions for error responses
+interface ValidationError {
+  field?: string;
+  message?: string;
+  loc?: (string | number)[];
+  msg?: string;
+  type?: string;
+}
+
+interface CustomErrorResponse {
+  error?: {
+    message?: string;
+    code?: string;
+    details?: {
+      validation_errors?: ValidationError[];
+    };
+  };
+  detail?: ValidationError[] | string;
+  message?: string;
+}
+
 /**
  * Extract error message from various API response formats
  * Handles both FastAPI default format and our custom error middleware format
  */
 function extractErrorMessage(error: AxiosError, fallback: string): string {
-  const data = error.response?.data as any;
+  const data = error.response?.data as CustomErrorResponse | undefined;
 
   // Format 1: Our custom error middleware with validation errors
   // {error: {message: "...", details: {validation_errors: [{field: "...", message: "..."}]}}}
   if (data?.error?.details?.validation_errors) {
-    const errors = data.error.details.validation_errors.map((err: any) => {
+    const errors = data.error.details.validation_errors.map((err: ValidationError) => {
       const field = err.field || 'field';
       const message = err.message || 'validation error';
       return `${field}: ${message}`;
@@ -58,7 +79,7 @@ function extractErrorMessage(error: AxiosError, fallback: string): string {
   if (data?.detail) {
     // Handle validation error array
     if (Array.isArray(data.detail)) {
-      const errors = data.detail.map((err: any) => {
+      const errors = data.detail.map((err: ValidationError) => {
         const field = err.loc ? err.loc.slice(1).join('.') : 'field';
         const message = err.msg || 'validation error';
         return `${field}: ${message}`;
