@@ -190,7 +190,8 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         if not job:
             return None
 
-        job.progress_percent = progress_percent
+        # Clamp progress to 0-100 range
+        job.progress_percent = max(0, min(100, progress_percent))
         if current_step:
             job.current_step = current_step
 
@@ -274,9 +275,9 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
 
         return dict(counts)
 
-    def delete_old_jobs(self, days: int = 7) -> int:
+    def cleanup_old_jobs(self, days: int = 7) -> int:
         """
-        Delete jobs older than specified days.
+        Delete completed jobs older than specified days.
 
         Args:
             days: Number of days to keep
@@ -286,7 +287,10 @@ class PipelineJobRepository(BaseRepository[PipelineJobDB]):
         """
         cutoff_date = datetime.now() - timedelta(days=days)
         jobs_to_delete = (
-            self.session.query(self.model).filter(self.model.created_at < cutoff_date).all()
+            self.db.query(self.model)
+            .filter(self.model.created_at < cutoff_date)
+            .filter(self.model.status == StepExecutionStatus.COMPLETED)
+            .all()
         )
 
         count = len(jobs_to_delete)

@@ -382,7 +382,8 @@ def test_get_recent_jobs(repository: PipelineJobRepository, db_session: Session)
             pipeline_config={"steps": []},
             ocr_config={"enabled": True},
             status=StepExecutionStatus.COMPLETED,
-            progress_percent=100
+            progress_percent=100,
+            created_at=now - timedelta(seconds=i)  # Each job is 1 second older
         )
         db_session.add(job)
     db_session.commit()
