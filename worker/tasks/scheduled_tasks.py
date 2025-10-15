@@ -101,3 +101,105 @@ def cleanup_celery_results():
     except Exception as e:
         logger.error(f"❌ Celery results cleanup error: {str(e)}")
         raise
+
+
+@celery_app.task(name='cleanup_orphaned_jobs')
+def cleanup_orphaned_jobs():
+    """
+    Clean up jobs that have been stuck in RUNNING status.
+
+    This happens when:
+    - Worker service is restarted/rebuilt during job processing
+    - Worker crashes mid-job
+    - Network issues cause worker to lose connection
+
+    Jobs stuck in RUNNING for >15 minutes are marked as FAILED.
+    Runs every 10 minutes via Celery Beat.
+    """
+    logger.info("🧹 Checking for orphaned pipeline jobs...")
+
+    try:
+        import sys
+        sys.path.insert(0, '/app/backend')
+        from app.database.connection import get_session
+        from sqlalchemy import text
+
+        with get_session() as session:
+            # Find jobs that have been RUNNING for more than 15 minutes without updates
+            result = session.execute(
+                text("""
+                UPDATE pipeline_jobs
+                SET status = 'FAILED',
+                    error_message = 'Job orphaned due to worker restart. Please retry your document.',
+                    failed_at = NOW(),
+                    updated_at = NOW()
+                WHERE status = 'RUNNING'
+                  AND updated_at < NOW() - INTERVAL '15 minutes'
+                RETURNING job_id, filename, updated_at
+                """)
+            )
+
+            orphaned_jobs = result.fetchall()
+            session.commit()
+
+            orphaned_count = len(orphaned_jobs)
+
+            if orphaned_count > 0:
+                logger.warning(f"🧹 Cleaned up {orphaned_count} orphaned jobs:")
+                for job in orphaned_jobs:
+                    logger.warning(f"  - {job.job_id} ({job.filename}) - stuck since {job.updated_at}")
+            else:
+                logger.info("✅ No orphaned jobs found")
+
+            return {
+                'status': 'completed',
+                'orphaned_jobs_cleaned': orphaned_count,
+                'jobs': [{'job_id': job.job_id, 'filename': job.filename} for job in orphaned_jobs]
+            }
+
+    except Exception as e:
+        logger.error(f"❌ Orphaned jobs cleanup error: {str(e)}")
+        raise
+
+
+@celery_app.task(name='cleanup_old_files')
+def cleanup_old_files():
+    """
+    Clean up old uploaded files from /tmp directory
+    Runs daily to free up disk space
+    """
+    logger.info("🧹 Cleaning up old temporary files...")
+
+    try:
+        import os
+        import time
+        from pathlib import Path
+
+        tmp_dir = Path('/tmp/medical-translator')
+        if not tmp_dir.exists():
+            logger.info("✅ No temporary directory found")
+            return {'status': 'completed', 'files_removed': 0}
+
+        # Remove files older than 24 hours
+        cutoff_time = time.time() - (24 * 60 * 60)
+        removed_count = 0
+
+        for file_path in tmp_dir.glob('**/*'):
+            if file_path.is_file():
+                if file_path.stat().st_mtime < cutoff_time:
+                    try:
+                        file_path.unlink()
+                        removed_count += 1
+                    except Exception as e:
+                        logger.warning(f"Could not delete {file_path}: {e}")
+
+        logger.info(f"✅ Temporary files cleanup complete: {removed_count} files removed")
+
+        return {
+            'status': 'completed',
+            'files_removed': removed_count
+        }
+
+    except Exception as e:
+        logger.error(f"❌ File cleanup error: {str(e)}")
+        raise

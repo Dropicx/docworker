@@ -49,9 +49,33 @@ celery_app.conf.update(
     result_backend_transport_options={
         'master_name': 'mymaster'
     } if 'sentinel' in REDIS_URL.lower() else {},
+    # Celery Beat schedule for periodic tasks
+    beat_schedule={
+        'cleanup-orphaned-jobs-every-10-min': {
+            'task': 'cleanup_orphaned_jobs',
+            'schedule': 600.0,  # Run every 10 minutes
+        },
+        'cleanup-celery-results-hourly': {
+            'task': 'cleanup_celery_results',
+            'schedule': 3600.0,  # Run every hour
+        },
+        'cleanup-old-files-daily': {
+            'task': 'cleanup_old_files',
+            'schedule': 86400.0,  # Run every 24 hours
+        },
+        'database-maintenance-daily': {
+            'task': 'database_maintenance',
+            'schedule': 86400.0,  # Run every 24 hours
+        },
+    },
 )
 
 logger.info("✅ Celery worker initialized")
+logger.info("📅 Celery Beat schedule configured:")
+logger.info("   - cleanup_orphaned_jobs: every 10 minutes")
+logger.info("   - cleanup_celery_results: every hour")
+logger.info("   - cleanup_old_files: every 24 hours")
+logger.info("   - database_maintenance: every 24 hours")
 
 if __name__ == '__main__':
     celery_app.start()
