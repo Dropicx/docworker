@@ -43,8 +43,18 @@ function extractErrorMessage(error: AxiosError, fallback: string): string {
     return data.error.message;
   }
 
-  // Format 2: FastAPI default {detail: "..."}
+  // Format 2: FastAPI validation errors {detail: [{loc: [...], msg: "...", type: "..."}]}
   if (data?.detail) {
+    // Handle validation error array
+    if (Array.isArray(data.detail)) {
+      const errors = data.detail.map((err: any) => {
+        const field = err.loc ? err.loc.slice(1).join('.') : 'field';
+        const message = err.msg || 'validation error';
+        return `${field}: ${message}`;
+      });
+      return errors.join(', ');
+    }
+    // Handle string detail
     return typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
   }
 

@@ -283,22 +283,25 @@ const PipelineBuilder: React.FC = () => {
     try {
       const updatedStep: PipelineStepRequest = {
         name: step.name,
-        description: step.description,
+        description: step.description || null,
         order: step.order,
         enabled: !step.enabled,
         prompt_template: step.prompt_template,
         selected_model_id: step.selected_model_id,
-        temperature: step.temperature,
-        max_tokens: step.max_tokens,
-        retry_on_failure: step.retry_on_failure,
-        max_retries: step.max_retries,
-        input_from_previous_step: step.input_from_previous_step,
-        output_format: step.output_format,
+        temperature: step.temperature ?? 0.7,
+        max_tokens: step.max_tokens ?? null,
+        retry_on_failure: step.retry_on_failure ?? true,
+        max_retries: step.max_retries ?? 3,
+        input_from_previous_step: step.input_from_previous_step ?? true,
+        output_format: step.output_format || 'text',
         // Include branching fields to prevent unwanted changes
-        document_class_id: step.document_class_id,
-        is_branching_step: step.is_branching_step,
-        branching_field: step.branching_field,
-        post_branching: step.post_branching,
+        document_class_id: step.document_class_id ?? null,
+        is_branching_step: step.is_branching_step ?? false,
+        branching_field: step.branching_field || null,
+        post_branching: step.post_branching ?? false,
+        // Additional fields
+        required_context_variables: step.required_context_variables || null,
+        stop_conditions: step.stop_conditions || null,
       };
 
       // Optimistically update local state first
