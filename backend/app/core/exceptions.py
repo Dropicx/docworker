@@ -61,7 +61,9 @@ class ValidationError(BaseAppError):
         - Invalid parameter values
     """
 
-    def __init__(self, message: str, field: str | None = None, details: dict[str, Any] | None = None):
+    def __init__(
+        self, message: str, field: str | None = None, details: dict[str, Any] | None = None
+    ):
         super().__init__(message, details, "VALIDATION_ERROR")
         if field:
             self.details["field"] = field

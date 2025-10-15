@@ -13,7 +13,7 @@ from app.core.circuit_breaker import CircuitBreaker, CircuitState
 from app.core.exceptions import (
     APITimeoutError,
     AuthenticationError,
-    BaseAppException,
+    BaseAppError,
     CircuitBreakerError,
     FileValidationError,
     ResourceNotFoundError,
@@ -35,8 +35,8 @@ from app.core.retry_policy import (
 
 
 def test_base_exception_structure():
-    """Test that BaseAppException has correct structure."""
-    exc = BaseAppException(
+    """Test that BaseAppError has correct structure."""
+    exc = BaseAppError(
         message="Test error",
         details={"key": "value"},
         error_code="TEST_ERROR",

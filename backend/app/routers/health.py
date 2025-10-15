@@ -55,6 +55,7 @@ async def health_check(request: Request = None):
         # Redis prüfen
         try:
             import redis
+
             redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
             redis_client = redis.from_url(redis_url, socket_connect_timeout=2)
             redis_client.ping()
@@ -65,6 +66,7 @@ async def health_check(request: Request = None):
         # Celery Worker prüfen
         try:
             from celery import Celery
+
             redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
             celery_app = Celery(broker=redis_url, backend=redis_url)
 

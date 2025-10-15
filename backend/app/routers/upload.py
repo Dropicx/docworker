@@ -5,7 +5,6 @@ import uuid
 
 from celery import Celery
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
-from shared.task_queue import check_workers_available
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
@@ -67,18 +66,20 @@ async def upload_document(
         try:
             redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
             celery_app = Celery(broker=redis_url, backend=redis_url)
-            worker_status = check_workers_available(celery_app, timeout=1.0)
 
-            if not worker_status["available"]:
-                logger.error(
-                    f"❌ Keine Worker verfügbar: {worker_status.get('error', 'Unknown error')}"
-                )
+            # Check worker availability directly
+            inspect = celery_app.control.inspect(timeout=1.0)
+            active_workers = inspect.active()
+
+            if not active_workers:
+                logger.error("❌ Keine Worker verfügbar")
                 raise HTTPException(
                     status_code=503,
                     detail="Service temporarily unavailable: No workers available to process document. Please try again later.",
                 )
 
-            logger.info(f"✅ Worker verfügbar: {worker_status['worker_count']} aktive Worker")
+            worker_count = len(active_workers)
+            logger.info(f"✅ Worker verfügbar: {worker_count} aktive Worker")
         except HTTPException:
             raise
         except Exception as e:

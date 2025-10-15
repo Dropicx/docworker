@@ -168,7 +168,9 @@ class CircuitBreaker:
                 if current_state == CircuitState.OPEN:
                     # Check if we should try recovery
                     if self._should_attempt_recovery():
-                        logger.info(f"🔄 Circuit '{self.name}': OPEN → HALF_OPEN (attempting recovery)")
+                        logger.info(
+                            f"🔄 Circuit '{self.name}': OPEN → HALF_OPEN (attempting recovery)"
+                        )
                         self._state = CircuitState.HALF_OPEN
                         self._success_count = 0
                     else:
@@ -181,8 +183,7 @@ class CircuitBreaker:
                                 "state": "OPEN",
                                 "last_failure": self._last_failure_time,
                                 "retry_after": int(
-                                    self.recovery_timeout
-                                    - (time.time() - self._last_failure_time)
+                                    self.recovery_timeout - (time.time() - self._last_failure_time)
                                 ),
                             },
                         )
@@ -219,7 +220,9 @@ class CircuitBreaker:
                 if current_state == CircuitState.OPEN:
                     # Check if we should try recovery
                     if self._should_attempt_recovery():
-                        logger.info(f"🔄 Circuit '{self.name}': OPEN → HALF_OPEN (attempting recovery)")
+                        logger.info(
+                            f"🔄 Circuit '{self.name}': OPEN → HALF_OPEN (attempting recovery)"
+                        )
                         self._state = CircuitState.HALF_OPEN
                         self._success_count = 0
                     else:
@@ -232,8 +235,7 @@ class CircuitBreaker:
                                 "state": "OPEN",
                                 "last_failure": self._last_failure_time,
                                 "retry_after": int(
-                                    self.recovery_timeout
-                                    - (time.time() - self._last_failure_time)
+                                    self.recovery_timeout - (time.time() - self._last_failure_time)
                                 ),
                             },
                         )

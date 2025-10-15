@@ -91,7 +91,9 @@ async def base_exception_handler(request: Request, exc: BaseAppError) -> JSONRes
         )
     elif status_code >= 400:
         logger.warning(
-            f"⚠️ Client error: {exc.error_code} | " f"Path: {request.url.path} | " f"Message: {exc.message}"
+            f"⚠️ Client error: {exc.error_code} | "
+            f"Path: {request.url.path} | "
+            f"Message: {exc.message}"
         )
 
     # Get request ID if available
@@ -146,7 +148,9 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
     )
 
 
-async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: RequestValidationError
+) -> JSONResponse:
     """
     Handle Pydantic validation errors.
 

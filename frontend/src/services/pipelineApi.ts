@@ -166,7 +166,9 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to update OCR configuration'));
+      throw new Error(
+        extractErrorMessage(error as AxiosError, 'Failed to update OCR configuration')
+      );
     }
   }
 
@@ -343,7 +345,9 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      throw new Error(extractErrorMessage(error as AxiosError, `Failed to get steps for class ${classId}`));
+      throw new Error(
+        extractErrorMessage(error as AxiosError, `Failed to get steps for class ${classId}`)
+      );
     }
   }
 
@@ -358,7 +362,9 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to get pipeline visualization'));
+      throw new Error(
+        extractErrorMessage(error as AxiosError, 'Failed to get pipeline visualization')
+      );
     }
   }
 
@@ -390,7 +396,9 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      throw new Error(extractErrorMessage(error as AxiosError, `Failed to get document class ${classId}`));
+      throw new Error(
+        extractErrorMessage(error as AxiosError, `Failed to get document class ${classId}`)
+      );
     }
   }
 
@@ -425,7 +433,9 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      throw new Error(extractErrorMessage(error as AxiosError, `Failed to update document class ${classId}`));
+      throw new Error(
+        extractErrorMessage(error as AxiosError, `Failed to update document class ${classId}`)
+      );
     }
   }
 
@@ -438,7 +448,9 @@ class PipelineApiService {
         headers: this.getAuthHeaders(),
       });
     } catch (error) {
-      throw new Error(extractErrorMessage(error as AxiosError, `Failed to delete document class ${classId}`));
+      throw new Error(
+        extractErrorMessage(error as AxiosError, `Failed to delete document class ${classId}`)
+      );
     }
   }
 
@@ -453,7 +465,9 @@ class PipelineApiService {
       );
       return response.data;
     } catch (error) {
-      throw new Error(extractErrorMessage(error as AxiosError, 'Failed to get document class statistics'));
+      throw new Error(
+        extractErrorMessage(error as AxiosError, 'Failed to get document class statistics')
+      );
     }
   }
 }
