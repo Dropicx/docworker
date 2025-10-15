@@ -112,7 +112,11 @@ npm run test:watch
 
 #### Run Specific Test
 ```bash
-npm test -- UploadZone.test.tsx
+# Run tests matching a pattern
+npm test -- FileUpload.test.tsx
+
+# Or run tests in a specific directory
+npm test -- components/__tests__/
 ```
 
 ---
@@ -258,11 +262,14 @@ def test_privacy_filter_removes_email_addresses():
 
 ### Frontend Testing Best Practices
 
+> **Note**: Test files are excluded from the TypeScript build via `tsconfig.json`. They run independently via Vitest and won't interfere with production builds.
+
 #### 1. Test User Interactions
 ```typescript
+// Example: Testing the FileUpload component
 it('calls onUpload when file is selected', async () => {
   const mockOnUpload = vi.fn();
-  render(<UploadZone onUpload={mockOnUpload} />);
+  render(<FileUpload onUpload={mockOnUpload} />);
 
   const file = new File(['content'], 'test.pdf', { type: 'application/pdf' });
   const input = screen.getByTestId('file-input');
@@ -277,8 +284,8 @@ it('calls onUpload when file is selected', async () => {
 
 #### 2. Test Component Rendering
 ```typescript
-it('renders upload zone with correct text', () => {
-  render(<UploadZone onUpload={vi.fn()} />);
+it('renders file upload with correct text', () => {
+  render(<FileUpload onUpload={vi.fn()} />);
 
   expect(screen.getByText(/Dokument hochladen/i)).toBeInTheDocument();
   expect(screen.getByText(/PDF, JPG/i)).toBeInTheDocument();
@@ -288,9 +295,11 @@ it('renders upload zone with correct text', () => {
 #### 3. Test Error States
 ```typescript
 it('shows error for invalid file type', async () => {
-  render(<UploadZone onUpload={vi.fn()} />);
+  render(<FileUpload onUpload={vi.fn()} />);
 
   const invalidFile = new File(['test'], 'test.txt', { type: 'text/plain' });
+  const input = screen.getByTestId('file-input');
+
   fireEvent.change(input, { target: { files: [invalidFile] } });
 
   await waitFor(() => {
@@ -298,6 +307,11 @@ it('shows error for invalid file type', async () => {
   });
 });
 ```
+
+#### 4. Important Configuration Notes
+- Test files must be excluded from `tsconfig.json` to prevent build errors
+- Use `tsconfig.exclude` to exclude: `__tests__` folders, `*.test.ts`, `*.test.tsx`, and `test/` folder
+- Tests run via Vitest's own TypeScript handling, not the main TypeScript compiler
 
 ---
 
@@ -312,10 +326,12 @@ Our CI/CD pipeline runs automatically on every push and pull request:
 - Uploads coverage to Codecov
 - Fails if tests fail
 
-**Frontend Tests** (when implemented):
-- Runs Vitest
-- Checks coverage thresholds
+**Frontend Tests** (`frontend-tests` job):
+- Runs Vitest with coverage
+- Uploads coverage to Codecov
 - Fails if tests fail
+
+> **Note**: Currently, no component tests exist yet. The testing infrastructure is ready - you can add tests for components like FileUpload, ProcessingStatus, etc. in `src/components/__tests__/`
 
 ### Configuration
 
