@@ -75,9 +75,9 @@ jobs:
     runs-on: arc-runner-set
 
     # Job container required for using services in Kubernetes mode
-    # Using Ubuntu base image that has GitHub Actions prerequisites (git, node, etc.)
+    # Using Node.js base image (has node for GitHub Actions) + install Python
     container:
-      image: ubuntu:22.04
+      image: node:20-bookworm
 
     # Service containers run as separate Kubernetes pods
     services:
