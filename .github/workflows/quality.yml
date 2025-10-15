@@ -78,9 +78,9 @@ jobs:
         working-directory: ./backend
 
     env:
-      DATABASE_URL: sqlite:///:memory:
-      OVH_AI_ENDPOINTS_ACCESS_TOKEN: test-token
-      ENVIRONMENT: development
+      DATABASE_URL: "sqlite:///:memory:"
+      OVH_AI_ENDPOINTS_ACCESS_TOKEN: "test-token"
+      ENVIRONMENT: "development"
 
     steps:
       - name: Checkout code
