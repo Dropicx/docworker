@@ -15,12 +15,12 @@ This prevents the application from repeatedly calling failing services,
 allowing them time to recover while providing fast failures to clients.
 """
 
-import logging
-import time
 from collections.abc import Callable
 from enum import Enum
 from functools import wraps
+import logging
 from threading import Lock
+import time
 from typing import Any, ParamSpec, TypeVar
 
 from app.core.exceptions import CircuitBreakerError, ServiceUnavailableError

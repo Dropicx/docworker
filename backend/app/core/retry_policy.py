@@ -12,8 +12,8 @@ Features:
 - Before/after retry callbacks
 """
 
-import logging
 from collections.abc import Callable
+import logging
 from typing import Any
 
 from tenacity import (
@@ -27,13 +27,7 @@ from tenacity import (
     wait_exponential,
 )
 
-from app.core.exceptions import (
-    APITimeoutError,
-    CircuitBreakerError,
-    RateLimitError,
-    ServiceUnavailableError,
-    is_retryable_error,
-)
+from app.core.exceptions import CircuitBreakerError, RateLimitError, is_retryable_error
 
 logger = logging.getLogger(__name__)
 
@@ -231,7 +225,7 @@ def with_retries(
                     f"❌ Operation '{name}' failed after "
                     f"{e.last_attempt.attempt_number} attempts"
                 )
-                raise e.last_attempt.exception()
+                raise e.last_attempt.exception() from e
 
         return wrapper
 
@@ -278,7 +272,7 @@ def with_async_retries(
                     f"❌ Async operation '{name}' failed after "
                     f"{e.last_attempt.attempt_number} attempts"
                 )
-                raise e.last_attempt.exception()
+                raise e.last_attempt.exception() from e
 
         return wrapper
 
@@ -329,7 +323,7 @@ def execute_with_retries(
 
     except RetryError as e:
         logger.error(f"❌ Operation '{name}' failed after {e.last_attempt.attempt_number} attempts")
-        raise e.last_attempt.exception()
+        raise e.last_attempt.exception() from e
 
 
 async def execute_async_with_retries(
@@ -375,4 +369,4 @@ async def execute_async_with_retries(
         logger.error(
             f"❌ Async operation '{name}' failed after {e.last_attempt.attempt_number} attempts"
         )
-        raise e.last_attempt.exception()
+        raise e.last_attempt.exception() from e

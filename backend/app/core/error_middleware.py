@@ -23,7 +23,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.config import settings
-from app.core.exceptions import BaseAppException, get_http_status_code
+from app.core.exceptions import BaseAppError, get_http_status_code
 
 logger = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def create_error_response(
     return response
 
 
-async def base_exception_handler(request: Request, exc: BaseAppException) -> JSONResponse:
+async def base_exception_handler(request: Request, exc: BaseAppError) -> JSONResponse:
     """
     Handle custom application exceptions.
 
@@ -246,7 +246,7 @@ def register_error_handlers(app) -> None:
         >>> register_error_handlers(app)
     """
     # Custom application exceptions
-    app.add_exception_handler(BaseAppException, base_exception_handler)
+    app.add_exception_handler(BaseAppError, base_exception_handler)
 
     # HTTP exceptions
     app.add_exception_handler(StarletteHTTPException, http_exception_handler)

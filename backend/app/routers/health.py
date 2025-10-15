@@ -6,8 +6,6 @@ import shutil
 import tempfile
 
 from fastapi import APIRouter, Request
-from shared.redis_client import get_redis
-from shared.task_queue import check_workers_available
 
 from app.models.document import HealthCheck
 from app.services.cleanup import get_memory_usage
@@ -56,7 +54,9 @@ async def health_check(request: Request = None):
 
         # Redis prüfen
         try:
-            redis_client = get_redis()
+            import redis
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+            redis_client = redis.from_url(redis_url, socket_connect_timeout=2)
             redis_client.ping()
             services["redis"] = "healthy"
         except Exception as e:
@@ -65,15 +65,18 @@ async def health_check(request: Request = None):
         # Celery Worker prüfen
         try:
             from celery import Celery
-
             redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
             celery_app = Celery(broker=redis_url, backend=redis_url)
 
-            worker_status = check_workers_available(celery_app, timeout=1.0)
-            if worker_status["available"]:
-                services["worker"] = f"healthy ({worker_status['worker_count']} active)"
+            # Simple worker check
+            inspect = celery_app.control.inspect(timeout=1.0)
+            active_workers = inspect.active()
+
+            if active_workers:
+                worker_count = len(active_workers)
+                services["worker"] = f"healthy ({worker_count} active)"
             else:
-                services["worker"] = f"error: {worker_status.get('error', 'No workers available')}"
+                services["worker"] = "error: No workers available"
         except Exception as e:
             services["worker"] = f"error: {str(e)[:50]}"
 

@@ -740,11 +740,12 @@ class AdvancedPrivacyFilter:
 
         try:
             import os
+            from pathlib import Path
 
             # Try loading from Railway volume first (for worker processes)
             volume_path = os.getenv("SPACY_MODEL_PATH", "/data/spacy_models/de_core_news_sm")
 
-            if os.path.exists(volume_path):
+            if Path(volume_path).exists():
                 logger.info(f"🔍 Loading spaCy model from volume: {volume_path}")
                 self.nlp = spacy.load(volume_path)
                 logger.info("✅ spaCy model loaded from Railway volume")

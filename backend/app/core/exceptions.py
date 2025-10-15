@@ -9,7 +9,7 @@ from datetime import datetime
 from typing import Any
 
 
-class BaseAppException(Exception):
+class BaseAppError(Exception):
     """
     Base exception for all application-specific exceptions.
 
@@ -50,7 +50,7 @@ class BaseAppException(Exception):
 # ==================== Validation Errors ====================
 
 
-class ValidationError(BaseAppException):
+class ValidationError(BaseAppError):
     """
     Raised when input validation fails.
 
@@ -89,7 +89,7 @@ class FileValidationError(ValidationError):
 # ==================== External Service Errors ====================
 
 
-class ExternalServiceError(BaseAppException):
+class ExternalServiceError(BaseAppError):
     """
     Base class for external service failures.
 
@@ -210,7 +210,7 @@ class APITimeoutError(ExternalServiceError):
 # ==================== Processing Errors ====================
 
 
-class ProcessingError(BaseAppException):
+class ProcessingError(BaseAppError):
     """
     Raised when document processing fails.
 
@@ -298,7 +298,7 @@ class PipelineStepError(ProcessingError):
 # ==================== Database Errors ====================
 
 
-class DatabaseError(BaseAppException):
+class DatabaseError(BaseAppError):
     """
     Raised when database operations fail.
 
@@ -342,7 +342,7 @@ class ResourceNotFoundError(DatabaseError):
 # ==================== Configuration Errors ====================
 
 
-class ConfigurationError(BaseAppException):
+class ConfigurationError(BaseAppError):
     """
     Raised when application configuration is invalid or missing.
 
@@ -367,7 +367,7 @@ class ConfigurationError(BaseAppException):
 # ==================== Circuit Breaker Errors ====================
 
 
-class CircuitBreakerError(BaseAppException):
+class CircuitBreakerError(BaseAppError):
     """
     Raised when a circuit breaker is open and blocks a request.
 
@@ -438,7 +438,7 @@ def get_http_status_code(exception: Exception) -> int:
             return status_code
 
     # Default status codes for base classes
-    if isinstance(exception, BaseAppException):
+    if isinstance(exception, BaseAppError):
         return 500
 
     # Unknown exceptions
