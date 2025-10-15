@@ -91,14 +91,16 @@ class ModularPipelineExecutor:
         """
         Load pre-branching universal pipeline steps (document_class_id = NULL, post_branching = FALSE).
         These steps run for all documents BEFORE document-specific processing.
+        Only ENABLED steps are returned (filtered by repository).
 
         Returns:
             List of pre-branching universal pipeline steps ordered by execution order
         """
         try:
-            # Get universal steps and filter for pre-branching
+            # Get universal steps (already filtered for enabled by repository)
             universal_steps = self.step_repository.get_universal_steps()
-            steps = [s for s in universal_steps if s.enabled and not s.post_branching]
+            # Filter for pre-branching only (post_branching = False)
+            steps = [s for s in universal_steps if not s.post_branching]
 
             logger.info(f"📋 Loaded {len(steps)} pre-branching universal pipeline steps")
             return steps
@@ -110,11 +112,13 @@ class ModularPipelineExecutor:
         """
         Load post-branching universal pipeline steps (document_class_id = NULL, post_branching = TRUE).
         These steps run for all documents AFTER document-specific processing.
+        Only ENABLED steps are returned (filtered by repository).
 
         Returns:
             List of post-branching universal pipeline steps ordered by execution order
         """
         try:
+            # Get post-branching steps (already filtered for enabled by repository)
             steps = self.step_repository.get_post_branching_steps()
 
             logger.info(f"📋 Loaded {len(steps)} post-branching universal pipeline steps")
@@ -126,6 +130,7 @@ class ModularPipelineExecutor:
     def load_steps_by_document_class(self, document_class_id: int) -> list[DynamicPipelineStepDB]:
         """
         Load pipeline steps specific to a document class using repository pattern.
+        Only ENABLED steps are returned (filtered by repository).
 
         Args:
             document_class_id: ID of the document class
@@ -134,14 +139,13 @@ class ModularPipelineExecutor:
             List of document-specific pipeline steps ordered by execution order
         """
         try:
+            # Get document class steps (already filtered for enabled by repository)
             steps = self.step_repository.get_steps_by_document_class(document_class_id)
-            # Filter for enabled steps only
-            enabled_steps = [s for s in steps if s.enabled]
 
             logger.info(
-                f"📋 Loaded {len(enabled_steps)} steps for document class ID {document_class_id}"
+                f"📋 Loaded {len(steps)} enabled steps for document class ID {document_class_id}"
             )
-            return enabled_steps
+            return steps
         except Exception as e:
             logger.error(f"❌ Failed to load steps for document class {document_class_id}: {e}")
             return []

@@ -59,13 +59,14 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Get universal pipeline steps (not specific to any document class).
 
         Universal steps run for all document types.
+        Only returns ENABLED steps.
 
         Returns:
-            List of universal steps ordered by execution order
+            List of enabled universal steps ordered by execution order
         """
         return (
             self.db.query(self.model)
-            .filter(self.model.document_class_id.is_(None))
+            .filter(self.model.document_class_id.is_(None), self.model.enabled == True)
             .order_by(self.model.order)
             .all()
         )
@@ -73,16 +74,17 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
     def get_steps_by_document_class(self, document_class_id: int) -> list[DynamicPipelineStepDB]:
         """
         Get pipeline steps for a specific document class.
+        Only returns ENABLED steps.
 
         Args:
             document_class_id: ID of the document class
 
         Returns:
-            List of steps for the document class ordered by execution order
+            List of enabled steps for the document class ordered by execution order
         """
         return (
             self.db.query(self.model)
-            .filter_by(document_class_id=document_class_id)
+            .filter_by(document_class_id=document_class_id, enabled=True)
             .order_by(self.model.order)
             .all()
         )
@@ -99,13 +101,14 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
     def get_post_branching_steps(self) -> list[DynamicPipelineStepDB]:
         """
         Get steps that run after document-specific processing.
+        Only returns ENABLED steps.
 
         Returns:
-            List of post-branching steps ordered by execution order
+            List of enabled post-branching steps ordered by execution order
         """
         return (
             self.db.query(self.model)
-            .filter_by(post_branching=True)
+            .filter_by(post_branching=True, enabled=True)
             .order_by(self.model.order)
             .all()
         )

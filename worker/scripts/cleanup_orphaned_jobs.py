@@ -36,7 +36,11 @@ def cleanup_orphaned_jobs():
         redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
         r = redis.from_url(redis_url, decode_responses=True)
 
-        with get_session() as session:
+        # Get session from generator
+        session_gen = get_session()
+        session = next(session_gen)
+
+        try:
             # At startup, mark ALL RUNNING jobs as orphaned
             # (since worker is just starting, no jobs should be running)
             result = session.execute(
@@ -75,6 +79,12 @@ def cleanup_orphaned_jobs():
                 logger.info("✅ Startup cleanup: No orphaned jobs found")
 
             return orphaned_count
+        finally:
+            # Close the session generator
+            try:
+                next(session_gen)
+            except StopIteration:
+                pass
 
     except Exception as e:
         logger.error(f"❌ Startup cleanup error: {str(e)}")

@@ -170,7 +170,11 @@ def cleanup_orphaned_jobs():
         redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
         r = redis.from_url(redis_url, decode_responses=True)
 
-        with get_session() as session:
+        # Get session from generator
+        session_gen = get_session()
+        session = next(session_gen)
+
+        try:
             # Find jobs that have been RUNNING for more than 15 minutes without updates
             result = session.execute(
                 text("""
@@ -215,6 +219,12 @@ def cleanup_orphaned_jobs():
                 'celery_tasks_removed': celery_tasks_removed,
                 'jobs': [{'job_id': job.job_id, 'filename': job.filename} for job in orphaned_jobs]
             }
+        finally:
+            # Close the session generator
+            try:
+                next(session_gen)
+            except StopIteration:
+                pass
 
     except Exception as e:
         logger.error(f"❌ Orphaned jobs cleanup error: {str(e)}")
