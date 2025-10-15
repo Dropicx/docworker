@@ -47,6 +47,7 @@ def sample_job(db_session: Session) -> PipelineJobDB:
         job_id="job-test-123",
         processing_id="test-123",
         filename="test_document.pdf",
+        file_type="pdf",
         status=StepExecutionStatus.PENDING,
         progress_percent=0,
         created_at=datetime.now(),
@@ -73,6 +74,7 @@ def test_create_job(repository: PipelineJobRepository):
         job_id=job_id,
         processing_id=processing_id,
         filename=filename,
+        file_type="pdf",
         status=StepExecutionStatus.PENDING,
         progress_percent=0
     )
@@ -114,6 +116,7 @@ def test_get_all_jobs(repository: PipelineJobRepository, db_session: Session):
             job_id=f"job-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
+            file_type="pdf",
             status=StepExecutionStatus.PENDING,
             progress_percent=0
         )
@@ -204,6 +207,7 @@ def test_get_active_jobs(repository: PipelineJobRepository, db_session: Session)
             job_id=f"job-active-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
+            file_type="pdf",
             status=status,
             progress_percent=0
         )
@@ -233,6 +237,7 @@ def test_get_pending_jobs(repository: PipelineJobRepository, db_session: Session
             job_id=f"job-pending-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
+            file_type="pdf",
             status=status,
             progress_percent=0
         )
@@ -324,6 +329,7 @@ def test_get_jobs_by_status(repository: PipelineJobRepository, db_session: Sessi
             job_id=f"job-status-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
+            file_type="pdf",
             status=status,
             progress_percent=100 if status == StepExecutionStatus.COMPLETED else 50
         )
@@ -347,6 +353,7 @@ def test_get_recent_jobs(repository: PipelineJobRepository, db_session: Session)
             job_id=f"job-recent-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
+            file_type="pdf",
             status=StepExecutionStatus.COMPLETED,
             progress_percent=100,
             created_at=now - timedelta(days=i)
@@ -375,6 +382,7 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
         job_id="job-old-job",
         processing_id="old-job",
         filename="old.pdf",
+        file_type="pdf",
         status=StepExecutionStatus.COMPLETED,
         progress_percent=100,
         created_at=old_date
@@ -385,6 +393,7 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
         job_id="job-recent-job",
         processing_id="recent-job",
         filename="recent.pdf",
+        file_type="pdf",
         status=StepExecutionStatus.COMPLETED,
         progress_percent=100,
         created_at=recent_date
@@ -395,6 +404,7 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
         job_id="job-old-failed",
         processing_id="old-failed",
         filename="old-failed.pdf",
+        file_type="pdf",
         status=StepExecutionStatus.FAILED,
         progress_percent=50,
         created_at=old_date
@@ -431,6 +441,7 @@ def test_count_by_status(repository: PipelineJobRepository, db_session: Session)
             job_id=f"job-count-test-{i}",
             processing_id=f"test-{i}",
             filename=f"doc_{i}.pdf",
+            file_type="pdf",
             status=status,
             progress_percent=0
         )
