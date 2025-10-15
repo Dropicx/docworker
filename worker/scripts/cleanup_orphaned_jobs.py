@@ -28,8 +28,13 @@ def cleanup_orphaned_jobs():
     logger.info("🔍 Startup: Checking for orphaned pipeline jobs...")
 
     try:
+        import redis
         from app.database.connection import get_session
         from sqlalchemy import text
+
+        # Connect to Redis
+        redis_url = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
+        r = redis.from_url(redis_url, decode_responses=True)
 
         with get_session() as session:
             # At startup, mark ALL RUNNING jobs as orphaned
@@ -50,12 +55,22 @@ def cleanup_orphaned_jobs():
             session.commit()
 
             orphaned_count = len(orphaned_jobs)
+            celery_tasks_removed = 0
 
             if orphaned_count > 0:
                 logger.warning(f"🧹 Startup cleanup: Found {orphaned_count} orphaned jobs from previous restart")
                 for job in orphaned_jobs:
                     logger.warning(f"  ✗ {job.job_id} - {job.filename} (marked as FAILED)")
-                logger.info("✅ Orphaned jobs cleaned up - users can retry")
+
+                    # Clean up Celery task result from Redis
+                    celery_key = f"celery-task-meta-{job.job_id}"
+                    if r.exists(celery_key):
+                        r.delete(celery_key)
+                        celery_tasks_removed += 1
+                        logger.info(f"    🗑️  Removed Celery task: {celery_key}")
+
+                logger.info(f"✅ Orphaned jobs cleaned up - users can retry")
+                logger.info(f"✅ Removed {celery_tasks_removed} Celery task results from Redis")
             else:
                 logger.info("✅ Startup cleanup: No orphaned jobs found")
 
