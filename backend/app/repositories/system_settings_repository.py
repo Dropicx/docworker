@@ -280,9 +280,7 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
                 "value": setting.value,
                 "description": setting.description,
                 "created_at": setting.created_at.isoformat() if setting.created_at else None,
-                "last_modified": setting.updated_at.isoformat()
-                if setting.updated_at
-                else None,
+                "last_modified": setting.updated_at.isoformat() if setting.updated_at else None,
             }
             for setting in settings
         }
