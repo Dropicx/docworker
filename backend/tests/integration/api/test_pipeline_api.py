@@ -76,7 +76,6 @@ def seed_test_data(test_db):
         name="Meta-Llama-3_3-70B-Instruct",
         display_name="Llama 3.3 70B",
         provider="OVH",
-        api_endpoint="https://test.api/v1",
         max_tokens=8192,
         is_enabled=True,
         supports_vision=False,

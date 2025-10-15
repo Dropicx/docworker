@@ -72,7 +72,6 @@ def seed_full_pipeline(test_db):
         name="Meta-Llama-3_3-70B-Instruct",
         display_name="Llama 3.3 70B",
         provider="OVH",
-        api_endpoint="https://test.api/v1",
         max_tokens=8192,
         is_enabled=True,
         supports_vision=False,
@@ -357,10 +356,10 @@ def test_health_check_flow(client):
     E2E Test: Health check endpoint
 
     Flow:
-    1. Call /health endpoint
+    1. Call /api/health endpoint
     2. Verify system status
     """
-    response = client.get("/health")
+    response = client.get("/api/health")
 
     assert response.status_code == 200
     data = response.json()

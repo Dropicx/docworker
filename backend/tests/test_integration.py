@@ -98,7 +98,6 @@ def seed_models(db_session):
         AvailableModelDB(
             name="Meta-Llama-3_3-70B-Instruct",
             provider="OVH",
-            api_endpoint="https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
             max_tokens=8192,
             cost_per_input_token=0.0001,
             cost_per_output_token=0.0002,
@@ -108,7 +107,6 @@ def seed_models(db_session):
         AvailableModelDB(
             name="Mistral-Nemo-Instruct-2407",
             provider="OVH",
-            api_endpoint="https://oai.endpoints.kepler.ai.cloud.ovh.net/v1",
             max_tokens=4096,
             cost_per_input_token=0.00005,
             cost_per_output_token=0.0001,
