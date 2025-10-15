@@ -91,8 +91,7 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 5432:5432
+        # No ports mapping needed - pod-to-pod communication via service DNS
 
     env:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/doctranslator_test
