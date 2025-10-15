@@ -169,7 +169,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
             }
         )
 
+    # Log each validation error for debugging
     logger.warning(f"⚠️ Validation error | Path: {request.url.path} | Errors: {len(errors)}")
+    for err in errors:
+        logger.warning(f"   - {err['field']}: {err['message']} (type: {err['type']})")
 
     request_id = request.headers.get("X-Request-ID")
 

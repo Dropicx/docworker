@@ -38,12 +38,23 @@ const TOKEN_KEY = 'settings_auth_token';
 function extractErrorMessage(error: AxiosError, fallback: string): string {
   const data = error.response?.data as any;
 
-  // Format 1: Our custom error middleware {error: {message: "...", code: "..."}}
+  // Format 1: Our custom error middleware with validation errors
+  // {error: {message: "...", details: {validation_errors: [{field: "...", message: "..."}]}}}
+  if (data?.error?.details?.validation_errors) {
+    const errors = data.error.details.validation_errors.map((err: any) => {
+      const field = err.field || 'field';
+      const message = err.message || 'validation error';
+      return `${field}: ${message}`;
+    });
+    return errors.join(', ');
+  }
+
+  // Format 2: Our custom error middleware {error: {message: "...", code: "..."}}
   if (data?.error?.message) {
     return data.error.message;
   }
 
-  // Format 2: FastAPI validation errors {detail: [{loc: [...], msg: "...", type: "..."}]}
+  // Format 3: FastAPI validation errors {detail: [{loc: [...], msg: "...", type: "..."}]}
   if (data?.detail) {
     // Handle validation error array
     if (Array.isArray(data.detail)) {
@@ -58,17 +69,17 @@ function extractErrorMessage(error: AxiosError, fallback: string): string {
     return typeof data.detail === 'string' ? data.detail : JSON.stringify(data.detail);
   }
 
-  // Format 3: Direct message field {message: "..."}
+  // Format 4: Direct message field {message: "..."}
   if (data?.message) {
     return data.message;
   }
 
-  // Format 4: HTTP status text
+  // Format 5: HTTP status text
   if (error.response?.statusText) {
     return error.response.statusText;
   }
 
-  // Format 5: Error message from Error object
+  // Format 6: Error message from Error object
   if (error.message) {
     return error.message;
   }
