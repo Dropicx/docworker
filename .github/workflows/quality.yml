@@ -71,16 +71,64 @@ jobs:
   # Backend Testing
   # ==========================================
   backend-tests:
-    name: Backend Tests (Skipped - Infrastructure Setup)
+    name: Backend Tests
     runs-on: arc-runner-set
 
+    # Job container required for using services in Kubernetes mode
+    container:
+      image: python:3.11
+
+    # Service containers run as separate Kubernetes pods
+    services:
+      postgres:
+        image: postgres:14
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: doctranslator_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/doctranslator_test
+      OVH_AI_ENDPOINTS_ACCESS_TOKEN: test-token
+      ENVIRONMENT: test
+
     steps:
-      - name: Skip backend tests
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
         run: |
-          echo "⚠️ Backend tests temporarily skipped"
-          echo "Reason: ARC runner infrastructure setup in progress"
-          echo "Status: Waiting for Kubernetes service container configuration"
-          exit 0
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: Run pytest
+        working-directory: ./backend
+        run: |
+          pytest --cov=app --cov-report=xml --cov-report=term-missing --junitxml=pytest-report.xml
+        continue-on-error: false
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./backend/coverage.xml
+          flags: backend
+          name: backend-coverage
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-results
+          path: backend/pytest-report.xml
+          retention-days: 30
 
   # ==========================================
   # Frontend Code Quality
