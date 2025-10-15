@@ -159,6 +159,50 @@ jobs:
         continue-on-error: false
 
   # ==========================================
+  # Frontend Testing
+  # ==========================================
+  frontend-tests:
+    name: Frontend Tests
+    runs-on: arc-runner-set
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+        continue-on-error: false
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./frontend/coverage/lcov.info
+          flags: frontend
+          name: frontend-coverage
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vitest-results
+          path: frontend/coverage/
+          retention-days: 30
+
+  # ==========================================
   # Frontend Build
   # ==========================================
   frontend-build:
@@ -249,7 +293,7 @@ jobs:
   quality-gate:
     name: Quality Gate
     runs-on: arc-runner-set
-    needs: [backend-quality, backend-tests, frontend-quality, frontend-build]
+    needs: [backend-quality, backend-tests, frontend-quality, frontend-tests, frontend-build]
     if: always()
 
     steps:
@@ -258,11 +302,13 @@ jobs:
           echo "Backend Quality: ${{ needs.backend-quality.result }}"
           echo "Backend Tests: ${{ needs.backend-tests.result }}"
           echo "Frontend Quality: ${{ needs.frontend-quality.result }}"
+          echo "Frontend Tests: ${{ needs.frontend-tests.result }}"
           echo "Frontend Build: ${{ needs.frontend-build.result }}"
 
           if [[ "${{ needs.backend-quality.result }}" != "success" ]] || \
              [[ "${{ needs.backend-tests.result }}" != "success" ]] || \
              [[ "${{ needs.frontend-quality.result }}" != "success" ]] || \
+             [[ "${{ needs.frontend-tests.result }}" != "success" ]] || \
              [[ "${{ needs.frontend-build.result }}" != "success" ]]; then
             echo "❌ Quality gate FAILED"
             exit 1
@@ -279,6 +325,7 @@ jobs:
               'Backend Quality': '${{ needs.backend-quality.result }}',
               'Backend Tests': '${{ needs.backend-tests.result }}',
               'Frontend Quality': '${{ needs.frontend-quality.result }}',
+              'Frontend Tests': '${{ needs.frontend-tests.result }}',
               'Frontend Build': '${{ needs.frontend-build.result }}'
             };
 
