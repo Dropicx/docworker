@@ -39,7 +39,6 @@ redis==5.0.0
 
 # Error Handling & Resilience
 tenacity==8.2.3
-pybreaker==1.1.1
 
 # NOTE: spaCy moved to worker requirements.txt
 # PII removal now happens in worker, not backend
