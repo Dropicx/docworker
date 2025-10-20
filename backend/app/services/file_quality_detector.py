@@ -100,9 +100,7 @@ class FileQualityDetector:
     def __init__(self):
         self.tesseract_available = self._check_tesseract_available()
         self.opencv_available = OPENCV_AVAILABLE
-        logger.info("🔍 File Quality Detector initialized:")
-        logger.info(f"   - Tesseract: {'✅' if self.tesseract_available else '❌'}")
-        logger.info(f"   - OpenCV: {'✅' if self.opencv_available else '❌'}")
+        logger.debug("🔍 File Quality Detector initialized (using PaddleOCR microservice)")
 
     def _check_tesseract_available(self) -> bool:
         """Check if Tesseract OCR is available"""

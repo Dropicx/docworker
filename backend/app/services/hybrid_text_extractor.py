@@ -60,19 +60,19 @@ class HybridTextExtractor:
         self.ovh_client = OVHClient()
         self.sequence_detector = FileSequenceDetector()
 
-        # Initialize local OCR if available
+        # Initialize local OCR if available (legacy fallback - PaddleOCR is primary)
         self.local_ocr_available = LOCAL_OCR_AVAILABLE
         if self.local_ocr_available:
             try:
                 self.local_ocr = TextExtractorWithOCR()
-                logger.info("✅ Local OCR (Tesseract) available")
+                logger.debug("✅ Local OCR (Tesseract) available as fallback")
             except Exception as e:
-                logger.warning(f"⚠️ Local OCR initialization failed: {e}")
+                logger.debug(f"⚠️ Local OCR initialization failed: {e}")
                 self.local_ocr = None
                 self.local_ocr_available = False
         else:
             self.local_ocr = None
-            logger.info("ℹ️ Local OCR not available")
+            logger.debug("ℹ️ Local OCR not available, using PaddleOCR microservice")
 
         logger.debug("🚀 Hybrid Text Extractor initialized")
         logger.debug("   - Quality Detector: ✅")
