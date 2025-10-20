@@ -109,7 +109,8 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         """
         return (
             self.db.query(self.model)
-            .filter(self.model.document_class_id.is_(None), self.model.enabled is True)
+            .filter(self.model.document_class_id.is_(None))
+            .filter_by(enabled=True)
             .order_by(self.model.order)
             .all()
         )
