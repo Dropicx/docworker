@@ -31,28 +31,71 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         """
         Get all pipeline steps ordered by their execution order.
 
+        Uses phase-aware ordering:
+        - Phase 1: Pre-branching universal (document_class_id = NULL, post_branching = False)
+        - Phase 2: Document-specific (document_class_id != NULL)
+        - Phase 3: Post-branching universal (document_class_id = NULL, post_branching = True)
+
+        Within each phase, steps are ordered by the 'order' field.
+
         Returns:
-            List of steps sorted by order field
+            List of steps sorted by phase and order
         """
-        return self.db.query(self.model).order_by(self.model.order).all()
+        from sqlalchemy import case
+
+        # Define phase priority
+        phase_order = case(
+            (self.model.post_branching == True, 3),  # Post-branching last
+            (self.model.document_class_id != None, 2),  # Document-specific middle
+            else_=1  # Pre-branching first
+        )
+
+        return self.db.query(self.model).order_by(phase_order, self.model.order).all()
 
     def get_enabled_steps(self) -> list[DynamicPipelineStepDB]:
         """
         Get all enabled pipeline steps ordered by execution order.
 
+        Uses phase-aware ordering:
+        - Phase 1: Pre-branching universal (document_class_id = NULL, post_branching = False)
+        - Phase 2: Document-specific (document_class_id != NULL)
+        - Phase 3: Post-branching universal (document_class_id = NULL, post_branching = True)
+
+        Within each phase, steps are ordered by the 'order' field.
+
         Returns:
-            List of enabled steps sorted by order
+            List of enabled steps sorted by phase and order
         """
-        return self.db.query(self.model).filter_by(enabled=True).order_by(self.model.order).all()
+        from sqlalchemy import case
+
+        # Define phase priority
+        phase_order = case(
+            (self.model.post_branching == True, 3),  # Post-branching last
+            (self.model.document_class_id != None, 2),  # Document-specific middle
+            else_=1  # Pre-branching first
+        )
+
+        return self.db.query(self.model).filter_by(enabled=True).order_by(phase_order, self.model.order).all()
 
     def get_disabled_steps(self) -> list[DynamicPipelineStepDB]:
         """
         Get all disabled pipeline steps.
 
+        Uses phase-aware ordering for consistency with other queries.
+
         Returns:
-            List of disabled steps
+            List of disabled steps sorted by phase and order
         """
-        return self.db.query(self.model).filter_by(enabled=False).order_by(self.model.order).all()
+        from sqlalchemy import case
+
+        # Define phase priority
+        phase_order = case(
+            (self.model.post_branching == True, 3),  # Post-branching last
+            (self.model.document_class_id != None, 2),  # Document-specific middle
+            else_=1  # Pre-branching first
+        )
+
+        return self.db.query(self.model).filter_by(enabled=False).order_by(phase_order, self.model.order).all()
 
     def get_universal_steps(self) -> list[DynamicPipelineStepDB]:
         """
