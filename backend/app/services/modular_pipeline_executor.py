@@ -553,7 +553,19 @@ class ModularPipelineExecutor:
                 # Check for API errors
                 if result.startswith("Error"):
                     last_error = result
-                    logger.warning(f"⚠️ API error on attempt {attempt + 1}: {result}")
+
+                    # Detect 503 service unavailable errors (infrastructure issues)
+                    is_503_error = "503" in result or "Service Unavailable" in result or "ring-balancer" in result
+
+                    if is_503_error and attempt < max_retries - 1:
+                        # Use longer backoff for 503 errors (infrastructure recovery time)
+                        retry_delay = 5 * (attempt + 1)  # 5s, 10s instead of 1s, 2s
+                        logger.warning(f"⚠️ OVH infrastructure error (503) on attempt {attempt + 1}: {result[:200]}")
+                        logger.info(f"   Waiting {retry_delay}s for OVH infrastructure recovery...")
+                        time.sleep(retry_delay)
+                    else:
+                        logger.warning(f"⚠️ API error on attempt {attempt + 1}: {result}")
+
                     continue
 
                 # ✨ NEW: Log AI call with token usage (don't break pipeline if this fails!)
@@ -591,8 +603,21 @@ class ModularPipelineExecutor:
                 logger.error(f"❌ Step '{step.name}' failed on attempt {attempt + 1}: {e}")
 
                 if attempt < max_retries - 1:
-                    logger.info(f"🔄 Retrying step '{step.name}'...")
-                    time.sleep(1 * (attempt + 1))  # Exponential backoff
+                    # Detect 503 errors in exceptions (OVH infrastructure issues)
+                    error_str = str(e).lower()
+                    is_503_error = "503" in error_str or "service unavailable" in error_str or "ring-balancer" in error_str
+
+                    if is_503_error:
+                        # Use longer backoff for 503 errors (infrastructure recovery time)
+                        retry_delay = 5 * (attempt + 1)  # 5s, 10s
+                        logger.warning(f"⚠️ OVH infrastructure error (503) detected in exception")
+                        logger.info(f"   Waiting {retry_delay}s for OVH infrastructure recovery...")
+                        time.sleep(retry_delay)
+                    else:
+                        # Standard exponential backoff for other errors
+                        retry_delay = 1 * (attempt + 1)  # 1s, 2s
+                        logger.info(f"🔄 Retrying step '{step.name}' in {retry_delay}s...")
+                        time.sleep(retry_delay)
 
         # All retries failed
         return False, "", last_error or "Unknown error"

@@ -200,12 +200,35 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                 logger.error(f"❌ Pipeline failed at step '{failed_step}': {error_msg}")
                 logger.error(f"   Error type: {error_type}, Step ID: {failed_step_id}")
 
-                # Store error details in job before raising exception
+                # Store error details in job
+                job.status = StepExecutionStatus.FAILED
+                job.failed_at = datetime.now()
                 job.error_message = f"[{failed_step}] {error_msg}"
                 job.error_step_id = failed_step_id
                 db.commit()
 
-                raise Exception(f"Pipeline execution failed at '{failed_step}': {error_msg}")
+                # Update Celery state with proper serializable error (avoid exception serialization issues)
+                self.update_state(
+                    state='FAILURE',
+                    meta={
+                        'error': error_msg,
+                        'error_type': error_type,
+                        'failed_step': failed_step,
+                        'failed_step_id': failed_step_id,
+                        'processing_id': processing_id,
+                        'message': f"Pipeline execution failed at '{failed_step}': {error_msg}"
+                    }
+                )
+
+                # Return failure status instead of raising to avoid Celery serialization issues
+                return {
+                    'status': 'failed',
+                    'processing_id': processing_id,
+                    'error': error_msg,
+                    'error_type': error_type,
+                    'failed_step': failed_step,
+                    'failed_step_id': failed_step_id
+                }
 
         # ==================== WORKER IS THE ORCHESTRATOR ====================
         # Worker owns the job lifecycle and builds final result_data
