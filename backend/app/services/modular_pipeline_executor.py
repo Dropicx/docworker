@@ -99,10 +99,20 @@ class ModularPipelineExecutor:
         try:
             # Get universal steps (already filtered for enabled by repository)
             universal_steps = self.step_repository.get_universal_steps()
+
+            # DEBUG: Log what we got from repository
+            logger.info(f"🔍 DEBUG: Repository returned {len(universal_steps)} universal steps (document_class_id = NULL)")
+            for step in universal_steps:
+                logger.info(f"   - {step.name} (order={step.order}, post_branching={step.post_branching}, enabled={step.enabled})")
+
             # Filter for pre-branching only (post_branching = False)
             steps = [s for s in universal_steps if not s.post_branching]
 
-            logger.info(f"📋 Loaded {len(steps)} pre-branching universal pipeline steps")
+            logger.info(f"📋 Loaded {len(steps)} pre-branching universal pipeline steps (after filtering post_branching=False)")
+            if len(steps) == 0 and len(universal_steps) > 0:
+                logger.warning(f"⚠️ ISSUE DETECTED: Repository returned {len(universal_steps)} universal steps but ALL have post_branching=True!")
+                logger.warning(f"   Expected at least some steps with post_branching=False for pre-branching phase")
+
             return steps
         except Exception as e:
             logger.error(f"❌ Failed to load universal pipeline steps: {e}")
