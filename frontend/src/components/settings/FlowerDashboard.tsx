@@ -9,6 +9,8 @@ interface WorkerStats {
   };
   tasks: {
     total: number;
+    active: number;  // Currently being processed
+    reserved: number;  // Picked up but not started yet
     details: any;
   };
   queues: {
@@ -214,16 +216,29 @@ const FlowerDashboard: React.FC = () => {
               <Activity className="w-5 h-5 text-primary-600" />
               <h4 className="font-semibold text-primary-900">Tasks</h4>
             </div>
+            {workerStats && workerStats.tasks.active > 0 && (
+              <div className="flex items-center space-x-1">
+                <div className="w-2 h-2 bg-brand-600 rounded-full animate-pulse"></div>
+                <span className="text-xs text-brand-600 font-semibold">Processing</span>
+              </div>
+            )}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-baseline space-x-2">
               <span className="text-3xl font-bold text-primary-900">
-                {workerStats?.tasks.total || 0}
+                {workerStats?.tasks.active || 0}
               </span>
-              <span className="text-sm text-primary-600">gesamt</span>
+              <span className="text-sm text-primary-600">aktiv</span>
             </div>
-            <p className="text-xs text-primary-500">Alle Zeit</p>
+            <div className="pt-2 border-t border-primary-100">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-primary-500">Gesamt verarbeitet:</span>
+                <span className="font-mono font-semibold text-primary-700">
+                  {workerStats?.tasks.total || 0}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -232,7 +247,10 @@ const FlowerDashboard: React.FC = () => {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center space-x-2">
               <Activity className="w-5 h-5 text-primary-600" />
-              <h4 className="font-semibold text-primary-900">Queues</h4>
+              <div>
+                <h4 className="font-semibold text-primary-900">Warteschlangen</h4>
+                <p className="text-xs text-primary-500">Tasks warten auf Worker</p>
+              </div>
             </div>
           </div>
 

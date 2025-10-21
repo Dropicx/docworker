@@ -235,6 +235,19 @@ async def worker_stats():
             # Get real queue lengths from Redis
             queue_lengths = get_queue_lengths()
 
+            # Count active tasks (currently being processed)
+            active_tasks = 0
+            reserved_tasks = 0
+            for task_id, task_info in tasks.items():
+                if isinstance(task_info, dict):
+                    state = task_info.get('state', '').upper()
+                    if state in ['STARTED', 'RETRY']:
+                        active_tasks += 1
+                    elif state in ['RECEIVED', 'PENDING']:
+                        reserved_tasks += 1
+
+            logger.debug(f"📊 Active tasks: {active_tasks}, Reserved: {reserved_tasks}")
+
             return {
                 "workers": {
                     "total": total_workers,
@@ -243,9 +256,11 @@ async def worker_stats():
                 },
                 "tasks": {
                     "total": len(tasks),
+                    "active": active_tasks,  # Currently being processed
+                    "reserved": reserved_tasks,  # Picked up but not started yet
                     "details": tasks
                 },
-                "queues": queue_lengths
+                "queues": queue_lengths  # Waiting in queue (not yet picked up)
             }
         else:
             raise HTTPException(
