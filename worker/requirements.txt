@@ -2,6 +2,10 @@
 celery[redis]==5.4.0
 redis==5.0.0
 
+# Worker Enhancements
+flower==2.0.1  # Celery monitoring dashboard
+celery-once==3.0.1  # Task deduplication
+
 # Shared dependencies from backend
 fastapi==0.115.6
 pydantic==2.10.5
