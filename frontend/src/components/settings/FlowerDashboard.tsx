@@ -262,22 +262,49 @@ const FlowerDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Full Flower Dashboard iFrame */}
+      {/* Full Flower Dashboard Link */}
       <div className="bg-white border border-primary-200 rounded-lg overflow-hidden">
-        <div className="p-4 bg-primary-50 border-b border-primary-200">
-          <h4 className="font-semibold text-primary-900">Flower Dashboard</h4>
-          <p className="text-sm text-primary-600">
-            Vollständige Celery Monitoring-Oberfläche
-          </p>
-        </div>
-
-        <div className="relative" style={{ height: '600px' }}>
-          <iframe
-            src="/api/monitoring/flower/"
-            className="w-full h-full border-0"
-            title="Flower Dashboard"
-            sandbox="allow-same-origin allow-scripts allow-forms"
-          />
+        <div className="p-6">
+          <div className="flex items-start space-x-4">
+            <div className="w-12 h-12 bg-gradient-to-br from-brand-600 to-brand-700 rounded-lg flex items-center justify-center flex-shrink-0">
+              <Activity className="w-6 h-6 text-white" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-semibold text-primary-900 mb-2">Vollständiges Flower Dashboard</h4>
+              <p className="text-sm text-primary-600 mb-4">
+                Öffnen Sie das vollständige Flower Dashboard in einem neuen Tab für erweiterte Monitoring-Funktionen:
+              </p>
+              <ul className="text-sm text-primary-600 space-y-1 mb-4 ml-4">
+                <li>• Echtzeit-Graphen und Metriken</li>
+                <li>• Detaillierte Task-Historie</li>
+                <li>• Worker-Pool-Verwaltung</li>
+                <li>• Task-Revocation und Retry-Management</li>
+                <li>• Queue-Statistiken und Monitoring</li>
+              </ul>
+              <a
+                href="/api/monitoring/flower/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
+              >
+                <Activity className="w-5 h-5" />
+                <span>Flower Dashboard öffnen</span>
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                  />
+                </svg>
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

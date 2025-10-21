@@ -55,20 +55,12 @@ async def flower_proxy(path: str, request: Request):
             response = await client.get(url, auth=auth)
 
         # Return response with original content type
-        # Remove X-Frame-Options to allow iframe embedding in our own frontend
-        headers = {
-            "Content-Type": response.headers.get("Content-Type", "text/html"),
-        }
-
-        # Copy other useful headers but exclude X-Frame-Options
-        for key, value in response.headers.items():
-            if key.lower() not in ['x-frame-options', 'content-type', 'content-length', 'transfer-encoding']:
-                headers[key] = value
-
         return Response(
             content=response.content,
             status_code=response.status_code,
-            headers=headers
+            headers={
+                "Content-Type": response.headers.get("Content-Type", "text/html"),
+            }
         )
 
     except httpx.ConnectError:

@@ -172,12 +172,7 @@ async def add_security_headers(request: Request, call_next):
 
     # Security headers
     response.headers["X-Content-Type-Options"] = "nosniff"
-
-    # X-Frame-Options: Allow Flower dashboard iframe, deny others
-    # Flower is proxied through /api/monitoring/flower/ and needs to load in iframe
-    if not request.url.path.startswith("/api/monitoring/flower"):
-        response.headers["X-Frame-Options"] = "DENY"
-
+    response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     # Relaxed CSP for Railway deployment
