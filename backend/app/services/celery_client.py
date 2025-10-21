@@ -96,7 +96,7 @@ REDIS_URL = os.getenv("REDIS_URL", "redis://localhost:6379/0")
 
 celery_client = Celery("doctranslator_backend", broker=REDIS_URL, backend=REDIS_URL)
 
-# Configure client
+# Configure client with task routing (matches worker config)
 celery_client.conf.update(
     task_serializer="json",
     accept_content=["json"],
@@ -104,9 +104,18 @@ celery_client.conf.update(
     timezone="Europe/Berlin",
     enable_utc=True,
     result_expires=3600,  # Task results expire after 1 hour
+    # Task routing - ensures tasks go to correct priority queues
+    task_routes={
+        "process_medical_document": {"queue": "high_priority"},
+        "cleanup_orphaned_jobs": {"queue": "maintenance"},
+        "cleanup_celery_results": {"queue": "maintenance"},
+        "cleanup_old_files": {"queue": "maintenance"},
+        "database_maintenance": {"queue": "maintenance"},
+    },
 )
 
 logger.info(f"🔗 Celery client configured with Redis: {REDIS_URL.split('@')[0]}...")
+logger.info(f"📋 Task routing: process_medical_document → high_priority queue")
 
 
 def enqueue_document_processing(processing_id: str, options: dict[str, Any] | None = None) -> str:
