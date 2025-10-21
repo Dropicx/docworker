@@ -42,5 +42,10 @@ EXPOSE 5555
 # --broker: Redis connection for monitoring workers
 # --port: Web UI port
 # --basic-auth: Optional authentication (format: user:password)
-# --url-prefix: Optional prefix for reverse proxy
-CMD ["celery", "-A", "worker.worker", "flower", "--port=5555"]
+# --url-prefix: Optional prefix for reverse proxy (currently not used)
+# --max-workers: Max number of workers to monitor
+# --natural-time: Use natural time instead of timestamps
+CMD ["celery", "-A", "worker.worker", "flower", \
+     "--port=5555", \
+     "--max-workers=100", \
+     "--natural-time"]

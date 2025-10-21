@@ -47,12 +47,14 @@ async def flower_proxy(path: str, request: Request):
         if query_string:
             url = f"{url}?{query_string}"
 
-        logger.debug(f"🌸 Proxying request to Flower: {url}")
+        logger.info(f"🌸 Proxying request to Flower: {url}")
 
         # Forward request to Flower with authentication if configured
         auth = get_flower_auth()
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(url, auth=auth)
+
+        logger.info(f"🌸 Flower response: {response.status_code} for {url}")
 
         content = response.content
         content_type = response.headers.get("Content-Type", "text/html")
