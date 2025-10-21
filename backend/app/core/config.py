@@ -6,6 +6,7 @@ are defined here using Pydantic for type safety and validation.
 """
 
 import logging
+import os
 
 from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -179,7 +180,6 @@ class Settings(BaseSettings):
 
         # Allow SQLite for testing/development environments
         if v.startswith("sqlite://"):
-            import os
             env = os.getenv("ENVIRONMENT", "development")
             if env in ["development", "testing", "test"]:
                 logger.info(f"✅ Allowing SQLite DATABASE_URL in {env} environment")
