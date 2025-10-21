@@ -11,9 +11,13 @@ from fastapi.testclient import TestClient
 from unittest.mock import patch, AsyncMock, MagicMock
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.main import app
 from app.database.connection import get_session
+
+# Import ALL models to register them with Base.metadata before create_all()
+from app.database import unified_models, modular_pipeline_models  # noqa: F401
 from app.database.modular_pipeline_models import (
     Base,
     DynamicPipelineStepDB,
@@ -27,8 +31,16 @@ from app.database.modular_pipeline_models import (
 
 @pytest.fixture(scope="function")
 def test_db():
-    """Create test database"""
-    engine = create_engine("sqlite:///:memory:")
+    """Create test database
+
+    Uses StaticPool to ensure all connections share the same in-memory database.
+    Without this, each connection would get its own separate in-memory database.
+    """
+    engine = create_engine(
+        "sqlite:///:memory:",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
     Base.metadata.create_all(engine)
     SessionLocal = sessionmaker(bind=engine)
     session = SessionLocal()
@@ -37,6 +49,7 @@ def test_db():
 
     session.close()
     Base.metadata.drop_all(engine)
+    engine.dispose()
 
 
 @pytest.fixture(scope="function")
