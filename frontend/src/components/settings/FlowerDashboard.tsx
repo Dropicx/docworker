@@ -56,10 +56,13 @@ const FlowerDashboard: React.FC = () => {
       const response = await fetch('/api/monitoring/worker-stats');
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 Worker Stats received:', data);
         setWorkerStats(data);
+      } else {
+        console.error('❌ Worker stats request failed:', response.status, response.statusText);
       }
     } catch (err) {
-      console.error('Error fetching worker stats:', err);
+      console.error('❌ Error fetching worker stats:', err);
     }
   };
 

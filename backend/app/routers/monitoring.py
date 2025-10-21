@@ -9,6 +9,9 @@ from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse, Response
 import httpx
 
+# Import Redis client for queue length queries
+from shared.redis_client import get_redis
+
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/monitoring", tags=["monitoring"])
 
@@ -26,6 +29,30 @@ def get_flower_auth():
         username, password = FLOWER_BASIC_AUTH.split(':', 1)
         return (username, password)
     return None
+
+
+def get_queue_lengths():
+    """Get current queue lengths from Redis.
+
+    Returns:
+        Dict with queue names and their lengths
+    """
+    try:
+        redis_client = get_redis()
+        return {
+            "high_priority": redis_client.llen("high_priority"),
+            "default": redis_client.llen("default"),
+            "low_priority": redis_client.llen("low_priority"),
+            "maintenance": redis_client.llen("maintenance")
+        }
+    except Exception as e:
+        logger.error(f"❌ Error fetching queue lengths from Redis: {str(e)}")
+        return {
+            "high_priority": 0,
+            "default": 0,
+            "low_priority": 0,
+            "maintenance": 0
+        }
 
 
 @router.get("/flower-status")
@@ -95,12 +122,42 @@ async def worker_stats():
             workers = workers_response.json()
             tasks = tasks_response.json()
 
-            # Calculate statistics
-            active_workers = len([w for w in workers.values() if w.get('status') == 'Online'])
+            # Debug logging
+            logger.debug(f"📊 Flower API response - Workers: {len(workers)}, Tasks: {len(tasks)}")
+            if workers:
+                logger.debug(f"   Worker names: {list(workers.keys())}")
+
+            # Calculate worker statistics
+            # Flower API: workers dict where each key is a worker name
+            # Workers are active if they appear in the response
+            total_workers = len(workers)
+
+            # Count active workers (workers with 'stats' field are active)
+            # If no 'stats' field exists, assume all returned workers are active
+            active_workers = 0
+            for worker_name, worker_info in workers.items():
+                # Check if worker has stats (indicates it's responding)
+                if isinstance(worker_info, dict):
+                    # If it has 'stats' key, it's definitely active
+                    if 'stats' in worker_info or 'status' in worker_info:
+                        # Check status field if present
+                        status = worker_info.get('status', 'online')
+                        if status != 'offline':
+                            active_workers += 1
+                    else:
+                        # Worker present in response = active
+                        active_workers += 1
+
+            # If all workers have no status info, assume all are active
+            if active_workers == 0 and total_workers > 0:
+                active_workers = total_workers
+
+            # Get real queue lengths from Redis
+            queue_lengths = get_queue_lengths()
 
             return {
                 "workers": {
-                    "total": len(workers),
+                    "total": total_workers,
                     "active": active_workers,
                     "details": workers
                 },
@@ -108,12 +165,7 @@ async def worker_stats():
                     "total": len(tasks),
                     "details": tasks
                 },
-                "queues": {
-                    "high_priority": 0,  # Flower API doesn't expose queue lengths directly
-                    "default": 0,
-                    "low_priority": 0,
-                    "maintenance": 0
-                }
+                "queues": queue_lengths
             }
         else:
             raise HTTPException(
