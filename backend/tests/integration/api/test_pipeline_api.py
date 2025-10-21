@@ -8,7 +8,6 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from unittest.mock import patch
 
 from app.main import app
 from app.database.connection import get_session
@@ -56,9 +55,21 @@ def client(test_db):
 
 @pytest.fixture
 def mock_auth():
-    """Mock authentication for protected endpoints"""
-    with patch("app.routers.settings_auth.verify_session_token", return_value=True):
-        yield
+    """Mock authentication for protected endpoints using FastAPI dependency override"""
+    from app.routers.settings_auth import verify_session_token
+
+    # Create a mock dependency that always returns True
+    def mock_verify_token(authorization: str | None = None) -> bool:
+        return True
+
+    # Override the dependency in the FastAPI app
+    app.dependency_overrides[verify_session_token] = mock_verify_token
+
+    yield
+
+    # Clean up after test
+    if verify_session_token in app.dependency_overrides:
+        del app.dependency_overrides[verify_session_token]
 
 
 @pytest.fixture
@@ -415,11 +426,21 @@ def test_create_step_prompt_without_input_text(client, mock_auth, seed_test_data
 
 def test_unauthorized_access_without_token(client, seed_test_data):
     """Test that endpoints require authentication"""
-    # Mock no authentication
-    with patch("app.routers.settings_auth.verify_session_token", return_value=False):
-        response = client.get("/api/pipeline/steps")
+    from app.routers.settings_auth import verify_session_token
 
+    # Override dependency to return False (not authenticated)
+    def mock_verify_token_false(authorization: str | None = None) -> bool:
+        return False
+
+    app.dependency_overrides[verify_session_token] = mock_verify_token_false
+
+    try:
+        response = client.get("/api/pipeline/steps")
         assert response.status_code == 401
+    finally:
+        # Clean up
+        if verify_session_token in app.dependency_overrides:
+            del app.dependency_overrides[verify_session_token]
 
 
 if __name__ == "__main__":
