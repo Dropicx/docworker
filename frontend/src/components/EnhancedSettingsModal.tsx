@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Settings, AlertCircle, FileText, Workflow } from 'lucide-react';
+import { X, Settings, AlertCircle, FileText, Workflow, Activity } from 'lucide-react';
 import settingsService from '../services/settings';
 import PipelineBuilder from './settings/PipelineBuilder';
 import DocumentClassManager from './settings/DocumentClassManager';
+import FlowerDashboard from './settings/FlowerDashboard';
 import { pipelineApi } from '../services/pipelineApi';
 
 interface EnhancedSettingsModalProps {
@@ -15,7 +16,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   const [accessCode, setAccessCode] = useState('');
   const [authError, setAuthError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pipeline' | 'classes'>('pipeline');
+  const [activeTab, setActiveTab] = useState<'pipeline' | 'classes' | 'monitoring'>('pipeline');
 
   // Check authentication on mount only if we have a token
   useEffect(() => {
@@ -186,6 +187,17 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       <FileText className="w-4 h-4" />
                       <span>Dokumentenklassen</span>
                     </button>
+                    <button
+                      onClick={() => setActiveTab('monitoring')}
+                      className={`flex items-center space-x-2 px-6 py-3 rounded-t-lg font-medium transition-all ${
+                        activeTab === 'monitoring'
+                          ? 'bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-md'
+                          : 'text-primary-600 hover:bg-primary-50'
+                      }`}
+                    >
+                      <Activity className="w-4 h-4" />
+                      <span>Worker Monitoring</span>
+                    </button>
                   </div>
 
                   {/* Logout Button */}
@@ -203,6 +215,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                 <div className="max-w-6xl mx-auto">
                   {activeTab === 'pipeline' && <PipelineBuilder />}
                   {activeTab === 'classes' && <DocumentClassManager />}
+                  {activeTab === 'monitoring' && <FlowerDashboard />}
                 </div>
               </div>
             </div>

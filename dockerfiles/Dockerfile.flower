@@ -1,0 +1,46 @@
+# ==========================================
+# Flower Monitoring Service Dockerfile
+# ==========================================
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies (minimal for Flower)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmagic1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements for worker (includes flower)
+COPY worker/requirements.txt /app/worker/requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r /app/worker/requirements.txt
+
+# Create non-root user for security
+RUN useradd -m -u 1000 floweruser && \
+    chown -R floweruser:floweruser /app
+
+# Copy worker code (Flower needs access to worker.worker module)
+COPY --chown=floweruser:floweruser worker/ /app/worker/
+COPY --chown=floweruser:floweruser backend/ /app/backend/
+COPY --chown=floweruser:floweruser shared/ /app/shared/
+
+# Set Python path to include all modules
+ENV PYTHONPATH=/app:/app/worker:/app/backend:/app/shared
+
+# Switch to non-root user
+USER floweruser
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:5555')" || exit 1
+
+# Expose Flower port
+EXPOSE 5555
+
+# Start Flower monitoring dashboard
+# --broker: Redis connection for monitoring workers
+# --port: Web UI port
+# --basic-auth: Optional authentication (format: user:password)
+# --url-prefix: Optional prefix for reverse proxy
+CMD ["celery", "-A", "worker.worker", "flower", "--port=5555"]

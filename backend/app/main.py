@@ -19,6 +19,7 @@ from app.routers.admin.config import router as admin_config_router
 from app.routers.modular_pipeline import router as modular_pipeline_router
 from app.routers.process_multi_file import router as multi_file_router
 from app.routers.settings_auth import router as settings_auth_router
+from app.routers.monitoring import router as monitoring_router
 from app.services.cleanup import cleanup_temp_files
 
 # Configure logging with centralized settings
@@ -197,6 +198,7 @@ app.include_router(
     modular_pipeline_router, tags=["pipeline"]
 )  # Modular pipeline has its own prefix
 app.include_router(admin_config_router, tags=["admin"])  # Admin configuration management
+app.include_router(monitoring_router, tags=["monitoring"])  # Flower dashboard proxy and worker monitoring
 
 
 @app.get("/")
