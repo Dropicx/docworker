@@ -35,9 +35,10 @@ COPY --chown=celeryuser:celeryuser worker/ /app/worker/
 COPY --chown=celeryuser:celeryuser backend/ /app/backend/
 COPY --chown=celeryuser:celeryuser shared/ /app/shared/
 
-# Copy spaCy initialization script
+# Copy startup scripts
 COPY --chown=celeryuser:celeryuser worker/scripts/init_spacy.sh /app/init_spacy.sh
-RUN chmod +x /app/init_spacy.sh
+COPY --chown=celeryuser:celeryuser worker/scripts/cleanup_orphaned_jobs.py /app/cleanup_orphaned_jobs.py
+RUN chmod +x /app/init_spacy.sh && chmod +x /app/cleanup_orphaned_jobs.py
 
 # Set Python path to include all modules
 ENV PYTHONPATH=/app:/app/worker:/app/backend:/app/shared
@@ -51,4 +52,11 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
 
 # ⚡ OPTIMIZED STARTUP: Run as root to fix volume permissions, then switch to celeryuser
 # Railway mounts volumes as root, so we need root to create directories
-CMD ["/bin/bash", "-c", "chown -R celeryuser:celeryuser /data && su celeryuser -c '/app/init_spacy.sh && celery -A worker.worker.celery_app worker --loglevel=info --concurrency=2 --max-tasks-per-child=50'"]
+# Startup sequence:
+#   1. Fix volume permissions
+#   2. Initialize spaCy model (load from volume)
+#   3. Clean up orphaned jobs from previous restart
+#   4. Start Celery worker with priority queues
+# Note: Beat scheduler runs in separate beat-service (prevents duplicate schedules with replicas)
+# Priority queues: high_priority (user uploads), default, low_priority, maintenance (cleanup tasks)
+CMD ["/bin/bash", "-c", "chown -R celeryuser:celeryuser /data && su celeryuser -c '/app/init_spacy.sh && python3 /app/cleanup_orphaned_jobs.py && celery -A worker.worker.celery_app worker --loglevel=info --queues=high_priority,default,low_priority,maintenance --concurrency=2 --max-tasks-per-child=50'"]

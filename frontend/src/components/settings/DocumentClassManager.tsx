@@ -19,18 +19,11 @@ import {
   CheckCircle,
   Loader2,
   Shield,
-  Tag,
-  Hash,
   List,
   Star,
-  Archive
 } from 'lucide-react';
 import { pipelineApi } from '../../services/pipelineApi';
-import {
-  DocumentClass,
-  DocumentClassRequest,
-  DocumentClassStatistics
-} from '../../types/pipeline';
+import { DocumentClass, DocumentClassRequest, DocumentClassStatistics } from '../../types/pipeline';
 
 const DocumentClassManager: React.FC = () => {
   // State
@@ -51,7 +44,7 @@ const DocumentClassManager: React.FC = () => {
     examples: [],
     strong_indicators: [],
     weak_indicators: [],
-    is_enabled: true
+    is_enabled: true,
   });
 
   // Input state for arrays
@@ -73,8 +66,8 @@ const DocumentClassManager: React.FC = () => {
     try {
       const classesData = await pipelineApi.getAllDocumentClasses(false);
       setClasses(classesData);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -84,7 +77,7 @@ const DocumentClassManager: React.FC = () => {
     try {
       const stats = await pipelineApi.getDocumentClassStatistics();
       setStatistics(stats);
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to load statistics:', err);
     }
   };
@@ -101,7 +94,7 @@ const DocumentClassManager: React.FC = () => {
       examples: [],
       strong_indicators: [],
       weak_indicators: [],
-      is_enabled: true
+      is_enabled: true,
     });
     setExampleInput('');
     setStrongIndicatorInput('');
@@ -119,7 +112,7 @@ const DocumentClassManager: React.FC = () => {
       examples: docClass.examples || [],
       strong_indicators: docClass.strong_indicators || [],
       weak_indicators: docClass.weak_indicators || [],
-      is_enabled: docClass.is_enabled
+      is_enabled: docClass.is_enabled,
     });
     setExampleInput('');
     setStrongIndicatorInput('');
@@ -158,8 +151,8 @@ const DocumentClassManager: React.FC = () => {
       await loadClasses();
       await loadStatistics();
       setTimeout(() => setSuccess(''), 3000);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -185,8 +178,8 @@ const DocumentClassManager: React.FC = () => {
       await loadClasses();
       await loadStatistics();
       setTimeout(() => setSuccess(''), 3000);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -198,7 +191,7 @@ const DocumentClassManager: React.FC = () => {
     if (exampleInput.trim()) {
       setFormData({
         ...formData,
-        examples: [...(formData.examples || []), exampleInput.trim()]
+        examples: [...(formData.examples || []), exampleInput.trim()],
       });
       setExampleInput('');
     }
@@ -207,7 +200,7 @@ const DocumentClassManager: React.FC = () => {
   const handleRemoveExample = (index: number) => {
     setFormData({
       ...formData,
-      examples: formData.examples?.filter((_, i) => i !== index) || []
+      examples: formData.examples?.filter((_, i) => i !== index) || [],
     });
   };
 
@@ -215,7 +208,7 @@ const DocumentClassManager: React.FC = () => {
     if (strongIndicatorInput.trim()) {
       setFormData({
         ...formData,
-        strong_indicators: [...(formData.strong_indicators || []), strongIndicatorInput.trim()]
+        strong_indicators: [...(formData.strong_indicators || []), strongIndicatorInput.trim()],
       });
       setStrongIndicatorInput('');
     }
@@ -224,7 +217,7 @@ const DocumentClassManager: React.FC = () => {
   const handleRemoveStrongIndicator = (index: number) => {
     setFormData({
       ...formData,
-      strong_indicators: formData.strong_indicators?.filter((_, i) => i !== index) || []
+      strong_indicators: formData.strong_indicators?.filter((_, i) => i !== index) || [],
     });
   };
 
@@ -232,7 +225,7 @@ const DocumentClassManager: React.FC = () => {
     if (weakIndicatorInput.trim()) {
       setFormData({
         ...formData,
-        weak_indicators: [...(formData.weak_indicators || []), weakIndicatorInput.trim()]
+        weak_indicators: [...(formData.weak_indicators || []), weakIndicatorInput.trim()],
       });
       setWeakIndicatorInput('');
     }
@@ -241,7 +234,7 @@ const DocumentClassManager: React.FC = () => {
   const handleRemoveWeakIndicator = (index: number) => {
     setFormData({
       ...formData,
-      weak_indicators: formData.weak_indicators?.filter((_, i) => i !== index) || []
+      weak_indicators: formData.weak_indicators?.filter((_, i) => i !== index) || [],
     });
   };
 
@@ -328,7 +321,7 @@ const DocumentClassManager: React.FC = () => {
         </div>
       ) : (
         <div className="space-y-3">
-          {classes.map((docClass) => (
+          {classes.map(docClass => (
             <div
               key={docClass.id}
               className={`p-4 rounded-xl border-2 transition-all ${
@@ -465,12 +458,15 @@ const DocumentClassManager: React.FC = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-primary-700 mb-2">
-                    Class Key * <span className="text-xs text-gray-500">(z.B. "ARZTBRIEF")</span>
+                    Class Key *{' '}
+                    <span className="text-xs text-gray-500">(z.B. &quot;ARZTBRIEF&quot;)</span>
                   </label>
                   <input
                     type="text"
                     value={formData.class_key}
-                    onChange={(e) => setFormData({ ...formData, class_key: e.target.value.toUpperCase() })}
+                    onChange={e =>
+                      setFormData({ ...formData, class_key: e.target.value.toUpperCase() })
+                    }
                     disabled={editingClass?.is_system_class}
                     className="w-full px-3 py-2 border border-primary-300 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-brand-500 disabled:bg-gray-100"
                     placeholder="BEISPIEL"
@@ -484,7 +480,7 @@ const DocumentClassManager: React.FC = () => {
                   <input
                     type="text"
                     value={formData.display_name}
-                    onChange={(e) => setFormData({ ...formData, display_name: e.target.value })}
+                    onChange={e => setFormData({ ...formData, display_name: e.target.value })}
                     className="w-full px-3 py-2 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="Beispiel Dokument"
                   />
@@ -499,7 +495,7 @@ const DocumentClassManager: React.FC = () => {
                   <input
                     type="text"
                     value={formData.icon ?? ''}
-                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
+                    onChange={e => setFormData({ ...formData, icon: e.target.value })}
                     className="w-full px-3 py-2 border border-primary-300 rounded-lg text-2xl text-center focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="📄"
                     maxLength={2}
@@ -511,7 +507,7 @@ const DocumentClassManager: React.FC = () => {
                     <input
                       type="checkbox"
                       checked={formData.is_enabled}
-                      onChange={(e) => setFormData({ ...formData, is_enabled: e.target.checked })}
+                      onChange={e => setFormData({ ...formData, is_enabled: e.target.checked })}
                       className="w-4 h-4 text-brand-600 border-primary-300 rounded focus:ring-brand-500"
                     />
                     <span className="text-sm font-medium text-primary-700">Aktiv</span>
@@ -525,7 +521,7 @@ const DocumentClassManager: React.FC = () => {
                 </label>
                 <textarea
                   value={formData.description ?? ''}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  onChange={e => setFormData({ ...formData, description: e.target.value })}
                   className="w-full px-3 py-2 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                   rows={3}
                   placeholder="Beschreibung der Dokumentenklasse..."
@@ -534,15 +530,13 @@ const DocumentClassManager: React.FC = () => {
 
               {/* Examples */}
               <div>
-                <label className="block text-sm font-medium text-primary-700 mb-2">
-                  Beispiele
-                </label>
+                <label className="block text-sm font-medium text-primary-700 mb-2">Beispiele</label>
                 <div className="flex space-x-2 mb-2">
                   <input
                     type="text"
                     value={exampleInput}
-                    onChange={(e) => setExampleInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddExample()}
+                    onChange={e => setExampleInput(e.target.value)}
+                    onKeyPress={e => e.key === 'Enter' && handleAddExample()}
                     className="flex-1 px-3 py-2 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="Beispiel hinzufügen..."
                   />
@@ -580,8 +574,8 @@ const DocumentClassManager: React.FC = () => {
                   <input
                     type="text"
                     value={strongIndicatorInput}
-                    onChange={(e) => setStrongIndicatorInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddStrongIndicator()}
+                    onChange={e => setStrongIndicatorInput(e.target.value)}
+                    onKeyPress={e => e.key === 'Enter' && handleAddStrongIndicator()}
                     className="flex-1 px-3 py-2 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="Indikator hinzufügen..."
                   />
@@ -619,8 +613,8 @@ const DocumentClassManager: React.FC = () => {
                   <input
                     type="text"
                     value={weakIndicatorInput}
-                    onChange={(e) => setWeakIndicatorInput(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleAddWeakIndicator()}
+                    onChange={e => setWeakIndicatorInput(e.target.value)}
+                    onKeyPress={e => e.key === 'Enter' && handleAddWeakIndicator()}
                     className="flex-1 px-3 py-2 border border-primary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-500"
                     placeholder="Indikator hinzufügen..."
                   />

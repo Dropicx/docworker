@@ -1,9 +1,10 @@
 import logging
-import re
-from typing import Tuple, Optional, Dict, Any
+from typing import Any
+
 from app.models.document_types import DocumentClass
 
 logger = logging.getLogger(__name__)
+
 
 class QualityChecker:
     """
@@ -21,11 +22,8 @@ class QualityChecker:
         self.ovh_client = ovh_client
 
     async def fact_check(
-        self,
-        text: str,
-        document_type: DocumentClass,
-        fact_check_prompt: Optional[str] = None
-    ) -> Tuple[str, Dict[str, Any]]:
+        self, text: str, document_type: DocumentClass, fact_check_prompt: str | None = None
+    ) -> tuple[str, dict[str, Any]]:
         """
         Check medical facts in the translated text.
 
@@ -56,7 +54,7 @@ class QualityChecker:
                 text=text,
                 instruction=prompt,
                 temperature=0.1,  # Very low temperature for accuracy
-                max_tokens=4000
+                max_tokens=4000,
             )
 
             # Analyze changes
@@ -67,7 +65,7 @@ class QualityChecker:
             return checked_text, {
                 "status": "completed",
                 "changes": changes,
-                "document_type": document_type.value
+                "document_type": document_type.value,
             }
 
         except Exception as e:
@@ -75,11 +73,8 @@ class QualityChecker:
             return text, {"status": "error", "error": str(e)}
 
     async def grammar_check(
-        self,
-        text: str,
-        language: str = "de",
-        grammar_check_prompt: Optional[str] = None
-    ) -> Tuple[str, Dict[str, Any]]:
+        self, text: str, language: str = "de", grammar_check_prompt: str | None = None
+    ) -> tuple[str, dict[str, Any]]:
         """
         Check and correct grammar in the text.
 
@@ -110,7 +105,7 @@ class QualityChecker:
                 text=text,
                 instruction=prompt,
                 temperature=0.2,  # Low temperature for consistency
-                max_tokens=4000
+                max_tokens=4000,
             )
 
             # Analyze changes
@@ -118,22 +113,15 @@ class QualityChecker:
 
             logger.info(f"✅ Grammar check completed: {changes['change_count']} corrections")
 
-            return corrected_text, {
-                "status": "completed",
-                "language": language,
-                "changes": changes
-            }
+            return corrected_text, {"status": "completed", "language": language, "changes": changes}
 
         except Exception as e:
             logger.error(f"Grammar check failed: {e}")
             return text, {"status": "error", "error": str(e)}
 
     async def final_quality_check(
-        self,
-        text: str,
-        document_type: DocumentClass,
-        final_check_prompt: Optional[str] = None
-    ) -> Tuple[str, float]:
+        self, text: str, document_type: DocumentClass, final_check_prompt: str | None = None
+    ) -> tuple[str, float]:
         """
         Perform final quality check and scoring.
 
@@ -167,10 +155,7 @@ class QualityChecker:
 
             # Perform final check using OVH
             final_text = await self.ovh_client.process_medical_text(
-                text=text,
-                instruction=prompt,
-                temperature=0.3,
-                max_tokens=4000
+                text=text, instruction=prompt, temperature=0.3, max_tokens=4000
             )
 
             # Calculate final quality score
@@ -192,7 +177,7 @@ class QualityChecker:
             logger.error(f"Final quality check failed: {e}")
             return text, base_score
 
-    def _analyze_changes(self, original: str, modified: str) -> Dict[str, Any]:
+    def _analyze_changes(self, original: str, modified: str) -> dict[str, Any]:
         """
         Analyze changes between original and modified text.
 
@@ -206,14 +191,14 @@ class QualityChecker:
         changes = {
             "change_count": 0,
             "length_diff": len(modified) - len(original),
-            "significant_change": False
+            "significant_change": False,
         }
 
         # Simple change detection
         if original != modified:
             # Count line differences
-            original_lines = original.split('\n')
-            modified_lines = modified.split('\n')
+            original_lines = original.split("\n")
+            modified_lines = modified.split("\n")
 
             # Count changed lines
             max_lines = max(len(original_lines), len(modified_lines))
@@ -231,7 +216,7 @@ class QualityChecker:
 
         return changes
 
-    def _calculate_quality_metrics(self, text: str) -> Dict[str, Any]:
+    def _calculate_quality_metrics(self, text: str) -> dict[str, Any]:
         """
         Calculate basic quality metrics without AI.
 
@@ -246,7 +231,7 @@ class QualityChecker:
             "has_structure": False,
             "has_sections": False,
             "has_formatting": False,
-            "base_score": 0.5
+            "base_score": 0.5,
         }
 
         # Check for structure elements
@@ -264,7 +249,7 @@ class QualityChecker:
             metrics["base_score"] += 0.1
 
         # Check for structure
-        if text.count('\n') > 10:
+        if text.count("\n") > 10:
             metrics["has_structure"] = True
             metrics["base_score"] += 0.1
 
@@ -295,7 +280,7 @@ TEXT:
 
 KORRIGIERTER TEXT:"""
 
-        elif document_type == DocumentClass.BEFUNDBERICHT:
+        if document_type == DocumentClass.BEFUNDBERICHT:
             return """Prüfe diesen Befundbericht auf medizinische Korrektheit:
 1. Sind anatomische Begriffe richtig?
 2. Stimmen Größenangaben und Lokalisationen?
@@ -308,8 +293,8 @@ TEXT:
 
 KORRIGIERTER TEXT:"""
 
-        else:  # ARZTBRIEF
-            return """Prüfe diesen Arztbrief auf Korrektheit:
+        # ARZTBRIEF
+        return """Prüfe diesen Arztbrief auf Korrektheit:
 1. Stimmen Medikamentendosierungen?
 2. Sind Diagnosen korrekt wiedergegeben?
 3. Stimmen Termine und Empfehlungen?
@@ -336,8 +321,7 @@ TEXT:
 
 KORRIGIERTER TEXT:"""
 
-        else:
-            return f"""Correct ONLY grammar and spelling in this {language} text.
+        return f"""Correct ONLY grammar and spelling in this {language} text.
 Do NOT change:
 - Medical information
 - Formatting

@@ -1,14 +1,15 @@
-import re
 import logging
-from typing import Optional, Dict, Any, Tuple
+from typing import Any
+
 from app.models.document_types import (
+    CLASSIFICATION_PATTERNS,
+    DOCUMENT_TYPE_DESCRIPTIONS,
     DocumentClass,
     DocumentClassificationResult,
-    CLASSIFICATION_PATTERNS,
-    DOCUMENT_TYPE_DESCRIPTIONS
 )
 
 logger = logging.getLogger(__name__)
+
 
 class DocumentClassifier:
     """
@@ -27,9 +28,7 @@ class DocumentClassifier:
         self.patterns = CLASSIFICATION_PATTERNS
 
     async def classify_document(
-        self,
-        text: str,
-        use_ai_fallback: bool = True
+        self, text: str, use_ai_fallback: bool = True
     ) -> DocumentClassificationResult:
         """
         Classify a medical document into one of the predefined categories.
@@ -48,7 +47,9 @@ class DocumentClassifier:
 
         # If confidence is high enough, return pattern result
         if pattern_result.confidence >= 0.7:
-            logger.info(f"✅ Pattern classification successful: {pattern_result.document_class} (confidence: {pattern_result.confidence:.2%})")
+            logger.info(
+                f"✅ Pattern classification successful: {pattern_result.document_class} (confidence: {pattern_result.confidence:.2%})"
+            )
             return pattern_result
 
         # If pattern matching is uncertain and AI is available, use AI
@@ -56,11 +57,15 @@ class DocumentClassifier:
             logger.info("Pattern matching uncertain, using AI classification...")
             ai_result = await self._classify_by_ai(text)
             if ai_result.confidence > pattern_result.confidence:
-                logger.info(f"✅ AI classification: {ai_result.document_class} (confidence: {ai_result.confidence:.2%})")
+                logger.info(
+                    f"✅ AI classification: {ai_result.document_class} (confidence: {ai_result.confidence:.2%})"
+                )
                 return ai_result
 
         # Return best result (pattern or default)
-        logger.info(f"Using pattern result: {pattern_result.document_class} (confidence: {pattern_result.confidence:.2%})")
+        logger.info(
+            f"Using pattern result: {pattern_result.document_class} (confidence: {pattern_result.confidence:.2%})"
+        )
         return pattern_result
 
     def _classify_by_patterns(self, text: str) -> DocumentClassificationResult:
@@ -97,10 +102,12 @@ class DocumentClassifier:
             scores[doc_class] = {
                 "total_score": score,
                 "strong_matches": strong_matches,
-                "weak_matches": weak_matches
+                "weak_matches": weak_matches,
             }
 
-            logger.debug(f"Pattern matching for {doc_class}: score={score}, strong={strong_matches}, weak={weak_matches}")
+            logger.debug(
+                f"Pattern matching for {doc_class}: score={score}, strong={strong_matches}, weak={weak_matches}"
+            )
 
         # Find the best match
         if scores:
@@ -108,19 +115,22 @@ class DocumentClassifier:
             best_score_data = scores[best_class]
 
             # Calculate confidence based on matches
-            max_possible_score = (
-                len(self.patterns[best_class].get("strong_indicators", [])) * 3 +
-                len(self.patterns[best_class].get("weak_indicators", []))
-            )
+            max_possible_score = len(
+                self.patterns[best_class].get("strong_indicators", [])
+            ) * 3 + len(self.patterns[best_class].get("weak_indicators", []))
 
             # Base confidence on score ratio and number of strong matches
             if max_possible_score > 0:
                 score_ratio = best_score_data["total_score"] / max_possible_score
                 # Boost confidence if we have strong matches
                 if best_score_data["strong_matches"] > 0:
-                    confidence = min(0.5 + (score_ratio * 0.5) + (best_score_data["strong_matches"] * 0.1), 1.0)
+                    confidence = min(
+                        0.5 + (score_ratio * 0.5) + (best_score_data["strong_matches"] * 0.1), 1.0
+                    )
                 else:
-                    confidence = min(score_ratio * 0.6, 0.6)  # Max 60% confidence without strong matches
+                    confidence = min(
+                        score_ratio * 0.6, 0.6
+                    )  # Max 60% confidence without strong matches
             else:
                 confidence = 0.3
 
@@ -135,7 +145,7 @@ class DocumentClassifier:
                 document_class=best_class,
                 confidence=confidence,
                 method="pattern",
-                processing_hints=self._get_processing_hints(best_class)
+                processing_hints=self._get_processing_hints(best_class),
             )
 
         # Default fallback
@@ -143,7 +153,7 @@ class DocumentClassifier:
             document_class=DocumentClass.ARZTBRIEF,
             confidence=0.3,
             method="pattern",
-            processing_hints=self._get_processing_hints(DocumentClass.ARZTBRIEF)
+            processing_hints=self._get_processing_hints(DocumentClass.ARZTBRIEF),
         )
 
     async def _classify_by_ai(self, text: str) -> DocumentClassificationResult:
@@ -162,7 +172,7 @@ class DocumentClassifier:
                 document_class=DocumentClass.ARZTBRIEF,
                 confidence=0.0,
                 method="ai",
-                processing_hints={}
+                processing_hints={},
             )
 
         try:
@@ -185,7 +195,7 @@ KLASSIFIZIERUNG:"""
                 text=text[:2000],  # Limit text length for classification
                 instruction=classification_prompt,
                 temperature=0.1,  # Low temperature for consistent classification
-                max_tokens=10  # We only need one word
+                max_tokens=10,  # We only need one word
             )
 
             # Parse AI response
@@ -211,7 +221,7 @@ KLASSIFIZIERUNG:"""
                 document_class=doc_class,
                 confidence=confidence,
                 method="ai",
-                processing_hints=self._get_processing_hints(doc_class)
+                processing_hints=self._get_processing_hints(doc_class),
             )
 
         except Exception as e:
@@ -220,10 +230,10 @@ KLASSIFIZIERUNG:"""
                 document_class=DocumentClass.ARZTBRIEF,
                 confidence=0.3,
                 method="ai",
-                processing_hints={}
+                processing_hints={},
             )
 
-    def _get_processing_hints(self, doc_class: DocumentClass) -> Dict[str, Any]:
+    def _get_processing_hints(self, doc_class: DocumentClass) -> dict[str, Any]:
         """
         Get processing hints based on document class.
 
@@ -236,7 +246,7 @@ KLASSIFIZIERUNG:"""
         hints = {
             "document_info": DOCUMENT_TYPE_DESCRIPTIONS.get(doc_class, {}),
             "focus_areas": [],
-            "special_handling": []
+            "special_handling": [],
         }
 
         if doc_class == DocumentClass.ARZTBRIEF:
@@ -244,11 +254,11 @@ KLASSIFIZIERUNG:"""
                 "treatment_recommendations",
                 "medication_changes",
                 "follow_up_appointments",
-                "diagnoses"
+                "diagnoses",
             ]
             hints["special_handling"] = [
                 "preserve_doctor_recommendations",
-                "highlight_patient_actions"
+                "highlight_patient_actions",
             ]
 
         elif doc_class == DocumentClass.BEFUNDBERICHT:
@@ -256,29 +266,26 @@ KLASSIFIZIERUNG:"""
                 "examination_findings",
                 "abnormalities",
                 "size_descriptions",
-                "follow_up_examinations"
+                "follow_up_examinations",
             ]
-            hints["special_handling"] = [
-                "use_visual_comparisons",
-                "explain_medical_imaging_terms"
-            ]
+            hints["special_handling"] = ["use_visual_comparisons", "explain_medical_imaging_terms"]
 
         elif doc_class == DocumentClass.LABORWERTE:
             hints["focus_areas"] = [
                 "abnormal_values",
                 "reference_ranges",
                 "trends",
-                "critical_values"
+                "critical_values",
             ]
             hints["special_handling"] = [
                 "preserve_all_numbers",
                 "maintain_table_structure",
-                "use_color_coding_analogies"
+                "use_color_coding_analogies",
             ]
 
         return hints
 
-    def get_document_type_info(self, doc_class: DocumentClass) -> Dict[str, Any]:
+    def get_document_type_info(self, doc_class: DocumentClass) -> dict[str, Any]:
         """
         Get information about a document type.
 

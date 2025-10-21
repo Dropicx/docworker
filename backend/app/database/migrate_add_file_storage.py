@@ -11,16 +11,18 @@ This migration adds columns for storing uploaded documents directly in the datab
 """
 
 import logging
+
 from sqlalchemy import create_engine, text
-from app.database.connection import get_database_url
+
+from app.core.config import settings
 
 logger = logging.getLogger(__name__)
+
 
 def migrate_add_file_storage():
     """Add file storage columns to pipeline_jobs table"""
     try:
-        database_url = get_database_url()
-        engine = create_engine(database_url)
+        engine = create_engine(settings.database_url)
 
         with engine.connect() as conn:
             # Start transaction
@@ -28,40 +30,52 @@ def migrate_add_file_storage():
 
             try:
                 # Add filename column
-                conn.execute(text("""
+                conn.execute(
+                    text("""
                     ALTER TABLE pipeline_jobs
                     ADD COLUMN IF NOT EXISTS filename VARCHAR(255) NOT NULL DEFAULT 'unknown.pdf'
-                """))
+                """)
+                )
 
                 # Add file_type column
-                conn.execute(text("""
+                conn.execute(
+                    text("""
                     ALTER TABLE pipeline_jobs
                     ADD COLUMN IF NOT EXISTS file_type VARCHAR(50) NOT NULL DEFAULT 'pdf'
-                """))
+                """)
+                )
 
                 # Add file_size column
-                conn.execute(text("""
+                conn.execute(
+                    text("""
                     ALTER TABLE pipeline_jobs
                     ADD COLUMN IF NOT EXISTS file_size INTEGER NOT NULL DEFAULT 0
-                """))
+                """)
+                )
 
                 # Add file_content column (BYTEA for PostgreSQL, BLOB for SQLite)
-                conn.execute(text("""
+                conn.execute(
+                    text("""
                     ALTER TABLE pipeline_jobs
                     ADD COLUMN IF NOT EXISTS file_content BYTEA
-                """))
+                """)
+                )
 
                 # Add client_ip column
-                conn.execute(text("""
+                conn.execute(
+                    text("""
                     ALTER TABLE pipeline_jobs
                     ADD COLUMN IF NOT EXISTS client_ip VARCHAR(100)
-                """))
+                """)
+                )
 
                 # Add uploaded_at column
-                conn.execute(text("""
+                conn.execute(
+                    text("""
                     ALTER TABLE pipeline_jobs
                     ADD COLUMN IF NOT EXISTS uploaded_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                """))
+                """)
+                )
 
                 # Commit transaction
                 trans.commit()
@@ -81,6 +95,7 @@ def migrate_add_file_storage():
         logger.error(f"❌ Migration error: {e}")
         print(f"❌ Migration error: {e}")
         return False
+
 
 if __name__ == "__main__":
     import sys

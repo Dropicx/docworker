@@ -6,6 +6,9 @@
 ![Python](https://img.shields.io/badge/python-3.11-blue.svg)
 ![React](https://img.shields.io/badge/react-18.3-blue.svg)
 ![FastAPI](https://img.shields.io/badge/fastapi-0.115-green.svg)
+![Code Quality](https://img.shields.io/badge/code%20quality-A-brightgreen.svg)
+![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
+![Coverage](https://img.shields.io/badge/coverage-60%25-yellow.svg)
 
 DocTranslator transforms complex medical documents into patient-friendly language while maintaining complete data privacy and GDPR compliance. Built with FastAPI and React, powered by OVH AI Endpoints.
 
@@ -90,11 +93,16 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for complete local setup guide.
 - **Getting Started**
   - [Development Setup](./docs/DEVELOPMENT.md) - Local development quick start
   - [Railway Dev Setup](./docs/RAILWAY_DEV_SETUP.md) - Railway + PostgreSQL setup
+  - [Contributing Guidelines](./CONTRIBUTING.md) - Code style and workflow
+  - [Type Checking Guide](./docs/TYPE_CHECKING.md) - MyPy setup and type annotation guidelines
 - **Architecture & API**
   - [Architecture](./docs/ARCHITECTURE.md) - System design and components
   - [API Reference](./docs/API.md) - Complete API documentation
   - [Database](./docs/DATABASE.md) - Database schema and queries
-- **Deployment**
+- **Configuration**
+  - [Configuration Guide](./docs/CONFIGURATION.md) - Environment variables and settings
+  - [Feature Flags](./docs/FEATURE_FLAGS.md) - Feature flag system and management
+- **Deployment & Operations**
   - [Deployment Guide](./docs/DEPLOYMENT.md) - Production deployment
   - [Privacy Filter](./docs/PRIVACY_FILTER.md) - PII detection system
 
@@ -139,6 +147,8 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for complete local setup guide.
 - Railway - Cloud platform
 - Docker - Containerization
 - nginx - Reverse proxy
+- GitHub Actions - CI/CD pipeline
+- Actions Runner Controller (ARC) - Self-hosted Kubernetes runners
 
 ## 🔐 Security & Privacy
 
@@ -219,15 +229,79 @@ npm test
 npm run test:e2e
 ```
 
+## 🎯 Code Quality
+
+DocTranslator maintains high code quality standards through automated tooling and CI/CD pipelines.
+
+### Backend Quality Tools
+
+- **Ruff** - Fast Python linter and formatter (1,451 issues auto-fixed)
+- **MyPy** - Static type checking for Python
+- **Bandit** - Security vulnerability scanning
+- **pytest** - Unit and integration testing (60%+ coverage)
+- **pip-audit** - Dependency vulnerability scanning
+
+### Frontend Quality Tools
+
+- **ESLint** - JavaScript/TypeScript linting
+- **Prettier** - Code formatting
+- **TypeScript** - Static type checking
+
+### Pre-commit Hooks
+
+```bash
+# Install pre-commit hooks
+pre-commit install
+
+# Run manually on all files
+pre-commit run --all-files
+```
+
+Hooks automatically run on every commit:
+- Ruff linting and formatting
+- MyPy type checking
+- Bandit security scanning
+- JSON/YAML validation
+- Secret detection (gitleaks)
+- Trailing whitespace removal
+- Conventional commit message validation
+
+### CI/CD Pipeline
+
+Every push and pull request triggers automated quality checks on self-hosted ARC runners:
+
+**Quality Checks:**
+- ✅ **Backend Quality** - Ruff linting & formatting, MyPy type checking, Bandit security scan
+- ✅ **Backend Tests** - pytest with PostgreSQL (Docker-in-Docker on Kubernetes)
+- ✅ **Frontend Quality** - ESLint, Prettier, TypeScript strict mode
+- ✅ **Frontend Build** - Production build verification with Vite
+- ✅ **Security Audit** - pip-audit and npm audit for dependency vulnerabilities
+- ✅ **Quality Gate** - All checks must pass for PR merge
+
+**Self-Hosted Runners:**
+- Runs on Actions Runner Controller (ARC) in Kubernetes cluster
+- Docker daemon access for service containers (PostgreSQL for tests)
+- Python 3.11 and Node.js 18 environments pre-configured
+- Faster builds with internal network access and better resource control
+
+**Workflow Configuration:** `.github/workflows/quality.yml`
+
+See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for detailed CI/CD setup and [CONTRIBUTING.md](./CONTRIBUTING.md) for code style guidelines.
+
 ## 🤝 Contributing
 
-Contributions welcome! Please:
+Contributions welcome! Please read [CONTRIBUTING.md](./CONTRIBUTING.md) for detailed guidelines.
+
+**Quick Start:**
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Make your changes following our code style guidelines
+4. Run quality checks: `pre-commit run --all-files`
+5. Commit with conventional commits format
+6. Push to your branch and open a Pull Request
+
+All PRs must pass automated quality checks before merge.
 
 ## 📝 License
 

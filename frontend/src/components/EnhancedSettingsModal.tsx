@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Settings, AlertCircle, FileText, Workflow } from 'lucide-react';
+import { X, Settings, AlertCircle, FileText, Workflow, Activity } from 'lucide-react';
 import settingsService from '../services/settings';
 import PipelineBuilder from './settings/PipelineBuilder';
 import DocumentClassManager from './settings/DocumentClassManager';
+import FlowerDashboard from './settings/FlowerDashboard';
 import { pipelineApi } from '../services/pipelineApi';
 
 interface EnhancedSettingsModalProps {
@@ -15,7 +16,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
   const [accessCode, setAccessCode] = useState('');
   const [authError, setAuthError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<'pipeline' | 'classes'>('pipeline');
+  const [activeTab, setActiveTab] = useState<'pipeline' | 'classes' | 'monitoring'>('pipeline');
 
   // Check authentication on mount only if we have a token
   useEffect(() => {
@@ -34,7 +35,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
         // Sync token with pipeline API
         pipelineApi.updateToken(localStorage.getItem('settings_auth_token'));
       }
-    } catch (error: any) {
+    } catch (error) {
       setIsAuthenticated(false);
     }
   };
@@ -55,8 +56,8 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
       } else {
         setAuthError(response.message || 'Authentifizierung fehlgeschlagen');
       }
-    } catch (error: any) {
-      setAuthError(error.message || 'Authentifizierung fehlgeschlagen');
+    } catch (error) {
+      setAuthError((error as Error).message || 'Authentifizierung fehlgeschlagen');
     } finally {
       setIsLoading(false);
     }
@@ -106,22 +107,28 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                   <div className="w-16 h-16 bg-brand-100 rounded-full flex items-center justify-center mx-auto">
                     <Settings className="w-8 h-8 text-brand-600" />
                   </div>
-                  <h3 className="text-xl font-bold text-primary-900">Authentifizierung erforderlich</h3>
+                  <h3 className="text-xl font-bold text-primary-900">
+                    Authentifizierung erforderlich
+                  </h3>
                   <p className="text-sm text-primary-600">
-                    Bitte geben Sie den Zugangscode ein, um auf die Pipeline-Einstellungen zuzugreifen
+                    Bitte geben Sie den Zugangscode ein, um auf die Pipeline-Einstellungen
+                    zuzugreifen
                   </p>
                 </div>
 
                 <form onSubmit={handleLogin} className="space-y-4">
                   <div>
-                    <label htmlFor="accessCode" className="block text-sm font-medium text-primary-700 mb-2">
+                    <label
+                      htmlFor="accessCode"
+                      className="block text-sm font-medium text-primary-700 mb-2"
+                    >
                       Zugangscode
                     </label>
                     <input
                       id="accessCode"
                       type="password"
                       value={accessCode}
-                      onChange={(e) => setAccessCode(e.target.value)}
+                      onChange={e => setAccessCode(e.target.value)}
                       className="w-full px-4 py-3 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                       placeholder="Geben Sie den Zugangscode ein"
                       required
@@ -180,6 +187,17 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                       <FileText className="w-4 h-4" />
                       <span>Dokumentenklassen</span>
                     </button>
+                    <button
+                      onClick={() => setActiveTab('monitoring')}
+                      className={`flex items-center space-x-2 px-6 py-3 rounded-t-lg font-medium transition-all ${
+                        activeTab === 'monitoring'
+                          ? 'bg-gradient-to-r from-brand-600 to-brand-700 text-white shadow-md'
+                          : 'text-primary-600 hover:bg-primary-50'
+                      }`}
+                    >
+                      <Activity className="w-4 h-4" />
+                      <span>Worker Monitoring</span>
+                    </button>
                   </div>
 
                   {/* Logout Button */}
@@ -197,6 +215,7 @@ const EnhancedSettingsModal: React.FC<EnhancedSettingsModalProps> = ({ isOpen, o
                 <div className="max-w-6xl mx-auto">
                   {activeTab === 'pipeline' && <PipelineBuilder />}
                   {activeTab === 'classes' && <DocumentClassManager />}
+                  {activeTab === 'monitoring' && <FlowerDashboard />}
                 </div>
               </div>
             </div>

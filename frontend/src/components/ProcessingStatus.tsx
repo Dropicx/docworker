@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, CheckCircle, AlertCircle, Loader, RefreshCw, X, Sparkles, Zap, FileCheck } from 'lucide-react';
+import {
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Loader,
+  RefreshCw,
+  X,
+  Sparkles,
+  Zap,
+  FileCheck,
+} from 'lucide-react';
 import ApiService from '../services/api';
 import { ProcessingProgress, ProcessingStatus as Status } from '../types/api';
 import { isTerminated, getTerminationMetadata } from '../utils/termination';
@@ -7,7 +17,7 @@ import { isTerminated, getTerminationMetadata } from '../utils/termination';
 interface ProcessingStatusProps {
   processingId: string;
   onComplete: () => void;
-  onError: (error: string, metadata?: any) => void;
+  onError: (error: string, metadata?: Record<string, unknown>) => void;
   onCancel?: () => void;
 }
 
@@ -15,7 +25,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
   processingId,
   onComplete,
   onError,
-  onCancel
+  onCancel,
 }) => {
   const [status, setStatus] = useState<ProcessingProgress | null>(null);
   const [isPolling, setIsPolling] = useState(true);
@@ -28,7 +38,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
       try {
         const statusResponse = await ApiService.getProcessingStatus(processingId);
         setStatus(statusResponse);
-        
+
         if (statusResponse.status === 'completed') {
           setIsPolling(false);
           setTimeout(onComplete, 1500); // Etwas längere Verzögerung für bessere UX
@@ -44,13 +54,13 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
           setError(metadata.message);
 
           // Pass structured metadata to parent for specialized UI
-          onError(metadata.message, metadata);
+          onError(metadata.message, metadata as unknown as Record<string, unknown>);
         }
-      } catch (err: any) {
-        console.error('Status polling error:', err);
-        setError(err.message);
+      } catch (err) {
+        console.error('Status polling error:', err as Error);
+        setError((err as Error).message);
         setIsPolling(false);
-        onError(err.message);
+        onError((err as Error).message);
       }
     };
 
@@ -71,9 +81,9 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
       await ApiService.cancelProcessing(processingId);
       setIsPolling(false);
       onCancel?.();
-    } catch (err: any) {
-      console.error('Cancel error:', err);
-      setError(err.message);
+    } catch (err) {
+      console.error('Cancel error:', err as Error);
+      setError((err as Error).message);
     }
   };
 
@@ -145,28 +155,27 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               )}
             </div>
             <div className="min-w-0">
-              <h3 className="text-lg sm:text-xl font-bold text-primary-900">
-                KI-Verarbeitung
-              </h3>
+              <h3 className="text-lg sm:text-xl font-bold text-primary-900">KI-Verarbeitung</h3>
               <p className="text-xs sm:text-sm text-primary-600">
                 Ihr Dokument wird analysiert und übersetzt
               </p>
-              <p className="text-xs text-primary-500 mt-1">
-                Dies kann bis zu 3 Minuten dauern
-              </p>
+              <p className="text-xs text-primary-500 mt-1">Dies kann bis zu 3 Minuten dauern</p>
             </div>
           </div>
-          
-          {(status.status === 'pending' || status.status === 'processing' || 
-            status.status === 'extracting_text' || status.status === 'translating') && onCancel && (
-            <button
-              onClick={handleCancel}
-              className="p-2 text-primary-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200"
-              title="Verarbeitung abbrechen"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+
+          {(status.status === 'pending' ||
+            status.status === 'processing' ||
+            status.status === 'extracting_text' ||
+            status.status === 'translating') &&
+            onCancel && (
+              <button
+                onClick={handleCancel}
+                className="p-2 text-primary-400 hover:text-primary-600 hover:bg-primary-50 rounded-xl transition-all duration-200"
+                title="Verarbeitung abbrechen"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
         </div>
 
         {/* Status Display - Mobile Optimized */}
@@ -198,7 +207,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                 <span className="font-medium text-primary-700">Fortschritt</span>
                 <span className="font-bold text-primary-900">{status.progress_percent}%</span>
               </div>
-              
+
               <div className="progress-bar h-3">
                 <div
                   className={`progress-fill bg-gradient-to-r ${getProgressColor(status.status)} transition-all duration-700 ease-out`}
@@ -206,9 +215,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                 />
               </div>
 
-              <p className="text-sm text-primary-600 leading-relaxed">
-                {status.current_step}
-              </p>
+              <p className="text-sm text-primary-600 leading-relaxed">{status.current_step}</p>
             </div>
           </div>
 
@@ -218,66 +225,75 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               <FileCheck className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-600" />
               Verarbeitungsschritte
             </h4>
-            
+
             <div className="space-y-2 sm:space-y-3">
               {[
-                { 
-                  step: 'upload', 
-                  label: 'Dokument hochgeladen', 
+                {
+                  step: 'upload',
+                  label: 'Dokument hochgeladen',
                   icon: CheckCircle,
                   completed: status.progress_percent >= 10,
-                  active: status.progress_percent >= 0 && status.progress_percent < 30
+                  active: status.progress_percent >= 0 && status.progress_percent < 30,
                 },
-                { 
-                  step: 'extract', 
-                  label: 'Text wird extrahiert', 
+                {
+                  step: 'extract',
+                  label: 'Text wird extrahiert',
                   icon: Loader,
                   completed: status.progress_percent >= 30,
-                  active: status.progress_percent >= 10 && status.progress_percent < 70
+                  active: status.progress_percent >= 10 && status.progress_percent < 70,
                 },
-                { 
-                  step: 'translate', 
-                  label: 'KI übersetzt das Dokument', 
+                {
+                  step: 'translate',
+                  label: 'KI übersetzt das Dokument',
                   icon: Zap,
                   completed: status.progress_percent >= 70,
-                  active: status.progress_percent >= 30 && status.progress_percent < 100
+                  active: status.progress_percent >= 30 && status.progress_percent < 100,
                 },
-                { 
-                  step: 'finalize', 
-                  label: 'Übersetzung wird finalisiert', 
+                {
+                  step: 'finalize',
+                  label: 'Übersetzung wird finalisiert',
                   icon: Sparkles,
                   completed: status.progress_percent >= 100,
-                  active: status.progress_percent >= 70 && status.progress_percent < 100
-                }
+                  active: status.progress_percent >= 70 && status.progress_percent < 100,
+                },
               ].map((item, index) => {
                 const IconComponent = item.icon;
                 return (
-                  <div key={index} className={`flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 rounded-lg sm:rounded-xl transition-all duration-300 ${
-                    item.completed 
-                      ? 'bg-gradient-to-r from-success-50 to-success-50/50 border border-success-200' 
-                      : item.active 
-                        ? 'bg-gradient-to-r from-brand-50 to-accent-50/50 border border-brand-200' 
-                        : 'bg-neutral-50 border border-neutral-200'
-                  }`}>
-                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-300 flex-shrink-0 ${
-                      item.completed 
-                        ? 'bg-gradient-to-br from-success-500 to-success-600' 
-                        : item.active 
-                          ? 'bg-gradient-to-br from-brand-500 to-brand-600' 
-                          : 'bg-neutral-200'
-                    }`}>
-                      <IconComponent className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                        item.completed || item.active ? 'text-white' : 'text-neutral-500'
-                      } ${item.active && !item.completed ? 'animate-pulse-soft' : ''}`} />
+                  <div
+                    key={index}
+                    className={`flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 rounded-lg sm:rounded-xl transition-all duration-300 ${
+                      item.completed
+                        ? 'bg-gradient-to-r from-success-50 to-success-50/50 border border-success-200'
+                        : item.active
+                          ? 'bg-gradient-to-r from-brand-50 to-accent-50/50 border border-brand-200'
+                          : 'bg-neutral-50 border border-neutral-200'
+                    }`}
+                  >
+                    <div
+                      className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-300 flex-shrink-0 ${
+                        item.completed
+                          ? 'bg-gradient-to-br from-success-500 to-success-600'
+                          : item.active
+                            ? 'bg-gradient-to-br from-brand-500 to-brand-600'
+                            : 'bg-neutral-200'
+                      }`}
+                    >
+                      <IconComponent
+                        className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                          item.completed || item.active ? 'text-white' : 'text-neutral-500'
+                        } ${item.active && !item.completed ? 'animate-pulse-soft' : ''}`}
+                      />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className={`text-sm sm:text-base font-medium truncate ${
-                        item.completed 
-                          ? 'text-success-900' 
-                          : item.active 
-                            ? 'text-brand-900' 
-                            : 'text-neutral-600'
-                      }`}>
+                      <div
+                        className={`text-sm sm:text-base font-medium truncate ${
+                          item.completed
+                            ? 'text-success-900'
+                            : item.active
+                              ? 'text-brand-900'
+                              : 'text-neutral-600'
+                        }`}
+                      >
                         {item.label}
                       </div>
                     </div>
@@ -301,7 +317,9 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                     <AlertCircle className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-error-900 mb-1">Verarbeitung fehlgeschlagen</h4>
+                    <h4 className="font-semibold text-error-900 mb-1">
+                      Verarbeitung fehlgeschlagen
+                    </h4>
                     <p className="text-error-700 text-sm leading-relaxed">{error}</p>
                   </div>
                 </div>
@@ -323,9 +341,12 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                     <Sparkles className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-success-900 mb-1">Übersetzung abgeschlossen!</h4>
+                    <h4 className="font-semibold text-success-900 mb-1">
+                      Übersetzung abgeschlossen!
+                    </h4>
                     <p className="text-success-700 text-sm leading-relaxed">
-                      Ihr Dokument wurde erfolgreich in verständliche Sprache übersetzt. Das Ergebnis wird geladen...
+                      Ihr Dokument wurde erfolgreich in verständliche Sprache übersetzt. Das
+                      Ergebnis wird geladen...
                     </p>
                   </div>
                 </div>
@@ -341,12 +362,17 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
                     <FileCheck className="w-5 h-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-error-900 mb-1">Nicht-medizinischer Inhalt erkannt</h4>
+                    <h4 className="font-semibold text-error-900 mb-1">
+                      Nicht-medizinischer Inhalt erkannt
+                    </h4>
                     <p className="text-error-700 text-sm leading-relaxed mb-3">
-                      {status.error || 'Dieses Dokument scheint keinen medizinischen Inhalt zu enthalten.'}
+                      {status.error ||
+                        'Dieses Dokument scheint keinen medizinischen Inhalt zu enthalten.'}
                     </p>
                     <div className="bg-error-100 border border-error-200 rounded-lg p-3">
-                      <p className="text-error-800 text-xs font-medium mb-1">Bitte laden Sie eines der folgenden Dokumente hoch:</p>
+                      <p className="text-error-800 text-xs font-medium mb-1">
+                        Bitte laden Sie eines der folgenden Dokumente hoch:
+                      </p>
                       <ul className="text-error-700 text-xs space-y-1">
                         <li>• Arztbriefe und Entlassungsbriefe</li>
                         <li>• Laborwerte und Blutbefunde</li>
@@ -373,4 +399,4 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
   );
 };
 
-export default ProcessingStatus; 
+export default ProcessingStatus;

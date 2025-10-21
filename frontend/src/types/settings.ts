@@ -3,7 +3,7 @@
 export enum DocumentClass {
   ARZTBRIEF = 'arztbrief',
   BEFUNDBERICHT = 'befundbericht',
-  LABORWERTE = 'laborwerte'
+  LABORWERTE = 'laborwerte',
 }
 
 export interface PipelineStepConfig {
@@ -83,7 +83,7 @@ export interface DocumentTypeInfo {
 export interface ExportData {
   export_date: string;
   version: number;
-  prompts: Record<string, any>;
+  prompts: Record<string, unknown>;
 }
 
 export interface ImportRequest {
@@ -114,7 +114,7 @@ export interface GlobalPrompts {
   classification_prompt: string;
   preprocessing_prompt: string;
   language_translation_prompt: string;
-  ocr_preprocessing_prompt?: string;  // Added OCR preprocessing prompt
+  ocr_preprocessing_prompt?: string; // Added OCR preprocessing prompt
 }
 
 export interface GlobalPromptsMetadata {
@@ -126,7 +126,7 @@ export interface GlobalPromptsMetadata {
 export interface GlobalPromptsResponse {
   global_prompts: GlobalPrompts;
   metadata: GlobalPromptsMetadata;
-  statistics: Record<string, any>;
+  statistics: Record<string, unknown>;
 }
 
 export interface GlobalPromptUpdateRequest {
@@ -145,22 +145,22 @@ export const DOCUMENT_TYPE_INFO: Record<DocumentClass, DocumentTypeInfo> = {
     name: 'Arztbrief',
     description: 'Briefe zwischen Ärzten, Entlassungsbriefe, Überweisungen',
     icon: '📨',
-    examples: ['Entlassungsbrief', 'Überweisungsschreiben', 'Konsiliarbericht', 'Therapiebericht']
+    examples: ['Entlassungsbrief', 'Überweisungsschreiben', 'Konsiliarbericht', 'Therapiebericht'],
   },
   [DocumentClass.BEFUNDBERICHT]: {
     id: 'befundbericht',
     name: 'Befundbericht',
     description: 'Medizinische Befunde, Untersuchungsergebnisse, Bildgebung',
     icon: '🔬',
-    examples: ['MRT-Befund', 'CT-Bericht', 'Ultraschallbefund', 'Pathologiebefund']
+    examples: ['MRT-Befund', 'CT-Bericht', 'Ultraschallbefund', 'Pathologiebefund'],
   },
   [DocumentClass.LABORWERTE]: {
     id: 'laborwerte',
     name: 'Laborwerte',
     description: 'Laborergebnisse, Blutwerte, Messwerte mit Referenzbereichen',
     icon: '🧪',
-    examples: ['Blutbild', 'Urinanalyse', 'Hormonwerte', 'Tumormarker']
-  }
+    examples: ['Blutbild', 'Urinanalyse', 'Hormonwerte', 'Tumormarker'],
+  },
 };
 
 // Pipeline optimization settings
@@ -169,7 +169,7 @@ export interface PipelineSettings {
   pipeline_cache_timeout: number;
   enable_medical_validation: boolean;
   enable_classification: boolean;
-  enable_text_extraction: boolean;  // Added OCR/text extraction step
+  enable_text_extraction: boolean; // Added OCR/text extraction step
   enable_preprocessing: boolean;
   enable_translation: boolean;
   enable_fact_check: boolean;
@@ -197,36 +197,36 @@ export const GLOBAL_PROMPT_STEPS = {
     description: 'Bereinigt und strukturiert OCR-extrahierte Texte - Schritt 0',
     placeholder: 'Bereinige diesen OCR-Text und korrigiere erkannte Fehler...',
     category: 'preprocessing',
-    order: 0
+    order: 0,
   },
   medical_validation_prompt: {
     name: '🔍 Medizinische Validierung (Universal)',
     description: 'Erkennt medizinische Inhalte - gilt für alle Dokumenttypen - Schritt 1',
     placeholder: 'Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält...',
     category: 'preprocessing',
-    order: 1
+    order: 1,
   },
   classification_prompt: {
     name: '📋 Dokumentklassifizierung (Universal)',
     description: 'Bestimmt den Dokumenttyp - gilt für alle Eingänge - Schritt 2',
     placeholder: 'Analysiere diesen medizinischen Text und klassifiziere ihn als...',
     category: 'preprocessing',
-    order: 2
+    order: 2,
   },
   preprocessing_prompt: {
     name: '🔒 Datenbereinigung (Universal)',
     description: 'Entfernt persönliche Daten - gilt für alle Dokumenttypen - Schritt 3',
     placeholder: 'Entferne alle persönlichen Daten aus diesem Text...',
     category: 'preprocessing',
-    order: 3
+    order: 3,
   },
   language_translation_prompt: {
     name: '🌍 Sprachübersetzung (Universal)',
     description: 'Template für Übersetzungen - gilt für alle Sprachen - Schritt 7',
     placeholder: 'Übersetze diesen Text in {language}...',
     category: 'translation',
-    order: 7
-  }
+    order: 7,
+  },
 };
 
 // Document-specific prompt step descriptions for UI (universal prompts moved to GLOBAL_PROMPT_STEPS)
@@ -235,32 +235,32 @@ export const PROMPT_STEPS = {
     name: 'Hauptübersetzung',
     description: 'Übersetzung in patientenfreundliche Sprache (dokumentspezifisch)',
     placeholder: 'Übersetze diesen medizinischen Text in einfache Sprache...',
-    category: 'translation'
+    category: 'translation',
   },
   fact_check_prompt: {
     name: 'Faktenprüfung',
     description: 'Überprüfung der medizinischen Korrektheit (dokumentspezifisch)',
     placeholder: 'Prüfe diesen Text auf medizinische Korrektheit...',
-    category: 'quality'
+    category: 'quality',
   },
   grammar_check_prompt: {
     name: 'Grammatikprüfung',
     description: 'Korrigiert Grammatik und Rechtschreibung (dokumentspezifisch)',
     placeholder: 'Korrigiere Grammatik und Rechtschreibung in diesem Text...',
-    category: 'quality'
+    category: 'quality',
   },
   final_check_prompt: {
     name: 'Finale Kontrolle',
     description: 'Abschließende Qualitätsprüfung (dokumentspezifisch)',
     placeholder: 'Führe eine finale Qualitätskontrolle durch...',
-    category: 'quality'
+    category: 'quality',
   },
   formatting_prompt: {
     name: 'Textformatierung',
     description: 'Optimierung der Textstruktur und Lesbarkeit (dokumentspezifisch)',
     placeholder: 'Formatiere diesen Text für optimale Lesbarkeit mit Überschriften und Listen...',
-    category: 'formatting'
-  }
+    category: 'formatting',
+  },
 };
 
 // Combined prompt categories
@@ -268,23 +268,23 @@ export const PROMPT_CATEGORIES = {
   preprocessing: {
     name: 'Vorverarbeitung',
     description: 'Universal für alle Dokumenttypen',
-    color: 'blue'
+    color: 'blue',
   },
   quality: {
     name: 'Qualitätskontrolle',
     description: 'Universal für alle Dokumenttypen',
-    color: 'green'
+    color: 'green',
   },
   translation: {
     name: 'Übersetzung',
     description: 'Universal für alle Sprachen',
-    color: 'purple'
+    color: 'purple',
   },
   document_specific: {
     name: 'Dokumentspezifisch',
     description: 'Angepasst für jeden Dokumenttyp',
-    color: 'orange'
-  }
+    color: 'orange',
+  },
 };
 
 // OCR Settings interfaces - matching backend structure

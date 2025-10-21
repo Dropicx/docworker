@@ -1,16 +1,18 @@
 from datetime import datetime
+import logging
+import os
+from pathlib import Path
+import shutil
+import tempfile
+
 from fastapi import APIRouter, Request
+
 from app.models.document import HealthCheck
 from app.services.cleanup import get_memory_usage
 from app.services.ovh_client import OVHClient
-from shared.redis_client import get_redis
-from shared.task_queue import check_workers_available
-import tempfile
-import os
-import shutil
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 def check_ocr_capabilities() -> dict:
     """
@@ -19,18 +21,18 @@ def check_ocr_capabilities() -> dict:
     NOTE: OCR processing now happens in the WORKER service, not backend.
     Backend no longer requires OCR dependencies (PaddleOCR runs in worker).
     """
-    ocr_info = {
+    return {
         "ocr_location": "worker_service",
         "backend_ocr": False,
         "available_engines": ["PADDLEOCR", "VISION_LLM", "HYBRID"],
         "architecture": "worker_based",
         "status": "delegated_to_worker",
-        "note": "OCR handled by Celery worker with PaddleOCR, Vision LLM, and Hybrid engines"
+        "note": "OCR handled by Celery worker with PaddleOCR, Vision LLM, and Hybrid engines",
     }
 
-    return ocr_info
 
 router = APIRouter()
+
 
 @router.get("/health", response_model=HealthCheck)
 async def health_check(request: Request = None):
@@ -40,19 +42,22 @@ async def health_check(request: Request = None):
 
     # Debug: Log health check request
     if request:
-        print(f"🔍 === HEALTH REQUEST DEBUG ===")
+        print("🔍 === HEALTH REQUEST DEBUG ===")
         print(f"🔍 Method: {request.method}")
         print(f"🔍 URL: {request.url}")
         print(f"🔍 Headers: {dict(request.headers)}")
         print(f"🔍 Client: {request.client}")
-        print(f"🔍 === END HEALTH DEBUG ===")
+        print("🔍 === END HEALTH DEBUG ===")
 
     try:
         services = {}
 
         # Redis prüfen
         try:
-            redis_client = get_redis()
+            import redis
+
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+            redis_client = redis.from_url(redis_url, socket_connect_timeout=2)
             redis_client.ping()
             services["redis"] = "healthy"
         except Exception as e:
@@ -61,14 +66,19 @@ async def health_check(request: Request = None):
         # Celery Worker prüfen
         try:
             from celery import Celery
-            REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
-            celery_app = Celery(broker=REDIS_URL, backend=REDIS_URL)
 
-            worker_status = check_workers_available(celery_app, timeout=1.0)
-            if worker_status['available']:
-                services["worker"] = f"healthy ({worker_status['worker_count']} active)"
+            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+            celery_app = Celery(broker=redis_url, backend=redis_url)
+
+            # Simple worker check
+            inspect = celery_app.control.inspect(timeout=1.0)
+            active_workers = inspect.active()
+
+            if active_workers:
+                worker_count = len(active_workers)
+                services["worker"] = f"healthy ({worker_count} active)"
             else:
-                services["worker"] = f"error: {worker_status.get('error', 'No workers available')}"
+                services["worker"] = "error: No workers available"
         except Exception as e:
             services["worker"] = f"error: {str(e)[:50]}"
 
@@ -79,9 +89,10 @@ async def health_check(request: Request = None):
 
         # PaddleOCR Service prüfen
         try:
-            paddleocr_url = os.getenv('PADDLEOCR_SERVICE_URL')
+            paddleocr_url = os.getenv("PADDLEOCR_SERVICE_URL")
             if paddleocr_url:
                 import httpx
+
                 async with httpx.AsyncClient(timeout=2.0) as client:
                     response = await client.get(f"{paddleocr_url}/health")
                     if response.status_code == 200:
@@ -95,26 +106,22 @@ async def health_check(request: Request = None):
 
         # Temporäres Verzeichnis prüfen
         try:
-            temp_dir = tempfile.gettempdir()
-            test_file = os.path.join(temp_dir, "health_check_test")
-            with open(test_file, 'w') as f:
-                f.write("test")
-            os.remove(test_file)
+            temp_dir = Path(tempfile.gettempdir())
+            test_file = temp_dir / "health_check_test"
+            test_file.write_text("test")
+            test_file.unlink()
             services["filesystem"] = "healthy"
         except Exception:
             services["filesystem"] = "error"
 
         # PIL/Pillow prüfen
         try:
-            from PIL import Image
             services["image_processing"] = "healthy"
         except Exception:
             services["image_processing"] = "error"
 
         # PDF-Verarbeitung prüfen
         try:
-            import PyPDF2
-            import pdfplumber
             services["pdf_processing"] = "healthy"
         except Exception:
             services["pdf_processing"] = "error"
@@ -134,18 +141,11 @@ async def health_check(request: Request = None):
         else:
             overall_status = "healthy"
 
-        return HealthCheck(
-            status=overall_status,
-            services=services,
-            memory_usage=memory_usage
-        )
+        return HealthCheck(status=overall_status, services=services, memory_usage=memory_usage)
 
     except Exception as e:
-        return HealthCheck(
-            status="error",
-            services={"error": str(e)},
-            memory_usage=None
-        )
+        return HealthCheck(status="error", services={"error": str(e)}, memory_usage=None)
+
 
 @router.get("/health/simple")
 async def simple_health_check():
@@ -154,21 +154,22 @@ async def simple_health_check():
     """
     return {"status": "ok", "timestamp": datetime.now()}
 
+
 @router.get("/health/detailed")
 async def detailed_health_check():
     """
     Detaillierter Gesundheitscheck mit zusätzlichen Informationen
     """
-    
+
     try:
         from app.services.cleanup import processing_store
-        
+
         # Basis-Gesundheitscheck
         basic_health = await health_check()
-        
+
         # OCR capability check
         ocr_status = check_ocr_capabilities()
-        
+
         # Zusätzliche Details
         details = {
             "active_processes": len(processing_store),
@@ -176,55 +177,48 @@ async def detailed_health_check():
             "temp_space_available": shutil.disk_usage(tempfile.gettempdir()).free,
             "python_version": os.sys.version,
             "process_id": os.getpid(),
-            "ocr_capabilities": ocr_status
+            "ocr_capabilities": ocr_status,
         }
-        
+
         # Disk Space Check
         temp_space_gb = details["temp_space_available"] / (1024**3)
         if temp_space_gb < 1:  # Weniger als 1GB frei
             basic_health.services["disk_space"] = "warning"
         else:
             basic_health.services["disk_space"] = "healthy"
-        
+
         # Model availability prüfen - OVH models are configured via environment
         ovh_models = [
             os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct"),
             os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407"),
-            os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
+            os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct"),
         ]
         details["available_models"] = list(set(ovh_models))  # Remove duplicates
         details["model_count"] = len(details["available_models"])
         details["api_mode"] = "OVH AI Endpoints"
-        
-        return {
-            **basic_health.dict(),
-            "details": details
-        }
-        
+
+        return {**basic_health.dict(), "details": details}
+
     except Exception as e:
-        return {
-            "status": "error",
-            "error": str(e),
-            "timestamp": datetime.now()
-        }
+        return {"status": "error", "error": str(e), "timestamp": datetime.now()}
+
 
 # Debug endpoint removed for production security
 # To enable debugging, set ENVIRONMENT=development
+
 
 @router.get("/health/test-markdown-format")
 async def test_markdown_format():
     """
     Testet die neue Markdown-Formatierung mit Sublisten
     """
-    
+
     # Test mit problematischem Text
     test_cases = {
         "simple_bullet_arrow": """• Sie haben Atemnot. → Bedeutung: Sie kommen schnell außer Atem.
 • Sie haben Brustschmerzen. → Bedeutung: Ihr Herz arbeitet nicht richtig.""",
-        
         "multiple_arrows": """• Ramipril 5mg. → Wofür: Senkt Ihren Blutdruck. → Einnahme: 1x morgens.
 • Metformin 1000mg. → Wofür: Hilft bei der Zuckerverarbeitung. → Einnahme: 2x täglich zum Essen.""",
-        
         "mixed_content": """## 💊 Behandlung & Medikamente
 
 • Ramipril 5mg. → Wofür: Senkt Ihren Blutdruck. → Einnahme: 1x morgens.
@@ -233,35 +227,37 @@ async def test_markdown_format():
 ## 📊 Ihre Werte
 
 • Blutdruck: 140/90 mmHg → Bedeutung: Leicht erhöht, sollte gesenkt werden.
-• Blutzucker: 7.8% HbA1c → Bedeutung: Über dem Zielwert, besser kontrollieren."""
+• Blutzucker: 7.8% HbA1c → Bedeutung: Über dem Zielwert, besser kontrollieren.""",
     }
-    
+
     # Teste unsere neue Formatierung
     from app.services.ovh_client import OVHClient
+
     client = OVHClient()
-    
+
     formatted_results = {}
     for name, text in test_cases.items():
         formatted = client._improve_formatting(text)
         formatted_results[name] = {
             "original": text,
             "formatted": formatted,
-            "lines_original": text.split('\n'),
-            "lines_formatted": formatted.split('\n'),
-            "contains_sublists": '  - ' in formatted,
-            "arrow_count": formatted.count('→'),
-            "bullet_count": formatted.count('•'),
-            "sublist_count": formatted.count('  - ')
+            "lines_original": text.split("\n"),
+            "lines_formatted": formatted.split("\n"),
+            "contains_sublists": "  - " in formatted,
+            "arrow_count": formatted.count("→"),
+            "bullet_count": formatted.count("•"),
+            "sublist_count": formatted.count("  - "),
         }
-    
+
     return {
         "test_results": formatted_results,
         "formatting_info": {
             "method": "Markdown sublists with '  - ' prefix",
             "expected_rendering": "Indented arrows with gray background",
-            "reactmarkdown_compatible": True
-        }
+            "reactmarkdown_compatible": True,
+        },
     }
+
 
 @router.get("/health/test-formatting-live")
 async def test_formatting_live():
@@ -278,39 +274,36 @@ async def test_formatting_live():
 
 • Ramipril 5mg. → Wofür: Senkt Ihren Blutdruck. → Einnahme: 1x morgens.
 • Metformin 1000mg. → Wofür: Hilft bei der Zuckerverarbeitung. → Einnahme: 2x täglich zum Essen."""
-    
+
     from app.services.ovh_client import OVHClient
+
     client = OVHClient()
-    
+
     # Formatierung anwenden
     formatted = client._improve_formatting(problem_text)
-    
+
     # HTML-Version für Browser-Anzeige erstellen
-    html_display = formatted.replace('\n', '<br>').replace('  ', '&nbsp;&nbsp;')
-    
+    html_display = formatted.replace("\n", "<br>").replace("  ", "&nbsp;&nbsp;")
+
     return {
         "original": problem_text,
         "formatted": formatted,
         "html_preview": f"<pre style='font-family: monospace; white-space: pre-wrap;'>{html_display}</pre>",
-        "line_by_line": {
-            "original": problem_text.split('\n'),
-            "formatted": formatted.split('\n')
-        },
+        "line_by_line": {"original": problem_text.split("\n"), "formatted": formatted.split("\n")},
         "stats": {
-            "original_lines": len(problem_text.split('\n')),
-            "formatted_lines": len(formatted.split('\n')),
-            "arrows_found": problem_text.count('→'),
-            "bullets_found": problem_text.count('•')
-        }
+            "original_lines": len(problem_text.split("\n")),
+            "formatted_lines": len(formatted.split("\n")),
+            "arrows_found": problem_text.count("→"),
+            "bullets_found": problem_text.count("•"),
+        },
     }
+
 
 @router.get("/health/test-formatting")
 async def test_formatting():
     """
     Testet die Formatierungsfunktion
     """
-    use_ovh_only = os.getenv("USE_OVH_ONLY", "true").lower() == "true"
-    
     # Test text mit problematischen Formatierungen
     test_text = """## 📊 Zusammenfassung
 ### Was wurde gemacht?
@@ -320,31 +313,32 @@ async def test_formatting():
 • Sie haben Atemnot bereits bei geringer körperlicher Anstrengung (NYHA II-III). → Bedeutung: Das bedeutet, dass Sie schnell außer Atem kommen, wenn Sie sich anstrengen.
 • Sie haben gelegentliche retrosternale Druckgefühle in der Brust. → Bedeutung: Das bedeutet, dass Sie manchmal ein Druckgefühl in der Brust verspüren.
 • Ihr Blutdruck ist normal. → Bedeutung: Das bedeutet, dass Ihr Blutdruck im normalen Bereich liegt."""
-    
+
     from app.services.ovh_client import OVHClient
+
     client = OVHClient()
-    
+
     # Schritt für Schritt debuggen
     import re
-    
+
     steps = []
     step1 = test_text
     steps.append({"step": "original", "text": step1})
-    
+
     # Schritt 1: Bullet Points auf neue Zeilen
-    step2 = re.sub(r'([^\n])(•)', r'\1\n•', step1)
+    step2 = re.sub(r"([^\n])(•)", r"\1\n•", step1)
     steps.append({"step": "bullets_on_newlines", "text": step2})
-    
+
     # Schritt 2: Pfeile auf neue Zeilen
-    step3 = re.sub(r'([^^\n])(\s*→\s*)', r'\1\n  → ', step2)
+    step3 = re.sub(r"([^^\n])(\s*→\s*)", r"\1\n  → ", step2)
     steps.append({"step": "arrows_on_newlines", "text": step3})
-    
+
     formatted_text = client._improve_formatting(test_text)
-    
+
     # Zeige auch die Zeilen einzeln für besseres Debugging
-    lines_original = test_text.split('\n')
-    lines_formatted = formatted_text.split('\n')
-    
+    lines_original = test_text.split("\n")
+    lines_formatted = formatted_text.split("\n")
+
     return {
         "original": test_text,
         "formatted": formatted_text,
@@ -353,62 +347,74 @@ async def test_formatting():
             "original_lines": lines_original,
             "formatted_lines": lines_formatted,
             "line_count_original": len(lines_original),
-            "line_count_formatted": len(lines_formatted)
+            "line_count_formatted": len(lines_formatted),
         },
-        "api_mode": "OVH"
+        "api_mode": "OVH",
     }
+
 
 @router.get("/health/dependencies")
 async def check_dependencies():
     """
     Prüft alle wichtigen Abhängigkeiten
     """
-    
+
     dependencies = {}
-    
+
     # Python-Pakete
     packages = [
-        "fastapi", "uvicorn", "pydantic", "httpx", 
-        "PIL", "pytesseract", "PyPDF2", "pdfplumber"
+        "fastapi",
+        "uvicorn",
+        "pydantic",
+        "httpx",
+        "PIL",
+        "pytesseract",
+        "PyPDF2",
+        "pdfplumber",
     ]
-    
+
     for package in packages:
         try:
             __import__(package)
             dependencies[package] = "installed"
         except ImportError:
             dependencies[package] = "missing"
-    
+
     # System-Kommandos
     system_commands = ["tesseract"]
-    
+
     for cmd in system_commands:
         try:
             import subprocess
-            result = subprocess.run([cmd, "--version"], 
-                                 capture_output=True, 
-                                 timeout=5)
+
+            result = subprocess.run([cmd, "--version"], capture_output=True, timeout=5)
             dependencies[f"system_{cmd}"] = "available" if result.returncode == 0 else "error"
         except Exception:
             dependencies[f"system_{cmd}"] = "missing"
-    
+
     # Externe Services - OVH API Service
     try:
         from app.services.ovh_client import OVHClient
+
         ovh_client = OVHClient()
         ovh_status, error_msg = await ovh_client.check_connection()
-        dependencies["ovh_api_service"] = "connected" if ovh_status else f"disconnected: {error_msg[:50]}"
+        dependencies["ovh_api_service"] = (
+            "connected" if ovh_status else f"disconnected: {error_msg[:50]}"
+        )
     except Exception as e:
         dependencies["ovh_api_service"] = f"error: {str(e)}"
-    
+
     # Zusammenfassung
-    missing_deps = [name for name, status in dependencies.items() 
-                   if status in ["missing", "error", "disconnected"]]
-    
+    missing_deps = [
+        name
+        for name, status in dependencies.items()
+        if status in ["missing", "error", "disconnected"]
+    ]
+
     return {
         "dependencies": dependencies,
         "missing_count": len(missing_deps),
         "missing_dependencies": missing_deps,
         "status": "healthy" if not missing_deps else "degraded",
-        "timestamp": datetime.now()
-    } 
+        "timestamp": datetime.now(),
+    }

@@ -1,5 +1,17 @@
 # Railway Deployment Guide - Optimized PII Filter
 
+> ## ⚠️ DEPRECATED (2025-10-13)
+>
+> **This deployment guide is DEPRECATED.**
+>
+> **Current Implementation**: The system now uses `AdvancedPrivacyFilter` without Railway volume
+> - No special volume configuration needed
+> - Works with or without spaCy (graceful fallback)
+> - Better medical term coverage
+> - See current implementation in `worker/tasks/document_processing.py:123`
+>
+> This guide is kept for historical reference only.
+
 ## ✅ Implementation Complete
 
 All code changes for the optimized PII filter with Railway volume integration have been implemented.

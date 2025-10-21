@@ -2,10 +2,11 @@
 pytest==8.3.4
 pytest-asyncio==0.25.2
 pytest-cov==6.0.0
-black==24.11.0
-flake8==7.1.1
-mypy==1.14.1
-isort==5.13.2
+
+# Code Quality Tools
+ruff==0.1.9  # Fast linter + formatter (replaces black, flake8, isort)
+mypy==1.14.1  # Type checking
+pip-audit==2.7.0  # Security vulnerability scanning
 
 # Type stubs
 types-aiofiles==24.1.0.20250103

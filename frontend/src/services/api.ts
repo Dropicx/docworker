@@ -9,7 +9,7 @@ import {
   ActiveProcessesResponse,
   ProcessingOptions,
   AvailableLanguagesResponse,
-  ApiError
+  ApiError,
 } from '../types/api';
 
 // Base API configuration
@@ -24,30 +24,32 @@ const api = axios.create({
 });
 
 // Request interceptor for logging
-api.interceptors.request.use((config) => {
+api.interceptors.request.use(config => {
+  // eslint-disable-next-line no-console
   console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
   return config;
 });
 
 // Response interceptor for error handling
 api.interceptors.response.use(
-  (response) => {
+  response => {
+    // eslint-disable-next-line no-console
     console.log(`✅ API Response: ${response.status} ${response.config.url}`);
     return response;
   },
-  (error) => {
-    console.error(`❌ API Error: ${error.response?.status} ${error.config?.url}`, error.response?.data);
-    
-    const message = error.response?.data?.detail || 
-                   error.response?.data?.message || 
-                   error.message || 
-                   'Unknown API error';
-    
-    throw new ApiError(
-      message,
-      error.response?.status || 500,
+  error => {
+    console.error(
+      `❌ API Error: ${error.response?.status} ${error.config?.url}`,
       error.response?.data
     );
+
+    const message =
+      error.response?.data?.detail ||
+      error.response?.data?.message ||
+      error.message ||
+      'Unknown API error';
+
+    throw new ApiError(message, error.response?.status || 500, error.response?.data);
   }
 );
 
@@ -70,7 +72,7 @@ export class ApiService {
 
   // Start processing with optional language
   static async startProcessing(
-    processingId: string, 
+    processingId: string,
     options?: ProcessingOptions
   ): Promise<{ message: string; processing_id: string; status: string; target_language?: string }> {
     const response = await api.post(`/process/${processingId}`, options || {});
@@ -79,18 +81,24 @@ export class ApiService {
 
   // Get processing status
   static async getProcessingStatus(processingId: string): Promise<ProcessingProgress> {
-    const response: AxiosResponse<ProcessingProgress> = await api.get(`/process/${processingId}/status`);
+    const response: AxiosResponse<ProcessingProgress> = await api.get(
+      `/process/${processingId}/status`
+    );
     return response.data;
   }
 
   // Get processing result
   static async getProcessingResult(processingId: string): Promise<TranslationResult> {
-    const response: AxiosResponse<TranslationResult> = await api.get(`/process/${processingId}/result`);
+    const response: AxiosResponse<TranslationResult> = await api.get(
+      `/process/${processingId}/result`
+    );
     return response.data;
   }
 
   // Cancel processing
-  static async cancelProcessing(processingId: string): Promise<{ message: string; processing_id: string }> {
+  static async cancelProcessing(
+    processingId: string
+  ): Promise<{ message: string; processing_id: string }> {
     const response = await api.delete(`/upload/${processingId}`);
     return response.data;
   }
@@ -101,12 +109,12 @@ export class ApiService {
     return response.data;
   }
 
-  static async getDetailedHealth(): Promise<any> {
+  static async getDetailedHealth(): Promise<unknown> {
     const response = await api.get('/health/detailed');
     return response.data;
   }
 
-  static async checkDependencies(): Promise<any> {
+  static async checkDependencies(): Promise<unknown> {
     const response = await api.get('/health/dependencies');
     return response.data;
   }
@@ -117,7 +125,7 @@ export class ApiService {
     return response.data;
   }
 
-  static async getUploadHealth(): Promise<any> {
+  static async getUploadHealth(): Promise<unknown> {
     const response = await api.get('/upload/health');
     return response.data;
   }
@@ -142,11 +150,11 @@ export class ApiService {
   // Utility methods
   static formatFileSize(bytes: number): string {
     if (bytes === 0) return '0 Bytes';
-    
+
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    
+
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 
@@ -216,7 +224,7 @@ export class ApiService {
     if (file.size > maxSize) {
       return {
         valid: false,
-        error: `Datei zu groß. Maximum: ${this.formatFileSize(maxSize)}`
+        error: `Datei zu groß. Maximum: ${this.formatFileSize(maxSize)}`,
       };
     }
 
@@ -225,7 +233,7 @@ export class ApiService {
     if (!allowedTypes.includes(file.type)) {
       return {
         valid: false,
-        error: 'Dateityp nicht unterstützt. Erlaubt: PDF, JPEG, PNG'
+        error: 'Dateityp nicht unterstützt. Erlaubt: PDF, JPEG, PNG',
       };
     }
 
@@ -233,7 +241,7 @@ export class ApiService {
     if (!file.name || file.name.length > 255) {
       return {
         valid: false,
-        error: 'Ungültiger Dateiname'
+        error: 'Ungültiger Dateiname',
       };
     }
 
@@ -241,4 +249,4 @@ export class ApiService {
   }
 }
 
-export default ApiService; 
+export default ApiService;

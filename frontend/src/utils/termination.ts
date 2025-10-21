@@ -60,7 +60,7 @@ export function getTerminationMetadata(status: ProcessingProgress): TerminationM
     isTermination: true,
     reason: status.termination_reason,
     step: status.termination_step || status.current_step,
-    message
+    message,
   };
 }
 

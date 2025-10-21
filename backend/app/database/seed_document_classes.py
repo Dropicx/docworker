@@ -10,7 +10,9 @@ These are marked as system classes and cannot be deleted.
 """
 
 import logging
+
 from sqlalchemy.orm import Session
+
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import DocumentClassDB
 
@@ -26,7 +28,7 @@ DEFAULT_DOCUMENT_CLASSES = [
             "Entlassungsbrief",
             "Überweisungsschreiben",
             "Konsiliarbericht",
-            "Therapiebericht"
+            "Therapiebericht",
         ],
         "strong_indicators": [
             "sehr geehrte",
@@ -41,7 +43,7 @@ DEFAULT_DOCUMENT_CLASSES = [
             "überweisen",
             "vorstellung",
             "konsil",
-            "therapiebericht"
+            "therapiebericht",
         ],
         "weak_indicators": [
             "patient wurde",
@@ -50,23 +52,18 @@ DEFAULT_DOCUMENT_CLASSES = [
             "therapie",
             "empfehlung",
             "weiteres vorgehen",
-            "rückfragen"
+            "rückfragen",
         ],
         "is_enabled": True,
         "is_system_class": True,
-        "created_by": "system_seed"
+        "created_by": "system_seed",
     },
     {
         "class_key": "BEFUNDBERICHT",
         "display_name": "Befundbericht",
         "description": "Medizinische Befunde, Untersuchungsergebnisse, Bildgebung",
         "icon": "🔬",
-        "examples": [
-            "MRT-Befund",
-            "CT-Bericht",
-            "Ultraschallbefund",
-            "Pathologiebefund"
-        ],
+        "examples": ["MRT-Befund", "CT-Bericht", "Ultraschallbefund", "Pathologiebefund"],
         "strong_indicators": [
             "befund",
             "befundbericht",
@@ -84,7 +81,7 @@ DEFAULT_DOCUMENT_CLASSES = [
             "darstellung",
             "kontrastmittel",
             "schnittbild",
-            "aufnahme"
+            "aufnahme",
         ],
         "weak_indicators": [
             "auffällig",
@@ -99,23 +96,18 @@ DEFAULT_DOCUMENT_CLASSES = [
             "fraktur",
             "läsion",
             "infiltrat",
-            "erguss"
+            "erguss",
         ],
         "is_enabled": True,
         "is_system_class": True,
-        "created_by": "system_seed"
+        "created_by": "system_seed",
     },
     {
         "class_key": "LABORWERTE",
         "display_name": "Laborwerte",
         "description": "Laborergebnisse, Blutwerte, Messwerte mit Referenzbereichen",
         "icon": "🧪",
-        "examples": [
-            "Blutbild",
-            "Urinanalyse",
-            "Hormonwerte",
-            "Tumormarker"
-        ],
+        "examples": ["Blutbild", "Urinanalyse", "Hormonwerte", "Tumormarker"],
         "strong_indicators": [
             "laborwerte",
             "blutwerte",
@@ -141,7 +133,7 @@ DEFAULT_DOCUMENT_CLASSES = [
             "tsh",
             "psa",
             "ck",
-            "troponin"
+            "troponin",
         ],
         "weak_indicators": [
             "erhöht",
@@ -154,12 +146,12 @@ DEFAULT_DOCUMENT_CLASSES = [
             "bakterien",
             "keime",
             "resistenz",
-            "antibiogramm"
+            "antibiogramm",
         ],
         "is_enabled": True,
         "is_system_class": True,
-        "created_by": "system_seed"
-    }
+        "created_by": "system_seed",
+    },
 ]
 
 
@@ -180,18 +172,22 @@ def seed_document_classes(session: Session = None):
 
         for class_data in DEFAULT_DOCUMENT_CLASSES:
             # Check if class already exists
-            existing = session.query(DocumentClassDB).filter_by(
-                class_key=class_data["class_key"]
-            ).first()
+            existing = (
+                session.query(DocumentClassDB).filter_by(class_key=class_data["class_key"]).first()
+            )
 
             if existing:
-                logger.info(f"   ✓ Document class '{class_data['class_key']}' already exists, skipping")
+                logger.info(
+                    f"   ✓ Document class '{class_data['class_key']}' already exists, skipping"
+                )
                 continue
 
             # Create new document class
             doc_class = DocumentClassDB(**class_data)
             session.add(doc_class)
-            logger.info(f"   ✅ Created document class: {class_data['class_key']} - {class_data['display_name']}")
+            logger.info(
+                f"   ✅ Created document class: {class_data['class_key']} - {class_data['display_name']}"
+            )
 
         session.commit()
         logger.info("✅ Document class seeding completed successfully!")
@@ -209,8 +205,7 @@ def seed_document_classes(session: Session = None):
 if __name__ == "__main__":
     # Configure logging
     logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     # Run seeding

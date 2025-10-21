@@ -1,6 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import { Stethoscope, Shield, AlertTriangle, Sparkles, FileText, Zap, Globe, ChevronDown, Search, Settings } from 'lucide-react';
+import {
+  Stethoscope,
+  Shield,
+  AlertTriangle,
+  Sparkles,
+  FileText,
+  Zap,
+  Globe,
+  ChevronDown,
+  Search,
+  Settings,
+} from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
@@ -12,7 +23,13 @@ import Impressum from './pages/Impressum';
 import Datenschutz from './pages/Datenschutz';
 import Nutzungsbedingungen from './pages/Nutzungsbedingungen';
 import ApiService from './services/api';
-import { UploadResponse, TranslationResult as TranslationData, HealthCheck, ProcessingOptions, SupportedLanguage } from './types/api';
+import {
+  UploadResponse,
+  TranslationResult as TranslationData,
+  HealthCheck,
+  ProcessingOptions,
+  SupportedLanguage,
+} from './types/api';
 
 type AppState = 'upload' | 'initializing' | 'processing' | 'result' | 'error';
 
@@ -21,7 +38,7 @@ function App() {
   const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null);
   const [translationResult, setTranslationResult] = useState<TranslationData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [errorMetadata, setErrorMetadata] = useState<any>(null);
+  const [errorMetadata, setErrorMetadata] = useState<Record<string, unknown> | null>(null);
   const [health, setHealth] = useState<HealthCheck | null>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [availableLanguages, setAvailableLanguages] = useState<SupportedLanguage[]>([]);
@@ -39,7 +56,7 @@ function App() {
     const checkHealth = async () => {
       if (healthCheckDone) return;
       healthCheckDone = true;
-      
+
       try {
         const healthResponse = await ApiService.getHealth();
         if (mounted) {
@@ -53,7 +70,7 @@ function App() {
     const loadLanguages = async () => {
       if (languagesCheckDone) return;
       languagesCheckDone = true;
-      
+
       try {
         const languagesResponse = await ApiService.getAvailableLanguages();
         if (mounted) {
@@ -81,21 +98,21 @@ function App() {
     setError(null);
     // Show initializing screen immediately
     setAppState('initializing');
-    
+
     try {
       // Small delay to show the initializing screen
       await new Promise(resolve => setTimeout(resolve, 500));
-      
+
       // Start processing with language options
       const options: ProcessingOptions = {};
       if (selectedLanguage) {
         options.target_language = selectedLanguage;
       }
-      
+
       await ApiService.startProcessing(response.processing_id, options);
       setAppState('processing');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten');
       setAppState('error');
     }
   };
@@ -116,7 +133,7 @@ function App() {
         const metadata = {
           isTermination: true,
           reason: result.termination_reason,
-          step: result.termination_step
+          step: result.termination_step,
         };
         handleProcessingError(
           result.termination_message || 'Verarbeitung wurde gestoppt',
@@ -128,13 +145,13 @@ function App() {
       // Normal completion
       setTranslationResult(result);
       setAppState('result');
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Ein unbekannter Fehler ist aufgetreten');
       setAppState('error');
     }
   };
 
-  const handleProcessingError = (errorMessage: string, metadata?: any) => {
+  const handleProcessingError = (errorMessage: string, metadata?: Record<string, unknown>) => {
     setError(errorMessage);
     setErrorMetadata(metadata || null);
     setAppState('error');
@@ -162,19 +179,17 @@ function App() {
     const hasWarnings = health.status === 'degraded';
 
     return (
-      <div className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium ${
-        isHealthy ? 'bg-success-50 text-success-700 ring-1 ring-success-200' : 
-        hasWarnings ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200' : 
-        'bg-error-50 text-error-700 ring-1 ring-error-200'
-      }`}>
-        {isHealthy ? (
-          <Shield className="w-3 h-3" />
-        ) : (
-          <AlertTriangle className="w-3 h-3" />
-        )}
-        <span>
-          {isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschränkt' : 'Systemfehler'}
-        </span>
+      <div
+        className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+          isHealthy
+            ? 'bg-success-50 text-success-700 ring-1 ring-success-200'
+            : hasWarnings
+              ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200'
+              : 'bg-error-50 text-error-700 ring-1 ring-error-200'
+        }`}
+      >
+        {isHealthy ? <Shield className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+        <span>{isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschränkt' : 'Systemfehler'}</span>
       </div>
     );
   };
@@ -189,9 +204,9 @@ function App() {
           {/* Skeleton that matches the final button layout */}
           <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center min-h-[40px]">
             {/* Skeleton buttons to prevent layout shift */}
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div 
-                key={i} 
+            {[1, 2, 3, 4, 5].map(i => (
+              <div
+                key={i}
                 className="px-2 sm:px-3 py-1.5 sm:py-2 bg-neutral-100 rounded-md sm:rounded-lg animate-pulse"
                 style={{ width: i === 1 ? '100px' : '60px', height: '32px' }}
               />
@@ -206,9 +221,10 @@ function App() {
     }
 
     const popularLanguages = availableLanguages.filter(lang => lang.popular);
-    const allLanguages = availableLanguages.filter(lang => 
-      lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
-      lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
+    const allLanguages = availableLanguages.filter(
+      lang =>
+        lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
+        lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
     );
     const selectedLanguageInfo = availableLanguages.find(lang => lang.code === selectedLanguage);
 
@@ -217,7 +233,7 @@ function App() {
         <label className="block text-xs sm:text-sm font-medium text-neutral-700 text-center">
           Übersetzung (optional)
         </label>
-        
+
         {/* Popular language quick buttons - Mobile Optimized */}
         <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
           <button
@@ -230,11 +246,13 @@ function App() {
           >
             Nur vereinfachen
           </button>
-          
-          {popularLanguages.slice(0, 4).map((language) => (
+
+          {popularLanguages.slice(0, 4).map(language => (
             <button
               key={language.code}
-              onClick={() => setSelectedLanguage(language.code === selectedLanguage ? null : language.code)}
+              onClick={() =>
+                setSelectedLanguage(language.code === selectedLanguage ? null : language.code)
+              }
               className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium rounded-md sm:rounded-lg transition-all duration-200 ${
                 selectedLanguage === language.code
                   ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-300'
@@ -244,7 +262,7 @@ function App() {
               {language.name}
             </button>
           ))}
-          
+
           {/* "Mehr Sprachen" Button - Mobile Optimized */}
           <button
             onClick={() => setShowAllLanguages(!showAllLanguages)}
@@ -256,9 +274,11 @@ function App() {
           >
             <span className="hidden sm:inline">Mehr Sprachen</span>
             <span className="sm:hidden">Mehr</span>
-            <ChevronDown className={`w-3 h-3 transition-transform duration-200 ${
-              showAllLanguages ? 'rotate-180' : ''
-            }`} />
+            <ChevronDown
+              className={`w-3 h-3 transition-transform duration-200 ${
+                showAllLanguages ? 'rotate-180' : ''
+              }`}
+            />
           </button>
         </div>
 
@@ -274,7 +294,7 @@ function App() {
                     type="text"
                     placeholder="Sprache suchen..."
                     value={languageSearchTerm}
-                    onChange={(e) => setLanguageSearchTerm(e.target.value)}
+                    onChange={e => setLanguageSearchTerm(e.target.value)}
                     className="w-full pl-10 pr-4 py-2 text-sm border border-neutral-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
                   />
                 </div>
@@ -283,11 +303,13 @@ function App() {
               {/* Language Grid */}
               <div className="p-3 max-h-64 overflow-y-auto">
                 <div className="grid grid-cols-2 gap-2">
-                  {allLanguages.map((language) => (
+                  {allLanguages.map(language => (
                     <button
                       key={language.code}
                       onClick={() => {
-                        setSelectedLanguage(language.code === selectedLanguage ? null : language.code);
+                        setSelectedLanguage(
+                          language.code === selectedLanguage ? null : language.code
+                        );
                         setShowAllLanguages(false);
                         setLanguageSearchTerm('');
                       }}
@@ -306,14 +328,14 @@ function App() {
                     </button>
                   ))}
                 </div>
-                
+
                 {allLanguages.length === 0 && languageSearchTerm && (
                   <div className="text-center py-4 text-sm text-neutral-500">
-                    Keine Sprachen gefunden für "{languageSearchTerm}"
+                    Keine Sprachen gefunden für &quot;{languageSearchTerm}&quot;
                   </div>
                 )}
               </div>
-              
+
               {/* Footer Info */}
               <div className="px-3 py-2 border-t border-neutral-100 bg-neutral-50 text-xs text-neutral-500 text-center rounded-b-xl">
                 {availableLanguages.length} Sprachen verfügbar
@@ -340,10 +362,9 @@ function App() {
 
         {/* Info text - Mobile Optimized */}
         <p className="text-xs text-neutral-500 px-2 sm:px-0 text-center">
-          {selectedLanguage 
+          {selectedLanguage
             ? 'Das Dokument wird zuerst vereinfacht und dann in die gewählte Sprache übersetzt.'
-            : 'Optional: Wählen Sie eine Sprache, um das vereinfachte Ergebnis zusätzlich zu übersetzen.'
-          }
+            : 'Optional: Wählen Sie eine Sprache, um das vereinfachte Ergebnis zusätzlich zu übersetzen.'}
         </p>
       </div>
     );
@@ -355,7 +376,7 @@ function App() {
       <header className="sticky top-0 z-50 header-blur">
         <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16 sm:h-20">
-            <button 
+            <button
               onClick={handleNewTranslation}
               className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity"
             >
@@ -371,7 +392,7 @@ function App() {
                 </p>
               </div>
             </button>
-            
+
             <div className="flex items-center space-x-4">
               {renderHealthIndicator()}
               <button
@@ -391,7 +412,10 @@ function App() {
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-30">
           <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-r from-brand-400/20 to-accent-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse-soft"></div>
-          <div className="absolute bottom-0 right-0 w-72 h-72 bg-gradient-to-r from-accent-400/20 to-brand-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse-soft" style={{ animationDelay: '1s' }}></div>
+          <div
+            className="absolute bottom-0 right-0 w-72 h-72 bg-gradient-to-r from-accent-400/20 to-brand-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse-soft"
+            style={{ animationDelay: '1s' }}
+          ></div>
         </div>
 
         <div className="relative z-10 max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
@@ -401,8 +425,8 @@ function App() {
               {errorMetadata?.isTermination ? (
                 <TerminationCard
                   message={error || 'Verarbeitung wurde gestoppt'}
-                  reason={errorMetadata.reason}
-                  step={errorMetadata.step}
+                  reason={errorMetadata.reason as string | undefined}
+                  step={errorMetadata.step as string | undefined}
                   onReset={handleNewTranslation}
                 />
               ) : (
@@ -416,13 +440,8 @@ function App() {
                         <h3 className="text-xl font-bold text-error-900 mb-2">
                           Verarbeitung fehlgeschlagen
                         </h3>
-                        <p className="text-error-700 mb-6 leading-relaxed">
-                          {error}
-                        </p>
-                        <button
-                          onClick={handleNewTranslation}
-                          className="btn-primary"
-                        >
+                        <p className="text-error-700 mb-6 leading-relaxed">{error}</p>
+                        <button onClick={handleNewTranslation} className="btn-primary">
                           <Sparkles className="w-4 h-4 mr-2" />
                           Neuen Versuch starten
                         </button>
@@ -449,12 +468,13 @@ function App() {
                     </span>
                   </h2>
                   <p className="text-lead max-w-3xl mx-auto px-4 sm:px-0">
-                    Verwandeln Sie komplexe Arztbriefe und medizinische Befunde in verständliche Sprache. 
+                    Verwandeln Sie komplexe Arztbriefe und medizinische Befunde in verständliche
+                    Sprache.
                     <span className="hidden sm:inline">Schnell, sicher und DSGVO-konform.</span>
                     <span className="sm:hidden block mt-2">Schnell, sicher und DSGVO-konform.</span>
                   </p>
                 </div>
-                
+
                 {/* Quick Stats - Mobile Optimized */}
                 <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-6 lg:space-x-8 text-xs sm:text-sm">
                   <div className="flex items-center space-x-2 text-primary-600">
@@ -471,16 +491,14 @@ function App() {
                   </div>
                 </div>
               </div>
-              
+
               {/* Language Selection */}
               <div>
                 <div className="card-elevated">
-                  <div className="card-body">
-                    {renderLanguageSelector()}
-                  </div>
+                  <div className="card-body">{renderLanguageSelector()}</div>
                 </div>
               </div>
-              
+
               {/* Upload Component */}
               <div>
                 <FileUpload
@@ -499,11 +517,11 @@ function App() {
                     Datenschutz first
                   </h3>
                   <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                    Keine Speicherung Ihrer Daten. Alle Informationen werden nach der 
-                    Übersetzung automatisch gelöscht.
+                    Keine Speicherung Ihrer Daten. Alle Informationen werden nach der Übersetzung
+                    automatisch gelöscht.
                   </p>
                 </div>
-                
+
                 <div className="feature-card">
                   <div className="feature-icon">
                     <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
@@ -512,11 +530,11 @@ function App() {
                     Medizinisch präzise
                   </h3>
                   <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                    Speziell für medizinische Fachbegriffe und Dokumente entwickelt. 
-                    Präzise Übersetzungen ohne Informationsverlust.
+                    Speziell für medizinische Fachbegriffe und Dokumente entwickelt. Präzise
+                    Übersetzungen ohne Informationsverlust.
                   </p>
                 </div>
-                
+
                 <div className="feature-card sm:col-span-2 lg:col-span-1">
                   <div className="feature-icon">
                     <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
@@ -525,8 +543,8 @@ function App() {
                     Blitzschnell
                   </h3>
                   <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                    Erhalten Sie in wenigen Sekunden eine verständliche Übersetzung 
-                    Ihrer medizinischen Dokumente.
+                    Erhalten Sie in wenigen Sekunden eine verständliche Übersetzung Ihrer
+                    medizinischen Dokumente.
                   </p>
                 </div>
               </div>
@@ -551,22 +569,29 @@ function App() {
                       </div>
                       <div className="absolute inset-0 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl opacity-30 animate-ping" />
                     </div>
-                    
+
                     {/* German text */}
                     <div className="text-center space-y-2">
                       <h3 className="text-2xl font-bold text-primary-900">
                         Analyse wird gestartet
                       </h3>
-                      <p className="text-primary-600">
-                        Ihr Dokument wird vorbereitet...
-                      </p>
+                      <p className="text-primary-600">Ihr Dokument wird vorbereitet...</p>
                     </div>
-                    
+
                     {/* Loading dots */}
                     <div className="flex space-x-2">
-                      <div className="w-2 h-2 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                      <div className="w-2 h-2 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                      <div className="w-2 h-2 bg-brand-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                      <div
+                        className="w-2 h-2 bg-brand-500 rounded-full animate-bounce"
+                        style={{ animationDelay: '0ms' }}
+                      />
+                      <div
+                        className="w-2 h-2 bg-brand-500 rounded-full animate-bounce"
+                        style={{ animationDelay: '150ms' }}
+                      />
+                      <div
+                        className="w-2 h-2 bg-brand-500 rounded-full animate-bounce"
+                        style={{ animationDelay: '300ms' }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -599,12 +624,9 @@ function App() {
       </main>
 
       <Footer />
-      
+
       {/* Settings Modal */}
-      <EnhancedSettingsModal 
-        isOpen={showSettings} 
-        onClose={() => setShowSettings(false)} 
-      />
+      <EnhancedSettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
   );
 
@@ -618,4 +640,4 @@ function App() {
   );
 }
 
-export default App; 
+export default App;

@@ -86,6 +86,8 @@ Local development environment
 - Installation steps
 - Running locally
 - Testing
+- CI/CD with GitHub Actions
+- Self-hosted ARC runners on Kubernetes
 
 ---
 
@@ -166,6 +168,8 @@ Historical and implementation-specific documentation:
 
 ## 🔄 Recently Updated
 
+- **2025-10-14**: Added CI/CD and ARC runner documentation to DEVELOPMENT.md and DEPLOYMENT.md
+- **2025-10-14**: Enhanced README with self-hosted runners information
 - **2025-01-09**: Created comprehensive Pipeline User Guide
 - **2025-01-09**: Reorganized documentation structure
 - **2025-01-09**: Moved technical implementation docs to archive

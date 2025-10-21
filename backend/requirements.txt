@@ -17,6 +17,7 @@ python-magic==0.4.27
 
 # Data Validation & Models
 pydantic==2.10.5
+pydantic-settings==2.1.0
 
 # Rate Limiting
 slowapi==0.1.9
@@ -36,5 +37,26 @@ alembic==1.16.5
 celery[redis]==5.4.0
 redis==5.0.0
 
+# Error Handling & Resilience
+tenacity==8.2.3
+
 # NOTE: spaCy moved to worker requirements.txt
 # PII removal now happens in worker, not backend
+
+# Testing
+pytest==8.3.4
+pytest-asyncio==0.25.2
+pytest-mock==3.14.0
+pytest-cov==6.0.0
+
+# Code Quality & Linting
+ruff==0.8.4
+mypy==1.13.0
+pre-commit==4.0.1
+pip-audit==2.7.3
+
+# Type stubs for mypy
+types-aiofiles==24.1.0.20240626
+types-Pillow==10.2.0.20240822
+types-PyYAML==6.0.12.20240917
+types-redis==4.6.0.20241004

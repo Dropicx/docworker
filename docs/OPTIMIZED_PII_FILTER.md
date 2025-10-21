@@ -1,5 +1,16 @@
 # Optimized PII Filter with Railway Volume Integration
 
+> ## ⚠️ DEPRECATED (2025-10-13)
+>
+> **This document describes `OptimizedPrivacyFilter` which has been DEPRECATED.**
+>
+> **Current Implementation**: Use `AdvancedPrivacyFilter` instead
+> - **Location**: `backend/app/services/privacy_filter_advanced.py`
+> - **Benefits**: 2x more medical terms (146 vs 70), 2x more abbreviations (210 vs 111)
+> - **Migration Guide**: See [Service Consolidation Documentation](../backend/app/services/_deprecated/README.md)
+>
+> This document is kept for historical reference only.
+
 ## 🎯 Overview
 
 The **OptimizedPrivacyFilter** implements a hybrid approach for PII (Personally Identifiable Information) removal that achieves **60-70% performance improvement** over the previous implementation while maintaining **95%+ accuracy**.

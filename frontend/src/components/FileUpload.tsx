@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, FileText, Image, AlertCircle, CheckCircle, Sparkles, Play, Shield } from 'lucide-react';
+import { Upload, X, FileText, Image, AlertCircle, Play, Shield } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ApiService from '../services/api';
 import { UploadResponse } from '../types/api';
@@ -14,7 +14,7 @@ interface FileUploadProps {
 const FileUpload: React.FC<FileUploadProps> = ({
   onUploadSuccess,
   onUploadError,
-  disabled = false
+  disabled = false,
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -25,34 +25,37 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const privacyCheckboxRef = useRef<HTMLDivElement>(null);
 
-  const handleFileUpload = useCallback(async (files: File[]) => {
-    setValidationError(null);
+  const handleFileUpload = useCallback(
+    async (files: File[]) => {
+      setValidationError(null);
 
-    // Validate all files
-    for (const file of files) {
-      const validation = ApiService.validateFile(file);
-      if (!validation.valid) {
-        setValidationError(validation.error!);
-        onUploadError(validation.error!);
-        return;
+      // Validate all files
+      for (const file of files) {
+        const validation = ApiService.validateFile(file);
+        if (!validation.valid) {
+          setValidationError(validation.error!);
+          onUploadError(validation.error!);
+          return;
+        }
       }
-    }
 
-    // Add files to selected files
-    setSelectedFiles(prev => [...prev, ...files]);
+      // Add files to selected files
+      setSelectedFiles(prev => [...prev, ...files]);
 
-    // Scroll to privacy checkbox after a short delay to allow rendering
-    setTimeout(() => {
-      privacyCheckboxRef.current?.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center'
-      });
-      // Scroll up a bit after centering to reduce scroll distance
+      // Scroll to privacy checkbox after a short delay to allow rendering
       setTimeout(() => {
-        window.scrollBy({ top: -100, behavior: 'smooth' });
-      }, 400);
-    }, 300);
-  }, [onUploadError]);
+        privacyCheckboxRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+        });
+        // Scroll up a bit after centering to reduce scroll distance
+        setTimeout(() => {
+          window.scrollBy({ top: -100, behavior: 'smooth' });
+        }, 400);
+      }, 300);
+    },
+    [onUploadError]
+  );
 
   const handleStartProcessing = useCallback(async () => {
     if (selectedFiles.length === 0 || !privacyAccepted) return;
@@ -66,7 +69,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       // For now, process only the first file (backend doesn't support multiple files yet)
       // TODO: Update backend to support multiple files
       const file = selectedFiles[0];
-      
+
       // Simulate upload progress for better UX - faster for mobile
       const progressInterval = setInterval(() => {
         setUploadProgress(prev => {
@@ -80,18 +83,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
       }, 150); // Reduced from 300ms to 150ms
 
       const response = await ApiService.uploadDocument(file);
-      
+
       clearInterval(progressInterval);
       setUploadProgress(100);
-      
+
       // Reset state
       setSelectedFiles([]);
       setPrivacyAccepted(false);
-      
+
       // Immediately proceed on mobile for better UX
       onUploadSuccess(response);
-    } catch (error: any) {
-      const errorMessage = error.message || 'Upload fehlgeschlagen';
+    } catch (error) {
+      const errorMessage = (error as Error).message || 'Upload fehlgeschlagen';
       setValidationError(errorMessage);
       onUploadError(errorMessage);
       setIsUploading(false);
@@ -109,11 +112,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setPrivacyAccepted(false);
   }, []);
 
-  const onDrop = useCallback((acceptedFiles: File[]) => {
-    if (acceptedFiles.length > 0) {
-      handleFileUpload(acceptedFiles);
-    }
-  }, [handleFileUpload]);
+  const onDrop = useCallback(
+    (acceptedFiles: File[]) => {
+      if (acceptedFiles.length > 0) {
+        handleFileUpload(acceptedFiles);
+      }
+    },
+    [handleFileUpload]
+  );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
@@ -122,13 +128,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
     accept: {
       'application/pdf': ['.pdf'],
       'image/jpeg': ['.jpg', '.jpeg'],
-      'image/png': ['.png']
+      'image/png': ['.png'],
     },
     noClick: false,
-    noKeyboard: false
+    noKeyboard: false,
   });
-
-
 
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
@@ -139,8 +143,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
     }
     return <FileText className="w-8 h-8 text-primary-500" />;
   };
-
-
 
   const handleClick = () => {
     if (fileInputRef.current && !disabled && !isUploading) {
@@ -174,7 +176,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 </h3>
                 <p className="text-sm sm:text-base text-primary-600">
                   {uploadingFileName && (
-                    <span className="font-medium truncate block max-w-full px-4">{uploadingFileName}</span>
+                    <span className="font-medium truncate block max-w-full px-4">
+                      {uploadingFileName}
+                    </span>
                   )}
                 </p>
                 <p className="text-xs sm:text-sm text-primary-500">
@@ -185,7 +189,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               {/* Progress Bar */}
               <div className="space-y-2">
                 <div className="w-full bg-neutral-100 rounded-full h-2 overflow-hidden">
-                  <div 
+                  <div
                     className="h-full bg-gradient-to-r from-brand-500 to-accent-500 rounded-full transition-all duration-300 ease-out"
                     style={{ width: `${uploadProgress}%` }}
                   />
@@ -198,10 +202,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
               {/* Info Text */}
               <div className="text-center">
                 <p className="text-xs text-primary-500">
-                  {uploadProgress < 30 && "Verbindung wird hergestellt..."}
-                  {uploadProgress >= 30 && uploadProgress < 60 && "Datei wird übertragen..."}
-                  {uploadProgress >= 60 && uploadProgress < 90 && "Fast fertig..."}
-                  {uploadProgress >= 90 && "Verarbeitung wird vorbereitet..."}
+                  {uploadProgress < 30 && 'Verbindung wird hergestellt...'}
+                  {uploadProgress >= 30 && uploadProgress < 60 && 'Datei wird übertragen...'}
+                  {uploadProgress >= 60 && uploadProgress < 90 && 'Fast fertig...'}
+                  {uploadProgress >= 90 && 'Verarbeitung wird vorbereitet...'}
                 </p>
               </div>
             </div>
@@ -218,9 +222,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
       >
         <input {...getInputProps()} ref={fileInputRef} />
 
-        <div className={`${selectedFiles.length > 0 ? 'space-y-3 sm:space-y-4' : 'space-y-4 sm:space-y-6'}`}>
+        <div
+          className={`${selectedFiles.length > 0 ? 'space-y-3 sm:space-y-4' : 'space-y-4 sm:space-y-6'}`}
+        >
           <div className="flex justify-center">
-            <div className={`group w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 ${!disabled ? 'group-hover:scale-110 group-hover:shadow-glow' : ''}`}>
+            <div
+              className={`group w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl sm:rounded-2xl flex items-center justify-center transition-all duration-300 ${!disabled ? 'group-hover:scale-110 group-hover:shadow-glow' : ''}`}
+            >
               <Upload className="w-6 h-6 sm:w-8 sm:h-8 text-white transition-transform duration-300 group-hover:scale-110" />
             </div>
           </div>
@@ -230,18 +238,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
               {isDragActive
                 ? 'Dateien hier ablegen'
                 : selectedFiles.length > 0
-                ? 'Weitere Dateien hinzufügen'
-                : 'Dokumente hochladen'
-              }
+                  ? 'Weitere Dateien hinzufügen'
+                  : 'Dokumente hochladen'}
             </h3>
-            
+
             <p className="text-primary-600 text-sm sm:text-base lg:text-lg leading-relaxed max-w-md mx-auto px-4 sm:px-0">
-              {isDragActive 
+              {isDragActive
                 ? 'Lassen Sie die Dateien los, um sie hinzuzufügen'
                 : selectedFiles.length > 0
-                ? 'Ziehen Sie weitere Dateien hierher oder tippen Sie zum Auswählen'
-                : 'Ziehen Sie Dateien hierher oder tippen Sie zum Auswählen'
-              }
+                  ? 'Ziehen Sie weitere Dateien hierher oder tippen Sie zum Auswählen'
+                  : 'Ziehen Sie Dateien hierher oder tippen Sie zum Auswählen'}
             </p>
           </div>
 
@@ -284,20 +290,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   Alle entfernen
                 </button>
               </div>
-              
+
               <div className="space-y-2">
                 {selectedFiles.map((file, index) => (
                   <div
                     key={`${file.name}-${index}`}
                     className="flex items-center space-x-3 p-3 bg-neutral-50 rounded-lg border border-neutral-200"
                   >
-                    <div className="flex-shrink-0">
-                      {getFileIcon(file.name)}
-                    </div>
+                    <div className="flex-shrink-0">{getFileIcon(file.name)}</div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-primary-900 truncate">
-                        {file.name}
-                      </p>
+                      <p className="text-sm font-medium text-primary-900 truncate">{file.name}</p>
                       <p className="text-xs text-primary-500">
                         {ApiService.formatFileSize(file.size)}
                       </p>
@@ -323,12 +325,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     type="checkbox"
                     id="privacy-checkbox"
                     checked={privacyAccepted}
-                    onChange={(e) => setPrivacyAccepted(e.target.checked)}
+                    onChange={e => setPrivacyAccepted(e.target.checked)}
                     className="w-4 h-4 text-brand-600 bg-neutral-100 border-neutral-300 rounded focus:ring-brand-500 focus:ring-2"
                   />
                 </div>
                 <div className="flex-1">
-                  <label htmlFor="privacy-checkbox" className="text-sm text-primary-700 cursor-pointer">
+                  <label
+                    htmlFor="privacy-checkbox"
+                    className="text-sm text-primary-700 cursor-pointer"
+                  >
                     Ich habe die{' '}
                     <Link
                       to="/datenschutz"
@@ -337,8 +342,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     >
                       Datenschutzerklärung
                     </Link>{' '}
-                    gelesen und stimme der Verarbeitung meiner Dokumente zu. Ich verstehe, dass meine Daten 
-                    DSGVO-konform verarbeitet und nach der Übersetzung automatisch gelöscht werden.
+                    gelesen und stimme der Verarbeitung meiner Dokumente zu. Ich verstehe, dass
+                    meine Daten DSGVO-konform verarbeitet und nach der Übersetzung automatisch
+                    gelöscht werden.
                   </label>
                 </div>
               </div>
@@ -401,4 +407,4 @@ const FileUpload: React.FC<FileUploadProps> = ({
   );
 };
 
-export default FileUpload; 
+export default FileUpload;

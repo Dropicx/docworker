@@ -70,6 +70,9 @@ venv.bak/
 .dmypy.json
 dmypy.json
 
+# Ruff cache
+.ruff_cache/
+
 # Pyre type checker
 .pyre/
 
@@ -269,6 +272,8 @@ extraction_temp/
 *.bak
 *.old
 *.orig
+*_backup*.json
+*_backup*.sql
 backup/
 backups/
 

@@ -12,6 +12,8 @@ export interface TerminationInfo {
   matched_value?: string;
 }
 
-export const isTerminated = (result: any): result is TerminationInfo => {
-  return result && result.terminated === true;
+export const isTerminated = (result: unknown): result is TerminationInfo => {
+  return (
+    typeof result === 'object' && result !== null && (result as TerminationInfo).terminated === true
+  );
 };

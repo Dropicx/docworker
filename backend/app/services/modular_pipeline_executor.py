@@ -5,26 +5,27 @@ Worker-ready service for executing user-configured pipeline steps.
 Designed to be stateless and compatible with Redis queue workers.
 """
 
+from datetime import datetime
 import logging
 import time
-import uuid
-from datetime import datetime
-from typing import Dict, Any, Optional, List, Tuple
+from typing import Any
+
 from sqlalchemy.orm import Session
-from sqlalchemy import text
 
 from app.database.modular_pipeline_models import (
-    DynamicPipelineStepDB,
     AvailableModelDB,
+    DynamicPipelineStepDB,
     OCRConfigurationDB,
-    PipelineJobDB,
     PipelineStepExecutionDB,
     StepExecutionStatus,
-    DocumentClassDB
 )
-from app.services.ovh_client import OVHClient
-from app.services.document_class_manager import DocumentClassManager
+from app.repositories.available_model_repository import AvailableModelRepository
+from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
+from app.repositories.pipeline_job_repository import PipelineJobRepository
+from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.services.ai_cost_tracker import AICostTracker
+from app.services.document_class_manager import DocumentClassManager
+from app.services.ovh_client import OVHClient
 
 logger = logging.getLogger(__name__)
 
@@ -40,14 +41,29 @@ class ModularPipelineExecutor:
     - Retry-Aware: Handles retries per step configuration
     """
 
-    def __init__(self, session: Session):
+    def __init__(
+        self,
+        session: Session,
+        job_repository: PipelineJobRepository | None = None,
+        step_repository: PipelineStepRepository | None = None,
+        ocr_config_repository: OCRConfigurationRepository | None = None,
+        model_repository: AvailableModelRepository | None = None,
+    ):
         """
-        Initialize executor with database session.
+        Initialize executor with database session and repositories.
 
         Args:
-            session: SQLAlchemy session for database access
+            session: SQLAlchemy session (kept for backward compatibility)
+            job_repository: Pipeline job repository (injected for clean architecture)
+            step_repository: Pipeline step repository (injected for clean architecture)
+            ocr_config_repository: OCR configuration repository (injected for clean architecture)
+            model_repository: Available model repository (injected for clean architecture)
         """
         self.session = session
+        self.job_repository = job_repository or PipelineJobRepository(session)
+        self.step_repository = step_repository or PipelineStepRepository(session)
+        self.ocr_config_repository = ocr_config_repository or OCRConfigurationRepository(session)
+        self.model_repository = model_repository or AvailableModelRepository(session)
         self.ovh_client = OVHClient()
         self.doc_class_manager = DocumentClassManager(session)
         self.cost_tracker = AICostTracker(session)
@@ -55,17 +71,15 @@ class ModularPipelineExecutor:
 
     # ==================== CONFIGURATION LOADING ====================
 
-    def load_pipeline_steps(self) -> List[DynamicPipelineStepDB]:
+    def load_pipeline_steps(self) -> list[DynamicPipelineStepDB]:
         """
-        Load all enabled pipeline steps from database, ordered by execution order.
+        Load all enabled pipeline steps from database using repository pattern.
 
         Returns:
             List of pipeline steps ordered by 'order' field
         """
         try:
-            steps = self.session.query(DynamicPipelineStepDB).filter_by(
-                enabled=True
-            ).order_by(DynamicPipelineStepDB.order).all()
+            steps = self.step_repository.get_enabled_steps()
 
             logger.info(f"📋 Loaded {len(steps)} enabled pipeline steps")
             return steps
@@ -73,41 +87,49 @@ class ModularPipelineExecutor:
             logger.error(f"❌ Failed to load pipeline steps: {e}")
             return []
 
-    def load_universal_steps(self) -> List[DynamicPipelineStepDB]:
+    def load_universal_steps(self) -> list[DynamicPipelineStepDB]:
         """
         Load pre-branching universal pipeline steps (document_class_id = NULL, post_branching = FALSE).
         These steps run for all documents BEFORE document-specific processing.
+        Only ENABLED steps are returned (filtered by repository).
 
         Returns:
             List of pre-branching universal pipeline steps ordered by execution order
         """
         try:
-            steps = self.session.query(DynamicPipelineStepDB).filter_by(
-                enabled=True,
-                document_class_id=None,
-                post_branching=False
-            ).order_by(DynamicPipelineStepDB.order).all()
+            # Get universal steps (already filtered for enabled by repository)
+            universal_steps = self.step_repository.get_universal_steps()
 
-            logger.info(f"📋 Loaded {len(steps)} pre-branching universal pipeline steps")
+            # DEBUG: Log what we got from repository
+            logger.info(f"🔍 DEBUG: Repository returned {len(universal_steps)} universal steps (document_class_id = NULL)")
+            for step in universal_steps:
+                logger.info(f"   - {step.name} (order={step.order}, post_branching={step.post_branching}, enabled={step.enabled})")
+
+            # Filter for pre-branching only (post_branching = False)
+            steps = [s for s in universal_steps if not s.post_branching]
+
+            logger.info(f"📋 Loaded {len(steps)} pre-branching universal pipeline steps (after filtering post_branching=False)")
+            if len(steps) == 0 and len(universal_steps) > 0:
+                logger.warning(f"⚠️ ISSUE DETECTED: Repository returned {len(universal_steps)} universal steps but ALL have post_branching=True!")
+                logger.warning(f"   Expected at least some steps with post_branching=False for pre-branching phase")
+
             return steps
         except Exception as e:
             logger.error(f"❌ Failed to load universal pipeline steps: {e}")
             return []
 
-    def load_post_branching_steps(self) -> List[DynamicPipelineStepDB]:
+    def load_post_branching_steps(self) -> list[DynamicPipelineStepDB]:
         """
         Load post-branching universal pipeline steps (document_class_id = NULL, post_branching = TRUE).
         These steps run for all documents AFTER document-specific processing.
+        Only ENABLED steps are returned (filtered by repository).
 
         Returns:
             List of post-branching universal pipeline steps ordered by execution order
         """
         try:
-            steps = self.session.query(DynamicPipelineStepDB).filter_by(
-                enabled=True,
-                document_class_id=None,
-                post_branching=True
-            ).order_by(DynamicPipelineStepDB.order).all()
+            # Get post-branching steps (already filtered for enabled by repository)
+            steps = self.step_repository.get_post_branching_steps()
 
             logger.info(f"📋 Loaded {len(steps)} post-branching universal pipeline steps")
             return steps
@@ -115,9 +137,10 @@ class ModularPipelineExecutor:
             logger.error(f"❌ Failed to load post-branching pipeline steps: {e}")
             return []
 
-    def load_steps_by_document_class(self, document_class_id: int) -> List[DynamicPipelineStepDB]:
+    def load_steps_by_document_class(self, document_class_id: int) -> list[DynamicPipelineStepDB]:
         """
-        Load pipeline steps specific to a document class.
+        Load pipeline steps specific to a document class using repository pattern.
+        Only ENABLED steps are returned (filtered by repository).
 
         Args:
             document_class_id: ID of the document class
@@ -126,18 +149,20 @@ class ModularPipelineExecutor:
             List of document-specific pipeline steps ordered by execution order
         """
         try:
-            steps = self.session.query(DynamicPipelineStepDB).filter_by(
-                enabled=True,
-                document_class_id=document_class_id
-            ).order_by(DynamicPipelineStepDB.order).all()
+            # Get document class steps (already filtered for enabled by repository)
+            steps = self.step_repository.get_steps_by_document_class(document_class_id)
 
-            logger.info(f"📋 Loaded {len(steps)} steps for document class ID {document_class_id}")
+            logger.info(
+                f"📋 Loaded {len(steps)} enabled steps for document class ID {document_class_id}"
+            )
             return steps
         except Exception as e:
             logger.error(f"❌ Failed to load steps for document class {document_class_id}: {e}")
             return []
 
-    def find_branching_step(self, steps: List[DynamicPipelineStepDB]) -> Optional[DynamicPipelineStepDB]:
+    def find_branching_step(
+        self, steps: list[DynamicPipelineStepDB]
+    ) -> DynamicPipelineStepDB | None:
         """
         Find the branching/classification step in the pipeline.
 
@@ -155,7 +180,9 @@ class ModularPipelineExecutor:
         logger.warning("⚠️ No branching step found in pipeline")
         return None
 
-    def check_stop_condition(self, step: DynamicPipelineStepDB, output_text: str) -> Optional[Dict[str, Any]]:
+    def check_stop_condition(
+        self, step: DynamicPipelineStepDB, output_text: str
+    ) -> dict[str, Any] | None:
         """
         Check if step output matches termination condition.
 
@@ -201,14 +228,20 @@ class ModularPipelineExecutor:
         # Check if output matches any stop value
         for stop_value in stop_values:
             if decision_value == stop_value.upper():
-                logger.warning(f"🛑 Stop condition matched for step '{step.name}': {decision_value}")
+                logger.warning(
+                    f"🛑 Stop condition matched for step '{step.name}': {decision_value}"
+                )
                 return {
                     "should_stop": True,
-                    "termination_reason": step.stop_conditions.get("termination_reason", "Processing stopped"),
-                    "termination_message": step.stop_conditions.get("termination_message", "Processing was terminated."),
+                    "termination_reason": step.stop_conditions.get(
+                        "termination_reason", "Processing stopped"
+                    ),
+                    "termination_message": step.stop_conditions.get(
+                        "termination_message", "Processing was terminated."
+                    ),
                     "matched_value": decision_value,
                     "step_name": step.name,
-                    "step_order": step.order
+                    "step_order": step.order,
                 }
 
         return None
@@ -219,10 +252,10 @@ class ModularPipelineExecutor:
         step: DynamicPipelineStepDB,
         status: StepExecutionStatus,
         input_text: str,
-        output_text: Optional[str],
+        output_text: str | None,
         step_start_time: float,
-        error: Optional[str] = None,
-        metadata: Optional[Dict] = None
+        error: str | None = None,
+        metadata: dict | None = None,
     ) -> None:
         """
         Centralized step execution logging.
@@ -251,7 +284,7 @@ class ModularPipelineExecutor:
             completed_at=datetime.now(),
             execution_time_seconds=time.time() - step_start_time,
             error_message=error,
-            step_metadata=metadata
+            step_metadata=metadata,
         )
         self.session.add(step_execution)
         self.session.commit()
@@ -265,9 +298,9 @@ class ModularPipelineExecutor:
         step_start_time: float,
         step_execution_time: float,
         pipeline_start_time: float,
-        execution_metadata: Dict,
-        success: bool = True
-    ) -> Tuple[bool, str, Dict]:
+        execution_metadata: dict,
+        success: bool = True,
+    ) -> tuple[bool, str, dict]:
         """
         Check and handle stop conditions for a step.
 
@@ -304,21 +337,20 @@ class ModularPipelineExecutor:
             output_text=output,
             step_start_time=step_start_time,
             error=None,
-            metadata={
-                "termination_info": stop_info,
-                "is_termination_step": True
-            }
+            metadata={"termination_info": stop_info, "is_termination_step": True},
         )
 
         # Add to execution metadata
-        execution_metadata["steps_executed"].append({
-            "step_name": step.name,
-            "step_order": step.order,
-            "success": True,
-            "execution_time": step_execution_time,
-            "error": None,
-            "terminated": True
-        })
+        execution_metadata["steps_executed"].append(
+            {
+                "step_name": step.name,
+                "step_order": step.order,
+                "success": True,
+                "execution_time": step_execution_time,
+                "error": None,
+                "terminated": True,
+            }
+        )
 
         # Return early with termination info
         execution_metadata["terminated"] = True
@@ -328,10 +360,14 @@ class ModularPipelineExecutor:
         execution_metadata["matched_value"] = stop_info["matched_value"]
         execution_metadata["total_time"] = time.time() - pipeline_start_time
 
-        logger.info(f"🛑 Pipeline terminated at step '{step.name}': {stop_info['termination_reason']}")
+        logger.info(
+            f"🛑 Pipeline terminated at step '{step.name}': {stop_info['termination_reason']}"
+        )
         return True, current_output, execution_metadata
 
-    def extract_branch_value(self, output_text: str, branching_field: str = "document_type") -> Optional[Dict[str, Any]]:
+    def extract_branch_value(
+        self, output_text: str, branching_field: str = "document_type"
+    ) -> dict[str, Any] | None:
         """
         Extract the branch value from step output with DYNAMIC BRANCHING SUPPORT.
 
@@ -363,9 +399,14 @@ class ModularPipelineExecutor:
         branch_value = output_text.strip().upper()
 
         # Remove common prefixes/suffixes
-        for prefix in ["DOCUMENT_TYPE:", "CLASS:", "CLASSIFICATION:", f"{branching_field.upper()}:"]:
+        for prefix in [
+            "DOCUMENT_TYPE:",
+            "CLASS:",
+            "CLASSIFICATION:",
+            f"{branching_field.upper()}:",
+        ]:
             if branch_value.startswith(prefix):
-                branch_value = branch_value[len(prefix):].strip()
+                branch_value = branch_value[len(prefix) :].strip()
 
         # Extract first word (should be the decision value)
         branch_value = branch_value.split()[0] if branch_value.split() else branch_value
@@ -375,55 +416,55 @@ class ModularPipelineExecutor:
             # Document class branching - lookup class and load class-specific steps
             doc_class = self.doc_class_manager.get_class_by_key(branch_value)
             if doc_class:
-                logger.info(f"✅ Document class branching: {branch_value} → {doc_class.display_name}")
+                logger.info(
+                    f"✅ Document class branching: {branch_value} → {doc_class.display_name}"
+                )
                 return {
                     "field": branching_field,
                     "value": branch_value,
                     "type": "document_class",
                     "target_id": doc_class.id,
                     "target_key": doc_class.class_key,
-                    "target_display_name": doc_class.display_name
+                    "target_display_name": doc_class.display_name,
                 }
-            else:
-                logger.warning(f"⚠️ Unknown document class: {branch_value}")
-                return {
-                    "field": branching_field,
-                    "value": branch_value,
-                    "type": "document_class",
-                    "target_id": None,
-                    "target_key": branch_value,
-                    "target_display_name": "Unknown"
-                }
-        else:
-            # Generic branching (boolean, enum, quality level, etc.)
-            # Determine subtype based on common patterns
-            branch_type = "generic"
-            if branch_value in ["TRUE", "FALSE", "YES", "NO", "JA", "NEIN"]:
-                branch_type = "boolean"
-            elif branch_value in ["MEDIZINISCH", "NICHT_MEDIZINISCH"]:
-                branch_type = "boolean"  # Medical validation boolean
-            elif branch_value in ["HIGH", "MEDIUM", "LOW", "HOCH", "MITTEL", "NIEDRIG"]:
-                branch_type = "enum"  # Quality level enum
-
-            logger.info(f"✅ Generic branching ({branch_type}): {branching_field} = {branch_value}")
+            logger.warning(f"⚠️ Unknown document class: {branch_value}")
             return {
                 "field": branching_field,
                 "value": branch_value,
-                "type": branch_type,
+                "type": "document_class",
                 "target_id": None,
-                "target_key": None,
-                "target_display_name": None
+                "target_key": branch_value,
+                "target_display_name": "Unknown",
             }
+        # Generic branching (boolean, enum, quality level, etc.)
+        # Determine subtype based on common patterns
+        branch_type = "generic"
+        if branch_value in ["TRUE", "FALSE", "YES", "NO", "JA", "NEIN"]:
+            branch_type = "boolean"
+        elif branch_value in ["MEDIZINISCH", "NICHT_MEDIZINISCH"]:
+            branch_type = "boolean"  # Medical validation boolean
+        elif branch_value in ["HIGH", "MEDIUM", "LOW", "HOCH", "MITTEL", "NIEDRIG"]:
+            branch_type = "enum"  # Quality level enum
 
-    def load_ocr_configuration(self) -> Optional[OCRConfigurationDB]:
+        logger.info(f"✅ Generic branching ({branch_type}): {branching_field} = {branch_value}")
+        return {
+            "field": branching_field,
+            "value": branch_value,
+            "type": branch_type,
+            "target_id": None,
+            "target_key": None,
+            "target_display_name": None,
+        }
+
+    def load_ocr_configuration(self) -> OCRConfigurationDB | None:
         """
-        Load OCR configuration from database.
+        Load OCR configuration from database using repository pattern.
 
         Returns:
             OCR configuration or None if not found
         """
         try:
-            config = self.session.query(OCRConfigurationDB).first()
+            config = self.ocr_config_repository.get_config()
             if config:
                 logger.info(f"🔍 Loaded OCR configuration: {config.selected_engine}")
             return config
@@ -431,9 +472,9 @@ class ModularPipelineExecutor:
             logger.error(f"❌ Failed to load OCR configuration: {e}")
             return None
 
-    def get_model_info(self, model_id: int) -> Optional[AvailableModelDB]:
+    def get_model_info(self, model_id: int) -> AvailableModelDB | None:
         """
-        Get model information from database.
+        Get model information from database using repository pattern.
 
         Args:
             model_id: Database ID of the model
@@ -442,11 +483,7 @@ class ModularPipelineExecutor:
             Model information or None if not found
         """
         try:
-            model = self.session.query(AvailableModelDB).filter_by(
-                id=model_id,
-                is_enabled=True
-            ).first()
-            return model
+            return self.model_repository.get_enabled_model_by_id(model_id)
         except Exception as e:
             logger.error(f"❌ Failed to load model info for ID {model_id}: {e}")
             return None
@@ -457,10 +494,10 @@ class ModularPipelineExecutor:
         self,
         step: DynamicPipelineStepDB,
         input_text: str,
-        context: Dict[str, Any] = None,
+        context: dict[str, Any] = None,
         processing_id: str = None,
-        document_type: str = None
-    ) -> Tuple[bool, str, Optional[str]]:
+        document_type: str = None,
+    ) -> tuple[bool, str, str | None]:
         """
         Execute a single pipeline step.
 
@@ -487,7 +524,7 @@ class ModularPipelineExecutor:
         try:
             prompt = step.prompt_template.format(
                 input_text=input_text,
-                **context  # e.g., target_language
+                **context,  # e.g., target_language
             )
         except KeyError as e:
             error = f"Missing required variable in prompt template: {e}"
@@ -500,10 +537,13 @@ class ModularPipelineExecutor:
 
         for attempt in range(max_retries):
             try:
-                logger.info(f"🔄 Executing step '{step.name}' (attempt {attempt + 1}/{max_retries})")
-                logger.debug(f"   Model: {model.name}")
-                logger.debug(f"   Temperature: {step.temperature}")
-                logger.debug(f"   Max Tokens: {step.max_tokens or model.max_tokens}")
+                logger.info(
+                    f"🔄 Executing step '{step.name}' (attempt {attempt + 1}/{max_retries})"
+                )
+                logger.info(
+                    f"   Model: {model.name} | Temp: {step.temperature} | Max Tokens: {step.max_tokens or model.max_tokens}"
+                )
+                logger.info(f"   Input length: {len(input_text)} characters")
 
                 # Call AI model
                 start_time = time.time()
@@ -512,7 +552,7 @@ class ModularPipelineExecutor:
                     full_prompt=prompt,
                     temperature=step.temperature or 0.7,
                     max_tokens=step.max_tokens or model.max_tokens or 4096,
-                    use_fast_model=(model.name == "Mistral-Nemo-Instruct-2407")
+                    use_fast_model=(model.name == "Mistral-Nemo-Instruct-2407"),
                 )
 
                 execution_time = time.time() - start_time
@@ -523,7 +563,19 @@ class ModularPipelineExecutor:
                 # Check for API errors
                 if result.startswith("Error"):
                     last_error = result
-                    logger.warning(f"⚠️ API error on attempt {attempt + 1}: {result}")
+
+                    # Detect 503 service unavailable errors (infrastructure issues)
+                    is_503_error = "503" in result or "Service Unavailable" in result or "ring-balancer" in result
+
+                    if is_503_error and attempt < max_retries - 1:
+                        # Use longer backoff for 503 errors (infrastructure recovery time)
+                        retry_delay = 5 * (attempt + 1)  # 5s, 10s instead of 1s, 2s
+                        logger.warning(f"⚠️ OVH infrastructure error (503) on attempt {attempt + 1}: {result[:200]}")
+                        logger.info(f"   Waiting {retry_delay}s for OVH infrastructure recovery...")
+                        time.sleep(retry_delay)
+                    else:
+                        logger.warning(f"⚠️ API error on attempt {attempt + 1}: {result}")
+
                     continue
 
                 # ✨ NEW: Log AI call with token usage (don't break pipeline if this fails!)
@@ -542,10 +594,12 @@ class ModularPipelineExecutor:
                             "temperature": step.temperature or 0.7,
                             "max_tokens": step.max_tokens or model.max_tokens or 4096,
                             "model_db_id": model.id,
-                            "attempt": attempt + 1
-                        }
+                            "attempt": attempt + 1,
+                        },
                     )
-                    logger.info(f"💰 Logged {result_dict.get('total_tokens', 0)} tokens for step '{step.name}'")
+                    logger.info(
+                        f"💰 Logged {result_dict.get('total_tokens', 0)} tokens for step '{step.name}'"
+                    )
                 except Exception as log_error:
                     # Don't fail the pipeline if logging fails!
                     logger.error(f"⚠️ Failed to log AI costs (non-critical): {log_error}")
@@ -559,8 +613,21 @@ class ModularPipelineExecutor:
                 logger.error(f"❌ Step '{step.name}' failed on attempt {attempt + 1}: {e}")
 
                 if attempt < max_retries - 1:
-                    logger.info(f"🔄 Retrying step '{step.name}'...")
-                    time.sleep(1 * (attempt + 1))  # Exponential backoff
+                    # Detect 503 errors in exceptions (OVH infrastructure issues)
+                    error_str = str(e).lower()
+                    is_503_error = "503" in error_str or "service unavailable" in error_str or "ring-balancer" in error_str
+
+                    if is_503_error:
+                        # Use longer backoff for 503 errors (infrastructure recovery time)
+                        retry_delay = 5 * (attempt + 1)  # 5s, 10s
+                        logger.warning(f"⚠️ OVH infrastructure error (503) detected in exception")
+                        logger.info(f"   Waiting {retry_delay}s for OVH infrastructure recovery...")
+                        time.sleep(retry_delay)
+                    else:
+                        # Standard exponential backoff for other errors
+                        retry_delay = 1 * (attempt + 1)  # 1s, 2s
+                        logger.info(f"🔄 Retrying step '{step.name}' in {retry_delay}s...")
+                        time.sleep(retry_delay)
 
         # All retries failed
         return False, "", last_error or "Unknown error"
@@ -568,11 +635,8 @@ class ModularPipelineExecutor:
     # ==================== PIPELINE EXECUTION ====================
 
     async def execute_pipeline(
-        self,
-        processing_id: str,
-        input_text: str,
-        context: Dict[str, Any] = None
-    ) -> Tuple[bool, str, Dict[str, Any]]:
+        self, processing_id: str, input_text: str, context: dict[str, Any] = None
+    ) -> tuple[bool, str, dict[str, Any]]:
         """
         Execute complete AI pipeline on input text.
 
@@ -598,10 +662,12 @@ class ModularPipelineExecutor:
         """
         context = context or {}
 
-        logger.info(f"🚀 Starting modular pipeline execution with branching support: {processing_id[:8]}")
+        logger.info(
+            f"🚀 Starting modular pipeline execution with branching support: {processing_id[:8]}"
+        )
 
-        # Load job (must exist - created by upload endpoint)
-        job = self.session.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+        # Load job using repository (must exist - created by upload endpoint)
+        job = self.job_repository.get_by_processing_id(processing_id)
 
         if not job:
             error_msg = f"Job not found for processing_id: {processing_id}"
@@ -631,7 +697,7 @@ class ModularPipelineExecutor:
             "branching_occurred": False,
             "document_class": None,
             "branching_path": [],  # Track all branching decisions
-            "post_branching_steps": 0  # Will be set later
+            "post_branching_steps": 0,  # Will be set later
         }
 
         pipeline_start_time = time.time()
@@ -648,8 +714,10 @@ class ModularPipelineExecutor:
             all_steps.append(step)
 
             # Update job progress
-            total_steps_so_far = len(all_steps)
-            progress_percent = int((idx / max(len(universal_steps), 1)) * 50)  # First 50% is universal steps
+            len(all_steps)
+            progress_percent = int(
+                (idx / max(len(universal_steps), 1)) * 50
+            )  # First 50% is universal steps
             job.progress_percent = progress_percent
             job.current_step_id = step.id
             self.session.commit()
@@ -658,10 +726,16 @@ class ModularPipelineExecutor:
 
             # Check if step has required context variables
             if step.required_context_variables:
-                missing_vars = [var for var in step.required_context_variables if var not in context or context[var] is None]
+                missing_vars = [
+                    var
+                    for var in step.required_context_variables
+                    if var not in context or context[var] is None
+                ]
 
                 if missing_vars:
-                    logger.info(f"⏭️  Skipping step '{step.name}' - missing required context variables: {missing_vars}")
+                    logger.info(
+                        f"⏭️  Skipping step '{step.name}' - missing required context variables: {missing_vars}"
+                    )
 
                     # Log skipped step
                     step_execution = PipelineStepExecutionDB(
@@ -681,21 +755,23 @@ class ModularPipelineExecutor:
                         step_metadata={
                             "skip_reason": "missing_required_context_variables",
                             "missing_variables": missing_vars,
-                            "required_variables": step.required_context_variables
-                        }
+                            "required_variables": step.required_context_variables,
+                        },
                     )
                     self.session.add(step_execution)
                     self.session.commit()
 
-                    execution_metadata["steps_executed"].append({
-                        "step_name": step.name,
-                        "step_order": step.order,
-                        "success": True,  # Skipping is success
-                        "execution_time": time.time() - step_start_time,
-                        "error": None,
-                        "skipped": True,
-                        "skip_reason": f"Missing required variables: {', '.join(missing_vars)}"
-                    })
+                    execution_metadata["steps_executed"].append(
+                        {
+                            "step_name": step.name,
+                            "step_order": step.order,
+                            "success": True,  # Skipping is success
+                            "execution_time": time.time() - step_start_time,
+                            "error": None,
+                            "skipped": True,
+                            "skip_reason": f"Missing required variables: {', '.join(missing_vars)}",
+                        }
+                    )
 
                     # Continue to next step without updating current_output
                     continue
@@ -706,7 +782,7 @@ class ModularPipelineExecutor:
                 input_text=current_output,
                 context=context,
                 processing_id=processing_id,
-                document_type=context.get("document_type")
+                document_type=context.get("document_type"),
             )
 
             step_execution_time = time.time() - step_start_time
@@ -720,8 +796,7 @@ class ModularPipelineExecutor:
 
                 # Extract branch metadata (new dynamic system)
                 branch_metadata = self.extract_branch_value(
-                    output,
-                    step.branching_field or "document_type"
+                    output, step.branching_field or "document_type"
                 )
 
                 if branch_metadata:
@@ -730,40 +805,50 @@ class ModularPipelineExecutor:
                         "is_branching_step": True,
                         "branching_field": step.branching_field or "document_type",
                         "branch_metadata": branch_metadata,
-                        "decision_timestamp": datetime.now().isoformat()
+                        "decision_timestamp": datetime.now().isoformat(),
                     }
 
                     # Add to branching path for job-level tracking
-                    execution_metadata["branching_path"].append({
-                        "step_name": step.name,
-                        "step_order": step.order,
-                        "field": branch_metadata["field"],
-                        "decision": branch_metadata["value"],
-                        "type": branch_metadata["type"]
-                    })
+                    execution_metadata["branching_path"].append(
+                        {
+                            "step_name": step.name,
+                            "step_order": step.order,
+                            "field": branch_metadata["field"],
+                            "decision": branch_metadata["value"],
+                            "type": branch_metadata["type"],
+                        }
+                    )
 
                     # Handle document class branching (loads class-specific steps)
                     if branch_metadata["type"] == "document_class" and branch_metadata["target_id"]:
-                        logger.info(f"🎯 Document class branch: {branch_metadata['target_display_name']} (ID: {branch_metadata['target_id']})")
+                        logger.info(
+                            f"🎯 Document class branch: {branch_metadata['target_display_name']} (ID: {branch_metadata['target_id']})"
+                        )
 
                         # Load document class-specific steps
-                        document_class_specific_steps = self.load_steps_by_document_class(branch_metadata["target_id"])
+                        document_class_specific_steps = self.load_steps_by_document_class(
+                            branch_metadata["target_id"]
+                        )
 
                         execution_metadata["branching_occurred"] = True
                         execution_metadata["document_class"] = {
                             "class_key": branch_metadata["target_key"],
                             "display_name": branch_metadata["target_display_name"],
-                            "class_id": branch_metadata["target_id"]
+                            "class_id": branch_metadata["target_id"],
                         }
-                        execution_metadata["class_specific_steps"] = len(document_class_specific_steps)
+                        execution_metadata["class_specific_steps"] = len(
+                            document_class_specific_steps
+                        )
 
                         # Store document_type in context for subsequent steps
                         context["document_type"] = branch_metadata["target_key"]
                     else:
                         # Generic branching (boolean, enum, etc.) - just log the decision
-                        logger.info(f"🔀 Generic branch decision: {branch_metadata['field']} = {branch_metadata['value']}")
+                        logger.info(
+                            f"🔀 Generic branch decision: {branch_metadata['field']} = {branch_metadata['value']}"
+                        )
                 else:
-                    logger.warning(f"⚠️ Failed to extract branch value from output")
+                    logger.warning("⚠️ Failed to extract branch value from output")
 
             # Check for stop conditions (early termination)
             should_terminate, current_output, execution_metadata = self._handle_stop_condition(
@@ -775,7 +860,7 @@ class ModularPipelineExecutor:
                 step_execution_time=step_execution_time,
                 pipeline_start_time=pipeline_start_time,
                 execution_metadata=execution_metadata,
-                success=success
+                success=success,
             )
             if should_terminate:
                 return False, current_output, execution_metadata
@@ -789,18 +874,20 @@ class ModularPipelineExecutor:
                 output_text=output if success else None,
                 step_start_time=step_start_time,
                 error=error,
-                metadata=step_metadata_dict  # Store branching metadata
+                metadata=step_metadata_dict,  # Store branching metadata
             )
 
             # Store metadata for in-memory tracking
-            execution_metadata["steps_executed"].append({
-                "step_name": step.name,
-                "step_order": step.order,
-                "success": success,
-                "execution_time": step_execution_time,
-                "error": error,
-                "is_branching_step": step.is_branching_step
-            })
+            execution_metadata["steps_executed"].append(
+                {
+                    "step_name": step.name,
+                    "step_order": step.order,
+                    "success": success,
+                    "execution_time": step_execution_time,
+                    "error": error,
+                    "is_branching_step": step.is_branching_step,
+                }
+            )
 
             if not success:
                 logger.error(f"❌ Pipeline failed at step '{step.name}': {error}")
@@ -823,7 +910,9 @@ class ModularPipelineExecutor:
 
         # ==================== PHASE 2: CLASS-SPECIFIC STEPS ====================
         if document_class_specific_steps:
-            logger.info(f"📋 Phase 2: Executing {len(document_class_specific_steps)} class-specific steps")
+            logger.info(
+                f"📋 Phase 2: Executing {len(document_class_specific_steps)} class-specific steps"
+            )
 
             for idx, step in enumerate(document_class_specific_steps):
                 step_start_time = time.time()
@@ -835,7 +924,9 @@ class ModularPipelineExecutor:
                 job.current_step_id = step.id
                 self.session.commit()
 
-                logger.info(f"▶️  Step {idx + 1}/{len(document_class_specific_steps)}: {step.name} [{execution_metadata['document_class']['class_key']}]")
+                logger.info(
+                    f"▶️  Step {idx + 1}/{len(document_class_specific_steps)}: {step.name} [{execution_metadata['document_class']['class_key']}]"
+                )
 
                 # Execute step
                 success, output, error = await self.execute_step(
@@ -843,7 +934,7 @@ class ModularPipelineExecutor:
                     input_text=current_output,
                     context=context,
                     processing_id=processing_id,
-                    document_type=context.get("document_type")
+                    document_type=context.get("document_type"),
                 )
 
                 step_execution_time = time.time() - step_start_time
@@ -857,8 +948,7 @@ class ModularPipelineExecutor:
 
                     # Extract branch metadata
                     branch_info = self.extract_branch_value(
-                        output,
-                        step.branching_field or "document_type"
+                        output, step.branching_field or "document_type"
                     )
 
                     if branch_info:
@@ -867,19 +957,23 @@ class ModularPipelineExecutor:
                             "is_branching_step": True,
                             "branching_field": step.branching_field or "document_type",
                             "branch_metadata": branch_info,
-                            "decision_timestamp": datetime.now().isoformat()
+                            "decision_timestamp": datetime.now().isoformat(),
                         }
 
                         # Add to branching path
-                        execution_metadata["branching_path"].append({
-                            "step_name": step.name,
-                            "step_order": step.order,
-                            "field": branch_info["field"],
-                            "decision": branch_info["value"],
-                            "type": branch_info["type"]
-                        })
+                        execution_metadata["branching_path"].append(
+                            {
+                                "step_name": step.name,
+                                "step_order": step.order,
+                                "field": branch_info["field"],
+                                "decision": branch_info["value"],
+                                "type": branch_info["type"],
+                            }
+                        )
 
-                        logger.info(f"🔀 Class-specific branch decision: {branch_info['field']} = {branch_info['value']}")
+                        logger.info(
+                            f"🔀 Class-specific branch decision: {branch_info['field']} = {branch_info['value']}"
+                        )
 
                 # Check for stop conditions (early termination) - PHASE 2
                 should_terminate, current_output, execution_metadata = self._handle_stop_condition(
@@ -891,7 +985,7 @@ class ModularPipelineExecutor:
                     step_execution_time=step_execution_time,
                     pipeline_start_time=pipeline_start_time,
                     execution_metadata=execution_metadata,
-                    success=success
+                    success=success,
                 )
                 if should_terminate:
                     return False, current_output, execution_metadata
@@ -905,18 +999,20 @@ class ModularPipelineExecutor:
                     output_text=output if success else None,
                     step_start_time=step_start_time,
                     error=error,
-                    metadata=step_metadata_dict  # Store branching metadata
+                    metadata=step_metadata_dict,  # Store branching metadata
                 )
 
                 # Store metadata for in-memory tracking
-                execution_metadata["steps_executed"].append({
-                    "step_name": step.name,
-                    "step_order": step.order,
-                    "success": success,
-                    "execution_time": step_execution_time,
-                    "error": error,
-                    "document_class_id": step.document_class_id
-                })
+                execution_metadata["steps_executed"].append(
+                    {
+                        "step_name": step.name,
+                        "step_order": step.order,
+                        "success": success,
+                        "execution_time": step_execution_time,
+                        "error": error,
+                        "document_class_id": step.document_class_id,
+                    }
+                )
 
                 if not success:
                     logger.error(f"❌ Pipeline failed at step '{step.name}': {error}")
@@ -936,7 +1032,9 @@ class ModularPipelineExecutor:
         post_branching_steps = self.load_post_branching_steps()
 
         if post_branching_steps:
-            logger.info(f"📋 Phase 3: Executing {len(post_branching_steps)} post-branching universal steps")
+            logger.info(
+                f"📋 Phase 3: Executing {len(post_branching_steps)} post-branching universal steps"
+            )
 
             for idx, step in enumerate(post_branching_steps):
                 step_start_time = time.time()
@@ -945,19 +1043,29 @@ class ModularPipelineExecutor:
                 # Update job progress
                 # Phase 3 is the last 20% of progress (50% universal + 30% doc-specific + 20% post-branching)
                 base_progress = 80  # After Phase 1 (50%) and Phase 2 (30%)
-                progress_percent = base_progress + int((idx / max(len(post_branching_steps), 1)) * 20)
+                progress_percent = base_progress + int(
+                    (idx / max(len(post_branching_steps), 1)) * 20
+                )
                 job.progress_percent = progress_percent
                 job.current_step_id = step.id
                 self.session.commit()
 
-                logger.info(f"▶️  Step {idx + 1}/{len(post_branching_steps)}: {step.name} [POST-BRANCHING]")
+                logger.info(
+                    f"▶️  Step {idx + 1}/{len(post_branching_steps)}: {step.name} [POST-BRANCHING]"
+                )
 
                 # Check if step has required context variables
                 if step.required_context_variables:
-                    missing_vars = [var for var in step.required_context_variables if var not in context or context[var] is None]
+                    missing_vars = [
+                        var
+                        for var in step.required_context_variables
+                        if var not in context or context[var] is None
+                    ]
 
                     if missing_vars:
-                        logger.info(f"⏭️  Skipping post-branching step '{step.name}' - missing required context variables: {missing_vars}")
+                        logger.info(
+                            f"⏭️  Skipping post-branching step '{step.name}' - missing required context variables: {missing_vars}"
+                        )
 
                         # Log skipped step
                         step_execution = PipelineStepExecutionDB(
@@ -978,22 +1086,24 @@ class ModularPipelineExecutor:
                                 "post_branching": True,
                                 "skip_reason": "missing_required_context_variables",
                                 "missing_variables": missing_vars,
-                                "required_variables": step.required_context_variables
-                            }
+                                "required_variables": step.required_context_variables,
+                            },
                         )
                         self.session.add(step_execution)
                         self.session.commit()
 
-                        execution_metadata["steps_executed"].append({
-                            "step_name": step.name,
-                            "step_order": step.order,
-                            "success": True,  # Skipping is success
-                            "execution_time": time.time() - step_start_time,
-                            "error": None,
-                            "post_branching": True,
-                            "skipped": True,
-                            "skip_reason": f"Missing required variables: {', '.join(missing_vars)}"
-                        })
+                        execution_metadata["steps_executed"].append(
+                            {
+                                "step_name": step.name,
+                                "step_order": step.order,
+                                "success": True,  # Skipping is success
+                                "execution_time": time.time() - step_start_time,
+                                "error": None,
+                                "post_branching": True,
+                                "skipped": True,
+                                "skip_reason": f"Missing required variables: {', '.join(missing_vars)}",
+                            }
+                        )
 
                         # Continue to next step without updating current_output
                         continue
@@ -1004,7 +1114,7 @@ class ModularPipelineExecutor:
                     input_text=current_output,
                     context=context,
                     processing_id=processing_id,
-                    document_type=context.get("document_type")
+                    document_type=context.get("document_type"),
                 )
 
                 step_execution_time = time.time() - step_start_time
@@ -1019,7 +1129,7 @@ class ModularPipelineExecutor:
                     step_execution_time=step_execution_time,
                     pipeline_start_time=pipeline_start_time,
                     execution_metadata=execution_metadata,
-                    success=success
+                    success=success,
                 )
                 if should_terminate:
                     return False, current_output, execution_metadata
@@ -1033,21 +1143,25 @@ class ModularPipelineExecutor:
                     output_text=output if success else None,
                     step_start_time=step_start_time,
                     error=error,
-                    metadata={"post_branching": True}
+                    metadata={"post_branching": True},
                 )
 
                 # Store metadata for in-memory tracking
-                execution_metadata["steps_executed"].append({
-                    "step_name": step.name,
-                    "step_order": step.order,
-                    "success": success,
-                    "execution_time": step_execution_time,
-                    "error": error,
-                    "post_branching": True
-                })
+                execution_metadata["steps_executed"].append(
+                    {
+                        "step_name": step.name,
+                        "step_order": step.order,
+                        "success": success,
+                        "execution_time": step_execution_time,
+                        "error": error,
+                        "post_branching": True,
+                    }
+                )
 
                 if not success:
-                    logger.error(f"❌ Pipeline failed at post-branching step '{step.name}': {error}")
+                    logger.error(
+                        f"❌ Pipeline failed at post-branching step '{step.name}': {error}"
+                    )
                     execution_metadata["failed_at_step"] = step.name
                     execution_metadata["failed_step_id"] = step.id
                     execution_metadata["error"] = error
@@ -1063,7 +1177,9 @@ class ModularPipelineExecutor:
         total_time = time.time() - pipeline_start_time
         execution_metadata["total_time"] = total_time
         execution_metadata["total_steps"] = len(all_steps)
-        execution_metadata["post_branching_steps"] = len(post_branching_steps) if post_branching_steps else 0
+        execution_metadata["post_branching_steps"] = (
+            len(post_branching_steps) if post_branching_steps else 0
+        )
         execution_metadata["pipeline_execution_time"] = total_time  # For worker to use
 
         # NOTE: Executor is a pure service - it does NOT finalize the job
@@ -1071,15 +1187,19 @@ class ModularPipelineExecutor:
         # We only return execution results for the worker to use
 
         logger.info(f"✅ Pipeline execution completed successfully in {total_time:.2f}s")
-        logger.info(f"📊 Branching decisions: {len(execution_metadata['branching_path'])} decision(s) made")
-        if execution_metadata.get('document_class'):
-            logger.info(f"📄 Document class: {execution_metadata['document_class']['display_name']}")
+        logger.info(
+            f"📊 Branching decisions: {len(execution_metadata['branching_path'])} decision(s) made"
+        )
+        if execution_metadata.get("document_class"):
+            logger.info(
+                f"📄 Document class: {execution_metadata['document_class']['display_name']}"
+            )
 
         return True, current_output, execution_metadata
 
     # ==================== HELPER METHODS ====================
 
-    def _serialize_pipeline_config(self) -> Dict[str, Any]:
+    def _serialize_pipeline_config(self) -> dict[str, Any]:
         """Serialize current pipeline configuration for job record."""
         steps = self.load_pipeline_steps()
         return {
@@ -1088,13 +1208,13 @@ class ModularPipelineExecutor:
                     "id": step.id,
                     "name": step.name,
                     "order": step.order,
-                    "model_id": step.selected_model_id
+                    "model_id": step.selected_model_id,
                 }
                 for step in steps
             ]
         }
 
-    def _serialize_ocr_config(self) -> Dict[str, Any]:
+    def _serialize_ocr_config(self) -> dict[str, Any]:
         """Serialize current OCR configuration for job record."""
         config = self.load_ocr_configuration()
         if not config:
@@ -1105,7 +1225,7 @@ class ModularPipelineExecutor:
             "paddleocr_config": config.paddleocr_config,
             "vision_llm_config": config.vision_llm_config,
             "hybrid_config": config.hybrid_config,
-            "pii_removal_enabled": config.pii_removal_enabled
+            "pii_removal_enabled": config.pii_removal_enabled,
         }
 
 
@@ -1115,22 +1235,38 @@ class ModularPipelineManager:
     Used by API endpoints for pipeline configuration.
     """
 
-    def __init__(self, session: Session):
+    def __init__(
+        self,
+        session: Session,
+        step_repository: PipelineStepRepository | None = None,
+        ocr_config_repository: OCRConfigurationRepository | None = None,
+        model_repository: AvailableModelRepository | None = None,
+    ):
+        """
+        Initialize manager with database session and repositories.
+
+        Args:
+            session: SQLAlchemy session (kept for backward compatibility)
+            step_repository: Pipeline step repository (injected for clean architecture)
+            ocr_config_repository: OCR configuration repository (injected for clean architecture)
+            model_repository: Available model repository (injected for clean architecture)
+        """
         self.session = session
+        self.step_repository = step_repository or PipelineStepRepository(session)
+        self.ocr_config_repository = ocr_config_repository or OCRConfigurationRepository(session)
+        self.model_repository = model_repository or AvailableModelRepository(session)
 
     # ==================== PIPELINE STEP CRUD ====================
 
-    def get_all_steps(self) -> List[DynamicPipelineStepDB]:
-        """Get all pipeline steps (enabled and disabled)."""
-        return self.session.query(DynamicPipelineStepDB).order_by(
-            DynamicPipelineStepDB.order
-        ).all()
+    def get_all_steps(self) -> list[DynamicPipelineStepDB]:
+        """Get all pipeline steps (enabled and disabled) using repository pattern."""
+        return self.step_repository.get_all_ordered()
 
-    def get_step(self, step_id: int) -> Optional[DynamicPipelineStepDB]:
-        """Get a single pipeline step by ID."""
-        return self.session.query(DynamicPipelineStepDB).filter_by(id=step_id).first()
+    def get_step(self, step_id: int) -> DynamicPipelineStepDB | None:
+        """Get a single pipeline step by ID using repository pattern."""
+        return self.step_repository.get(step_id)
 
-    def create_step(self, step_data: Dict[str, Any]) -> DynamicPipelineStepDB:
+    def create_step(self, step_data: dict[str, Any]) -> DynamicPipelineStepDB:
         """Create a new pipeline step."""
         step = DynamicPipelineStepDB(**step_data)
         self.session.add(step)
@@ -1138,7 +1274,7 @@ class ModularPipelineManager:
         self.session.refresh(step)
         return step
 
-    def update_step(self, step_id: int, step_data: Dict[str, Any]) -> Optional[DynamicPipelineStepDB]:
+    def update_step(self, step_id: int, step_data: dict[str, Any]) -> DynamicPipelineStepDB | None:
         """Update an existing pipeline step."""
         step = self.get_step(step_id)
         if not step:
@@ -1163,7 +1299,7 @@ class ModularPipelineManager:
         self.session.commit()
         return True
 
-    def reorder_steps(self, step_order: List[int]) -> bool:
+    def reorder_steps(self, step_order: list[int]) -> bool:
         """
         Reorder pipeline steps.
 
@@ -1189,11 +1325,11 @@ class ModularPipelineManager:
 
     # ==================== OCR CONFIGURATION ====================
 
-    def get_ocr_config(self) -> Optional[OCRConfigurationDB]:
-        """Get current OCR configuration."""
-        return self.session.query(OCRConfigurationDB).first()
+    def get_ocr_config(self) -> OCRConfigurationDB | None:
+        """Get current OCR configuration using repository pattern."""
+        return self.ocr_config_repository.get_config()
 
-    def update_ocr_config(self, config_data: Dict[str, Any]) -> Optional[OCRConfigurationDB]:
+    def update_ocr_config(self, config_data: dict[str, Any]) -> OCRConfigurationDB | None:
         """Update OCR configuration."""
         config = self.get_ocr_config()
         if not config:
@@ -1211,13 +1347,12 @@ class ModularPipelineManager:
 
     # ==================== AVAILABLE MODELS ====================
 
-    def get_all_models(self, enabled_only: bool = False) -> List[AvailableModelDB]:
-        """Get all available AI models."""
-        query = self.session.query(AvailableModelDB)
+    def get_all_models(self, enabled_only: bool = False) -> list[AvailableModelDB]:
+        """Get all available AI models using repository pattern."""
         if enabled_only:
-            query = query.filter_by(is_enabled=True)
-        return query.all()
+            return self.model_repository.get_enabled_models()
+        return self.model_repository.get_all()
 
-    def get_model(self, model_id: int) -> Optional[AvailableModelDB]:
-        """Get a single model by ID."""
-        return self.session.query(AvailableModelDB).filter_by(id=model_id).first()
+    def get_model(self, model_id: int) -> AvailableModelDB | None:
+        """Get a single model by ID using repository pattern."""
+        return self.model_repository.get(model_id)

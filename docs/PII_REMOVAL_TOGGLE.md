@@ -146,9 +146,9 @@ pii_enabled = ocr_config.pii_removal_enabled if ocr_config else True
 
 if pii_enabled:
     logger.info("🔒 Starting local PII removal...")
-    from app.services.optimized_privacy_filter import OptimizedPrivacyFilter
+    from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
 
-    pii_filter = OptimizedPrivacyFilter()
+    pii_filter = AdvancedPrivacyFilter()
     extracted_text = pii_filter.remove_pii(extracted_text)
 
     logger.info(f"✅ PII removal completed")

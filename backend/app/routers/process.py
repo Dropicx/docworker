@@ -1,43 +1,29 @@
-import asyncio
+from datetime import datetime
 import logging
-import time
-from datetime import datetime, timedelta
-from typing import Optional
+import os
 
-from fastapi import APIRouter, HTTPException, BackgroundTasks, Request, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from app.core.dependencies import get_processing_service, get_statistics_service
 from app.models.document import (
-    ProcessingProgress, 
-    TranslationResult, 
-    ProcessingStatus,
+    LANGUAGE_NAMES,
     ProcessingOptions,
+    ProcessingProgress,
     SupportedLanguage,
-    ErrorResponse,
-    LANGUAGE_NAMES
+    TranslationResult,
 )
-from app.services.cleanup import (
-    get_from_processing_store,
-    update_processing_store,
-    remove_from_processing_store
-)
-from app.database.connection import get_db_session
-from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
-from app.services.ovh_client import OVHClient
-from app.services.ai_logging_service import AILoggingService
-from app.services.hybrid_text_extractor import HybridTextExtractor
-from app.database.connection import get_session
-from sqlalchemy.orm import Session
-import os
+from app.services.processing_service import ProcessingService
+from app.services.statistics_service import StatisticsService
 
 # Setup logging
 logger = logging.getLogger(__name__)
 
 # Authentication setup
 security = HTTPBearer()
+
 
 def verify_session_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> bool:
     """
@@ -47,15 +33,16 @@ def verify_session_token(credentials: HTTPAuthorizationCredentials = Depends(sec
     token = credentials.credentials
     # Simple token validation - check if token matches access code hash
     import hashlib
-    expected_token = hashlib.sha256(os.getenv("SETTINGS_ACCESS_CODE", "admin123").encode()).hexdigest()
+
+    expected_token = hashlib.sha256(
+        os.getenv("SETTINGS_ACCESS_CODE", "admin123").encode()
+    ).hexdigest()
 
     if token == expected_token:
         return True
 
-    raise HTTPException(
-        status_code=401,
-        detail="Invalid or expired session token"
-    )
+    raise HTTPException(status_code=401, detail="Invalid or expired session token")
+
 
 # ==================== TEXT EXTRACTION ====================
 # NOTE: OCR and text extraction now happen in the WORKER service, not backend
@@ -66,13 +53,15 @@ print("📄 Backend service initialized (OCR handled by worker)", flush=True)
 router = APIRouter()
 limiter = Limiter(key_func=get_remote_address)
 
+
 @router.post("/process/{processing_id}")
 @limiter.limit("3/minute")  # Maximal 3 Verarbeitungen pro Minute
 async def start_processing(
     processing_id: str,
     request: Request,
     background_tasks: BackgroundTasks,
-    options: Optional[ProcessingOptions] = None
+    options: ProcessingOptions | None = None,
+    service: ProcessingService = Depends(get_processing_service),
 ):
     """
     Startet die Verarbeitung eines hochgeladenen Dokuments
@@ -80,545 +69,89 @@ async def start_processing(
     - **processing_id**: ID des hochgeladenen Dokuments
     - **options**: Verarbeitungsoptionen (z.B. Zielsprache)
     """
-
     try:
-        # Load job from database (new architecture)
-        db = next(get_db_session())
-        try:
-            job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+        options_dict = options.dict() if options else {}
+        return service.start_processing(processing_id, options_dict)
 
-            if not job:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Verarbeitung nicht gefunden oder bereits abgelaufen"
-                )
-
-            # Save processing options (including target_language) to job
-            options_dict = options.dict() if options else {}
-            job.processing_options = options_dict
-            db.commit()
-
-            logger.info(f"📋 Processing options saved for {processing_id[:8]}: {options_dict}")
-
-            # NOW enqueue the worker task with the options
-            try:
-                from app.services.celery_client import enqueue_document_processing
-                task_id = enqueue_document_processing(processing_id, options=options_dict)
-                logger.info(f"📤 Job queued to Redis: {processing_id[:8]} (task_id: {task_id})")
-
-                return {
-                    "message": "Verarbeitung gestartet",
-                    "processing_id": processing_id,
-                    "status": "QUEUED",
-                    "task_id": task_id,
-                    "target_language": options_dict.get('target_language') if options_dict else None
-                }
-            except Exception as queue_error:
-                logger.error(f"❌ Failed to queue task: {queue_error}")
-                raise HTTPException(
-                    status_code=503,
-                    detail=f"Failed to queue processing task: {str(queue_error)}"
-                )
-
-        finally:
-            db.close()
-
-    except HTTPException:
-        raise
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
+    except RuntimeError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
     except Exception as e:
-        print(f"❌ Start-Verarbeitung Fehler: {e}")
+        logger.error(f"❌ Start-Verarbeitung Fehler: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Fehler beim Starten der Verarbeitung: {str(e)}"
-        )
+            status_code=500, detail=f"Fehler beim Starten der Verarbeitung: {str(e)}"
+        ) from e
 
-async def process_document_legacy(processing_id: str):
-    """
-    LEGACY FUNCTION - NO LONGER USED
-
-    This function is kept for backwards compatibility but is NOT called in the current system.
-    All document processing now happens via the worker service using process_document_unified.
-
-    The worker handles:
-    - OCR text extraction (PaddleOCR, Vision LLM, Hybrid)
-    - Local PII removal (before sending to AI)
-    - Pipeline execution via ModularPipelineExecutor
-    """
-    try:
-        # Import text extractor locally (only if this legacy function is somehow called)
-        try:
-            from app.services.text_extractor_ocr import TextExtractorWithOCR
-            text_extractor = TextExtractorWithOCR()
-        except ImportError:
-            from app.services.text_extractor_simple import TextExtractor
-            text_extractor = TextExtractor()
-
-        processing_data = get_from_processing_store(processing_id)
-        if not processing_data:
-            return
-
-        start_time = time.time()
-        options = processing_data.get("options", {})
-        target_language = options.get("target_language")
-
-        # Schritt 1: Textextraktion
-        update_processing_store(processing_id, {
-            "status": ProcessingStatus.EXTRACTING_TEXT,
-            "progress_percent": 20,
-            "current_step": "Text wird extrahiert..."
-        })
-
-        file_content = processing_data["file_content"]
-        file_type = processing_data["file_type"]
-        filename = processing_data["filename"]
-
-        extracted_text, text_confidence = await text_extractor.extract_text(
-            file_content, file_type, filename
-        )
-        
-        if not extracted_text or len(extracted_text.strip()) < 10:
-            raise Exception("Nicht genügend Text extrahiert")
-        
-        # Schritt 2: Text-Vereinfachung
-        update_processing_store(processing_id, {
-            "status": ProcessingStatus.TRANSLATING,
-            "progress_percent": 40,
-            "current_step": "Text wird in einfache Sprache übersetzt..."
-        })
-        
-        # OVH API verwenden für Übersetzung
-        from app.services.ovh_client import OVHClient
-        ovh_client = OVHClient()
-        
-        # Prüfe OVH-Verbindung
-        ovh_connected, error_msg = await ovh_client.check_connection()
-        if not ovh_connected:
-            raise Exception(f"OVH API nicht verfügbar: {error_msg}")
-        
-        # Get database session for logging and prompts
-        db_session = next(get_session())
-        ai_logger = AILoggingService(db_session)
-        
-        # Custom Prompts laden (für Validierung)
-        from app.services.prompt_manager import PromptManager
-        from app.models.document_types import DocumentClass
-        prompt_manager = PromptManager()
-        db_prompt_manager = DatabasePromptManager(db_session)
-        
-        # Erstmal mit "universal" laden, dann nach Klassifizierung aktualisieren
-        document_class = DocumentClass.ARZTBRIEF  # Default
-        try:
-            custom_prompts = db_prompt_manager.load_prompts(document_class)
-        except Exception as e:
-            print(f"Database prompt loading failed, using file-based: {e}")
-            custom_prompts = prompt_manager.load_prompts(document_class)
-        
-        # Medizinische Inhaltsvalidierung (nur wenn aktiviert)
-        global_pipeline = get_global_pipeline_service()
-        global_pipeline.db_session = db  # Pass database session
-        document_specific_enabled = custom_prompts.pipeline_steps.get("MEDICAL_VALIDATION", {}).enabled
-        
-        if not global_pipeline.should_skip_step("MEDICAL_VALIDATION", document_specific_enabled):
-            from app.services.medical_content_validator import MedicalContentValidator
-            validator = MedicalContentValidator(ovh_client)
-            is_medical, validation_confidence, validation_method = await validator.validate_medical_content(extracted_text)
-            
-            # Log medical validation
-            ai_logger.log_medical_validation(
-                processing_id=processing_id,
-                input_text=extracted_text[:1000],  # Log first 1000 chars
-                is_medical=is_medical,
-                confidence=validation_confidence,
-                method=validation_method,
-                document_type=document_class.value
-            )
-            
-            if not is_medical:
-                print(f"❌ Medical validation: FAILED (confidence: {validation_confidence:.2%}, method: {validation_method})")
-                print(f"📄 Document does not contain medical content - stopping pipeline")
-                
-                # Update status to non-medical content
-                update_processing_store(processing_id, {
-                    "status": ProcessingStatus.NON_MEDICAL_CONTENT,
-                    "progress_percent": 100,
-                    "current_step": "Document does not contain medical content",
-                    "error": "This document does not appear to contain medical content. Please upload a medical document (doctor's letter, lab results, medical report, etc.).",
-                    "validation_details": {
-                        "is_medical": False,
-                        "confidence": validation_confidence,
-                        "method": validation_method
-                    },
-                    "completed_at": datetime.now()
-                })
-                
-                print(f"🛑 Processing stopped: Non-medical content detected")
-                return
-            else:
-                print(f"✅ Medical validation: PASSED (confidence: {validation_confidence:.2%}, method: {validation_method})")
-        else:
-            print(f"⏭️ Medical validation: SKIPPED (disabled)")
-        
-        # Erst Text vorverarbeiten (PII-Entfernung)
-        cleaned_text = await ovh_client.preprocess_medical_text(extracted_text)
-        
-        # Dokumenttyp klassifizieren (nur wenn aktiviert)
-        detected_doc_type = "arztbrief"  # Default
-        document_specific_enabled = custom_prompts.pipeline_steps.get("CLASSIFICATION", {}).enabled
-        
-        if not global_pipeline.should_skip_step("CLASSIFICATION", document_specific_enabled):
-            from app.services.document_classifier import DocumentClassifier
-            classifier = DocumentClassifier(ovh_client)
-            classification_result = await classifier.classify_document(cleaned_text)
-            detected_doc_type = classification_result.document_class.value
-            document_class = DocumentClass(detected_doc_type)
-            
-            # Log classification
-            ai_logger.log_classification(
-                processing_id=processing_id,
-                input_text=cleaned_text[:1000],  # Log first 1000 chars
-                document_type=detected_doc_type,
-                confidence=classification_result.confidence,
-                method=classification_result.method
-            )
-            
-            # Reload prompts with correct type
-            try:
-                custom_prompts = db_prompt_manager.load_prompts(document_class)
-            except Exception as e:
-                print(f"Database prompt loading failed, using file-based: {e}")
-                custom_prompts = prompt_manager.load_prompts(document_class)
-            
-            print(f"📋 Document classification: {detected_doc_type} (confidence: {classification_result.confidence:.2%}, method: {classification_result.method})")
-        else:
-            print(f"⏭️ Document classification: SKIPPED (disabled)")
-        
-        print(f"📝 Using custom prompts for {detected_doc_type} (version: {custom_prompts.version})")
-        
-        # Übersetzung (nur wenn aktiviert)
-        translated_text = cleaned_text  # Start with cleaned text
-        translation_confidence = 1.0  # Default confidence
-        
-        document_specific_enabled = custom_prompts.pipeline_steps.get("TRANSLATION", {}).enabled
-        
-        if not global_pipeline.should_skip_step("TRANSLATION", document_specific_enabled):
-            translated_text, _, translation_confidence, _ = await ovh_client.translate_medical_document(
-                cleaned_text, document_type=detected_doc_type, custom_prompts=custom_prompts
-            )
-            
-            # Log translation
-            ai_logger.log_translation(
-                processing_id=processing_id,
-                input_text=cleaned_text[:1000],  # Log first 1000 chars
-                output_text=translated_text[:1000],  # Log first 1000 chars
-                confidence=translation_confidence,
-                model_used="OVH-Llama-3.3-70B",
-                document_type=detected_doc_type
-            )
-            
-            print(f"🌍 Translation: COMPLETED (confidence: {translation_confidence:.2%})")
-        else:
-            print(f"⏭️ Translation: SKIPPED (disabled)")
-        
-        # Qualitätsprüfung (Fact Check + Grammar Check)
-        from app.services.quality_checker import QualityChecker
-        quality_checker = QualityChecker(ovh_client)
-        
-        # Fact Check (nur wenn aktiviert)
-        document_specific_enabled = custom_prompts.pipeline_steps.get("FACT_CHECK", {}).enabled
-        
-        if not global_pipeline.should_skip_step("FACT_CHECK", document_specific_enabled):
-            fact_checked_text, fact_check_results = await quality_checker.fact_check(
-                translated_text, document_class, custom_prompts.fact_check_prompt
-            )
-            
-            # Log fact check
-            changes_made = fact_check_results.get('changes_made', 0)
-            ai_logger.log_quality_check(
-                processing_id=processing_id,
-                step_name="fact_check",
-                input_text=translated_text[:1000],
-                output_text=fact_checked_text[:1000],
-                changes_made=changes_made,
-                document_type=detected_doc_type
-            )
-            
-            translated_text = fact_checked_text
-            print(f"🔍 Fact check: COMPLETED ({fact_check_results.get('status', 'unknown')})")
-        else:
-            print(f"⏭️ Fact check: SKIPPED (disabled)")
-        
-        # Grammar Check (nur wenn aktiviert)
-        document_specific_enabled = custom_prompts.pipeline_steps.get("GRAMMAR_CHECK", {}).enabled
-        
-        if not global_pipeline.should_skip_step("GRAMMAR_CHECK", document_specific_enabled):
-            grammar_checked_text, grammar_check_results = await quality_checker.grammar_check(
-                translated_text, "de", custom_prompts.grammar_check_prompt
-            )
-            
-            # Log grammar check
-            changes_made = grammar_check_results.get('changes_made', 0)
-            ai_logger.log_quality_check(
-                processing_id=processing_id,
-                step_name="grammar_check",
-                input_text=translated_text[:1000],
-                output_text=grammar_checked_text[:1000],
-                changes_made=changes_made,
-                document_type=detected_doc_type
-            )
-            
-            translated_text = grammar_checked_text
-            print(f"✏️ Grammar check: COMPLETED ({grammar_check_results.get('status', 'unknown')})")
-        else:
-            print(f"⏭️ Grammar check: SKIPPED (disabled)")
-        
-        # Schritt 3: Optionale Sprachübersetzung
-        language_translated_text = None
-        language_confidence_score = None
-        
-        document_specific_enabled = custom_prompts.pipeline_steps.get("LANGUAGE_TRANSLATION", {}).enabled
-        
-        if target_language and not global_pipeline.should_skip_step("LANGUAGE_TRANSLATION", document_specific_enabled):
-            update_processing_store(processing_id, {
-                "status": ProcessingStatus.LANGUAGE_TRANSLATING,
-                "progress_percent": 70,
-                "current_step": f"Übersetzung in {target_language.value}..."
-            })
-            
-            # Use custom language translation prompt if available
-            language_prompt = custom_prompts.language_translation_prompt if custom_prompts else None
-            language_translated_text, language_confidence_score = await ovh_client.translate_to_language(
-                translated_text, target_language, custom_prompt=language_prompt
-            )
-            print(f"🌐 Language translation: COMPLETED (confidence: {language_confidence_score:.2%})")
-        elif target_language:
-            print(f"⏭️ Language translation: SKIPPED (disabled)")
-            language_translated_text = None
-            language_confidence_score = None
-        
-        # Schritt 4: Ergebnis finalisieren
-        progress_percent = 90
-        update_processing_store(processing_id, {
-            "progress_percent": progress_percent,
-            "current_step": "Ergebnis wird vorbereitet..."
-        })
-        
-        processing_time = time.time() - start_time
-        overall_confidence = translation_confidence
-        if language_confidence_score:
-            overall_confidence = (translation_confidence + language_confidence_score) / 2
-        
-        # Final Quality Check (nur wenn aktiviert)
-        document_specific_enabled = custom_prompts.pipeline_steps.get("FINAL_CHECK", {}).enabled
-        
-        if not global_pipeline.should_skip_step("FINAL_CHECK", document_specific_enabled):
-            final_checked_text, final_check_results = await quality_checker.final_check(
-                translated_text, custom_prompts.final_check_prompt
-            )
-            translated_text = final_checked_text
-            print(f"✅ Final quality check: COMPLETED ({final_check_results.get('status', 'unknown')})")
-        else:
-            print(f"⏭️ Final quality check: SKIPPED (disabled)")
-        
-        # Formatierung (nur wenn aktiviert)
-        document_specific_enabled = custom_prompts.pipeline_steps.get("FORMATTING", {}).enabled
-        
-        if not global_pipeline.should_skip_step("FORMATTING", document_specific_enabled):
-            print(f"[FORMATTING] Applying final formatting to translated text...")
-            from app.services.ovh_client import OVHClient
-            ovh_client = OVHClient()
-            translated_text = ovh_client._improve_formatting(translated_text)
-            if language_translated_text:
-                language_translated_text = ovh_client._improve_formatting(language_translated_text)
-            print(f"🎨 Formatting: COMPLETED")
-        else:
-            print(f"⏭️ Formatting: SKIPPED (disabled)")
-        
-        # Debug-Logging um zu sehen was passiert
-        print(f"[FORMATTING] Complete:")
-        print(f"  - Arrows in text: {translated_text.count('→')}")
-        print(f"  - Bullets in text: {translated_text.count('•')}")
-        print(f"  - Lines in text: {len(translated_text.split(chr(10)))}")
-        
-        # Ergebnis speichern - verwende cleaned_text statt extracted_text
-        result = TranslationResult(
-            processing_id=processing_id,
-            original_text=cleaned_text,  # Zeige den bereinigten Text statt Rohdaten
-            translated_text=translated_text,
-            language_translated_text=language_translated_text,
-            target_language=SupportedLanguage(target_language) if target_language else None,
-            document_type_detected=detected_doc_type,
-            confidence_score=overall_confidence,
-            language_confidence_score=language_confidence_score,
-            processing_time_seconds=processing_time
-        )
-        
-        update_processing_store(processing_id, {
-            "status": ProcessingStatus.COMPLETED,
-            "progress_percent": 100,
-            "current_step": "Verarbeitung abgeschlossen",
-            "result": result.dict(),
-            "completed_at": datetime.now()
-        })
-        
-        language_info = f" + {target_language}" if target_language else ""
-        print(f"✅ Legacy processing completed: {processing_id[:8]} ({processing_time:.2f}s{language_info})")
-        
-    except Exception as e:
-        print(f"❌ Legacy processing error {processing_id[:8]}: {e}")
-        
-        update_processing_store(processing_id, {
-            "status": ProcessingStatus.ERROR,
-            "current_step": "Fehler bei der Verarbeitung",
-            "error": str(e),
-            "error_at": datetime.now()
-        })
 
 @router.get("/process/{processing_id}/status", response_model=ProcessingProgress)
-async def get_processing_status(processing_id: str):
+async def get_processing_status(
+    processing_id: str, service: ProcessingService = Depends(get_processing_service)
+):
     """
     Gibt den aktuellen Verarbeitungsstatus zurück (aus Datenbank)
 
     - **processing_id**: ID der Verarbeitung
     """
-
     try:
-        # Load job from database
-        db = next(get_db_session())
-        try:
-            job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+        status_dict = service.get_processing_status(processing_id)
+        return ProcessingProgress(**status_dict)
 
-            if not job:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Verarbeitung nicht gefunden"
-                )
-
-            # Map database status to API status
-            status_mapping = {
-                StepExecutionStatus.PENDING: ProcessingStatus.PENDING,
-                StepExecutionStatus.RUNNING: ProcessingStatus.PROCESSING,
-                StepExecutionStatus.COMPLETED: ProcessingStatus.COMPLETED,
-                StepExecutionStatus.FAILED: ProcessingStatus.ERROR,
-                StepExecutionStatus.SKIPPED: ProcessingStatus.ERROR
-            }
-
-            # Determine current step description
-            current_step = "Warten auf Verarbeitung..."
-            if job.status == StepExecutionStatus.RUNNING:
-                current_step = f"Verarbeite Schritt {job.progress_percent}%"
-            elif job.status == StepExecutionStatus.COMPLETED:
-                current_step = "Verarbeitung abgeschlossen"
-            elif job.status == StepExecutionStatus.FAILED:
-                current_step = "Fehler bei Verarbeitung"
-
-            return ProcessingProgress(
-                processing_id=processing_id,
-                status=status_mapping.get(job.status, ProcessingStatus.PENDING),
-                progress_percent=job.progress_percent,
-                current_step=current_step,
-                message=None,
-                error=job.error_message
-            )
-
-        finally:
-            db.close()
-
-    except HTTPException:
-        raise
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
-        print(f"❌ Status-Abfrage Fehler: {e}")
+        logger.error(f"❌ Status-Abfrage Fehler: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Fehler beim Abrufen des Status: {str(e)}"
-        )
+            status_code=500, detail=f"Fehler beim Abrufen des Status: {str(e)}"
+        ) from e
+
 
 @router.get("/process/{processing_id}/result", response_model=TranslationResult)
-async def get_processing_result(processing_id: str):
+async def get_processing_result(
+    processing_id: str, service: ProcessingService = Depends(get_processing_service)
+):
     """
     Gibt das Verarbeitungsergebnis zurück (aus Datenbank)
 
     - **processing_id**: ID der Verarbeitung
     """
-
     try:
-        # Load job from database
-        db = next(get_db_session())
-        try:
-            job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+        result_data = service.get_processing_result(processing_id)
+        return TranslationResult(**result_data)
 
-            if not job:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Verarbeitung nicht gefunden"
-                )
-
-            if job.status != StepExecutionStatus.COMPLETED:
-                raise HTTPException(
-                    status_code=409,
-                    detail=f"Verarbeitung noch nicht abgeschlossen. Status: {job.status}"
-                )
-
-            result_data = job.result_data
-            if not result_data:
-                raise HTTPException(
-                    status_code=500,
-                    detail="Verarbeitungsergebnis nicht verfügbar"
-                )
-
-            # Return result (we keep it in DB for audit purposes, don't delete)
-            return TranslationResult(**result_data)
-
-        finally:
-            db.close()
-
-    except HTTPException:
-        raise
+    except ValueError as e:
+        # Service raises ValueError for both not-found and not-completed
+        if "not found" in str(e).lower():
+            raise HTTPException(status_code=404, detail=str(e)) from e
+        raise HTTPException(status_code=409, detail=str(e)) from e
     except Exception as e:
-        print(f"❌ Ergebnis-Abfrage Fehler: {e}")
+        logger.error(f"❌ Ergebnis-Abfrage Fehler: {e}")
         raise HTTPException(
-            status_code=500,
-            detail=f"Fehler beim Abrufen des Ergebnisses: {str(e)}"
-        )
+            status_code=500, detail=f"Fehler beim Abrufen des Ergebnisses: {str(e)}"
+        ) from e
+
 
 @router.get("/process/active")
 @limiter.limit("30/minute")
-async def get_active_processes(request: Request):
+async def get_active_processes(
+    request: Request, service: ProcessingService = Depends(get_processing_service)
+):
     """
     Gibt Übersicht über aktive Verarbeitungen zurück (für Debugging)
     """
-    
     try:
-        from app.services.cleanup import processing_store
-        
-        active_processes = []
-        
-        for proc_id, data in processing_store.items():
-            active_processes.append({
-                "processing_id": proc_id[:8] + "...",  # Verkürzt für Privatsphäre
-                "status": data.get("status"),
-                "progress_percent": data.get("progress_percent", 0),
-                "current_step": data.get("current_step"),
-                "created_at": data.get("created_at"),
-                "filename": data.get("filename", "").split("/")[-1] if data.get("filename") else None  # Nur Dateiname
-            })
-        
-        return {
-            "active_count": len(active_processes),
-            "processes": active_processes,
-            "timestamp": datetime.now()
-        }
-        
+        return service.get_active_processes()
     except Exception as e:
-        return {
-            "error": str(e),
-            "timestamp": datetime.now()
-        }
+        return {"error": str(e), "timestamp": datetime.now()}
+
 
 # Global optimized pipeline instance removed - now using unified system
 
+
 @router.get("/process/pipeline-stats")
 async def get_pipeline_stats(
-    authenticated: bool = Depends(verify_session_token)
+    authenticated: bool = Depends(verify_session_token),
+    service: StatisticsService = Depends(get_statistics_service),
 ):
     """
     Get comprehensive pipeline performance statistics from actual database data
@@ -626,286 +159,63 @@ async def get_pipeline_stats(
     """
     if not authenticated:
         raise HTTPException(
-            status_code=401,
-            detail="Authentication required to access pipeline statistics"
+            status_code=401, detail="Authentication required to access pipeline statistics"
         )
 
     try:
-        # Get real statistics from database (MODULAR PIPELINE)
-        from app.database.connection import get_session
-        from app.database.modular_pipeline_models import DynamicPipelineStepDB, PipelineStepExecutionDB
-        from app.database.unified_models import SystemSettingsDB, AILogInteractionDB
-        from sqlalchemy import func, desc
-
-        db = next(get_session())
-        # Get current time for calculations
-        now = datetime.now()
-        last_24h = now - timedelta(hours=24)
-        last_7d = now - timedelta(days=7)
-
-        # ==================== AI INTERACTION STATISTICS ====================
-
-        # Total AI interactions
-        total_interactions = db.query(PipelineStepExecutionDB).count()
-
-        # Recent interactions (24h)
-        recent_interactions = db.query(PipelineStepExecutionDB).filter(
-            PipelineStepExecutionDB.started_at >= last_24h
-        ).count()
-
-        # Weekly interactions
-        weekly_interactions = db.query(PipelineStepExecutionDB).filter(
-            PipelineStepExecutionDB.started_at >= last_7d
-        ).count()
-
-        # Average processing time (last 100 interactions)
-        avg_processing_time = db.query(func.avg(PipelineStepExecutionDB.execution_time_seconds)).filter(
-            PipelineStepExecutionDB.execution_time_seconds.isnot(None)
-        ).limit(100).scalar() or 0
-        avg_processing_time_ms = avg_processing_time * 1000  # Convert to ms
-
-        # Success rate (last 100 executions)
-        recent_logs = db.query(PipelineStepExecutionDB).order_by(desc(PipelineStepExecutionDB.started_at)).limit(100).all()
-        success_count = sum(1 for log in recent_logs if log.status == "COMPLETED")
-        success_rate = (success_count / len(recent_logs) * 100) if recent_logs else 100
-
-        # Most used step
-        step_usage = db.query(
-            PipelineStepExecutionDB.step_id,
-            func.count(PipelineStepExecutionDB.step_id).label('count')
-        ).group_by(PipelineStepExecutionDB.step_id).order_by(desc('count')).first()
-
-        if step_usage:
-            most_used_step_db = db.query(DynamicPipelineStepDB).filter_by(id=step_usage.step_id).first()
-            most_used_step = most_used_step_db.name if most_used_step_db else "N/A"
-        else:
-            most_used_step = "N/A"
-
-        # ==================== PIPELINE CONFIGURATION STATISTICS ====================
-
-        # Pipeline steps status (modular system)
-        pipeline_steps = db.query(DynamicPipelineStepDB).order_by(DynamicPipelineStepDB.order).all()
-        enabled_steps = [step for step in pipeline_steps if step.enabled]
-        disabled_steps = [step for step in pipeline_steps if not step.enabled]
-
-        # Configuration counts (modular system)
-        total_pipeline_steps = len(pipeline_steps)
-
-        # Get system settings
-        system_settings = db.query(SystemSettingsDB).filter(
-            SystemSettingsDB.key.like('enable_%')
-        ).all()
-
-        enabled_features = sum(1 for setting in system_settings if setting.value.lower() == 'true')
-        total_features = len(system_settings)
-
-        # Get the actual cache timeout from database settings
-        cache_timeout_setting = db.query(SystemSettingsDB).filter(
-            SystemSettingsDB.key == 'pipeline_cache_timeout'
-        ).first()
-        actual_cache_timeout = int(cache_timeout_setting.value) if cache_timeout_setting and cache_timeout_setting.value.isdigit() else 3600
-
-        # ==================== REAL PERFORMANCE METRICS ====================
-
-        # Calculate actual performance improvements based on data
-        performance_metrics = {}
-
-        if total_interactions > 0:
-            performance_metrics["avg_processing_time"] = f"{avg_processing_time_ms:.0f}ms average processing time"
-            performance_metrics["success_rate"] = f"{success_rate:.1f}% success rate"
-            performance_metrics["daily_throughput"] = f"{recent_interactions} interactions in last 24h"
-            performance_metrics["weekly_volume"] = f"{weekly_interactions} interactions in last 7 days"
-        else:
-            performance_metrics["status"] = "No AI interactions recorded yet"
-
-        if len(enabled_steps) > 0:
-            performance_metrics["active_pipeline_steps"] = f"{len(enabled_steps)}/{len(pipeline_steps)} pipeline steps enabled"
-            performance_metrics["most_used_step"] = f"Most used: {most_used_step}"
-
-        performance_metrics["configuration_completeness"] = f"{total_pipeline_steps} dynamic pipeline steps configured"
-        performance_metrics["feature_adoption"] = f"{enabled_features}/{total_features} features enabled"
-
-        # ==================== CACHE STATISTICS (for frontend compatibility) ====================
-
-        # Create cache statistics based on AI interactions and real settings
-        cache_statistics = {
-            "total_entries": total_interactions,
-            "active_entries": recent_interactions,
-            "expired_entries": max(0, total_interactions - recent_interactions),
-            "cache_timeout_seconds": actual_cache_timeout
-        }
-
-        return {
-            "pipeline_mode": "modular",
-            "timestamp": now.isoformat(),
-            "cache_statistics": cache_statistics,
-            "ai_interaction_statistics": {
-                "total_interactions": total_interactions,
-                "last_24h_interactions": recent_interactions,
-                "last_7d_interactions": weekly_interactions,
-                "avg_processing_time_ms": round(avg_processing_time_ms, 2) if avg_processing_time_ms else 0,
-                "success_rate_percent": round(success_rate, 1),
-                "most_used_step": most_used_step
-            },
-            "pipeline_configuration": {
-                "total_steps": len(pipeline_steps),
-                "enabled_steps": len(enabled_steps),
-                "disabled_steps": len(disabled_steps),
-                "enabled_step_names": [step.name for step in enabled_steps],
-                "disabled_step_names": [step.name for step in disabled_steps]
-            },
-            "prompt_configuration": {
-                "dynamic_pipeline_steps": total_pipeline_steps,
-                "total_prompts_configured": total_pipeline_steps
-            },
-            "system_health": {
-                "enabled_features": enabled_features,
-                "total_features": total_features,
-                "feature_adoption_percent": round((enabled_features / total_features * 100), 1) if total_features > 0 else 0,
-                "database_status": "operational"
-            },
-            "performance_improvements": performance_metrics
-        }
-
+        return service.get_pipeline_statistics()
     except Exception as e:
         logger.error(f"Failed to get pipeline statistics: {e}")
+        raise HTTPException(
+            status_code=500, detail=f"Failed to retrieve pipeline statistics: {str(e)}"
+        ) from e
 
-        # Try to get cache timeout even in error case
-        try:
-            cache_timeout_setting = db.query(SystemSettingsDB).filter(
-                SystemSettingsDB.key == 'pipeline_cache_timeout'
-            ).first()
-            error_cache_timeout = int(cache_timeout_setting.value) if cache_timeout_setting and cache_timeout_setting.value.isdigit() else 3600
-        except:
-            error_cache_timeout = 3600
-
-        return {
-            "pipeline_mode": "unified",
-            "timestamp": datetime.now().isoformat(),
-            "error": str(e),
-            "cache_statistics": {
-                "total_entries": 0,
-                "active_entries": 0,
-                "expired_entries": 0,
-                "cache_timeout_seconds": error_cache_timeout
-            },
-            "ai_interaction_statistics": {
-                "total_interactions": 0,
-                "last_24h_interactions": 0,
-                "last_7d_interactions": 0,
-                "avg_processing_time_ms": 0,
-                "success_rate_percent": 0,
-                "most_used_step": "N/A"
-            },
-            "pipeline_configuration": {
-                "total_steps": 0,
-                "enabled_steps": 0,
-                "disabled_steps": 0,
-                "enabled_step_names": [],
-                "disabled_step_names": []
-            },
-            "prompt_configuration": {
-                "universal_prompts": 0,
-                "document_specific_prompts": 0,
-                "total_prompts_configured": 0
-            },
-            "system_health": {
-                "enabled_features": 0,
-                "total_features": 0,
-                "feature_adoption_percent": 0,
-                "database_status": "error"
-            },
-            "performance_improvements": {
-                "error": "Unable to calculate performance metrics"
-            }
-        }
 
 @router.post("/process/clear-cache")
-async def clear_pipeline_cache():
+async def clear_pipeline_cache(service: StatisticsService = Depends(get_statistics_service)):
     """
     Clear the pipeline prompt cache (unified system)
     """
     try:
-        # In the unified system, prompts are stored in the database
-        # This endpoint is kept for compatibility but doesn't need to do anything
-        return {
-            "success": True,
-            "message": "Unified system uses database storage - no cache to clear",
-            "timestamp": datetime.now()
-        }
+        return service.clear_cache()
     except Exception as e:
-        return {
-            "error": str(e),
-            "timestamp": datetime.now()
-        }
+        return {"error": str(e), "timestamp": datetime.now()}
+
 
 @router.get("/process/performance-comparison")
-async def get_performance_comparison():
+async def get_performance_comparison(service: StatisticsService = Depends(get_statistics_service)):
     """
     Get performance comparison between optimized and legacy pipeline
     """
-    return {
-        "optimized_pipeline": {
-            "features": [
-                "Prompt caching (5min TTL)",
-                "Parallel classification + preprocessing",
-                "Parallel quality checks (fact + grammar)",
-                "Async AI API calls",
-                "Smart error fallbacks",
-                "AI-based medical validation",
-                "AI-based text formatting"
-            ],
-            "expected_improvements": {
-                "speed": "40-60% faster processing",
-                "database_calls": "90% reduction via caching",
-                "ai_api_efficiency": "2-3x better throughput with parallel calls",
-                "reliability": "Better error handling and fallbacks"
-            }
-        },
-        "legacy_pipeline": {
-            "features": [
-                "Sequential processing",
-                "Database call per document",
-                "Hardcoded medical validation",
-                "Hardcoded text formatting",
-                "No parallel operations"
-            ],
-            "limitations": [
-                "Slower due to sequential processing",
-                "More database load",
-                "Less flexible validation",
-                "Fixed formatting logic"
-            ]
-        },
-        "recommendation": "Use optimized pipeline for better performance and flexibility",
-        "toggle_method": "Set USE_OPTIMIZED_PIPELINE environment variable"
-    }
+    return service.get_performance_comparison()
+
 
 @router.get("/process/models")
 async def get_available_models():
     """
     Gibt verfügbare OVH-Modelle zurück
     """
-    
+
     # OVH verwendet feste Modelle die in den Umgebungsvariablen konfiguriert sind
     return {
         "connected": True,
         "models": [
             os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct"),
             os.getenv("OVH_PREPROCESSING_MODEL", "Mistral-Nemo-Instruct-2407"),
-            os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct")
+            os.getenv("OVH_TRANSLATION_MODEL", "Meta-Llama-3_3-70B-Instruct"),
         ],
         "recommended": os.getenv("OVH_MAIN_MODEL", "Meta-Llama-3_3-70B-Instruct"),
         "api_mode": "OVH AI Endpoints",
-        "timestamp": datetime.now()
+        "timestamp": datetime.now(),
     }
+
 
 @router.get("/process/languages")
 async def get_available_languages():
     """
     Gibt verfügbare Sprachen für die Übersetzung zurück
     """
-    
+
     try:
         # Sehr gut unterstützte Sprachen (beste Llama 3.3 Performance)
         best_supported = [
@@ -915,9 +225,9 @@ async def get_available_languages():
             SupportedLanguage.SPANISH,
             SupportedLanguage.ITALIAN,
             SupportedLanguage.PORTUGUESE,
-            SupportedLanguage.DUTCH
+            SupportedLanguage.DUTCH,
         ]
-        
+
         # Gut unterstützte Sprachen
         well_supported = [
             SupportedLanguage.RUSSIAN,
@@ -931,41 +241,41 @@ async def get_available_languages():
             SupportedLanguage.CZECH,
             SupportedLanguage.SWEDISH,
             SupportedLanguage.NORWEGIAN,
-            SupportedLanguage.DANISH
+            SupportedLanguage.DANISH,
         ]
-        
+
         # Alle verfügbaren Sprachen
         all_languages = []
-        
+
         # Zuerst sehr gut unterstützte Sprachen
         for lang in best_supported:
-            all_languages.append({
-                "code": lang.value,
-                "name": LANGUAGE_NAMES[lang],
-                "popular": True,
-                "quality": "excellent"
-            })
-        
+            all_languages.append(
+                {
+                    "code": lang.value,
+                    "name": LANGUAGE_NAMES[lang],
+                    "popular": True,
+                    "quality": "excellent",
+                }
+            )
+
         # Dann gut unterstützte Sprachen
         for lang in well_supported:
-            all_languages.append({
-                "code": lang.value,
-                "name": LANGUAGE_NAMES[lang],
-                "popular": False,
-                "quality": "good"
-            })
-        
+            all_languages.append(
+                {
+                    "code": lang.value,
+                    "name": LANGUAGE_NAMES[lang],
+                    "popular": False,
+                    "quality": "good",
+                }
+            )
+
         return {
             "languages": all_languages,
             "total_count": len(all_languages),
             "best_supported_count": len(best_supported),
             "well_supported_count": len(well_supported),
-            "timestamp": datetime.now()
+            "timestamp": datetime.now(),
         }
-        
+
     except Exception as e:
-        return {
-            "error": str(e),
-            "languages": [],
-            "timestamp": datetime.now()
-        }
+        return {"error": str(e), "languages": [], "timestamp": datetime.now()}

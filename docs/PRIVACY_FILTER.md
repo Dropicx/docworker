@@ -1,32 +1,44 @@
 # Privacy Filter mit spaCy NER
 
+> ## ⚠️ OUTDATED DOCUMENTATION (2025-10-13)
+>
+> **This document describes an old three-tier system that has been consolidated.**
+>
+> **Current Implementation**: Single consolidated filter
+> - **Filter**: `AdvancedPrivacyFilter` (privacy_filter_advanced.py)
+> - **Features**:
+>   - Optional spaCy NER with graceful fallback to regex-only mode
+>   - 146+ medical terms protected
+>   - 210+ medical abbreviations protected
+>   - GDPR-compliant PII removal
+> - **Deprecated Filters**: Moved to `backend/app/services/_deprecated/`
+>   - privacy_filter.py
+>   - optimized_privacy_filter.py
+>   - smart_privacy_filter.py
+>
+> See [REFACTORING_NOTES.md](../docs/REFACTORING_NOTES.md) for details.
+
 ## 🚀 Deployment-Status
 
 Die Anwendung ist jetzt mit **spaCy NER (Named Entity Recognition)** für intelligente Namenerkennung konfiguriert!
 
 ## 📦 Was wurde implementiert?
 
-### 1. **Drei-Stufen-System** mit Fallback:
+### 1. **Konsolidiertes Filter-System**:
 
-#### Stufe 1: AdvancedPrivacyFilter mit spaCy NER ✨
-- **Aktiviert wenn**: spaCy und deutsches Modell installiert sind
-- **Vorteile**: 
-  - KI-basierte Namenerkennung
-  - Erkennt auch unbekannte Namen
-  - Unterscheidet medizinische Eponyme von echten Namen
-- **Datei**: `privacy_filter_advanced.py`
+#### Current: AdvancedPrivacyFilter ✨
+- **Location**: `backend/app/services/privacy_filter_advanced.py`
+- **Features**:
+  - Optional spaCy NER (falls verfügbar)
+  - Graceful fallback to regex-only mode
+  - 146+ medizinische Begriffe geschützt
+  - 210+ medizinische Abkürzungen geschützt
+  - GDPR-konform
 
-#### Stufe 2: SmartPrivacyFilter (Heuristik) 🧩
-- **Aktiviert wenn**: spaCy nicht verfügbar
-- **Vorteile**:
-  - Keine externen Dependencies
-  - Schnell und zuverlässig
-  - Kontextbasierte Erkennung
-- **Datei**: `smart_privacy_filter.py`
-
-#### Stufe 3: Basis-Filter (veraltet) ⚠️
-- **Nicht mehr verwendet**
-- **Datei**: `privacy_filter.py`
+#### Deprecated Filters (moved to _deprecated/) ⚠️
+- `privacy_filter.py` - Basic filter
+- `optimized_privacy_filter.py` - Performance optimized
+- `smart_privacy_filter.py` - Heuristic-based
 
 ## 🐳 Docker-Deployment
 
@@ -45,16 +57,15 @@ RUN python -m spacy download de_core_news_sm
 ## 🔧 Konfiguration
 
 ### Automatische Erkennung
-Die Anwendung wählt automatisch den besten verfügbaren Filter:
+Die Anwendung verwendet AdvancedPrivacyFilter mit automatischem Fallback:
 
 ```python
-# In ovh_client.py
-if ADVANCED_FILTER_AVAILABLE:
-    self.privacy_filter = AdvancedPrivacyFilter()  # Mit spaCy
-    logger.info("🧠 Using AdvancedPrivacyFilter with spaCy NER")
-else:
-    self.privacy_filter = SmartPrivacyFilter()     # Fallback
-    logger.info("📝 Using SmartPrivacyFilter (heuristic-based)")
+# Current implementation (worker/tasks/document_processing.py)
+from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
+
+pii_filter = AdvancedPrivacyFilter()
+# Automatically uses spaCy NER if available, otherwise falls back to regex-only mode
+cleaned_text = pii_filter.remove_pii(extracted_text)
 ```
 
 ## 🧪 Testen

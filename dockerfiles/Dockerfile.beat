@@ -1,0 +1,42 @@
+# ==========================================
+# Celery Beat Scheduler Service Dockerfile
+# ==========================================
+# Dedicated scheduler for periodic tasks (runs ONCE, not per worker)
+# This prevents duplicate scheduled tasks when using multiple worker replicas
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install system dependencies (minimal - Beat doesn't process tasks)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libmagic1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements for worker (Beat needs same dependencies)
+COPY worker/requirements.txt /app/worker/requirements.txt
+
+# Install Python dependencies
+RUN pip install --no-cache-dir -r /app/worker/requirements.txt
+
+# Create non-root user for security
+RUN useradd -m -u 1000 beatuser && \
+    chown -R beatuser:beatuser /app
+
+# Copy worker code (Beat needs access to task definitions)
+COPY --chown=beatuser:beatuser worker/ /app/worker/
+COPY --chown=beatuser:beatuser backend/ /app/backend/
+COPY --chown=beatuser:beatuser shared/ /app/shared/
+
+# Set Python path to include all modules
+ENV PYTHONPATH=/app:/app/worker:/app/backend:/app/shared
+
+# Switch to non-root user
+USER beatuser
+
+# Health check via Redis connection
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+    CMD python -c "from shared.redis_client import get_redis; get_redis().ping()" || exit 1
+
+# Start Celery Beat scheduler (no --beat flag in worker service anymore)
+# This service only schedules tasks, workers execute them
+CMD ["celery", "-A", "worker.worker.celery_app", "beat", "--loglevel=info"]
