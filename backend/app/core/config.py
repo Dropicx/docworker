@@ -184,10 +184,9 @@ class Settings(BaseSettings):
             if env in ["development", "testing", "test"]:
                 logger.info(f"✅ Allowing SQLite DATABASE_URL in {env} environment")
                 return v
-            else:
-                raise ValueError(
-                    "SQLite DATABASE_URL is only allowed in development/testing environments"
-                )
+            raise ValueError(
+                "SQLite DATABASE_URL is only allowed in development/testing environments"
+            )
 
         # Production must use PostgreSQL
         if not v.startswith(("postgresql://", "postgres://")):

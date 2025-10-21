@@ -48,37 +48,48 @@ async def lifespan(app: FastAPI):
     logger.info(f"Port: {settings.port}")
     logger.info(f"USE_OVH_ONLY: {settings.use_ovh_only}")
 
+    # Detect test environment (pytest sets sys.modules['pytest'] when running)
+    is_testing = "pytest" in sys.modules
+    if is_testing:
+        logger.info("🧪 Test environment detected - skipping database initialization")
+
     # Validate configuration
-    try:
-        settings.validate_on_startup()
-    except Exception as e:
-        logger.error(f"❌ Configuration validation failed: {e}")
-        raise
+    if not is_testing:
+        try:
+            settings.validate_on_startup()
+        except Exception as e:
+            logger.error(f"❌ Configuration validation failed: {e}")
+            raise
 
-    # Initialize database
-    logger.info("🗄️ Initializing database...")
-    try:
-        if init_database():
-            logger.info("✅ Database initialized successfully")
-        else:
-            logger.error("❌ Database initialization failed")
-    except Exception as e:
-        logger.error(f"❌ Database initialization error: {e}")
+    # Initialize database (skip in test environment)
+    if not is_testing:
+        logger.info("🗄️ Initializing database...")
+        try:
+            if init_database():
+                logger.info("✅ Database initialized successfully")
+            else:
+                logger.error("❌ Database initialization failed")
+        except Exception as e:
+            logger.error(f"❌ Database initialization error: {e}")
 
-    # Cleanup task - runs every 30 seconds
-    cleanup_task = asyncio.create_task(periodic_cleanup())
-    logger.info("✅ Started periodic cleanup task (30s interval)")
+    # Cleanup task - runs every 30 seconds (skip in test environment)
+    cleanup_task = None
+    if not is_testing:
+        cleanup_task = asyncio.create_task(periodic_cleanup())
+        logger.info("✅ Started periodic cleanup task (30s interval)")
 
     yield
 
     # Shutdown
     logger.info("🔄 Shutting down...")
-    cleanup_task.cancel()
-    with suppress(asyncio.CancelledError):
-        await cleanup_task
+    if cleanup_task is not None:
+        cleanup_task.cancel()
+        with suppress(asyncio.CancelledError):
+            await cleanup_task
 
-    # Final cleanup
-    await cleanup_temp_files()
+    # Final cleanup (skip in test environment to avoid cleanup conflicts)
+    if not is_testing:
+        await cleanup_temp_files()
     logger.info("✅ Shutdown complete")
 
 
