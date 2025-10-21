@@ -9,6 +9,7 @@ import os
 
 import httpx
 from fastapi import APIRouter, HTTPException
+
 from shared.redis_client import get_redis
 
 logger = logging.getLogger(__name__)
