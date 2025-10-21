@@ -165,8 +165,7 @@ class Settings(BaseSettings):
         allowed = ["development", "staging", "production"]
         if v not in allowed:
             logger.warning(
-                f"Invalid environment '{v}', must be one of {allowed}. "
-                f"Defaulting to 'development'."
+                f"Invalid environment '{v}', must be one of {allowed}. Defaulting to 'development'."
             )
             return "development"
         return v
@@ -179,8 +178,7 @@ class Settings(BaseSettings):
             raise ValueError("DATABASE_URL is required")
         if not v.startswith(("postgresql://", "postgres://")):
             raise ValueError(
-                "DATABASE_URL must be a PostgreSQL connection string "
-                "(postgresql:// or postgres://)"
+                "DATABASE_URL must be a PostgreSQL connection string (postgresql:// or postgres://)"
             )
         return v
 
@@ -192,7 +190,7 @@ class Settings(BaseSettings):
         v_upper = v.upper()
         if v_upper not in allowed:
             logger.warning(
-                f"Invalid log level '{v}', must be one of {allowed}. " f"Defaulting to 'INFO'."
+                f"Invalid log level '{v}', must be one of {allowed}. Defaulting to 'INFO'."
             )
             return "INFO"
         return v_upper

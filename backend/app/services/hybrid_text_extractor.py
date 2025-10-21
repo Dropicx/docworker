@@ -434,7 +434,7 @@ class HybridTextExtractor:
                                 table_data = table.extract()
                                 if table_data:
                                     # Format table as markdown-like structure
-                                    table_text = f"\n--- Tabelle {i+1} ---\n"
+                                    table_text = f"\n--- Tabelle {i + 1} ---\n"
                                     for row in table_data:
                                         if row and any(
                                             cell for cell in row if cell
@@ -676,7 +676,7 @@ class HybridTextExtractor:
                     # Add a document header if first page doesn't have one
                     merged_parts.append(f"# Medizinische Dokumentation\n\n{text}")
 
-                logger.info(f"📄 File {i+1}: Started document (type: {current_section_type})")
+                logger.info(f"📄 File {i + 1}: Started document (type: {current_section_type})")
             else:
                 # Subsequent files - intelligent merging
                 prev_text = merged_parts[-1] if merged_parts else ""
@@ -686,12 +686,12 @@ class HybridTextExtractor:
                 ):
                     # Seamless continuation
                     merged_parts.append(f"\n{text}")
-                    logger.info(f"📄 File {i+1}: Seamless merge (type: {current_section_type})")
+                    logger.info(f"📄 File {i + 1}: Seamless merge (type: {current_section_type})")
 
                 elif self._is_table_continuation(prev_text, text):
                     # Table continuation - preserve structure
                     merged_parts.append(f"\n{text}")
-                    logger.info(f"📄 File {i+1}: Table continuation")
+                    logger.info(f"📄 File {i + 1}: Table continuation")
 
                 elif current_section_type == "lab_values" and previous_section_type in [
                     "lab_values",
@@ -699,13 +699,13 @@ class HybridTextExtractor:
                 ]:
                     # Lab values continuation
                     merged_parts.append(f"\n## Laborwerte (Fortsetzung)\n\n{text}")
-                    logger.info(f"📄 File {i+1}: Lab values continuation")
+                    logger.info(f"📄 File {i + 1}: Lab values continuation")
 
                 else:
                     # New section - add appropriate header
                     section_header = self._get_section_header(current_section_type, filename)
                     merged_parts.append(f"\n{section_header}\n\n{text}")
-                    logger.info(f"📄 File {i+1}: New section (type: {current_section_type})")
+                    logger.info(f"📄 File {i + 1}: New section (type: {current_section_type})")
 
             previous_section_type = current_section_type
 

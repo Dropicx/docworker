@@ -316,7 +316,7 @@ class FileSequenceDetector:
             page_infos = []
 
             for i, (content, file_type, filename) in enumerate(files):
-                logger.info(f"📄 Analyzing file {i+1}: {filename}")
+                logger.info(f"📄 Analyzing file {i + 1}: {filename}")
 
                 page_info = PageInfo(
                     index=i, filename=filename, file_content=content, file_type=file_type
@@ -332,7 +332,7 @@ class FileSequenceDetector:
 
                 page_infos.append(page_info)
 
-                logger.info(f"✅ File {i+1} analyzed:")
+                logger.info(f"✅ File {i + 1} analyzed:")
                 logger.info(f"   - Page number: {page_info.page_number}")
                 logger.info(f"   - Has patient info: {page_info.has_patient_info}")
                 logger.info(f"   - Text length: {len(text) if text else 0}")
@@ -627,7 +627,7 @@ class FileSequenceDetector:
         logger.info("📊 Medical structure ordering:")
         for i, page in enumerate(sorted_pages):
             priority = medical_priority(page)
-            logger.info(f"   {i+1}. {page.filename} (priority: {priority})")
+            logger.info(f"   {i + 1}. {page.filename} (priority: {priority})")
 
         return [p.index for p in sorted_pages]
 

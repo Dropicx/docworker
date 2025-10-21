@@ -198,7 +198,9 @@ app.include_router(
     modular_pipeline_router, tags=["pipeline"]
 )  # Modular pipeline has its own prefix
 app.include_router(admin_config_router, tags=["admin"])  # Admin configuration management
-app.include_router(monitoring_router, tags=["monitoring"])  # Flower dashboard proxy and worker monitoring
+app.include_router(
+    monitoring_router, tags=["monitoring"]
+)  # Flower dashboard proxy and worker monitoring
 
 
 @app.get("/")

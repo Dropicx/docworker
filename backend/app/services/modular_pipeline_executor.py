@@ -101,17 +101,27 @@ class ModularPipelineExecutor:
             universal_steps = self.step_repository.get_universal_steps()
 
             # DEBUG: Log what we got from repository
-            logger.info(f"🔍 DEBUG: Repository returned {len(universal_steps)} universal steps (document_class_id = NULL)")
+            logger.info(
+                f"🔍 DEBUG: Repository returned {len(universal_steps)} universal steps (document_class_id = NULL)"
+            )
             for step in universal_steps:
-                logger.info(f"   - {step.name} (order={step.order}, post_branching={step.post_branching}, enabled={step.enabled})")
+                logger.info(
+                    f"   - {step.name} (order={step.order}, post_branching={step.post_branching}, enabled={step.enabled})"
+                )
 
             # Filter for pre-branching only (post_branching = False)
             steps = [s for s in universal_steps if not s.post_branching]
 
-            logger.info(f"📋 Loaded {len(steps)} pre-branching universal pipeline steps (after filtering post_branching=False)")
+            logger.info(
+                f"📋 Loaded {len(steps)} pre-branching universal pipeline steps (after filtering post_branching=False)"
+            )
             if len(steps) == 0 and len(universal_steps) > 0:
-                logger.warning(f"⚠️ ISSUE DETECTED: Repository returned {len(universal_steps)} universal steps but ALL have post_branching=True!")
-                logger.warning("   Expected at least some steps with post_branching=False for pre-branching phase")
+                logger.warning(
+                    f"⚠️ ISSUE DETECTED: Repository returned {len(universal_steps)} universal steps but ALL have post_branching=True!"
+                )
+                logger.warning(
+                    "   Expected at least some steps with post_branching=False for pre-branching phase"
+                )
 
             return steps
         except Exception as e:
@@ -565,12 +575,18 @@ class ModularPipelineExecutor:
                     last_error = result
 
                     # Detect 503 service unavailable errors (infrastructure issues)
-                    is_503_error = "503" in result or "Service Unavailable" in result or "ring-balancer" in result
+                    is_503_error = (
+                        "503" in result
+                        or "Service Unavailable" in result
+                        or "ring-balancer" in result
+                    )
 
                     if is_503_error and attempt < max_retries - 1:
                         # Use longer backoff for 503 errors (infrastructure recovery time)
                         retry_delay = 5 * (attempt + 1)  # 5s, 10s instead of 1s, 2s
-                        logger.warning(f"⚠️ OVH infrastructure error (503) on attempt {attempt + 1}: {result[:200]}")
+                        logger.warning(
+                            f"⚠️ OVH infrastructure error (503) on attempt {attempt + 1}: {result[:200]}"
+                        )
                         logger.info(f"   Waiting {retry_delay}s for OVH infrastructure recovery...")
                         time.sleep(retry_delay)
                     else:
@@ -615,7 +631,11 @@ class ModularPipelineExecutor:
                 if attempt < max_retries - 1:
                     # Detect 503 errors in exceptions (OVH infrastructure issues)
                     error_str = str(e).lower()
-                    is_503_error = "503" in error_str or "service unavailable" in error_str or "ring-balancer" in error_str
+                    is_503_error = (
+                        "503" in error_str
+                        or "service unavailable" in error_str
+                        or "ring-balancer" in error_str
+                    )
 
                     if is_503_error:
                         # Use longer backoff for 503 errors (infrastructure recovery time)

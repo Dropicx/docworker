@@ -47,7 +47,7 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         phase_order = case(
             (self.model.post_branching, 3),  # Post-branching last
             (self.model.document_class_id.is_not(None), 2),  # Document-specific middle
-            else_=1  # Pre-branching first
+            else_=1,  # Pre-branching first
         )
 
         return self.db.query(self.model).order_by(phase_order, self.model.order).all()
@@ -72,10 +72,15 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         phase_order = case(
             (self.model.post_branching, 3),  # Post-branching last
             (self.model.document_class_id.is_not(None), 2),  # Document-specific middle
-            else_=1  # Pre-branching first
+            else_=1,  # Pre-branching first
         )
 
-        return self.db.query(self.model).filter_by(enabled=True).order_by(phase_order, self.model.order).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(enabled=True)
+            .order_by(phase_order, self.model.order)
+            .all()
+        )
 
     def get_disabled_steps(self) -> list[DynamicPipelineStepDB]:
         """
@@ -92,10 +97,15 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         phase_order = case(
             (self.model.post_branching, 3),  # Post-branching last
             (self.model.document_class_id.is_not(None), 2),  # Document-specific middle
-            else_=1  # Pre-branching first
+            else_=1,  # Pre-branching first
         )
 
-        return self.db.query(self.model).filter_by(enabled=False).order_by(phase_order, self.model.order).all()
+        return (
+            self.db.query(self.model)
+            .filter_by(enabled=False)
+            .order_by(phase_order, self.model.order)
+            .all()
+        )
 
     def get_universal_steps(self) -> list[DynamicPipelineStepDB]:
         """

@@ -233,7 +233,7 @@ class AdvancedOCRProcessor:
 
                     if row_text:
                         all_rows.append(row_text)
-                        logger.debug(f"Row {i+1}: {row_text[:100]}...")
+                        logger.debug(f"Row {i + 1}: {row_text[:100]}...")
             else:
                 # Fall back to extracting the whole table region
                 table_text = pytesseract.image_to_string(

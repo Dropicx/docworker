@@ -222,8 +222,7 @@ def with_retries(
             except RetryError as e:
                 name = operation_name or func.__name__
                 logger.error(
-                    f"❌ Operation '{name}' failed after "
-                    f"{e.last_attempt.attempt_number} attempts"
+                    f"❌ Operation '{name}' failed after {e.last_attempt.attempt_number} attempts"
                 )
                 raise e.last_attempt.exception() from e
 

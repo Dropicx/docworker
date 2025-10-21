@@ -91,9 +91,7 @@ async def base_exception_handler(request: Request, exc: BaseAppError) -> JSONRes
         )
     elif status_code >= 400:
         logger.warning(
-            f"⚠️ Client error: {exc.error_code} | "
-            f"Path: {request.url.path} | "
-            f"Message: {exc.message}"
+            f"⚠️ Client error: {exc.error_code} | Path: {request.url.path} | Message: {exc.message}"
         )
 
     # Get request ID if available
