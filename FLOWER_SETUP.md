@@ -55,14 +55,21 @@ FLOWER_BASIC_AUTH=admin:your-secure-password-here
 
 Add or update:
 ```bash
-# Public Flower URL (from Step 2)
-FLOWER_URL=https://flower-service-production-xxxx.up.railway.app
+# Public Flower URL (from Step 2) - for frontend button
+FLOWER_URL_PUBLIC=https://flower-service-production-xxxx.up.railway.app
+
+# Internal Flower URL - for backend API calls (faster, private network)
+FLOWER_URL_INTERNAL=http://flower-service.railway.internal:5555
 
 # Same auth credentials as flower-service (for API access)
 FLOWER_BASIC_AUTH=admin:your-secure-password-here
 ```
 
 ⚠️ **Use the EXACT same `FLOWER_BASIC_AUTH` value as flower-service!**
+
+**Why two URLs?**
+- `FLOWER_URL_INTERNAL`: Backend → Flower API calls (stays on Railway private network, faster)
+- `FLOWER_URL_PUBLIC`: Frontend button → User's browser (needs public URL)
 
 ---
 
@@ -184,7 +191,8 @@ Once configured, you get:
 | **flower-service** | `REDIS_URL` | `${{REDIS.REDIS_URL}}` |
 | **flower-service** | `PORT` | `5555` |
 | **flower-service** | `FLOWER_BASIC_AUTH` | `admin:your-password` |
-| **backend** | `FLOWER_URL` | `https://flower-xxx.railway.app` |
+| **backend** | `FLOWER_URL_PUBLIC` | `https://flower-xxx.railway.app` |
+| **backend** | `FLOWER_URL_INTERNAL` | `http://flower-service.railway.internal:5555` |
 | **backend** | `FLOWER_BASIC_AUTH` | `admin:your-password` (same) |
 
 ---
