@@ -84,7 +84,7 @@ unfixable = []
 # ==========================================
 
 [tool.ruff.lint.isort]
-known-first-party = ["app"]
+known-first-party = ["app", "shared"]
 force-sort-within-sections = true
 split-on-trailing-comma = false
 
