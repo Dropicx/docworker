@@ -78,7 +78,7 @@ jobs:
         working-directory: ./backend
 
     env:
-      DATABASE_URL: "postgresql://test:test@localhost:5432/test"
+      DATABASE_URL: "sqlite:///./test.db"
       OVH_AI_ENDPOINTS_ACCESS_TOKEN: "test-token"
       ENVIRONMENT: "development"
 
