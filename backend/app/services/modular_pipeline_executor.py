@@ -111,7 +111,7 @@ class ModularPipelineExecutor:
             logger.info(f"📋 Loaded {len(steps)} pre-branching universal pipeline steps (after filtering post_branching=False)")
             if len(steps) == 0 and len(universal_steps) > 0:
                 logger.warning(f"⚠️ ISSUE DETECTED: Repository returned {len(universal_steps)} universal steps but ALL have post_branching=True!")
-                logger.warning(f"   Expected at least some steps with post_branching=False for pre-branching phase")
+                logger.warning("   Expected at least some steps with post_branching=False for pre-branching phase")
 
             return steps
         except Exception as e:
@@ -620,7 +620,7 @@ class ModularPipelineExecutor:
                     if is_503_error:
                         # Use longer backoff for 503 errors (infrastructure recovery time)
                         retry_delay = 5 * (attempt + 1)  # 5s, 10s
-                        logger.warning(f"⚠️ OVH infrastructure error (503) detected in exception")
+                        logger.warning("⚠️ OVH infrastructure error (503) detected in exception")
                         logger.info(f"   Waiting {retry_delay}s for OVH infrastructure recovery...")
                         time.sleep(retry_delay)
                     else:

@@ -1,8 +1,8 @@
 import asyncio
-from contextlib import asynccontextmanager, suppress
-from datetime import datetime
 import logging
 import sys
+from contextlib import asynccontextmanager, suppress
+from datetime import datetime
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,9 +17,9 @@ from app.database.init_db import init_database
 from app.routers import health, process, upload
 from app.routers.admin.config import router as admin_config_router
 from app.routers.modular_pipeline import router as modular_pipeline_router
+from app.routers.monitoring import router as monitoring_router
 from app.routers.process_multi_file import router as multi_file_router
 from app.routers.settings_auth import router as settings_auth_router
-from app.routers.monitoring import router as monitoring_router
 from app.services.cleanup import cleanup_temp_files
 
 # Configure logging with centralized settings

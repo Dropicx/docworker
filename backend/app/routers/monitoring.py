@@ -3,11 +3,11 @@ Monitoring Router
 
 Provides proxy access to Flower dashboard and worker monitoring endpoints.
 """
-import os
 import logging
-from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import HTMLResponse, Response
+import os
+
 import httpx
+from fastapi import APIRouter, HTTPException
 
 # Import Redis client for queue length queries
 from shared.redis_client import get_redis
@@ -128,11 +128,11 @@ async def redis_debug():
         return {
             "total_keys": len(all_keys),
             "keys": key_details,
-            "queue_patterns": [k for k in key_details.keys() if any(q in k for q in ['high_priority', 'default', 'low_priority', 'maintenance'])]
+            "queue_patterns": [k for k in key_details if any(q in k for q in ['high_priority', 'default', 'low_priority', 'maintenance'])]
         }
     except Exception as e:
         logger.error(f"❌ Redis debug error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e)) from e
 
 
 @router.get("/flower-status")
@@ -157,12 +157,12 @@ async def flower_status():
                 "workers": workers,
                 "worker_count": len(workers)
             }
-        else:
-            return {
-                "available": False,
-                "flower_url": FLOWER_URL_PUBLIC,
-                "error": f"Unexpected status code: {response.status_code}"
-            }
+
+        return {
+            "available": False,
+            "flower_url": FLOWER_URL_PUBLIC,
+            "error": f"Unexpected status code: {response.status_code}"
+        }
 
     except httpx.ConnectError:
         logger.warning(f"⚠️ Flower service not available at {FLOWER_URL_INTERNAL}")
@@ -215,7 +215,7 @@ async def worker_stats():
             # Count active workers (workers with 'stats' field are active)
             # If no 'stats' field exists, assume all returned workers are active
             active_workers = 0
-            for worker_name, worker_info in workers.items():
+            for worker_info in workers.values():
                 # Check if worker has stats (indicates it's responding)
                 if isinstance(worker_info, dict):
                     # If it has 'stats' key, it's definitely active
@@ -238,7 +238,7 @@ async def worker_stats():
             # Count active tasks (currently being processed)
             active_tasks = 0
             reserved_tasks = 0
-            for task_id, task_info in tasks.items():
+            for task_info in tasks.values():
                 if isinstance(task_info, dict):
                     state = task_info.get('state', '').upper()
                     if state in ['STARTED', 'RETRY']:
@@ -262,20 +262,20 @@ async def worker_stats():
                 },
                 "queues": queue_lengths  # Waiting in queue (not yet picked up)
             }
-        else:
-            raise HTTPException(
-                status_code=503,
-                detail="Failed to fetch worker statistics from Flower"
-            )
 
-    except httpx.ConnectError:
+        raise HTTPException(
+            status_code=503,
+            detail="Failed to fetch worker statistics from Flower"
+        )
+
+    except httpx.ConnectError as exc:
         raise HTTPException(
             status_code=503,
             detail="Flower service unavailable"
-        )
+        ) from exc
     except Exception as e:
         logger.error(f"❌ Error fetching worker stats: {str(e)}")
         raise HTTPException(
             status_code=500,
             detail=str(e)
-        )
+        ) from e

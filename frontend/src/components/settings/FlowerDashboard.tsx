@@ -1,17 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Activity, AlertCircle, CheckCircle, RefreshCw, Server } from 'lucide-react';
+
+interface WorkerDetails {
+  [key: string]: unknown;
+}
+
+interface TaskDetails {
+  [key: string]: unknown;
+}
 
 interface WorkerStats {
   workers: {
     total: number;
     active: number;
-    details: any;
+    details: WorkerDetails;
   };
   tasks: {
     total: number;
     active: number;  // Currently being processed
     reserved: number;  // Picked up but not started yet
-    details: any;
+    details: TaskDetails;
   };
   queues: {
     high_priority: number;
@@ -24,7 +32,7 @@ interface WorkerStats {
 interface FlowerStatus {
   available: boolean;
   flower_url: string;
-  workers?: any;
+  workers?: WorkerDetails;
   worker_count?: number;
   error?: string;
 }
@@ -49,7 +57,6 @@ const FlowerDashboard: React.FC = () => {
       }
     } catch (err) {
       setError('Failed to fetch Flower status');
-      console.error('Error fetching Flower status:', err);
     }
   };
 
@@ -58,21 +65,18 @@ const FlowerDashboard: React.FC = () => {
       const response = await fetch('/api/monitoring/worker-stats');
       if (response.ok) {
         const data = await response.json();
-        console.log('📊 Worker Stats received:', data);
         setWorkerStats(data);
-      } else {
-        console.error('❌ Worker stats request failed:', response.status, response.statusText);
       }
     } catch (err) {
-      console.error('❌ Error fetching worker stats:', err);
+      // Silent fail - stats will show as unavailable
     }
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setIsLoading(true);
     await Promise.all([fetchFlowerStatus(), fetchWorkerStats()]);
     setIsLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -84,7 +88,7 @@ const FlowerDashboard: React.FC = () => {
 
       return () => clearInterval(interval);
     }
-  }, [autoRefresh]);
+  }, [autoRefresh, fetchData]);
 
   const handleRefresh = () => {
     fetchData();

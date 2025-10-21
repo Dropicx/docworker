@@ -115,7 +115,7 @@ celery_client.conf.update(
 )
 
 logger.info(f"🔗 Celery client configured with Redis: {REDIS_URL.split('@')[0]}...")
-logger.info(f"📋 Task routing: process_medical_document → high_priority queue")
+logger.info("📋 Task routing: process_medical_document → high_priority queue")
 
 
 def enqueue_document_processing(processing_id: str, options: dict[str, Any] | None = None) -> str:

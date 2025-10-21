@@ -201,6 +201,9 @@ python_files = ["test_*.py", "*_test.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 
+# Python path - include project root for shared module imports
+pythonpath = ["..", "."]
+
 # Output options
 addopts = [
     "-v",                    # Verbose output

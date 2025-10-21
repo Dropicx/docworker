@@ -45,8 +45,8 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
 
         # Define phase priority
         phase_order = case(
-            (self.model.post_branching == True, 3),  # Post-branching last
-            (self.model.document_class_id != None, 2),  # Document-specific middle
+            (self.model.post_branching, 3),  # Post-branching last
+            (self.model.document_class_id.is_not(None), 2),  # Document-specific middle
             else_=1  # Pre-branching first
         )
 
@@ -70,8 +70,8 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
 
         # Define phase priority
         phase_order = case(
-            (self.model.post_branching == True, 3),  # Post-branching last
-            (self.model.document_class_id != None, 2),  # Document-specific middle
+            (self.model.post_branching, 3),  # Post-branching last
+            (self.model.document_class_id.is_not(None), 2),  # Document-specific middle
             else_=1  # Pre-branching first
         )
 
@@ -90,8 +90,8 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
 
         # Define phase priority
         phase_order = case(
-            (self.model.post_branching == True, 3),  # Post-branching last
-            (self.model.document_class_id != None, 2),  # Document-specific middle
+            (self.model.post_branching, 3),  # Post-branching last
+            (self.model.document_class_id.is_not(None), 2),  # Document-specific middle
             else_=1  # Pre-branching first
         )
 
