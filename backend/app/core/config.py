@@ -176,9 +176,24 @@ class Settings(BaseSettings):
         """Validate database URL format."""
         if not v:
             raise ValueError("DATABASE_URL is required")
+
+        # Allow SQLite for testing/development environments
+        if v.startswith("sqlite://"):
+            import os
+            env = os.getenv("ENVIRONMENT", "development")
+            if env in ["development", "testing", "test"]:
+                logger.info(f"✅ Allowing SQLite DATABASE_URL in {env} environment")
+                return v
+            else:
+                raise ValueError(
+                    "SQLite DATABASE_URL is only allowed in development/testing environments"
+                )
+
+        # Production must use PostgreSQL
         if not v.startswith(("postgresql://", "postgres://")):
             raise ValueError(
-                "DATABASE_URL must be a PostgreSQL connection string (postgresql:// or postgres://)"
+                "DATABASE_URL must be a PostgreSQL connection string (postgresql:// or postgres://) "
+                "or SQLite (sqlite://) for development/testing"
             )
         return v
 
