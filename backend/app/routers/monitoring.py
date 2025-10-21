@@ -3,13 +3,12 @@ Monitoring Router
 
 Provides proxy access to Flower dashboard and worker monitoring endpoints.
 """
+
 import logging
 import os
 
 import httpx
 from fastapi import APIRouter, HTTPException
-
-# Import Redis client for queue length queries
 from shared.redis_client import get_redis
 
 logger = logging.getLogger(__name__)

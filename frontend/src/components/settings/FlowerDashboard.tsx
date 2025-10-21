@@ -17,8 +17,8 @@ interface WorkerStats {
   };
   tasks: {
     total: number;
-    active: number;  // Currently being processed
-    reserved: number;  // Picked up but not started yet
+    active: number; // Currently being processed
+    reserved: number; // Picked up but not started yet
     details: TaskDetails;
   };
   queues: {
@@ -267,9 +267,7 @@ const FlowerDashboard: React.FC = () => {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-primary-600">Default:</span>
-              <span className="font-mono text-primary-900">
-                {workerStats?.queues.default || 0}
-              </span>
+              <span className="font-mono text-primary-900">{workerStats?.queues.default || 0}</span>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-primary-600">Low Priority:</span>
@@ -295,9 +293,12 @@ const FlowerDashboard: React.FC = () => {
               <Activity className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-primary-900 mb-2">Vollständiges Flower Dashboard</h4>
+              <h4 className="font-semibold text-primary-900 mb-2">
+                Vollständiges Flower Dashboard
+              </h4>
               <p className="text-sm text-primary-600 mb-4">
-                Öffnen Sie das vollständige Flower Dashboard in einem neuen Tab für erweiterte Monitoring-Funktionen:
+                Öffnen Sie das vollständige Flower Dashboard in einem neuen Tab für erweiterte
+                Monitoring-Funktionen:
               </p>
               <ul className="text-sm text-primary-600 space-y-1 mb-4 ml-4">
                 <li>• Echtzeit-Graphen und Metriken</li>
@@ -315,12 +316,7 @@ const FlowerDashboard: React.FC = () => {
                 >
                   <Activity className="w-5 h-5" />
                   <span>Flower Dashboard öffnen</span>
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -330,9 +326,7 @@ const FlowerDashboard: React.FC = () => {
                   </svg>
                 </a>
                 {flowerStatus?.flower_url && (
-                  <p className="text-xs text-primary-500">
-                    URL: {flowerStatus.flower_url}
-                  </p>
+                  <p className="text-xs text-primary-500">URL: {flowerStatus.flower_url}</p>
                 )}
               </div>
             </div>
