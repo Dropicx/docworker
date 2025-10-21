@@ -12,8 +12,17 @@ import httpx
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/monitoring", tags=["monitoring"])
 
-# Flower service URL from environment variable
+# Flower service URL and authentication from environment variables
 FLOWER_URL = os.getenv('FLOWER_URL', 'http://localhost:5555')
+FLOWER_BASIC_AUTH = os.getenv('FLOWER_BASIC_AUTH', '')  # Format: "user:password"
+
+
+def get_flower_auth():
+    """Get HTTP Basic Auth tuple for Flower if configured."""
+    if FLOWER_BASIC_AUTH and ':' in FLOWER_BASIC_AUTH:
+        username, password = FLOWER_BASIC_AUTH.split(':', 1)
+        return (username, password)
+    return None
 
 
 @router.get("/flower/{path:path}", response_class=HTMLResponse)
@@ -40,9 +49,10 @@ async def flower_proxy(path: str, request: Request):
 
         logger.debug(f"🌸 Proxying request to Flower: {url}")
 
-        # Forward request to Flower
+        # Forward request to Flower with authentication if configured
+        auth = get_flower_auth()
         async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(url)
+            response = await client.get(url, auth=auth)
 
         # Return response with original content type
         return Response(
@@ -83,8 +93,9 @@ async def flower_status():
         Status information about Flower service
     """
     try:
+        auth = get_flower_auth()
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{FLOWER_URL}/api/workers")
+            response = await client.get(f"{FLOWER_URL}/api/workers", auth=auth)
 
         if response.status_code == 200:
             workers = response.json()
@@ -126,12 +137,13 @@ async def worker_stats():
         Worker statistics including active tasks, queues, etc.
     """
     try:
+        auth = get_flower_auth()
         async with httpx.AsyncClient(timeout=10.0) as client:
             # Get workers
-            workers_response = await client.get(f"{FLOWER_URL}/api/workers")
+            workers_response = await client.get(f"{FLOWER_URL}/api/workers", auth=auth)
 
             # Get tasks
-            tasks_response = await client.get(f"{FLOWER_URL}/api/tasks")
+            tasks_response = await client.get(f"{FLOWER_URL}/api/tasks", auth=auth)
 
         if workers_response.status_code == 200 and tasks_response.status_code == 200:
             workers = workers_response.json()
