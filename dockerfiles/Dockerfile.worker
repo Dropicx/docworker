@@ -56,7 +56,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
 #   1. Fix volume permissions
 #   2. Initialize spaCy model (load from volume)
 #   3. Clean up orphaned jobs from previous restart
-#   4. Start Celery worker with Beat scheduler and priority queues
-# Note: --beat flag runs the scheduler in the worker process (fine for single-worker setup)
+#   4. Start Celery worker with priority queues
+# Note: Beat scheduler runs in separate beat-service (prevents duplicate schedules with replicas)
 # Priority queues: high_priority (user uploads), default, low_priority, maintenance (cleanup tasks)
-CMD ["/bin/bash", "-c", "chown -R celeryuser:celeryuser /data && su celeryuser -c '/app/init_spacy.sh && python3 /app/cleanup_orphaned_jobs.py && celery -A worker.worker.celery_app worker --beat --loglevel=info --queues=high_priority,default,low_priority,maintenance --concurrency=2 --max-tasks-per-child=50'"]
+CMD ["/bin/bash", "-c", "chown -R celeryuser:celeryuser /data && su celeryuser -c '/app/init_spacy.sh && python3 /app/cleanup_orphaned_jobs.py && celery -A worker.worker.celery_app worker --loglevel=info --queues=high_priority,default,low_priority,maintenance --concurrency=2 --max-tasks-per-child=50'"]
