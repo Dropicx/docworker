@@ -281,28 +281,35 @@ const FlowerDashboard: React.FC = () => {
                 <li>• Task-Revocation und Retry-Management</li>
                 <li>• Queue-Statistiken und Monitoring</li>
               </ul>
-              <a
-                href="/api/monitoring/flower/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
-              >
-                <Activity className="w-5 h-5" />
-                <span>Flower Dashboard öffnen</span>
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              <div className="space-y-3">
+                <a
+                  href={flowerStatus?.flower_url || '#'}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-700 hover:to-brand-800 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
-                  />
-                </svg>
-              </a>
+                  <Activity className="w-5 h-5" />
+                  <span>Flower Dashboard öffnen</span>
+                  <svg
+                    className="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                    />
+                  </svg>
+                </a>
+                {flowerStatus?.flower_url && (
+                  <p className="text-xs text-primary-500">
+                    URL: {flowerStatus.flower_url}
+                  </p>
+                )}
+              </div>
             </div>
           </div>
         </div>
