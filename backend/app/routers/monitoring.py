@@ -34,17 +34,47 @@ def get_flower_auth():
 def get_queue_lengths():
     """Get current queue lengths from Redis.
 
+    Celery stores queues in Redis with specific key formats.
+    Default format is just the queue name as a Redis list.
+
     Returns:
         Dict with queue names and their lengths
     """
     try:
         redis_client = get_redis()
-        return {
-            "high_priority": redis_client.llen("high_priority"),
-            "default": redis_client.llen("default"),
-            "low_priority": redis_client.llen("low_priority"),
-            "maintenance": redis_client.llen("maintenance")
-        }
+
+        # Try to get all keys to debug (only in development)
+        all_keys = redis_client.keys("*")
+        logger.debug(f"🔍 All Redis keys: {all_keys}")
+
+        # Celery queue names in Redis - try multiple possible formats
+        queue_lengths = {}
+        queue_names = ["high_priority", "default", "low_priority", "maintenance"]
+
+        for queue_name in queue_names:
+            # Try different possible key formats
+            possible_keys = [
+                queue_name,  # Direct queue name
+                f"celery:{queue_name}",  # Celery prefix
+                f"{queue_name}:queue",  # Queue suffix
+            ]
+
+            length = 0
+            for key in possible_keys:
+                try:
+                    key_len = redis_client.llen(key)
+                    if key_len > 0:
+                        length = key_len
+                        logger.debug(f"   Found queue '{queue_name}' at key '{key}': {length} tasks")
+                        break
+                except Exception:
+                    continue
+
+            queue_lengths[queue_name] = length
+
+        logger.debug(f"📊 Queue lengths: {queue_lengths}")
+        return queue_lengths
+
     except Exception as e:
         logger.error(f"❌ Error fetching queue lengths from Redis: {str(e)}")
         return {
@@ -53,6 +83,56 @@ def get_queue_lengths():
             "low_priority": 0,
             "maintenance": 0
         }
+
+
+@router.get("/redis-debug")
+async def redis_debug():
+    """
+    Debug endpoint to see all Redis keys and queue contents.
+    ONLY use in development - disable in production!
+    """
+    try:
+        redis_client = get_redis()
+
+        # Get all keys
+        all_keys = redis_client.keys("*")
+
+        # Get details for each key
+        key_details = {}
+        for key in all_keys:
+            key_str = key.decode() if isinstance(key, bytes) else key
+            key_type = redis_client.type(key).decode() if isinstance(redis_client.type(key), bytes) else redis_client.type(key)
+
+            if key_type == 'list':
+                length = redis_client.llen(key)
+                key_details[key_str] = {
+                    "type": "list",
+                    "length": length,
+                    "sample": redis_client.lrange(key, 0, 2) if length > 0 else []
+                }
+            elif key_type == 'string':
+                key_details[key_str] = {
+                    "type": "string",
+                    "value": redis_client.get(key)
+                }
+            elif key_type == 'hash':
+                key_details[key_str] = {
+                    "type": "hash",
+                    "fields": list(redis_client.hkeys(key))[:5]  # First 5 fields
+                }
+            else:
+                key_details[key_str] = {
+                    "type": key_type
+                }
+
+        return {
+            "total_keys": len(all_keys),
+            "keys": key_details,
+            "queue_patterns": [k for k in key_details.keys() if any(q in k for q in ['high_priority', 'default', 'low_priority', 'maintenance'])]
+        }
+    except Exception as e:
+        logger.error(f"❌ Redis debug error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/flower-status")
