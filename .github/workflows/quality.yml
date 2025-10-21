@@ -17,7 +17,7 @@ jobs:
   # ==========================================
   backend-quality:
     name: Backend Quality Checks
-    runs-on: arc-runner-set
+    runs-on: k8s-runner
     defaults:
       run:
         working-directory: ./backend
@@ -72,7 +72,7 @@ jobs:
   # ==========================================
   backend-tests:
     name: Backend Tests
-    runs-on: arc-runner-set
+    runs-on: k8s-runner
     defaults:
       run:
         working-directory: ./backend
@@ -127,7 +127,7 @@ jobs:
   # ==========================================
   frontend-quality:
     name: Frontend Quality Checks
-    runs-on: arc-runner-set
+    runs-on: k8s-runner
     defaults:
       run:
         working-directory: ./frontend
@@ -163,7 +163,7 @@ jobs:
   # ==========================================
   frontend-tests:
     name: Frontend Tests
-    runs-on: arc-runner-set
+    runs-on: k8s-runner
     defaults:
       run:
         working-directory: ./frontend
@@ -207,7 +207,7 @@ jobs:
   # ==========================================
   frontend-build:
     name: Frontend Build Test
-    runs-on: arc-runner-set
+    runs-on: k8s-runner
     defaults:
       run:
         working-directory: ./frontend
@@ -243,7 +243,7 @@ jobs:
   # ==========================================
   security-audit:
     name: Security Audit
-    runs-on: arc-runner-set
+    runs-on: k8s-runner
 
     steps:
       - name: Checkout code
@@ -292,7 +292,7 @@ jobs:
   # ==========================================
   quality-gate:
     name: Quality Gate
-    runs-on: arc-runner-set
+    runs-on: k8s-runner
     needs: [backend-quality, backend-tests, frontend-quality, frontend-tests, frontend-build]
     if: always()
 
