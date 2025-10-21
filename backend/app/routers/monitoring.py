@@ -54,12 +54,28 @@ async def flower_proxy(path: str, request: Request):
         async with httpx.AsyncClient(timeout=30.0) as client:
             response = await client.get(url, auth=auth)
 
-        # Return response with original content type
+        content = response.content
+        content_type = response.headers.get("Content-Type", "text/html")
+
+        # Rewrite HTML to fix static asset paths
+        if "text/html" in content_type:
+            html = content.decode('utf-8')
+            # Replace absolute paths with proxy-relative paths
+            html = html.replace('href="/static/', 'href="/api/monitoring/flower/static/')
+            html = html.replace('src="/static/', 'src="/api/monitoring/flower/static/')
+            html = html.replace('href="/api/', 'href="/api/monitoring/flower/api/')
+            html = html.replace('src="/api/', 'src="/api/monitoring/flower/api/')
+            # Add base tag to ensure all relative URLs work correctly
+            if '<head>' in html and '<base' not in html:
+                html = html.replace('<head>', '<head>\n    <base href="/api/monitoring/flower/">')
+            content = html.encode('utf-8')
+
+        # Return response with rewritten content
         return Response(
-            content=response.content,
+            content=content,
             status_code=response.status_code,
             headers={
-                "Content-Type": response.headers.get("Content-Type", "text/html"),
+                "Content-Type": content_type,
             }
         )
 
