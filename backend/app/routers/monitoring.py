@@ -60,14 +60,15 @@ async def flower_proxy(path: str, request: Request):
         # Rewrite HTML to fix static asset paths
         if "text/html" in content_type:
             html = content.decode('utf-8')
-            # Replace absolute paths with proxy-relative paths
-            html = html.replace('href="/static/', 'href="/api/monitoring/flower/static/')
-            html = html.replace('src="/static/', 'src="/api/monitoring/flower/static/')
-            html = html.replace('href="/api/', 'href="/api/monitoring/flower/api/')
-            html = html.replace('src="/api/', 'src="/api/monitoring/flower/api/')
-            # Add base tag to ensure all relative URLs work correctly
-            if '<head>' in html and '<base' not in html:
-                html = html.replace('<head>', '<head>\n    <base href="/api/monitoring/flower/">')
+            # Convert absolute paths to relative paths
+            # Since we're at /api/monitoring/flower/, relative paths will resolve correctly
+            # /static/css/file.css → static/css/file.css → /api/monitoring/flower/static/css/file.css
+            html = html.replace('href="/static/', 'href="static/')
+            html = html.replace('src="/static/', 'src="static/')
+            html = html.replace('href="/api/', 'href="api/')
+            html = html.replace('src="/api/', 'src="api/')
+            # Also handle action attributes in forms
+            html = html.replace('action="/api/', 'action="api/')
             content = html.encode('utf-8')
 
         # Return response with rewritten content
