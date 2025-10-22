@@ -61,30 +61,34 @@ async def upload_document(
                 status_code=400, detail=f"Dateivalidierung fehlgeschlagen: {error_message}"
             )
 
-        # Worker-Verfügbarkeit prüfen
-        logger.debug("🔍 Prüfe Worker-Verfügbarkeit...")
-        try:
-            redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
-            celery_app = Celery(broker=redis_url, backend=redis_url)
+        # Worker-Verfügbarkeit prüfen (skip in test/development environment)
+        skip_worker_check = os.getenv("ENVIRONMENT") in ["test", "development"]
+        if not skip_worker_check:
+            logger.debug("🔍 Prüfe Worker-Verfügbarkeit...")
+            try:
+                redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
+                celery_app = Celery(broker=redis_url, backend=redis_url)
 
-            # Check worker availability directly
-            inspect = celery_app.control.inspect(timeout=1.0)
-            active_workers = inspect.active()
+                # Check worker availability directly
+                inspect = celery_app.control.inspect(timeout=1.0)
+                active_workers = inspect.active()
 
-            if not active_workers:
-                logger.error("❌ Keine Worker verfügbar")
-                raise HTTPException(
-                    status_code=503,
-                    detail="Service temporarily unavailable: No workers available to process document. Please try again later.",
-                )
+                if not active_workers:
+                    logger.error("❌ Keine Worker verfügbar")
+                    raise HTTPException(
+                        status_code=503,
+                        detail="Service temporarily unavailable: No workers available to process document. Please try again later.",
+                    )
 
-            worker_count = len(active_workers)
-            logger.info(f"✅ Worker verfügbar: {worker_count} aktive Worker")
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.warning(f"⚠️ Worker-Check fehlgeschlagen (Upload wird fortgesetzt): {str(e)}")
-            # Continue with upload even if worker check fails (might be temporary issue)
+                worker_count = len(active_workers)
+                logger.info(f"✅ Worker verfügbar: {worker_count} aktive Worker")
+            except HTTPException:
+                raise
+            except Exception as e:
+                logger.warning(f"⚠️ Worker-Check fehlgeschlagen (Upload wird fortgesetzt): {str(e)}")
+                # Continue with upload even if worker check fails (might be temporary issue)
+        else:
+            logger.debug("⏭️ Worker-Check übersprungen (Test/Development-Modus)")
 
         # Eindeutige IDs generieren
         processing_id = str(uuid.uuid4())
