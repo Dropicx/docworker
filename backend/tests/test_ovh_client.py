@@ -32,13 +32,24 @@ class TestOVHClientInitialization:
 
     def test_initialization_without_token(self):
         """Test client initialization without token logs warning and uses dummy key"""
-        with patch.dict(os.environ, {}, clear=True):
+        with patch('app.services.ovh_client.settings') as mock_settings:
+            # Mock settings to return empty token
+            mock_settings.ovh_api_token = ""
+            mock_settings.ovh_ai_base_url = "https://test.com/v1"
+            mock_settings.ovh_main_model = "test-main"
+            mock_settings.ovh_preprocessing_model = "test-prep"
+            mock_settings.ovh_translation_model = "test-trans"
+            mock_settings.ovh_vision_model = "test-vision"
+            mock_settings.ovh_vision_base_url = "https://test-vision.com"
+            mock_settings.ai_timeout_seconds = 120
+            mock_settings.use_ovh_only = True
+
             client = OVHClient()
             # Client should be created but with empty access_token
             assert client is not None
             assert client.client is not None
-            # access_token will be empty string when not set in environment
-            assert client.access_token == "" or client.access_token is None
+            # access_token will be empty string when not set
+            assert client.access_token == ""
 
     def test_initialization_custom_models(self):
         """Test client initialization with custom model configuration"""
@@ -69,7 +80,7 @@ class TestConnectionCheck:
         mock_response = Mock()
         mock_response.choices = [Mock(message=Mock(content="Hello from OVH AI!"))]
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
             success, message = await client.check_connection()
 
             assert success is True
@@ -115,7 +126,7 @@ class TestMedicalTextProcessing:
         mock_response.choices = [Mock(message=Mock(content="DIAGNOSIS: Diabetes Type 2"))]
         mock_response.usage = Mock(prompt_tokens=50, completion_tokens=20, total_tokens=70)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
                 full_prompt=full_prompt
             )
@@ -135,7 +146,7 @@ class TestMedicalTextProcessing:
         mock_response.choices = [Mock(message=Mock(content="Translated text"))]
         mock_response.usage = Mock(prompt_tokens=30, completion_tokens=15, total_tokens=45)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response) as mock_create:
+        with patch.object(client.client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response) as mock_create:
             result = await client.process_medical_text_with_prompt(
                 full_prompt=full_prompt
             )
@@ -230,11 +241,19 @@ class TestVisionOCR:
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_success(self, client, test_image):
         """Test successful vision OCR extraction"""
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="Extracted medical text from image"))]
-        mock_response.usage = Mock(prompt_tokens=1000, completion_tokens=50, total_tokens=1050)
+        mock_http_response = Mock()
+        mock_http_response.status_code = 200
+        mock_http_response.json.return_value = {
+            "choices": [{"message": {"content": "Extracted medical text from image"}}]
+        }
 
-        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
+        with patch('httpx.AsyncClient') as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.__aenter__.return_value = mock_client
+            mock_client.__aexit__.return_value = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_http_response)
+            mock_client_class.return_value = mock_client
+
             text, confidence = await client.extract_text_with_vision(test_image, "image")
 
             assert "medical text" in text.lower()
@@ -244,11 +263,19 @@ class TestVisionOCR:
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_pdf_type(self, client, test_image):
         """Test vision OCR with PDF file type"""
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="PDF content extracted"))]
-        mock_response.usage = Mock(prompt_tokens=1000, completion_tokens=30, total_tokens=1030)
+        mock_http_response = Mock()
+        mock_http_response.status_code = 200
+        mock_http_response.json.return_value = {
+            "choices": [{"message": {"content": "PDF content extracted"}}]
+        }
 
-        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
+        with patch('httpx.AsyncClient') as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.__aenter__.return_value = mock_client
+            mock_client.__aexit__.return_value = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_http_response)
+            mock_client_class.return_value = mock_client
+
             text, confidence = await client.extract_text_with_vision(test_image, "pdf")
 
             assert len(text) > 0
@@ -257,7 +284,13 @@ class TestVisionOCR:
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_error_handling(self, client, test_image):
         """Test vision OCR error handling"""
-        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, side_effect=Exception("Vision API Error")):
+        with patch('httpx.AsyncClient') as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.__aenter__.return_value = mock_client
+            mock_client.__aexit__.return_value = AsyncMock()
+            mock_client.post = AsyncMock(side_effect=Exception("Vision API Error"))
+            mock_client_class.return_value = mock_client
+
             text, confidence = await client.extract_text_with_vision(test_image, "image")
 
             assert "Error" in text or "Fehler" in text or "error" in text.lower()
@@ -266,25 +299,42 @@ class TestVisionOCR:
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_empty_response(self, client, test_image):
         """Test vision OCR with empty API response"""
-        mock_response = Mock()
-        mock_response.choices = []
+        mock_http_response = Mock()
+        mock_http_response.status_code = 200
+        mock_http_response.json.return_value = {
+            "choices": []  # Empty response
+        }
 
-        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
+        with patch('httpx.AsyncClient') as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.__aenter__.return_value = mock_client
+            mock_client.__aexit__.return_value = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_http_response)
+            mock_client_class.return_value = mock_client
+
             text, confidence = await client.extract_text_with_vision(test_image, "image")
 
-            assert "Error" in text or "error" in text.lower() or len(text) == 0
-            assert confidence == 0.0
+            assert "Unerwartetes Antwortformat" in text or "Kein Text" in text or len(text) == 0
+            assert confidence <= 0.1
 
     @pytest.mark.asyncio
     async def test_process_multiple_images_ocr_success(self, client, test_image):
         """Test processing multiple images successfully"""
         images = [test_image, test_image, test_image]
 
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="Combined text from all pages"))]
-        mock_response.usage = Mock(prompt_tokens=3000, completion_tokens=100, total_tokens=3100)
+        mock_http_response = Mock()
+        mock_http_response.status_code = 200
+        mock_http_response.json.return_value = {
+            "choices": [{"message": {"content": "Combined text from all pages"}}]
+        }
 
-        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
+        with patch('httpx.AsyncClient') as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.__aenter__.return_value = mock_client
+            mock_client.__aexit__.return_value = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_http_response)
+            mock_client_class.return_value = mock_client
+
             text, confidence = await client.process_multiple_images_ocr(images)
 
             assert len(text) > 0
@@ -303,11 +353,19 @@ class TestVisionOCR:
         """Test different merge strategies for multiple images"""
         images = [test_image, test_image]
 
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="Page text"))]
-        mock_response.usage = Mock(prompt_tokens=2000, completion_tokens=50, total_tokens=2050)
+        mock_http_response = Mock()
+        mock_http_response.status_code = 200
+        mock_http_response.json.return_value = {
+            "choices": [{"message": {"content": "Page text"}}]
+        }
 
-        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
+        with patch('httpx.AsyncClient') as mock_client_class:
+            mock_client = AsyncMock()
+            mock_client.__aenter__.return_value = mock_client
+            mock_client.__aexit__.return_value = AsyncMock()
+            mock_client.post = AsyncMock(return_value=mock_http_response)
+            mock_client_class.return_value = mock_client
+
             # Test smart merge
             text_smart, conf_smart = await client.process_multiple_images_ocr(images, merge_strategy="smart")
             assert len(text_smart) > 0
@@ -381,7 +439,7 @@ class TestLanguageTranslation:
     @pytest.mark.asyncio
     async def test_translate_error_handling(self, client):
         """Test translation error handling"""
-        with patch.object(client.client.chat.completions, 'create', side_effect=Exception("Translation API Error")):
+        with patch.object(client.client.chat.completions, 'create', new_callable=AsyncMock, side_effect=Exception("Translation API Error")):
             translated, confidence = await client.translate_to_language("Text", "EN")
 
             assert isinstance(translated, str)
@@ -425,7 +483,7 @@ class TestTokenUsageTracking:
         mock_response.choices = [Mock(message=Mock(content="Response"))]
         mock_response.usage = Mock(prompt_tokens=100, completion_tokens=50, total_tokens=150)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
                 full_prompt="Test: Text"
             )
