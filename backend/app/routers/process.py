@@ -51,7 +51,10 @@ def verify_session_token(credentials: HTTPAuthorizationCredentials = Depends(sec
 print("📄 Backend service initialized (OCR handled by worker)", flush=True)
 
 router = APIRouter()
-limiter = Limiter(key_func=get_remote_address, enabled=os.getenv("ENVIRONMENT") not in ["test", "development"])
+limiter = Limiter(
+    key_func=get_remote_address,
+    enabled=os.getenv("ENVIRONMENT") not in ["test", "development"],
+)
 
 
 @router.post("/process/{processing_id}")

@@ -19,7 +19,10 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 # Rate limiting für Upload (disabled in test/development)
-limiter = Limiter(key_func=get_remote_address, enabled=os.getenv("ENVIRONMENT") not in ["test", "development"])
+limiter = Limiter(
+    key_func=get_remote_address,
+    enabled=os.getenv("ENVIRONMENT") not in ["test", "development"],
+)
 
 
 @router.post("/upload", response_model=UploadResponse)
