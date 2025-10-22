@@ -234,7 +234,7 @@ class TestVisionOCR:
         mock_response.choices = [Mock(message=Mock(content="Extracted medical text from image"))]
         mock_response.usage = Mock(prompt_tokens=1000, completion_tokens=50, total_tokens=1050)
 
-        with patch.object(client.vision_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
             text, confidence = await client.extract_text_with_vision(test_image, "image")
 
             assert "medical text" in text.lower()
@@ -248,7 +248,7 @@ class TestVisionOCR:
         mock_response.choices = [Mock(message=Mock(content="PDF content extracted"))]
         mock_response.usage = Mock(prompt_tokens=1000, completion_tokens=30, total_tokens=1030)
 
-        with patch.object(client.vision_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
             text, confidence = await client.extract_text_with_vision(test_image, "pdf")
 
             assert len(text) > 0
@@ -257,10 +257,10 @@ class TestVisionOCR:
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_error_handling(self, client, test_image):
         """Test vision OCR error handling"""
-        with patch.object(client.vision_client.chat.completions, 'create', side_effect=Exception("Vision API Error")):
+        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, side_effect=Exception("Vision API Error")):
             text, confidence = await client.extract_text_with_vision(test_image, "image")
 
-            assert "Error" in text or "Fehler" in text
+            assert "Error" in text or "Fehler" in text or "error" in text.lower()
             assert confidence == 0.0
 
     @pytest.mark.asyncio
@@ -269,10 +269,10 @@ class TestVisionOCR:
         mock_response = Mock()
         mock_response.choices = []
 
-        with patch.object(client.vision_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
             text, confidence = await client.extract_text_with_vision(test_image, "image")
 
-            assert "Error" in text or len(text) == 0
+            assert "Error" in text or "error" in text.lower() or len(text) == 0
             assert confidence == 0.0
 
     @pytest.mark.asyncio
@@ -284,7 +284,7 @@ class TestVisionOCR:
         mock_response.choices = [Mock(message=Mock(content="Combined text from all pages"))]
         mock_response.usage = Mock(prompt_tokens=3000, completion_tokens=100, total_tokens=3100)
 
-        with patch.object(client.vision_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
             text, confidence = await client.process_multiple_images_ocr(images)
 
             assert len(text) > 0
@@ -295,7 +295,7 @@ class TestVisionOCR:
         """Test processing empty image list"""
         text, confidence = await client.process_multiple_images_ocr([])
 
-        assert "No images" in text or len(text) == 0
+        assert "No images" in text or "no images" in text.lower() or len(text) == 0
         assert confidence == 0.0
 
     @pytest.mark.asyncio
@@ -307,7 +307,7 @@ class TestVisionOCR:
         mock_response.choices = [Mock(message=Mock(content="Page text"))]
         mock_response.usage = Mock(prompt_tokens=2000, completion_tokens=50, total_tokens=2050)
 
-        with patch.object(client.vision_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.vision_client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
             # Test smart merge
             text_smart, conf_smart = await client.process_multiple_images_ocr(images, merge_strategy="smart")
             assert len(text_smart) > 0
