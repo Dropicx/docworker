@@ -72,7 +72,7 @@ class TestEnhancedOCRSystem:
 
     @pytest.mark.asyncio
     @patch('app.services.ovh_client.OVHClient')
-    async def test_hybrid_text_extractor_single_file(self, mock_ovh_client):
+    async def test_hybrid_text_extractor_single_file(self, mock_ovh_client, mock_files):
         """Test hybrid text extractor with single file"""
         from app.services.hybrid_text_extractor import HybridTextExtractor
 
@@ -120,13 +120,9 @@ class TestEnhancedOCRSystem:
         """Test OVH Vision (Qwen 2.5 VL) integration"""
         from app.services.ovh_client import OVHClient
 
-        # Mock vision client response
-        mock_response = Mock()
-        mock_response.choices = [Mock()]
-        mock_response.choices[0].message.content = "Extracted medical text from vision model"
-
-        mock_ovh_client.return_value.vision_client.chat.completions.create = AsyncMock(
-            return_value=mock_response
+        # Mock the extract_text_with_vision method directly with AsyncMock
+        mock_ovh_client.return_value.extract_text_with_vision = AsyncMock(
+            return_value=("Extracted medical text from vision model", 0.95)
         )
 
         client = OVHClient()
@@ -141,6 +137,8 @@ class TestEnhancedOCRSystem:
 
         assert isinstance(text, str)
         assert isinstance(confidence, float)
+        assert text == "Extracted medical text from vision model"
+        assert confidence == 0.95
 
     def test_strategy_selection_logic(self):
         """Test the logic for strategy selection"""
