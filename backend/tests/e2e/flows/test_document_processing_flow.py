@@ -167,11 +167,15 @@ def test_complete_image_upload_and_processing_flow(client, test_db, seed_full_pi
     mock_inspect = MagicMock()
     mock_inspect.active.return_value = {"worker1": []}  # Non-empty dict = workers available
 
-    # Mock OCR and AI processing
-    with patch("app.services.ocr_engine_manager.OCREngineManager.extract_text") as mock_ocr, \
+    # Mock file validation, OCR, and AI processing
+    with patch("app.services.file_validator.FileValidator.validate_file") as mock_validate, \
+         patch("app.services.ocr_engine_manager.OCREngineManager.extract_text") as mock_ocr, \
          patch("app.services.ovh_client.OVHClient.process_medical_text_with_prompt") as mock_ai, \
          patch("app.services.privacy_filter_advanced.AdvancedPrivacyFilter.remove_pii") as mock_pii, \
          patch("app.routers.upload.Celery") as mock_celery:
+
+        # Mock file validation (always pass)
+        mock_validate.return_value = (True, None)
 
         # Configure Celery mock
         mock_celery_instance = MagicMock()
@@ -257,14 +261,18 @@ def test_invalid_file_upload_flow(client, seed_full_pipeline):
     # Create invalid file (text file)
     invalid_file = io.BytesIO(b"This is not a valid document")
 
-    response = client.post(
-        "/api/upload",
-        files={"file": ("test.txt", invalid_file, "text/plain")},
-    )
+    with patch("app.services.file_validator.FileValidator.validate_file") as mock_validate:
+        # Mock file validation to fail for invalid file type
+        mock_validate.return_value = (False, "Unsupported file type: text/plain")
 
-    assert response.status_code == 400
-    data = response.json()
-    assert "error" in data
+        response = client.post(
+            "/api/upload",
+            files={"file": ("test.txt", invalid_file, "text/plain")},
+        )
+
+        assert response.status_code == 400
+        data = response.json()
+        assert "error" in data
 
 
 @pytest.mark.e2e
@@ -320,7 +328,12 @@ def test_concurrent_uploads_flow(client, seed_full_pipeline):
     mock_inspect = MagicMock()
     mock_inspect.active.return_value = {"worker1": []}
 
-    with patch("app.routers.upload.Celery") as mock_celery:
+    with patch("app.services.file_validator.FileValidator.validate_file") as mock_validate, \
+         patch("app.routers.upload.Celery") as mock_celery:
+
+        # Mock file validation (always pass)
+        mock_validate.return_value = (True, None)
+
         mock_celery_instance = MagicMock()
         mock_celery_instance.control.inspect.return_value = mock_inspect
         mock_celery.return_value = mock_celery_instance
@@ -361,7 +374,12 @@ def test_processing_timeout_flow(client, test_db, seed_full_pipeline):
     mock_inspect = MagicMock()
     mock_inspect.active.return_value = {"worker1": []}
 
-    with patch("app.routers.upload.Celery") as mock_celery:
+    with patch("app.services.file_validator.FileValidator.validate_file") as mock_validate, \
+         patch("app.routers.upload.Celery") as mock_celery:
+
+        # Mock file validation (always pass)
+        mock_validate.return_value = (True, None)
+
         mock_celery_instance = MagicMock()
         mock_celery_instance.control.inspect.return_value = mock_inspect
         mock_celery.return_value = mock_celery_instance
