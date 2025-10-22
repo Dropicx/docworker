@@ -932,7 +932,11 @@ class AdvancedPrivacyFilter:
     def _remove_personal_data(self, text: str) -> str:
         """Entfernt persönliche Daten aber ERHÄLT medizinische Informationen"""
 
-        # ZUERST: Entferne explizite Patientennamen-Muster
+        # IMPORTANT: Remove insurance/patient numbers BEFORE patient_info pattern
+        # to avoid partial matches on compound words like "Versichertennummer"
+        text = self.patterns["insurance"].sub("[NUMMER ENTFERNT]", text)
+
+        # Now remove explicit patient name patterns
         text = self.patterns["patient_info"].sub("[NAME ENTFERNT]", text)
         text = self.patterns["name_format"].sub("[NAME ENTFERNT]", text)
 
@@ -943,9 +947,6 @@ class AdvancedPrivacyFilter:
         # Kontaktdaten entfernen
         text = self.patterns["phone"].sub("[TELEFON ENTFERNT]", text)
         text = self.patterns["email"].sub("[EMAIL ENTFERNT]", text)
-
-        # Versicherungsnummern entfernen
-        text = self.patterns["insurance"].sub("[NUMMER ENTFERNT]", text)
 
         # Anreden und Grußformeln entfernen
         text = self.patterns["salutation"].sub("", text)
@@ -1026,6 +1027,13 @@ class AdvancedPrivacyFilter:
         Heuristische Namenerkennung als Fallback
         Erkennt Namen basierend auf Mustern und Kontext
         """
+        # Remove doctor signatures like "Dr. med. Schmidt" or "Prof. Dr. Müller"
+        text = re.sub(
+            r"\b(?:Dr\.?|Prof\.?)\s+(?:med\.?\s+|Dr\.?\s+)?[A-ZÄÖÜ][a-zäöüß]+\b",
+            "[NAME ENTFERNT]",
+            text
+        )
+
         lines = text.split("\n")
         cleaned_lines = []
 
