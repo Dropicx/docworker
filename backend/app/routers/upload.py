@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-# Rate limiting für Upload
-limiter = Limiter(key_func=get_remote_address)
+# Rate limiting für Upload (disabled in test/development)
+limiter = Limiter(key_func=get_remote_address, enabled=os.getenv("ENVIRONMENT") not in ["test", "development"])
 
 
 @router.post("/upload", response_model=UploadResponse)
-@limiter.limit("5/minute")  # Maximal 5 Uploads pro Minute
+@limiter.limit("5/minute")  # Maximal 5 Uploads pro Minute (disabled in test/development)
 async def upload_document(
     request: Request,
     file: UploadFile = File(..., description="Medizinisches Dokument (PDF, JPG, PNG)"),

@@ -35,8 +35,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.info("🔧 Logging configured for Railway deployment")
 
-# Rate limiting
-limiter = Limiter(key_func=get_remote_address)
+# Rate limiting (disabled in test/development)
+limiter = Limiter(key_func=get_remote_address, enabled=os.getenv("ENVIRONMENT") not in ["test", "development"])
 
 
 @asynccontextmanager
