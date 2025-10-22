@@ -244,7 +244,7 @@ def test_complete_image_upload_and_processing_flow(client, test_db, seed_full_pi
         assert progress == 100
 
         # 5. Retrieve results
-        response = client.get(f"/api/result/{processing_id}")
+        response = client.get(f"/api/process/{processing_id}/result")
         assert response.status_code == 200
         result_data = response.json()
         assert "translated_text" in result_data
