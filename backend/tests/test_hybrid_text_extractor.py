@@ -24,9 +24,10 @@ class TestHybridTextExtractorInitialization:
     def test_initialization_with_local_ocr(self):
         """Test extractor initializes with local OCR when available"""
         # Mock TextExtractorWithOCR class where it's used after import
+        # Use create=True because the attribute may be None when OCR isn't available
         mock_ocr_class = MagicMock()
         with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', True), \
-             patch('app.services.hybrid_text_extractor.TextExtractorWithOCR', mock_ocr_class):
+             patch('app.services.hybrid_text_extractor.TextExtractorWithOCR', mock_ocr_class, create=True):
             extractor = HybridTextExtractor()
 
             assert extractor is not None
@@ -45,8 +46,9 @@ class TestHybridTextExtractorInitialization:
 
     def test_initialization_ocr_failure_graceful(self):
         """Test extractor handles OCR initialization failure gracefully"""
+        # Use create=True because the attribute may be None when OCR isn't available
         with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', True), \
-             patch('app.services.hybrid_text_extractor.TextExtractorWithOCR', side_effect=Exception("OCR init failed")):
+             patch('app.services.hybrid_text_extractor.TextExtractorWithOCR', side_effect=Exception("OCR init failed"), create=True):
             extractor = HybridTextExtractor()
 
             assert extractor is not None
