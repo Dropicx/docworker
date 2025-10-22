@@ -318,6 +318,10 @@ class DocumentClassManager:
             logger.error(f"❌ Integrity error creating document class: {e}")
             raise ValueError("Document class with this key already exists") from e
 
+        except ValueError:
+            # Re-raise ValueError from validation checks (e.g., duplicate key)
+            raise
+
         except Exception as e:
             self.session.rollback()
             logger.error(f"❌ Failed to create document class: {e}")

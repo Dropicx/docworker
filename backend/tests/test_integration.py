@@ -316,9 +316,9 @@ class TestFileValidationIntegration:
 
         upload_file = UploadFile(
             filename="test.pdf",
-            file=BytesIO(pdf_content)
+            file=BytesIO(pdf_content),
+            headers={"content-type": "application/pdf"}
         )
-        upload_file.content_type = "application/pdf"
 
         is_valid, error = await FileValidator.validate_file(upload_file)
 
@@ -338,9 +338,9 @@ class TestFileValidationIntegration:
 
         upload_file = UploadFile(
             filename="test.png",
-            file=BytesIO(img_content)
+            file=BytesIO(img_content),
+            headers={"content-type": "image/png"}
         )
-        upload_file.content_type = "image/png"
 
         is_valid, error = await FileValidator.validate_file(upload_file)
 
