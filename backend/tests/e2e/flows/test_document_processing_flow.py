@@ -210,7 +210,7 @@ def test_complete_image_upload_and_processing_flow(client, test_db, seed_full_pi
         processing_id = data["processing_id"]
 
         # 2. Check initial job status
-        response = client.get(f"/api/status/{processing_id}")
+        response = client.get(f"/api/process/{processing_id}/status")
         assert response.status_code == 200
         status_data = response.json()
         assert status_data["status"] in ["pending", "running"]
@@ -235,7 +235,7 @@ def test_complete_image_upload_and_processing_flow(client, test_db, seed_full_pi
             }
 
         # 4. Check final job status
-        response = client.get(f"/api/status/{processing_id}")
+        response = client.get(f"/api/process/{processing_id}/status")
         assert response.status_code == 200
         final_data = response.json()
         assert final_data["status"] == "completed"
@@ -309,7 +309,7 @@ def test_job_not_found_flow(client):
     1. Request status for invalid processing_id
     2. Verify 404 error
     """
-    response = client.get("/api/status/invalid-processing-id-12345")
+    response = client.get("/api/process/invalid-processing-id-12345/status")
 
     assert response.status_code == 404
 
@@ -356,7 +356,7 @@ def test_concurrent_uploads_flow(client, seed_full_pipeline):
         assert len(set(processing_ids)) == upload_count
 
         for pid in processing_ids:
-            response = client.get(f"/api/status/{pid}")
+            response = client.get(f"/api/process/{pid}/status")
             assert response.status_code == 200
 
 
@@ -396,13 +396,13 @@ def test_processing_timeout_flow(client, test_db, seed_full_pipeline):
     # Simulate timeout by marking job as failed
     from app.database.modular_pipeline_models import PipelineJobDB
 
-    with test_db.begin():
-        job = test_db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
-        job.status = StepExecutionStatus.FAILED
-        job.error_message = "Processing timeout: exceeded 18 minutes"
+    job = test_db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+    job.status = StepExecutionStatus.FAILED
+    job.error_message = "Processing timeout: exceeded 18 minutes"
+    test_db.commit()
 
     # Check status shows failure
-    response = client.get(f"/api/status/{processing_id}")
+    response = client.get(f"/api/process/{processing_id}/status")
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "failed"
