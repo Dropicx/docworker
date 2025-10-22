@@ -27,14 +27,17 @@ class TestOVHClientInitialization:
             client = OVHClient()
 
             assert client is not None
-            assert client.text_client is not None
+            assert client.client is not None
             assert client.vision_client is not None
 
     def test_initialization_without_token(self):
-        """Test client initialization fails gracefully without token"""
+        """Test client initialization without token logs warning and uses dummy key"""
         with patch.dict(os.environ, {}, clear=True):
-            with pytest.raises(ValueError, match="OVH_AI_ENDPOINTS_ACCESS_TOKEN"):
-                OVHClient()
+            client = OVHClient()
+            # Client should be created but with dummy key
+            assert client is not None
+            assert client.client is not None
+            assert client.access_token == ""
 
     def test_initialization_custom_models(self):
         """Test client initialization with custom model configuration"""
@@ -65,18 +68,20 @@ class TestConnectionCheck:
         mock_response = Mock()
         mock_response.choices = [Mock(message=Mock(content="Hello from OVH AI!"))]
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
-            result = await client.check_connection()
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+            success, message = await client.check_connection()
 
-            assert result is True
+            assert success is True
+            assert "successful" in message.lower()
 
     @pytest.mark.asyncio
     async def test_check_connection_failure(self, client):
         """Test connection check handles failures gracefully"""
-        with patch.object(client.text_client.chat.completions, 'create', side_effect=Exception("Connection failed")):
-            result = await client.check_connection()
+        with patch.object(client.client.chat.completions, 'create', side_effect=Exception("Connection failed")):
+            success, message = await client.check_connection()
 
-            assert result is False
+            assert success is False
+            assert len(message) > 0  # Should have error message
 
     @pytest.mark.asyncio
     async def test_check_connection_no_response(self, client):
@@ -84,10 +89,11 @@ class TestConnectionCheck:
         mock_response = Mock()
         mock_response.choices = []
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
-            result = await client.check_connection()
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+            success, message = await client.check_connection()
 
-            assert result is False
+            assert success is False
+            assert len(message) > 0  # Should have error message
 
 
 class TestMedicalTextProcessing:
@@ -109,7 +115,7 @@ class TestMedicalTextProcessing:
         mock_response.choices = [Mock(message=Mock(content="DIAGNOSIS: Diabetes Type 2"))]
         mock_response.usage = Mock(prompt_tokens=50, completion_tokens=20, total_tokens=70)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
                 prompt=prompt,
                 input_text=input_text
@@ -129,7 +135,7 @@ class TestMedicalTextProcessing:
         mock_response.choices = [Mock(message=Mock(content="Translated text"))]
         mock_response.usage = Mock(prompt_tokens=30, completion_tokens=15, total_tokens=45)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response) as mock_create:
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response) as mock_create:
             result = await client.process_medical_text_with_prompt(
                 prompt=prompt,
                 input_text=input_text,
@@ -153,7 +159,7 @@ class TestMedicalTextProcessing:
         mock_response.choices = [Mock(message=Mock(content="Result"))]
         mock_response.usage = Mock(prompt_tokens=10, completion_tokens=5, total_tokens=15)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response) as mock_create:
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response) as mock_create:
             await client.process_medical_text_with_prompt(
                 prompt=prompt,
                 input_text=input_text,
@@ -174,7 +180,7 @@ class TestMedicalTextProcessing:
         mock_response.choices = [Mock(message=Mock(content="Summary"))]
         mock_response.usage = Mock(prompt_tokens=100, completion_tokens=50, total_tokens=150)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response) as mock_create:
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response) as mock_create:
             await client.process_medical_text_with_prompt(
                 prompt=prompt,
                 input_text=input_text,
@@ -187,7 +193,7 @@ class TestMedicalTextProcessing:
     @pytest.mark.asyncio
     async def test_process_medical_text_api_error(self, client):
         """Test medical text processing handles API errors"""
-        with patch.object(client.text_client.chat.completions, 'create', side_effect=Exception("API Error")):
+        with patch.object(client.client.chat.completions, 'create', side_effect=Exception("API Error")):
             result = await client.process_medical_text_with_prompt(
                 prompt="Test",
                 input_text="Text"
@@ -201,7 +207,7 @@ class TestMedicalTextProcessing:
         mock_response = Mock()
         mock_response.choices = []
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
                 prompt="Test",
                 input_text="Text"
@@ -332,7 +338,7 @@ class TestLanguageTranslation:
         mock_response.choices = [Mock(message=Mock(content="The patient has diabetes mellitus type 2"))]
         mock_response.usage = Mock(prompt_tokens=30, completion_tokens=20, total_tokens=50)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             translated = await client.translate_to_language(german_text, "EN")
 
             assert "patient" in translated.lower()
@@ -347,7 +353,7 @@ class TestLanguageTranslation:
         mock_response.choices = [Mock(message=Mock(content="Valeurs de laboratoire normales"))]
         mock_response.usage = Mock(prompt_tokens=20, completion_tokens=15, total_tokens=35)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             translated = await client.translate_to_language(german_text, "FR")
 
             assert "laboratoire" in translated.lower() or "normal" in translated.lower()
@@ -361,7 +367,7 @@ class TestLanguageTranslation:
         mock_response.choices = [Mock(message=Mock(content="Translated text"))]
         mock_response.usage = Mock(prompt_tokens=10, completion_tokens=5, total_tokens=15)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             # Should still attempt translation even for unusual codes
             translated = await client.translate_to_language(text, "XX")
 
@@ -370,7 +376,7 @@ class TestLanguageTranslation:
     @pytest.mark.asyncio
     async def test_translate_error_handling(self, client):
         """Test translation error handling"""
-        with patch.object(client.text_client.chat.completions, 'create', side_effect=Exception("Translation API Error")):
+        with patch.object(client.client.chat.completions, 'create', side_effect=Exception("Translation API Error")):
             translated = await client.translate_to_language("Text", "EN")
 
             assert "Error" in translated or translated is None
@@ -384,7 +390,7 @@ class TestLanguageTranslation:
         mock_response.choices = [Mock(message=Mock(content="HbA1c: 8.2%, Metformin 1000mg (preserved)"))]
         mock_response.usage = Mock(prompt_tokens=40, completion_tokens=25, total_tokens=65)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             translated = await client.translate_to_language(text, "EN")
 
             # Medical terms and values should be preserved
@@ -410,7 +416,7 @@ class TestTokenUsageTracking:
         mock_response.choices = [Mock(message=Mock(content="Response"))]
         mock_response.usage = Mock(prompt_tokens=100, completion_tokens=50, total_tokens=150)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             await client.process_medical_text_with_prompt(
                 prompt="Test",
                 input_text="Text"
@@ -449,7 +455,7 @@ class TestEdgeCases:
         mock_response.choices = [Mock(message=Mock(content=""))]
         mock_response.usage = Mock(prompt_tokens=5, completion_tokens=0, total_tokens=5)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
                 prompt="Test",
                 input_text=""
@@ -467,7 +473,7 @@ class TestEdgeCases:
         mock_response.choices = [Mock(message=Mock(content="Processed"))]
         mock_response.usage = Mock(prompt_tokens=50000, completion_tokens=100, total_tokens=50100)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
                 prompt="Summarize",
                 input_text=long_text
@@ -484,7 +490,7 @@ class TestEdgeCases:
         mock_response.choices = [Mock(message=Mock(content="Processed special chars"))]
         mock_response.usage = Mock(prompt_tokens=30, completion_tokens=10, total_tokens=40)
 
-        with patch.object(client.text_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
                 prompt="Analyze",
                 input_text=special_text

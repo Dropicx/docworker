@@ -339,13 +339,13 @@ class TestExtractTextMethod:
         """Test extraction with LOCAL_TEXT strategy"""
         mock_analysis = {
             'recommended_strategy': 'LOCAL_TEXT',
-            'recommended_complexity': 'LOW'
+            'recommended_complexity': 'SIMPLE'
         }
 
         with patch.object(extractor.quality_detector, 'analyze_file', new_callable=AsyncMock) as mock_analyze, \
              patch.object(extractor, '_extract_with_local_text', new_callable=AsyncMock) as mock_extract:
 
-            mock_analyze.return_value = (ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.LOW, mock_analysis)
+            mock_analyze.return_value = (ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.SIMPLE, mock_analysis)
             mock_extract.return_value = ("Extracted text", 0.95)
 
             text, confidence = await extractor.extract_text(b"fake pdf content", "pdf", "test.pdf")
@@ -359,13 +359,13 @@ class TestExtractTextMethod:
         """Test extraction with VISION_LLM strategy"""
         mock_analysis = {
             'recommended_strategy': 'VISION_LLM',
-            'recommended_complexity': 'HIGH'
+            'recommended_complexity': 'COMPLEX'
         }
 
         with patch.object(extractor.quality_detector, 'analyze_file', new_callable=AsyncMock) as mock_analyze, \
              patch.object(extractor, '_extract_with_vision_llm', new_callable=AsyncMock) as mock_extract:
 
-            mock_analyze.return_value = (ExtractionStrategy.VISION_LLM, DocumentComplexity.HIGH, mock_analysis)
+            mock_analyze.return_value = (ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX, mock_analysis)
             mock_extract.return_value = ("Vision extracted text", 0.90)
 
             text, confidence = await extractor.extract_text(b"fake image content", "image", "scan.jpg")
@@ -422,7 +422,7 @@ class TestExtractFromMultipleFiles:
 
         mock_analysis = {
             'recommended_strategy': 'LOCAL_TEXT',
-            'recommended_complexity': 'LOW'
+            'recommended_complexity': 'SIMPLE'
         }
 
         with patch.object(extractor.sequence_detector, 'detect_sequence', new_callable=AsyncMock) as mock_sequence, \
@@ -454,7 +454,7 @@ class TestExtractFromMultipleFiles:
 
         mock_analysis = {
             'recommended_strategy': 'LOCAL_TEXT',
-            'recommended_complexity': 'LOW'
+            'recommended_complexity': 'SIMPLE'
         }
 
         with patch.object(extractor.sequence_detector, 'detect_sequence', new_callable=AsyncMock) as mock_sequence, \
