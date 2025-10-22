@@ -749,9 +749,7 @@ class AdvancedPrivacyFilter:
             from pathlib import Path
 
             # Try loading from Railway volume first (for worker processes)
-            volume_path = os.getenv(
-                "SPACY_MODEL_PATH", "/data/spacy_models/de_core_news_sm"
-            )
+            volume_path = os.getenv("SPACY_MODEL_PATH", "/data/spacy_models/de_core_news_sm")
 
             if Path(volume_path).exists():
                 logger.info(f"🔍 Loading spaCy model from volume: {volume_path}")
@@ -768,9 +766,7 @@ class AdvancedPrivacyFilter:
             logger.warning(
                 f"⚠️ spaCy Modell nicht verfügbar - verwende eingeschränkten Heuristik-Modus: {e}"
             )
-            logger.info(
-                "💡 Für bessere Namenerkennung: python -m spacy download de_core_news_sm"
-            )
+            logger.info("💡 Für bessere Namenerkennung: python -m spacy download de_core_news_sm")
             try:
                 # Fallback: Versuche ein leeres deutsches Modell
                 self.nlp = spacy.blank("de")
@@ -809,9 +805,7 @@ class AdvancedPrivacyFilter:
                 re.IGNORECASE,
             ),
             # PLZ + Stadt
-            "plz_city": re.compile(
-                r"\b\d{5}\s+[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*\b"
-            ),
+            "plz_city": re.compile(r"\b\d{5}\s+[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*\b"),
             # Telefon - German phone numbers
             # International: +49/0049 + any digits; National: 0 + at least 2 more digits
             "phone": re.compile(
@@ -890,9 +884,7 @@ class AdvancedPrivacyFilter:
         text = re.sub(r"\n{3,}", "\n\n", text)
         text = re.sub(r"[ \t]+", " ", text)
 
-        logger.info(
-            "✅ Persönliche Daten entfernt - medizinische Informationen erhalten"
-        )
+        logger.info("✅ Persönliche Daten entfernt - medizinische Informationen erhalten")
         return text.strip()
 
     def _protect_medical_terms(self, text: str) -> str:
@@ -900,7 +892,9 @@ class AdvancedPrivacyFilter:
         import re
 
         # Schütze Vitamin-Kombinationen (z.B. "Vitamin D3", "Vitamin B12")
-        vitamin_pattern = r"\b(Vitamin|Vit\.?)\s*([A-Z][0-9]*|[0-9]+[-,]?[0-9]*[-]?OH[-]?[A-Z]?[0-9]*)\b"
+        vitamin_pattern = (
+            r"\b(Vitamin|Vit\.?)\s*([A-Z][0-9]*|[0-9]+[-,]?[0-9]*[-]?OH[-]?[A-Z]?[0-9]*)\b"
+        )
         text = re.sub(vitamin_pattern, r"§VITAMIN_\2§", text, flags=re.IGNORECASE)
 
         # Schütze Laborwert-Kombinationen mit Zahlen (z.B. "25-OH-D3", "1,25-OH2-D3")
@@ -912,9 +906,7 @@ class AdvancedPrivacyFilter:
         for term in self.medical_terms:
             if len(term) > 3:  # Nur längere Begriffe
                 pattern = (
-                    r"\b("
-                    + re.escape(term)
-                    + r")\s*:?\s*([0-9]+[,.]?[0-9]*)\s*([a-zA-Z/%]*)\b"
+                    r"\b(" + re.escape(term) + r")\s*:?\s*([0-9]+[,.]?[0-9]*)\s*([a-zA-Z/%]*)\b"
                 )
                 text = re.sub(pattern, r"§LABVAL_\1_\2_\3§", text, flags=re.IGNORECASE)
 
@@ -1063,9 +1055,7 @@ class AdvancedPrivacyFilter:
             if re.match(r"^\s*(?:Dr\.?|Prof\.?|Herr|Frau)\s+[A-ZÄÖÜ]", line):
                 # Prüfe ob die Zeile medizinische Begriffe enthält
                 line_lower = line.lower()
-                contains_medical = any(
-                    term in line_lower for term in self.medical_terms
-                )
+                contains_medical = any(term in line_lower for term in self.medical_terms)
                 if not contains_medical:
                     continue  # Skip diese Zeile
 
