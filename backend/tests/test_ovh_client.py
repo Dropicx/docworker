@@ -34,10 +34,11 @@ class TestOVHClientInitialization:
         """Test client initialization without token logs warning and uses dummy key"""
         with patch.dict(os.environ, {}, clear=True):
             client = OVHClient()
-            # Client should be created but with dummy key
+            # Client should be created but with empty access_token
             assert client is not None
             assert client.client is not None
-            assert client.access_token == ""
+            # access_token will be empty string when not set in environment
+            assert client.access_token == "" or client.access_token is None
 
     def test_initialization_custom_models(self):
         """Test client initialization with custom model configuration"""
@@ -108,8 +109,7 @@ class TestMedicalTextProcessing:
     @pytest.mark.asyncio
     async def test_process_medical_text_success(self, client):
         """Test successful medical text processing"""
-        prompt = "Classify this medical document"
-        input_text = "Patient has diabetes mellitus type 2"
+        full_prompt = "Classify this medical document: Patient has diabetes mellitus type 2"
 
         mock_response = Mock()
         mock_response.choices = [Mock(message=Mock(content="DIAGNOSIS: Diabetes Type 2"))]
@@ -117,19 +117,19 @@ class TestMedicalTextProcessing:
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
-                prompt=prompt,
-                input_text=input_text
+                full_prompt=full_prompt
             )
 
             assert result is not None
-            assert "Diabetes Type 2" in result
+            assert isinstance(result, dict)
+            assert "text" in result
+            assert "Diabetes Type 2" in result["text"]
+            assert result["total_tokens"] == 70
 
     @pytest.mark.asyncio
     async def test_process_medical_text_with_variables(self, client):
-        """Test medical text processing with template variables"""
-        prompt = "Translate to {target_language}"
-        input_text = "Patient text"
-        variables = {"target_language": "English"}
+        """Test medical text processing with full prompt"""
+        full_prompt = "Translate to English: Patient text"
 
         mock_response = Mock()
         mock_response.choices = [Mock(message=Mock(content="Translated text"))]
@@ -137,13 +137,12 @@ class TestMedicalTextProcessing:
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response) as mock_create:
             result = await client.process_medical_text_with_prompt(
-                prompt=prompt,
-                input_text=input_text,
-                variables=variables
+                full_prompt=full_prompt
             )
 
-            assert "Translated text" in result
-            # Check that the prompt was formatted with variables
+            assert isinstance(result, dict)
+            assert "Translated text" in result["text"]
+            # Check that the prompt was sent to API
             call_args = mock_create.call_args
             messages = call_args.kwargs['messages']
             assert any('English' in str(msg) for msg in messages)
@@ -151,8 +150,7 @@ class TestMedicalTextProcessing:
     @pytest.mark.asyncio
     async def test_process_medical_text_temperature(self, client):
         """Test medical text processing respects temperature setting"""
-        prompt = "Analyze"
-        input_text = "Text"
+        full_prompt = "Analyze: Text"
         temperature = 0.5
 
         mock_response = Mock()
@@ -160,20 +158,19 @@ class TestMedicalTextProcessing:
         mock_response.usage = Mock(prompt_tokens=10, completion_tokens=5, total_tokens=15)
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response) as mock_create:
-            await client.process_medical_text_with_prompt(
-                prompt=prompt,
-                input_text=input_text,
+            result = await client.process_medical_text_with_prompt(
+                full_prompt=full_prompt,
                 temperature=temperature
             )
 
             # Verify temperature was passed
             assert mock_create.call_args.kwargs['temperature'] == 0.5
+            assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_process_medical_text_max_tokens(self, client):
         """Test medical text processing respects max_tokens limit"""
-        prompt = "Summarize"
-        input_text = "Long medical text"
+        full_prompt = "Summarize: Long medical text"
         max_tokens = 1000
 
         mock_response = Mock()
@@ -181,25 +178,25 @@ class TestMedicalTextProcessing:
         mock_response.usage = Mock(prompt_tokens=100, completion_tokens=50, total_tokens=150)
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response) as mock_create:
-            await client.process_medical_text_with_prompt(
-                prompt=prompt,
-                input_text=input_text,
+            result = await client.process_medical_text_with_prompt(
+                full_prompt=full_prompt,
                 max_tokens=max_tokens
             )
 
             # Verify max_tokens was passed
             assert mock_create.call_args.kwargs['max_tokens'] == 1000
+            assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_process_medical_text_api_error(self, client):
         """Test medical text processing handles API errors"""
         with patch.object(client.client.chat.completions, 'create', side_effect=Exception("API Error")):
             result = await client.process_medical_text_with_prompt(
-                prompt="Test",
-                input_text="Text"
+                full_prompt="Test: Text"
             )
 
-            assert "Error" in result or result is None
+            assert isinstance(result, dict)
+            assert "Error" in result["text"]
 
     @pytest.mark.asyncio
     async def test_process_medical_text_empty_response(self, client):
@@ -209,11 +206,11 @@ class TestMedicalTextProcessing:
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
-                prompt="Test",
-                input_text="Text"
+                full_prompt="Test: Text"
             )
 
-            assert result is None or "Error" in result
+            assert isinstance(result, dict)
+            assert "Error" in result["text"] or "error" in result["text"].lower()
 
 
 class TestVisionOCR:
@@ -339,10 +336,13 @@ class TestLanguageTranslation:
         mock_response.usage = Mock(prompt_tokens=30, completion_tokens=20, total_tokens=50)
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
-            translated = await client.translate_to_language(german_text, "EN")
+            translated, confidence = await client.translate_to_language(german_text, "EN")
 
+            assert isinstance(translated, str)
+            assert isinstance(confidence, float)
             assert "patient" in translated.lower()
             assert "diabetes" in translated.lower()
+            assert 0.0 <= confidence <= 1.0
 
     @pytest.mark.asyncio
     async def test_translate_to_french(self, client):
@@ -354,9 +354,12 @@ class TestLanguageTranslation:
         mock_response.usage = Mock(prompt_tokens=20, completion_tokens=15, total_tokens=35)
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
-            translated = await client.translate_to_language(german_text, "FR")
+            translated, confidence = await client.translate_to_language(german_text, "FR")
 
+            assert isinstance(translated, str)
+            assert isinstance(confidence, float)
             assert "laboratoire" in translated.lower() or "normal" in translated.lower()
+            assert 0.0 <= confidence <= 1.0
 
     @pytest.mark.asyncio
     async def test_translate_unsupported_language(self, client):
@@ -369,17 +372,21 @@ class TestLanguageTranslation:
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             # Should still attempt translation even for unusual codes
-            translated = await client.translate_to_language(text, "XX")
+            translated, confidence = await client.translate_to_language(text, "XX")
 
+            assert isinstance(translated, str)
             assert len(translated) > 0
+            assert isinstance(confidence, float)
 
     @pytest.mark.asyncio
     async def test_translate_error_handling(self, client):
         """Test translation error handling"""
         with patch.object(client.client.chat.completions, 'create', side_effect=Exception("Translation API Error")):
-            translated = await client.translate_to_language("Text", "EN")
+            translated, confidence = await client.translate_to_language("Text", "EN")
 
-            assert "Error" in translated or translated is None
+            assert isinstance(translated, str)
+            assert "Error" in translated or "error" in translated.lower()
+            assert confidence == 0.0
 
     @pytest.mark.asyncio
     async def test_translate_preserves_medical_terms(self, client):
@@ -391,13 +398,15 @@ class TestLanguageTranslation:
         mock_response.usage = Mock(prompt_tokens=40, completion_tokens=25, total_tokens=65)
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
-            translated = await client.translate_to_language(text, "EN")
+            translated, confidence = await client.translate_to_language(text, "EN")
 
             # Medical terms and values should be preserved
+            assert isinstance(translated, str)
             assert "HbA1c" in translated or "hba1c" in translated.lower()
             assert "8.2" in translated
             assert "Metformin" in translated or "metformin" in translated.lower()
             assert "1000mg" in translated or "1000" in translated
+            assert isinstance(confidence, float)
 
 
 class TestTokenUsageTracking:
@@ -417,12 +426,13 @@ class TestTokenUsageTracking:
         mock_response.usage = Mock(prompt_tokens=100, completion_tokens=50, total_tokens=150)
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
-            await client.process_medical_text_with_prompt(
-                prompt="Test",
-                input_text="Text"
+            result = await client.process_medical_text_with_prompt(
+                full_prompt="Test: Text"
             )
 
-            # Token tracking happens internally - just verify no errors
+            # Token tracking happens internally - verify result contains token info
+            assert isinstance(result, dict)
+            assert result["total_tokens"] == 150
 
     @pytest.mark.asyncio
     async def test_vision_token_usage_tracked(self, client):
@@ -457,12 +467,12 @@ class TestEdgeCases:
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
-                prompt="Test",
-                input_text=""
+                full_prompt="Test: "
             )
 
             # Should handle gracefully
             assert result is not None
+            assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_very_long_input_text(self, client):
@@ -475,11 +485,11 @@ class TestEdgeCases:
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
-                prompt="Summarize",
-                input_text=long_text
+                full_prompt=f"Summarize: {long_text}"
             )
 
             assert result is not None
+            assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_special_characters_in_text(self, client):
@@ -492,11 +502,11 @@ class TestEdgeCases:
 
         with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
-                prompt="Analyze",
-                input_text=special_text
+                full_prompt=f"Analyze: {special_text}"
             )
 
             assert result is not None
+            assert isinstance(result, dict)
 
 
 if __name__ == "__main__":
