@@ -776,9 +776,9 @@ class AdvancedPrivacyFilter:
     def _compile_patterns(self) -> dict[str, Pattern[str]]:
         """Kompiliert Regex-Patterns für verschiedene PII-Typen"""
         return {
-            # Geburtsdaten
+            # Geburtsdaten - matches "Geb.: 15.05.1965", "geb. 15.05.1965", etc.
             "birthdate": re.compile(
-                r"\b(?:geb(?:oren)?\.?\s*(?:am\s*)?|geboren\s+am\s+|geburtsdatum:?\s*)"
+                r"\b(?:geb(?:oren)?\.?:?\s*(?:am\s*)?|geboren\s+am\s+|geburtsdatum:?\s*)"
                 r"(?:\d{1,2}[\.\/-]\d{1,2}[\.\/-]\d{2,4}|\d{4}[\.\/-]\d{1,2}[\.\/-]\d{1,2})",
                 re.IGNORECASE,
             ),
@@ -800,9 +800,12 @@ class AdvancedPrivacyFilter:
             ),
             # PLZ + Stadt
             "plz_city": re.compile(r"\b\d{5}\s+[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*\b"),
-            # Telefon - matches German phone numbers with various separators
+            # Telefon - German phone numbers (min 6 digits to avoid matching dates/codes)
+            # International: +49 or 0049 followed by digits
+            # National: 0 followed by 2+ digit area code then more digits
             "phone": re.compile(
-                r"(?:\+49|0049|0)\s*\d+(?:[\s\-\(\)\/]\d+)*",
+                r"\b(?:\+49|0049)\s*\d[\s\-\(\)\/\d]+|"
+                r"\b0\d{2,}\s*\d[\s\-\(\)\/\d]*",
             ),
             # E-Mail
             "email": re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b"),
