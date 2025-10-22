@@ -806,8 +806,8 @@ class AdvancedPrivacyFilter:
             ),
             # E-Mail
             "email": re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b"),
-            # Versicherungsnummern - handles compound words like "Versichertennummer", "Patientennummer"
-            # Note: Uses "patienten" not "patient" to avoid matching "Patient: Name" (names are handled separately)
+            # Versicherungsnummern - handles compound words
+            # Uses "patienten" not "patient" to avoid matching "Patient: Name"
             "insurance": re.compile(
                 r"\b(?:versicherungs?|versichert\w*|kassen|patienten\w*|fall|akte)[\-\s]*(?:nr\.?|nummer)?[:\s]*[A-Z0-9][\w\-\/]*\b",
                 re.IGNORECASE,
@@ -933,6 +933,10 @@ class AdvancedPrivacyFilter:
     def _remove_personal_data(self, text: str) -> str:
         """Entfernt persönliche Daten aber ERHÄLT medizinische Informationen"""
 
+        # CRITICAL ORDER: Remove birthdates FIRST before other patterns
+        # This prevents phone/insurance patterns from matching parts of dates
+        text = self.patterns["birthdate"].sub("[GEBURTSDATUM ENTFERNT]", text)
+
         # IMPORTANT: Remove insurance/patient numbers BEFORE patient_info pattern
         # to avoid partial matches on compound words like "Versichertennummer"
         text = self.patterns["insurance"].sub("[NUMMER ENTFERNT]", text)
@@ -951,9 +955,6 @@ class AdvancedPrivacyFilter:
 
         # Anreden und Grußformeln entfernen
         text = self.patterns["salutation"].sub("", text)
-
-        # Geburtsdaten entfernen (aber NICHT aktuelle Untersuchungsdaten!)
-        text = self.patterns["birthdate"].sub("[GEBURTSDATUM ENTFERNT]", text)
 
         # Geschlecht entfernen (wenn explizit als "Geschlecht:" angegeben)
         return re.sub(
