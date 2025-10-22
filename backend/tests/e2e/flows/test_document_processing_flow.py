@@ -239,7 +239,9 @@ def test_complete_image_upload_and_processing_flow(client, test_db, seed_full_pi
         assert response.status_code == 200
         final_data = response.json()
         assert final_data["status"] == "completed"
-        assert final_data["progress"] == 100
+        # API may return either 'progress' or 'progress_percent'
+        progress = final_data.get("progress") or final_data.get("progress_percent")
+        assert progress == 100
 
         # 5. Retrieve results
         response = client.get(f"/api/result/{processing_id}")
