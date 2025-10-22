@@ -163,10 +163,20 @@ def test_complete_image_upload_and_processing_flow(client, test_db, seed_full_pi
     4. Check job status
     5. Retrieve results
     """
+    # Mock Celery worker availability (simulates workers being available)
+    mock_inspect = MagicMock()
+    mock_inspect.active.return_value = {"worker1": []}  # Non-empty dict = workers available
+
     # Mock OCR and AI processing
     with patch("app.services.ocr_engine_manager.OCREngineManager.extract_text") as mock_ocr, \
          patch("app.services.ovh_client.OVHClient.process_medical_text_with_prompt") as mock_ai, \
-         patch("app.services.privacy_filter_advanced.AdvancedPrivacyFilter.remove_pii") as mock_pii:
+         patch("app.services.privacy_filter_advanced.AdvancedPrivacyFilter.remove_pii") as mock_pii, \
+         patch("app.routers.upload.Celery") as mock_celery:
+
+        # Configure Celery mock
+        mock_celery_instance = MagicMock()
+        mock_celery_instance.control.inspect.return_value = mock_inspect
+        mock_celery.return_value = mock_celery_instance
 
         # Mock OCR extraction
         mock_ocr.return_value = (
@@ -306,26 +316,35 @@ def test_concurrent_uploads_flow(client, seed_full_pipeline):
     2. Verify all jobs created
     3. Check independent processing
     """
-    upload_count = 3
-    processing_ids = []
+    # Mock Celery worker availability
+    mock_inspect = MagicMock()
+    mock_inspect.active.return_value = {"worker1": []}
 
-    for i in range(upload_count):
-        img_file = create_test_image()
-        response = client.post(
-            "/api/upload",
-            files={"file": (f"test_{i}.png", img_file, "image/png")},
-        )
+    with patch("app.routers.upload.Celery") as mock_celery:
+        mock_celery_instance = MagicMock()
+        mock_celery_instance.control.inspect.return_value = mock_inspect
+        mock_celery.return_value = mock_celery_instance
 
-        assert response.status_code == 200
-        data = response.json()
-        processing_ids.append(data["processing_id"])
+        upload_count = 3
+        processing_ids = []
 
-    # Verify all jobs are unique and tracked
-    assert len(set(processing_ids)) == upload_count
+        for i in range(upload_count):
+            img_file = create_test_image()
+            response = client.post(
+                "/api/upload",
+                files={"file": (f"test_{i}.png", img_file, "image/png")},
+            )
 
-    for pid in processing_ids:
-        response = client.get(f"/api/status/{pid}")
-        assert response.status_code == 200
+            assert response.status_code == 200
+            data = response.json()
+            processing_ids.append(data["processing_id"])
+
+        # Verify all jobs are unique and tracked
+        assert len(set(processing_ids)) == upload_count
+
+        for pid in processing_ids:
+            response = client.get(f"/api/status/{pid}")
+            assert response.status_code == 200
 
 
 @pytest.mark.e2e
@@ -338,14 +357,23 @@ def test_processing_timeout_flow(client, test_db, seed_full_pipeline):
     2. Simulate timeout in worker
     3. Verify timeout error handling
     """
-    img_file = create_test_image()
-    response = client.post(
-        "/api/upload",
-        files={"file": ("test.png", img_file, "image/png")},
-    )
+    # Mock Celery worker availability
+    mock_inspect = MagicMock()
+    mock_inspect.active.return_value = {"worker1": []}
 
-    assert response.status_code == 200
-    processing_id = response.json()["processing_id"]
+    with patch("app.routers.upload.Celery") as mock_celery:
+        mock_celery_instance = MagicMock()
+        mock_celery_instance.control.inspect.return_value = mock_inspect
+        mock_celery.return_value = mock_celery_instance
+
+        img_file = create_test_image()
+        response = client.post(
+            "/api/upload",
+            files={"file": ("test.png", img_file, "image/png")},
+        )
+
+        assert response.status_code == 200
+        processing_id = response.json()["processing_id"]
 
     # Simulate timeout by marking job as failed
     from app.database.modular_pipeline_models import PipelineJobDB

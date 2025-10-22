@@ -166,13 +166,19 @@ def test_update_ocr_config(client, mock_auth, seed_test_data):
 
 def test_get_available_engines(client, mock_auth, seed_test_data):
     """Test GET /api/pipeline/ocr-engines"""
-    response = client.get("/api/pipeline/ocr-engines")
+    # Mock PaddleOCR health check to simulate service availability
+    from unittest.mock import patch
 
-    assert response.status_code == 200
-    data = response.json()
-    assert "PADDLEOCR" in data
-    assert "HYBRID" in data
-    assert data["PADDLEOCR"]["available"] is True
+    with patch("app.services.ocr_engine_manager.OCREngineManager._check_paddleocr_health_sync") as mock_health:
+        mock_health.return_value = True
+
+        response = client.get("/api/pipeline/ocr-engines")
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "PADDLEOCR" in data
+        assert "HYBRID" in data
+        assert data["PADDLEOCR"]["available"] is True
 
 
 # ==================== Pipeline Steps Tests ====================
