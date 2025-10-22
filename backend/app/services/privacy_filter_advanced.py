@@ -131,6 +131,9 @@ class AdvancedPrivacyFilter:
             "muskulär",
             "vaskulär",
             "arterial",
+            "arterielle",
+            "arterieller",
+            "arterielles",
             "venös",
             "symptom",
             "syndrom",
@@ -150,6 +153,9 @@ class AdvancedPrivacyFilter:
             "abszeß",
             "tumor",
             "karzinom",
+            "hypertonie",
+            "hypotonie",
+            "diabetes",
             # Häufige medizinische Adjektive
             "akut",
             "akute",
@@ -800,12 +806,10 @@ class AdvancedPrivacyFilter:
             ),
             # PLZ + Stadt
             "plz_city": re.compile(r"\b\d{5}\s+[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*\b"),
-            # Telefon - German phone numbers (min 6 digits to avoid matching dates/codes)
-            # International: +49 or 0049 followed by digits
-            # National: 0 followed by 2+ digit area code then more digits
+            # Telefon - German phone numbers
+            # International: +49/0049 + any digits; National: 0 + at least 2 more digits
             "phone": re.compile(
-                r"\b(?:\+49|0049)\s*\d[\s\-\(\)\/\d]+|"
-                r"\b0\d{2,}\s*\d[\s\-\(\)\/\d]*",
+                r"(?:^|\s)(?:(?:\+49|0049)\s*\d+(?:[\s\-\(\)\/]\d+)*|0\d{2,}(?:[\s\-\(\)\/]\d+)*)",
             ),
             # E-Mail
             "email": re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b"),
