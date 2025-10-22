@@ -806,9 +806,10 @@ class AdvancedPrivacyFilter:
             ),
             # E-Mail
             "email": re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b"),
-            # Versicherungsnummern - handles compound words like "Versichertennummer"
+            # Versicherungsnummern - handles compound words like "Versichertennummer", "Patientennummer"
+            # Note: Uses "patienten" not "patient" to avoid matching "Patient: Name" (names are handled separately)
             "insurance": re.compile(
-                r"\b(?:versicherungs?|versichert\w*|kassen|patient\w*|fall|akte)[\-\s]*(?:nr\.?|nummer)?[:\s]*[A-Z0-9][\w\-\/]*\b",
+                r"\b(?:versicherungs?|versichert\w*|kassen|patienten\w*|fall|akte)[\-\s]*(?:nr\.?|nummer)?[:\s]*[A-Z0-9][\w\-\/]*\b",
                 re.IGNORECASE,
             ),
             # Anreden
