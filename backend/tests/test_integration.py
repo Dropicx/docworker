@@ -97,19 +97,21 @@ def seed_models(db_session):
     models = [
         AvailableModelDB(
             name="Meta-Llama-3_3-70B-Instruct",
+            display_name="Llama 3.3 70B",
             provider="OVH",
             max_tokens=8192,
-            cost_per_input_token=0.0001,
-            cost_per_output_token=0.0002,
+            price_input_per_1m_tokens=0.1,  # $0.10 per 1M input tokens
+            price_output_per_1m_tokens=0.2,  # $0.20 per 1M output tokens
             is_enabled=True,
             supports_vision=False
         ),
         AvailableModelDB(
             name="Mistral-Nemo-Instruct-2407",
+            display_name="Mistral Nemo",
             provider="OVH",
             max_tokens=4096,
-            cost_per_input_token=0.00005,
-            cost_per_output_token=0.0001,
+            price_input_per_1m_tokens=0.05,  # $0.05 per 1M input tokens
+            price_output_per_1m_tokens=0.1,  # $0.10 per 1M output tokens
             is_enabled=True,
             supports_vision=False
         )
