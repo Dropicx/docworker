@@ -200,7 +200,7 @@ class CircuitBreaker:
 
         return wrapper
 
-    async def call_async(self, func: Callable[P, T]) -> Callable[P, T]:
+    def call_async(self, func: Callable[P, T]) -> Callable[P, T]:
         """
         Async decorator to protect an async function with circuit breaker.
 

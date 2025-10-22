@@ -298,15 +298,19 @@ def test_retry_with_transient_error():
             raise ServiceUnavailableError("Temporary failure")
         return "success"
 
-    result = execute_with_retries(
-        func=failing_then_success,
-        policy=get_conservative_retry_policy(),  # 2 retries max
-        operation_name="test",
-    )
+    # First test: Conservative policy (2 attempts) with function that needs 3 attempts
+    # Should fail after exhausting retries
+    with pytest.raises(ServiceUnavailableError):
+        execute_with_retries(
+            func=failing_then_success,
+            policy=get_conservative_retry_policy(),  # 2 attempts max
+            operation_name="test",
+        )
 
-    # Should fail after 2 attempts
-    # Actually, conservative policy allows 2 attempts total, so it will fail
-    # Let's use a policy that allows 3 attempts
+    # Verify it tried 2 times
+    assert call_count[0] == 2
+
+    # Second test: Conservative policy with function that succeeds on retry
     call_count[0] = 0
 
     def failing_then_success_v2():
