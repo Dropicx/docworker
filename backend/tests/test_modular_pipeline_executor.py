@@ -105,38 +105,30 @@ class TestConfigurationLoading:
         mock_step.post_branching = False
         mock_step.document_class_id = None
 
-        mock_query = Mock()
-        mock_query.filter_by.return_value.order_by.return_value.all.return_value = [mock_step]
-        executor.session.query.return_value = mock_query
+        # Mock step_repository instead of session.query
+        executor.step_repository = Mock()
+        executor.step_repository.get_universal_steps.return_value = [mock_step]
 
         steps = executor.load_universal_steps()
 
         assert len(steps) == 1
-        # Verify correct filters
-        executor.session.query.return_value.filter_by.assert_called_with(
-            enabled=True,
-            document_class_id=None,
-            post_branching=False
-        )
+        # Verify repository was called
+        executor.step_repository.get_universal_steps.assert_called_once()
 
     def test_load_post_branching_steps(self, executor, mock_step):
         """Test loading post-branching universal steps"""
         mock_step.post_branching = True
         mock_step.document_class_id = None
 
-        mock_query = Mock()
-        mock_query.filter_by.return_value.order_by.return_value.all.return_value = [mock_step]
-        executor.session.query.return_value = mock_query
+        # Mock step_repository instead of session.query
+        executor.step_repository = Mock()
+        executor.step_repository.get_post_branching_steps.return_value = [mock_step]
 
         steps = executor.load_post_branching_steps()
 
         assert len(steps) == 1
-        # Verify correct filters
-        executor.session.query.return_value.filter_by.assert_called_with(
-            enabled=True,
-            document_class_id=None,
-            post_branching=True
-        )
+        # Verify repository was called
+        executor.step_repository.get_post_branching_steps.assert_called_once()
 
     def test_load_steps_by_document_class(self, executor, mock_step):
         """Test loading document class-specific steps"""
@@ -531,13 +523,14 @@ class TestModularPipelineManager:
 
     def test_get_step(self, manager, mock_step):
         """Test getting a single step by ID"""
-        mock_query = Mock()
-        mock_query.filter_by.return_value.first.return_value = mock_step
-        manager.session.query.return_value = mock_query
+        # Mock step_repository instead of session.query
+        manager.step_repository = Mock()
+        manager.step_repository.get.return_value = mock_step
 
         step = manager.get_step(step_id=1)
 
         assert step == mock_step
+        manager.step_repository.get.assert_called_once_with(1)
 
     def test_create_step(self, manager):
         """Test creating a new pipeline step"""
@@ -641,25 +634,26 @@ class TestModularPipelineManager:
     def test_get_all_models(self, manager):
         """Test getting all available models"""
         mock_model = Mock(spec=AvailableModelDB)
-        mock_query = Mock()
-        mock_query.all.return_value = [mock_model]
-        manager.session.query.return_value = mock_query
+        # Mock model_repository instead of session.query
+        manager.model_repository = Mock()
+        manager.model_repository.get_all.return_value = [mock_model]
 
         models = manager.get_all_models()
 
         assert len(models) == 1
+        manager.model_repository.get_all.assert_called_once()
 
     def test_get_all_models_enabled_only(self, manager):
         """Test getting only enabled models"""
         mock_model = Mock(spec=AvailableModelDB)
-        mock_query = Mock()
-        mock_query.filter_by.return_value.all.return_value = [mock_model]
-        manager.session.query.return_value = mock_query
+        # Mock model_repository instead of session.query
+        manager.model_repository = Mock()
+        manager.model_repository.get_enabled_models.return_value = [mock_model]
 
         models = manager.get_all_models(enabled_only=True)
 
         assert len(models) == 1
-        mock_query.filter_by.assert_called_with(is_enabled=True)
+        manager.model_repository.get_enabled_models.assert_called_once()
 
 
 if __name__ == "__main__":
