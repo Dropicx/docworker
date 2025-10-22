@@ -800,13 +800,15 @@ class AdvancedPrivacyFilter:
             ),
             # PLZ + Stadt
             "plz_city": re.compile(r"\b\d{5}\s+[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*\b"),
-            # Telefon
-            "phone": re.compile(r"\b(?:\+49|0049|0)[\s\-\(\)\/]*(?:\d[\s\-\(\)\/]*){8,15}\b"),
+            # Telefon - matches German phone numbers with various separators
+            "phone": re.compile(
+                r"(?:\+49|0049|0)\s*\d+(?:[\s\-\(\)\/]\d+)*",
+            ),
             # E-Mail
             "email": re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b"),
-            # Versicherungsnummern
+            # Versicherungsnummern - handles compound words like "Versichertennummer"
             "insurance": re.compile(
-                r"\b(?:versicherungs?|kassen|patient|fall|akte)[\-\s]*(?:nr\.?|nummer)?[:\s]*[\w\-\/]+\b",
+                r"\b(?:versicherungs?|versichert\w*|kassen|patient\w*|fall|akte)[\-\s]*(?:nr\.?|nummer)?[:\s]*[A-Z0-9][\w\-\/]*\b",
                 re.IGNORECASE,
             ),
             # Anreden
