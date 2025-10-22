@@ -7,17 +7,64 @@ Verifies that steps are ordered correctly by execution phase:
 2. Document-specific (document_class_id != NULL)
 3. Post-branching universal (document_class_id = NULL, post_branching = True)
 """
-import sys
-sys.path.insert(0, '/media/catchmelit/5a972e8f-2616-4a45-b03c-2d2fd85f5030/Projects/doctranslator/backend')
+import pytest
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-from app.database.connection import get_db_session
+from app.database.modular_pipeline_models import Base, DynamicPipelineStepDB, AvailableModelDB
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 
 
-def test_phase_aware_ordering():
+@pytest.fixture(scope="function")
+def test_db_session():
+    """Create an in-memory SQLite database session for testing"""
+    engine = create_engine("sqlite:///:memory:")
+    Base.metadata.create_all(engine)
+    SessionLocal = sessionmaker(bind=engine)
+    session = SessionLocal()
+
+    # Seed with test data
+    model = AvailableModelDB(
+        name="test-model",
+        display_name="Test Model",
+        provider="OVH",
+        max_tokens=4096,
+        is_enabled=True
+    )
+    session.add(model)
+    session.commit()
+
+    # Add test steps
+    steps = [
+        DynamicPipelineStepDB(
+            name="Pre-branching 1", order=1, prompt_template="test",
+            selected_model_id=model.id, enabled=True, post_branching=False
+        ),
+        DynamicPipelineStepDB(
+            name="Pre-branching 2", order=2, prompt_template="test",
+            selected_model_id=model.id, enabled=True, post_branching=False
+        ),
+        DynamicPipelineStepDB(
+            name="Doc-specific 1", order=10, prompt_template="test",
+            selected_model_id=model.id, enabled=True, document_class_id=1, post_branching=False
+        ),
+        DynamicPipelineStepDB(
+            name="Post-branching 1", order=20, prompt_template="test",
+            selected_model_id=model.id, enabled=True, post_branching=True
+        ),
+    ]
+    session.add_all(steps)
+    session.commit()
+
+    yield session
+
+    session.close()
+    Base.metadata.drop_all(engine)
+
+
+def test_phase_aware_ordering(test_db_session):
     """Test that steps are ordered by phase first, then by order field."""
-    db = next(get_db_session())
-    repo = PipelineStepRepository(db)
+    repo = PipelineStepRepository(test_db_session)
 
     print("\n" + "="*120)
     print("TESTING PHASE-AWARE ORDERING")
@@ -125,8 +172,6 @@ def test_phase_aware_ordering():
         print("❌ Enabled steps phase ordering is INCORRECT")
         print(f"   Phase sequence: {phase_order_enabled}")
 
-    db.close()
-
-
-if __name__ == "__main__":
-    test_phase_aware_ordering()
+    # Verify phase ordering is correct
+    assert is_correct, f"Phase ordering is incorrect: {phase_order}"
+    assert is_correct_enabled, f"Enabled steps phase ordering is incorrect: {phase_order_enabled}"
