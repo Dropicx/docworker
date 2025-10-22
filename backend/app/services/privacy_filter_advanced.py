@@ -809,7 +809,10 @@ class AdvancedPrivacyFilter:
             # Telefon - German phone numbers
             # International: +49/0049 + any digits; National: 0 + at least 2 more digits
             "phone": re.compile(
-                r"(?:^|\s)(?:(?:\+49|0049)\s*\d+(?:[\s\-\(\)\/]\d+)*|0\d{2,}(?:[\s\-\(\)\/]\d+)*)",
+                r"(?:^|\s)(?:"
+                r"(?:\+49|0049)\s*\d+(?:[\s\-\(\)\/]\d+)*"
+                r"|0\d{2,}(?:[\s\-\(\)\/]\d+)*"
+                r")",
             ),
             # E-Mail
             "email": re.compile(r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b"),
