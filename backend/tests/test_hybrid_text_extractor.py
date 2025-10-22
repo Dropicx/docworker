@@ -23,10 +23,10 @@ class TestHybridTextExtractorInitialization:
 
     def test_initialization_with_local_ocr(self):
         """Test extractor initializes with local OCR when available"""
-        # Mock TextExtractorWithOCR class at module level before patching
+        # Mock TextExtractorWithOCR class where it's used after import
         mock_ocr_class = MagicMock()
         with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', True), \
-             patch('app.services.text_extractor_ocr.TextExtractorWithOCR', mock_ocr_class):
+             patch('app.services.hybrid_text_extractor.TextExtractorWithOCR', mock_ocr_class):
             extractor = HybridTextExtractor()
 
             assert extractor is not None
@@ -46,7 +46,7 @@ class TestHybridTextExtractorInitialization:
     def test_initialization_ocr_failure_graceful(self):
         """Test extractor handles OCR initialization failure gracefully"""
         with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', True), \
-             patch('app.services.text_extractor_ocr.TextExtractorWithOCR', side_effect=Exception("OCR init failed")):
+             patch('app.services.hybrid_text_extractor.TextExtractorWithOCR', side_effect=Exception("OCR init failed")):
             extractor = HybridTextExtractor()
 
             assert extractor is not None
@@ -436,7 +436,8 @@ class TestExtractFromMultipleFiles:
              patch.object(extractor, '_extract_with_local_text', new_callable=AsyncMock) as mock_extract:
 
             mock_sequence.return_value = ordered_files
-            mock_analyze.return_value = (ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.SIMPLE, mock_analysis)
+            # analyze_multiple_files returns a dict, not a tuple
+            mock_analyze.return_value = mock_analysis
             mock_extract.return_value = ("Page content", 0.9)
 
             text, confidence = await extractor.extract_from_multiple_files(files, merge_strategy="smart")
