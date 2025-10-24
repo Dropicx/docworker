@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authApi } from '../services/authApi';
+import { authApiService } from '../services/authApi';
 
 export interface User {
   id: string;
@@ -55,7 +55,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
           // Verify tokens are still valid by getting current user
           try {
-            const currentUser = await authApi.getCurrentUser(parsedTokens.access_token);
+            const currentUser = await authApiService.getCurrentUser(parsedTokens.access_token);
             setTokens(parsedTokens);
             setUser(currentUser);
           } catch (error) {
@@ -110,7 +110,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
-      const response = await authApi.login(email, password);
+      const response = await authApiService.login(email, password);
       
       setTokens(response.tokens);
       setUser(response.user);
@@ -129,7 +129,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const logout = async (): Promise<void> => {
     try {
       if (tokens?.refresh_token) {
-        await authApi.logout(tokens.refresh_token);
+        await authApiService.logout(tokens.refresh_token);
       }
     } catch (error) {
       console.error('Logout API call failed:', error);
@@ -149,7 +149,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     try {
-      const response = await authApi.refreshToken(tokens.refresh_token);
+      const response = await authApiService.refreshToken(tokens.refresh_token);
       
       const newTokens = {
         ...tokens,

@@ -126,7 +126,7 @@ export class AuthApiService {
 }
 
 // Export individual functions for easier use
-export const authApi = {
+export const authApiService = {
   login: AuthApiService.login,
   refreshToken: AuthApiService.refreshToken,
   logout: AuthApiService.logout,

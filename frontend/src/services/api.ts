@@ -1,4 +1,4 @@
-import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
+import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import {
   UploadResponse,
   ProcessingProgress,
@@ -24,17 +24,14 @@ const api = axios.create({
 });
 
 // Request interceptor for authentication and logging
-api.interceptors.request.use((config: AxiosRequestConfig) => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   // Add authentication header if token exists
   const storedTokens = localStorage.getItem('auth_tokens');
   if (storedTokens) {
     try {
       const tokens = JSON.parse(storedTokens);
       if (tokens.access_token) {
-        config.headers = {
-          ...config.headers,
-          Authorization: `Bearer ${tokens.access_token}`,
-        };
+        config.headers.Authorization = `Bearer ${tokens.access_token}`;
       }
     } catch (error) {
       console.error('Error parsing stored tokens:', error);
