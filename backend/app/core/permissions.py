@@ -75,36 +75,39 @@ class Permission(str, Enum):
     SYSTEM_CONFIG = "system:config"
 
 
+# Define USER permissions first to avoid circular reference
+USER_PERMISSIONS = [
+    # Document access (public endpoints work without auth, but users can also access)
+    Permission.DOCUMENT_UPLOAD,
+    Permission.DOCUMENT_STATUS,
+    Permission.DOCUMENT_RESULTS,
+    
+    # Pipeline configuration
+    Permission.PIPELINE_READ,
+    Permission.PIPELINE_WRITE,
+    Permission.PROMPTS_READ,
+    Permission.PROMPTS_WRITE,
+    Permission.OCR_CONFIG_READ,
+    Permission.OCR_CONFIG_WRITE,
+    Permission.MODELS_READ,
+    Permission.DOCUMENT_CLASSES_READ,
+    
+    # Settings access
+    Permission.SETTINGS_READ,
+    Permission.SETTINGS_WRITE,
+    
+    # Own API keys
+    Permission.API_KEY_CREATE,
+    Permission.API_KEY_READ,
+    Permission.API_KEY_DELETE,
+]
+
 # Role-permission mapping
 ROLE_PERMISSIONS = {
-    Role.USER: [
-        # Document access (public endpoints work without auth, but users can also access)
-        Permission.DOCUMENT_UPLOAD,
-        Permission.DOCUMENT_STATUS,
-        Permission.DOCUMENT_RESULTS,
-        
-        # Pipeline configuration
-        Permission.PIPELINE_READ,
-        Permission.PIPELINE_WRITE,
-        Permission.PROMPTS_READ,
-        Permission.PROMPTS_WRITE,
-        Permission.OCR_CONFIG_READ,
-        Permission.OCR_CONFIG_WRITE,
-        Permission.MODELS_READ,
-        Permission.DOCUMENT_CLASSES_READ,
-        
-        # Settings access
-        Permission.SETTINGS_READ,
-        Permission.SETTINGS_WRITE,
-        
-        # Own API keys
-        Permission.API_KEY_CREATE,
-        Permission.API_KEY_READ,
-        Permission.API_KEY_DELETE,
-    ],
+    Role.USER: USER_PERMISSIONS,
     Role.ADMIN: [
         # All USER permissions
-        *ROLE_PERMISSIONS[Role.USER],
+        *USER_PERMISSIONS,
         
         # User management
         Permission.USER_CREATE,
