@@ -9,7 +9,7 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
-from app.core.permissions import get_current_user
+from app.core.permissions import get_current_user_optional
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
 from app.database.auth_models import UserDB
@@ -33,7 +33,7 @@ async def upload_document(
     request: Request,
     file: UploadFile = File(..., description="Medizinisches Dokument (PDF, JPG, PNG)"),
     db: Session = Depends(get_session),
-    current_user: UserDB | None = Depends(get_current_user),  # Optional user tracking
+    current_user: UserDB | None = Depends(get_current_user_optional),  # Optional user tracking
 ):
     # Log upload request
     upload_log = f"📤 Upload request: {file.filename} ({file.content_type})"
