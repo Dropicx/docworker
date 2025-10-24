@@ -17,10 +17,11 @@ from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_pipeline_step_repository
+from app.core.permissions import get_current_user_required, require_role
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import OCREngineEnum
+from app.database.auth_models import UserDB
 from app.repositories.pipeline_step_repository import PipelineStepRepository
-from app.routers.settings_auth import verify_session_token
 from app.services.document_class_manager import DocumentClassManager
 from app.services.modular_pipeline_executor import ModularPipelineManager
 from app.services.ocr_engine_manager import OCREngineManager
@@ -28,6 +29,12 @@ from app.services.ocr_engine_manager import OCREngineManager
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/pipeline", tags=["pipeline"])
+
+# ==================== AUTHENTICATION ====================
+
+def require_user_auth(current_user: UserDB = Depends(get_current_user_required)):
+    """Require user authentication (USER or ADMIN role)"""
+    return require_role("user")(current_user)
 
 # ==================== PYDANTIC MODELS ====================
 
@@ -238,7 +245,7 @@ class DocumentClassResponse(BaseModel):
 
 @router.get("/ocr-config", response_model=OCRConfigResponse)
 async def get_ocr_config(
-    db: Session = Depends(get_session), authenticated: bool = Depends(verify_session_token)
+    db: Session = Depends(get_session), current_user: UserDB = Depends(require_user_auth)
 ):
     """
     Get current OCR engine configuration.
@@ -262,7 +269,7 @@ async def get_ocr_config(
 async def update_ocr_config(
     config_request: OCRConfigRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Update OCR engine configuration.
@@ -295,7 +302,7 @@ async def update_ocr_config(
 
 @router.get("/ocr-engines", response_model=dict[str, EngineStatusResponse])
 async def get_available_engines(
-    db: Session = Depends(get_session), authenticated: bool = Depends(verify_session_token)
+    db: Session = Depends(get_session), current_user: UserDB = Depends(require_user_auth)
 ):
     """
     Get information about available OCR engines.
@@ -318,7 +325,7 @@ async def get_available_engines(
 async def get_engine_status(
     engine: OCREngineEnum,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Get detailed status of a specific OCR engine.
@@ -342,7 +349,7 @@ async def get_engine_status(
 
 @router.get("/steps", response_model=list[PipelineStepResponse])
 async def get_all_steps(
-    db: Session = Depends(get_session), authenticated: bool = Depends(verify_session_token)
+    db: Session = Depends(get_session), current_user: UserDB = Depends(require_user_auth)
 ):
     """
     Get all pipeline steps (enabled and disabled).
@@ -365,7 +372,7 @@ async def get_all_steps(
 async def get_step(
     step_id: int,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Get a single pipeline step by ID.
@@ -389,7 +396,7 @@ async def get_step(
 async def create_step(
     step_request: PipelineStepRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Create a new pipeline step.
@@ -419,7 +426,7 @@ async def update_step(
     step_id: int,
     step_request: PipelineStepRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Update an existing pipeline step.
@@ -453,7 +460,7 @@ async def update_step(
 async def delete_step(
     step_id: int,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Delete a pipeline step.
@@ -479,7 +486,7 @@ async def delete_step(
 async def reorder_steps(
     reorder_request: StepReorderRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Reorder pipeline steps.
@@ -508,7 +515,7 @@ async def reorder_steps(
 
 @router.get("/steps/universal", response_model=list[PipelineStepResponse])
 async def get_universal_steps(
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
     step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository),
 ):
     """
@@ -532,7 +539,7 @@ async def get_universal_steps(
 @router.get("/steps/by-class/{class_id}", response_model=list[PipelineStepResponse])
 async def get_steps_by_document_class(
     class_id: int,
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
     db: Session = Depends(get_session),
     step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository),
 ):
@@ -563,7 +570,7 @@ async def get_steps_by_document_class(
 
 @router.get("/visualization")
 async def get_pipeline_visualization(
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
     db: Session = Depends(get_session),
     step_repository: PipelineStepRepository = Depends(get_pipeline_step_repository),
 ):
@@ -642,7 +649,7 @@ async def get_pipeline_visualization(
 async def get_available_models(
     enabled_only: bool = False,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Get all available AI models.
@@ -668,7 +675,7 @@ async def get_available_models(
 async def get_model(
     model_id: int,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Get a single model by ID.
@@ -695,7 +702,7 @@ async def get_model(
 async def get_all_document_classes(
     enabled_only: bool = False,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Get all document classes.
@@ -721,7 +728,7 @@ async def get_all_document_classes(
 async def get_document_class(
     class_id: int,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Get a single document class by ID.
@@ -747,7 +754,7 @@ async def get_document_class(
 async def create_document_class(
     class_request: DocumentClassRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Create a new document class.
@@ -788,7 +795,7 @@ async def update_document_class(
     class_id: int,
     class_request: DocumentClassRequest,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Update an existing document class.
@@ -825,7 +832,7 @@ async def update_document_class(
 async def delete_document_class(
     class_id: int,
     db: Session = Depends(get_session),
-    authenticated: bool = Depends(verify_session_token),
+    current_user: UserDB = Depends(require_user_auth),
 ):
     """
     Delete a document class.
@@ -859,7 +866,7 @@ async def delete_document_class(
 
 @router.get("/document-classes/statistics/summary")
 async def get_document_class_statistics(
-    db: Session = Depends(get_session), authenticated: bool = Depends(verify_session_token)
+    db: Session = Depends(get_session), current_user: UserDB = Depends(require_user_auth)
 ):
     """
     Get statistics about document classes.

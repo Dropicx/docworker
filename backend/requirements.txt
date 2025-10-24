@@ -40,6 +40,10 @@ redis==5.0.0
 # Error Handling & Resilience
 tenacity==8.2.3
 
+# Authentication & Security
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.3.0
+
 # NOTE: spaCy moved to worker requirements.txt
 # PII removal now happens in worker, not backend
 

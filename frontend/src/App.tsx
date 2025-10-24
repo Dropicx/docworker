@@ -11,6 +11,8 @@ import {
   ChevronDown,
   Search,
   Settings,
+  LogOut,
+  User,
 } from 'lucide-react';
 import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
@@ -22,6 +24,9 @@ import FAQ from './components/FAQ';
 import Impressum from './pages/Impressum';
 import Datenschutz from './pages/Datenschutz';
 import Nutzungsbedingungen from './pages/Nutzungsbedingungen';
+import Login from './pages/Login';
+import ProtectedRoute from './components/ProtectedRoute';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ApiService from './services/api';
 import {
   UploadResponse,
@@ -370,7 +375,27 @@ function App() {
     );
   };
 
-  const MainApp = () => (
+  const MainApp = () => {
+    const { isAuthenticated, user, logout } = useAuth();
+
+    const handleLogout = async () => {
+      try {
+        await logout();
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    };
+
+    const handleSettingsClick = () => {
+      if (isAuthenticated) {
+        setShowSettings(true);
+      } else {
+        // Redirect to login, then back to settings
+        window.location.href = '/login?redirect=/settings';
+      }
+    };
+
+    return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
       {/* Header - Mobile Optimized */}
       <header className="sticky top-0 z-50 header-blur">
@@ -395,13 +420,51 @@ function App() {
 
             <div className="flex items-center space-x-4">
               {renderHealthIndicator()}
-              <button
-                onClick={() => setShowSettings(true)}
-                className="p-2 text-primary-600 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200 group"
-                title="Prompt-Einstellungen"
-              >
-                <Settings className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              </button>
+              
+              {/* User Menu */}
+              {isAuthenticated ? (
+                <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 px-3 py-1.5 bg-brand-50 rounded-lg">
+                    <User className="w-4 h-4 text-brand-600" />
+                    <span className="text-sm font-medium text-brand-700">
+                      {user?.full_name || user?.email}
+                    </span>
+                    <span className="text-xs text-brand-600 bg-brand-100 px-2 py-0.5 rounded-full">
+                      {user?.role === 'admin' ? 'Admin' : 'User'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={handleSettingsClick}
+                    className="p-2 text-primary-600 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200 group"
+                    title="Einstellungen"
+                  >
+                    <Settings className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="p-2 text-primary-600 hover:text-error-600 hover:bg-error-50 rounded-lg transition-all duration-200 group"
+                    title="Abmelden"
+                  >
+                    <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={handleSettingsClick}
+                    className="p-2 text-primary-600 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200 group"
+                    title="Einstellungen (Anmeldung erforderlich)"
+                  >
+                    <Settings className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                  </button>
+                  <a
+                    href="/login"
+                    className="px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors"
+                  >
+                    Anmelden
+                  </a>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -628,15 +691,19 @@ function App() {
       {/* Settings Modal */}
       <EnhancedSettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
-  );
+    );
+  };
 
   return (
-    <Routes>
-      <Route path="/" element={<MainApp />} />
-      <Route path="/impressum" element={<Impressum />} />
-      <Route path="/datenschutz" element={<Datenschutz />} />
-      <Route path="/nutzungsbedingungen" element={<Nutzungsbedingungen />} />
-    </Routes>
+    <AuthProvider>
+      <Routes>
+        <Route path="/" element={<MainApp />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/impressum" element={<Impressum />} />
+        <Route path="/datenschutz" element={<Datenschutz />} />
+        <Route path="/nutzungsbedingungen" element={<Nutzungsbedingungen />} />
+      </Routes>
+    </AuthProvider>
   );
 }
 

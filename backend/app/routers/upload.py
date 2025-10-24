@@ -9,8 +9,10 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
+from app.core.permissions import get_current_user
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
+from app.database.auth_models import UserDB
 from app.models.document import DocumentType, ProcessingStatus, UploadResponse
 from app.services.file_validator import FileValidator
 
@@ -31,6 +33,7 @@ async def upload_document(
     request: Request,
     file: UploadFile = File(..., description="Medizinisches Dokument (PDF, JPG, PNG)"),
     db: Session = Depends(get_session),
+    current_user: UserDB | None = Depends(get_current_user),  # Optional user tracking
 ):
     # Log upload request
     upload_log = f"📤 Upload request: {file.filename} ({file.content_type})"
@@ -152,6 +155,7 @@ async def upload_document(
             started_at=datetime.now(),  # Track when user initiates processing
             pipeline_config=pipeline_config,  # Snapshot der Pipeline-Konfiguration
             ocr_config=ocr_config,  # Snapshot der OCR-Konfiguration
+            user_id=current_user.id if current_user else None,  # Track user if authenticated
         )
 
         db.add(pipeline_job)

@@ -24,9 +24,11 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings, settings
+from app.core.permissions import require_role, get_current_user_required
 from app.database.connection import get_session
 from app.repositories.feature_flags_repository import FeatureFlagsRepository
 from app.services.feature_flags import Feature, FeatureFlags
+from app.database.auth_models import UserDB
 
 logger = logging.getLogger(__name__)
 
@@ -87,30 +89,10 @@ class ReloadResponse(BaseModel):
 # ==================
 
 
-def verify_access_code(x_access_code: str | None = Header(None, alias="X-Access-Code")) -> bool:
-    """
-    Verify admin access code from header.
-
-    Args:
-        x_access_code: Access code from X-Access-Code header
-
-    Raises:
-        HTTPException: If access code is missing or invalid
-
-    Returns:
-        True if authenticated
-    """
-    if not x_access_code:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Access code required. Provide X-Access-Code header.",
-        )
-
-    if x_access_code != settings.admin_access_code:
-        logger.warning("Invalid access code attempt")
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid access code")
-
-    return True
+# All endpoints in this router require ADMIN role
+def require_admin_auth(current_user: UserDB = Depends(get_current_user_required)):
+    """Require admin authentication for all endpoints"""
+    return require_role("admin")(current_user)
 
 
 # ==================
@@ -120,13 +102,13 @@ def verify_access_code(x_access_code: str | None = Header(None, alias="X-Access-
 
 @router.get("/", response_model=ConfigResponse)
 async def get_configuration(
-    authenticated: bool = Depends(verify_access_code),
+    current_user: UserDB = Depends(require_admin_auth),
     app_settings: Settings = Depends(get_settings),
 ) -> ConfigResponse:
     """
     Get current application configuration (non-sensitive values only).
 
-    **Authentication Required:** X-Access-Code header
+    **Authentication Required:** Admin role
 
     Returns summary of current configuration without exposing secrets.
     """
@@ -145,13 +127,13 @@ async def get_configuration(
 
 @router.get("/validation", response_model=ValidationResponse)
 async def validate_configuration(
-    authenticated: bool = Depends(verify_access_code),
+    current_user: UserDB = Depends(require_admin_auth),
     app_settings: Settings = Depends(get_settings),
 ) -> ValidationResponse:
     """
     Validate current configuration and check for issues.
 
-    **Authentication Required:** X-Access-Code header
+    **Authentication Required:** Admin role
 
     Returns validation status with any errors or warnings found.
     """
@@ -192,14 +174,14 @@ async def validate_configuration(
 
 @router.get("/feature-flags", response_model=FeatureFlagsResponse)
 async def get_feature_flags(
-    authenticated: bool = Depends(verify_access_code),
+    current_user: UserDB = Depends(require_admin_auth),
     db: Session = Depends(get_session),
     app_settings: Settings = Depends(get_settings),
 ) -> FeatureFlagsResponse:
     """
     Get status of all feature flags.
 
-    **Authentication Required:** X-Access-Code header
+    **Authentication Required:** Admin role
 
     Returns current state of all feature flags with their enabled status.
     """
@@ -223,13 +205,13 @@ async def get_feature_flags(
 async def update_feature_flag(
     flag_name: str,
     update: FeatureFlagUpdate,
-    authenticated: bool = Depends(verify_access_code),
+    current_user: UserDB = Depends(require_admin_auth),
     db: Session = Depends(get_session),
 ) -> JSONResponse:
     """
     Update a feature flag in the database.
 
-    **Authentication Required:** X-Access-Code header
+    **Authentication Required:** Admin role
 
     Updates the feature flag in the database (priority level 2).
     Environment variables (priority level 1) will still override this value.
@@ -278,13 +260,13 @@ async def update_feature_flag(
 
 @router.post("/reload", response_model=ReloadResponse)
 async def reload_configuration(
-    authenticated: bool = Depends(verify_access_code),
+    current_user: UserDB = Depends(require_admin_auth),
     app_settings: Settings = Depends(get_settings),
 ) -> ReloadResponse:
     """
     Hot reload configuration (safe settings only).
 
-    **Authentication Required:** X-Access-Code header
+    **Authentication Required:** Admin role
 
     **Note:** Only non-critical settings can be reloaded without restart.
     Critical settings (database URL, API keys, etc.) require application restart.
@@ -321,11 +303,11 @@ async def reload_configuration(
 
 
 @router.get("/health")
-async def config_health(authenticated: bool = Depends(verify_access_code)) -> dict[str, Any]:
+async def config_health(current_user: UserDB = Depends(require_admin_auth)) -> dict[str, Any]:
     """
     Check health of configuration management system.
 
-    **Authentication Required:** X-Access-Code header
+    **Authentication Required:** Admin role
 
     Returns health status and diagnostics.
     """

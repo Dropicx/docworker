@@ -21,6 +21,10 @@ from app.routers.modular_pipeline import router as modular_pipeline_router
 from app.routers.monitoring import router as monitoring_router
 from app.routers.process_multi_file import router as multi_file_router
 from app.routers.settings_auth import router as settings_auth_router
+from app.routers.auth import router as auth_router
+from app.routers.users import router as users_router
+from app.routers.api_keys import router as api_keys_router
+from app.routers.audit import router as audit_router
 from app.services.cleanup import cleanup_temp_files
 
 # Configure logging with centralized settings
@@ -141,9 +145,10 @@ app.add_middleware(TrustedHostMiddleware, allowed_hosts=settings.trusted_hosts)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins,
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_credentials=settings.cors_allow_credentials,
+    allow_methods=["GET", "POST", "DELETE", "PUT", "PATCH", "OPTIONS"],
     allow_headers=["*"],
+    max_age=settings.cors_max_age,
 )
 
 
@@ -185,18 +190,34 @@ async def log_requests(request: Request, call_next):
 async def add_security_headers(request: Request, call_next):
     response = await call_next(request)
 
-    # Security headers
+    # Enhanced security headers
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
-    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-    # Relaxed CSP for Railway deployment
-    if not settings.is_production:
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
+    
+    # Content Security Policy
+    if settings.is_production:
+        response.headers["Content-Security-Policy"] = (
+            "default-src 'self'; "
+            "script-src 'self'; "
+            "style-src 'self' 'unsafe-inline'; "
+            "img-src 'self' data: https:; "
+            "connect-src 'self'; "
+            "font-src 'self'; "
+            "object-src 'none'; "
+            "base-uri 'self'; "
+            "form-action 'self'"
+        )
+    else:
+        # Relaxed CSP for development
         response.headers["Content-Security-Policy"] = (
             "default-src 'self'; "
             "script-src 'self' 'unsafe-inline'; "
             "style-src 'self' 'unsafe-inline'; "
-            "img-src 'self' data:; "
+            "img-src 'self' data: https:; "
             "connect-src 'self'"
         )
 
@@ -204,10 +225,19 @@ async def add_security_headers(request: Request, call_next):
 
 
 # Router einbinden
+# Public endpoints (no authentication required)
 app.include_router(upload.router, prefix="/api", tags=["upload"])
 app.include_router(process.router, prefix="/api", tags=["process"])
 app.include_router(multi_file_router, prefix="/api", tags=["multi-file"])
 app.include_router(health.router, prefix="/api", tags=["health"])
+
+# Authentication and user management
+app.include_router(auth_router, tags=["authentication"])
+app.include_router(users_router, tags=["users"])
+app.include_router(api_keys_router, tags=["api-keys"])
+app.include_router(audit_router, tags=["audit"])
+
+# Legacy endpoints (will be updated with proper authentication)
 app.include_router(settings_auth_router, tags=["settings"])  # Minimal auth for settings UI
 app.include_router(
     modular_pipeline_router, tags=["pipeline"]

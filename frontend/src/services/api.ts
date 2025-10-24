@@ -1,4 +1,4 @@
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosResponse, AxiosRequestConfig } from 'axios';
 import {
   UploadResponse,
   ProcessingProgress,
@@ -23,25 +23,78 @@ const api = axios.create({
   },
 });
 
-// Request interceptor for logging
-api.interceptors.request.use(config => {
+// Request interceptor for authentication and logging
+api.interceptors.request.use((config: AxiosRequestConfig) => {
+  // Add authentication header if token exists
+  const storedTokens = localStorage.getItem('auth_tokens');
+  if (storedTokens) {
+    try {
+      const tokens = JSON.parse(storedTokens);
+      if (tokens.access_token) {
+        config.headers = {
+          ...config.headers,
+          Authorization: `Bearer ${tokens.access_token}`,
+        };
+      }
+    } catch (error) {
+      console.error('Error parsing stored tokens:', error);
+    }
+  }
+
   // eslint-disable-next-line no-console
   console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
   return config;
 });
 
-// Response interceptor for error handling
+// Response interceptor for error handling and token refresh
 api.interceptors.response.use(
   response => {
     // eslint-disable-next-line no-console
     console.log(`✅ API Response: ${response.status} ${response.config.url}`);
     return response;
   },
-  error => {
+  async error => {
     console.error(
       `❌ API Error: ${error.response?.status} ${error.config?.url}`,
       error.response?.data
     );
+
+    // Handle 401 Unauthorized - try to refresh token
+    if (error.response?.status === 401 && !error.config._retry) {
+      const storedTokens = localStorage.getItem('auth_tokens');
+      if (storedTokens) {
+        try {
+          const tokens = JSON.parse(storedTokens);
+          if (tokens.refresh_token) {
+            // Try to refresh the token
+            const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {
+              refresh_token: tokens.refresh_token,
+            });
+
+            const newTokens = {
+              ...tokens,
+              access_token: refreshResponse.data.access_token,
+              refresh_token: refreshResponse.data.refresh_token,
+            };
+
+            // Update stored tokens
+            localStorage.setItem('auth_tokens', JSON.stringify(newTokens));
+
+            // Retry the original request with new token
+            error.config.headers.Authorization = `Bearer ${newTokens.access_token}`;
+            error.config._retry = true;
+            return api.request(error.config);
+          }
+        } catch (refreshError) {
+          console.error('Token refresh failed:', refreshError);
+          // If refresh fails, clear tokens and redirect to login
+          localStorage.removeItem('auth_tokens');
+          localStorage.removeItem('auth_user');
+          // Dispatch custom event to notify auth context
+          window.dispatchEvent(new CustomEvent('auth:logout'));
+        }
+      }
+    }
 
     const message =
       error.response?.data?.detail ||

@@ -98,6 +98,69 @@ class Settings(BaseSettings):
     )
 
     # ==================
+    # JWT Configuration
+    # ==================
+    jwt_secret_key: SecretStr = Field(
+        ...,  # Required
+        description="Secret key for JWT signing",
+    )
+    jwt_algorithm: str = Field(default="HS256", description="JWT signing algorithm")
+    jwt_access_token_expire_minutes: int = Field(
+        default=15, description="Access token expiration in minutes"
+    )
+    jwt_refresh_token_expire_days: int = Field(
+        default=7, description="Refresh token expiration in days"
+    )
+
+    # ==================
+    # API Key Configuration
+    # ==================
+    api_key_length: int = Field(default=32, description="Length of generated API keys")
+    api_key_default_expiry_days: int = Field(
+        default=90, description="Default API key expiration in days"
+    )
+
+    # ==================
+    # Password Security
+    # ==================
+    bcrypt_rounds: int = Field(
+        default=12, ge=10, le=14, description="Bcrypt cost factor (10-14)"
+    )
+    password_min_length: int = Field(
+        default=8, ge=8, description="Minimum password length"
+    )
+
+    # ==================
+    # Audit Logging
+    # ==================
+    enable_audit_logging: bool = Field(
+        default=True, description="Enable audit logging for security events"
+    )
+    audit_admin_actions_only: bool = Field(
+        default=True, description="Only log admin/user actions (not public uploads)"
+    )
+
+    # ==================
+    # Public Access Configuration
+    # ==================
+    allow_public_upload: bool = Field(
+        default=True, description="Allow public document uploads without authentication"
+    )
+    require_auth_for_results: bool = Field(
+        default=False, description="Require authentication to view processing results"
+    )
+
+    # ==================
+    # CORS Configuration
+    # ==================
+    cors_allow_credentials: bool = Field(
+        default=True, description="Allow credentials in CORS requests"
+    )
+    cors_max_age: int = Field(
+        default=3600, description="CORS preflight cache duration in seconds"
+    )
+
+    # ==================
     # File Processing Settings
     # ==================
     max_file_size_mb: int = Field(default=50, description="Maximum upload file size in MB")
