@@ -15,7 +15,6 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.permissions import (
-    check_resource_access,
     get_current_user_required,
     require_admin,
 )
@@ -210,7 +209,7 @@ async def revoke_api_key(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="API key not found or access denied"
-            ) from e
+            )
 
         logger.info(f"Revoked API key {key_id} for user {current_user.email}")
 
@@ -266,7 +265,6 @@ async def update_api_key(
             update_fields["name"] = update_data.name
 
         if update_data.expires_days is not None:
-            from datetime import timedelta
             update_fields["expires_at"] = datetime.now(datetime.UTC) + timedelta(days=update_data.expires_days)
 
         if update_fields:
