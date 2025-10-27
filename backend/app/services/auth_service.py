@@ -53,17 +53,17 @@ class AuthService:
     ) -> UserDB:
         """
         Create a new user (admin-only operation).
-        
+
         Args:
             email: User's email address
             password: Plain text password
             full_name: User's full name
             role: User role (USER or ADMIN)
             created_by_admin_id: ID of admin creating the user
-            
+
         Returns:
             Created user instance
-            
+
         Raises:
             ValueError: If email already exists or password is weak
         """
@@ -71,14 +71,14 @@ class AuthService:
             # Validate email format
             if not email or "@" not in email:
                 raise ValueError("Invalid email format")
-            
+
             # Check if email already exists
             if self.user_repo.is_email_taken(email):
                 raise ValueError(f"User with email {email} already exists")
-            
+
             # Hash password
             password_hash = hash_password(password)
-            
+
             # Create user
             user = self.user_repo.create_user(
                 email=email,
@@ -87,7 +87,7 @@ class AuthService:
                 role=role,
                 created_by_admin_id=created_by_admin_id
             )
-            
+
             # Log user creation
             self.audit_log_repo.create_log(
                 user_id=created_by_admin_id,
@@ -96,10 +96,10 @@ class AuthService:
                 resource_id=str(user.id),
                 details={"created_user_email": email, "role": role.value}
             )
-            
+
             logger.info(f"Created user {email} with role {role} by admin {created_by_admin_id}")
             return user
-            
+
         except Exception as e:
             logger.error(f"Error creating user {email}: {e}")
             raise
@@ -210,13 +210,13 @@ class AuthService:
             logger.error(f"Error authenticating user {email}: {e}")
             return None
 
-    def create_tokens(self, user: UserDB) -> Dict[str, str]:
+    def create_tokens(self, user: UserDB) -> dict[str, str]:
         """
         Create access and refresh tokens for a user.
-        
+
         Args:
             user: User instance
-            
+
         Returns:
             Dictionary with access_token and refresh_token
         """
@@ -225,28 +225,28 @@ class AuthService:
             access_token = create_access_token(
                 data={"sub": str(user.id), "email": user.email, "role": user.role.value}
             )
-            
+
             # Create refresh token
             refresh_token = create_refresh_token(str(user.id))
-            
+
             # Hash refresh token for storage
             from app.core.security import hash_api_key
             refresh_token_hash = hash_api_key(refresh_token)
-            
+
             # Store refresh token in database
-            expires_at = datetime.now(timezone.utc) + timedelta(days=7)  # 7 days
+            expires_at = datetime.now(datetime.UTC) + timedelta(days=7)  # 7 days
             self.refresh_token_repo.create_token(
                 user_id=user.id,
                 token_hash=refresh_token_hash,
                 expires_at=expires_at
             )
-            
+
             logger.debug(f"Created tokens for user {user.email}")
             return {
                 "access_token": access_token,
                 "refresh_token": refresh_token
             }
-            
+
         except Exception as e:
             logger.error(f"Error creating tokens for user {user.id}: {e}")
             raise
@@ -254,10 +254,10 @@ class AuthService:
     def refresh_access_token(self, refresh_token: str) -> Optional[str]:
         """
         Refresh an access token using a refresh token.
-        
+
         Args:
             refresh_token: Refresh token string
-            
+
         Returns:
             New access token if refresh successful, None otherwise
         """
@@ -265,35 +265,35 @@ class AuthService:
             # Hash the refresh token to look it up
             from app.core.security import hash_api_key
             refresh_token_hash = hash_api_key(refresh_token)
-            
+
             # Get refresh token from database
             stored_token = self.refresh_token_repo.get_by_hash(refresh_token_hash)
             if not stored_token:
                 logger.warning("Refresh token not found in database")
                 return None
-            
+
             # Check if token is valid
             if not self.refresh_token_repo.is_token_valid(refresh_token_hash):
                 logger.warning("Refresh token is revoked or expired")
                 return None
-            
+
             # Get user
             user = self.user_repo.get_by_id(stored_token.user_id)
             if not user or not user.is_active or user.status != UserStatus.ACTIVE:
                 logger.warning("User not found or inactive")
                 return None
-            
+
             # Update last used timestamp
             self.refresh_token_repo.update_last_used(stored_token.id)
-            
+
             # Create new access token
             access_token = create_access_token(
                 data={"sub": str(user.id), "email": user.email, "role": user.role.value}
             )
-            
+
             logger.debug(f"Refreshed access token for user {user.email}")
             return access_token
-            
+
         except Exception as e:
             logger.error(f"Error refreshing access token: {e}")
             return None
@@ -301,10 +301,10 @@ class AuthService:
     def revoke_refresh_token(self, refresh_token: str) -> bool:
         """
         Revoke a refresh token (logout).
-        
+
         Args:
             refresh_token: Refresh token string to revoke
-            
+
         Returns:
             True if revoked successfully
         """
@@ -312,17 +312,17 @@ class AuthService:
             # Hash the refresh token to look it up
             from app.core.security import hash_api_key
             refresh_token_hash = hash_api_key(refresh_token)
-            
+
             # Revoke token
             success = self.refresh_token_repo.revoke_token_by_hash(refresh_token_hash)
-            
+
             if success:
                 logger.info("Refresh token revoked successfully")
             else:
                 logger.warning("Refresh token not found for revocation")
-            
+
             return success
-            
+
         except Exception as e:
             logger.error(f"Error revoking refresh token: {e}")
             return False
@@ -330,10 +330,10 @@ class AuthService:
     def revoke_all_user_tokens(self, user_id: UUID) -> int:
         """
         Revoke all refresh tokens for a user.
-        
+
         Args:
             user_id: User's UUID
-            
+
         Returns:
             Number of tokens revoked
         """
@@ -341,7 +341,7 @@ class AuthService:
             count = self.refresh_token_repo.revoke_all_user_tokens(user_id)
             logger.info(f"Revoked {count} refresh tokens for user {user_id}")
             return count
-            
+
         except Exception as e:
             logger.error(f"Error revoking all tokens for user {user_id}: {e}")
             raise
@@ -349,10 +349,10 @@ class AuthService:
     def get_user_from_token(self, token: str) -> Optional[UserDB]:
         """
         Get user from JWT access token.
-        
+
         Args:
             token: JWT access token
-            
+
         Returns:
             User instance if token is valid, None otherwise
         """
@@ -360,17 +360,17 @@ class AuthService:
             # Verify token
             payload = verify_token(token, "access")
             user_id = payload.get("sub")
-            
+
             if not user_id:
                 return None
-            
+
             # Get user
             user = self.user_repo.get_by_id(UUID(user_id))
             if not user or not user.is_active or user.status != UserStatus.ACTIVE:
                 return None
-            
+
             return user
-            
+
         except Exception as e:
             logger.debug(f"Error getting user from token: {e}")
             return None
@@ -378,12 +378,12 @@ class AuthService:
     def change_password(self, user_id: UUID, old_password: str, new_password: str) -> bool:
         """
         Change user's password.
-        
+
         Args:
             user_id: User's UUID
             old_password: Current password
             new_password: New password
-            
+
         Returns:
             True if changed successfully
         """
@@ -392,22 +392,22 @@ class AuthService:
             user = self.user_repo.get_by_id(user_id)
             if not user:
                 return False
-            
+
             # Verify old password
             if not verify_password(old_password, user.password_hash):
                 logger.warning(f"Password change failed: invalid old password for user {user_id}")
                 return False
-            
+
             # Hash new password
             new_password_hash = hash_password(new_password)
-            
+
             # Update password
             success = self.user_repo.change_password(user_id, new_password_hash)
-            
+
             if success:
                 # Revoke all refresh tokens for security
                 self.revoke_all_user_tokens(user_id)
-                
+
                 # Log password change
                 self.audit_log_repo.create_log(
                     user_id=user_id,
@@ -415,11 +415,11 @@ class AuthService:
                     resource_type="user",
                     resource_id=str(user_id)
                 )
-                
+
                 logger.info(f"Password changed for user {user_id}")
-            
+
             return success
-            
+
         except Exception as e:
             logger.error(f"Error changing password for user {user_id}: {e}")
             return False
@@ -429,27 +429,27 @@ class AuthService:
         user_id: UUID,
         name: str,
         expires_days: Optional[int] = None
-    ) -> Tuple[str, str]:
+    ) -> tuple[str, str]:
         """
         Create an API key for a user.
-        
+
         Args:
             user_id: User's UUID
             name: User-friendly name for the key
             expires_days: Days until expiration (None for no expiration)
-            
+
         Returns:
             Tuple of (plain_key, key_id)
         """
         try:
             # Generate API key
             plain_key, key_hash = generate_api_key()
-            
+
             # Set expiration
             expires_at = None
             if expires_days:
-                expires_at = datetime.now(timezone.utc) + timedelta(days=expires_days)
-            
+                expires_at = datetime.now(datetime.UTC) + timedelta(days=expires_days)
+
             # Create API key record
             api_key = self.api_key_repo.create_api_key(
                 user_id=user_id,
@@ -457,7 +457,7 @@ class AuthService:
                 name=name,
                 expires_at=expires_at
             )
-            
+
             # Log API key creation
             self.audit_log_repo.create_log(
                 user_id=user_id,
@@ -466,10 +466,10 @@ class AuthService:
                 resource_id=str(api_key.id),
                 details={"key_name": name}
             )
-            
+
             logger.info(f"Created API key '{name}' for user {user_id}")
             return plain_key, str(api_key.id)
-            
+
         except Exception as e:
             logger.error(f"Error creating API key for user {user_id}: {e}")
             raise
@@ -477,39 +477,39 @@ class AuthService:
     def verify_api_key(self, api_key: str) -> Optional[UserDB]:
         """
         Verify an API key and return the associated user.
-        
+
         Args:
             api_key: Plain API key string
-            
+
         Returns:
             User instance if key is valid, None otherwise
         """
         try:
             # Hash the API key to look it up
             key_hash = hash_api_key(api_key)
-            
+
             # Get API key record
             stored_key = self.api_key_repo.get_by_hash(key_hash)
             if not stored_key:
                 return None
-            
+
             # Check if key is active and not expired
             if not stored_key.is_active:
                 return None
-            
-            if stored_key.expires_at and stored_key.expires_at < datetime.now(timezone.utc):
+
+            if stored_key.expires_at and stored_key.expires_at < datetime.now(datetime.UTC):
                 return None
-            
+
             # Get user
             user = self.user_repo.get_by_id(stored_key.user_id)
             if not user or not user.is_active or user.status != UserStatus.ACTIVE:
                 return None
-            
+
             # Update usage statistics
             self.api_key_repo.update_usage(stored_key.id)
-            
+
             return user
-            
+
         except Exception as e:
             logger.error(f"Error verifying API key: {e}")
             return None
@@ -517,11 +517,11 @@ class AuthService:
     def revoke_api_key(self, key_id: str, user_id: UUID) -> bool:
         """
         Revoke an API key.
-        
+
         Args:
             key_id: API key UUID
             user_id: User's UUID (for authorization)
-            
+
         Returns:
             True if revoked successfully
         """
@@ -530,10 +530,10 @@ class AuthService:
             api_key = self.api_key_repo.get_by_id(UUID(key_id))
             if not api_key or api_key.user_id != user_id:
                 return False
-            
+
             # Revoke key
             success = self.api_key_repo.revoke_key(UUID(key_id))
-            
+
             if success:
                 # Log API key revocation
                 self.audit_log_repo.create_log(
@@ -542,11 +542,11 @@ class AuthService:
                     resource_type="api_key",
                     resource_id=key_id
                 )
-                
+
                 logger.info(f"Revoked API key {key_id} for user {user_id}")
-            
+
             return success
-            
+
         except Exception as e:
             logger.error(f"Error revoking API key {key_id}: {e}")
             return False
@@ -554,10 +554,10 @@ class AuthService:
     def get_user_api_keys(self, user_id: UUID) -> list:
         """
         Get all API keys for a user.
-        
+
         Args:
             user_id: User's UUID
-            
+
         Returns:
             List of API key records (without key values)
         """
@@ -570,7 +570,7 @@ class AuthService:
     def cleanup_expired_tokens(self) -> int:
         """
         Clean up expired refresh tokens.
-        
+
         Returns:
             Number of tokens cleaned up
         """
@@ -583,7 +583,7 @@ class AuthService:
     def cleanup_expired_api_keys(self) -> int:
         """
         Clean up expired API keys.
-        
+
         Returns:
             Number of keys cleaned up
         """

@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class AuditLogger:
     """
     Centralized audit logging service for security and compliance.
-    
+
     This service provides methods to log various types of events including
     authentication, authorization, data access, and system changes.
     """
@@ -45,11 +45,11 @@ class AuditLogger:
         action: AuditAction,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None
     ) -> None:
         """
         Log authentication-related events.
-        
+
         Args:
             user_id: User ID (None for failed authentication)
             action: Authentication action type
@@ -59,7 +59,7 @@ class AuditLogger:
         """
         if not settings.enable_audit_logging:
             return
-        
+
         try:
             self.audit_repo.create_log(
                 user_id=user_id,
@@ -70,7 +70,7 @@ class AuditLogger:
                 user_agent=user_agent,
                 details=details
             )
-            
+
             logger.debug(f"Logged auth event: {action.value} for user {user_id}")
         except Exception as e:
             logger.error(f"Failed to log auth event {action.value}: {e}")
@@ -83,11 +83,11 @@ class AuditLogger:
         resource_id: str,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None
     ) -> None:
         """
         Log user actions and changes.
-        
+
         Args:
             user_id: User performing the action
             action: Action type
@@ -99,7 +99,7 @@ class AuditLogger:
         """
         if not settings.enable_audit_logging:
             return
-        
+
         try:
             self.audit_repo.create_log(
                 user_id=user_id,
@@ -110,7 +110,7 @@ class AuditLogger:
                 user_agent=user_agent,
                 details=details
             )
-            
+
             logger.debug(f"Logged user action: {action.value} by user {user_id}")
         except Exception as e:
             logger.error(f"Failed to log user action {action.value}: {e}")
@@ -123,11 +123,11 @@ class AuditLogger:
         user_id: Optional[UUID] = None,
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None
     ) -> None:
         """
         Log security-related events.
-        
+
         Args:
             action: Security action type
             resource_type: Type of resource affected
@@ -139,7 +139,7 @@ class AuditLogger:
         """
         if not settings.enable_audit_logging:
             return
-        
+
         try:
             self.audit_repo.create_log(
                 user_id=user_id,
@@ -150,7 +150,7 @@ class AuditLogger:
                 user_agent=user_agent,
                 details=details
             )
-            
+
             logger.warning(f"Logged security event: {action.value}")
         except Exception as e:
             logger.error(f"Failed to log security event {action.value}: {e}")
@@ -160,11 +160,11 @@ class AuditLogger:
         action: AuditAction,
         resource_type: str,
         resource_id: str,
-        details: Optional[Dict[str, Any]] = None
+        details: Optional[dict[str, Any]] = None
     ) -> None:
         """
         Log system-level events.
-        
+
         Args:
             action: System action type
             resource_type: Type of resource affected
@@ -173,7 +173,7 @@ class AuditLogger:
         """
         if not settings.enable_audit_logging:
             return
-        
+
         try:
             self.audit_repo.create_log(
                 user_id=None,  # System events have no user
@@ -182,7 +182,7 @@ class AuditLogger:
                 resource_id=resource_id,
                 details=details
             )
-            
+
             logger.info(f"Logged system event: {action.value}")
         except Exception as e:
             logger.error(f"Failed to log system event {action.value}: {e}")
@@ -198,7 +198,7 @@ class AuditLogger:
     ) -> None:
         """
         Log permission denied events.
-        
+
         Args:
             user_id: User who was denied access
             permission: Permission that was denied
@@ -226,7 +226,7 @@ class AuditLogger:
     ) -> None:
         """
         Log authentication failure events.
-        
+
         Args:
             email: Email that failed authentication
             reason: Reason for failure
@@ -251,7 +251,7 @@ class AuditLogger:
     ) -> None:
         """
         Log rate limit exceeded events.
-        
+
         Args:
             user_id: User who exceeded rate limit
             endpoint: Endpoint that was rate limited
@@ -277,7 +277,7 @@ class AuditLogger:
     ) -> None:
         """
         Log user login events.
-        
+
         Args:
             user_id: User who logged in
             ip_address: Client IP address
@@ -301,7 +301,7 @@ class AuditLogger:
     ) -> None:
         """
         Log user logout events.
-        
+
         Args:
             user_id: User who logged out
             ip_address: Client IP address
@@ -327,7 +327,7 @@ class AuditLogger:
     ) -> None:
         """
         Log user creation events.
-        
+
         Args:
             admin_user_id: Admin who created the user
             created_user_id: ID of created user
@@ -353,13 +353,13 @@ class AuditLogger:
         self,
         admin_user_id: UUID,
         updated_user_id: UUID,
-        changes: Dict[str, Any],
+        changes: dict[str, Any],
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None
     ) -> None:
         """
         Log user update events.
-        
+
         Args:
             admin_user_id: Admin who updated the user
             updated_user_id: ID of updated user
@@ -387,7 +387,7 @@ class AuditLogger:
     ) -> None:
         """
         Log user deletion events.
-        
+
         Args:
             admin_user_id: Admin who deleted the user
             deleted_user_id: ID of deleted user
@@ -415,7 +415,7 @@ class AuditLogger:
     ) -> None:
         """
         Log password change events.
-        
+
         Args:
             user_id: User whose password was changed
             changed_by_admin: Whether changed by admin
@@ -443,7 +443,7 @@ class AuditLogger:
     ) -> None:
         """
         Log API key creation events.
-        
+
         Args:
             user_id: User who created the key
             key_id: ID of created key
@@ -471,7 +471,7 @@ class AuditLogger:
     ) -> None:
         """
         Log API key revocation events.
-        
+
         Args:
             user_id: User who revoked the key (or admin)
             key_id: ID of revoked key
@@ -494,13 +494,13 @@ class AuditLogger:
         user_id: UUID,
         config_type: str,
         config_id: str,
-        changes: Dict[str, Any],
+        changes: dict[str, Any],
         ip_address: Optional[str] = None,
         user_agent: Optional[str] = None
     ) -> None:
         """
         Log pipeline configuration changes.
-        
+
         Args:
             user_id: User who made the change
             config_type: Type of configuration changed
@@ -530,7 +530,7 @@ class AuditLogger:
     ) -> None:
         """
         Log settings update events.
-        
+
         Args:
             user_id: User who updated the setting
             setting_name: Name of setting updated
@@ -556,13 +556,13 @@ class AuditLogger:
     def get_audit_summary(
         self,
         hours: int = 24
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Get audit log summary for a time period.
-        
+
         Args:
             hours: Number of hours to look back
-            
+
         Returns:
             Dictionary with audit summary
         """
@@ -575,10 +575,10 @@ class AuditLogger:
     def cleanup_old_logs(self, days: int = 90) -> int:
         """
         Clean up old audit logs.
-        
+
         Args:
             days: Number of days to keep logs
-            
+
         Returns:
             Number of logs cleaned up
         """
@@ -596,10 +596,10 @@ audit_logger: Optional[AuditLogger] = None
 def get_audit_logger(db: Session) -> AuditLogger:
     """
     Get audit logger instance.
-    
+
     Args:
         db: Database session
-        
+
     Returns:
         Audit logger instance
     """

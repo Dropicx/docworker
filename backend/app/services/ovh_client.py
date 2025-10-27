@@ -249,7 +249,7 @@ class OVHClient:
                 Llama 3.3 70B for quality. Default False.
 
         Returns:
-            Dict[str, Any]: Processing result containing:
+            dict[str, Any]: Processing result containing:
                 - text (str): The AI-generated response
                 - input_tokens (int): Number of tokens in the prompt
                 - output_tokens (int): Number of tokens in the response

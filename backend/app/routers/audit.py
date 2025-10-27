@@ -45,7 +45,7 @@ class AuditLogResponse(BaseModel):
 
 class AuditLogListResponse(BaseModel):
     """Audit log list response model"""
-    logs: List[AuditLogResponse] = Field(..., description="List of audit log entries")
+    logs: list[AuditLogResponse] = Field(..., description="List of audit log entries")
     total: int = Field(..., description="Total number of logs")
     page: int = Field(..., description="Current page number")
     limit: int = Field(..., description="Number of logs per page")
@@ -94,7 +94,7 @@ async def list_audit_logs(
 ):
     """
     List audit logs with optional filtering (admin only).
-    
+
     Args:
         page: Page number for pagination
         limit: Number of logs per page
@@ -104,16 +104,16 @@ async def list_audit_logs(
         hours: Hours to look back
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         Paginated list of audit logs
     """
     try:
         audit_repo = AuditLogRepository(db)
-        
+
         # Calculate skip for pagination
         skip = (page - 1) * limit
-        
+
         # Get logs based on filters
         if user_id:
             logs = audit_repo.get_by_user(user_id, skip=skip, limit=limit)
@@ -123,7 +123,7 @@ async def list_audit_logs(
             logs = audit_repo.get_by_resource(resource_type, "", skip=skip, limit=limit)
         else:
             logs = audit_repo.get_recent_logs(hours=hours, skip=skip, limit=limit)
-        
+
         # Convert to response format
         log_responses = [
             AuditLogResponse(
@@ -139,14 +139,14 @@ async def list_audit_logs(
             )
             for log in logs
         ]
-        
+
         return AuditLogListResponse(
             logs=log_responses,
             total=len(log_responses),
             page=page,
             limit=limit
         )
-        
+
     except Exception as e:
         logger.error(f"Error listing audit logs: {e}")
         raise HTTPException(
@@ -165,26 +165,26 @@ async def get_user_audit_logs(
 ):
     """
     Get audit logs for a specific user (admin only).
-    
+
     Args:
         user_id: User ID to get logs for
         page: Page number for pagination
         limit: Number of logs per page
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         Paginated list of user's audit logs
     """
     try:
         audit_repo = AuditLogRepository(db)
-        
+
         # Calculate skip for pagination
         skip = (page - 1) * limit
-        
+
         # Get user logs
         logs = audit_repo.get_by_user(user_id, skip=skip, limit=limit)
-        
+
         # Convert to response format
         log_responses = [
             AuditLogResponse(
@@ -200,14 +200,14 @@ async def get_user_audit_logs(
             )
             for log in logs
         ]
-        
+
         return AuditLogListResponse(
             logs=log_responses,
             total=len(log_responses),
             page=page,
             limit=limit
         )
-        
+
     except Exception as e:
         logger.error(f"Error getting audit logs for user {user_id}: {e}")
         raise HTTPException(
@@ -227,7 +227,7 @@ async def get_action_audit_logs(
 ):
     """
     Get audit logs for a specific action type (admin only).
-    
+
     Args:
         action_type: Action type to filter by
         page: Page number for pagination
@@ -235,19 +235,19 @@ async def get_action_audit_logs(
         hours: Hours to look back
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         Paginated list of action-specific audit logs
     """
     try:
         audit_repo = AuditLogRepository(db)
-        
+
         # Calculate skip for pagination
         skip = (page - 1) * limit
-        
+
         # Get action logs
         logs = audit_repo.get_by_action(action_type, skip=skip, limit=limit)
-        
+
         # Convert to response format
         log_responses = [
             AuditLogResponse(
@@ -263,14 +263,14 @@ async def get_action_audit_logs(
             )
             for log in logs
         ]
-        
+
         return AuditLogListResponse(
             logs=log_responses,
             total=len(log_responses),
             page=page,
             limit=limit
         )
-        
+
     except Exception as e:
         logger.error(f"Error getting audit logs for action {action_type}: {e}")
         raise HTTPException(
@@ -289,26 +289,26 @@ async def get_failed_login_logs(
 ):
     """
     Get failed login attempts (admin only).
-    
+
     Args:
         page: Page number for pagination
         limit: Number of logs per page
         hours: Hours to look back
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         Paginated list of failed login logs
     """
     try:
         audit_repo = AuditLogRepository(db)
-        
+
         # Calculate skip for pagination
         skip = (page - 1) * limit
-        
+
         # Get failed login logs
         logs = audit_repo.get_failed_logins(hours=hours, skip=skip, limit=limit)
-        
+
         # Convert to response format
         log_responses = [
             AuditLogResponse(
@@ -324,14 +324,14 @@ async def get_failed_login_logs(
             )
             for log in logs
         ]
-        
+
         return AuditLogListResponse(
             logs=log_responses,
             total=len(log_responses),
             page=page,
             limit=limit
         )
-        
+
     except Exception as e:
         logger.error(f"Error getting failed login logs: {e}")
         raise HTTPException(
@@ -350,26 +350,26 @@ async def get_permission_denied_logs(
 ):
     """
     Get permission denied events (admin only).
-    
+
     Args:
         page: Page number for pagination
         limit: Number of logs per page
         hours: Hours to look back
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         Paginated list of permission denied logs
     """
     try:
         audit_repo = AuditLogRepository(db)
-        
+
         # Calculate skip for pagination
         skip = (page - 1) * limit
-        
+
         # Get permission denied logs
         logs = audit_repo.get_permission_denied(hours=hours, skip=skip, limit=limit)
-        
+
         # Convert to response format
         log_responses = [
             AuditLogResponse(
@@ -385,14 +385,14 @@ async def get_permission_denied_logs(
             )
             for log in logs
         ]
-        
+
         return AuditLogListResponse(
             logs=log_responses,
             total=len(log_responses),
             page=page,
             limit=limit
         )
-        
+
     except Exception as e:
         logger.error(f"Error getting permission denied logs: {e}")
         raise HTTPException(
@@ -412,7 +412,7 @@ async def get_ip_audit_logs(
 ):
     """
     Get audit logs for a specific IP address (admin only).
-    
+
     Args:
         ip_address: IP address to filter by
         page: Page number for pagination
@@ -420,19 +420,19 @@ async def get_ip_audit_logs(
         hours: Hours to look back
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         Paginated list of IP-specific audit logs
     """
     try:
         audit_repo = AuditLogRepository(db)
-        
+
         # Calculate skip for pagination
         skip = (page - 1) * limit
-        
+
         # Get IP logs
         logs = audit_repo.get_logs_by_ip(ip_address, hours=hours, skip=skip, limit=limit)
-        
+
         # Convert to response format
         log_responses = [
             AuditLogResponse(
@@ -448,14 +448,14 @@ async def get_ip_audit_logs(
             )
             for log in logs
         ]
-        
+
         return AuditLogListResponse(
             logs=log_responses,
             total=len(log_responses),
             page=page,
             limit=limit
         )
-        
+
     except Exception as e:
         logger.error(f"Error getting audit logs for IP {ip_address}: {e}")
         raise HTTPException(
@@ -472,20 +472,20 @@ async def get_audit_summary(
 ):
     """
     Get audit log summary for a time period (admin only).
-    
+
     Args:
         hours: Hours to look back
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         Audit log summary statistics
     """
     try:
         audit_repo = AuditLogRepository(db)
-        
+
         summary = audit_repo.get_activity_summary(hours=hours)
-        
+
         return AuditSummaryResponse(
             time_period_hours=summary["time_period_hours"],
             action_counts=summary["action_counts"],
@@ -493,7 +493,7 @@ async def get_audit_summary(
             unique_ips=summary["unique_ips"],
             total_events=summary["total_events"]
         )
-        
+
     except Exception as e:
         logger.error(f"Error getting audit summary: {e}")
         raise HTTPException(
@@ -512,50 +512,50 @@ async def export_audit_logs_csv(
 ):
     """
     Export audit logs as CSV (admin only).
-    
+
     Args:
         start_date: Start date for export
         end_date: End date for export
         limit: Maximum records to export
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         CSV file download
     """
     try:
         audit_repo = AuditLogRepository(db)
-        
+
         # Get CSV data
         csv_data = audit_repo.export_logs_csv(
             start_date=start_date,
             end_date=end_date,
             limit=limit
         )
-        
+
         if not csv_data:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No audit logs found for the specified criteria"
             )
-        
+
         # Generate CSV content
         import csv
         import io
-        
+
         output = io.StringIO()
         fieldnames = ["timestamp", "user_id", "action", "resource_type", "resource_id", "ip_address", "user_agent", "details"]
         writer = csv.DictWriter(output, fieldnames=fieldnames)
         writer.writeheader()
         writer.writerows(csv_data)
-        
+
         csv_content = output.getvalue()
         output.close()
-        
+
         # Generate filename
-        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(datetime.UTC).strftime("%Y%m%d_%H%M%S")
         filename = f"audit_logs_{timestamp}.csv"
-        
+
         # Log export action
         audit_repo.create_log(
             user_id=current_user.id,
@@ -568,16 +568,16 @@ async def export_audit_logs_csv(
                 "record_count": len(csv_data)
             }
         )
-        
+
         logger.info(f"Admin {current_user.email} exported {len(csv_data)} audit logs to CSV")
-        
+
         # Return CSV file
         return StreamingResponse(
             io.BytesIO(csv_content.encode('utf-8')),
             media_type="text/csv",
             headers={"Content-Disposition": f"attachment; filename={filename}"}
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -596,20 +596,20 @@ async def cleanup_old_audit_logs(
 ):
     """
     Clean up old audit logs (admin only).
-    
+
     Args:
         days: Number of days to keep logs
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         Cleanup results
     """
     try:
         audit_repo = AuditLogRepository(db)
-        
+
         count = audit_repo.cleanup_old_logs(days=days)
-        
+
         # Log cleanup action
         audit_repo.create_log(
             user_id=current_user.id,
@@ -618,15 +618,15 @@ async def cleanup_old_audit_logs(
             resource_id="cleanup",
             details={"days_kept": days, "logs_removed": count}
         )
-        
+
         logger.info(f"Admin {current_user.email} cleaned up {count} old audit logs (kept {days} days)")
-        
+
         return {
             "message": f"Cleaned up {count} old audit logs",
             "days_kept": days,
             "logs_removed": count
         }
-        
+
     except Exception as e:
         logger.error(f"Error cleaning up audit logs: {e}")
         raise HTTPException(
@@ -641,7 +641,7 @@ async def cleanup_old_audit_logs(
 async def audit_health_check():
     """
     Audit service health check.
-    
+
     Returns:
         Service status
     """

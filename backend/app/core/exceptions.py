@@ -31,7 +31,7 @@ class BaseAppError(Exception):
     ):
         self.message = message
         self.details = details or {}
-        self.timestamp = datetime.now(timezone.utc)
+        self.timestamp = datetime.now(datetime.UTC)
         self.error_code = error_code or self.__class__.__name__
         super().__init__(self.message)
 

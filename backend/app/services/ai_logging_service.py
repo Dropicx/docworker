@@ -218,7 +218,7 @@ class AILoggingService:
             request_id: Request identifier for distributed tracing (optional)
 
         Yields:
-            Dict[str, Callable]: Context dict with setter functions:
+            dict[str, Callable]: Context dict with setter functions:
                 - 'set_input': Lambda to set input text → ctx['set_input'](text)
                 - 'set_output': Lambda to set output text → ctx['set_output'](text)
                 - 'set_error': Lambda to set error message → ctx['set_error'](error)
@@ -489,7 +489,7 @@ class AILoggingService:
             document_type: Filter to specific document type (e.g., "ARZTBRIEF")
 
         Returns:
-            Dict[str, Any]: Analytics summary with keys:
+            dict[str, Any]: Analytics summary with keys:
                 - total_interactions (int): Total log entries
                 - success_count (int): Successful interactions (status="success")
                 - error_count (int): Failed interactions (status="error")

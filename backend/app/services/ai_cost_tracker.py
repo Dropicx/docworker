@@ -164,7 +164,7 @@ class AICostTracker:
             model_name: Model identifier (e.g., "Meta-Llama-3.3-70B-Instruct")
 
         Returns:
-            Dict[str, float]: Pricing per 1K tokens with keys:
+            dict[str, float]: Pricing per 1K tokens with keys:
                 - "input": Cost per 1K input tokens (USD)
                 - "output": Cost per 1K output tokens (USD)
 
@@ -370,7 +370,7 @@ class AICostTracker:
             end_date: Filter logs created on/before this datetime (inclusive, default: no limit)
 
         Returns:
-            Dict[str, Any]: Aggregated statistics with keys:
+            dict[str, Any]: Aggregated statistics with keys:
                 - total_cost_usd (float): Sum of all costs (rounded to 6 decimals)
                 - total_tokens (int): Sum of all token counts
                 - total_calls (int): Count of AI API invocations
@@ -461,7 +461,7 @@ class AICostTracker:
             end_date: Filter logs created on/before this datetime (inclusive, default: no limit)
 
         Returns:
-            Dict[str, Any]: Breakdown analysis with keys:
+            dict[str, Any]: Breakdown analysis with keys:
                 - by_model (dict): Model-level aggregation, keyed by model_name:
                     * calls (int): API invocations for this model
                     * tokens (int): Total tokens consumed by this model

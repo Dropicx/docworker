@@ -249,7 +249,7 @@ class FileSequenceDetector:
                 - filename (str): Original filename
 
         Returns:
-            List[Tuple[bytes, str, str]]: Files reordered into logical sequence,
+            list[tuple[bytes, str, str]]: Files reordered into logical sequence,
                 maintaining same tuple structure as input. Returns original order
                 if sequence detection fails or single file provided.
 
@@ -550,7 +550,7 @@ class FileSequenceDetector:
             page_infos: List of PageInfo objects with analyzed content
 
         Returns:
-            List[int]: Original indices reordered by medical structure priority
+            list[int]: Original indices reordered by medical structure priority
 
         Example:
             >>> detector = FileSequenceDetector()
@@ -644,7 +644,7 @@ class FileSequenceDetector:
             detected_order: List of filenames in detected logical order
 
         Returns:
-            Dict[str, Any]: Quality analysis containing:
+            dict[str, Any]: Quality analysis containing:
                 - reordering_applied (bool): Whether any reordering occurred
                 - original_order (list): Input filename order
                 - detected_order (list): Output filename order

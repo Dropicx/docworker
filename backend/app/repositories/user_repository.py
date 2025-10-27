@@ -28,10 +28,10 @@ class UserRepository(BaseRepository[UserDB]):
     def get_by_email(self, email: str) -> Optional[UserDB]:
         """
         Get user by email address.
-        
+
         Args:
             email: User's email address
-            
+
         Returns:
             User instance or None if not found
         """
@@ -44,10 +44,10 @@ class UserRepository(BaseRepository[UserDB]):
     def get_by_id(self, user_id: UUID) -> Optional[UserDB]:
         """
         Get user by UUID.
-        
+
         Args:
             user_id: User's UUID
-            
+
         Returns:
             User instance or None if not found
         """
@@ -63,17 +63,17 @@ class UserRepository(BaseRepository[UserDB]):
     ) -> UserDB:
         """
         Create a new user.
-        
+
         Args:
             email: User's email address
             password_hash: Hashed password
             full_name: User's full name
             role: User role (USER or ADMIN)
             created_by_admin_id: ID of admin who created this user
-            
+
         Returns:
             Created user instance
-            
+
         Raises:
             ValueError: If email already exists
         """
@@ -81,7 +81,7 @@ class UserRepository(BaseRepository[UserDB]):
             # Check if email already exists
             if self.get_by_email(email):
                 raise ValueError(f"User with email {email} already exists")
-            
+
             user = self.create(
                 email=email,
                 password_hash=password_hash,
@@ -92,7 +92,7 @@ class UserRepository(BaseRepository[UserDB]):
                 is_active=True,
                 is_verified=True
             )
-            
+
             logger.info(f"Created user {email} with role {role}")
             return user
         except Exception as e:
@@ -102,10 +102,10 @@ class UserRepository(BaseRepository[UserDB]):
     def update_last_login(self, user_id: UUID) -> bool:
         """
         Update user's last login timestamp.
-        
+
         Args:
             user_id: User's UUID
-            
+
         Returns:
             True if updated successfully
         """
@@ -114,9 +114,9 @@ class UserRepository(BaseRepository[UserDB]):
             if not user:
                 return False
 
-            user.last_login_at = datetime.now(timezone.utc)
+            user.last_login_at = datetime.now(datetime.UTC)
             self.db.commit()
-            
+
             logger.debug(f"Updated last login for user {user_id}")
             return True
         except Exception as e:
@@ -127,10 +127,10 @@ class UserRepository(BaseRepository[UserDB]):
     def activate_user(self, user_id: UUID) -> bool:
         """
         Activate a user account.
-        
+
         Args:
             user_id: User's UUID
-            
+
         Returns:
             True if activated successfully
         """
@@ -138,11 +138,11 @@ class UserRepository(BaseRepository[UserDB]):
             user = self.get_by_id(user_id)
             if not user:
                 return False
-            
+
             user.is_active = True
             user.status = UserStatus.ACTIVE
             self.db.commit()
-            
+
             logger.info(f"Activated user {user_id}")
             return True
         except Exception as e:
@@ -153,10 +153,10 @@ class UserRepository(BaseRepository[UserDB]):
     def deactivate_user(self, user_id: UUID) -> bool:
         """
         Deactivate a user account.
-        
+
         Args:
             user_id: User's UUID
-            
+
         Returns:
             True if deactivated successfully
         """
@@ -164,11 +164,11 @@ class UserRepository(BaseRepository[UserDB]):
             user = self.get_by_id(user_id)
             if not user:
                 return False
-            
+
             user.is_active = False
             user.status = UserStatus.INACTIVE
             self.db.commit()
-            
+
             logger.info(f"Deactivated user {user_id}")
             return True
         except Exception as e:
@@ -179,11 +179,11 @@ class UserRepository(BaseRepository[UserDB]):
     def change_password(self, user_id: UUID, new_password_hash: str) -> bool:
         """
         Change user's password.
-        
+
         Args:
             user_id: User's UUID
             new_password_hash: New hashed password
-            
+
         Returns:
             True if changed successfully
         """
@@ -191,10 +191,10 @@ class UserRepository(BaseRepository[UserDB]):
             user = self.get_by_id(user_id)
             if not user:
                 return False
-            
+
             user.password_hash = new_password_hash
             self.db.commit()
-            
+
             logger.info(f"Changed password for user {user_id}")
             return True
         except Exception as e:
@@ -205,11 +205,11 @@ class UserRepository(BaseRepository[UserDB]):
     def update_role(self, user_id: UUID, new_role: UserRole) -> bool:
         """
         Update user's role.
-        
+
         Args:
             user_id: User's UUID
             new_role: New user role
-            
+
         Returns:
             True if updated successfully
         """
@@ -217,10 +217,10 @@ class UserRepository(BaseRepository[UserDB]):
             user = self.get_by_id(user_id)
             if not user:
                 return False
-            
+
             user.role = new_role
             self.db.commit()
-            
+
             logger.info(f"Updated role for user {user_id} to {new_role}")
             return True
         except Exception as e:
@@ -229,42 +229,42 @@ class UserRepository(BaseRepository[UserDB]):
             raise
 
     def list_all_users(
-        self, 
-        skip: int = 0, 
-        limit: int = 100, 
+        self,
+        skip: int = 0,
+        limit: int = 100,
         role_filter: Optional[UserRole] = None,
         status_filter: Optional[UserStatus] = None
-    ) -> List[UserDB]:
+    ) -> list[UserDB]:
         """
         List all users with optional filtering.
-        
+
         Args:
             skip: Number of records to skip
             limit: Maximum number of records to return
             role_filter: Filter by user role
             status_filter: Filter by user status
-            
+
         Returns:
             List of user instances
         """
         try:
             query = self.db.query(UserDB)
-            
+
             if role_filter:
                 query = query.filter(UserDB.role == role_filter)
-            
+
             if status_filter:
                 query = query.filter(UserDB.status == status_filter)
-            
+
             return query.offset(skip).limit(limit).all()
         except Exception as e:
             logger.error(f"Error listing users: {e}")
             raise
 
-    def get_active_users(self) -> List[UserDB]:
+    def get_active_users(self) -> list[UserDB]:
         """
         Get all active users.
-        
+
         Returns:
             List of active user instances
         """
@@ -276,10 +276,10 @@ class UserRepository(BaseRepository[UserDB]):
             logger.error(f"Error getting active users: {e}")
             raise
 
-    def get_admins(self) -> List[UserDB]:
+    def get_admins(self) -> list[UserDB]:
         """
         Get all admin users.
-        
+
         Returns:
             List of admin user instances
         """
@@ -298,7 +298,7 @@ class UserRepository(BaseRepository[UserDB]):
     def count_admins(self) -> int:
         """
         Count active admin users.
-        
+
         Returns:
             Number of active admin users
         """
@@ -314,14 +314,14 @@ class UserRepository(BaseRepository[UserDB]):
             logger.error(f"Error counting admin users: {e}")
             raise
 
-    def search_users(self, search_term: str, limit: int = 50) -> List[UserDB]:
+    def search_users(self, search_term: str, limit: int = 50) -> list[UserDB]:
         """
         Search users by email or full name.
-        
+
         Args:
             search_term: Search term
             limit: Maximum number of results
-            
+
         Returns:
             List of matching user instances
         """
@@ -337,13 +337,13 @@ class UserRepository(BaseRepository[UserDB]):
             logger.error(f"Error searching users with term '{search_term}': {e}")
             raise
 
-    def get_users_created_by_admin(self, admin_id: UUID) -> List[UserDB]:
+    def get_users_created_by_admin(self, admin_id: UUID) -> list[UserDB]:
         """
         Get all users created by a specific admin.
-        
+
         Args:
             admin_id: Admin's UUID
-            
+
         Returns:
             List of users created by the admin
         """
@@ -358,10 +358,10 @@ class UserRepository(BaseRepository[UserDB]):
     def soft_delete_user(self, user_id: UUID) -> bool:
         """
         Soft delete a user (deactivate instead of hard delete).
-        
+
         Args:
             user_id: User's UUID
-            
+
         Returns:
             True if deactivated successfully
         """
@@ -369,12 +369,12 @@ class UserRepository(BaseRepository[UserDB]):
             user = self.get_by_id(user_id)
             if not user:
                 return False
-            
+
             # Soft delete by deactivating
             user.is_active = False
             user.status = UserStatus.INACTIVE
             self.db.commit()
-            
+
             logger.info(f"Soft deleted user {user_id}")
             return True
         except Exception as e:
@@ -475,7 +475,7 @@ class UserRepository(BaseRepository[UserDB]):
             if not user:
                 return False
 
-            lockout_time = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+            lockout_time = datetime.now(datetime.UTC) + timedelta(minutes=minutes)
             user.locked_until = lockout_time
             self.db.commit()
 
@@ -502,7 +502,7 @@ class UserRepository(BaseRepository[UserDB]):
                 return False
 
             # Check if lockout has expired
-            if user.locked_until <= datetime.now(timezone.utc):
+            if user.locked_until <= datetime.now(datetime.UTC):
                 # Lockout expired, reset it
                 user.locked_until = None
                 user.failed_login_attempts = 0

@@ -309,7 +309,7 @@ class InMemoryTaskQueue(TaskQueue):
 #     async def enqueue(
 #         self,
 #         task_name: str,
-#         task_data: Dict[str, Any],
+#         task_data: dict[str, Any],
 #         priority: int = 0
 #     ) -> str:
 #         """
@@ -333,7 +333,7 @@ class InMemoryTaskQueue(TaskQueue):
 #         logger.info(f"📋 Task '{task_name}' enqueued to {queue.name} with job_id: {job.id}")
 #         return job.id
 #
-#     async def get_job_status(self, job_id: str) -> Optional[Dict[str, Any]]:
+#     async def get_job_status(self, job_id: str) -> Optional[dict[str, Any]]:
 #         """Get status from Redis queue."""
 #         from rq.job import Job
 #

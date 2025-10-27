@@ -191,7 +191,7 @@ class OCREngineManager:
                 ignores database configuration. Default None.
 
         Returns:
-            Tuple[str, float]: A tuple containing:
+            tuple[str, float]: A tuple containing:
                 - str: Extracted text with preserved formatting
                 - float: Confidence score (0.0-1.0) based on OCR quality
 
@@ -416,7 +416,7 @@ class OCREngineManager:
         Returns detailed specifications including speed, accuracy, and cost.
 
         Returns:
-            Dict[str, Dict[str, Any]]: Dictionary mapping engine names to capabilities:
+            dict[str, dict[str, Any]]: Dictionary mapping engine names to capabilities:
                 - engine (str): Engine enum value
                 - name (str): Human-readable name
                 - description (str): Detailed description

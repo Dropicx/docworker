@@ -128,12 +128,12 @@ class FileQualityDetector:
             filename: Original filename for logging and analysis context
 
         Returns:
-            Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
+            tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
                 - ExtractionStrategy: Recommended OCR engine (LOCAL_TEXT, LOCAL_OCR,
                   VISION_LLM, or HYBRID)
                 - DocumentComplexity: Assessed complexity level (SIMPLE, MODERATE,
                   COMPLEX, or VERY_COMPLEX)
-                - Dict[str, Any]: Detailed analysis metadata including:
+                - dict[str, Any]: Detailed analysis metadata including:
                     * file_type, filename
                     * Quality metrics (text_coverage, text_quality_score)
                     * Structure flags (has_tables, has_images, has_forms)
@@ -202,7 +202,7 @@ class FileQualityDetector:
             filename: Original filename for logging context
 
         Returns:
-            Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
+            tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
                 Strategy recommendation, complexity level, and detailed metadata dict with:
                 - has_embedded_text (bool): Whether PDF contains extractable text
                 - text_coverage (float): Proportion of pages with text (0.0-1.0)
@@ -692,7 +692,7 @@ class FileQualityDetector:
                 - has_images (bool): Whether embedded images present
 
         Returns:
-            Tuple[ExtractionStrategy, DocumentComplexity]:
+            tuple[ExtractionStrategy, DocumentComplexity]:
                 Recommended strategy and assessed complexity level
 
         Example:
@@ -825,7 +825,7 @@ class FileQualityDetector:
             filename: Original filename for logging context
 
         Returns:
-            Tuple[ExtractionStrategy, DocumentComplexity, Dict[str, Any]]:
+            tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:
                 Strategy recommendation, complexity level, and detailed metadata dict with:
                 - image_size (tuple): Pixel dimensions (width, height)
                 - image_quality (float): Sharpness + contrast score (0.0-1.0)
@@ -1096,7 +1096,7 @@ class FileQualityDetector:
                 - filename (str): Original filename
 
         Returns:
-            Dict[str, Any]: Consolidated analysis containing:
+            dict[str, Any]: Consolidated analysis containing:
                 - file_count (int): Number of files analyzed
                 - individual_analyses (list): Per-file analysis metadata
                 - strategies (list): Strategy for each file

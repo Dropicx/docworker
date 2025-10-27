@@ -62,7 +62,7 @@ class APIKeyResponse(BaseModel):
 
 class APIKeyListResponse(BaseModel):
     """API key list response model"""
-    keys: List[APIKeyResponse] = Field(..., description="List of API keys")
+    keys: list[APIKeyResponse] = Field(..., description="List of API keys")
     total: int = Field(..., description="Total number of keys")
 
 
@@ -93,36 +93,36 @@ async def create_api_key(
 ):
     """
     Create a new API key for the current user.
-    
+
     Args:
         request: FastAPI request object
         key_data: API key creation data
         current_user: Current authenticated user
         db: Database session
-        
+
     Returns:
         Generated API key and metadata
-        
+
     Raises:
         HTTPException: If creation fails
     """
     try:
         auth_service = AuthService(db)
-        
+
         # Create API key
         plain_key, key_id = auth_service.create_api_key(
             user_id=current_user.id,
             name=key_data.name,
             expires_days=key_data.expires_days
         )
-        
+
         # Get the created key for response
         from app.repositories.api_key_repository import APIKeyRepository
         api_key_repo = APIKeyRepository(db)
         created_key = api_key_repo.get_by_id(UUID(key_id))
-        
+
         logger.info(f"Created API key '{key_data.name}' for user {current_user.email}")
-        
+
         return CreateAPIKeyResponse(
             api_key=plain_key,
             key_id=key_id,
@@ -130,7 +130,7 @@ async def create_api_key(
             expires_at=created_key.expires_at.isoformat() if created_key.expires_at else None,
             created_at=created_key.created_at.isoformat()
         )
-        
+
     except Exception as e:
         logger.error(f"Error creating API key for user {current_user.email}: {e}")
         raise HTTPException(
@@ -146,18 +146,18 @@ async def list_api_keys(
 ):
     """
     List all API keys for the current user.
-    
+
     Args:
         current_user: Current authenticated user
         db: Database session
-        
+
     Returns:
         List of user's API keys
     """
     try:
         auth_service = AuthService(db)
         keys = auth_service.get_user_api_keys(current_user.id)
-        
+
         key_responses = [
             APIKeyResponse(
                 id=key.id,
@@ -170,9 +170,9 @@ async def list_api_keys(
             )
             for key in keys
         ]
-        
+
         return APIKeyListResponse(keys=key_responses, total=len(key_responses))
-        
+
     except Exception as e:
         logger.error(f"Error listing API keys for user {current_user.email}: {e}")
         raise HTTPException(
@@ -189,34 +189,34 @@ async def revoke_api_key(
 ):
     """
     Revoke an API key for the current user.
-    
+
     Args:
         key_id: API key ID to revoke
         current_user: Current authenticated user
         db: Database session
-        
+
     Returns:
         Revocation confirmation message
-        
+
     Raises:
         HTTPException: If revocation fails
     """
     try:
         auth_service = AuthService(db)
-        
+
         # Revoke API key
         success = auth_service.revoke_api_key(key_id, current_user.id)
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="API key not found or access denied"
             )
-        
+
         logger.info(f"Revoked API key {key_id} for user {current_user.email}")
-        
+
         return RevokeAPIKeyResponse(message="API key revoked successfully")
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -236,23 +236,23 @@ async def update_api_key(
 ):
     """
     Update an API key for the current user.
-    
+
     Args:
         key_id: API key ID to update
         update_data: Update data
         current_user: Current authenticated user
         db: Database session
-        
+
     Returns:
         Update confirmation message
-        
+
     Raises:
         HTTPException: If update fails
     """
     try:
         from app.repositories.api_key_repository import APIKeyRepository
         api_key_repo = APIKeyRepository(db)
-        
+
         # Get API key
         api_key = api_key_repo.get_by_id(UUID(key_id))
         if not api_key or api_key.user_id != current_user.id:
@@ -260,19 +260,19 @@ async def update_api_key(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="API key not found or access denied"
             )
-        
+
         # Update fields
         update_fields = {}
         if update_data.name is not None:
             update_fields["name"] = update_data.name
-        
+
         if update_data.expires_days is not None:
             from datetime import timedelta
-            update_fields["expires_at"] = datetime.now(timezone.utc) + timedelta(days=update_data.expires_days)
-        
+            update_fields["expires_at"] = datetime.now(datetime.UTC) + timedelta(days=update_data.expires_days)
+
         if update_fields:
             api_key_repo.update(UUID(key_id), **update_fields)
-            
+
             # Log update
             from app.repositories.audit_log_repository import AuditLogRepository
             audit_repo = AuditLogRepository(db)
@@ -283,11 +283,11 @@ async def update_api_key(
                 resource_id=key_id,
                 details=update_fields
             )
-        
+
         logger.info(f"Updated API key {key_id} for user {current_user.email}")
-        
+
         return UpdateAPIKeyResponse(message="API key updated successfully")
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -309,22 +309,22 @@ async def list_all_api_keys(
 ):
     """
     List all API keys across all users (admin only).
-    
+
     Args:
         skip: Number of records to skip
         limit: Maximum number of records to return
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         List of all API keys
     """
     try:
         from app.repositories.api_key_repository import APIKeyRepository
         api_key_repo = APIKeyRepository(db)
-        
+
         keys = api_key_repo.get_all_active(skip=skip, limit=limit)
-        
+
         key_responses = [
             APIKeyResponse(
                 id=key.id,
@@ -337,9 +337,9 @@ async def list_all_api_keys(
             )
             for key in keys
         ]
-        
+
         return APIKeyListResponse(keys=key_responses, total=len(key_responses))
-        
+
     except Exception as e:
         logger.error(f"Error listing all API keys: {e}")
         raise HTTPException(
@@ -356,21 +356,21 @@ async def list_user_api_keys(
 ):
     """
     List API keys for a specific user (admin only).
-    
+
     Args:
         user_id: User ID to get keys for
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         List of user's API keys
     """
     try:
         from app.repositories.api_key_repository import APIKeyRepository
         api_key_repo = APIKeyRepository(db)
-        
+
         keys = api_key_repo.get_by_user(UUID(user_id))
-        
+
         key_responses = [
             APIKeyResponse(
                 id=key.id,
@@ -383,9 +383,9 @@ async def list_user_api_keys(
             )
             for key in keys
         ]
-        
+
         return APIKeyListResponse(keys=key_responses, total=len(key_responses))
-        
+
     except Exception as e:
         logger.error(f"Error listing API keys for user {user_id}: {e}")
         raise HTTPException(
@@ -402,22 +402,22 @@ async def admin_revoke_api_key(
 ):
     """
     Revoke any API key (admin only).
-    
+
     Args:
         key_id: API key ID to revoke
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         Revocation confirmation message
-        
+
     Raises:
         HTTPException: If revocation fails
     """
     try:
         from app.repositories.api_key_repository import APIKeyRepository
         api_key_repo = APIKeyRepository(db)
-        
+
         # Get API key
         api_key = api_key_repo.get_by_id(UUID(key_id))
         if not api_key:
@@ -425,16 +425,16 @@ async def admin_revoke_api_key(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="API key not found"
             )
-        
+
         # Revoke key
         success = api_key_repo.revoke_key(UUID(key_id))
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to revoke API key"
             )
-        
+
         # Log admin action
         from app.repositories.audit_log_repository import AuditLogRepository
         audit_repo = AuditLogRepository(db)
@@ -445,11 +445,11 @@ async def admin_revoke_api_key(
             resource_id=key_id,
             details={"revoked_by_admin": True, "original_user_id": str(api_key.user_id)}
         )
-        
+
         logger.info(f"Admin {current_user.email} revoked API key {key_id} (owned by user {api_key.user_id})")
-        
+
         return RevokeAPIKeyResponse(message="API key revoked successfully")
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -467,20 +467,20 @@ async def cleanup_expired_keys(
 ):
     """
     Clean up expired API keys (admin only).
-    
+
     Args:
         current_user: Current authenticated admin user
         db: Database session
-        
+
     Returns:
         Cleanup results
     """
     try:
         from app.repositories.api_key_repository import APIKeyRepository
         api_key_repo = APIKeyRepository(db)
-        
+
         count = api_key_repo.cleanup_expired_keys()
-        
+
         # Log cleanup action
         from app.repositories.audit_log_repository import AuditLogRepository
         audit_repo = AuditLogRepository(db)
@@ -491,11 +491,11 @@ async def cleanup_expired_keys(
             resource_id="api_keys",
             details={"keys_cleaned": count}
         )
-        
+
         logger.info(f"Admin {current_user.email} cleaned up {count} expired API keys")
-        
+
         return {"message": f"Cleaned up {count} expired API keys"}
-        
+
     except Exception as e:
         logger.error(f"Error cleaning up API keys by admin {current_user.email}: {e}")
         raise HTTPException(
@@ -510,7 +510,7 @@ async def cleanup_expired_keys(
 async def api_keys_health_check():
     """
     API keys service health check.
-    
+
     Returns:
         Service status
     """

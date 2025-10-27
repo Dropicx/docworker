@@ -99,21 +99,21 @@ async def login(
 ):
     """
     Authenticate user and return access and refresh tokens.
-    
+
     Args:
         request: FastAPI request object
         login_data: Login credentials
         db: Database session
-        
+
     Returns:
         Access token, refresh token, and user information
-        
+
     Raises:
         HTTPException: If authentication fails
     """
     try:
         auth_service = AuthService(db)
-        
+
         # Authenticate user
         user = auth_service.authenticate_user(login_data.email, login_data.password)
         if not user:
@@ -124,10 +124,10 @@ async def login(
                 detail="Invalid email or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
+
         # Create tokens
         tokens = auth_service.create_tokens(user)
-        
+
         # Log successful login
         from app.repositories.audit_log_repository import AuditLogRepository
         audit_repo = AuditLogRepository(db)
@@ -139,9 +139,9 @@ async def login(
             ip_address=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent")
         )
-        
+
         logger.info(f"User {login_data.email} logged in successfully")
-        
+
         return LoginResponse(
             access_token=tokens["access_token"],
             refresh_token=tokens["refresh_token"],
@@ -155,7 +155,7 @@ async def login(
                 last_login_at=user.last_login_at.isoformat() if user.last_login_at else None
             )
         )
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -173,20 +173,20 @@ async def refresh_token(
 ):
     """
     Refresh access token using refresh token.
-    
+
     Args:
         refresh_data: Refresh token
         db: Database session
-        
+
     Returns:
         New access token
-        
+
     Raises:
         HTTPException: If refresh token is invalid
     """
     try:
         auth_service = AuthService(db)
-        
+
         # Refresh access token
         access_token = auth_service.refresh_access_token(refresh_data.refresh_token)
         if not access_token:
@@ -195,11 +195,11 @@ async def refresh_token(
                 detail="Invalid or expired refresh token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
+
         logger.debug("Access token refreshed successfully")
-        
+
         return RefreshResponse(access_token=access_token)
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -218,24 +218,24 @@ async def logout(
 ):
     """
     Logout user by revoking refresh token.
-    
+
     Args:
         request: FastAPI request object
         logout_data: Refresh token to revoke
         db: Database session
-        
+
     Returns:
         Logout confirmation message
     """
     try:
         auth_service = AuthService(db)
-        
+
         # Revoke refresh token
         success = auth_service.revoke_refresh_token(logout_data.refresh_token)
-        
+
         if not success:
             logger.warning("Failed to revoke refresh token during logout")
-        
+
         # Log logout (if we can identify the user)
         try:
             # Try to get user from refresh token before revoking
@@ -244,7 +244,7 @@ async def logout(
             from app.repositories.refresh_token_repository import RefreshTokenRepository
             refresh_repo = RefreshTokenRepository(db)
             stored_token = refresh_repo.get_by_hash(refresh_token_hash)
-            
+
             if stored_token:
                 from app.repositories.audit_log_repository import AuditLogRepository
                 audit_repo = AuditLogRepository(db)
@@ -258,11 +258,11 @@ async def logout(
                 )
         except Exception as e:
             logger.debug(f"Could not log logout event: {e}")
-        
+
         logger.info("User logged out successfully")
-        
+
         return LogoutResponse(message="Logged out successfully")
-        
+
     except Exception as e:
         logger.error(f"Logout error: {e}")
         raise HTTPException(
@@ -277,10 +277,10 @@ async def get_current_user_info(
 ):
     """
     Get current user information.
-    
+
     Args:
         current_user: Current authenticated user
-        
+
     Returns:
         User information
     """
@@ -304,39 +304,39 @@ async def change_password(
 ):
     """
     Change user's password.
-    
+
     Args:
         request: FastAPI request object
         password_data: Old and new password
         current_user: Current authenticated user
         db: Database session
-        
+
     Returns:
         Password change confirmation message
-        
+
     Raises:
         HTTPException: If password change fails
     """
     try:
         auth_service = AuthService(db)
-        
+
         # Change password
         success = auth_service.change_password(
             current_user.id,
             password_data.old_password,
             password_data.new_password
         )
-        
+
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid current password"
             )
-        
+
         logger.info(f"Password changed for user {current_user.email}")
-        
+
         return ChangePasswordResponse(message="Password changed successfully")
-        
+
     except HTTPException:
         raise
     except Exception as e:
@@ -354,20 +354,20 @@ async def logout_all_devices(
 ):
     """
     Logout from all devices by revoking all refresh tokens.
-    
+
     Args:
         current_user: Current authenticated user
         db: Database session
-        
+
     Returns:
         Logout confirmation message
     """
     try:
         auth_service = AuthService(db)
-        
+
         # Revoke all user tokens
         count = auth_service.revoke_all_user_tokens(current_user.id)
-        
+
         # Log logout all
         from app.repositories.audit_log_repository import AuditLogRepository
         audit_repo = AuditLogRepository(db)
@@ -378,11 +378,11 @@ async def logout_all_devices(
             resource_id=str(current_user.id),
             details={"logout_all": True, "tokens_revoked": count}
         )
-        
+
         logger.info(f"User {current_user.email} logged out from all devices ({count} tokens revoked)")
-        
+
         return {"message": f"Logged out from all devices ({count} tokens revoked)"}
-        
+
     except Exception as e:
         logger.error(f"Logout all error for user {current_user.email}: {e}")
         raise HTTPException(
@@ -397,7 +397,7 @@ async def logout_all_devices(
 async def auth_health_check():
     """
     Authentication service health check.
-    
+
     Returns:
         Service status
     """

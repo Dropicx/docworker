@@ -210,7 +210,7 @@ def get_task_status(task_id: str) -> dict[str, Any]:
         task_id: Celery task ID (UUID) returned from enqueue_document_processing()
 
     Returns:
-        Dict[str, Any]: Task status dict with keys:
+        dict[str, Any]: Task status dict with keys:
             - task_id (str): Task identifier (same as input)
             - status (str): Celery task state (PENDING, STARTED, PROGRESS, SUCCESS, FAILURE, REVOKED)
             - ready (bool): True if task completed (success or failure)

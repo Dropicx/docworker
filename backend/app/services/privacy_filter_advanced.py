@@ -57,7 +57,7 @@ class AdvancedPrivacyFilter:
         has_ner (bool): Whether NER functionality is available
         medical_terms (Set[str]): Protected medical terminology
         protected_abbreviations (Set[str]): Protected medical abbreviations
-        patterns (Dict[str, Pattern]): Compiled regex patterns for PII detection
+        patterns (dict[str, Pattern]): Compiled regex patterns for PII detection
 
     Example:
         >>> filter = AdvancedPrivacyFilter()

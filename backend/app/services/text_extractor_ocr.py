@@ -68,7 +68,7 @@ class TextExtractorWithOCR:
             filename: Ursprünglicher Dateiname
 
         Returns:
-            Tuple[str, float]: (extracted_text, confidence_score)
+            tuple[str, float]: (extracted_text, confidence_score)
         """
         logger.info(f"📄 Processing {file_type} file: {filename}")
         print(f"📄 Processing {file_type} file: {filename}", flush=True)

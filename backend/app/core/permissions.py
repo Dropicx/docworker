@@ -41,7 +41,7 @@ class Permission(str, Enum):
     DOCUMENT_UPLOAD = "document:upload"
     DOCUMENT_STATUS = "document:status"
     DOCUMENT_RESULTS = "document:results"
-    
+
     # Pipeline permissions (User + Admin)
     PIPELINE_READ = "pipeline:read"
     PIPELINE_WRITE = "pipeline:write"
@@ -51,23 +51,23 @@ class Permission(str, Enum):
     OCR_CONFIG_WRITE = "ocr_config:write"
     MODELS_READ = "models:read"
     DOCUMENT_CLASSES_READ = "document_classes:read"
-    
+
     # Settings permissions (User + Admin)
     SETTINGS_READ = "settings:read"
     SETTINGS_WRITE = "settings:write"
-    
+
     # API key permissions (User + Admin for own keys)
     API_KEY_CREATE = "api_key:create"
     API_KEY_READ = "api_key:read"
     API_KEY_DELETE = "api_key:delete"
-    
+
     # User management permissions (Admin only)
     USER_CREATE = "user:create"
     USER_READ = "user:read"
     USER_UPDATE = "user:update"
     USER_DELETE = "user:delete"
     USER_LIST = "user:list"
-    
+
     # Admin permissions (Admin only)
     AUDIT_READ = "audit:read"
     AUDIT_EXPORT = "audit:export"
@@ -81,7 +81,7 @@ USER_PERMISSIONS = [
     Permission.DOCUMENT_UPLOAD,
     Permission.DOCUMENT_STATUS,
     Permission.DOCUMENT_RESULTS,
-    
+
     # Pipeline configuration
     Permission.PIPELINE_READ,
     Permission.PIPELINE_WRITE,
@@ -91,11 +91,11 @@ USER_PERMISSIONS = [
     Permission.OCR_CONFIG_WRITE,
     Permission.MODELS_READ,
     Permission.DOCUMENT_CLASSES_READ,
-    
+
     # Settings access
     Permission.SETTINGS_READ,
     Permission.SETTINGS_WRITE,
-    
+
     # Own API keys
     Permission.API_KEY_CREATE,
     Permission.API_KEY_READ,
@@ -108,14 +108,14 @@ ROLE_PERMISSIONS = {
     Role.ADMIN: [
         # All USER permissions
         *USER_PERMISSIONS,
-        
+
         # User management
         Permission.USER_CREATE,
         Permission.USER_READ,
         Permission.USER_UPDATE,
         Permission.USER_DELETE,
         Permission.USER_LIST,
-        
+
         # Admin functions
         Permission.AUDIT_READ,
         Permission.AUDIT_EXPORT,
@@ -128,17 +128,17 @@ ROLE_PERMISSIONS = {
 def has_permission(user: UserDB, permission: Permission) -> bool:
     """
     Check if a user has a specific permission.
-    
+
     Args:
         user: User instance
         permission: Permission to check
-        
+
     Returns:
         True if user has permission
     """
     if not user or not user.is_active:
         return False
-    
+
     user_permissions = ROLE_PERMISSIONS.get(user.role, [])
     return permission in user_permissions
 
@@ -146,34 +146,34 @@ def has_permission(user: UserDB, permission: Permission) -> bool:
 def has_role(user: UserDB, role: Role) -> bool:
     """
     Check if a user has a specific role.
-    
+
     Args:
         user: User instance
         role: Role to check
-        
+
     Returns:
         True if user has role
     """
     if not user or not user.is_active:
         return False
-    
+
     return user.role == role
 
 
-def has_any_role(user: UserDB, roles: List[Role]) -> bool:
+def has_any_role(user: UserDB, roles: list[Role]) -> bool:
     """
     Check if a user has any of the specified roles.
-    
+
     Args:
         user: User instance
         roles: List of roles to check
-        
+
     Returns:
         True if user has any of the roles
     """
     if not user or not user.is_active:
         return False
-    
+
     return user.role in roles
 
 
@@ -184,20 +184,20 @@ async def get_current_user_optional(
 ) -> Optional[UserDB]:
     """
     Get current user from JWT token (optional - returns None if no token).
-    
+
     Used for endpoints that can work with or without authentication.
-    
+
     Args:
         request: FastAPI request object
         credentials: Authorization credentials
         db: Database session
-        
+
     Returns:
         User instance if authenticated, None otherwise
     """
     if not credentials:
         return None
-    
+
     try:
         auth_service = AuthService(db)
         user = auth_service.get_user_from_token(credentials.credentials)
@@ -214,17 +214,17 @@ async def get_current_user_required(
 ) -> UserDB:
     """
     Get current user from JWT token (required - raises exception if no token).
-    
+
     Used for protected endpoints that require authentication.
-    
+
     Args:
         request: FastAPI request object
         credentials: Authorization credentials
         db: Database session
-        
+
     Returns:
         User instance
-        
+
     Raises:
         HTTPException: If authentication fails
     """
@@ -234,18 +234,18 @@ async def get_current_user_required(
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     try:
         auth_service = AuthService(db)
         user = auth_service.get_user_from_token(credentials.credentials)
-        
+
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        
+
         return user
     except HTTPException:
         raise
@@ -265,28 +265,28 @@ async def get_current_user_from_api_key(
 ) -> Optional[UserDB]:
     """
     Get current user from API key (optional).
-    
+
     Used for endpoints that support both JWT and API key authentication.
-    
+
     Args:
         request: FastAPI request object
         credentials: Authorization credentials
         db: Database session
-        
+
     Returns:
         User instance if authenticated, None otherwise
     """
     if not credentials:
         return None
-    
+
     try:
         auth_service = AuthService(db)
-        
+
         # Try API key first
         user = auth_service.verify_api_key(credentials.credentials)
         if user:
             return user
-        
+
         # Fall back to JWT token
         user = auth_service.get_user_from_token(credentials.credentials)
         return user
@@ -298,10 +298,10 @@ async def get_current_user_from_api_key(
 def require_permission(permission: Permission):
     """
     Decorator to require a specific permission.
-    
+
     Args:
         permission: Required permission
-        
+
     Returns:
         FastAPI dependency function
     """
@@ -314,17 +314,17 @@ def require_permission(permission: Permission):
                 detail=f"Permission '{permission.value}' required"
             )
         return current_user
-    
+
     return permission_checker
 
 
 def require_role(role: Role):
     """
     Decorator to require a specific role.
-    
+
     Args:
         role: Required role
-        
+
     Returns:
         FastAPI dependency function
     """
@@ -337,17 +337,17 @@ def require_role(role: Role):
                 detail=f"Role '{role.value}' required"
             )
         return current_user
-    
+
     return role_checker
 
 
-def require_any_role(roles: List[Role]):
+def require_any_role(roles: list[Role]):
     """
     Decorator to require any of the specified roles.
-    
+
     Args:
         roles: List of required roles
-        
+
     Returns:
         FastAPI dependency function
     """
@@ -361,14 +361,14 @@ def require_any_role(roles: List[Role]):
                 detail=f"One of these roles required: {', '.join(role_names)}"
             )
         return current_user
-    
+
     return role_checker
 
 
 def require_admin():
     """
     Decorator to require admin role.
-    
+
     Returns:
         FastAPI dependency function
     """
@@ -378,7 +378,7 @@ def require_admin():
 def require_user_or_admin():
     """
     Decorator to require user or admin role.
-    
+
     Returns:
         FastAPI dependency function
     """
@@ -406,11 +406,11 @@ RequireUserOrAdmin = require_user_or_admin()
 def check_resource_access(user: UserDB, resource_user_id: UUID) -> bool:
     """
     Check if user can access a resource owned by another user.
-    
+
     Args:
         user: Current user
         resource_user_id: User ID who owns the resource
-        
+
     Returns:
         True if user can access the resource
     """
@@ -418,17 +418,17 @@ def check_resource_access(user: UserDB, resource_user_id: UUID) -> bool:
     # Admins can access all resources
     if user.role == Role.ADMIN:
         return True
-    
+
     return user.id == resource_user_id
 
 
 def require_resource_access(resource_user_id: UUID):
     """
     Decorator to require access to a resource owned by a specific user.
-    
+
     Args:
         resource_user_id: User ID who owns the resource
-        
+
     Returns:
         FastAPI dependency function
     """
@@ -441,7 +441,7 @@ def require_resource_access(resource_user_id: UUID):
                 detail="Access denied to this resource"
             )
         return current_user
-    
+
     return resource_checker
 
 
@@ -452,7 +452,7 @@ def log_permission_denied(
 ) -> None:
     """
     Log a permission denied event.
-    
+
     Args:
         user: User who was denied access (None if not authenticated)
         permission: Permission that was denied
@@ -461,10 +461,10 @@ def log_permission_denied(
     try:
         from app.repositories.audit_log_repository import AuditLogRepository
         from app.database.connection import get_session
-        
+
         db = next(get_session())
         audit_repo = AuditLogRepository(db)
-        
+
         audit_repo.create_log(
             user_id=user.id if user else None,
             action="PERMISSION_DENIED",
@@ -485,7 +485,7 @@ def log_auth_failure(
 ) -> None:
     """
     Log an authentication failure.
-    
+
     Args:
         email: Email that failed authentication
         request: FastAPI request object
@@ -494,10 +494,10 @@ def log_auth_failure(
     try:
         from app.repositories.audit_log_repository import AuditLogRepository
         from app.database.connection import get_session
-        
+
         db = next(get_session())
         audit_repo = AuditLogRepository(db)
-        
+
         audit_repo.create_log(
             user_id=None,
             action="AUTH_FAILURE",
