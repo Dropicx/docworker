@@ -7,7 +7,7 @@ All pipeline configuration now handled by modular_pipeline.py router.
 
 import logging
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 
 from app.core.config import settings

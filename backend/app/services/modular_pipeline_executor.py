@@ -8,7 +8,7 @@ Designed to be stateless and compatible with Redis queue workers.
 from datetime import datetime
 import logging
 import time
-from typing import Any
+
 
 from sqlalchemy.orm import Session
 

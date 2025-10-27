@@ -5,7 +5,7 @@ Funktioniert komplett ohne spaCy oder andere ML-Bibliotheken
 
 import re
 import logging
-from typing import Set, List, Tuple
+from typing import Set, 
 
 logger = logging.getLogger(__name__)
 

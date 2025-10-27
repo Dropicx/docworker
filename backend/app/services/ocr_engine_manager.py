@@ -8,7 +8,7 @@ Supports multiple OCR engines based on database configuration.
 import json
 import logging
 import os
-from typing import Any
+
 
 import httpx
 from sqlalchemy.orm import Session

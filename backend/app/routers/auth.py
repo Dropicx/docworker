@@ -8,7 +8,7 @@ logout, and password management. No public registration - users are created by a
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
@@ -122,7 +122,7 @@ async def login(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password",
                 headers={"WWW-Authenticate": "Bearer"},
-            )
+            ) from e
 
         # Create tokens
         tokens = auth_service.create_tokens(user)
@@ -162,7 +162,7 @@ async def login(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Authentication failed"
-        )
+        ) from e
 
 
 @router.post("/refresh", response_model=RefreshResponse)
@@ -193,7 +193,7 @@ async def refresh_token(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or expired refresh token",
                 headers={"WWW-Authenticate": "Bearer"},
-            )
+            ) from e
 
         logger.debug("Access token refreshed successfully")
 
@@ -206,7 +206,7 @@ async def refresh_token(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Token refresh failed"
-        )
+        ) from e
 
 
 @router.post("/logout", response_model=LogoutResponse)
@@ -267,7 +267,7 @@ async def logout(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Logout failed"
-        )
+        ) from e
 
 
 @router.get("/me", response_model=UserResponse)
@@ -330,7 +330,7 @@ async def change_password(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid current password"
-            )
+            ) from e
 
         logger.info(f"Password changed for user {current_user.email}")
 
@@ -343,7 +343,7 @@ async def change_password(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Password change failed"
-        )
+        ) from e
 
 
 @router.post("/logout-all")
@@ -387,7 +387,7 @@ async def logout_all_devices(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Logout all failed"
-        )
+        ) from e
 
 
 # ==================== HEALTH CHECK ====================

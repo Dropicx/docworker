@@ -7,10 +7,10 @@ and deletion. Admin-only endpoints for managing user accounts and roles.
 
 import logging
 from datetime import datetime
-from typing import List, Optional
+
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
@@ -147,14 +147,14 @@ async def create_user(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
+            detail=str(e) from e
         )
     except Exception as e:
         logger.error(f"Error creating user {user_data.email}: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create user"
-        )
+        ) from e
 
 
 @router.get("", response_model=UserListResponse)
@@ -213,7 +213,7 @@ async def list_users(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to list users"
-        )
+        ) from e
 
 
 @router.get("/{user_id}", response_model=UserResponse)
@@ -245,7 +245,7 @@ async def get_user(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            )
+            ) from e
 
         return UserResponse(
             id=user.id,
@@ -266,7 +266,7 @@ async def get_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get user"
-        )
+        ) from e
 
 
 @router.put("/{user_id}", response_model=UpdateUserResponse)
@@ -301,14 +301,14 @@ async def update_user(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            )
+            ) from e
 
         # Check if admin is trying to update themselves
         if user.id == current_user.id and update_data.role and update_data.role != current_user.role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot change your own role"
-            )
+            ) from e
 
         # Check if trying to demote last admin
         if user.role == UserRole.ADMIN and update_data.role and update_data.role != UserRole.ADMIN:
@@ -317,7 +317,7 @@ async def update_user(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Cannot demote the last admin user"
-                )
+                ) from e
 
         # Check email uniqueness if changing email
         if update_data.email and update_data.email != user.email:
@@ -325,7 +325,7 @@ async def update_user(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Email already taken"
-                )
+                ) from e
 
         # Update fields
         update_fields = {}
@@ -364,7 +364,7 @@ async def update_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update user"
-        )
+        ) from e
 
 
 @router.delete("/{user_id}", response_model=UpdateUserResponse)
@@ -397,14 +397,14 @@ async def delete_user(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            )
+            ) from e
 
         # Check if admin is trying to delete themselves
         if user.id == current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot delete your own account"
-            )
+            ) from e
 
         # Check if trying to delete last admin
         if user.role == UserRole.ADMIN:
@@ -413,7 +413,7 @@ async def delete_user(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Cannot delete the last admin user"
-                )
+                ) from e
 
         # Soft delete user
         success = user_repo.soft_delete_user(UUID(user_id))
@@ -422,7 +422,7 @@ async def delete_user(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to delete user"
-            )
+            ) from e
 
         # Log deletion
         from app.repositories.audit_log_repository import AuditLogRepository
@@ -446,7 +446,7 @@ async def delete_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to delete user"
-        )
+        ) from e
 
 
 @router.patch("/{user_id}/activate", response_model=UpdateUserResponse)
@@ -476,7 +476,7 @@ async def activate_user(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            )
+            ) from e
 
         # Log activation
         from app.repositories.audit_log_repository import AuditLogRepository
@@ -500,7 +500,7 @@ async def activate_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to activate user"
-        )
+        ) from e
 
 
 @router.patch("/{user_id}/deactivate", response_model=UpdateUserResponse)
@@ -532,7 +532,7 @@ async def deactivate_user(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Cannot deactivate the last admin user"
-                )
+                ) from e
 
         success = user_repo.deactivate_user(UUID(user_id))
 
@@ -540,7 +540,7 @@ async def deactivate_user(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            )
+            ) from e
 
         # Log deactivation
         from app.repositories.audit_log_repository import AuditLogRepository
@@ -564,7 +564,7 @@ async def deactivate_user(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to deactivate user"
-        )
+        ) from e
 
 
 @router.post("/{user_id}/reset-password", response_model=ResetPasswordResponse)
@@ -597,7 +597,7 @@ async def reset_user_password(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            )
+            ) from e
 
         # Hash new password
         new_password_hash = hash_password(password_data.new_password)
@@ -609,7 +609,7 @@ async def reset_user_password(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to reset password"
-            )
+            ) from e
 
         # Revoke all user tokens for security
         auth_service = AuthService(db)
@@ -637,7 +637,7 @@ async def reset_user_password(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to reset password"
-        )
+        ) from e
 
 
 @router.get("/stats/overview", response_model=UserStatsResponse)
@@ -676,7 +676,7 @@ async def get_user_stats(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get user statistics"
-        )
+        ) from e
 
 
 # ==================== HEALTH CHECK ====================

@@ -5,7 +5,7 @@ Verwendet lokale Python-Bibliotheken für PII-Entfernung
 
 import re
 import logging
-from typing import List, Dict, Set, Tuple
+from typing import Set, 
 from datetime import datetime
 
 logger = logging.getLogger(__name__)

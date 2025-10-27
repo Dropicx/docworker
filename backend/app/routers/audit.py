@@ -6,11 +6,11 @@ Supports comprehensive audit trail analysis for security monitoring and complian
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import List, Optional
+from datetime import datetime
+
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
@@ -152,7 +152,7 @@ async def list_audit_logs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to list audit logs"
-        )
+        ) from e
 
 
 @router.get("/logs/user/{user_id}", response_model=AuditLogListResponse)
@@ -213,7 +213,7 @@ async def get_user_audit_logs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get user audit logs"
-        )
+        ) from e
 
 
 @router.get("/logs/action/{action_type}", response_model=AuditLogListResponse)
@@ -276,7 +276,7 @@ async def get_action_audit_logs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get action audit logs"
-        )
+        ) from e
 
 
 @router.get("/logs/failed-logins", response_model=AuditLogListResponse)
@@ -337,7 +337,7 @@ async def get_failed_login_logs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get failed login logs"
-        )
+        ) from e
 
 
 @router.get("/logs/permission-denied", response_model=AuditLogListResponse)
@@ -398,7 +398,7 @@ async def get_permission_denied_logs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get permission denied logs"
-        )
+        ) from e
 
 
 @router.get("/logs/ip/{ip_address}", response_model=AuditLogListResponse)
@@ -461,7 +461,7 @@ async def get_ip_audit_logs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get IP audit logs"
-        )
+        ) from e
 
 
 @router.get("/summary", response_model=AuditSummaryResponse)
@@ -499,7 +499,7 @@ async def get_audit_summary(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get audit summary"
-        )
+        ) from e
 
 
 @router.get("/export/csv")
@@ -537,7 +537,7 @@ async def export_audit_logs_csv(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No audit logs found for the specified criteria"
-            )
+            ) from e
 
         # Generate CSV content
         import csv
@@ -585,7 +585,7 @@ async def export_audit_logs_csv(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to export audit logs"
-        )
+        ) from e
 
 
 @router.post("/cleanup")
@@ -632,7 +632,7 @@ async def cleanup_old_audit_logs(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to cleanup audit logs"
-        )
+        ) from e
 
 
 # ==================== HEALTH CHECK ====================

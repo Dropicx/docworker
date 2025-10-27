@@ -5,7 +5,7 @@ Provides type-safe access to system configuration stored in database.
 """
 
 import logging
-from typing import Any
+
 
 from sqlalchemy.orm import Session
 

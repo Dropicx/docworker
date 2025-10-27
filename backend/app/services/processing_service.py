@@ -6,7 +6,7 @@ Coordinates between repositories and external services (Celery).
 """
 
 import logging
-from typing import Any
+
 
 from sqlalchemy.orm import Session
 

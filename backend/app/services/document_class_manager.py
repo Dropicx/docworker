@@ -94,7 +94,7 @@ Note:
 
 from datetime import datetime
 import logging
-from typing import Any
+
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session

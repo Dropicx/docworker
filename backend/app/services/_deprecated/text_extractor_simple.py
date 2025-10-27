@@ -6,7 +6,7 @@ For images, returns a message to use OVH's vision capabilities
 
 import os
 import logging
-from typing import Optional, Tuple
+
 from io import BytesIO
 
 import PyPDF2

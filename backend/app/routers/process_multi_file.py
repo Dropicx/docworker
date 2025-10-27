@@ -6,7 +6,7 @@ Handles batch upload and processing of multiple medical document files
 from datetime import datetime
 import logging
 import os
-from typing import Any
+
 import uuid
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
@@ -189,7 +189,7 @@ async def process_multiple_files(
         if not translated_text or translated_text.startswith("Error"):
             raise HTTPException(
                 status_code=500, detail=f"Medical processing failed: {translated_text}"
-            )
+            ) from e
 
         # Step 6: Optional language translation
         final_text = translated_text
@@ -291,7 +291,7 @@ async def _validate_multi_file_request(files: list[UploadFile]):
         raise HTTPException(
             status_code=400,
             detail=f"Total file size too large. Maximum allowed: {MAX_TOTAL_SIZE:,} bytes",
-        )
+        ) from e
 
     logger.info("✅ Multi-file request validation passed:")
     logger.info(f"   - File count: {len(files)}")
@@ -334,7 +334,7 @@ async def analyze_files_strategy(files: list[UploadFile] = File(...)):
         if len(files) > MAX_FILES:
             raise HTTPException(
                 status_code=400, detail=f"Too many files for analysis. Maximum: {MAX_FILES}"
-            )
+            ) from e
 
         # Validate and prepare files
         file_tuples = []

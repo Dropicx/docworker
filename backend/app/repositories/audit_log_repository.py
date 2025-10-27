@@ -6,12 +6,12 @@ querying, filtering, and export operations for security and compliance.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import List, Optional, Dict, Any
+from datetime import datetime
+
 from uuid import UUID
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, desc
+from sqlalchemy import and_, desc, or_
 
 from app.database.auth_models import AuditLogDB, AuditAction
 from app.repositories.base_repository import BaseRepository

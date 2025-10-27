@@ -79,7 +79,7 @@ from contextlib import contextmanager
 from datetime import datetime
 import logging
 import time
-from typing import Any
+
 
 from sqlalchemy.orm import Session
 

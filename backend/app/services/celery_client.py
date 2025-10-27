@@ -85,7 +85,7 @@ Note:
 
 import logging
 import os
-from typing import Any
+
 
 from celery import Celery
 

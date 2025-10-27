@@ -16,7 +16,7 @@ from collections.abc import Awaitable, Callable
 from datetime import datetime
 from enum import Enum
 import logging
-from typing import Any
+
 import uuid
 
 logger = logging.getLogger(__name__)

@@ -1,4 +1,3 @@
-from typing import Any
 """
 Circuit Breaker Pattern Implementation
 
@@ -22,7 +21,7 @@ from functools import wraps
 import logging
 from threading import Lock
 import time
-from typing import Any, ParamSpec, TypeVar
+from typing import ParamSpec, TypeVar
 
 from app.core.exceptions import CircuitBreakerError, ServiceUnavailableError
 

@@ -2,7 +2,7 @@ from datetime import datetime
 import logging
 import os
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -163,7 +163,7 @@ async def get_pipeline_stats(
     if not authenticated:
         raise HTTPException(
             status_code=401, detail="Authentication required to access pipeline statistics"
-        )
+        ) from e
 
     try:
         return service.get_pipeline_statistics()

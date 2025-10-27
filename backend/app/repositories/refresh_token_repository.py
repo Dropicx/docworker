@@ -6,8 +6,8 @@ validation, cleanup, and revocation operations.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import List, Optional
+from datetime import datetime
+
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -107,7 +107,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             return self.db.query(RefreshTokenDB).filter(
                 and_(
                     RefreshTokenDB.user_id == user_id,
-                    RefreshTokenDB.is_revoked == False,
+                    ~RefreshTokenDB.is_revoked,
                     RefreshTokenDB.expires_at > now
                 )
             ).all()
@@ -342,7 +342,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             return self.db.query(RefreshTokenDB).filter(
                 and_(
                     RefreshTokenDB.user_id == user_id,
-                    RefreshTokenDB.is_revoked == False,
+                    ~RefreshTokenDB.is_revoked,
                     RefreshTokenDB.expires_at > now
                 )
             ).count()

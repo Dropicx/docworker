@@ -1,5 +1,5 @@
 import logging
-from typing import Any
+
 
 from app.models.document_types import (
     CLASSIFICATION_PATTERNS,

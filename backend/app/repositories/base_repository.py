@@ -1,4 +1,3 @@
-from typing import Any
 """
 Base Repository Pattern
 
@@ -7,7 +6,7 @@ All specific repositories should inherit from BaseRepository.
 """
 
 import logging
-from typing import Any, Generic, TypeVar
+from typing import Generic, TypeVar
 
 from sqlalchemy.orm import Session
 

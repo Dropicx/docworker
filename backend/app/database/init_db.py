@@ -68,7 +68,7 @@ def init_database():
                             logger.info("✅ Updated existing user {admin_email} to ADMIN role")
                     else:
                         # Create new admin user directly using repository
-                        logger.info("🔐 Hashing password for {admin_email} (length: {len(admin_password)} chars, {len(admin_password.encode('utf-8'))} bytes)")
+                        logger.info(f"🔐 Hashing password for {admin_email} (length: {len(admin_password)} chars, {len(admin_password.encode('utf-8'))} bytes)")
                         password_hash = hash_password(admin_password)
                         logger.info("✅ Password hashed successfully")
                         new_user = user_repo.create_user(
@@ -79,7 +79,7 @@ def init_database():
                             created_by_admin_id=None  # System-created, no admin created it
                         )
                         if new_user:
-                            logger.info("✅ Created new admin user: {admin_email}")
+                            logger.info(f"✅ Created new admin user: {admin_email}")
                         else:
                             logger.warning("❌ Failed to create admin user")
                 except Exception as e:

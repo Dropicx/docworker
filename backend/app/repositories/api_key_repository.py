@@ -6,8 +6,8 @@ validation, usage tracking, and cleanup operations.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import List, Optional, Tuple
+from datetime import datetime
+
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -106,7 +106,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             return self.db.query(APIKeyDB).filter(
                 and_(
                     APIKeyDB.user_id == user_id,
-                    APIKeyDB.is_active == True
+                    APIKeyDB.is_active
                 )
             ).all()
         except Exception as e:
@@ -126,7 +126,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
         """
         try:
             return self.db.query(APIKeyDB).filter(
-                APIKeyDB.is_active == True
+                APIKeyDB.is_active
             ).offset(skip).limit(limit).all()
         except Exception as e:
             logger.error(f"Error getting all active API keys: {e}")
@@ -247,7 +247,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
                 and_(
                     APIKeyDB.expires_at.isnot(None),
                     APIKeyDB.expires_at < now,
-                    APIKeyDB.is_active == True
+                    APIKeyDB.is_active
                 )
             ).all()
         except Exception as e:
@@ -331,7 +331,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             return self.db.query(APIKeyDB).filter(
                 and_(
                     APIKeyDB.user_id == user_id,
-                    APIKeyDB.is_active == True
+                    APIKeyDB.is_active
                 )
             ).count()
         except Exception as e:

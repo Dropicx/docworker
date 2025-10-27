@@ -7,8 +7,8 @@ password management with proper security measures.
 """
 
 import logging
-from datetime import datetime, timedelta
-from typing import Optional, Dict, Any, Tuple
+from datetime import datetime
+
 from uuid import UUID
 
 from sqlalchemy.orm import Session

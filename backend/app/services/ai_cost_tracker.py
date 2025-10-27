@@ -57,7 +57,7 @@ Example Cost Calculation:
 
 from datetime import datetime
 import logging
-from typing import Any
+
 
 from sqlalchemy.orm import Session
 
@@ -388,7 +388,7 @@ class AICostTracker:
             API calls: 5, Avg: $0.002840
             >>>
             >>> # Get costs for date range
-            >>> from datetime import datetime, timedelta
+            >>> from datetime import datetime
             >>> today = datetime.now()
             >>> week_ago = today - timedelta(days=7)
             >>> weekly_costs = tracker.get_total_cost(start_date=week_ago, end_date=today)

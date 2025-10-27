@@ -5,7 +5,7 @@ Handles both embedded text PDFs and scanned documents/images
 
 import os
 import base64
-from typing import Optional, Tuple
+
 from io import BytesIO
 import logging
 

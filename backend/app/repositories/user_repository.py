@@ -7,11 +7,11 @@ authentication queries, and user status management.
 
 import logging
 from datetime import datetime
-from typing import List, Optional
+
 from uuid import UUID
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_
+from sqlalchemy import and_, or_
 
 from app.database.auth_models import UserDB, UserRole, UserStatus
 from app.repositories.base_repository import BaseRepository

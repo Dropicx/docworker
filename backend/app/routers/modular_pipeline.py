@@ -10,7 +10,7 @@ API endpoints for managing user-configurable pipeline:
 
 from datetime import datetime
 import logging
-from typing import Any
+
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
@@ -258,7 +258,7 @@ async def get_ocr_config(
     if not config:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="OCR configuration not found"
-        )
+        ) from e
 
     return config
 
@@ -286,7 +286,7 @@ async def update_ocr_config(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update OCR configuration",
-            )
+            ) from e
 
         logger.info(f"✅ OCR configuration updated: {config.selected_engine}")
         return config
@@ -375,7 +375,7 @@ async def get_step(
     if not step:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
-        )
+        ) from e
 
     return step
 
@@ -430,7 +430,7 @@ async def update_step(
         if not step:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
-            )
+            ) from e
 
         logger.info(f"✅ Updated pipeline step: {step.name} (ID: {step_id})")
         return step
@@ -458,7 +458,7 @@ async def delete_step(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
-        )
+        ) from e
 
     logger.info(f"✅ Deleted pipeline step ID: {step_id}")
     return
@@ -483,7 +483,7 @@ async def reorder_steps(
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to reorder steps"
-            )
+            ) from e
 
         logger.info(f"✅ Reordered pipeline steps: {reorder_request.step_ids}")
         return {"success": True, "message": "Steps reordered successfully"}
@@ -532,7 +532,7 @@ async def get_steps_by_document_class(
     if not doc_class:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found"
-        )
+        ) from e
 
     try:
         steps = step_repository.get_steps_by_document_class(class_id)
@@ -660,7 +660,7 @@ async def get_model(
     if not model:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Model {model_id} not found"
-        )
+        ) from e
 
     return model
 
@@ -709,7 +709,7 @@ async def get_document_class(
     if not doc_class:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found"
-        )
+        ) from e
 
     return doc_class
 
@@ -740,7 +740,7 @@ async def create_document_class(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create document class",
-            )
+            ) from e
 
         logger.info(f"✅ Created document class: {doc_class.class_key}")
         return doc_class
@@ -776,7 +776,7 @@ async def update_document_class(
         if not doc_class:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found"
-            )
+            ) from e
 
         logger.info(f"✅ Updated document class: {doc_class.class_key}")
         return doc_class
@@ -810,7 +810,7 @@ async def delete_document_class(
         if not success:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found"
-            )
+            ) from e
 
         logger.info(f"✅ Deleted document class ID: {class_id}")
         return

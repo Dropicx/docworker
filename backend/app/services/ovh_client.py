@@ -2,7 +2,7 @@ import base64
 from collections.abc import AsyncGenerator
 from io import BytesIO
 import logging
-from typing import Any
+
 
 import httpx
 from openai import AsyncOpenAI

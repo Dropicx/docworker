@@ -5,7 +5,7 @@ Specializes in detecting and formatting medical tables from OCR output
 
 import re
 import logging
-from typing import List, Dict, Tuple, Optional
+
 
 logger = logging.getLogger(__name__)
 

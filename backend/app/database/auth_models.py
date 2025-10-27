@@ -7,7 +7,6 @@ with JWT tokens, role-based access control, and comprehensive audit trails.
 """
 
 import uuid
-from datetime import datetime
 from enum import Enum
 
 from sqlalchemy import (
@@ -20,7 +19,6 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
-    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.ext.declarative import declarative_base

@@ -16,9 +16,9 @@ All endpoints require SETTINGS_ACCESS_CODE header for authentication.
 """
 
 import logging
-from typing import Any
 
-from fastapi import APIRouter, Depends, Header, HTTPException, status
+
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session

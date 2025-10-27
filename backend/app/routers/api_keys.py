@@ -8,10 +8,10 @@ can manage all keys.
 
 import logging
 from datetime import datetime
-from typing import List, Optional
+
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
@@ -20,7 +20,7 @@ from app.core.permissions import (
     require_admin,
     check_resource_access
 )
-from app.database.auth_models import UserDB, APIKeyDB
+from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.services.auth_service import AuthService
 
@@ -136,7 +136,7 @@ async def create_api_key(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create API key"
-        )
+        ) from e
 
 
 @router.get("", response_model=APIKeyListResponse)
@@ -178,7 +178,7 @@ async def list_api_keys(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to list API keys"
-        )
+        ) from e
 
 
 @router.delete("/{key_id}", response_model=RevokeAPIKeyResponse)
@@ -211,7 +211,7 @@ async def revoke_api_key(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="API key not found or access denied"
-            )
+            ) from e
 
         logger.info(f"Revoked API key {key_id} for user {current_user.email}")
 
@@ -224,7 +224,7 @@ async def revoke_api_key(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to revoke API key"
-        )
+        ) from e
 
 
 @router.put("/{key_id}", response_model=UpdateAPIKeyResponse)
@@ -259,7 +259,7 @@ async def update_api_key(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="API key not found or access denied"
-            )
+            ) from e
 
         # Update fields
         update_fields = {}
@@ -295,7 +295,7 @@ async def update_api_key(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to update API key"
-        )
+        ) from e
 
 
 # ==================== ADMIN API KEY ENDPOINTS ====================
@@ -345,7 +345,7 @@ async def list_all_api_keys(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to list API keys"
-        )
+        ) from e
 
 
 @router.get("/admin/user/{user_id}", response_model=APIKeyListResponse)
@@ -391,7 +391,7 @@ async def list_user_api_keys(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to list user API keys"
-        )
+        ) from e
 
 
 @router.delete("/admin/{key_id}", response_model=RevokeAPIKeyResponse)
@@ -424,7 +424,7 @@ async def admin_revoke_api_key(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="API key not found"
-            )
+            ) from e
 
         # Revoke key
         success = api_key_repo.revoke_key(UUID(key_id))
@@ -433,7 +433,7 @@ async def admin_revoke_api_key(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to revoke API key"
-            )
+            ) from e
 
         # Log admin action
         from app.repositories.audit_log_repository import AuditLogRepository
@@ -457,7 +457,7 @@ async def admin_revoke_api_key(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to revoke API key"
-        )
+        ) from e
 
 
 @router.post("/admin/cleanup")
@@ -501,7 +501,7 @@ async def cleanup_expired_keys(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to cleanup API keys"
-        )
+        ) from e
 
 
 # ==================== HEALTH CHECK ====================

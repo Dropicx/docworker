@@ -4,7 +4,7 @@ Pipeline Job Repository
 Handles database operations for pipeline jobs (document processing tasks).
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from sqlalchemy.orm import Session
 
