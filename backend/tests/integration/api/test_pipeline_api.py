@@ -11,7 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 # Import ALL models to register them with Base.metadata before create_all()
-from app.database import modular_pipeline_models, unified_models  # noqa: F401
+from app.database import auth_models, modular_pipeline_models, unified_models  # noqa: F401
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import (
     AvailableModelDB,
