@@ -1,11 +1,11 @@
-from datetime import datetime
 import logging
 import os
-from pathlib import Path
 import shutil
 import tempfile
+from datetime import datetime
+from pathlib import Path
 
-from fastapi import Request, Header, APIRouter
+from fastapi import APIRouter, Request
 
 from app.models.document import HealthCheck
 from app.services.cleanup import get_memory_usage
