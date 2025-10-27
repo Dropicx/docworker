@@ -10,9 +10,9 @@ Access Model:
 - Admin: Full access (user management, all configurations, audit logs)
 """
 
+import logging
 from enum import Enum
 from uuid import UUID
-import logging
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials

@@ -3,11 +3,11 @@ Multi-File Processing Router
 Handles batch upload and processing of multiple medical document files
 """
 
-from datetime import datetime
 import logging
 import os
-
 import uuid
+from datetime import datetime
+from typing import Any
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
@@ -15,7 +15,6 @@ from app.models.document import CustomPrompts, DocumentType, ProcessingResponse
 from app.services.file_validator import FileValidator
 from app.services.hybrid_text_extractor import HybridTextExtractor
 from app.services.ovh_client import OVHClient
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

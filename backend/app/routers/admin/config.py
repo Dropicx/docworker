@@ -17,7 +17,6 @@ All endpoints require SETTINGS_ACCESS_CODE header for authentication.
 
 import logging
 
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field

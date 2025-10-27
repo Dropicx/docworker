@@ -7,7 +7,7 @@ querying, filtering, and export operations for security and compliance.
 
 import logging
 from datetime import timedelta, datetime
-
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -15,7 +15,6 @@ from sqlalchemy import and_, desc, or_
 
 from app.database.auth_models import AuditLogDB, AuditAction
 from app.repositories.base_repository import BaseRepository
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

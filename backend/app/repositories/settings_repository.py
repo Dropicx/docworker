@@ -5,13 +5,12 @@ Provides type-safe access to system configuration stored in database.
 """
 
 import logging
-
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.database.unified_models import SystemSettingsDB
 from app.repositories.base_repository import BaseRepository
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

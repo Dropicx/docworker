@@ -7,7 +7,6 @@ Supports comprehensive audit trail analysis for security monitoring and complian
 
 import logging
 from datetime import datetime
-
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status

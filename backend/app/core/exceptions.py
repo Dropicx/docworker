@@ -9,7 +9,6 @@ from datetime import datetime
 from typing import Any
 
 
-
 class BaseAppError(Exception):
     """
     Base exception for all application-specific exceptions.
