@@ -48,15 +48,15 @@ def hash_password(password: str) -> str:
     if not password:
         raise ValueError("Password cannot be empty")
     
-    # Validate password strength
-    validate_password_strength(password)
-    
-    # Truncate password to 72 bytes if it's too long (bcrypt limitation)
-    # Encode to bytes, truncate, then decode back to string
+    # Truncate password to 72 bytes FIRST if it's too long (bcrypt limitation)
+    # Must happen before any validation or hashing operations
     password_bytes = password.encode('utf-8')
     if len(password_bytes) > 72:
         password_bytes = password_bytes[:72]
         password = password_bytes.decode('utf-8', errors='ignore')
+    
+    # Validate password strength (on truncated password)
+    validate_password_strength(password)
     
     return pwd_context.hash(password)
 
