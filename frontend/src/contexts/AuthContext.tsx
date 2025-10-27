@@ -49,20 +49,50 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         const storedTokens = localStorage.getItem('auth_tokens');
         const storedUser = localStorage.getItem('auth_user');
 
-        if (storedTokens && storedUser) {
+        // Check for valid JSON strings (not null, not "undefined", not empty)
+        if (
+          storedTokens &&
+          storedUser &&
+          storedTokens !== 'undefined' &&
+          storedUser !== 'undefined' &&
+          storedTokens !== 'null' &&
+          storedUser !== 'null'
+        ) {
           const parsedTokens = JSON.parse(storedTokens);
           const parsedUser = JSON.parse(storedUser);
 
-          // Verify tokens are still valid by getting current user
-          try {
-            const currentUser = await authApiService.getCurrentUser(parsedTokens.access_token);
-            setTokens(parsedTokens);
-            setUser(currentUser);
-          } catch (error) {
-            // Tokens are invalid, clear storage
+          // Validate that parsed data is actually objects
+          if (
+            parsedTokens &&
+            typeof parsedTokens === 'object' &&
+            parsedUser &&
+            typeof parsedUser === 'object' &&
+            parsedTokens.access_token
+          ) {
+            // Verify tokens are still valid by getting current user
+            try {
+              const currentUser = await authApiService.getCurrentUser(
+                parsedTokens.access_token
+              );
+              setTokens(parsedTokens);
+              setUser(currentUser);
+            } catch (error) {
+              // Tokens are invalid, clear storage
+              console.warn('Stored tokens invalid, clearing:', error);
+              localStorage.removeItem('auth_tokens');
+              localStorage.removeItem('auth_user');
+            }
+          } else {
+            // Invalid data structure, clear storage
+            console.warn('Invalid auth data structure, clearing');
             localStorage.removeItem('auth_tokens');
             localStorage.removeItem('auth_user');
           }
+        } else if (storedTokens || storedUser) {
+          // Partial or corrupted data, clear everything
+          console.warn('Partial or corrupted auth data, clearing');
+          localStorage.removeItem('auth_tokens');
+          localStorage.removeItem('auth_user');
         }
       } catch (error) {
         console.error('Error loading stored auth:', error);
