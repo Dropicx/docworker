@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { authApiService } from '../services/authApi';
 
 export interface User {
@@ -41,6 +41,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isLoading, setIsLoading] = useState(true);
 
   const isAuthenticated = !!user && !!tokens;
+
+  // Define logout and refreshToken with useCallback before they're used in useEffect
+  const logout = useCallback(async (): Promise<void> => {
+    try {
+      if (tokens?.refresh_token) {
+        await authApiService.logout(tokens.refresh_token);
+      }
+    } catch (error) {
+      console.error('Logout API call failed:', error);
+      // Continue with local logout even if API call fails
+    } finally {
+      // Clear local state and storage
+      setUser(null);
+      setTokens(null);
+      localStorage.removeItem('auth_tokens');
+      localStorage.removeItem('auth_user');
+    }
+  }, [tokens]);
+
+  const refreshToken = useCallback(async (): Promise<void> => {
+    if (!tokens?.refresh_token) {
+      throw new Error('No refresh token available');
+    }
+
+    try {
+      const response = await authApiService.refreshToken(tokens.refresh_token);
+
+      const newTokens = {
+        ...tokens,
+        access_token: response.access_token,
+        refresh_token: response.refresh_token,
+      };
+
+      setTokens(newTokens);
+      localStorage.setItem('auth_tokens', JSON.stringify(newTokens));
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      // If refresh fails, logout user
+      await logout();
+      throw error;
+    }
+  }, [tokens, logout]);
 
   // Load stored tokens and user data on mount
   useEffect(() => {
@@ -153,47 +195,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       throw error;
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const logout = async (): Promise<void> => {
-    try {
-      if (tokens?.refresh_token) {
-        await authApiService.logout(tokens.refresh_token);
-      }
-    } catch (error) {
-      console.error('Logout API call failed:', error);
-      // Continue with local logout even if API call fails
-    } finally {
-      // Clear local state and storage
-      setUser(null);
-      setTokens(null);
-      localStorage.removeItem('auth_tokens');
-      localStorage.removeItem('auth_user');
-    }
-  };
-
-  const refreshToken = async (): Promise<void> => {
-    if (!tokens?.refresh_token) {
-      throw new Error('No refresh token available');
-    }
-
-    try {
-      const response = await authApiService.refreshToken(tokens.refresh_token);
-      
-      const newTokens = {
-        ...tokens,
-        access_token: response.access_token,
-        refresh_token: response.refresh_token,
-      };
-      
-      setTokens(newTokens);
-      localStorage.setItem('auth_tokens', JSON.stringify(newTokens));
-    } catch (error) {
-      console.error('Token refresh failed:', error);
-      // If refresh fails, logout user
-      await logout();
-      throw error;
     }
   };
 
