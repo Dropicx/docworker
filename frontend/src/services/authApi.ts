@@ -12,18 +12,9 @@ const authApi = axios.create({
   },
 });
 
-// Request interceptor for logging
-authApi.interceptors.request.use(config => {
-  console.log(`🔐 Auth API Request: ${config.method?.toUpperCase()} ${config.url}`);
-  return config;
-});
-
 // Response interceptor for error handling
 authApi.interceptors.response.use(
-  response => {
-    console.log(`✅ Auth API Response: ${response.status} ${response.config.url}`);
-    return response;
-  },
+  response => response,
   error => {
     console.error(
       `❌ Auth API Error: ${error.response?.status} ${error.config?.url}`,

@@ -122,7 +122,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }, 14 * 60 * 1000); // Refresh every 14 minutes (tokens expire in 15)
 
     return () => clearInterval(refreshInterval);
-  }, [tokens]);
+  }, [tokens, refreshToken, logout]);
 
   // Listen for logout events from API interceptor
   useEffect(() => {
@@ -216,6 +216,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
   if (context === undefined) {

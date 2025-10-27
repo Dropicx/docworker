@@ -17,7 +17,6 @@ const Settings: React.FC = () => {
   // Sync token with pipeline API when authenticated
   useEffect(() => {
     if (tokens?.access_token) {
-      console.log('Setting pipelineApi token:', tokens.access_token.substring(0, 20) + '...');
       pipelineApi.updateToken(tokens.access_token);
       setTokenReady(true);
     } else if (!isLoading) {
