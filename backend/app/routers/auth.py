@@ -8,7 +8,7 @@ logout, and password management. No public registration - users are created by a
 import logging
 from uuid import UUID
 
-from fastapi import Request, APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
