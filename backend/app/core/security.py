@@ -13,14 +13,14 @@ Features:
 - Password strength validation
 """
 
+from datetime import datetime, timedelta
+from typing import Any
 import hashlib
 import hmac
 import logging
 import secrets
 import string
 import warnings
-from datetime import datetime, timedelta
-from typing import Any
 
 from jose import JWTError, jwt
 from passlib.context import CryptContext
@@ -187,14 +187,13 @@ def decode_token(token: str) -> dict[str, Any]:
         JWTError: If token is invalid, expired, or malformed
     """
     try:
-        payload = jwt.decode(
+        return jwt.decode(
             token,
             settings.jwt_secret_key.get_secret_value(),
             algorithms=[settings.jwt_algorithm]
         )
-        return payload
     except JWTError as e:
-        raise JWTError(f"Token validation failed: {str(e)}")
+        raise JWTError(f"Token validation failed: {str(e)}") from e
 
 
 def verify_token(token: str, expected_type: str = "access") -> dict[str, Any]:

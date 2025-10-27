@@ -10,16 +10,17 @@ Access Model:
 - Admin: Full access (user management, all configurations, audit logs)
 """
 
-import logging
 from enum import Enum
 from uuid import UUID
+import logging
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
-from app.database.auth_models import UserDB, UserRole
+from app.database.auth_models import UserDB
 from app.database.connection import get_session
+from app.repositories.audit_log_repository import AuditLogRepository
 from app.services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
@@ -454,9 +455,6 @@ def log_permission_denied(
         request: FastAPI request object
     """
     try:
-        from app.repositories.audit_log_repository import AuditLogRepository
-        from app.database.connection import get_session
-
         db = next(get_session())
         audit_repo = AuditLogRepository(db)
 
@@ -487,9 +485,6 @@ def log_auth_failure(
         reason: Reason for failure
     """
     try:
-        from app.repositories.audit_log_repository import AuditLogRepository
-        from app.database.connection import get_session
-
         db = next(get_session())
         audit_repo = AuditLogRepository(db)
 
