@@ -77,9 +77,9 @@ async def start_processing(
         return service.start_processing(processing_id, options_dict)
 
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except RuntimeError as e:
-        raise HTTPException(status_code=503, detail=str(e))
+        raise HTTPException(status_code=503, detail=str(e)) from e
     except Exception as e:
         logger.error(f"❌ Start-Verarbeitung Fehler: {e}")
         raise HTTPException(
@@ -101,7 +101,7 @@ async def get_processing_status(
         return ProcessingProgress(**status_dict)
 
     except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+        raise HTTPException(status_code=404, detail=str(e)) from e
     except Exception as e:
         logger.error(f"❌ Status-Abfrage Fehler: {e}")
         raise HTTPException(
