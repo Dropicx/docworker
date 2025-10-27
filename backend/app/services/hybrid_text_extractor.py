@@ -18,6 +18,7 @@ from app.services.file_quality_detector import (
 )
 from app.services.file_sequence_detector import FileSequenceDetector
 from app.services.ovh_client import OVHClient
+from typing import Any
 
 # Optional imports for local OCR (fallback gracefully if not available)
 try:

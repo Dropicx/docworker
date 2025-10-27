@@ -5,7 +5,7 @@ from pathlib import Path
 import shutil
 import tempfile
 
-from fastapi import APIRouter
+from fastapi import Request, Header, APIRouter
 
 from app.models.document import HealthCheck
 from app.services.cleanup import get_memory_usage

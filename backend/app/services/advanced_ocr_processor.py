@@ -11,6 +11,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageFilter
 import pytesseract
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

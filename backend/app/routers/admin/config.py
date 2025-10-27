@@ -29,6 +29,7 @@ from app.database.connection import get_session
 from app.repositories.feature_flags_repository import FeatureFlagsRepository
 from app.services.feature_flags import Feature, FeatureFlags
 from app.database.auth_models import UserDB
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

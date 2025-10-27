@@ -2,6 +2,7 @@ import logging
 
 
 from app.models.document_types import (
+from typing import Any
     CLASSIFICATION_PATTERNS,
     DOCUMENT_TYPE_DESCRIPTIONS,
     DocumentClass,

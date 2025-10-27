@@ -15,6 +15,7 @@ from app.models.document import CustomPrompts, DocumentType, ProcessingResponse
 from app.services.file_validator import FileValidator
 from app.services.hybrid_text_extractor import HybridTextExtractor
 from app.services.ovh_client import OVHClient
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -373,7 +374,7 @@ async def analyze_files_strategy(files: list[UploadFile] = File(...)):
         raise
     except Exception as e:
         logger.error(f"❌ File analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=f"File analysis error: {str(e)}") from e
+        raise HTTPException(status_code=500, detail=f"File analysis error: {str(e)}")
 
 
 def _estimate_processing_time(analysis: dict[str, Any]) -> str:

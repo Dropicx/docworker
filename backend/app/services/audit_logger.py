@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.database.auth_models import AuditAction
 from app.repositories.audit_log_repository import AuditLogRepository
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

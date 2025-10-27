@@ -6,7 +6,7 @@ authentication queries, and user status management.
 """
 
 import logging
-from datetime import datetime
+from datetime import timedelta, datetime
 
 from uuid import UUID
 

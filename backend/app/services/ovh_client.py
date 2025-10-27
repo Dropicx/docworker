@@ -9,6 +9,7 @@ from openai import AsyncOpenAI
 from PIL import Image
 
 from app.core.config import settings
+from typing import Any
 
 # ⚡ NOTE: PII removal now happens in worker (OptimizedPrivacyFilter)
 # This service receives already-cleaned text from the worker

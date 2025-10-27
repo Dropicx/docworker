@@ -6,7 +6,7 @@ All specific repositories should inherit from BaseRepository.
 """
 
 import logging
-from typing import Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from sqlalchemy.orm import Session
 

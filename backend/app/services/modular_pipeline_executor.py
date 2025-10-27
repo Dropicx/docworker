@@ -26,6 +26,7 @@ from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.services.ai_cost_tracker import AICostTracker
 from app.services.document_class_manager import DocumentClassManager
 from app.services.ovh_client import OVHClient
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

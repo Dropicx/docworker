@@ -88,6 +88,7 @@ import os
 
 
 from celery import Celery
+from typing import Any
 
 logger = logging.getLogger(__name__)
 

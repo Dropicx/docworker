@@ -11,6 +11,7 @@ import logging
 import pdfplumber
 from PIL import Image
 import PyPDF2
+from typing import Any
 
 # Optional OpenCV import - graceful fallback if not available
 try:

@@ -134,7 +134,7 @@ async def redis_debug():
         }
     except Exception as e:
         logger.error(f"❌ Redis debug error: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/flower-status")
@@ -259,4 +259,4 @@ async def worker_stats():
         raise HTTPException(status_code=503, detail="Flower service unavailable") from exc
     except Exception as e:
         logger.error(f"❌ Error fetching worker stats: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        raise HTTPException(status_code=500, detail=str(e))

@@ -4,7 +4,7 @@ Statistics Service
 Handles business logic for pipeline statistics and performance metrics.
 """
 
-from datetime import datetime
+from datetime import timedelta, datetime
 import logging
 
 from sqlalchemy.orm import Session

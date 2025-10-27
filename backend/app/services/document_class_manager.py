@@ -102,6 +102,7 @@ from sqlalchemy.orm import Session
 from app.database.modular_pipeline_models import DocumentClassDB
 from app.repositories.document_class_repository import DocumentClassRepository
 from app.repositories.pipeline_step_repository import PipelineStepRepository
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
