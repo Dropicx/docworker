@@ -53,7 +53,7 @@ class AdvancedPrivacyFilter:
         - Medical procedures and findings
 
     Attributes:
-        nlp (Optional[Language]): spaCy language model if available
+        nlp (Language | None): spaCy language model if available
         has_ner (bool): Whether NER functionality is available
         medical_terms (Set[str]): Protected medical terminology
         protected_abbreviations (Set[str]): Protected medical abbreviations

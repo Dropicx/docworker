@@ -72,7 +72,7 @@ class UserResponse(BaseModel):
     role: UserRole = Field(..., description="User role")
     is_active: bool = Field(..., description="User active status")
     created_at: str = Field(..., description="Account creation date")
-    last_login_at: Optional[str] = Field(None, description="Last login date")
+    last_login_at: str | None = Field(None, description="Last login date")
 
     class Config:
         from_attributes = True

@@ -75,9 +75,9 @@ class FileValidator:
             file: FastAPI UploadFile object containing uploaded file data
 
         Returns:
-            tuple[bool, Optional[str]]: Validation result tuple containing:
+            tuple[bool, str | None]: Validation result tuple containing:
                 - bool: True if file is valid and safe to process
-                - Optional[str]: Error message if validation failed, None if valid
+                - str | None: Error message if validation failed, None if valid
 
         Example:
             >>> from fastapi import UploadFile
@@ -195,9 +195,9 @@ class FileValidator:
             content: Raw PDF file content as bytes
 
         Returns:
-            tuple[bool, Optional[str]]: Validation result tuple containing:
+            tuple[bool, str | None]: Validation result tuple containing:
                 - bool: True if PDF is valid, False otherwise
-                - Optional[str]: Error message if invalid, None if valid
+                - str | None: Error message if invalid, None if valid
 
         Example:
             >>> pdf_bytes = open("report.pdf", "rb").read()
@@ -254,9 +254,9 @@ class FileValidator:
             content: Raw image file content as bytes
 
         Returns:
-            tuple[bool, Optional[str]]: Validation result tuple containing:
+            tuple[bool, str | None]: Validation result tuple containing:
                 - bool: True if image is valid, False otherwise
-                - Optional[str]: Error message if invalid, None if valid
+                - str | None: Error message if invalid, None if valid
 
         Example:
             >>> img_bytes = open("scan.jpg", "rb").read()

@@ -33,7 +33,7 @@ class OptimizedPrivacyFilter:
     and conditional spaCy NER for intelligent name detection.
     """
 
-    def __init__(self, spacy_model_path: Optional[str] = None):
+    def __init__(self, spacy_model_path: str | None = None):
         """
         Initialize optimized privacy filter.
 

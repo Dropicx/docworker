@@ -333,7 +333,7 @@ class InMemoryTaskQueue(TaskQueue):
 #         logger.info(f"📋 Task '{task_name}' enqueued to {queue.name} with job_id: {job.id}")
 #         return job.id
 #
-#     async def get_job_status(self, job_id: str) -> Optional[dict[str, Any]]:
+#     async def get_job_status(self, job_id: str) -> dict[str, Any | None]:
 #         """Get status from Redis queue."""
 #         from rq.job import Job
 #
@@ -352,7 +352,7 @@ class InMemoryTaskQueue(TaskQueue):
 #             logger.error(f"❌ Failed to fetch job {job_id}: {e}")
 #             return None
 #
-#     async def get_job_result(self, job_id: str) -> Optional[Any]:
+#     async def get_job_result(self, job_id: str) -> Any | None:
 #         """Get result from Redis queue."""
 #         from rq.job import Job
 #

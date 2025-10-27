@@ -519,7 +519,7 @@ class ModularPipelineExecutor:
             document_type: Document type for cost tracking (optional)
 
         Returns:
-            Tuple of (success: bool, output_text: str, error_message: Optional[str])
+            Tuple of (success: bool, output_text: str, error_message: str | None)
         """
         context = context or {}
 

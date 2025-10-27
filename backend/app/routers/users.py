@@ -53,8 +53,8 @@ class UserResponse(BaseModel):
     status: UserStatus = Field(..., description="User status")
     is_active: bool = Field(..., description="User active status")
     created_at: str = Field(..., description="Account creation date")
-    last_login_at: Optional[str] = Field(None, description="Last login date")
-    created_by_admin_id: Optional[UUID] = Field(None, description="Admin who created this user")
+    last_login_at: str | None = Field(None, description="Last login date")
+    created_by_admin_id: UUID | None = Field(None, description="Admin who created this user")
 
     class Config:
         from_attributes = True
@@ -68,10 +68,10 @@ class UserListResponse(BaseModel):
 
 class UpdateUserRequest(BaseModel):
     """Update user request model"""
-    email: Optional[EmailStr] = Field(None, description="New email address")
-    full_name: Optional[str] = Field(None, min_length=1, max_length=255, description="New full name")
-    role: Optional[UserRole] = Field(None, description="New role")
-    status: Optional[UserStatus] = Field(None, description="New status")
+    email: EmailStr | None = Field(None, description="New email address")
+    full_name: str | None = Field(None, min_length=1, max_length=255, description="New full name")
+    role: UserRole | None = Field(None, description="New role")
+    status: UserStatus | None = Field(None, description="New status")
 
 
 class UpdateUserResponse(BaseModel):
@@ -161,8 +161,8 @@ async def create_user(
 async def list_users(
     skip: int = 0,
     limit: int = 100,
-    role_filter: Optional[UserRole] = None,
-    status_filter: Optional[UserStatus] = None,
+    role_filter: UserRole | None = None,
+    status_filter: UserStatus | None = None,
     current_user: UserDB = Depends(require_admin()),
     db: Session = Depends(get_session)
 ):

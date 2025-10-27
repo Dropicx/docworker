@@ -257,7 +257,7 @@ class AICostTracker:
             metadata: Additional context (temperature, max_tokens, etc.) stored as JSON
 
         Returns:
-            Optional[AILogInteractionDB]: Created database record, or None if logging failed
+            AILogInteractionDB | None: Created database record, or None if logging failed
 
         Example:
             >>> tracker = AICostTracker(session=db)

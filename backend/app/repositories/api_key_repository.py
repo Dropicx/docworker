@@ -30,7 +30,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
         user_id: UUID,
         key_hash: str,
         name: str,
-        expires_at: Optional[datetime] = None
+        expires_at: datetime | None = None
     ) -> APIKeyDB:
         """
         Create a new API key.
@@ -60,7 +60,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             logger.error(f"Error creating API key for user {user_id}: {e}")
             raise
 
-    def get_by_hash(self, key_hash: str) -> Optional[APIKeyDB]:
+    def get_by_hash(self, key_hash: str) -> APIKeyDB | None:
         """
         Get API key by its hash.
 
@@ -208,7 +208,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             logger.error(f"Error activating API key {key_id}: {e}")
             raise
 
-    def update_expiration(self, key_id: UUID, expires_at: Optional[datetime]) -> bool:
+    def update_expiration(self, key_id: UUID, expires_at: datetime | None) -> bool:
         """
         Update API key expiration date.
 

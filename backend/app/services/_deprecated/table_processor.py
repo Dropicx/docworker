@@ -16,7 +16,7 @@ class TableProcessor:
         self.min_column_gap = 2  # Minimum spaces between columns
         self.column_alignment_tolerance = 30  # Pixels for column alignment
 
-    def process_ocr_output(self, text: str, ocr_data: Optional[dict] = None) -> str:
+    def process_ocr_output(self, text: str, ocr_data: dict | None = None) -> str:
         """
         Main entry point for table processing
 

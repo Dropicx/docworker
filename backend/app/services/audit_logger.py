@@ -41,11 +41,11 @@ class AuditLogger:
 
     def log_auth_event(
         self,
-        user_id: Optional[UUID],
+        user_id: UUID | None,
         action: AuditAction,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        details: Optional[dict[str, Any]] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        details: dict[str, Any | None] = None
     ) -> None:
         """
         Log authentication-related events.
@@ -81,9 +81,9 @@ class AuditLogger:
         action: AuditAction,
         resource_type: str,
         resource_id: str,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        details: Optional[dict[str, Any]] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        details: dict[str, Any | None] = None
     ) -> None:
         """
         Log user actions and changes.
@@ -120,10 +120,10 @@ class AuditLogger:
         action: AuditAction,
         resource_type: str,
         resource_id: str,
-        user_id: Optional[UUID] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        details: Optional[dict[str, Any]] = None
+        user_id: UUID | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        details: dict[str, Any | None] = None
     ) -> None:
         """
         Log security-related events.
@@ -160,7 +160,7 @@ class AuditLogger:
         action: AuditAction,
         resource_type: str,
         resource_id: str,
-        details: Optional[dict[str, Any]] = None
+        details: dict[str, Any | None] = None
     ) -> None:
         """
         Log system-level events.
@@ -189,12 +189,12 @@ class AuditLogger:
 
     def log_permission_denied(
         self,
-        user_id: Optional[UUID],
+        user_id: UUID | None,
         permission: str,
         resource_type: str,
         resource_id: str,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log permission denied events.
@@ -219,10 +219,10 @@ class AuditLogger:
 
     def log_auth_failure(
         self,
-        email: Optional[str],
+        email: str | None,
         reason: str,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log authentication failure events.
@@ -244,10 +244,10 @@ class AuditLogger:
 
     def log_rate_limit_exceeded(
         self,
-        user_id: Optional[UUID],
+        user_id: UUID | None,
         endpoint: str,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log rate limit exceeded events.
@@ -271,8 +271,8 @@ class AuditLogger:
     def log_user_login(
         self,
         user_id: UUID,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
         login_method: str = "password"
     ) -> None:
         """
@@ -295,8 +295,8 @@ class AuditLogger:
     def log_user_logout(
         self,
         user_id: UUID,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
         logout_all: bool = False
     ) -> None:
         """
@@ -322,8 +322,8 @@ class AuditLogger:
         created_user_id: UUID,
         created_user_email: str,
         role: str,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log user creation events.
@@ -354,8 +354,8 @@ class AuditLogger:
         admin_user_id: UUID,
         updated_user_id: UUID,
         changes: dict[str, Any],
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log user update events.
@@ -382,8 +382,8 @@ class AuditLogger:
         admin_user_id: UUID,
         deleted_user_id: UUID,
         deleted_user_email: str,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log user deletion events.
@@ -409,9 +409,9 @@ class AuditLogger:
         self,
         user_id: UUID,
         changed_by_admin: bool = False,
-        admin_user_id: Optional[UUID] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        admin_user_id: UUID | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log password change events.
@@ -438,8 +438,8 @@ class AuditLogger:
         user_id: UUID,
         key_id: str,
         key_name: str,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log API key creation events.
@@ -466,8 +466,8 @@ class AuditLogger:
         user_id: UUID,
         key_id: str,
         revoked_by_admin: bool = False,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log API key revocation events.
@@ -495,8 +495,8 @@ class AuditLogger:
         config_type: str,
         config_id: str,
         changes: dict[str, Any],
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log pipeline configuration changes.
@@ -525,8 +525,8 @@ class AuditLogger:
         setting_name: str,
         old_value: Any,
         new_value: Any,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None
+        ip_address: str | None = None,
+        user_agent: str | None = None
     ) -> None:
         """
         Log settings update events.
@@ -590,7 +590,7 @@ class AuditLogger:
 
 
 # Global audit logger instance (will be initialized with database session)
-audit_logger: Optional[AuditLogger] = None
+audit_logger: AuditLogger | None = None
 
 
 def get_audit_logger(db: Session) -> AuditLogger:

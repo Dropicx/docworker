@@ -56,7 +56,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             logger.error(f"Error creating refresh token for user {user_id}: {e}")
             raise
 
-    def get_by_hash(self, token_hash: str) -> Optional[RefreshTokenDB]:
+    def get_by_hash(self, token_hash: str) -> RefreshTokenDB | None:
         """
         Get refresh token by its hash.
 

@@ -42,7 +42,7 @@ class HybridTextExtractor:
         ovh_client (OVHClient): Client for Vision LLM processing
         sequence_detector (FileSequenceDetector): Detects logical order of multi-file documents
         local_ocr_available (bool): Whether Tesseract OCR is available
-        local_ocr (Optional[TextExtractorWithOCR]): Local OCR implementation if available
+        local_ocr (TextExtractorWithOCR | None): Local OCR implementation if available
 
     Example:
         >>> extractor = HybridTextExtractor()

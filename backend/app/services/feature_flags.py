@@ -139,7 +139,7 @@ class FeatureFlags:
     def __init__(
         self,
         session: Session | None = None,
-        settings: Optional["Settings"] = None,
+        settings: "Settings" | None = None,
         settings_repository: SystemSettingsRepository | None = None,
     ):
         """
@@ -312,7 +312,7 @@ class FeatureFlags:
 
 
 def is_feature_enabled(
-    feature: Feature, session: Session | None = None, settings: Optional["Settings"] = None
+    feature: Feature, session: Session | None = None, settings: "Settings" | None = None
 ) -> bool:
     """
     Global helper function to check if a feature is enabled.
@@ -336,7 +336,7 @@ def is_feature_enabled(
 
 
 def get_enabled_features(
-    session: Session | None = None, settings: Optional["Settings"] = None
+    session: Session | None = None, settings: "Settings" | None = None
 ) -> list[str]:
     """
     Global helper function to get all enabled features.

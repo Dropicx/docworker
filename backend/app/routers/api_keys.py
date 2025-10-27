@@ -34,7 +34,7 @@ router = APIRouter(prefix="/api/keys", tags=["api-keys"])
 class CreateAPIKeyRequest(BaseModel):
     """Create API key request model"""
     name: str = Field(..., min_length=1, max_length=255, description="User-friendly name for the key")
-    expires_days: Optional[int] = Field(None, ge=1, le=365, description="Days until expiration (1-365)")
+    expires_days: int | None = Field(None, ge=1, le=365, description="Days until expiration (1-365)")
 
 
 class CreateAPIKeyResponse(BaseModel):
@@ -42,7 +42,7 @@ class CreateAPIKeyResponse(BaseModel):
     api_key: str = Field(..., description="Generated API key (only shown once)")
     key_id: str = Field(..., description="API key ID")
     name: str = Field(..., description="Key name")
-    expires_at: Optional[str] = Field(None, description="Expiration date")
+    expires_at: str | None = Field(None, description="Expiration date")
     created_at: str = Field(..., description="Creation date")
 
 
@@ -51,8 +51,8 @@ class APIKeyResponse(BaseModel):
     id: UUID = Field(..., description="API key ID")
     name: str = Field(..., description="Key name")
     is_active: bool = Field(..., description="Active status")
-    expires_at: Optional[str] = Field(None, description="Expiration date")
-    last_used_at: Optional[str] = Field(None, description="Last used date")
+    expires_at: str | None = Field(None, description="Expiration date")
+    last_used_at: str | None = Field(None, description="Last used date")
     usage_count: int = Field(..., description="Usage count")
     created_at: str = Field(..., description="Creation date")
 
@@ -73,8 +73,8 @@ class RevokeAPIKeyResponse(BaseModel):
 
 class UpdateAPIKeyRequest(BaseModel):
     """Update API key request model"""
-    name: Optional[str] = Field(None, min_length=1, max_length=255, description="New key name")
-    expires_days: Optional[int] = Field(None, ge=1, le=365, description="New expiration days")
+    name: str | None = Field(None, min_length=1, max_length=255, description="New key name")
+    expires_days: int | None = Field(None, ge=1, le=365, description="New expiration days")
 
 
 class UpdateAPIKeyResponse(BaseModel):

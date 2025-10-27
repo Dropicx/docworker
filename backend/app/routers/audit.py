@@ -30,13 +30,13 @@ router = APIRouter(prefix="/api/audit", tags=["audit"])
 class AuditLogResponse(BaseModel):
     """Audit log response model"""
     id: UUID = Field(..., description="Log entry ID")
-    user_id: Optional[UUID] = Field(None, description="User who performed the action")
+    user_id: UUID | None = Field(None, description="User who performed the action")
     action: AuditAction = Field(..., description="Action performed")
-    resource_type: Optional[str] = Field(None, description="Type of resource affected")
-    resource_id: Optional[str] = Field(None, description="ID of resource affected")
-    ip_address: Optional[str] = Field(None, description="Client IP address")
-    user_agent: Optional[str] = Field(None, description="Client user agent")
-    details: Optional[str] = Field(None, description="Additional details (JSON)")
+    resource_type: str | None = Field(None, description="Type of resource affected")
+    resource_id: str | None = Field(None, description="ID of resource affected")
+    ip_address: str | None = Field(None, description="Client IP address")
+    user_agent: str | None = Field(None, description="Client user agent")
+    details: str | None = Field(None, description="Additional details (JSON)")
     timestamp: str = Field(..., description="Event timestamp")
 
     class Config:
@@ -62,14 +62,14 @@ class AuditSummaryResponse(BaseModel):
 
 class AuditFilterRequest(BaseModel):
     """Audit log filter request model"""
-    user_id: Optional[UUID] = Field(None, description="Filter by user ID")
-    action: Optional[AuditAction] = Field(None, description="Filter by action type")
-    resource_type: Optional[str] = Field(None, description="Filter by resource type")
-    resource_id: Optional[str] = Field(None, description="Filter by resource ID")
-    ip_address: Optional[str] = Field(None, description="Filter by IP address")
-    start_date: Optional[datetime] = Field(None, description="Start date filter")
-    end_date: Optional[datetime] = Field(None, description="End date filter")
-    search_term: Optional[str] = Field(None, description="Search term")
+    user_id: UUID | None = Field(None, description="Filter by user ID")
+    action: AuditAction | None = Field(None, description="Filter by action type")
+    resource_type: str | None = Field(None, description="Filter by resource type")
+    resource_id: str | None = Field(None, description="Filter by resource ID")
+    ip_address: str | None = Field(None, description="Filter by IP address")
+    start_date: datetime | None = Field(None, description="Start date filter")
+    end_date: datetime | None = Field(None, description="End date filter")
+    search_term: str | None = Field(None, description="Search term")
 
 
 class AuditExportResponse(BaseModel):
@@ -85,9 +85,9 @@ class AuditExportResponse(BaseModel):
 async def list_audit_logs(
     page: int = Query(1, ge=1, description="Page number"),
     limit: int = Query(100, ge=1, le=1000, description="Number of logs per page"),
-    user_id: Optional[UUID] = Query(None, description="Filter by user ID"),
-    action: Optional[AuditAction] = Query(None, description="Filter by action type"),
-    resource_type: Optional[str] = Query(None, description="Filter by resource type"),
+    user_id: UUID | None = Query(None, description="Filter by user ID"),
+    action: AuditAction | None = Query(None, description="Filter by action type"),
+    resource_type: str | None = Query(None, description="Filter by resource type"),
     hours: int = Query(24, ge=1, le=168, description="Hours to look back"),
     current_user: UserDB = Depends(require_admin()),
     db: Session = Depends(get_session)
@@ -504,8 +504,8 @@ async def get_audit_summary(
 
 @router.get("/export/csv")
 async def export_audit_logs_csv(
-    start_date: Optional[datetime] = Query(None, description="Start date for export"),
-    end_date: Optional[datetime] = Query(None, description="End date for export"),
+    start_date: datetime | None = Query(None, description="Start date for export"),
+    end_date: datetime | None = Query(None, description="End date for export"),
     limit: int = Query(10000, ge=1, le=50000, description="Maximum records to export"),
     current_user: UserDB = Depends(require_admin()),
     db: Session = Depends(get_session)

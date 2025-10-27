@@ -12,7 +12,6 @@ Access Model:
 
 import logging
 from enum import Enum
-from typing import Optional, List
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status, Request
@@ -179,9 +178,9 @@ def has_any_role(user: UserDB, roles: list[Role]) -> bool:
 
 async def get_current_user_optional(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_session)
-) -> Optional[UserDB]:
+) -> UserDB | None:
     """
     Get current user from JWT token (optional - returns None if no token).
 
@@ -200,10 +199,8 @@ async def get_current_user_optional(
 
     try:
         auth_service = AuthService(db)
-        user = auth_service.get_user_from_token(credentials.credentials)
-        return user
-    except Exception as e:
-        logger.debug(f"Error getting current user: {e}")
+        return auth_service.get_user_from_token(credentials.credentials)
+    except Exception:
         return None
 
 
@@ -255,14 +252,14 @@ async def get_current_user_required(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication failed",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from e
 
 
 async def get_current_user_from_api_key(
     request: Request,
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    credentials: HTTPAuthorizationCredentials | None = Depends(security),
     db: Session = Depends(get_session)
-) -> Optional[UserDB]:
+) -> UserDB | None:
     """
     Get current user from API key (optional).
 
@@ -288,10 +285,8 @@ async def get_current_user_from_api_key(
             return user
 
         # Fall back to JWT token
-        user = auth_service.get_user_from_token(credentials.credentials)
-        return user
-    except Exception as e:
-        logger.debug(f"Error getting current user from API key: {e}")
+        return auth_service.get_user_from_token(credentials.credentials)
+    except Exception:
         return None
 
 
@@ -446,7 +441,7 @@ def require_resource_access(resource_user_id: UUID):
 
 
 def log_permission_denied(
-    user: Optional[UserDB],
+    user: UserDB | None,
     permission: Permission,
     request: Request
 ) -> None:
@@ -479,7 +474,7 @@ def log_permission_denied(
 
 
 def log_auth_failure(
-    email: Optional[str],
+    email: str | None,
     request: Request,
     reason: str = "invalid_credentials"
 ) -> None:

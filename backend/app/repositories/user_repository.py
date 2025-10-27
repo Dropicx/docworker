@@ -25,7 +25,7 @@ class UserRepository(BaseRepository[UserDB]):
     def __init__(self, db: Session):
         super().__init__(db, UserDB)
 
-    def get_by_email(self, email: str) -> Optional[UserDB]:
+    def get_by_email(self, email: str) -> UserDB | None:
         """
         Get user by email address.
 
@@ -41,7 +41,7 @@ class UserRepository(BaseRepository[UserDB]):
             logger.error(f"Error getting user by email {email}: {e}")
             raise
 
-    def get_by_id(self, user_id: UUID) -> Optional[UserDB]:
+    def get_by_id(self, user_id: UUID) -> UserDB | None:
         """
         Get user by UUID.
 
@@ -59,7 +59,7 @@ class UserRepository(BaseRepository[UserDB]):
         password_hash: str,
         full_name: str,
         role: UserRole = UserRole.USER,
-        created_by_admin_id: Optional[UUID] = None
+        created_by_admin_id: UUID | None = None
     ) -> UserDB:
         """
         Create a new user.
@@ -232,8 +232,8 @@ class UserRepository(BaseRepository[UserDB]):
         self,
         skip: int = 0,
         limit: int = 100,
-        role_filter: Optional[UserRole] = None,
-        status_filter: Optional[UserStatus] = None
+        role_filter: UserRole | None = None,
+        status_filter: UserStatus | None = None
     ) -> list[UserDB]:
         """
         List all users with optional filtering.
@@ -382,7 +382,7 @@ class UserRepository(BaseRepository[UserDB]):
             logger.error(f"Error soft deleting user {user_id}: {e}")
             raise
 
-    def is_email_taken(self, email: str, exclude_user_id: Optional[UUID] = None) -> bool:
+    def is_email_taken(self, email: str, exclude_user_id: UUID | None = None) -> bool:
         """
         Check if email is already taken by another user.
 

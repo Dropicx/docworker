@@ -67,7 +67,7 @@ class TextExtractor:
             print(f"❌ PDF-Textextraktion fehler: {e}")
             return f"Fehler bei der PDF-Verarbeitung: {str(e)}", 0.0
 
-    async def _extract_pdf_with_pdfplumber(self, content: bytes) -> Optional[str]:
+    async def _extract_pdf_with_pdfplumber(self, content: bytes) -> str | None:
         """Textextraktion mit pdfplumber"""
         try:
             pdf_file = BytesIO(content)
@@ -86,7 +86,7 @@ class TextExtractor:
             print(f"pdfplumber Fehler: {e}")
             return None
 
-    async def _extract_pdf_with_pypdf2(self, content: bytes) -> Optional[str]:
+    async def _extract_pdf_with_pypdf2(self, content: bytes) -> str | None:
         """Textextraktion mit PyPDF2"""
         try:
             pdf_file = BytesIO(content)
@@ -105,7 +105,7 @@ class TextExtractor:
             print(f"PyPDF2 Fehler: {e}")
             return None
 
-    async def _extract_pdf_with_ocr(self, content: bytes) -> Optional[str]:
+    async def _extract_pdf_with_ocr(self, content: bytes) -> str | None:
         """PDF zu Bildern konvertieren und OCR anwenden"""
         try:
             # Dies erfordert pdf2image - für jetzt einen Platzhalter

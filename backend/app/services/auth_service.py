@@ -104,7 +104,7 @@ class AuthService:
             logger.error(f"Error creating user {email}: {e}")
             raise
 
-    def authenticate_user(self, email: str, password: str, ip_address: Optional[str] = None) -> Optional[UserDB]:
+    def authenticate_user(self, email: str, password: str, ip_address: str | None = None) -> UserDB | None:
         """
         Authenticate a user with email and password.
 
@@ -251,7 +251,7 @@ class AuthService:
             logger.error(f"Error creating tokens for user {user.id}: {e}")
             raise
 
-    def refresh_access_token(self, refresh_token: str) -> Optional[str]:
+    def refresh_access_token(self, refresh_token: str) -> str | None:
         """
         Refresh an access token using a refresh token.
 
@@ -346,7 +346,7 @@ class AuthService:
             logger.error(f"Error revoking all tokens for user {user_id}: {e}")
             raise
 
-    def get_user_from_token(self, token: str) -> Optional[UserDB]:
+    def get_user_from_token(self, token: str) -> UserDB | None:
         """
         Get user from JWT access token.
 
@@ -428,7 +428,7 @@ class AuthService:
         self,
         user_id: UUID,
         name: str,
-        expires_days: Optional[int] = None
+        expires_days: int | None = None
     ) -> tuple[str, str]:
         """
         Create an API key for a user.
@@ -474,7 +474,7 @@ class AuthService:
             logger.error(f"Error creating API key for user {user_id}: {e}")
             raise
 
-    def verify_api_key(self, api_key: str) -> Optional[UserDB]:
+    def verify_api_key(self, api_key: str) -> UserDB | None:
         """
         Verify an API key and return the associated user.
 

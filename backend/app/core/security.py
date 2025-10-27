@@ -121,7 +121,7 @@ def validate_password_strength(password: str) -> None:
         raise ValueError("Password must contain at least one special character")
 
 
-def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     """
     Create a JWT access token with configurable expiration.
 
@@ -316,7 +316,7 @@ def is_token_expired(token: str) -> bool:
         return True
 
 
-def extract_user_id_from_token(token: str) -> Optional[str]:
+def extract_user_id_from_token(token: str) -> str | None:
     """
     Extract user ID from a JWT token without full validation.
 
@@ -358,7 +358,7 @@ def create_password_reset_token(user_id: str) -> str:
     )
 
 
-def verify_password_reset_token(token: str) -> Optional[str]:
+def verify_password_reset_token(token: str) -> str | None:
     """
     Verify a password reset token and return user ID.
 

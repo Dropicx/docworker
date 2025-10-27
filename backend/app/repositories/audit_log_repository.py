@@ -27,13 +27,13 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
 
     def create_log(
         self,
-        user_id: Optional[UUID],
+        user_id: UUID | None,
         action: AuditAction,
-        resource_type: Optional[str] = None,
-        resource_id: Optional[str] = None,
-        ip_address: Optional[str] = None,
-        user_agent: Optional[str] = None,
-        details: Optional[dict[str, Any]] = None
+        resource_type: str | None = None,
+        resource_id: str | None = None,
+        ip_address: str | None = None,
+        user_agent: str | None = None,
+        details: dict[str, Any | None] = None
     ) -> AuditLogDB:
         """
         Create a new audit log entry.
@@ -448,8 +448,8 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
 
     def export_logs_csv(
         self,
-        start_date: Optional[datetime] = None,
-        end_date: Optional[datetime] = None,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
         limit: int = 10000
     ) -> list[dict[str, Any]]:
         """
