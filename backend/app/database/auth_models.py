@@ -7,7 +7,7 @@ with JWT tokens, role-based access control, and comprehensive audit trails.
 """
 
 from enum import Enum
-from uuid import UUID as UUID_Type, uuid4
+from uuid import uuid4
 
 from sqlalchemy import (
     Boolean,

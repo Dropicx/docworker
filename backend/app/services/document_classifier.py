@@ -1,8 +1,7 @@
 import logging
-
+from typing import Any
 
 from app.models.document_types import (
-from typing import Any
     CLASSIFICATION_PATTERNS,
     DOCUMENT_TYPE_DESCRIPTIONS,
     DocumentClass,
