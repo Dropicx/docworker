@@ -4,25 +4,24 @@ API Integration Tests for Pipeline Endpoints
 Tests FastAPI endpoints with TestClient, mocked auth, and real database.
 """
 
-import pytest
 from fastapi.testclient import TestClient
+import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-from app.main import app
-from app.database.connection import get_session
-
 # Import ALL models to register them with Base.metadata before create_all()
-from app.database import unified_models, modular_pipeline_models  # noqa: F401
+from app.database import modular_pipeline_models, unified_models  # noqa: F401
+from app.database.connection import get_session
 from app.database.modular_pipeline_models import (
-    Base,
-    DynamicPipelineStepDB,
     AvailableModelDB,
+    Base,
     DocumentClassDB,
+    DynamicPipelineStepDB,
     OCRConfigurationDB,
     OCREngineEnum,
 )
+from app.main import app
 
 
 @pytest.fixture(scope="function")
@@ -38,8 +37,8 @@ def test_db():
         poolclass=StaticPool,
     )
     Base.metadata.create_all(engine)
-    SessionLocal = sessionmaker(bind=engine)
-    session = SessionLocal()
+    session_local = sessionmaker(bind=engine)
+    session = session_local()
 
     yield session
 
@@ -78,7 +77,7 @@ def mock_auth(test_db):
         full_name="Test User",
         role=UserRole.ADMIN,
         is_active=True,
-        hashed_password="test_hash"
+        password_hash="test_hash"
     )
     test_db.add(mock_user)
     test_db.commit()
