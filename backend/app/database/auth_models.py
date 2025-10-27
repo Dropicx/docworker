@@ -21,12 +21,14 @@ Base = declarative_base()
 
 class UserRole(str, Enum):
     """User role enumeration for RBAC"""
-    USER = "user"    # Can manage pipeline configurations
+
+    USER = "user"  # Can manage pipeline configurations
     ADMIN = "admin"  # Can manage users and all configurations
 
 
 class UserStatus(str, Enum):
     """User status enumeration"""
+
     ACTIVE = "active"
     INACTIVE = "inactive"
     PENDING = "pending"  # For future email verification
@@ -53,8 +55,16 @@ class UserDB(Base):
     full_name = Column(String(255), nullable=False)
 
     # Role and status (use values_callable to store enum values, not names)
-    role = Column(SQLEnum(UserRole, values_callable=lambda x: [e.value for e in x]), nullable=False, default=UserRole.USER)
-    status = Column(SQLEnum(UserStatus, values_callable=lambda x: [e.value for e in x]), nullable=False, default=UserStatus.ACTIVE)
+    role = Column(
+        SQLEnum(UserRole, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=UserRole.USER,
+    )
+    status = Column(
+        SQLEnum(UserStatus, values_callable=lambda x: [e.value for e in x]),
+        nullable=False,
+        default=UserStatus.ACTIVE,
+    )
 
     # Account tracking
     is_active = Column(Boolean, default=True, nullable=False)
@@ -71,15 +81,14 @@ class UserDB(Base):
 
     # Admin tracking
     created_by_admin_id = Column(
-        UUID(as_uuid=True),
-        ForeignKey("users.id", ondelete="SET NULL"),
-        nullable=True,
-        index=True
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
     # Relationships
     created_by_admin = relationship("UserDB", remote_side=[id], backref="created_users")
-    refresh_tokens = relationship("RefreshTokenDB", back_populates="user", cascade="all, delete-orphan")
+    refresh_tokens = relationship(
+        "RefreshTokenDB", back_populates="user", cascade="all, delete-orphan"
+    )
     api_keys = relationship("APIKeyDB", back_populates="user", cascade="all, delete-orphan")
     audit_logs = relationship("AuditLogDB", back_populates="user")
 
@@ -111,7 +120,9 @@ class RefreshTokenDB(Base):
 
     # Token information
     token_hash = Column(String(255), nullable=False, unique=True, index=True)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
 
     # Expiration and status
     expires_at = Column(DateTime, nullable=False, index=True)
@@ -151,7 +162,9 @@ class APIKeyDB(Base):
     # Key information
     key_hash = Column(String(255), nullable=False, unique=True, index=True)
     name = Column(String(255), nullable=False)  # User-friendly name for identification
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
 
     # Status and expiration
     is_active = Column(Boolean, default=True, nullable=False, index=True)
@@ -182,6 +195,7 @@ class APIKeyDB(Base):
 
 class AuditAction(str, Enum):
     """Audit action types for comprehensive logging"""
+
     # Authentication actions
     USER_LOGIN = "user_login"
     USER_LOGOUT = "user_logout"
@@ -231,11 +245,15 @@ class AuditLogDB(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
 
     # User information
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    user_id = Column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     # Action details
     action = Column(SQLEnum(AuditAction), nullable=False, index=True)
-    resource_type = Column(String(100), nullable=True, index=True)  # e.g., "pipeline_step", "user", "api_key"
+    resource_type = Column(
+        String(100), nullable=True, index=True
+    )  # e.g., "pipeline_step", "user", "api_key"
     resource_id = Column(String(255), nullable=True, index=True)  # ID of the affected resource
 
     # Request context

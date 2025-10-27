@@ -73,6 +73,7 @@ ignore = [
     "ARG002",  # Unused method argument (common in overrides)
     "PTH123",  # Use Path.open() instead of open() (not always better)
     "SIM102",  # Use single if statement (sometimes nested is clearer)
+    "UP017",   # Prefer datetime.UTC over timezone.utc (we use timezone.utc for compatibility)
 ]
 
 # Allow fix for all enabled rules (when using --fix)

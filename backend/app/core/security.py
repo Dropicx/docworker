@@ -13,7 +13,7 @@ Features:
 - Password strength validation
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import hashlib
 import hmac
 import logging
@@ -36,7 +36,9 @@ passlib_logger = logging.getLogger("passlib")
 passlib_logger.setLevel(logging.ERROR)  # Only show errors, not warnings
 
 # Password hashing context
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=settings.bcrypt_rounds)
+pwd_context = CryptContext(
+    schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=settings.bcrypt_rounds
+)
 
 
 def hash_password(password: str) -> str:
@@ -59,10 +61,10 @@ def hash_password(password: str) -> str:
 
     # Truncate password to 72 bytes FIRST if it's too long (bcrypt limitation)
     # Must happen before any validation or hashing operations
-    password_bytes = password.encode('utf-8')
+    password_bytes = password.encode("utf-8")
     if len(password_bytes) > 72:
         password_bytes = password_bytes[:72]
-        password = password_bytes.decode('utf-8', errors='ignore')
+        password = password_bytes.decode("utf-8", errors="ignore")
 
     # Validate password strength (on truncated password)
     validate_password_strength(password)
@@ -101,7 +103,9 @@ def validate_password_strength(password: str) -> None:
         ValueError: If password doesn't meet strength requirements
     """
     if len(password) < settings.password_min_length:
-        raise ValueError(f"Password must be at least {settings.password_min_length} characters long")
+        raise ValueError(
+            f"Password must be at least {settings.password_min_length} characters long"
+        )
 
     # Check for at least one lowercase letter
     if not any(c.islower() for c in password):
@@ -135,16 +139,16 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
     to_encode = data.copy()
 
     if expires_delta:
-        expire = datetime.now(datetime.UTC) + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(datetime.UTC) + timedelta(minutes=settings.jwt_access_token_expire_minutes)
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=settings.jwt_access_token_expire_minutes
+        )
 
     to_encode.update({"exp": expire, "type": "access"})
 
     return jwt.encode(
-        to_encode,
-        settings.jwt_secret_key.get_secret_value(),
-        algorithm=settings.jwt_algorithm
+        to_encode, settings.jwt_secret_key.get_secret_value(), algorithm=settings.jwt_algorithm
     )
 
 
@@ -158,18 +162,12 @@ def create_refresh_token(user_id: str) -> str:
     Returns:
         Encoded JWT refresh token string
     """
-    expire = datetime.now(datetime.UTC) + timedelta(days=settings.jwt_refresh_token_expire_days)
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.jwt_refresh_token_expire_days)
 
-    to_encode = {
-        "sub": user_id,
-        "exp": expire,
-        "type": "refresh"
-    }
+    to_encode = {"sub": user_id, "exp": expire, "type": "refresh"}
 
     return jwt.encode(
-        to_encode,
-        settings.jwt_secret_key.get_secret_value(),
-        algorithm=settings.jwt_algorithm
+        to_encode, settings.jwt_secret_key.get_secret_value(), algorithm=settings.jwt_algorithm
     )
 
 
@@ -188,9 +186,7 @@ def decode_token(token: str) -> dict[str, Any]:
     """
     try:
         return jwt.decode(
-            token,
-            settings.jwt_secret_key.get_secret_value(),
-            algorithms=[settings.jwt_algorithm]
+            token, settings.jwt_secret_key.get_secret_value(), algorithms=[settings.jwt_algorithm]
         )
     except JWTError as e:
         raise JWTError(f"Token validation failed: {str(e)}") from e
@@ -227,7 +223,7 @@ def generate_api_key() -> tuple[str, str]:
     """
     # Generate random key using cryptographically secure random
     alphabet = string.ascii_letters + string.digits
-    plain_key = ''.join(secrets.choice(alphabet) for _ in range(settings.api_key_length))
+    plain_key = "".join(secrets.choice(alphabet) for _ in range(settings.api_key_length))
 
     # Create HMAC hash for secure storage
     key_hash = hash_api_key(plain_key)
@@ -246,9 +242,7 @@ def hash_api_key(api_key: str) -> str:
         HMAC-SHA256 hash of the API key
     """
     return hmac.new(
-        settings.jwt_secret_key.get_secret_value().encode(),
-        api_key.encode(),
-        hashlib.sha256
+        settings.jwt_secret_key.get_secret_value().encode(), api_key.encode(), hashlib.sha256
     ).hexdigest()
 
 
@@ -281,7 +275,7 @@ def generate_password(length: int = 16) -> str:
         Random password string
     """
     alphabet = string.ascii_letters + string.digits + "!@#$%^&*()_+-=[]{}|;:,.<>?"
-    return ''.join(secrets.choice(alphabet) for _ in range(length))
+    return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
 def generate_secret_key() -> str:
@@ -310,7 +304,7 @@ def is_token_expired(token: str) -> bool:
         if exp is None:
             return True
 
-        return datetime.now(datetime.UTC) > datetime.fromtimestamp(exp, tz=datetime.UTC)
+        return datetime.now(timezone.utc) > datetime.fromtimestamp(exp, tz=timezone.utc)
     except JWTError:
         return True
 
@@ -342,18 +336,12 @@ def create_password_reset_token(user_id: str) -> str:
     Returns:
         Password reset token string
     """
-    expire = datetime.now(datetime.UTC) + timedelta(hours=1)  # 1 hour expiration for security
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)  # 1 hour expiration for security
 
-    to_encode = {
-        "sub": user_id,
-        "exp": expire,
-        "type": "password_reset"
-    }
+    to_encode = {"sub": user_id, "exp": expire, "type": "password_reset"}
 
     return jwt.encode(
-        to_encode,
-        settings.jwt_secret_key.get_secret_value(),
-        algorithm=settings.jwt_algorithm
+        to_encode, settings.jwt_secret_key.get_secret_value(), algorithm=settings.jwt_algorithm
     )
 
 

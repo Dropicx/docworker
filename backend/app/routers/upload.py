@@ -155,7 +155,6 @@ async def upload_document(
             started_at=datetime.now(),  # Track when user initiates processing
             pipeline_config=pipeline_config,  # Snapshot der Pipeline-Konfiguration
             ocr_config=ocr_config,  # Snapshot der OCR-Konfiguration
-            user_id=current_user.id if current_user else None,  # Track user if authenticated
         )
 
         db.add(pipeline_job)

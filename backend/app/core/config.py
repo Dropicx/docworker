@@ -91,8 +91,7 @@ class Settings(BaseSettings):
         validation_alias="SETTINGS_ACCESS_CODE",  # Keep backward compatibility with Railway env var
     )
     allowed_origins: str | list[str] | None = Field(
-        default=None,
-        description="CORS allowed origins (comma-separated string or list)"
+        default=None, description="CORS allowed origins (comma-separated string or list)"
     )
     trusted_hosts: list[str] = Field(
         default_factory=lambda: ["*"], description="Trusted host headers"
@@ -124,12 +123,8 @@ class Settings(BaseSettings):
     # ==================
     # Password Security
     # ==================
-    bcrypt_rounds: int = Field(
-        default=12, ge=10, le=14, description="Bcrypt cost factor (10-14)"
-    )
-    password_min_length: int = Field(
-        default=8, ge=8, description="Minimum password length"
-    )
+    bcrypt_rounds: int = Field(default=12, ge=10, le=14, description="Bcrypt cost factor (10-14)")
+    password_min_length: int = Field(default=8, ge=8, description="Minimum password length")
 
     # ==================
     # Account Lockout (Brute Force Prevention)
@@ -167,9 +162,7 @@ class Settings(BaseSettings):
     cors_allow_credentials: bool = Field(
         default=True, description="Allow credentials in CORS requests"
     )
-    cors_max_age: int = Field(
-        default=3600, description="CORS preflight cache duration in seconds"
-    )
+    cors_max_age: int = Field(default=3600, description="CORS preflight cache duration in seconds")
 
     # ==================
     # File Processing Settings
@@ -305,7 +298,7 @@ class Settings(BaseSettings):
             "http://localhost:5173",
             "http://localhost:9122",
             "http://127.0.0.1:5173",
-            "http://127.0.0.1:9122"
+            "http://127.0.0.1:9122",
         ]
 
         # If it's already a list, return it

@@ -6,7 +6,7 @@ and token management. It handles user creation, login, token refresh, and
 password management with proper security measures.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from uuid import UUID
 
@@ -42,12 +42,7 @@ class AuthService:
         self.audit_log_repo = AuditLogRepository(db)
 
     def create_user_by_admin(
-        self,
-        email: str,
-        password: str,
-        full_name: str,
-        role: UserRole,
-        created_by_admin_id: UUID
+        self, email: str, password: str, full_name: str, role: UserRole, created_by_admin_id: UUID
     ) -> UserDB:
         """
         Create a new user (admin-only operation).
@@ -83,7 +78,7 @@ class AuthService:
                 password_hash=password_hash,
                 full_name=full_name,
                 role=role,
-                created_by_admin_id=created_by_admin_id
+                created_by_admin_id=created_by_admin_id,
             )
 
             # Log user creation
@@ -92,7 +87,7 @@ class AuthService:
                 action=AuditAction.USER_CREATED,
                 resource_type="user",
                 resource_id=str(user.id),
-                details={"created_user_email": email, "role": role.value}
+                details={"created_user_email": email, "role": role.value},
             )
 
             logger.info(f"Created user {email} with role {role} by admin {created_by_admin_id}")
@@ -102,7 +97,9 @@ class AuthService:
             logger.error(f"Error creating user {email}: {e}")
             raise
 
-    def authenticate_user(self, email: str, password: str, ip_address: str | None = None) -> UserDB | None:
+    def authenticate_user(
+        self, email: str, password: str, ip_address: str | None = None
+    ) -> UserDB | None:
         """
         Authenticate a user with email and password.
 
@@ -139,7 +136,12 @@ class AuthService:
                     resource_type="user",
                     resource_id=str(user.id),
                     ip_address=ip_address,
-                    details={"reason": "account_locked", "locked_until": user.locked_until.isoformat() if user.locked_until else None}
+                    details={
+                        "reason": "account_locked",
+                        "locked_until": user.locked_until.isoformat()
+                        if user.locked_until
+                        else None,
+                    },
                 )
 
                 return None
@@ -158,7 +160,7 @@ class AuthService:
                     resource_type="user",
                     resource_id=str(user.id),
                     ip_address=ip_address,
-                    details={"reason": "invalid_password", "failed_attempts": failed_attempts}
+                    details={"reason": "invalid_password", "failed_attempts": failed_attempts},
                 )
 
                 # Check if should lock account
@@ -175,8 +177,8 @@ class AuthService:
                         details={
                             "reason": "max_failed_attempts",
                             "failed_attempts": failed_attempts,
-                            "lockout_minutes": settings.account_lockout_minutes
-                        }
+                            "lockout_minutes": settings.account_lockout_minutes,
+                        },
                     )
 
                     logger.warning(
@@ -198,7 +200,7 @@ class AuthService:
                 action=AuditAction.USER_LOGIN,
                 resource_type="user",
                 resource_id=str(user.id),
-                ip_address=ip_address
+                ip_address=ip_address,
             )
 
             logger.info(f"User {email} authenticated successfully")
@@ -229,21 +231,17 @@ class AuthService:
 
             # Hash refresh token for storage
             from app.core.security import hash_api_key
+
             refresh_token_hash = hash_api_key(refresh_token)
 
             # Store refresh token in database
-            expires_at = datetime.now(datetime.UTC) + timedelta(days=7)  # 7 days
+            expires_at = datetime.now(timezone.utc) + timedelta(days=7)  # 7 days
             self.refresh_token_repo.create_token(
-                user_id=user.id,
-                token_hash=refresh_token_hash,
-                expires_at=expires_at
+                user_id=user.id, token_hash=refresh_token_hash, expires_at=expires_at
             )
 
             logger.debug(f"Created tokens for user {user.email}")
-            return {
-                "access_token": access_token,
-                "refresh_token": refresh_token
-            }
+            return {"access_token": access_token, "refresh_token": refresh_token}
 
         except Exception as e:
             logger.error(f"Error creating tokens for user {user.id}: {e}")
@@ -262,6 +260,7 @@ class AuthService:
         try:
             # Hash the refresh token to look it up
             from app.core.security import hash_api_key
+
             refresh_token_hash = hash_api_key(refresh_token)
 
             # Get refresh token from database
@@ -309,6 +308,7 @@ class AuthService:
         try:
             # Hash the refresh token to look it up
             from app.core.security import hash_api_key
+
             refresh_token_hash = hash_api_key(refresh_token)
 
             # Revoke token
@@ -411,7 +411,7 @@ class AuthService:
                     user_id=user_id,
                     action=AuditAction.PASSWORD_CHANGED,
                     resource_type="user",
-                    resource_id=str(user_id)
+                    resource_id=str(user_id),
                 )
 
                 logger.info(f"Password changed for user {user_id}")
@@ -423,10 +423,7 @@ class AuthService:
             return False
 
     def create_api_key(
-        self,
-        user_id: UUID,
-        name: str,
-        expires_days: int | None = None
+        self, user_id: UUID, name: str, expires_days: int | None = None
     ) -> tuple[str, str]:
         """
         Create an API key for a user.
@@ -446,14 +443,11 @@ class AuthService:
             # Set expiration
             expires_at = None
             if expires_days:
-                expires_at = datetime.now(datetime.UTC) + timedelta(days=expires_days)
+                expires_at = datetime.now(timezone.utc) + timedelta(days=expires_days)
 
             # Create API key record
             api_key = self.api_key_repo.create_api_key(
-                user_id=user_id,
-                key_hash=key_hash,
-                name=name,
-                expires_at=expires_at
+                user_id=user_id, key_hash=key_hash, name=name, expires_at=expires_at
             )
 
             # Log API key creation
@@ -462,7 +456,7 @@ class AuthService:
                 action=AuditAction.API_KEY_CREATED,
                 resource_type="api_key",
                 resource_id=str(api_key.id),
-                details={"key_name": name}
+                details={"key_name": name},
             )
 
             logger.info(f"Created API key '{name}' for user {user_id}")
@@ -495,7 +489,7 @@ class AuthService:
             if not stored_key.is_active:
                 return None
 
-            if stored_key.expires_at and stored_key.expires_at < datetime.now(datetime.UTC):
+            if stored_key.expires_at and stored_key.expires_at < datetime.now(timezone.utc):
                 return None
 
             # Get user
@@ -538,7 +532,7 @@ class AuthService:
                     user_id=user_id,
                     action=AuditAction.API_KEY_REVOKED,
                     resource_type="api_key",
-                    resource_id=key_id
+                    resource_id=key_id,
                 )
 
                 logger.info(f"Revoked API key {key_id} for user {user_id}")

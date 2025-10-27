@@ -24,14 +24,17 @@ router = APIRouter(prefix="/api/auth", tags=["authentication"])
 
 # ==================== PYDANTIC MODELS ====================
 
+
 class LoginRequest(BaseModel):
     """Login request model"""
+
     email: EmailStr = Field(..., description="User email address")
     password: str = Field(..., min_length=1, description="User password")
 
 
 class LoginResponse(BaseModel):
     """Login response model"""
+
     access_token: str = Field(..., description="JWT access token")
     refresh_token: str = Field(..., description="JWT refresh token")
     token_type: str = Field(default="bearer", description="Token type")
@@ -40,27 +43,32 @@ class LoginResponse(BaseModel):
 
 class RefreshRequest(BaseModel):
     """Token refresh request model"""
+
     refresh_token: str = Field(..., description="Refresh token")
 
 
 class RefreshResponse(BaseModel):
     """Token refresh response model"""
+
     access_token: str = Field(..., description="New JWT access token")
     token_type: str = Field(default="bearer", description="Token type")
 
 
 class LogoutRequest(BaseModel):
     """Logout request model"""
+
     refresh_token: str = Field(..., description="Refresh token to revoke")
 
 
 class LogoutResponse(BaseModel):
     """Logout response model"""
+
     message: str = Field(..., description="Logout confirmation message")
 
 
 class UserResponse(BaseModel):
     """User response model (public user data)"""
+
     id: UUID = Field(..., description="User ID")
     email: str = Field(..., description="User email")
     full_name: str = Field(..., description="User full name")
@@ -75,23 +83,22 @@ class UserResponse(BaseModel):
 
 class ChangePasswordRequest(BaseModel):
     """Change password request model"""
+
     old_password: str = Field(..., min_length=1, description="Current password")
     new_password: str = Field(..., min_length=8, description="New password")
 
 
 class ChangePasswordResponse(BaseModel):
     """Change password response model"""
+
     message: str = Field(..., description="Password change confirmation message")
 
 
 # ==================== AUTHENTICATION ENDPOINTS ====================
 
+
 @router.post("/login", response_model=LoginResponse)
-async def login(
-    request: Request,
-    login_data: LoginRequest,
-    db: Session = Depends(get_session)
-):
+async def login(request: Request, login_data: LoginRequest, db: Session = Depends(get_session)):
     """
     Authenticate user and return access and refresh tokens.
 
@@ -125,6 +132,7 @@ async def login(
 
         # Log successful login
         from app.repositories.audit_log_repository import AuditLogRepository
+
         audit_repo = AuditLogRepository(db)
         audit_repo.create_log(
             user_id=user.id,
@@ -132,7 +140,7 @@ async def login(
             resource_type="authentication",
             resource_id=str(user.id),
             ip_address=request.client.host if request.client else None,
-            user_agent=request.headers.get("user-agent")
+            user_agent=request.headers.get("user-agent"),
         )
 
         logger.info(f"User {login_data.email} logged in successfully")
@@ -147,8 +155,8 @@ async def login(
                 role=user.role,
                 is_active=user.is_active,
                 created_at=user.created_at.isoformat(),
-                last_login_at=user.last_login_at.isoformat() if user.last_login_at else None
-            )
+                last_login_at=user.last_login_at.isoformat() if user.last_login_at else None,
+            ),
         )
 
     except HTTPException:
@@ -156,16 +164,12 @@ async def login(
     except Exception as e:
         logger.error(f"Login error for {login_data.email}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Authentication failed"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Authentication failed"
         ) from e
 
 
 @router.post("/refresh", response_model=RefreshResponse)
-async def refresh_token(
-    refresh_data: RefreshRequest,
-    db: Session = Depends(get_session)
-):
+async def refresh_token(refresh_data: RefreshRequest, db: Session = Depends(get_session)):
     """
     Refresh access token using refresh token.
 
@@ -200,17 +204,12 @@ async def refresh_token(
     except Exception as e:
         logger.error(f"Token refresh error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Token refresh failed"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Token refresh failed"
         ) from e
 
 
 @router.post("/logout", response_model=LogoutResponse)
-async def logout(
-    request: Request,
-    logout_data: LogoutRequest,
-    db: Session = Depends(get_session)
-):
+async def logout(request: Request, logout_data: LogoutRequest, db: Session = Depends(get_session)):
     """
     Logout user by revoking refresh token.
 
@@ -235,13 +234,16 @@ async def logout(
         try:
             # Try to get user from refresh token before revoking
             from app.core.security import hash_api_key
+
             refresh_token_hash = hash_api_key(logout_data.refresh_token)
             from app.repositories.refresh_token_repository import RefreshTokenRepository
+
             refresh_repo = RefreshTokenRepository(db)
             stored_token = refresh_repo.get_by_hash(refresh_token_hash)
 
             if stored_token:
                 from app.repositories.audit_log_repository import AuditLogRepository
+
                 audit_repo = AuditLogRepository(db)
                 audit_repo.create_log(
                     user_id=stored_token.user_id,
@@ -249,7 +251,7 @@ async def logout(
                     resource_type="authentication",
                     resource_id=str(stored_token.user_id),
                     ip_address=request.client.host if request.client else None,
-                    user_agent=request.headers.get("user-agent")
+                    user_agent=request.headers.get("user-agent"),
                 )
         except Exception as e:
             logger.debug(f"Could not log logout event: {e}")
@@ -261,15 +263,12 @@ async def logout(
     except Exception as e:
         logger.error(f"Logout error: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Logout failed"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Logout failed"
         ) from e
 
 
 @router.get("/me", response_model=UserResponse)
-async def get_current_user_info(
-    current_user: UserDB = Depends(get_current_user_required)
-):
+async def get_current_user_info(current_user: UserDB = Depends(get_current_user_required)):
     """
     Get current user information.
 
@@ -286,7 +285,9 @@ async def get_current_user_info(
         role=current_user.role,
         is_active=current_user.is_active,
         created_at=current_user.created_at.isoformat(),
-        last_login_at=current_user.last_login_at.isoformat() if current_user.last_login_at else None
+        last_login_at=current_user.last_login_at.isoformat()
+        if current_user.last_login_at
+        else None,
     )
 
 
@@ -295,7 +296,7 @@ async def change_password(
     request: Request,
     password_data: ChangePasswordRequest,
     current_user: UserDB = Depends(get_current_user_required),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ):
     """
     Change user's password.
@@ -317,15 +318,12 @@ async def change_password(
 
         # Change password
         success = auth_service.change_password(
-            current_user.id,
-            password_data.old_password,
-            password_data.new_password
+            current_user.id, password_data.old_password, password_data.new_password
         )
 
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid current password"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid current password"
             )
 
         logger.info(f"Password changed for user {current_user.email}")
@@ -337,15 +335,13 @@ async def change_password(
     except Exception as e:
         logger.error(f"Password change error for user {current_user.email}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Password change failed"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Password change failed"
         ) from e
 
 
 @router.post("/logout-all")
 async def logout_all_devices(
-    current_user: UserDB = Depends(get_current_user_required),
-    db: Session = Depends(get_session)
+    current_user: UserDB = Depends(get_current_user_required), db: Session = Depends(get_session)
 ):
     """
     Logout from all devices by revoking all refresh tokens.
@@ -365,28 +361,31 @@ async def logout_all_devices(
 
         # Log logout all
         from app.repositories.audit_log_repository import AuditLogRepository
+
         audit_repo = AuditLogRepository(db)
         audit_repo.create_log(
             user_id=current_user.id,
             action="USER_LOGOUT",
             resource_type="authentication",
             resource_id=str(current_user.id),
-            details={"logout_all": True, "tokens_revoked": count}
+            details={"logout_all": True, "tokens_revoked": count},
         )
 
-        logger.info(f"User {current_user.email} logged out from all devices ({count} tokens revoked)")
+        logger.info(
+            f"User {current_user.email} logged out from all devices ({count} tokens revoked)"
+        )
 
         return {"message": f"Logged out from all devices ({count} tokens revoked)"}
 
     except Exception as e:
         logger.error(f"Logout all error for user {current_user.email}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Logout all failed"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Logout all failed"
         ) from e
 
 
 # ==================== HEALTH CHECK ====================
+
 
 @router.get("/health")
 async def auth_health_check():
@@ -396,8 +395,4 @@ async def auth_health_check():
     Returns:
         Service status
     """
-    return {
-        "status": "healthy",
-        "service": "authentication",
-        "version": "1.0.0"
-    }
+    return {"status": "healthy", "service": "authentication", "version": "1.0.0"}

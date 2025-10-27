@@ -5,7 +5,7 @@ Provides data access methods for user management including CRUD operations,
 authentication queries, and user status management.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 import logging
 from uuid import UUID
 
@@ -58,7 +58,7 @@ class UserRepository(BaseRepository[UserDB]):
         password_hash: str,
         full_name: str,
         role: UserRole = UserRole.USER,
-        created_by_admin_id: UUID | None = None
+        created_by_admin_id: UUID | None = None,
     ) -> UserDB:
         """
         Create a new user.
@@ -89,7 +89,7 @@ class UserRepository(BaseRepository[UserDB]):
                 created_by_admin_id=created_by_admin_id,
                 status=UserStatus.ACTIVE,
                 is_active=True,
-                is_verified=True
+                is_verified=True,
             )
 
             logger.info("Created user {email} with role {role}")
@@ -113,7 +113,7 @@ class UserRepository(BaseRepository[UserDB]):
             if not user:
                 return False
 
-            user.last_login_at = datetime.now(datetime.UTC)
+            user.last_login_at = datetime.now(timezone.utc)
             self.db.commit()
 
             logger.debug(f"Updated last login for user {user_id}")
@@ -232,7 +232,7 @@ class UserRepository(BaseRepository[UserDB]):
         skip: int = 0,
         limit: int = 100,
         role_filter: UserRole | None = None,
-        status_filter: UserStatus | None = None
+        status_filter: UserStatus | None = None,
     ) -> list[UserDB]:
         """
         List all users with optional filtering.
@@ -268,9 +268,11 @@ class UserRepository(BaseRepository[UserDB]):
             List of active user instances
         """
         try:
-            return self.db.query(UserDB).filter(
-                and_(UserDB.is_active, UserDB.status == UserStatus.ACTIVE)
-            ).all()
+            return (
+                self.db.query(UserDB)
+                .filter(and_(UserDB.is_active, UserDB.status == UserStatus.ACTIVE))
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting active users: {e}")
             raise
@@ -283,13 +285,17 @@ class UserRepository(BaseRepository[UserDB]):
             List of admin user instances
         """
         try:
-            return self.db.query(UserDB).filter(
-                and_(
-                    UserDB.role == UserRole.ADMIN,
-                    UserDB.is_active,
-                    UserDB.status == UserStatus.ACTIVE
+            return (
+                self.db.query(UserDB)
+                .filter(
+                    and_(
+                        UserDB.role == UserRole.ADMIN,
+                        UserDB.is_active,
+                        UserDB.status == UserStatus.ACTIVE,
+                    )
                 )
-            ).all()
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting admin users: {e}")
             raise
@@ -302,13 +308,17 @@ class UserRepository(BaseRepository[UserDB]):
             Number of active admin users
         """
         try:
-            return self.db.query(UserDB).filter(
-                and_(
-                    UserDB.role == UserRole.ADMIN,
-                    UserDB.is_active,
-                    UserDB.status == UserStatus.ACTIVE
+            return (
+                self.db.query(UserDB)
+                .filter(
+                    and_(
+                        UserDB.role == UserRole.ADMIN,
+                        UserDB.is_active,
+                        UserDB.status == UserStatus.ACTIVE,
+                    )
                 )
-            ).count()
+                .count()
+            )
         except Exception as e:
             logger.error(f"Error counting admin users: {e}")
             raise
@@ -326,12 +336,14 @@ class UserRepository(BaseRepository[UserDB]):
         """
         try:
             search_pattern = f"%{search_term}%"
-            return self.db.query(UserDB).filter(
-                or_(
-                    UserDB.email.ilike(search_pattern),
-                    UserDB.full_name.ilike(search_pattern)
+            return (
+                self.db.query(UserDB)
+                .filter(
+                    or_(UserDB.email.ilike(search_pattern), UserDB.full_name.ilike(search_pattern))
                 )
-            ).limit(limit).all()
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error searching users with term '{search_term}': {e}")
             raise
@@ -347,9 +359,7 @@ class UserRepository(BaseRepository[UserDB]):
             List of users created by the admin
         """
         try:
-            return self.db.query(UserDB).filter(
-                UserDB.created_by_admin_id == admin_id
-            ).all()
+            return self.db.query(UserDB).filter(UserDB.created_by_admin_id == admin_id).all()
         except Exception as e:
             logger.error(f"Error getting users created by admin {admin_id}: {e}")
             raise
@@ -474,7 +484,7 @@ class UserRepository(BaseRepository[UserDB]):
             if not user:
                 return False
 
-            lockout_time = datetime.now(datetime.UTC) + timedelta(minutes=minutes)
+            lockout_time = datetime.now(timezone.utc) + timedelta(minutes=minutes)
             user.locked_until = lockout_time
             self.db.commit()
 
@@ -501,7 +511,7 @@ class UserRepository(BaseRepository[UserDB]):
                 return False
 
             # Check if lockout has expired
-            if user.locked_until <= datetime.now(datetime.UTC):
+            if user.locked_until <= datetime.now(timezone.utc):
                 # Lockout expired, reset it
                 user.locked_until = None
                 user.failed_login_attempts = 0

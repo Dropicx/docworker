@@ -24,8 +24,10 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 # ==================== PYDANTIC MODELS ====================
 
+
 class CreateUserRequest(BaseModel):
     """Create user request model"""
+
     email: EmailStr = Field(..., description="User email address")
     password: str = Field(..., min_length=8, description="User password")
     full_name: str = Field(..., min_length=1, max_length=255, description="User full name")
@@ -34,6 +36,7 @@ class CreateUserRequest(BaseModel):
 
 class CreateUserResponse(BaseModel):
     """Create user response model"""
+
     id: UUID = Field(..., description="User ID")
     email: str = Field(..., description="User email")
     full_name: str = Field(..., description="User full name")
@@ -44,6 +47,7 @@ class CreateUserResponse(BaseModel):
 
 class UserResponse(BaseModel):
     """User response model (public user data)"""
+
     id: UUID = Field(..., description="User ID")
     email: str = Field(..., description="User email")
     full_name: str = Field(..., description="User full name")
@@ -60,12 +64,14 @@ class UserResponse(BaseModel):
 
 class UserListResponse(BaseModel):
     """User list response model"""
+
     users: list[UserResponse] = Field(..., description="List of users")
     total: int = Field(..., description="Total number of users")
 
 
 class UpdateUserRequest(BaseModel):
     """Update user request model"""
+
     email: EmailStr | None = Field(None, description="New email address")
     full_name: str | None = Field(None, min_length=1, max_length=255, description="New full name")
     role: UserRole | None = Field(None, description="New role")
@@ -74,21 +80,25 @@ class UpdateUserRequest(BaseModel):
 
 class UpdateUserResponse(BaseModel):
     """Update user response model"""
+
     message: str = Field(..., description="Update confirmation message")
 
 
 class ResetPasswordRequest(BaseModel):
     """Reset password request model"""
+
     new_password: str = Field(..., min_length=8, description="New password")
 
 
 class ResetPasswordResponse(BaseModel):
     """Reset password response model"""
+
     message: str = Field(..., description="Password reset confirmation message")
 
 
 class UserStatsResponse(BaseModel):
     """User statistics response model"""
+
     total_users: int = Field(..., description="Total number of users")
     active_users: int = Field(..., description="Number of active users")
     admin_users: int = Field(..., description="Number of admin users")
@@ -97,12 +107,13 @@ class UserStatsResponse(BaseModel):
 
 # ==================== USER MANAGEMENT ENDPOINTS ====================
 
+
 @router.post("", response_model=CreateUserResponse)
 async def create_user(
     request: Request,
     user_data: CreateUserRequest,
     current_user: UserDB = Depends(require_admin()),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ):
     """
     Create a new user (admin only).
@@ -128,10 +139,12 @@ async def create_user(
             password=user_data.password,
             full_name=user_data.full_name,
             role=user_data.role,
-            created_by_admin_id=current_user.id
+            created_by_admin_id=current_user.id,
         )
 
-        logger.info(f"Admin {current_user.email} created user {user_data.email} with role {user_data.role}")
+        logger.info(
+            f"Admin {current_user.email} created user {user_data.email} with role {user_data.role}"
+        )
 
         return CreateUserResponse(
             id=user.id,
@@ -139,19 +152,15 @@ async def create_user(
             full_name=user.full_name,
             role=user.role,
             status=user.status,
-            created_at=user.created_at.isoformat()
+            created_at=user.created_at.isoformat(),
         )
 
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e)
-        ) from e
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e)) from e
     except Exception as e:
         logger.error(f"Error creating user {user_data.email}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to create user"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to create user"
         ) from e
 
 
@@ -162,7 +171,7 @@ async def list_users(
     role_filter: UserRole | None = None,
     status_filter: UserStatus | None = None,
     current_user: UserDB = Depends(require_admin()),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ):
     """
     List all users with optional filtering (admin only).
@@ -180,13 +189,11 @@ async def list_users(
     """
     try:
         from app.repositories.user_repository import UserRepository
+
         user_repo = UserRepository(db)
 
         users = user_repo.list_all_users(
-            skip=skip,
-            limit=limit,
-            role_filter=role_filter,
-            status_filter=status_filter
+            skip=skip, limit=limit, role_filter=role_filter, status_filter=status_filter
         )
 
         user_responses = [
@@ -199,7 +206,7 @@ async def list_users(
                 is_active=user.is_active,
                 created_at=user.created_at.isoformat(),
                 last_login_at=user.last_login_at.isoformat() if user.last_login_at else None,
-                created_by_admin_id=user.created_by_admin_id
+                created_by_admin_id=user.created_by_admin_id,
             )
             for user in users
         ]
@@ -209,8 +216,7 @@ async def list_users(
     except Exception as e:
         logger.error(f"Error listing users: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to list users"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to list users"
         ) from e
 
 
@@ -218,7 +224,7 @@ async def list_users(
 async def get_user(
     user_id: str,
     current_user: UserDB = Depends(require_admin()),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ):
     """
     Get user by ID (admin only).
@@ -236,14 +242,12 @@ async def get_user(
     """
     try:
         from app.repositories.user_repository import UserRepository
+
         user_repo = UserRepository(db)
 
         user = user_repo.get_by_id(UUID(user_id))
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         return UserResponse(
             id=user.id,
@@ -254,7 +258,7 @@ async def get_user(
             is_active=user.is_active,
             created_at=user.created_at.isoformat(),
             last_login_at=user.last_login_at.isoformat() if user.last_login_at else None,
-            created_by_admin_id=user.created_by_admin_id
+            created_by_admin_id=user.created_by_admin_id,
         )
 
     except HTTPException:
@@ -262,8 +266,7 @@ async def get_user(
     except Exception as e:
         logger.error(f"Error getting user {user_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get user"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to get user"
         ) from e
 
 
@@ -272,7 +275,7 @@ async def update_user(
     user_id: str,
     update_data: UpdateUserRequest,
     current_user: UserDB = Depends(require_admin()),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ):
     """
     Update user information (admin only).
@@ -291,21 +294,22 @@ async def update_user(
     """
     try:
         from app.repositories.user_repository import UserRepository
+
         user_repo = UserRepository(db)
 
         # Get user
         user = user_repo.get_by_id(UUID(user_id))
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         # Check if admin is trying to update themselves
-        if user.id == current_user.id and update_data.role and update_data.role != current_user.role:
+        if (
+            user.id == current_user.id
+            and update_data.role
+            and update_data.role != current_user.role
+        ):
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot change your own role"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot change your own role"
             )
 
         # Check if trying to demote last admin
@@ -314,15 +318,14 @@ async def update_user(
             if admin_count <= 1:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cannot demote the last admin user"
+                    detail="Cannot demote the last admin user",
                 )
 
         # Check email uniqueness if changing email
         if update_data.email and update_data.email != user.email:
             if user_repo.is_email_taken(update_data.email, exclude_user_id=user.id):
                 raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email already taken"
+                    status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken"
                 )
 
         # Update fields
@@ -342,13 +345,14 @@ async def update_user(
 
             # Log update
             from app.repositories.audit_log_repository import AuditLogRepository
+
             audit_repo = AuditLogRepository(db)
             audit_repo.create_log(
                 user_id=current_user.id,
                 action="USER_UPDATED",
                 resource_type="user",
                 resource_id=user_id,
-                details=update_fields
+                details=update_fields,
             )
 
         logger.info(f"Admin {current_user.email} updated user {user_id}")
@@ -360,8 +364,7 @@ async def update_user(
     except Exception as e:
         logger.error(f"Error updating user {user_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to update user"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to update user"
         ) from e
 
 
@@ -369,7 +372,7 @@ async def update_user(
 async def delete_user(
     user_id: str,
     current_user: UserDB = Depends(require_admin()),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ):
     """
     Delete user (soft delete - admin only).
@@ -387,21 +390,18 @@ async def delete_user(
     """
     try:
         from app.repositories.user_repository import UserRepository
+
         user_repo = UserRepository(db)
 
         # Get user
         user = user_repo.get_by_id(UUID(user_id))
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         # Check if admin is trying to delete themselves
         if user.id == current_user.id:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Cannot delete your own account"
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Cannot delete your own account"
             )
 
         # Check if trying to delete last admin
@@ -410,7 +410,7 @@ async def delete_user(
             if admin_count <= 1:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cannot delete the last admin user"
+                    detail="Cannot delete the last admin user",
                 )
 
         # Soft delete user
@@ -418,19 +418,19 @@ async def delete_user(
 
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to delete user"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete user"
             )
 
         # Log deletion
         from app.repositories.audit_log_repository import AuditLogRepository
+
         audit_repo = AuditLogRepository(db)
         audit_repo.create_log(
             user_id=current_user.id,
             action="USER_DELETED",
             resource_type="user",
             resource_id=user_id,
-            details={"deleted_user_email": user.email}
+            details={"deleted_user_email": user.email},
         )
 
         logger.info(f"Admin {current_user.email} deleted user {user.email}")
@@ -442,8 +442,7 @@ async def delete_user(
     except Exception as e:
         logger.error(f"Error deleting user {user_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete user"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to delete user"
         ) from e
 
 
@@ -451,7 +450,7 @@ async def delete_user(
 async def activate_user(
     user_id: str,
     current_user: UserDB = Depends(require_admin()),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ):
     """
     Activate a user account (admin only).
@@ -466,25 +465,24 @@ async def activate_user(
     """
     try:
         from app.repositories.user_repository import UserRepository
+
         user_repo = UserRepository(db)
 
         success = user_repo.activate_user(UUID(user_id))
 
         if not success:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         # Log activation
         from app.repositories.audit_log_repository import AuditLogRepository
+
         audit_repo = AuditLogRepository(db)
         audit_repo.create_log(
             user_id=current_user.id,
             action="USER_UPDATED",
             resource_type="user",
             resource_id=user_id,
-            details={"action": "activated"}
+            details={"action": "activated"},
         )
 
         logger.info(f"Admin {current_user.email} activated user {user_id}")
@@ -496,8 +494,7 @@ async def activate_user(
     except Exception as e:
         logger.error(f"Error activating user {user_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to activate user"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to activate user"
         ) from e
 
 
@@ -505,7 +502,7 @@ async def activate_user(
 async def deactivate_user(
     user_id: str,
     current_user: UserDB = Depends(require_admin()),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ):
     """
     Deactivate a user account (admin only).
@@ -520,6 +517,7 @@ async def deactivate_user(
     """
     try:
         from app.repositories.user_repository import UserRepository
+
         user_repo = UserRepository(db)
 
         # Check if trying to deactivate last admin
@@ -529,26 +527,24 @@ async def deactivate_user(
             if admin_count <= 1:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cannot deactivate the last admin user"
+                    detail="Cannot deactivate the last admin user",
                 )
 
         success = user_repo.deactivate_user(UUID(user_id))
 
         if not success:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         # Log deactivation
         from app.repositories.audit_log_repository import AuditLogRepository
+
         audit_repo = AuditLogRepository(db)
         audit_repo.create_log(
             user_id=current_user.id,
             action="USER_UPDATED",
             resource_type="user",
             resource_id=user_id,
-            details={"action": "deactivated"}
+            details={"action": "deactivated"},
         )
 
         logger.info(f"Admin {current_user.email} deactivated user {user_id}")
@@ -560,8 +556,7 @@ async def deactivate_user(
     except Exception as e:
         logger.error(f"Error deactivating user {user_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to deactivate user"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to deactivate user"
         ) from e
 
 
@@ -570,7 +565,7 @@ async def reset_user_password(
     user_id: str,
     password_data: ResetPasswordRequest,
     current_user: UserDB = Depends(require_admin()),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ):
     """
     Reset user password (admin only).
@@ -587,15 +582,13 @@ async def reset_user_password(
     try:
         from app.core.security import hash_password
         from app.repositories.user_repository import UserRepository
+
         user_repo = UserRepository(db)
 
         # Get user
         user = user_repo.get_by_id(UUID(user_id))
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
-            )
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
         # Hash new password
         new_password_hash = hash_password(password_data.new_password)
@@ -605,8 +598,7 @@ async def reset_user_password(
 
         if not success:
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to reset password"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to reset password"
             )
 
         # Revoke all user tokens for security
@@ -615,13 +607,14 @@ async def reset_user_password(
 
         # Log password reset
         from app.repositories.audit_log_repository import AuditLogRepository
+
         audit_repo = AuditLogRepository(db)
         audit_repo.create_log(
             user_id=current_user.id,
             action="PASSWORD_CHANGED",
             resource_type="user",
             resource_id=user_id,
-            details={"reset_by_admin": True}
+            details={"reset_by_admin": True},
         )
 
         logger.info(f"Admin {current_user.email} reset password for user {user.email}")
@@ -633,15 +626,13 @@ async def reset_user_password(
     except Exception as e:
         logger.error(f"Error resetting password for user {user_id}: {e}")
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to reset password"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to reset password"
         ) from e
 
 
 @router.get("/stats/overview", response_model=UserStatsResponse)
 async def get_user_stats(
-    current_user: UserDB = Depends(require_admin()),
-    db: Session = Depends(get_session)
+    current_user: UserDB = Depends(require_admin()), db: Session = Depends(get_session)
 ):
     """
     Get user statistics (admin only).
@@ -655,6 +646,7 @@ async def get_user_stats(
     """
     try:
         from app.repositories.user_repository import UserRepository
+
         user_repo = UserRepository(db)
 
         total_users = user_repo.count()
@@ -666,18 +658,19 @@ async def get_user_stats(
             total_users=total_users,
             active_users=active_users,
             admin_users=admin_users,
-            user_users=user_users
+            user_users=user_users,
         )
 
     except Exception as e:
         logger.error(f"Error getting user stats: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to get user statistics"
+            detail="Failed to get user statistics",
         ) from e
 
 
 # ==================== HEALTH CHECK ====================
+
 
 @router.get("/health")
 async def users_health_check():
@@ -687,8 +680,4 @@ async def users_health_check():
     Returns:
         Service status
     """
-    return {
-        "status": "healthy",
-        "service": "users",
-        "version": "1.0.0"
-    }
+    return {"status": "healthy", "service": "users", "version": "1.0.0"}

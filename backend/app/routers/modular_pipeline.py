@@ -32,9 +32,11 @@ router = APIRouter(prefix="/api/pipeline", tags=["pipeline"])
 
 # ==================== AUTHENTICATION ====================
 
+
 def require_user_auth(current_user: UserDB = Depends(get_current_user_required)):
     """Require user authentication (USER or ADMIN role)"""
     return require_role("user")(current_user)
+
 
 # ==================== PYDANTIC MODELS ====================
 

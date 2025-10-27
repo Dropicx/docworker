@@ -5,7 +5,7 @@ Provides data access methods for audit logging including creation,
 querying, filtering, and export operations for security and compliance.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from typing import Any
 from uuid import UUID
@@ -33,7 +33,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
         resource_id: str | None = None,
         ip_address: str | None = None,
         user_agent: str | None = None,
-        details: dict[str, Any | None] = None
+        details: dict[str, Any | None] = None,
     ) -> AuditLogDB:
         """
         Create a new audit log entry.
@@ -55,6 +55,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             details_json = None
             if details:
                 import json
+
                 details_json = json.dumps(details)
 
             audit_log = self.create(
@@ -65,7 +66,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
                 ip_address=ip_address,
                 user_agent=user_agent,
                 details=details_json,
-                timestamp=datetime.now(datetime.UTC)
+                timestamp=datetime.now(timezone.utc),
             )
 
             logger.debug(f"Created audit log for action {action} by user {user_id}")
@@ -74,12 +75,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             logger.error(f"Error creating audit log: {e}")
             raise
 
-    def get_by_user(
-        self,
-        user_id: UUID,
-        skip: int = 0,
-        limit: int = 100
-    ) -> list[AuditLogDB]:
+    def get_by_user(self, user_id: UUID, skip: int = 0, limit: int = 100) -> list[AuditLogDB]:
         """
         Get audit logs for a specific user.
 
@@ -92,18 +88,20 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of audit log entries
         """
         try:
-            return self.db.query(AuditLogDB).filter(
-                AuditLogDB.user_id == user_id
-            ).order_by(desc(AuditLogDB.timestamp)).offset(skip).limit(limit).all()
+            return (
+                self.db.query(AuditLogDB)
+                .filter(AuditLogDB.user_id == user_id)
+                .order_by(desc(AuditLogDB.timestamp))
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting audit logs for user {user_id}: {e}")
             raise
 
     def get_by_action(
-        self,
-        action: AuditAction,
-        skip: int = 0,
-        limit: int = 100
+        self, action: AuditAction, skip: int = 0, limit: int = 100
     ) -> list[AuditLogDB]:
         """
         Get audit logs by action type.
@@ -117,19 +115,20 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of audit log entries
         """
         try:
-            return self.db.query(AuditLogDB).filter(
-                AuditLogDB.action == action
-            ).order_by(desc(AuditLogDB.timestamp)).offset(skip).limit(limit).all()
+            return (
+                self.db.query(AuditLogDB)
+                .filter(AuditLogDB.action == action)
+                .order_by(desc(AuditLogDB.timestamp))
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting audit logs for action {action}: {e}")
             raise
 
     def get_by_resource(
-        self,
-        resource_type: str,
-        resource_id: str,
-        skip: int = 0,
-        limit: int = 100
+        self, resource_type: str, resource_id: str, skip: int = 0, limit: int = 100
     ) -> list[AuditLogDB]:
         """
         Get audit logs for a specific resource.
@@ -144,22 +143,26 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of audit log entries
         """
         try:
-            return self.db.query(AuditLogDB).filter(
-                and_(
-                    AuditLogDB.resource_type == resource_type,
-                    AuditLogDB.resource_id == resource_id
+            return (
+                self.db.query(AuditLogDB)
+                .filter(
+                    and_(
+                        AuditLogDB.resource_type == resource_type,
+                        AuditLogDB.resource_id == resource_id,
+                    )
                 )
-            ).order_by(desc(AuditLogDB.timestamp)).offset(skip).limit(limit).all()
+                .order_by(desc(AuditLogDB.timestamp))
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
-            logger.error(f"Error getting audit logs for resource {resource_type}:{resource_id}: {e}")
+            logger.error(
+                f"Error getting audit logs for resource {resource_type}:{resource_id}: {e}"
+            )
             raise
 
-    def get_recent_logs(
-        self,
-        hours: int = 24,
-        skip: int = 0,
-        limit: int = 100
-    ) -> list[AuditLogDB]:
+    def get_recent_logs(self, hours: int = 24, skip: int = 0, limit: int = 100) -> list[AuditLogDB]:
         """
         Get recent audit logs.
 
@@ -172,19 +175,21 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of recent audit log entries
         """
         try:
-            cutoff_time = datetime.now(datetime.UTC) - timedelta(hours=hours)
-            return self.db.query(AuditLogDB).filter(
-                AuditLogDB.timestamp >= cutoff_time
-            ).order_by(desc(AuditLogDB.timestamp)).offset(skip).limit(limit).all()
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+            return (
+                self.db.query(AuditLogDB)
+                .filter(AuditLogDB.timestamp >= cutoff_time)
+                .order_by(desc(AuditLogDB.timestamp))
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting recent audit logs: {e}")
             raise
 
     def get_failed_logins(
-        self,
-        hours: int = 24,
-        skip: int = 0,
-        limit: int = 100
+        self, hours: int = 24, skip: int = 0, limit: int = 100
     ) -> list[AuditLogDB]:
         """
         Get failed login attempts.
@@ -198,22 +203,26 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of failed login audit log entries
         """
         try:
-            cutoff_time = datetime.now(datetime.UTC) - timedelta(hours=hours)
-            return self.db.query(AuditLogDB).filter(
-                and_(
-                    AuditLogDB.action == AuditAction.AUTH_FAILURE,
-                    AuditLogDB.timestamp >= cutoff_time
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+            return (
+                self.db.query(AuditLogDB)
+                .filter(
+                    and_(
+                        AuditLogDB.action == AuditAction.AUTH_FAILURE,
+                        AuditLogDB.timestamp >= cutoff_time,
+                    )
                 )
-            ).order_by(desc(AuditLogDB.timestamp)).offset(skip).limit(limit).all()
+                .order_by(desc(AuditLogDB.timestamp))
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting failed login logs: {e}")
             raise
 
     def get_permission_denied(
-        self,
-        hours: int = 24,
-        skip: int = 0,
-        limit: int = 100
+        self, hours: int = 24, skip: int = 0, limit: int = 100
     ) -> list[AuditLogDB]:
         """
         Get permission denied events.
@@ -227,23 +236,25 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of permission denied audit log entries
         """
         try:
-            cutoff_time = datetime.now(datetime.UTC) - timedelta(hours=hours)
-            return self.db.query(AuditLogDB).filter(
-                and_(
-                    AuditLogDB.action == AuditAction.PERMISSION_DENIED,
-                    AuditLogDB.timestamp >= cutoff_time
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+            return (
+                self.db.query(AuditLogDB)
+                .filter(
+                    and_(
+                        AuditLogDB.action == AuditAction.PERMISSION_DENIED,
+                        AuditLogDB.timestamp >= cutoff_time,
+                    )
                 )
-            ).order_by(desc(AuditLogDB.timestamp)).offset(skip).limit(limit).all()
+                .order_by(desc(AuditLogDB.timestamp))
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting permission denied logs: {e}")
             raise
 
-    def search_logs(
-        self,
-        search_term: str,
-        skip: int = 0,
-        limit: int = 100
-    ) -> list[AuditLogDB]:
+    def search_logs(self, search_term: str, skip: int = 0, limit: int = 100) -> list[AuditLogDB]:
         """
         Search audit logs by various fields.
 
@@ -257,24 +268,27 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
         """
         try:
             search_pattern = f"%{search_term}%"
-            return self.db.query(AuditLogDB).filter(
-                or_(
-                    AuditLogDB.resource_type.ilike(search_pattern),
-                    AuditLogDB.resource_id.ilike(search_pattern),
-                    AuditLogDB.ip_address.ilike(search_pattern),
-                    AuditLogDB.details.ilike(search_pattern)
+            return (
+                self.db.query(AuditLogDB)
+                .filter(
+                    or_(
+                        AuditLogDB.resource_type.ilike(search_pattern),
+                        AuditLogDB.resource_id.ilike(search_pattern),
+                        AuditLogDB.ip_address.ilike(search_pattern),
+                        AuditLogDB.details.ilike(search_pattern),
+                    )
                 )
-            ).order_by(desc(AuditLogDB.timestamp)).offset(skip).limit(limit).all()
+                .order_by(desc(AuditLogDB.timestamp))
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error searching audit logs with term '{search_term}': {e}")
             raise
 
     def get_logs_by_date_range(
-        self,
-        start_date: datetime,
-        end_date: datetime,
-        skip: int = 0,
-        limit: int = 100
+        self, start_date: datetime, end_date: datetime, skip: int = 0, limit: int = 100
     ) -> list[AuditLogDB]:
         """
         Get audit logs within a date range.
@@ -289,22 +303,20 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of audit log entries in date range
         """
         try:
-            return self.db.query(AuditLogDB).filter(
-                and_(
-                    AuditLogDB.timestamp >= start_date,
-                    AuditLogDB.timestamp <= end_date
-                )
-            ).order_by(desc(AuditLogDB.timestamp)).offset(skip).limit(limit).all()
+            return (
+                self.db.query(AuditLogDB)
+                .filter(and_(AuditLogDB.timestamp >= start_date, AuditLogDB.timestamp <= end_date))
+                .order_by(desc(AuditLogDB.timestamp))
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting audit logs by date range: {e}")
             raise
 
     def get_logs_by_ip(
-        self,
-        ip_address: str,
-        hours: int = 24,
-        skip: int = 0,
-        limit: int = 100
+        self, ip_address: str, hours: int = 24, skip: int = 0, limit: int = 100
     ) -> list[AuditLogDB]:
         """
         Get audit logs for a specific IP address.
@@ -319,13 +331,17 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of audit log entries for the IP
         """
         try:
-            cutoff_time = datetime.now(datetime.UTC) - timedelta(hours=hours)
-            return self.db.query(AuditLogDB).filter(
-                and_(
-                    AuditLogDB.ip_address == ip_address,
-                    AuditLogDB.timestamp >= cutoff_time
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+            return (
+                self.db.query(AuditLogDB)
+                .filter(
+                    and_(AuditLogDB.ip_address == ip_address, AuditLogDB.timestamp >= cutoff_time)
                 )
-            ).order_by(desc(AuditLogDB.timestamp)).offset(skip).limit(limit).all()
+                .order_by(desc(AuditLogDB.timestamp))
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting audit logs for IP {ip_address}: {e}")
             raise
@@ -362,10 +378,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             logger.error(f"Error counting audit logs for user {user_id}: {e}")
             raise
 
-    def get_activity_summary(
-        self,
-        hours: int = 24
-    ) -> dict[str, Any]:
+    def get_activity_summary(self, hours: int = 24) -> dict[str, Any]:
         """
         Get activity summary for a time period.
 
@@ -376,41 +389,42 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             Dictionary with activity summary
         """
         try:
-            cutoff_time = datetime.now(datetime.UTC) - timedelta(hours=hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
 
             # Count by action
             action_counts = {}
             for action in AuditAction:
-                count = self.db.query(AuditLogDB).filter(
-                    and_(
-                        AuditLogDB.action == action,
-                        AuditLogDB.timestamp >= cutoff_time
-                    )
-                ).count()
+                count = (
+                    self.db.query(AuditLogDB)
+                    .filter(and_(AuditLogDB.action == action, AuditLogDB.timestamp >= cutoff_time))
+                    .count()
+                )
                 action_counts[action.value] = count
 
             # Count unique users
-            unique_users = self.db.query(AuditLogDB.user_id).filter(
-                and_(
-                    AuditLogDB.user_id.isnot(None),
-                    AuditLogDB.timestamp >= cutoff_time
-                )
-            ).distinct().count()
+            unique_users = (
+                self.db.query(AuditLogDB.user_id)
+                .filter(and_(AuditLogDB.user_id.isnot(None), AuditLogDB.timestamp >= cutoff_time))
+                .distinct()
+                .count()
+            )
 
             # Count unique IPs
-            unique_ips = self.db.query(AuditLogDB.ip_address).filter(
-                and_(
-                    AuditLogDB.ip_address.isnot(None),
-                    AuditLogDB.timestamp >= cutoff_time
+            unique_ips = (
+                self.db.query(AuditLogDB.ip_address)
+                .filter(
+                    and_(AuditLogDB.ip_address.isnot(None), AuditLogDB.timestamp >= cutoff_time)
                 )
-            ).distinct().count()
+                .distinct()
+                .count()
+            )
 
             return {
                 "time_period_hours": hours,
                 "action_counts": action_counts,
                 "unique_users": unique_users,
                 "unique_ips": unique_ips,
-                "total_events": sum(action_counts.values())
+                "total_events": sum(action_counts.values()),
             }
         except Exception as e:
             logger.error(f"Error getting activity summary: {e}")
@@ -427,10 +441,8 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             Number of logs deleted
         """
         try:
-            cutoff_date = datetime.now(datetime.UTC) - timedelta(days=days)
-            old_logs = self.db.query(AuditLogDB).filter(
-                AuditLogDB.timestamp < cutoff_date
-            ).all()
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+            old_logs = self.db.query(AuditLogDB).filter(AuditLogDB.timestamp < cutoff_date).all()
 
             count = len(old_logs)
             for log in old_logs:
@@ -450,7 +462,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
         self,
         start_date: datetime | None = None,
         end_date: datetime | None = None,
-        limit: int = 10000
+        limit: int = 10000,
     ) -> list[dict[str, Any]]:
         """
         Export audit logs as CSV data.
@@ -476,16 +488,18 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             # Convert to dictionary format for CSV export
             csv_data = []
             for log in logs:
-                csv_data.append({
-                    "timestamp": log.timestamp.isoformat(),
-                    "user_id": str(log.user_id) if log.user_id else None,
-                    "action": log.action.value,
-                    "resource_type": log.resource_type,
-                    "resource_id": log.resource_id,
-                    "ip_address": log.ip_address,
-                    "user_agent": log.user_agent,
-                    "details": log.details
-                })
+                csv_data.append(
+                    {
+                        "timestamp": log.timestamp.isoformat(),
+                        "user_id": str(log.user_id) if log.user_id else None,
+                        "action": log.action.value,
+                        "resource_type": log.resource_type,
+                        "resource_id": log.resource_id,
+                        "ip_address": log.ip_address,
+                        "user_agent": log.user_agent,
+                        "details": log.details,
+                    }
+                )
 
             logger.info("Exported {len(csv_data)} audit logs to CSV format")
             return csv_data

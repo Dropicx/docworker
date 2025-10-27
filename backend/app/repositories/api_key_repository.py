@@ -5,7 +5,7 @@ Provides data access methods for API key management including creation,
 validation, usage tracking, and cleanup operations.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from uuid import UUID
 
@@ -25,11 +25,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
         super().__init__(db, APIKeyDB)
 
     def create_api_key(
-        self,
-        user_id: UUID,
-        key_hash: str,
-        name: str,
-        expires_at: datetime | None = None
+        self, user_id: UUID, key_hash: str, name: str, expires_at: datetime | None = None
     ) -> APIKeyDB:
         """
         Create a new API key.
@@ -50,7 +46,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
                 name=name,
                 expires_at=expires_at,
                 is_active=True,
-                usage_count=0
+                usage_count=0,
             )
 
             logger.info("Created API key '{name}' for user {user_id}")
@@ -102,12 +98,11 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             List of active API keys
         """
         try:
-            return self.db.query(APIKeyDB).filter(
-                and_(
-                    APIKeyDB.user_id == user_id,
-                    APIKeyDB.is_active
-                )
-            ).all()
+            return (
+                self.db.query(APIKeyDB)
+                .filter(and_(APIKeyDB.user_id == user_id, APIKeyDB.is_active))
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting active API keys for user {user_id}: {e}")
             raise
@@ -124,9 +119,9 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             List of active API keys
         """
         try:
-            return self.db.query(APIKeyDB).filter(
-                APIKeyDB.is_active
-            ).offset(skip).limit(limit).all()
+            return (
+                self.db.query(APIKeyDB).filter(APIKeyDB.is_active).offset(skip).limit(limit).all()
+            )
         except Exception as e:
             logger.error(f"Error getting all active API keys: {e}")
             raise
@@ -146,7 +141,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             if not api_key:
                 return False
 
-            api_key.last_used_at = datetime.now(datetime.UTC)
+            api_key.last_used_at = datetime.now(timezone.utc)
             api_key.usage_count += 1
             self.db.commit()
 
@@ -241,14 +236,18 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             List of expired API keys
         """
         try:
-            now = datetime.now(datetime.UTC)
-            return self.db.query(APIKeyDB).filter(
-                and_(
-                    APIKeyDB.expires_at.isnot(None),
-                    APIKeyDB.expires_at < now,
-                    APIKeyDB.is_active
+            now = datetime.now(timezone.utc)
+            return (
+                self.db.query(APIKeyDB)
+                .filter(
+                    and_(
+                        APIKeyDB.expires_at.isnot(None),
+                        APIKeyDB.expires_at < now,
+                        APIKeyDB.is_active,
+                    )
                 )
-            ).all()
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting expired API keys: {e}")
             raise
@@ -290,12 +289,11 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             List of matching API keys
         """
         try:
-            return self.db.query(APIKeyDB).filter(
-                and_(
-                    APIKeyDB.user_id == user_id,
-                    APIKeyDB.name == name
-                )
-            ).all()
+            return (
+                self.db.query(APIKeyDB)
+                .filter(and_(APIKeyDB.user_id == user_id, APIKeyDB.name == name))
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting API keys by name '{name}' for user {user_id}: {e}")
             raise
@@ -327,12 +325,11 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             Number of active API keys
         """
         try:
-            return self.db.query(APIKeyDB).filter(
-                and_(
-                    APIKeyDB.user_id == user_id,
-                    APIKeyDB.is_active
-                )
-            ).count()
+            return (
+                self.db.query(APIKeyDB)
+                .filter(and_(APIKeyDB.user_id == user_id, APIKeyDB.is_active))
+                .count()
+            )
         except Exception as e:
             logger.error(f"Error counting active API keys for user {user_id}: {e}")
             raise
@@ -349,13 +346,13 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             List of recently used API keys
         """
         try:
-            cutoff_date = datetime.now(datetime.UTC) - timedelta(days=days)
-            return self.db.query(APIKeyDB).filter(
-                and_(
-                    APIKeyDB.user_id == user_id,
-                    APIKeyDB.last_used_at >= cutoff_date
-                )
-            ).order_by(APIKeyDB.last_used_at.desc()).all()
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+            return (
+                self.db.query(APIKeyDB)
+                .filter(and_(APIKeyDB.user_id == user_id, APIKeyDB.last_used_at >= cutoff_date))
+                .order_by(APIKeyDB.last_used_at.desc())
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting recently used API keys for user {user_id}: {e}")
             raise
@@ -373,9 +370,12 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
         """
         try:
             search_pattern = f"%{search_term}%"
-            return self.db.query(APIKeyDB).filter(
-                APIKeyDB.name.ilike(search_pattern)
-            ).limit(limit).all()
+            return (
+                self.db.query(APIKeyDB)
+                .filter(APIKeyDB.name.ilike(search_pattern))
+                .limit(limit)
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error searching API keys with term '{search_term}': {e}")
             raise

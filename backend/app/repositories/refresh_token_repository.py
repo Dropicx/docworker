@@ -5,7 +5,7 @@ Provides data access methods for refresh token management including creation,
 validation, cleanup, and revocation operations.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import logging
 from uuid import UUID
 
@@ -24,12 +24,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
     def __init__(self, db: Session):
         super().__init__(db, RefreshTokenDB)
 
-    def create_token(
-        self,
-        user_id: UUID,
-        token_hash: str,
-        expires_at: datetime
-    ) -> RefreshTokenDB:
+    def create_token(self, user_id: UUID, token_hash: str, expires_at: datetime) -> RefreshTokenDB:
         """
         Create a new refresh token.
 
@@ -43,10 +38,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
         """
         try:
             refresh_token = self.create(
-                user_id=user_id,
-                token_hash=token_hash,
-                expires_at=expires_at,
-                is_revoked=False
+                user_id=user_id, token_hash=token_hash, expires_at=expires_at, is_revoked=False
             )
 
             logger.debug(f"Created refresh token for user {user_id}")
@@ -66,9 +58,11 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             Refresh token instance or None if not found
         """
         try:
-            return self.db.query(RefreshTokenDB).filter(
-                RefreshTokenDB.token_hash == token_hash
-            ).first()
+            return (
+                self.db.query(RefreshTokenDB)
+                .filter(RefreshTokenDB.token_hash == token_hash)
+                .first()
+            )
         except Exception as e:
             logger.error(f"Error getting refresh token by hash: {e}")
             raise
@@ -84,9 +78,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             List of user's refresh tokens
         """
         try:
-            return self.db.query(RefreshTokenDB).filter(
-                RefreshTokenDB.user_id == user_id
-            ).all()
+            return self.db.query(RefreshTokenDB).filter(RefreshTokenDB.user_id == user_id).all()
         except Exception as e:
             logger.error(f"Error getting refresh tokens for user {user_id}: {e}")
             raise
@@ -102,14 +94,18 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             List of active refresh tokens
         """
         try:
-            now = datetime.now(datetime.UTC)
-            return self.db.query(RefreshTokenDB).filter(
-                and_(
-                    RefreshTokenDB.user_id == user_id,
-                    ~RefreshTokenDB.is_revoked,
-                    RefreshTokenDB.expires_at > now
+            now = datetime.now(timezone.utc)
+            return (
+                self.db.query(RefreshTokenDB)
+                .filter(
+                    and_(
+                        RefreshTokenDB.user_id == user_id,
+                        ~RefreshTokenDB.is_revoked,
+                        RefreshTokenDB.expires_at > now,
+                    )
                 )
-            ).all()
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting active refresh tokens for user {user_id}: {e}")
             raise
@@ -207,7 +203,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             if not token:
                 return False
 
-            token.last_used_at = datetime.now(datetime.UTC)
+            token.last_used_at = datetime.now(timezone.utc)
             self.db.commit()
 
             logger.debug(f"Updated last used for refresh token {token_id}")
@@ -225,10 +221,8 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             List of expired tokens
         """
         try:
-            now = datetime.now(datetime.UTC)
-            return self.db.query(RefreshTokenDB).filter(
-                RefreshTokenDB.expires_at < now
-            ).all()
+            now = datetime.now(timezone.utc)
+            return self.db.query(RefreshTokenDB).filter(RefreshTokenDB.expires_at < now).all()
         except Exception as e:
             logger.error(f"Error getting expired refresh tokens: {e}")
             raise
@@ -268,10 +262,10 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             Number of tokens deleted
         """
         try:
-            cutoff_date = datetime.now(datetime.UTC) - timedelta(days=days)
-            old_tokens = self.db.query(RefreshTokenDB).filter(
-                RefreshTokenDB.created_at < cutoff_date
-            ).all()
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
+            old_tokens = (
+                self.db.query(RefreshTokenDB).filter(RefreshTokenDB.created_at < cutoff_date).all()
+            )
 
             count = len(old_tokens)
             for token in old_tokens:
@@ -302,7 +296,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             if not token:
                 return False
 
-            now = datetime.now(datetime.UTC)
+            now = datetime.now(timezone.utc)
             return not token.is_revoked and token.expires_at > now
         except Exception as e:
             logger.error(f"Error checking token validity: {e}")
@@ -319,9 +313,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             Number of refresh tokens
         """
         try:
-            return self.db.query(RefreshTokenDB).filter(
-                RefreshTokenDB.user_id == user_id
-            ).count()
+            return self.db.query(RefreshTokenDB).filter(RefreshTokenDB.user_id == user_id).count()
         except Exception as e:
             logger.error(f"Error counting refresh tokens for user {user_id}: {e}")
             raise
@@ -337,14 +329,18 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             Number of active refresh tokens
         """
         try:
-            now = datetime.now(datetime.UTC)
-            return self.db.query(RefreshTokenDB).filter(
-                and_(
-                    RefreshTokenDB.user_id == user_id,
-                    ~RefreshTokenDB.is_revoked,
-                    RefreshTokenDB.expires_at > now
+            now = datetime.now(timezone.utc)
+            return (
+                self.db.query(RefreshTokenDB)
+                .filter(
+                    and_(
+                        RefreshTokenDB.user_id == user_id,
+                        ~RefreshTokenDB.is_revoked,
+                        RefreshTokenDB.expires_at > now,
+                    )
                 )
-            ).count()
+                .count()
+            )
         except Exception as e:
             logger.error(f"Error counting active refresh tokens for user {user_id}: {e}")
             raise
@@ -361,13 +357,18 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             List of recently used tokens
         """
         try:
-            cutoff_time = datetime.now(datetime.UTC) - timedelta(hours=hours)
-            return self.db.query(RefreshTokenDB).filter(
-                and_(
-                    RefreshTokenDB.user_id == user_id,
-                    RefreshTokenDB.last_used_at >= cutoff_time
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
+            return (
+                self.db.query(RefreshTokenDB)
+                .filter(
+                    and_(
+                        RefreshTokenDB.user_id == user_id,
+                        RefreshTokenDB.last_used_at >= cutoff_time,
+                    )
                 )
-            ).order_by(RefreshTokenDB.last_used_at.desc()).all()
+                .order_by(RefreshTokenDB.last_used_at.desc())
+                .all()
+            )
         except Exception as e:
             logger.error(f"Error getting recently used tokens for user {user_id}: {e}")
             raise

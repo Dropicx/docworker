@@ -44,7 +44,7 @@ class AuditLogger:
         action: AuditAction,
         ip_address: str | None = None,
         user_agent: str | None = None,
-        details: dict[str, Any | None] = None
+        details: dict[str, Any | None] = None,
     ) -> None:
         """
         Log authentication-related events.
@@ -67,7 +67,7 @@ class AuditLogger:
                 resource_id=str(user_id) if user_id else "unknown",
                 ip_address=ip_address,
                 user_agent=user_agent,
-                details=details
+                details=details,
             )
 
             logger.debug(f"Logged auth event: {action.value} for user {user_id}")
@@ -82,7 +82,7 @@ class AuditLogger:
         resource_id: str,
         ip_address: str | None = None,
         user_agent: str | None = None,
-        details: dict[str, Any | None] = None
+        details: dict[str, Any | None] = None,
     ) -> None:
         """
         Log user actions and changes.
@@ -107,7 +107,7 @@ class AuditLogger:
                 resource_id=resource_id,
                 ip_address=ip_address,
                 user_agent=user_agent,
-                details=details
+                details=details,
             )
 
             logger.debug(f"Logged user action: {action.value} by user {user_id}")
@@ -122,7 +122,7 @@ class AuditLogger:
         user_id: UUID | None = None,
         ip_address: str | None = None,
         user_agent: str | None = None,
-        details: dict[str, Any | None] = None
+        details: dict[str, Any | None] = None,
     ) -> None:
         """
         Log security-related events.
@@ -147,7 +147,7 @@ class AuditLogger:
                 resource_id=resource_id,
                 ip_address=ip_address,
                 user_agent=user_agent,
-                details=details
+                details=details,
             )
 
             logger.warning(f"Logged security event: {action.value}")
@@ -159,7 +159,7 @@ class AuditLogger:
         action: AuditAction,
         resource_type: str,
         resource_id: str,
-        details: dict[str, Any | None] = None
+        details: dict[str, Any | None] = None,
     ) -> None:
         """
         Log system-level events.
@@ -179,7 +179,7 @@ class AuditLogger:
                 action=action,
                 resource_type=resource_type,
                 resource_id=resource_id,
-                details=details
+                details=details,
             )
 
             logger.info(f"Logged system event: {action.value}")
@@ -193,7 +193,7 @@ class AuditLogger:
         resource_type: str,
         resource_id: str,
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log permission denied events.
@@ -213,7 +213,7 @@ class AuditLogger:
             user_id=user_id,
             ip_address=ip_address,
             user_agent=user_agent,
-            details={"permission": permission}
+            details={"permission": permission},
         )
 
     def log_auth_failure(
@@ -221,7 +221,7 @@ class AuditLogger:
         email: str | None,
         reason: str,
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log authentication failure events.
@@ -238,7 +238,7 @@ class AuditLogger:
             resource_id=email or "unknown",
             ip_address=ip_address,
             user_agent=user_agent,
-            details={"email": email, "reason": reason}
+            details={"email": email, "reason": reason},
         )
 
     def log_rate_limit_exceeded(
@@ -246,7 +246,7 @@ class AuditLogger:
         user_id: UUID | None,
         endpoint: str,
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log rate limit exceeded events.
@@ -264,7 +264,7 @@ class AuditLogger:
             user_id=user_id,
             ip_address=ip_address,
             user_agent=user_agent,
-            details={"endpoint": endpoint}
+            details={"endpoint": endpoint},
         )
 
     def log_user_login(
@@ -272,7 +272,7 @@ class AuditLogger:
         user_id: UUID,
         ip_address: str | None = None,
         user_agent: str | None = None,
-        login_method: str = "password"
+        login_method: str = "password",
     ) -> None:
         """
         Log user login events.
@@ -288,7 +288,7 @@ class AuditLogger:
             action=AuditAction.USER_LOGIN,
             ip_address=ip_address,
             user_agent=user_agent,
-            details={"login_method": login_method}
+            details={"login_method": login_method},
         )
 
     def log_user_logout(
@@ -296,7 +296,7 @@ class AuditLogger:
         user_id: UUID,
         ip_address: str | None = None,
         user_agent: str | None = None,
-        logout_all: bool = False
+        logout_all: bool = False,
     ) -> None:
         """
         Log user logout events.
@@ -312,7 +312,7 @@ class AuditLogger:
             action=AuditAction.USER_LOGOUT,
             ip_address=ip_address,
             user_agent=user_agent,
-            details={"logout_all": logout_all}
+            details={"logout_all": logout_all},
         )
 
     def log_user_created(
@@ -322,7 +322,7 @@ class AuditLogger:
         created_user_email: str,
         role: str,
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log user creation events.
@@ -342,10 +342,7 @@ class AuditLogger:
             resource_id=str(created_user_id),
             ip_address=ip_address,
             user_agent=user_agent,
-            details={
-                "created_user_email": created_user_email,
-                "role": role
-            }
+            details={"created_user_email": created_user_email, "role": role},
         )
 
     def log_user_updated(
@@ -354,7 +351,7 @@ class AuditLogger:
         updated_user_id: UUID,
         changes: dict[str, Any],
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log user update events.
@@ -373,7 +370,7 @@ class AuditLogger:
             resource_id=str(updated_user_id),
             ip_address=ip_address,
             user_agent=user_agent,
-            details=changes
+            details=changes,
         )
 
     def log_user_deleted(
@@ -382,7 +379,7 @@ class AuditLogger:
         deleted_user_id: UUID,
         deleted_user_email: str,
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log user deletion events.
@@ -401,7 +398,7 @@ class AuditLogger:
             resource_id=str(deleted_user_id),
             ip_address=ip_address,
             user_agent=user_agent,
-            details={"deleted_user_email": deleted_user_email}
+            details={"deleted_user_email": deleted_user_email},
         )
 
     def log_password_changed(
@@ -410,7 +407,7 @@ class AuditLogger:
         changed_by_admin: bool = False,
         admin_user_id: UUID | None = None,
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log password change events.
@@ -429,7 +426,7 @@ class AuditLogger:
             resource_id=str(user_id),
             ip_address=ip_address,
             user_agent=user_agent,
-            details={"changed_by_admin": changed_by_admin}
+            details={"changed_by_admin": changed_by_admin},
         )
 
     def log_api_key_created(
@@ -438,7 +435,7 @@ class AuditLogger:
         key_id: str,
         key_name: str,
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log API key creation events.
@@ -457,7 +454,7 @@ class AuditLogger:
             resource_id=key_id,
             ip_address=ip_address,
             user_agent=user_agent,
-            details={"key_name": key_name}
+            details={"key_name": key_name},
         )
 
     def log_api_key_revoked(
@@ -466,7 +463,7 @@ class AuditLogger:
         key_id: str,
         revoked_by_admin: bool = False,
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log API key revocation events.
@@ -485,7 +482,7 @@ class AuditLogger:
             resource_id=key_id,
             ip_address=ip_address,
             user_agent=user_agent,
-            details={"revoked_by_admin": revoked_by_admin}
+            details={"revoked_by_admin": revoked_by_admin},
         )
 
     def log_pipeline_config_changed(
@@ -495,7 +492,7 @@ class AuditLogger:
         config_id: str,
         changes: dict[str, Any],
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log pipeline configuration changes.
@@ -515,7 +512,7 @@ class AuditLogger:
             resource_id=config_id,
             ip_address=ip_address,
             user_agent=user_agent,
-            details=changes
+            details=changes,
         )
 
     def log_settings_update(
@@ -525,7 +522,7 @@ class AuditLogger:
         old_value: Any,
         new_value: Any,
         ip_address: str | None = None,
-        user_agent: str | None = None
+        user_agent: str | None = None,
     ) -> None:
         """
         Log settings update events.
@@ -548,14 +545,11 @@ class AuditLogger:
             details={
                 "setting_name": setting_name,
                 "old_value": str(old_value),
-                "new_value": str(new_value)
-            }
+                "new_value": str(new_value),
+            },
         )
 
-    def get_audit_summary(
-        self,
-        hours: int = 24
-    ) -> dict[str, Any]:
+    def get_audit_summary(self, hours: int = 24) -> dict[str, Any]:
         """
         Get audit log summary for a time period.
 

@@ -31,12 +31,14 @@ security = HTTPBearer(auto_error=False)
 
 class Role(str, Enum):
     """User roles for RBAC"""
-    USER = "user"    # Can manage pipeline configurations
+
+    USER = "user"  # Can manage pipeline configurations
     ADMIN = "admin"  # Can manage users and all configurations
 
 
 class Permission(str, Enum):
     """Fine-grained permissions"""
+
     # Document permissions (public - no auth required)
     DOCUMENT_UPLOAD = "document:upload"
     DOCUMENT_STATUS = "document:status"
@@ -81,7 +83,6 @@ USER_PERMISSIONS = [
     Permission.DOCUMENT_UPLOAD,
     Permission.DOCUMENT_STATUS,
     Permission.DOCUMENT_RESULTS,
-
     # Pipeline configuration
     Permission.PIPELINE_READ,
     Permission.PIPELINE_WRITE,
@@ -91,11 +92,9 @@ USER_PERMISSIONS = [
     Permission.OCR_CONFIG_WRITE,
     Permission.MODELS_READ,
     Permission.DOCUMENT_CLASSES_READ,
-
     # Settings access
     Permission.SETTINGS_READ,
     Permission.SETTINGS_WRITE,
-
     # Own API keys
     Permission.API_KEY_CREATE,
     Permission.API_KEY_READ,
@@ -108,14 +107,12 @@ ROLE_PERMISSIONS = {
     Role.ADMIN: [
         # All USER permissions
         *USER_PERMISSIONS,
-
         # User management
         Permission.USER_CREATE,
         Permission.USER_READ,
         Permission.USER_UPDATE,
         Permission.USER_DELETE,
         Permission.USER_LIST,
-
         # Admin functions
         Permission.AUDIT_READ,
         Permission.AUDIT_EXPORT,
@@ -180,7 +177,7 @@ def has_any_role(user: UserDB, roles: list[Role]) -> bool:
 async def get_current_user_optional(
     request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ) -> UserDB | None:
     """
     Get current user from JWT token (optional - returns None if no token).
@@ -208,7 +205,7 @@ async def get_current_user_optional(
 async def get_current_user_required(
     request: Request,
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ) -> UserDB:
     """
     Get current user from JWT token (required - raises exception if no token).
@@ -259,7 +256,7 @@ async def get_current_user_required(
 async def get_current_user_from_api_key(
     request: Request,
     credentials: HTTPAuthorizationCredentials | None = Depends(security),
-    db: Session = Depends(get_session)
+    db: Session = Depends(get_session),
 ) -> UserDB | None:
     """
     Get current user from API key (optional).
@@ -301,13 +298,14 @@ def require_permission(permission: Permission):
     Returns:
         FastAPI dependency function
     """
+
     async def permission_checker(
-        current_user: UserDB = Depends(get_current_user_required)
+        current_user: UserDB = Depends(get_current_user_required),
     ) -> UserDB:
         if not has_permission(current_user, permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission '{permission.value}' required"
+                detail=f"Permission '{permission.value}' required",
             )
         return current_user
 
@@ -324,13 +322,11 @@ def require_role(role: Role):
     Returns:
         FastAPI dependency function
     """
-    async def role_checker(
-        current_user: UserDB = Depends(get_current_user_required)
-    ) -> UserDB:
+
+    async def role_checker(current_user: UserDB = Depends(get_current_user_required)) -> UserDB:
         if not has_role(current_user, role):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Role '{role.value}' required"
+                status_code=status.HTTP_403_FORBIDDEN, detail=f"Role '{role.value}' required"
             )
         return current_user
 
@@ -347,14 +343,13 @@ def require_any_role(roles: list[Role]):
     Returns:
         FastAPI dependency function
     """
-    async def role_checker(
-        current_user: UserDB = Depends(get_current_user_required)
-    ) -> UserDB:
+
+    async def role_checker(current_user: UserDB = Depends(get_current_user_required)) -> UserDB:
         if not has_any_role(current_user, roles):
             role_names = [role.value for role in roles]
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"One of these roles required: {', '.join(role_names)}"
+                detail=f"One of these roles required: {', '.join(role_names)}",
             )
         return current_user
 
@@ -428,24 +423,18 @@ def require_resource_access(resource_user_id: UUID):
     Returns:
         FastAPI dependency function
     """
-    async def resource_checker(
-        current_user: UserDB = Depends(get_current_user_required)
-    ) -> UserDB:
+
+    async def resource_checker(current_user: UserDB = Depends(get_current_user_required)) -> UserDB:
         if not check_resource_access(current_user, resource_user_id):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Access denied to this resource"
+                status_code=status.HTTP_403_FORBIDDEN, detail="Access denied to this resource"
             )
         return current_user
 
     return resource_checker
 
 
-def log_permission_denied(
-    user: UserDB | None,
-    permission: Permission,
-    request: Request
-) -> None:
+def log_permission_denied(user: UserDB | None, permission: Permission, request: Request) -> None:
     """
     Log a permission denied event.
 
@@ -465,16 +454,14 @@ def log_permission_denied(
             resource_id=permission.value,
             ip_address=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent"),
-            details={"permission": permission.value}
+            details={"permission": permission.value},
         )
     except Exception as e:
         logger.error(f"Error logging permission denied: {e}")
 
 
 def log_auth_failure(
-    email: str | None,
-    request: Request,
-    reason: str = "invalid_credentials"
+    email: str | None, request: Request, reason: str = "invalid_credentials"
 ) -> None:
     """
     Log an authentication failure.
@@ -495,7 +482,7 @@ def log_auth_failure(
             resource_id=email or "unknown",
             ip_address=request.client.host if request.client else None,
             user_agent=request.headers.get("user-agent"),
-            details={"email": email, "reason": reason}
+            details={"email": email, "reason": reason},
         )
     except Exception as e:
         logger.error(f"Error logging auth failure: {e}")
