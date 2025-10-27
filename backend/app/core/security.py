@@ -14,12 +14,12 @@ Features:
 """
 
 from datetime import datetime, timedelta
-from typing import Any
 import hashlib
 import hmac
 import logging
 import secrets
 import string
+from typing import Any
 import warnings
 
 from jose import JWTError, jwt
