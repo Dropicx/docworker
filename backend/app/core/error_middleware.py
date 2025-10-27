@@ -48,7 +48,7 @@ def create_error_response(
     Returns:
         Standardized error response dictionary
     """
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     response = {
         "error": {

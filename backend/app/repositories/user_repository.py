@@ -6,12 +6,12 @@ authentication queries, and user status management.
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 
 from app.database.auth_models import UserDB, UserRole, UserStatus
 from app.repositories.base_repository import BaseRepository
@@ -93,7 +93,7 @@ class UserRepository(BaseRepository[UserDB]):
                 is_verified=True
             )
 
-            logger.info(f"Created user {email} with role {role}")
+            logger.info("Created user {email} with role {role}")
             return user
         except Exception as e:
             logger.error(f"Error creating user {email}: {e}")
@@ -143,7 +143,7 @@ class UserRepository(BaseRepository[UserDB]):
             user.status = UserStatus.ACTIVE
             self.db.commit()
 
-            logger.info(f"Activated user {user_id}")
+            logger.info("Activated user {user_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -169,7 +169,7 @@ class UserRepository(BaseRepository[UserDB]):
             user.status = UserStatus.INACTIVE
             self.db.commit()
 
-            logger.info(f"Deactivated user {user_id}")
+            logger.info("Deactivated user {user_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -195,7 +195,7 @@ class UserRepository(BaseRepository[UserDB]):
             user.password_hash = new_password_hash
             self.db.commit()
 
-            logger.info(f"Changed password for user {user_id}")
+            logger.info("Changed password for user {user_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -221,7 +221,7 @@ class UserRepository(BaseRepository[UserDB]):
             user.role = new_role
             self.db.commit()
 
-            logger.info(f"Updated role for user {user_id} to {new_role}")
+            logger.info("Updated role for user {user_id} to {new_role}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -270,7 +270,7 @@ class UserRepository(BaseRepository[UserDB]):
         """
         try:
             return self.db.query(UserDB).filter(
-                and_(UserDB.is_active == True, UserDB.status == UserStatus.ACTIVE)
+                and_(UserDB.is_active, UserDB.status == UserStatus.ACTIVE)
             ).all()
         except Exception as e:
             logger.error(f"Error getting active users: {e}")
@@ -287,7 +287,7 @@ class UserRepository(BaseRepository[UserDB]):
             return self.db.query(UserDB).filter(
                 and_(
                     UserDB.role == UserRole.ADMIN,
-                    UserDB.is_active == True,
+                    UserDB.is_active,
                     UserDB.status == UserStatus.ACTIVE
                 )
             ).all()
@@ -306,7 +306,7 @@ class UserRepository(BaseRepository[UserDB]):
             return self.db.query(UserDB).filter(
                 and_(
                     UserDB.role == UserRole.ADMIN,
-                    UserDB.is_active == True,
+                    UserDB.is_active,
                     UserDB.status == UserStatus.ACTIVE
                 )
             ).count()
@@ -375,7 +375,7 @@ class UserRepository(BaseRepository[UserDB]):
             user.status = UserStatus.INACTIVE
             self.db.commit()
 
-            logger.info(f"Soft deleted user {user_id}")
+            logger.info("Soft deleted user {user_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -424,7 +424,7 @@ class UserRepository(BaseRepository[UserDB]):
             user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
             self.db.commit()
 
-            logger.warning(f"Failed login attempt #{user.failed_login_attempts} for user {user_id}")
+            logger.warning("Failed login attempt #{user.failed_login_attempts} for user {user_id}")
             return user.failed_login_attempts
         except Exception as e:
             self.db.rollback()
@@ -479,7 +479,7 @@ class UserRepository(BaseRepository[UserDB]):
             user.locked_until = lockout_time
             self.db.commit()
 
-            logger.warning(f"Locked account {user_id} until {lockout_time}")
+            logger.warning("Locked account {user_id} until {lockout_time}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -507,7 +507,7 @@ class UserRepository(BaseRepository[UserDB]):
                 user.locked_until = None
                 user.failed_login_attempts = 0
                 self.db.commit()
-                logger.info(f"Lockout expired for user {user_id}")
+                logger.info("Lockout expired for user {user_id}")
                 return False
 
             return True

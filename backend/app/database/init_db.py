@@ -50,7 +50,7 @@ def init_database():
             admin_name = os.getenv("INITIAL_ADMIN_NAME", "System Administrator")
 
             # Log environment variable status (without revealing password)
-            logger.info(f"🔑 Admin env vars - Email: {admin_email}, Password length: {len(admin_password) if admin_password else 0}, Name: {admin_name}")
+            logger.info("🔑 Admin env vars - Email: {admin_email}, Password length: {len(admin_password) if admin_password else 0}, Name: {admin_name}")
 
             if admin_email and admin_password:
                 db = next(get_session())
@@ -60,17 +60,17 @@ def init_database():
 
                     if existing_user:
                         if existing_user.role == UserRole.ADMIN:
-                            logger.info(f"✅ Admin user {admin_email} already exists")
+                            logger.info("✅ Admin user {admin_email} already exists")
                         else:
                             # User exists but not admin, make them admin
                             existing_user.role = UserRole.ADMIN
                             db.commit()
-                            logger.info(f"✅ Updated existing user {admin_email} to ADMIN role")
+                            logger.info("✅ Updated existing user {admin_email} to ADMIN role")
                     else:
                         # Create new admin user directly using repository
-                        logger.info(f"🔐 Hashing password for {admin_email} (length: {len(admin_password)} chars, {len(admin_password.encode('utf-8'))} bytes)")
+                        logger.info("🔐 Hashing password for {admin_email} (length: {len(admin_password)} chars, {len(admin_password.encode('utf-8'))} bytes)")
                         password_hash = hash_password(admin_password)
-                        logger.info(f"✅ Password hashed successfully")
+                        logger.info("✅ Password hashed successfully")
                         new_user = user_repo.create_user(
                             email=admin_email,
                             password_hash=password_hash,
@@ -79,9 +79,9 @@ def init_database():
                             created_by_admin_id=None  # System-created, no admin created it
                         )
                         if new_user:
-                            logger.info(f"✅ Created new admin user: {admin_email}")
+                            logger.info("✅ Created new admin user: {admin_email}")
                         else:
-                            logger.warning(f"❌ Failed to create admin user")
+                            logger.warning("❌ Failed to create admin user")
                 except Exception as e:
                     logger.error(f"Error creating admin user: {e}")
                 finally:

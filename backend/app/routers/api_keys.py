@@ -7,7 +7,7 @@ can manage all keys.
 """
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 

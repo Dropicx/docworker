@@ -6,7 +6,6 @@ logout, and password management. No public registration - users are created by a
 """
 
 import logging
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status

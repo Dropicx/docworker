@@ -5,7 +5,7 @@ Provides comprehensive, categorized exceptions for improved error handling,
 logging, and debugging across the DocTranslator application.
 """
 
-from datetime import datetime, timezone
+from datetime import datetime
 from typing import Any
 
 

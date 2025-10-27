@@ -62,7 +62,7 @@ class FeatureFlagsRepository(BaseRepository[FeatureFlag]):
                 flag.description = description
             self.db.commit()
             self.db.refresh(flag)
-            logger.info(f"Updated feature flag '{name}' = {enabled}")
+            logger.info("Updated feature flag '{name}' = {enabled}")
         else:
             # Create new
             flag = self.create(
@@ -71,7 +71,7 @@ class FeatureFlagsRepository(BaseRepository[FeatureFlag]):
                 description=description,
                 rollout_percentage=rollout_percentage,
             )
-            logger.info(f"Created feature flag '{name}' = {enabled}")
+            logger.info("Created feature flag '{name}' = {enabled}")
 
         return flag
 

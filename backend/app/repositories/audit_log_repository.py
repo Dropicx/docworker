@@ -6,12 +6,12 @@ querying, filtering, and export operations for security and compliance.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_, desc, asc
+from sqlalchemy import and_, desc
 
 from app.database.auth_models import AuditLogDB, AuditAction
 from app.repositories.base_repository import BaseRepository
@@ -438,7 +438,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
 
             if count > 0:
                 self.db.commit()
-                logger.info(f"Cleaned up {count} old audit logs")
+                logger.info("Cleaned up {count} old audit logs")
 
             return count
         except Exception as e:
@@ -487,7 +487,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
                     "details": log.details
                 })
 
-            logger.info(f"Exported {len(csv_data)} audit logs to CSV format")
+            logger.info("Exported {len(csv_data)} audit logs to CSV format")
             return csv_data
         except Exception as e:
             logger.error(f"Error exporting audit logs to CSV: {e}")

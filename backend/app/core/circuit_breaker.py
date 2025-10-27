@@ -1,3 +1,4 @@
+from typing import Any
 """
 Circuit Breaker Pattern Implementation
 

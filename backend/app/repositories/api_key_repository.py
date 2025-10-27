@@ -6,12 +6,12 @@ validation, usage tracking, and cleanup operations.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 from uuid import UUID
 
 from sqlalchemy.orm import Session
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 
 from app.database.auth_models import APIKeyDB
 from app.repositories.base_repository import BaseRepository
@@ -54,7 +54,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
                 usage_count=0
             )
 
-            logger.info(f"Created API key '{name}' for user {user_id}")
+            logger.info("Created API key '{name}' for user {user_id}")
             return api_key
         except Exception as e:
             logger.error(f"Error creating API key for user {user_id}: {e}")
@@ -176,7 +176,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             api_key.is_active = False
             self.db.commit()
 
-            logger.info(f"Revoked API key {key_id}")
+            logger.info("Revoked API key {key_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -201,7 +201,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             api_key.is_active = True
             self.db.commit()
 
-            logger.info(f"Activated API key {key_id}")
+            logger.info("Activated API key {key_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -227,7 +227,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             api_key.expires_at = expires_at
             self.db.commit()
 
-            logger.info(f"Updated expiration for API key {key_id}")
+            logger.info("Updated expiration for API key {key_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -271,7 +271,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
 
             if count > 0:
                 self.db.commit()
-                logger.info(f"Deactivated {count} expired API keys")
+                logger.info("Deactivated {count} expired API keys")
 
             return count
         except Exception as e:
@@ -400,7 +400,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
 
             if count > 0:
                 self.db.commit()
-                logger.info(f"Deleted {count} API keys for user {user_id}")
+                logger.info("Deleted {count} API keys for user {user_id}")
 
             return count
         except Exception as e:

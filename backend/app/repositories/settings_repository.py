@@ -38,7 +38,7 @@ class SettingsRepository(BaseRepository[SystemSettingsDB]):
         """
         setting = self.get_by_key(key)
         if not setting:
-            logger.warning(f"Setting '{key}' not found, using default={default}")
+            logger.warning("Setting '{key}' not found, using default={default}")
             return default
 
         return self._convert_value(setting.value, setting.value_type)
@@ -67,7 +67,7 @@ class SettingsRepository(BaseRepository[SystemSettingsDB]):
                 setting.description = description
             self.db.commit()
             self.db.refresh(setting)
-            logger.info(f"Updated setting '{key}' = {value}")
+            logger.info("Updated setting '{key}' = {value}")
         else:
             # Create new
             setting = self.create(
@@ -77,7 +77,7 @@ class SettingsRepository(BaseRepository[SystemSettingsDB]):
                 description=description,
                 is_encrypted=False,
             )
-            logger.info(f"Created setting '{key}' = {value}")
+            logger.info("Created setting '{key}' = {value}")
 
         return setting
 

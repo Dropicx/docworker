@@ -6,7 +6,7 @@ Supports comprehensive audit trail analysis for security monitoring and complian
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import List, Optional
 from uuid import UUID
 

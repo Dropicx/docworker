@@ -6,7 +6,7 @@ validation, cleanup, and revocation operations.
 """
 
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from typing import List, Optional
 from uuid import UUID
 
@@ -133,7 +133,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             token.is_revoked = True
             self.db.commit()
 
-            logger.info(f"Revoked refresh token {token_id}")
+            logger.info("Revoked refresh token {token_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -158,7 +158,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             token.is_revoked = True
             self.db.commit()
 
-            logger.info(f"Revoked refresh token by hash")
+            logger.info("Revoked refresh token by hash")
             return True
         except Exception as e:
             self.db.rollback()
@@ -185,7 +185,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
 
             if count > 0:
                 self.db.commit()
-                logger.info(f"Revoked {count} refresh tokens for user {user_id}")
+                logger.info("Revoked {count} refresh tokens for user {user_id}")
 
             return count
         except Exception as e:
@@ -250,7 +250,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
 
             if count > 0:
                 self.db.commit()
-                logger.info(f"Cleaned up {count} expired refresh tokens")
+                logger.info("Cleaned up {count} expired refresh tokens")
 
             return count
         except Exception as e:
@@ -280,7 +280,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
 
             if count > 0:
                 self.db.commit()
-                logger.info(f"Cleaned up {count} old refresh tokens")
+                logger.info("Cleaned up {count} old refresh tokens")
 
             return count
         except Exception as e:

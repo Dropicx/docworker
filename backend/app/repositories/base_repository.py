@@ -1,3 +1,4 @@
+from typing import Any
 """
 Base Repository Pattern
 
@@ -115,7 +116,7 @@ class BaseRepository(Generic[ModelType]):
             self.db.commit()
             self.db.refresh(entity)
 
-            logger.info(f"Created {self.model.__name__} with id={entity.id}")
+            logger.info("Created {self.model.__name__} with id={entity.id}")
             return entity
         except Exception as e:
             self.db.rollback()
@@ -133,7 +134,7 @@ class BaseRepository(Generic[ModelType]):
         try:
             entity = self.get_by_id(record_id)
             if not entity:
-                logger.warning(f"{self.model.__name__} with id={record_id} not found")
+                logger.warning("{self.model.__name__} with id={record_id} not found")
                 return None
 
             for key, value in kwargs.items():
@@ -143,7 +144,7 @@ class BaseRepository(Generic[ModelType]):
             self.db.commit()
             self.db.refresh(entity)
 
-            logger.info(f"Updated {self.model.__name__} with id={record_id}")
+            logger.info("Updated {self.model.__name__} with id={record_id}")
             return entity
         except Exception as e:
             self.db.rollback()
@@ -163,13 +164,13 @@ class BaseRepository(Generic[ModelType]):
         try:
             entity = self.get_by_id(record_id)
             if not entity:
-                logger.warning(f"{self.model.__name__} with id={record_id} not found")
+                logger.warning("{self.model.__name__} with id={record_id} not found")
                 return False
 
             self.db.delete(entity)
             self.db.commit()
 
-            logger.info(f"Deleted {self.model.__name__} with id={record_id}")
+            logger.info("Deleted {self.model.__name__} with id={record_id}")
             return True
         except Exception as e:
             self.db.rollback()

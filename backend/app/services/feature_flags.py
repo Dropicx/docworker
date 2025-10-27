@@ -29,7 +29,6 @@ Three-tier priority system: environment variables → database → config defaul
 from enum import Enum
 import logging
 import os
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
