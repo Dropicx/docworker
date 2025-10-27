@@ -5,8 +5,8 @@ Provides data access methods for user management including CRUD operations,
 authentication queries, and user status management.
 """
 
-from datetime import datetime, timedelta
 import logging
+from datetime import datetime
 from uuid import UUID
 
 from sqlalchemy.orm import Session
