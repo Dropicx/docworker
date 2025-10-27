@@ -4,7 +4,6 @@ Audit Log Repository
 Provides data access methods for audit logging including creation,
 querying, filtering, and export operations for security and compliance.
 """
-
 import logging
 from datetime import datetime, timedelta
 from typing import Any

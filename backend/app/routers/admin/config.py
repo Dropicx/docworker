@@ -14,7 +14,6 @@ All endpoints require SETTINGS_ACCESS_CODE header for authentication.
 - PUT /api/admin/config/feature-flags/{flag_name} - Update feature flag
 - POST /api/admin/config/reload - Hot reload configuration (safe settings only)
 """
-
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status

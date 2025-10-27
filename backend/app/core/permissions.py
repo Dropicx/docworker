@@ -9,7 +9,6 @@ Access Model:
 - User: Authentication required (pipeline configuration, own API keys)
 - Admin: Full access (user management, all configurations, audit logs)
 """
-
 import logging
 from enum import Enum
 from uuid import UUID

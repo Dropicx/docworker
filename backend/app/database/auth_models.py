@@ -5,7 +5,6 @@ This module contains database models for user authentication, authorization,
 and audit logging. These models support the enterprise-grade security system
 with JWT tokens, role-based access control, and comprehensive audit trails.
 """
-
 import uuid
 from enum import Enum
 

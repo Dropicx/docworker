@@ -12,7 +12,6 @@ Features:
 - Constant-time comparison to prevent timing attacks
 - Password strength validation
 """
-
 import hashlib
 import hmac
 import logging

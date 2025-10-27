@@ -4,7 +4,6 @@ API Key Repository
 Provides data access methods for API key management including creation,
 validation, usage tracking, and cleanup operations.
 """
-
 import logging
 from datetime import datetime, timedelta
 from uuid import UUID
