@@ -1,0 +1,27 @@
+# Gitleaks Configuration for DocTranslator
+# https://github.com/gitleaks/gitleaks
+
+[allowlist]
+description = "Allowlist for test secrets and example data"
+paths = [
+    '''backend/tests/''',
+    '''**/test_*.py''',
+    '''**/*_test.py''',
+]
+
+# Ignore certain patterns that are acceptable
+[[allowlist.regexes]]
+regex = '''(?i)test[_-]?(api[_-]?)?key'''
+reason = "Test API keys in test files"
+
+[[allowlist.regexes]]
+regex = '''(?i)example[_-]?(api[_-]?)?key'''
+reason = "Example API keys in documentation"
+
+# Override rules for common false positives
+[[rules]]
+id = "generic-api-key"
+description = "Generic API Key"
+regex = '''(?i)(api|access)[_-]?key['":\s]*[=:]\s*['"][0-9a-zA-Z]{32,}['"]'''
+severity = "high"
+

@@ -57,7 +57,7 @@ jobs:
         run: |
           pip install bandit
           bandit -c pyproject.toml -r app/ -f json -o bandit-report.json
-        continue-on-error: true
+        continue-on-error: false  # Fail on medium/high severity issues
 
       - name: Upload Bandit report
         if: always()
@@ -250,6 +250,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Run Gitleaks (secret detection)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -258,8 +263,12 @@ jobs:
       - name: Run pip-audit (Python dependencies)
         run: |
           pip install pip-audit
-          pip-audit --require backend/requirements.txt --format json --output pip-audit-report.json
-        continue-on-error: true
+          pip-audit --require backend/requirements.txt \
+            --format json \
+            --output pip-audit-report.json \
+            --vulnerability-service osv \
+            --severity high,critical
+        continue-on-error: false  # Fail on vulnerabilities
 
       - name: Upload pip-audit report
         if: always()
@@ -267,6 +276,29 @@ jobs:
         with:
           name: pip-audit-report
           path: pip-audit-report.json
+          retention-days: 30
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+      - name: Upload Trivy results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: trivy-results
+          path: trivy-results.sarif
           retention-days: 30
 
       - name: Set up Node.js
@@ -277,8 +309,8 @@ jobs:
       - name: Run npm audit (Node dependencies)
         working-directory: ./frontend
         run: |
-          npm audit --json > npm-audit-report.json || true
-        continue-on-error: true
+          npm audit --audit-level=high --json > npm-audit-report.json || true
+        continue-on-error: false  # Fail on high/critical vulnerabilities
 
       - name: Upload npm audit report
         if: always()

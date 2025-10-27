@@ -272,9 +272,11 @@ exclude_lines = [
 [tool.bandit]
 exclude_dirs = ["tests", "migrations", "_deprecated"]
 skips = [
-    "B101",  # assert_used (we use asserts in tests)
-    "B601",  # paramiko_calls (if we use paramiko)
+    "B101",  # assert_used (tests only)
 ]
+# Only report medium and high severity issues
+min_severity = "medium"
+min_confidence = "medium"
 
 # ==========================================
 # Build System

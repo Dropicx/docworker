@@ -1,0 +1,9 @@
+# Trivy Ignore List
+# Add CVEs that are confirmed false positives or not applicable
+
+# Example format:
+# CVE-2024-XXXXX: False positive - only affects specific build configurations
+# CVE-2024-YYYYY: Not applicable - dependency not used in our runtime
+
+# Add specific CVEs here with justification when needed
+
