@@ -45,6 +45,15 @@ export interface LoginRequest {
   password: string;
 }
 
+// Backend response structure (flat)
+export interface BackendLoginResponse {
+  access_token: string;
+  refresh_token: string;
+  token_type: string;
+  user: User;
+}
+
+// Frontend expected structure (nested)
 export interface LoginResponse {
   user: User;
   tokens: AuthTokens;
@@ -72,11 +81,20 @@ export interface ChangePasswordRequest {
 export class AuthApiService {
   // Login user
   static async login(email: string, password: string): Promise<LoginResponse> {
-    const response: AxiosResponse<LoginResponse> = await authApi.post('/auth/login', {
+    const response: AxiosResponse<BackendLoginResponse> = await authApi.post('/auth/login', {
       email,
       password,
     });
-    return response.data;
+    
+    // Transform backend response to match frontend expectations
+    return {
+      user: response.data.user,
+      tokens: {
+        access_token: response.data.access_token,
+        refresh_token: response.data.refresh_token,
+        token_type: response.data.token_type,
+      },
+    };
   }
 
   // Refresh access token
