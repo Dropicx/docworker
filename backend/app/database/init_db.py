@@ -40,9 +40,9 @@ def init_database():
         # Create initial admin user if environment variables are set
         try:
             from app.database.connection import get_session
-            from app.services.auth_service import AuthService
             from app.repositories.user_repository import UserRepository
             from app.database.auth_models import UserRole
+            from app.core.security import hash_password
             import os
 
             admin_email = os.getenv("INITIAL_ADMIN_EMAIL")
@@ -64,15 +64,16 @@ def init_database():
                             db.commit()
                             logger.info(f"✅ Updated existing user {admin_email} to ADMIN role")
                     else:
-                        # Create new admin user
-                        auth_service = AuthService(db)
-                        result = auth_service.register_user(
+                        # Create new admin user directly using repository
+                        password_hash = hash_password(admin_password)
+                        new_user = user_repo.create_user(
                             email=admin_email,
-                            password=admin_password,
+                            password_hash=password_hash,
                             full_name=admin_name,
-                            role=UserRole.ADMIN
+                            role=UserRole.ADMIN,
+                            created_by_admin_id=None  # System-created, no admin created it
                         )
-                        if result:
+                        if new_user:
                             logger.info(f"✅ Created new admin user: {admin_email}")
                         else:
                             logger.warning(f"❌ Failed to create admin user")
