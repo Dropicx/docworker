@@ -3,13 +3,17 @@ Database initialization script
 """
 
 import logging
+import os
 
 from sqlalchemy import create_engine
 
 from app.core.config import settings
-
+from app.core.security import hash_password
+from app.database.auth_models import UserRole
+from app.database.connection import get_session
 # Import modular pipeline models to register them with Base.metadata
 from app.database.unified_models import Base
+from app.repositories.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
 
@@ -39,12 +43,6 @@ def init_database():
 
         # Create initial admin user if environment variables are set
         try:
-            from app.database.connection import get_session
-            from app.repositories.user_repository import UserRepository
-            from app.database.auth_models import UserRole
-            from app.core.security import hash_password
-            import os
-
             admin_email = os.getenv("INITIAL_ADMIN_EMAIL")
             admin_password = os.getenv("INITIAL_ADMIN_PASSWORD")
             admin_name = os.getenv("INITIAL_ADMIN_NAME", "System Administrator")
