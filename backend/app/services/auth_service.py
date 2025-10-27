@@ -7,7 +7,7 @@ password management with proper security measures.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Optional, Dict, Any, Tuple
 from uuid import UUID
 
@@ -23,6 +23,7 @@ from app.core.security import (
     hash_api_key,
     verify_api_key
 )
+from app.core.config import settings
 from app.database.auth_models import UserDB, UserRole, UserStatus, AuditAction
 from app.repositories.user_repository import UserRepository
 from app.repositories.refresh_token_repository import RefreshTokenRepository
@@ -103,14 +104,17 @@ class AuthService:
             logger.error(f"Error creating user {email}: {e}")
             raise
 
-    def authenticate_user(self, email: str, password: str) -> Optional[UserDB]:
+    def authenticate_user(self, email: str, password: str, ip_address: Optional[str] = None) -> Optional[UserDB]:
         """
         Authenticate a user with email and password.
-        
+
+        Implements account lockout protection against brute force attacks.
+
         Args:
             email: User's email address
             password: Plain text password
-            
+            ip_address: IP address for audit logging
+
         Returns:
             User instance if authentication successful, None otherwise
         """
@@ -120,23 +124,88 @@ class AuthService:
             if not user:
                 logger.warning(f"Authentication failed: user {email} not found")
                 return None
-            
+
             # Check if user is active
             if not user.is_active or user.status != UserStatus.ACTIVE:
                 logger.warning(f"Authentication failed: user {email} is inactive")
                 return None
-            
+
+            # Check if account is locked
+            if self.user_repo.is_account_locked(user.id):
+                logger.warning(f"Authentication failed: account {email} is locked")
+
+                # Log lockout attempt
+                self.audit_log_repo.create_log(
+                    user_id=user.id,
+                    action=AuditAction.AUTH_FAILURE,
+                    resource_type="user",
+                    resource_id=str(user.id),
+                    ip_address=ip_address,
+                    details={"reason": "account_locked", "locked_until": user.locked_until.isoformat() if user.locked_until else None}
+                )
+
+                return None
+
             # Verify password
             if not verify_password(password, user.password_hash):
                 logger.warning(f"Authentication failed: invalid password for {email}")
+
+                # Increment failed login attempts
+                failed_attempts = self.user_repo.increment_failed_attempts(user.id)
+
+                # Log authentication failure
+                self.audit_log_repo.create_log(
+                    user_id=user.id,
+                    action=AuditAction.AUTH_FAILURE,
+                    resource_type="user",
+                    resource_id=str(user.id),
+                    ip_address=ip_address,
+                    details={"reason": "invalid_password", "failed_attempts": failed_attempts}
+                )
+
+                # Check if should lock account
+                if failed_attempts >= settings.max_login_attempts:
+                    self.user_repo.lock_account(user.id, settings.account_lockout_minutes)
+
+                    # Log account lockout
+                    self.audit_log_repo.create_log(
+                        user_id=user.id,
+                        action=AuditAction.ACCOUNT_LOCKED,
+                        resource_type="user",
+                        resource_id=str(user.id),
+                        ip_address=ip_address,
+                        details={
+                            "reason": "max_failed_attempts",
+                            "failed_attempts": failed_attempts,
+                            "lockout_minutes": settings.account_lockout_minutes
+                        }
+                    )
+
+                    logger.warning(
+                        f"Account {email} locked after {failed_attempts} failed attempts "
+                        f"for {settings.account_lockout_minutes} minutes"
+                    )
+
                 return None
-            
+
+            # Password correct - reset failed attempts
+            self.user_repo.reset_failed_attempts(user.id)
+
             # Update last login
             self.user_repo.update_last_login(user.id)
-            
+
+            # Log successful authentication
+            self.audit_log_repo.create_log(
+                user_id=user.id,
+                action=AuditAction.USER_LOGIN,
+                resource_type="user",
+                resource_id=str(user.id),
+                ip_address=ip_address
+            )
+
             logger.info(f"User {email} authenticated successfully")
             return user
-            
+
         except Exception as e:
             logger.error(f"Error authenticating user {email}: {e}")
             return None
@@ -165,7 +234,7 @@ class AuthService:
             refresh_token_hash = hash_api_key(refresh_token)
             
             # Store refresh token in database
-            expires_at = datetime.utcnow() + timedelta(days=7)  # 7 days
+            expires_at = datetime.now(timezone.utc) + timedelta(days=7)  # 7 days
             self.refresh_token_repo.create_token(
                 user_id=user.id,
                 token_hash=refresh_token_hash,
@@ -379,7 +448,7 @@ class AuthService:
             # Set expiration
             expires_at = None
             if expires_days:
-                expires_at = datetime.utcnow() + timedelta(days=expires_days)
+                expires_at = datetime.now(timezone.utc) + timedelta(days=expires_days)
             
             # Create API key record
             api_key = self.api_key_repo.create_api_key(
@@ -428,7 +497,7 @@ class AuthService:
             if not stored_key.is_active:
                 return None
             
-            if stored_key.expires_at and stored_key.expires_at < datetime.utcnow():
+            if stored_key.expires_at and stored_key.expires_at < datetime.now(timezone.utc):
                 return None
             
             # Get user

@@ -70,7 +70,11 @@ class UserDB(Base):
     # Account tracking
     is_active = Column(Boolean, default=True, nullable=False)
     is_verified = Column(Boolean, default=True, nullable=False)  # Skip email verification for now
-    
+
+    # Account lockout (brute force prevention)
+    failed_login_attempts = Column(Integer, default=0, nullable=False)
+    locked_until = Column(DateTime, nullable=True, index=True)
+
     # Timestamps
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
@@ -96,6 +100,7 @@ class UserDB(Base):
         Index("idx_users_role", "role"),
         Index("idx_users_status", "status"),
         Index("idx_users_created_by", "created_by_admin_id"),
+        Index("idx_users_locked_until", "locked_until"),
     )
     
     def __repr__(self):
@@ -214,6 +219,7 @@ class AuditAction(str, Enum):
     # Security actions
     PERMISSION_DENIED = "permission_denied"
     AUTH_FAILURE = "auth_failure"
+    ACCOUNT_LOCKED = "account_locked"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
     
     # Note: Public document uploads are NOT logged for privacy

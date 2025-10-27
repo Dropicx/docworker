@@ -6,7 +6,7 @@ and usage analytics beyond basic CRUD operations.
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 from app.repositories.ai_log_interaction_repository import AILogInteractionRepository
 
@@ -125,7 +125,7 @@ class TestAILogInteractionRepository:
 
     def test_get_by_date_range_both_bounds(self, repository, create_ai_log_interaction):
         """Test retrieving logs within a specific date range."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         yesterday = now - timedelta(days=1)
         tomorrow = now + timedelta(days=1)
 
@@ -142,7 +142,7 @@ class TestAILogInteractionRepository:
 
     def test_get_by_date_range_start_only(self, repository, create_ai_log_interaction):
         """Test querying with only start date (no upper bound)."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         yesterday = now - timedelta(days=1)
 
         create_ai_log_interaction(processing_id="recent")
@@ -153,7 +153,7 @@ class TestAILogInteractionRepository:
 
     def test_get_by_date_range_end_only(self, repository, create_ai_log_interaction):
         """Test querying with only end date (no lower bound)."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         tomorrow = now + timedelta(days=1)
 
         create_ai_log_interaction(processing_id="old")
@@ -205,7 +205,7 @@ class TestAILogInteractionRepository:
 
     def test_get_filtered_multiple_criteria(self, repository, create_ai_log_interaction):
         """Test filtered query with multiple criteria."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         yesterday = now - timedelta(days=1)
         tomorrow = now + timedelta(days=1)
 
@@ -335,7 +335,7 @@ class TestAILogInteractionRepository:
 
     def test_get_total_cost_with_date_range(self, repository, create_ai_log_interaction):
         """Test calculating cost within date range."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         yesterday = now - timedelta(days=1)
         tomorrow = now + timedelta(days=1)
 
@@ -435,7 +435,7 @@ class TestAILogInteractionRepository:
 
     def test_count_calls_with_date_range(self, repository, create_ai_log_interaction):
         """Test counting calls within date range."""
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         yesterday = now - timedelta(days=1)
         tomorrow = now + timedelta(days=1)
 
@@ -454,7 +454,7 @@ class TestAILogInteractionRepository:
         """Test deleting logs older than specified date."""
         # Note: In real tests with real timestamps, you'd need to manipulate created_at
         # For now, test the method exists and returns integer
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         cutoff_date = now + timedelta(days=1)  # Future date, should delete nothing
 
         deleted_count = repository.delete_old_logs(older_than=cutoff_date)
@@ -468,7 +468,7 @@ class TestAILogInteractionRepository:
         recent_log = create_ai_log_interaction(processing_id="recent-log")
 
         # Delete logs older than yesterday (recent log should be preserved)
-        yesterday = datetime.utcnow() - timedelta(days=1)
+        yesterday = datetime.now(timezone.utc) - timedelta(days=1)
         repository.delete_old_logs(older_than=yesterday)
 
         # Verify recent log still exists

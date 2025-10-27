@@ -5,7 +5,7 @@ Provides comprehensive, categorized exceptions for improved error handling,
 logging, and debugging across the DocTranslator application.
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 
 
@@ -31,7 +31,7 @@ class BaseAppError(Exception):
     ):
         self.message = message
         self.details = details or {}
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(timezone.utc)
         self.error_code = error_code or self.__class__.__name__
         super().__init__(self.message)
 

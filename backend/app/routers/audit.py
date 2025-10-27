@@ -6,7 +6,7 @@ Supports comprehensive audit trail analysis for security monitoring and complian
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -553,7 +553,7 @@ async def export_audit_logs_csv(
         output.close()
         
         # Generate filename
-        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        timestamp = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
         filename = f"audit_logs_{timestamp}.csv"
         
         # Log export action

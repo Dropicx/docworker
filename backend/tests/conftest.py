@@ -17,7 +17,7 @@ if str(backend_dir) not in sys.path:
     sys.path.insert(0, str(backend_dir))
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 from typing import Generator
@@ -177,7 +177,7 @@ def create_user_session(db_session):
         **kwargs
     ) -> UserSessionDB:
         if expires_at is None:
-            expires_at = datetime.utcnow() + timedelta(hours=24)
+            expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
 
         session = UserSessionDB(
             session_token=session_token,

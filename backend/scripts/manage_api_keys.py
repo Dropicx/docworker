@@ -20,7 +20,7 @@ Commands:
 import argparse
 import sys
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timezone, timedelta
 
 # Add the backend directory to the Python path
 backend_dir = Path(__file__).parent.parent
@@ -56,7 +56,7 @@ def create_api_key(user_email, name, expires_days=None):
         print(f"Name: {name}")
         print(f"API Key: {plain_key}")
         if expires_days:
-            expires_at = datetime.utcnow() + timedelta(days=expires_days)
+            expires_at = datetime.now(timezone.utc) + timedelta(days=expires_days)
             print(f"Expires: {expires_at.isoformat()}")
         else:
             print("Expires: Never")

@@ -48,14 +48,14 @@ def create_error_response(
     Returns:
         Standardized error response dictionary
     """
-    from datetime import datetime
+    from datetime import datetime, timezone
 
     response = {
         "error": {
             "code": error_code,
             "message": message,
             "status_code": status_code,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(timezone.utc).isoformat() + "Z",
         }
     }
 

@@ -6,7 +6,7 @@ validation, usage tracking, and cleanup operations.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Tuple
 from uuid import UUID
 
@@ -147,7 +147,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             if not api_key:
                 return False
             
-            api_key.last_used_at = datetime.utcnow()
+            api_key.last_used_at = datetime.now(timezone.utc)
             api_key.usage_count += 1
             self.db.commit()
             
@@ -242,7 +242,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             List of expired API keys
         """
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             return self.db.query(APIKeyDB).filter(
                 and_(
                     APIKeyDB.expires_at.isnot(None),
@@ -350,7 +350,7 @@ class APIKeyRepository(BaseRepository[APIKeyDB]):
             List of recently used API keys
         """
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
             return self.db.query(APIKeyDB).filter(
                 and_(
                     APIKeyDB.user_id == user_id,

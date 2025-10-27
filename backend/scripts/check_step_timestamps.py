@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0, '/media/catchmelit/5a972e8f-2616-4a45-b03c-2d2fd85f5030/Projects/doctranslator/backend')
 
 from sqlalchemy import create_engine, text
-from datetime import datetime
+from datetime import datetime, timezone
 
 DATABASE_URL = 'postgresql://postgres:KfcqZpqRnRCTyvVxHKkDHjssedAjXZSp@turntable.proxy.rlwy.net:58299/railway'
 engine = create_engine(DATABASE_URL)
@@ -17,7 +17,7 @@ print('\n' + '='*120)
 print('UNIVERSAL STEPS - CREATION AND MODIFICATION TIMESTAMPS')
 print('='*120)
 print('\nWorker logs timestamp: 2025-10-20 14:00:52 UTC (reported 0 universal steps)')
-print(f'Current time: {datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")} UTC')
+print(f'Current time: {datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")} UTC')
 
 with engine.connect() as conn:
     result = conn.execute(text('''

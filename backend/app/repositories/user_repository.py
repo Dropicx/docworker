@@ -6,7 +6,7 @@ authentication queries, and user status management.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -113,8 +113,8 @@ class UserRepository(BaseRepository[UserDB]):
             user = self.get_by_id(user_id)
             if not user:
                 return False
-            
-            user.last_login_at = datetime.utcnow()
+
+            user.last_login_at = datetime.now(timezone.utc)
             self.db.commit()
             
             logger.debug(f"Updated last login for user {user_id}")
@@ -385,21 +385,132 @@ class UserRepository(BaseRepository[UserDB]):
     def is_email_taken(self, email: str, exclude_user_id: Optional[UUID] = None) -> bool:
         """
         Check if email is already taken by another user.
-        
+
         Args:
             email: Email to check
             exclude_user_id: User ID to exclude from check (for updates)
-            
+
         Returns:
             True if email is taken by another user
         """
         try:
             query = self.db.query(UserDB).filter(UserDB.email == email)
-            
+
             if exclude_user_id:
                 query = query.filter(UserDB.id != exclude_user_id)
-            
+
             return query.first() is not None
         except Exception as e:
             logger.error(f"Error checking if email {email} is taken: {e}")
+            raise
+
+    # Account lockout methods for brute force prevention
+
+    def increment_failed_attempts(self, user_id: UUID) -> int:
+        """
+        Increment failed login attempts counter.
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            New failed attempts count
+        """
+        try:
+            user = self.get_by_id(user_id)
+            if not user:
+                return 0
+
+            user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+            self.db.commit()
+
+            logger.warning(f"Failed login attempt #{user.failed_login_attempts} for user {user_id}")
+            return user.failed_login_attempts
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error incrementing failed attempts for user {user_id}: {e}")
+            raise
+
+    def reset_failed_attempts(self, user_id: UUID) -> bool:
+        """
+        Reset failed login attempts counter.
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            True if reset successfully
+        """
+        try:
+            user = self.get_by_id(user_id)
+            if not user:
+                return False
+
+            user.failed_login_attempts = 0
+            user.locked_until = None
+            self.db.commit()
+
+            logger.debug(f"Reset failed attempts for user {user_id}")
+            return True
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error resetting failed attempts for user {user_id}: {e}")
+            raise
+
+    def lock_account(self, user_id: UUID, minutes: int = 15) -> bool:
+        """
+        Lock user account for specified duration.
+
+        Args:
+            user_id: User's UUID
+            minutes: Lockout duration in minutes
+
+        Returns:
+            True if locked successfully
+        """
+        try:
+            from datetime import timedelta
+
+            user = self.get_by_id(user_id)
+            if not user:
+                return False
+
+            lockout_time = datetime.now(timezone.utc) + timedelta(minutes=minutes)
+            user.locked_until = lockout_time
+            self.db.commit()
+
+            logger.warning(f"Locked account {user_id} until {lockout_time}")
+            return True
+        except Exception as e:
+            self.db.rollback()
+            logger.error(f"Error locking account {user_id}: {e}")
+            raise
+
+    def is_account_locked(self, user_id: UUID) -> bool:
+        """
+        Check if account is currently locked.
+
+        Args:
+            user_id: User's UUID
+
+        Returns:
+            True if account is locked
+        """
+        try:
+            user = self.get_by_id(user_id)
+            if not user or not user.locked_until:
+                return False
+
+            # Check if lockout has expired
+            if user.locked_until <= datetime.now(timezone.utc):
+                # Lockout expired, reset it
+                user.locked_until = None
+                user.failed_login_attempts = 0
+                self.db.commit()
+                logger.info(f"Lockout expired for user {user_id}")
+                return False
+
+            return True
+        except Exception as e:
+            logger.error(f"Error checking if account {user_id} is locked: {e}")
             raise

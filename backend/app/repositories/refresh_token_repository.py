@@ -6,7 +6,7 @@ validation, cleanup, and revocation operations.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -103,7 +103,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             List of active refresh tokens
         """
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             return self.db.query(RefreshTokenDB).filter(
                 and_(
                     RefreshTokenDB.user_id == user_id,
@@ -208,7 +208,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             if not token:
                 return False
             
-            token.last_used_at = datetime.utcnow()
+            token.last_used_at = datetime.now(timezone.utc)
             self.db.commit()
             
             logger.debug(f"Updated last used for refresh token {token_id}")
@@ -226,7 +226,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             List of expired tokens
         """
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             return self.db.query(RefreshTokenDB).filter(
                 RefreshTokenDB.expires_at < now
             ).all()
@@ -269,7 +269,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             Number of tokens deleted
         """
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
             old_tokens = self.db.query(RefreshTokenDB).filter(
                 RefreshTokenDB.created_at < cutoff_date
             ).all()
@@ -303,7 +303,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             if not token:
                 return False
             
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             return not token.is_revoked and token.expires_at > now
         except Exception as e:
             logger.error(f"Error checking token validity: {e}")
@@ -338,7 +338,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             Number of active refresh tokens
         """
         try:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             return self.db.query(RefreshTokenDB).filter(
                 and_(
                     RefreshTokenDB.user_id == user_id,
@@ -362,7 +362,7 @@ class RefreshTokenRepository(BaseRepository[RefreshTokenDB]):
             List of recently used tokens
         """
         try:
-            cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
             return self.db.query(RefreshTokenDB).filter(
                 and_(
                     RefreshTokenDB.user_id == user_id,

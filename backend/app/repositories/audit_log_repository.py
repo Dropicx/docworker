@@ -6,7 +6,7 @@ querying, filtering, and export operations for security and compliance.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Optional, Dict, Any
 from uuid import UUID
 
@@ -65,7 +65,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
                 ip_address=ip_address,
                 user_agent=user_agent,
                 details=details_json,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(timezone.utc)
             )
             
             logger.debug(f"Created audit log for action {action} by user {user_id}")
@@ -172,7 +172,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of recent audit log entries
         """
         try:
-            cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
             return self.db.query(AuditLogDB).filter(
                 AuditLogDB.timestamp >= cutoff_time
             ).order_by(desc(AuditLogDB.timestamp)).offset(skip).limit(limit).all()
@@ -198,7 +198,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of failed login audit log entries
         """
         try:
-            cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
             return self.db.query(AuditLogDB).filter(
                 and_(
                     AuditLogDB.action == AuditAction.AUTH_FAILURE,
@@ -227,7 +227,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of permission denied audit log entries
         """
         try:
-            cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
             return self.db.query(AuditLogDB).filter(
                 and_(
                     AuditLogDB.action == AuditAction.PERMISSION_DENIED,
@@ -319,7 +319,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             List of audit log entries for the IP
         """
         try:
-            cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
             return self.db.query(AuditLogDB).filter(
                 and_(
                     AuditLogDB.ip_address == ip_address,
@@ -376,7 +376,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             Dictionary with activity summary
         """
         try:
-            cutoff_time = datetime.utcnow() - timedelta(hours=hours)
+            cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
             
             # Count by action
             action_counts = {}
@@ -427,7 +427,7 @@ class AuditLogRepository(BaseRepository[AuditLogDB]):
             Number of logs deleted
         """
         try:
-            cutoff_date = datetime.utcnow() - timedelta(days=days)
+            cutoff_date = datetime.now(timezone.utc) - timedelta(days=days)
             old_logs = self.db.query(AuditLogDB).filter(
                 AuditLogDB.timestamp < cutoff_date
             ).all()

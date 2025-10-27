@@ -7,7 +7,7 @@ can manage all keys.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import UUID
 
@@ -268,7 +268,7 @@ async def update_api_key(
         
         if update_data.expires_days is not None:
             from datetime import timedelta
-            update_fields["expires_at"] = datetime.utcnow() + timedelta(days=update_data.expires_days)
+            update_fields["expires_at"] = datetime.now(timezone.utc) + timedelta(days=update_data.expires_days)
         
         if update_fields:
             api_key_repo.update(UUID(key_id), **update_fields)

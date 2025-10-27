@@ -19,7 +19,7 @@ import logging
 import secrets
 import string
 import warnings
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional, Tuple
 
 from jose import JWTError, jwt
@@ -133,12 +133,12 @@ def create_access_token(data: Dict[str, Any], expires_delta: Optional[timedelta]
         Encoded JWT token string
     """
     to_encode = data.copy()
-    
+
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.jwt_access_token_expire_minutes)
-    
+        expire = datetime.now(timezone.utc) + timedelta(minutes=settings.jwt_access_token_expire_minutes)
+
     to_encode.update({"exp": expire, "type": "access"})
     
     return jwt.encode(
@@ -158,8 +158,8 @@ def create_refresh_token(user_id: str) -> str:
     Returns:
         Encoded JWT refresh token string
     """
-    expire = datetime.utcnow() + timedelta(days=settings.jwt_refresh_token_expire_days)
-    
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.jwt_refresh_token_expire_days)
+
     to_encode = {
         "sub": user_id,
         "exp": expire,
@@ -310,8 +310,8 @@ def is_token_expired(token: str) -> bool:
         exp = payload.get("exp")
         if exp is None:
             return True
-        
-        return datetime.utcnow() > datetime.fromtimestamp(exp)
+
+        return datetime.now(timezone.utc) > datetime.fromtimestamp(exp, tz=timezone.utc)
     except JWTError:
         return True
 
@@ -343,8 +343,8 @@ def create_password_reset_token(user_id: str) -> str:
     Returns:
         Password reset token string
     """
-    expire = datetime.utcnow() + timedelta(hours=1)  # 1 hour expiration for security
-    
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)  # 1 hour expiration for security
+
     to_encode = {
         "sub": user_id,
         "exp": expire,

@@ -91,7 +91,13 @@ class Settings(BaseSettings):
         validation_alias="SETTINGS_ACCESS_CODE",  # Keep backward compatibility with Railway env var
     )
     allowed_origins: list[str] = Field(
-        default_factory=lambda: ["*"], description="CORS allowed origins"
+        default_factory=lambda: [
+            "http://localhost:5173",  # Vite dev server
+            "http://localhost:9122",  # Backend dev server
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:9122"
+        ],
+        description="CORS allowed origins (use explicit URLs in production)"
     )
     trusted_hosts: list[str] = Field(
         default_factory=lambda: ["*"], description="Trusted host headers"
@@ -128,6 +134,16 @@ class Settings(BaseSettings):
     )
     password_min_length: int = Field(
         default=8, ge=8, description="Minimum password length"
+    )
+
+    # ==================
+    # Account Lockout (Brute Force Prevention)
+    # ==================
+    max_login_attempts: int = Field(
+        default=5, ge=3, le=10, description="Maximum failed login attempts before lockout"
+    )
+    account_lockout_minutes: int = Field(
+        default=15, ge=5, le=60, description="Account lockout duration in minutes"
     )
 
     # ==================
@@ -278,6 +294,33 @@ class Settings(BaseSettings):
         """Validate max file size is reasonable."""
         if v < 1 or v > 100:
             raise ValueError("max_file_size_mb must be between 1 and 100 MB")
+        return v
+
+    @field_validator("allowed_origins")
+    @classmethod
+    def validate_cors_origins(cls, v: list[str]) -> list[str]:
+        """
+        Validate CORS allowed origins.
+
+        In production, wildcard "*" is not allowed for security reasons.
+        """
+        env = os.getenv("ENVIRONMENT", "development")
+
+        if env == "production":
+            if "*" in v:
+                raise ValueError(
+                    "CORS wildcard '*' is not allowed in production environment. "
+                    "Please specify explicit origins in ALLOWED_ORIGINS environment variable. "
+                    "Example: ALLOWED_ORIGINS='https://doctranslator.com,https://app.doctranslator.com'"
+                )
+            logger.info(f"✅ Production CORS origins validated: {v}")
+        else:
+            if "*" in v:
+                logger.warning(
+                    f"⚠️ CORS wildcard '*' detected in {env} environment. "
+                    "This is acceptable for development but must be changed for production."
+                )
+
         return v
 
     # ==================
