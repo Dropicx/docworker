@@ -251,8 +251,6 @@ async def get_ocr_config(
     Get current OCR engine configuration.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     manager = ModularPipelineManager(db)
     config = manager.get_ocr_config()
@@ -275,8 +273,6 @@ async def update_ocr_config(
     Update OCR engine configuration.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     manager = ModularPipelineManager(db)
 
@@ -308,8 +304,6 @@ async def get_available_engines(
     Get information about available OCR engines.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     ocr_manager = OCREngineManager(db)
 
@@ -331,8 +325,6 @@ async def get_engine_status(
     Get detailed status of a specific OCR engine.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     ocr_manager = OCREngineManager(db)
 
@@ -355,8 +347,6 @@ async def get_all_steps(
     Get all pipeline steps (enabled and disabled).
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     manager = ModularPipelineManager(db)
 
@@ -378,8 +368,6 @@ async def get_step(
     Get a single pipeline step by ID.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     manager = ModularPipelineManager(db)
 
@@ -402,8 +390,6 @@ async def create_step(
     Create a new pipeline step.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     manager = ModularPipelineManager(db)
 
@@ -432,8 +418,6 @@ async def update_step(
     Update an existing pipeline step.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     manager = ModularPipelineManager(db)
 
@@ -466,8 +450,6 @@ async def delete_step(
     Delete a pipeline step.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     manager = ModularPipelineManager(db)
 
@@ -492,8 +474,6 @@ async def reorder_steps(
     Reorder pipeline steps.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     manager = ModularPipelineManager(db)
 
@@ -523,8 +503,6 @@ async def get_universal_steps(
     These steps run for all document types.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     try:
         steps = step_repository.get_universal_steps()
@@ -547,8 +525,6 @@ async def get_steps_by_document_class(
     Get pipeline steps for a specific document class.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     # Verify document class exists
     doc_class_manager = DocumentClassManager(db)
@@ -592,8 +568,6 @@ async def get_pipeline_visualization(
             }
         }
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     try:
         # Get universal steps
@@ -658,8 +632,6 @@ async def get_available_models(
     Args:
         enabled_only: If True, only return enabled models
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     manager = ModularPipelineManager(db)
 
@@ -681,8 +653,6 @@ async def get_model(
     Get a single model by ID.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     manager = ModularPipelineManager(db)
 
@@ -711,8 +681,6 @@ async def get_all_document_classes(
     Args:
         enabled_only: If True, only return enabled classes
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     doc_class_manager = DocumentClassManager(db)
 
@@ -734,8 +702,6 @@ async def get_document_class(
     Get a single document class by ID.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     doc_class_manager = DocumentClassManager(db)
 
@@ -760,8 +726,6 @@ async def create_document_class(
     Create a new document class.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     doc_class_manager = DocumentClassManager(db)
 
@@ -801,8 +765,6 @@ async def update_document_class(
     Update an existing document class.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     doc_class_manager = DocumentClassManager(db)
 
@@ -839,8 +801,6 @@ async def delete_document_class(
     Cannot delete system classes or classes with associated pipeline steps.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     doc_class_manager = DocumentClassManager(db)
 
@@ -872,8 +832,6 @@ async def get_document_class_statistics(
     Get statistics about document classes.
     Requires authentication.
     """
-    if not authenticated:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     doc_class_manager = DocumentClassManager(db)
 
