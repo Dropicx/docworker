@@ -373,7 +373,7 @@ async def analyze_files_strategy(files: list[UploadFile] = File(...)):
         raise
     except Exception as e:
         logger.error(f"❌ File analysis failed: {e}")
-        raise HTTPException(status_code=500, detail=f"File analysis error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"File analysis error: {str(e)}") from e
 
 
 def _estimate_processing_time(analysis: dict[str, Any]) -> str:

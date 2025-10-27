@@ -26,6 +26,8 @@ Three-tier priority system: environment variables → database → config defaul
     ...     result = await ovh_client.extract_text_with_vision(image)
 """
 
+from __future__ import annotations
+
 from enum import Enum
 import logging
 import os
@@ -138,7 +140,7 @@ class FeatureFlags:
     def __init__(
         self,
         session: Session | None = None,
-        settings: "Settings" | None = None,
+        settings: Settings | None = None,
         settings_repository: SystemSettingsRepository | None = None,
     ):
         """
@@ -311,7 +313,7 @@ class FeatureFlags:
 
 
 def is_feature_enabled(
-    feature: Feature, session: Session | None = None, settings: "Settings" | None = None
+    feature: Feature, session: Session | None = None, settings: Settings | None = None
 ) -> bool:
     """
     Global helper function to check if a feature is enabled.
@@ -335,7 +337,7 @@ def is_feature_enabled(
 
 
 def get_enabled_features(
-    session: Session | None = None, settings: "Settings" | None = None
+    session: Session | None = None, settings: Settings | None = None
 ) -> list[str]:
     """
     Global helper function to get all enabled features.

@@ -55,7 +55,7 @@ Example Cost Calculation:
     Total: $0.00243
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 import logging
 from typing import Any
 
@@ -388,7 +388,7 @@ class AICostTracker:
             API calls: 5, Avg: $0.002840
             >>>
             >>> # Get costs for date range
-            >>> from datetime import datetime
+            >>> from datetime import datetime, timedelta
             >>> today = datetime.now()
             >>> week_ago = today - timedelta(days=7)
             >>> weekly_costs = tracker.get_total_cost(start_date=week_ago, end_date=today)
