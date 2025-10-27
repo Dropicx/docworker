@@ -1,6 +1,6 @@
+from datetime import datetime
 import logging
 import os
-from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -125,8 +125,8 @@ async def get_processing_result(
     except ValueError as e:
         # Service raises ValueError for both not-found and not-completed
         if "not found" in str(e).lower():
-            raise HTTPException(status_code=404, detail=str(e))
-        raise HTTPException(status_code=409, detail=str(e))
+            raise HTTPException(status_code=404, detail=str(e)) from e
+        raise HTTPException(status_code=409, detail=str(e)) from e
     except Exception as e:
         logger.error(f"❌ Ergebnis-Abfrage Fehler: {e}")
         raise HTTPException(
@@ -163,7 +163,7 @@ async def get_pipeline_stats(
     if not authenticated:
         raise HTTPException(
             status_code=401, detail="Authentication required to access pipeline statistics"
-        ) from e
+        )
 
     try:
         return service.get_pipeline_statistics()

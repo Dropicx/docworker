@@ -18,9 +18,9 @@ from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_pipeline_step_repository
 from app.core.permissions import get_current_user_required, require_role
+from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import OCREngineEnum
-from app.database.auth_models import UserDB
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.services.document_class_manager import DocumentClassManager
 from app.services.modular_pipeline_executor import ModularPipelineManager
