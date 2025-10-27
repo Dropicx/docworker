@@ -8,8 +8,8 @@ API endpoints for managing user-configurable pipeline:
 - Step reordering
 """
 
-import logging
 from datetime import datetime
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
@@ -258,7 +258,7 @@ async def get_ocr_config(
     if not config:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="OCR configuration not found"
-        ) from e
+        )
 
     return config
 

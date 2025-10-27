@@ -121,7 +121,7 @@ async def login(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid email or password",
                 headers={"WWW-Authenticate": "Bearer"},
-            ) from e
+            )
 
         # Create tokens
         tokens = auth_service.create_tokens(user)
@@ -192,7 +192,7 @@ async def refresh_token(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid or expired refresh token",
                 headers={"WWW-Authenticate": "Bearer"},
-            ) from e
+            )
 
         logger.debug("Access token refreshed successfully")
 
@@ -329,7 +329,7 @@ async def change_password(
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid current password"
-            ) from e
+            )
 
         logger.info(f"Password changed for user {current_user.email}")
 
