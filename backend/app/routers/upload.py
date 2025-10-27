@@ -65,7 +65,7 @@ async def upload_document(
             logger.error(f"❌ Dateivalidierung fehlgeschlagen: {error_message}")
             raise HTTPException(
                 status_code=400, detail=f"Dateivalidierung fehlgeschlagen: {error_message}"
-            ) from e
+            )
 
         # Worker-Verfügbarkeit prüfen (skip in test/development environment)
         skip_worker_check = os.getenv("ENVIRONMENT") in ["test", "development"]
@@ -84,7 +84,7 @@ async def upload_document(
                     raise HTTPException(
                         status_code=503,
                         detail="Service temporarily unavailable: No workers available to process document. Please try again later.",
-                    ) from e
+                    )
 
                 worker_count = len(active_workers)
                 logger.info(f"✅ Worker verfügbar: {worker_count} aktive Worker")
