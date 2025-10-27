@@ -375,7 +375,7 @@ async def get_step(
     if not step:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
-        ) from e
+        )
 
     return step
 
@@ -404,7 +404,7 @@ async def create_step(
 
     except Exception as e:
         logger.error(f"❌ Failed to create pipeline step: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.put("/steps/{step_id}", response_model=PipelineStepResponse)
@@ -430,14 +430,14 @@ async def update_step(
         if not step:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
-            ) from e
+            )
 
         logger.info(f"✅ Updated pipeline step: {step.name} (ID: {step_id})")
         return step
 
     except Exception as e:
         logger.error(f"❌ Failed to update pipeline step: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.delete("/steps/{step_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -458,7 +458,7 @@ async def delete_step(
     if not success:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
-        ) from e
+        )
 
     logger.info(f"✅ Deleted pipeline step ID: {step_id}")
     return
