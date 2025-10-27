@@ -63,9 +63,9 @@ class UserDB(Base):
     # User information
     full_name = Column(String(255), nullable=False)
     
-    # Role and status
-    role = Column(SQLEnum(UserRole), nullable=False, default=UserRole.USER)
-    status = Column(SQLEnum(UserStatus), nullable=False, default=UserStatus.ACTIVE)
+    # Role and status (use values_callable to store enum values, not names)
+    role = Column(SQLEnum(UserRole, values_callable=lambda x: [e.value for e in x]), nullable=False, default=UserRole.USER)
+    status = Column(SQLEnum(UserStatus, values_callable=lambda x: [e.value for e in x]), nullable=False, default=UserStatus.ACTIVE)
     
     # Account tracking
     is_active = Column(Boolean, default=True, nullable=False)
