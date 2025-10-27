@@ -14,7 +14,7 @@ import logging
 from enum import Enum
 from uuid import UUID
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
 
@@ -230,7 +230,7 @@ async def get_current_user_required(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required",
             headers={"WWW-Authenticate": "Bearer"},
-        ) from e
+        )
 
     try:
         auth_service = AuthService(db)
@@ -241,7 +241,7 @@ async def get_current_user_required(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid authentication credentials",
                 headers={"WWW-Authenticate": "Bearer"},
-            ) from e
+            )
 
         return user
     except HTTPException:
@@ -307,7 +307,7 @@ def require_permission(permission: Permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Permission '{permission.value}' required"
-            ) from e
+            )
         return current_user
 
     return permission_checker
@@ -330,7 +330,7 @@ def require_role(role: Role):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"Role '{role.value}' required"
-            ) from e
+            )
         return current_user
 
     return role_checker
@@ -434,7 +434,7 @@ def require_resource_access(resource_user_id: UUID):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied to this resource"
-            ) from e
+            )
         return current_user
 
     return resource_checker

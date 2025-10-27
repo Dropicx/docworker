@@ -21,7 +21,7 @@ from functools import wraps
 import logging
 from threading import Lock
 import time
-from typing import ParamSpec, TypeVar
+from typing import Any, ParamSpec, TypeVar
 
 from app.core.exceptions import CircuitBreakerError, ServiceUnavailableError
 

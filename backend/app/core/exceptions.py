@@ -6,6 +6,7 @@ logging, and debugging across the DocTranslator application.
 """
 
 from datetime import datetime
+from typing import Any
 
 
 
