@@ -4,6 +4,7 @@ User Repository
 Provides data access methods for user management including CRUD operations,
 authentication queries, and user status management.
 """
+
 import logging
 from datetime import datetime
 from uuid import UUID

@@ -1,6 +1,7 @@
 """
 Database initialization script
 """
+
 import logging
 import os
 
