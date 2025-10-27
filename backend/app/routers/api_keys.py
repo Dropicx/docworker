@@ -6,8 +6,8 @@ revocation, and usage tracking. Users can manage their own keys, admins
 can manage all keys.
 """
 
-import logging
 from datetime import datetime, timedelta
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
