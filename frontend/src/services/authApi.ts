@@ -76,7 +76,7 @@ export class AuthApiService {
       email,
       password,
     });
-    
+
     // Transform backend response to match frontend expectations
     return {
       user: response.data.user,

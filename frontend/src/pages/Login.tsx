@@ -9,7 +9,7 @@ const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login, isAuthenticated, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -98,9 +98,7 @@ const Login: React.FC = () => {
                 <div className="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Stethoscope className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-primary-900 mb-2">
-                  Admin-Anmeldung
-                </h2>
+                <h2 className="text-2xl font-bold text-primary-900 mb-2">Admin-Anmeldung</h2>
                 <p className="text-primary-600">
                   Melden Sie sich an, um auf die Verwaltungsfunktionen zuzugreifen
                 </p>
@@ -117,14 +115,17 @@ const Login: React.FC = () => {
               {/* Login Form */}
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label htmlFor="email" className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label
+                    htmlFor="email"
+                    className="block text-sm font-medium text-neutral-700 mb-2"
+                  >
                     E-Mail-Adresse
                   </label>
                   <input
                     id="email"
                     type="email"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={e => setEmail(e.target.value)}
                     required
                     className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-colors"
                     placeholder="ihre@email.de"
@@ -133,7 +134,10 @@ const Login: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-neutral-700 mb-2">
+                  <label
+                    htmlFor="password"
+                    className="block text-sm font-medium text-neutral-700 mb-2"
+                  >
                     Passwort
                   </label>
                   <div className="relative">
@@ -141,7 +145,7 @@ const Login: React.FC = () => {
                       id="password"
                       type={showPassword ? 'text' : 'password'}
                       value={password}
-                      onChange={(e) => setPassword(e.target.value)}
+                      onChange={e => setPassword(e.target.value)}
                       required
                       className="w-full px-4 py-3 pr-12 border border-neutral-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-colors"
                       placeholder="Ihr Passwort"
@@ -153,11 +157,7 @@ const Login: React.FC = () => {
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
                       disabled={isLoading}
                     >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
                 </div>
@@ -194,9 +194,7 @@ const Login: React.FC = () => {
           {/* Info Card */}
           <div className="mt-6 p-4 bg-neutral-50 border border-neutral-200 rounded-lg">
             <div className="text-center">
-              <h3 className="text-sm font-medium text-neutral-900 mb-1">
-                Kein Zugang?
-              </h3>
+              <h3 className="text-sm font-medium text-neutral-900 mb-1">Kein Zugang?</h3>
               <p className="text-xs text-neutral-600">
                 Kontaktieren Sie Ihren Administrator, um ein Konto zu erstellen.
               </p>

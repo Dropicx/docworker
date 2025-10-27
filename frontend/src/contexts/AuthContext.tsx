@@ -1,4 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+} from 'react';
 import { authApiService } from '../services/authApi';
 
 export interface User {
@@ -113,9 +120,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           ) {
             // Verify tokens are still valid by getting current user
             try {
-              const currentUser = await authApiService.getCurrentUser(
-                parsedTokens.access_token
-              );
+              const currentUser = await authApiService.getCurrentUser(parsedTokens.access_token);
               setTokens(parsedTokens);
               setUser(currentUser);
             } catch (error) {
@@ -153,15 +158,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   useEffect(() => {
     if (!tokens) return;
 
-    const refreshInterval = setInterval(async () => {
-      try {
-        await refreshToken();
-      } catch (error) {
-        console.error('Auto-refresh failed:', error);
-        // If refresh fails, logout user
-        await logout();
-      }
-    }, 14 * 60 * 1000); // Refresh every 14 minutes (tokens expire in 15)
+    const refreshInterval = setInterval(
+      async () => {
+        try {
+          await refreshToken();
+        } catch (error) {
+          console.error('Auto-refresh failed:', error);
+          // If refresh fails, logout user
+          await logout();
+        }
+      },
+      14 * 60 * 1000
+    ); // Refresh every 14 minutes (tokens expire in 15)
 
     return () => clearInterval(refreshInterval);
   }, [tokens, refreshToken, logout]);
@@ -183,10 +191,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       setIsLoading(true);
       const response = await authApiService.login(email, password);
-      
+
       setTokens(response.tokens);
       setUser(response.user);
-      
+
       // Store in localStorage
       localStorage.setItem('auth_tokens', JSON.stringify(response.tokens));
       localStorage.setItem('auth_user', JSON.stringify(response.user));

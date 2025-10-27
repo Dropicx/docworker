@@ -391,290 +391,291 @@ function App() {
     };
 
     return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
-      {/* Header - Mobile Optimized */}
-      <header className="sticky top-0 z-50 header-blur">
-        <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
-            <button
-              onClick={handleNewTranslation}
-              className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity"
-            >
-              <div className="hero-gradient p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-soft">
-                <Stethoscope className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <div className="text-left">
-                <h1 className="text-lg sm:text-2xl font-bold text-primary-900 tracking-tight">
-                  HealthLingo
-                </h1>
-                <p className="text-xs sm:text-sm text-primary-600 font-medium">
-                  Medizinische Dokumente verstehen
-                </p>
-              </div>
-            </button>
-
-            <div className="flex items-center space-x-4">
-              {renderHealthIndicator()}
-              
-              {/* User Menu */}
-              {isAuthenticated ? (
-                <div className="flex items-center space-x-2">
-                  <div className="flex items-center space-x-2 px-3 py-1.5 bg-brand-50 rounded-lg">
-                    <User className="w-4 h-4 text-brand-600" />
-                    <span className="text-sm font-medium text-brand-700">
-                      {user?.full_name || user?.email}
-                    </span>
-                    <span className="text-xs text-brand-600 bg-brand-100 px-2 py-0.5 rounded-full">
-                      {user?.role === 'admin' ? 'Admin' : 'User'}
-                    </span>
-                  </div>
-                  <button
-                    onClick={handleSettingsClick}
-                    className="p-2 text-primary-600 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200 group"
-                    title="Einstellungen"
-                  >
-                    <Settings className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="p-2 text-primary-600 hover:text-error-600 hover:bg-error-50 rounded-lg transition-all duration-200 group"
-                    title="Abmelden"
-                  >
-                    <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  </button>
+      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
+        {/* Header - Mobile Optimized */}
+        <header className="sticky top-0 z-50 header-blur">
+          <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16 sm:h-20">
+              <button
+                onClick={handleNewTranslation}
+                className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity"
+              >
+                <div className="hero-gradient p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-soft">
+                  <Stethoscope className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
                 </div>
-              ) : (
-                <a
-                  href="/login"
-                  className="px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors"
-                >
-                  Anmelden
-                </a>
-              )}
+                <div className="text-left">
+                  <h1 className="text-lg sm:text-2xl font-bold text-primary-900 tracking-tight">
+                    HealthLingo
+                  </h1>
+                  <p className="text-xs sm:text-sm text-primary-600 font-medium">
+                    Medizinische Dokumente verstehen
+                  </p>
+                </div>
+              </button>
+
+              <div className="flex items-center space-x-4">
+                {renderHealthIndicator()}
+
+                {/* User Menu */}
+                {isAuthenticated ? (
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center space-x-2 px-3 py-1.5 bg-brand-50 rounded-lg">
+                      <User className="w-4 h-4 text-brand-600" />
+                      <span className="text-sm font-medium text-brand-700">
+                        {user?.full_name || user?.email}
+                      </span>
+                      <span className="text-xs text-brand-600 bg-brand-100 px-2 py-0.5 rounded-full">
+                        {user?.role === 'admin' ? 'Admin' : 'User'}
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleSettingsClick}
+                      className="p-2 text-primary-600 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200 group"
+                      title="Einstellungen"
+                    >
+                      <Settings className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className="p-2 text-primary-600 hover:text-error-600 hover:bg-error-50 rounded-lg transition-all duration-200 group"
+                      title="Abmelden"
+                    >
+                      <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    </button>
+                  </div>
+                ) : (
+                  <a
+                    href="/login"
+                    className="px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors"
+                  >
+                    Anmelden
+                  </a>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </header>
+        </header>
 
-      {/* Main Content */}
-      <main className="relative">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-30">
-          <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-r from-brand-400/20 to-accent-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse-soft"></div>
-          <div
-            className="absolute bottom-0 right-0 w-72 h-72 bg-gradient-to-r from-accent-400/20 to-brand-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse-soft"
-            style={{ animationDelay: '1s' }}
-          ></div>
-        </div>
+        {/* Main Content */}
+        <main className="relative">
+          {/* Background Pattern */}
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-0 left-0 w-72 h-72 bg-gradient-to-r from-brand-400/20 to-accent-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse-soft"></div>
+            <div
+              className="absolute bottom-0 right-0 w-72 h-72 bg-gradient-to-r from-accent-400/20 to-brand-400/20 rounded-full mix-blend-multiply filter blur-xl animate-pulse-soft"
+              style={{ animationDelay: '1s' }}
+            ></div>
+          </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-          {/* Error State */}
-          {appState === 'error' && (
-            <div className="animate-fade-in">
-              {errorMetadata?.isTermination ? (
-                <TerminationCard
-                  message={error || 'Verarbeitung wurde gestoppt'}
-                  reason={errorMetadata.reason as string | undefined}
-                  step={errorMetadata.step as string | undefined}
-                  onReset={handleNewTranslation}
-                />
-              ) : (
-                <div className="card-elevated border-error-200/50 bg-gradient-to-br from-error-50/50 to-white">
-                  <div className="card-body">
-                    <div className="flex items-start space-x-4">
-                      <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-error-500 to-error-600 rounded-xl flex items-center justify-center">
-                        <AlertTriangle className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-xl font-bold text-error-900 mb-2">
-                          Verarbeitung fehlgeschlagen
-                        </h3>
-                        <p className="text-error-700 mb-6 leading-relaxed">{error}</p>
-                        <button onClick={handleNewTranslation} className="btn-primary">
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Neuen Versuch starten
-                        </button>
+          <div className="relative z-10 max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+            {/* Error State */}
+            {appState === 'error' && (
+              <div className="animate-fade-in">
+                {errorMetadata?.isTermination ? (
+                  <TerminationCard
+                    message={error || 'Verarbeitung wurde gestoppt'}
+                    reason={errorMetadata.reason as string | undefined}
+                    step={errorMetadata.step as string | undefined}
+                    onReset={handleNewTranslation}
+                  />
+                ) : (
+                  <div className="card-elevated border-error-200/50 bg-gradient-to-br from-error-50/50 to-white">
+                    <div className="card-body">
+                      <div className="flex items-start space-x-4">
+                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-error-500 to-error-600 rounded-xl flex items-center justify-center">
+                          <AlertTriangle className="w-6 h-6 text-white" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-error-900 mb-2">
+                            Verarbeitung fehlgeschlagen
+                          </h3>
+                          <p className="text-error-700 mb-6 leading-relaxed">{error}</p>
+                          <button onClick={handleNewTranslation} className="btn-primary">
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Neuen Versuch starten
+                          </button>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
 
-          {/* Upload State - Mobile Optimized */}
-          {appState === 'upload' && (
-            <div className="space-y-8 sm:space-y-12 lg:space-y-16">
-              {/* Hero Section - Mobile Optimized */}
-              <div className="text-center space-y-4 sm:space-y-6 lg:space-y-8">
-                <div className="space-y-3 sm:space-y-4">
-                  <h2 className="text-hero bg-gradient-to-r from-primary-900 via-brand-700 to-accent-700 bg-clip-text text-transparent px-2">
-                    Medizinische Dokumente
-                    <br className="hidden sm:block" />
-                    <span className="sm:hidden"> </span>
-                    <span className="bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">
-                      einfach verstehen
-                    </span>
-                  </h2>
-                  <p className="text-lead max-w-3xl mx-auto px-4 sm:px-0">
-                    Verwandeln Sie komplexe Arztbriefe und medizinische Befunde in verständliche
-                    Sprache.
-                    <span className="hidden sm:inline">Schnell, sicher und DSGVO-konform.</span>
-                    <span className="sm:hidden block mt-2">Schnell, sicher und DSGVO-konform.</span>
-                  </p>
+            {/* Upload State - Mobile Optimized */}
+            {appState === 'upload' && (
+              <div className="space-y-8 sm:space-y-12 lg:space-y-16">
+                {/* Hero Section - Mobile Optimized */}
+                <div className="text-center space-y-4 sm:space-y-6 lg:space-y-8">
+                  <div className="space-y-3 sm:space-y-4">
+                    <h2 className="text-hero bg-gradient-to-r from-primary-900 via-brand-700 to-accent-700 bg-clip-text text-transparent px-2">
+                      Medizinische Dokumente
+                      <br className="hidden sm:block" />
+                      <span className="sm:hidden"> </span>
+                      <span className="bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">
+                        einfach verstehen
+                      </span>
+                    </h2>
+                    <p className="text-lead max-w-3xl mx-auto px-4 sm:px-0">
+                      Verwandeln Sie komplexe Arztbriefe und medizinische Befunde in verständliche
+                      Sprache.
+                      <span className="hidden sm:inline">Schnell, sicher und DSGVO-konform.</span>
+                      <span className="sm:hidden block mt-2">
+                        Schnell, sicher und DSGVO-konform.
+                      </span>
+                    </p>
+                  </div>
+
+                  {/* Quick Stats - Mobile Optimized */}
+                  <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-6 lg:space-x-8 text-xs sm:text-sm">
+                    <div className="flex items-center space-x-2 text-primary-600">
+                      <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
+                      <span className="font-medium">100% DSGVO</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-primary-600">
+                      <div className="w-2 h-2 bg-accent-500 rounded-full"></div>
+                      <span className="font-medium">Sofort bereit</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-primary-600">
+                      <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
+                      <span className="font-medium">Keine Speicherung</span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Quick Stats - Mobile Optimized */}
-                <div className="flex flex-col sm:flex-row justify-center items-center space-y-2 sm:space-y-0 sm:space-x-6 lg:space-x-8 text-xs sm:text-sm">
-                  <div className="flex items-center space-x-2 text-primary-600">
-                    <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                    <span className="font-medium">100% DSGVO</span>
+                {/* Language Selection */}
+                <div>
+                  <div className="card-elevated">
+                    <div className="card-body">{renderLanguageSelector()}</div>
                   </div>
-                  <div className="flex items-center space-x-2 text-primary-600">
-                    <div className="w-2 h-2 bg-accent-500 rounded-full"></div>
-                    <span className="font-medium">Sofort bereit</span>
+                </div>
+
+                {/* Upload Component */}
+                <div>
+                  <FileUpload
+                    onUploadSuccess={handleUploadSuccess}
+                    onUploadError={handleUploadError}
+                  />
+                </div>
+
+                {/* Features - Mobile Optimized */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                  <div className="feature-card">
+                    <div className="feature-icon">
+                      <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                      Datenschutz first
+                    </h3>
+                    <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                      Keine Speicherung Ihrer Daten. Alle Informationen werden nach der Übersetzung
+                      automatisch gelöscht.
+                    </p>
                   </div>
-                  <div className="flex items-center space-x-2 text-primary-600">
-                    <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                    <span className="font-medium">Keine Speicherung</span>
+
+                  <div className="feature-card">
+                    <div className="feature-icon">
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                      Medizinisch präzise
+                    </h3>
+                    <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                      Speziell für medizinische Fachbegriffe und Dokumente entwickelt. Präzise
+                      Übersetzungen ohne Informationsverlust.
+                    </p>
                   </div>
+
+                  <div className="feature-card sm:col-span-2 lg:col-span-1">
+                    <div className="feature-icon">
+                      <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                    </div>
+                    <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                      Blitzschnell
+                    </h3>
+                    <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                      Erhalten Sie in wenigen Sekunden eine verständliche Übersetzung Ihrer
+                      medizinischen Dokumente.
+                    </p>
+                  </div>
+                </div>
+
+                {/* FAQ Section */}
+                <div className="mt-12 sm:mt-16 lg:mt-20">
+                  <FAQ />
                 </div>
               </div>
+            )}
 
-              {/* Language Selection */}
-              <div>
+            {/* Initializing State - Temporary screen */}
+            {appState === 'initializing' && (
+              <div className="animate-fade-in">
                 <div className="card-elevated">
-                  <div className="card-body">{renderLanguageSelector()}</div>
+                  <div className="card-body">
+                    <div className="flex flex-col items-center justify-center space-y-6 py-8">
+                      {/* Animated icon */}
+                      <div className="relative">
+                        <div className="w-20 h-20 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center animate-pulse">
+                          <Stethoscope className="w-10 h-10 text-white" />
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl opacity-30 animate-ping" />
+                      </div>
+
+                      {/* German text */}
+                      <div className="text-center space-y-2">
+                        <h3 className="text-2xl font-bold text-primary-900">
+                          Analyse wird gestartet
+                        </h3>
+                        <p className="text-primary-600">Ihr Dokument wird vorbereitet...</p>
+                      </div>
+
+                      {/* Loading dots */}
+                      <div className="flex space-x-2">
+                        <div
+                          className="w-2 h-2 bg-brand-500 rounded-full animate-bounce"
+                          style={{ animationDelay: '0ms' }}
+                        />
+                        <div
+                          className="w-2 h-2 bg-brand-500 rounded-full animate-bounce"
+                          style={{ animationDelay: '150ms' }}
+                        />
+                        <div
+                          className="w-2 h-2 bg-brand-500 rounded-full animate-bounce"
+                          style={{ animationDelay: '300ms' }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
+            )}
 
-              {/* Upload Component */}
-              <div>
-                <FileUpload
-                  onUploadSuccess={handleUploadSuccess}
-                  onUploadError={handleUploadError}
+            {/* Processing State */}
+            {appState === 'processing' && uploadResponse && (
+              <div className="animate-fade-in">
+                <ProcessingStatus
+                  processingId={uploadResponse.processing_id}
+                  onComplete={handleProcessingComplete}
+                  onError={handleProcessingError}
+                  onCancel={handleProcessingCancel}
                 />
               </div>
+            )}
 
-              {/* Features - Mobile Optimized */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                <div className="feature-card">
-                  <div className="feature-icon">
-                    <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                    Datenschutz first
-                  </h3>
-                  <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                    Keine Speicherung Ihrer Daten. Alle Informationen werden nach der Übersetzung
-                    automatisch gelöscht.
-                  </p>
-                </div>
-
-                <div className="feature-card">
-                  <div className="feature-icon">
-                    <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                    Medizinisch präzise
-                  </h3>
-                  <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                    Speziell für medizinische Fachbegriffe und Dokumente entwickelt. Präzise
-                    Übersetzungen ohne Informationsverlust.
-                  </p>
-                </div>
-
-                <div className="feature-card sm:col-span-2 lg:col-span-1">
-                  <div className="feature-icon">
-                    <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-                  </div>
-                  <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                    Blitzschnell
-                  </h3>
-                  <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                    Erhalten Sie in wenigen Sekunden eine verständliche Übersetzung Ihrer
-                    medizinischen Dokumente.
-                  </p>
-                </div>
+            {/* Result State */}
+            {appState === 'result' && translationResult && (
+              <div className="animate-fade-in">
+                <TranslationResult
+                  result={translationResult}
+                  onNewTranslation={handleNewTranslation}
+                />
               </div>
+            )}
+          </div>
+        </main>
 
-              {/* FAQ Section */}
-              <div className="mt-12 sm:mt-16 lg:mt-20">
-                <FAQ />
-              </div>
-            </div>
-          )}
-
-          {/* Initializing State - Temporary screen */}
-          {appState === 'initializing' && (
-            <div className="animate-fade-in">
-              <div className="card-elevated">
-                <div className="card-body">
-                  <div className="flex flex-col items-center justify-center space-y-6 py-8">
-                    {/* Animated icon */}
-                    <div className="relative">
-                      <div className="w-20 h-20 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center animate-pulse">
-                        <Stethoscope className="w-10 h-10 text-white" />
-                      </div>
-                      <div className="absolute inset-0 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl opacity-30 animate-ping" />
-                    </div>
-
-                    {/* German text */}
-                    <div className="text-center space-y-2">
-                      <h3 className="text-2xl font-bold text-primary-900">
-                        Analyse wird gestartet
-                      </h3>
-                      <p className="text-primary-600">Ihr Dokument wird vorbereitet...</p>
-                    </div>
-
-                    {/* Loading dots */}
-                    <div className="flex space-x-2">
-                      <div
-                        className="w-2 h-2 bg-brand-500 rounded-full animate-bounce"
-                        style={{ animationDelay: '0ms' }}
-                      />
-                      <div
-                        className="w-2 h-2 bg-brand-500 rounded-full animate-bounce"
-                        style={{ animationDelay: '150ms' }}
-                      />
-                      <div
-                        className="w-2 h-2 bg-brand-500 rounded-full animate-bounce"
-                        style={{ animationDelay: '300ms' }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Processing State */}
-          {appState === 'processing' && uploadResponse && (
-            <div className="animate-fade-in">
-              <ProcessingStatus
-                processingId={uploadResponse.processing_id}
-                onComplete={handleProcessingComplete}
-                onError={handleProcessingError}
-                onCancel={handleProcessingCancel}
-              />
-            </div>
-          )}
-
-          {/* Result State */}
-          {appState === 'result' && translationResult && (
-            <div className="animate-fade-in">
-              <TranslationResult
-                result={translationResult}
-                onNewTranslation={handleNewTranslation}
-              />
-            </div>
-          )}
-        </div>
-      </main>
-
-      <Footer />
-
-    </div>
+        <Footer />
+      </div>
     );
   };
 
@@ -683,13 +684,13 @@ function App() {
       <Routes>
         <Route path="/" element={<MainApp />} />
         <Route path="/login" element={<Login />} />
-        <Route 
-          path="/settings" 
+        <Route
+          path="/settings"
           element={
             <ProtectedRoute>
               <SettingsPage />
             </ProtectedRoute>
-          } 
+          }
         />
         <Route path="/impressum" element={<Impressum />} />
         <Route path="/datenschutz" element={<Datenschutz />} />

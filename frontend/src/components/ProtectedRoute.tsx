@@ -9,11 +9,7 @@ interface ProtectedRouteProps {
   fallback?: React.ReactNode;
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
-  children, 
-  requiredRole,
-  fallback 
-}) => {
+const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole, fallback }) => {
   const { isAuthenticated, user, isLoading } = useAuth();
   const location = useLocation();
 
@@ -52,21 +48,22 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
               <div className="w-16 h-16 bg-gradient-to-br from-error-500 to-error-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <AlertCircle className="w-8 h-8 text-white" />
               </div>
-              <h2 className="text-2xl font-bold text-error-900 mb-2">
-                Zugriff verweigert
-              </h2>
+              <h2 className="text-2xl font-bold text-error-900 mb-2">Zugriff verweigert</h2>
               <p className="text-error-700 mb-6">
                 Sie haben nicht die erforderlichen Berechtigungen, um auf diese Seite zuzugreifen.
               </p>
               <div className="space-y-3">
                 <div className="text-sm text-neutral-600">
-                  <p><strong>Ihre Rolle:</strong> {user?.role === 'user' ? 'Benutzer' : 'Administrator'}</p>
-                  <p><strong>Erforderlich:</strong> {requiredRole === 'admin' ? 'Administrator' : 'Benutzer oder Administrator'}</p>
+                  <p>
+                    <strong>Ihre Rolle:</strong>{' '}
+                    {user?.role === 'user' ? 'Benutzer' : 'Administrator'}
+                  </p>
+                  <p>
+                    <strong>Erforderlich:</strong>{' '}
+                    {requiredRole === 'admin' ? 'Administrator' : 'Benutzer oder Administrator'}
+                  </p>
                 </div>
-                <button
-                  onClick={() => window.history.back()}
-                  className="btn-primary"
-                >
+                <button onClick={() => window.history.back()} className="btn-primary">
                   Zurück
                 </button>
               </div>

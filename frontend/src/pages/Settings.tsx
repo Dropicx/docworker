@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, Settings as SettingsIcon, FileText, Workflow, Activity, ArrowLeft, User, LogOut, Loader2 } from 'lucide-react';
+import {
+  Stethoscope,
+  Settings as SettingsIcon,
+  FileText,
+  Workflow,
+  Activity,
+  ArrowLeft,
+  User,
+  LogOut,
+  Loader2,
+} from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import PipelineBuilder from '../components/settings/PipelineBuilder';
 import DocumentClassManager from '../components/settings/DocumentClassManager';
@@ -59,9 +69,7 @@ const Settings: React.FC = () => {
                 <h1 className="text-lg sm:text-2xl font-bold text-primary-900 tracking-tight">
                   HealthLingo
                 </h1>
-                <p className="text-xs sm:text-sm text-primary-600 font-medium">
-                  Einstellungen
-                </p>
+                <p className="text-xs sm:text-sm text-primary-600 font-medium">Einstellungen</p>
               </div>
             </button>
 
@@ -102,13 +110,15 @@ const Settings: React.FC = () => {
               <ArrowLeft className="w-4 h-4" />
               <span className="text-sm font-medium">Zurück zur Hauptseite</span>
             </button>
-            
+
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-br from-brand-600 to-brand-700 rounded-xl flex items-center justify-center">
                 <SettingsIcon className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-2xl sm:text-3xl font-bold text-primary-900">Pipeline-Konfiguration</h2>
+                <h2 className="text-2xl sm:text-3xl font-bold text-primary-900">
+                  Pipeline-Konfiguration
+                </h2>
                 <p className="text-sm text-primary-600">
                   Konfigurieren Sie OCR-Engine und dynamische Pipeline-Schritte
                 </p>
@@ -122,7 +132,7 @@ const Settings: React.FC = () => {
               {/* Sidebar Navigation */}
               <div className="w-full md:w-64 bg-neutral-50 border-b md:border-b-0 md:border-r border-neutral-200 p-4">
                 <nav className="space-y-2">
-                  {tabs.map((tab) => {
+                  {tabs.map(tab => {
                     const Icon = tab.icon;
                     return (
                       <button
@@ -144,7 +154,7 @@ const Settings: React.FC = () => {
 
               {/* Main Content Area */}
               <div className="flex-1 overflow-y-auto p-6">
-                {(isLoading || !tokenReady) ? (
+                {isLoading || !tokenReady ? (
                   <div className="flex items-center justify-center h-full min-h-[400px]">
                     <div className="flex flex-col items-center space-y-3">
                       <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
@@ -171,4 +181,3 @@ const Settings: React.FC = () => {
 };
 
 export default Settings;
-
