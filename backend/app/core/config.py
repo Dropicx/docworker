@@ -90,14 +90,9 @@ class Settings(BaseSettings):
         description="Access code for settings UI",
         validation_alias="SETTINGS_ACCESS_CODE",  # Keep backward compatibility with Railway env var
     )
-    allowed_origins: list[str] = Field(
-        default_factory=lambda: [
-            "http://localhost:5173",  # Vite dev server
-            "http://localhost:9122",  # Backend dev server
-            "http://127.0.0.1:5173",
-            "http://127.0.0.1:9122"
-        ],
-        description="CORS allowed origins (use explicit URLs in production)"
+    allowed_origins: str | list[str] | None = Field(
+        default=None,
+        description="CORS allowed origins (comma-separated string or list)"
     )
     trusted_hosts: list[str] = Field(
         default_factory=lambda: ["*"], description="Trusted host headers"
@@ -298,37 +293,40 @@ class Settings(BaseSettings):
 
     @field_validator("allowed_origins", mode="before")
     @classmethod
-    def parse_allowed_origins(cls, v):
+    def parse_allowed_origins(cls, v) -> list[str]:
         """
         Parse CORS allowed origins from environment variable.
 
-        Handles comma-separated strings and empty values gracefully.
+        Handles comma-separated strings, empty values, and lists gracefully.
+        Always returns a list of strings.
         """
+        # Default origins for development
+        default_origins = [
+            "http://localhost:5173",
+            "http://localhost:9122",
+            "http://127.0.0.1:5173",
+            "http://127.0.0.1:9122"
+        ]
+
         # If it's already a list, return it
         if isinstance(v, list):
-            return v
+            return v if v else default_origins
 
         # Handle None or empty string - return default
-        if not v or v == "":
-            return [
-                "http://localhost:5173",
-                "http://localhost:9122",
-                "http://127.0.0.1:5173",
-                "http://127.0.0.1:9122"
-            ]
+        if v is None or v == "" or v == "null":
+            return default_origins
 
         # If it's a string, split by comma
         if isinstance(v, str):
+            # Remove any quotes that might have been added
+            v = v.strip().strip('"').strip("'")
+
             # Split and strip whitespace
             origins = [origin.strip() for origin in v.split(",") if origin.strip()]
-            return origins if origins else [
-                "http://localhost:5173",
-                "http://localhost:9122",
-                "http://127.0.0.1:5173",
-                "http://127.0.0.1:9122"
-            ]
+            return origins if origins else default_origins
 
-        return v
+        # Fallback to default
+        return default_origins
 
     @field_validator("allowed_origins")
     @classmethod
