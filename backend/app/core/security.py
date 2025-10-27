@@ -34,6 +34,8 @@ def hash_password(password: str) -> str:
     """
     Hash a password using bcrypt with configurable cost factor.
     
+    Note: bcrypt has a 72 byte limit for passwords.
+    
     Args:
         password: Plain text password to hash
         
@@ -48,6 +50,13 @@ def hash_password(password: str) -> str:
     
     # Validate password strength
     validate_password_strength(password)
+    
+    # Truncate password to 72 bytes if it's too long (bcrypt limitation)
+    # Encode to bytes, truncate, then decode back to string
+    password_bytes = password.encode('utf-8')
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
+        password = password_bytes.decode('utf-8', errors='ignore')
     
     return pwd_context.hash(password)
 
