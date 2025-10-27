@@ -15,6 +15,7 @@ Features:
 
 import hashlib
 import hmac
+import logging
 import secrets
 import string
 import warnings
@@ -29,6 +30,10 @@ from app.core.config import settings
 
 # Suppress bcrypt version check warning (cosmetic only, doesn't affect functionality)
 warnings.filterwarnings("ignore", message=".*error reading bcrypt version.*")
+
+# Suppress passlib's bcrypt handler warnings at the logger level
+passlib_logger = logging.getLogger("passlib")
+passlib_logger.setLevel(logging.ERROR)  # Only show errors, not warnings
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=settings.bcrypt_rounds)
