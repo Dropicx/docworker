@@ -17,6 +17,7 @@ import hashlib
 import hmac
 import secrets
 import string
+import warnings
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Tuple
 
@@ -25,6 +26,9 @@ from passlib.context import CryptContext
 from passlib.exc import InvalidTokenError
 
 from app.core.config import settings
+
+# Suppress bcrypt version check warning (cosmetic only, doesn't affect functionality)
+warnings.filterwarnings("ignore", message=".*error reading bcrypt version.*")
 
 # Password hashing context
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=settings.bcrypt_rounds)
