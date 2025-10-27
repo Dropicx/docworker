@@ -49,6 +49,9 @@ def init_database():
             admin_password = os.getenv("INITIAL_ADMIN_PASSWORD")
             admin_name = os.getenv("INITIAL_ADMIN_NAME", "System Administrator")
 
+            # Log environment variable status (without revealing password)
+            logger.info(f"🔑 Admin env vars - Email: {admin_email}, Password length: {len(admin_password) if admin_password else 0}, Name: {admin_name}")
+
             if admin_email and admin_password:
                 db = next(get_session())
                 try:
@@ -65,7 +68,9 @@ def init_database():
                             logger.info(f"✅ Updated existing user {admin_email} to ADMIN role")
                     else:
                         # Create new admin user directly using repository
+                        logger.info(f"🔐 Hashing password for {admin_email} (length: {len(admin_password)} chars, {len(admin_password.encode('utf-8'))} bytes)")
                         password_hash = hash_password(admin_password)
+                        logger.info(f"✅ Password hashed successfully")
                         new_user = user_repo.create_user(
                             email=admin_email,
                             password_hash=password_hash,
