@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, useNavigate } from 'react-router-dom';
 import {
   Stethoscope,
   Shield,
@@ -18,13 +18,13 @@ import FileUpload from './components/FileUpload';
 import ProcessingStatus from './components/ProcessingStatus';
 import TranslationResult from './components/TranslationResult';
 import TerminationCard from './components/TerminationCard';
-import EnhancedSettingsModal from './components/EnhancedSettingsModal';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
 import Impressum from './pages/Impressum';
 import Datenschutz from './pages/Datenschutz';
 import Nutzungsbedingungen from './pages/Nutzungsbedingungen';
 import Login from './pages/Login';
+import SettingsPage from './pages/Settings';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import ApiService from './services/api';
@@ -50,7 +50,6 @@ function App() {
   const [languagesLoaded, setLanguagesLoaded] = useState(false);
   const [showAllLanguages, setShowAllLanguages] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
-  const [showSettings, setShowSettings] = useState(false);
 
   // Health check beim Start
   useEffect(() => {
@@ -377,6 +376,7 @@ function App() {
 
   const MainApp = () => {
     const { isAuthenticated, user, logout } = useAuth();
+    const navigate = useNavigate();
 
     const handleLogout = async () => {
       try {
@@ -387,7 +387,7 @@ function App() {
     };
 
     const handleSettingsClick = () => {
-      setShowSettings(true);
+      navigate('/settings');
     };
 
     return (
@@ -674,8 +674,6 @@ function App() {
 
       <Footer />
 
-      {/* Settings Modal */}
-      <EnhancedSettingsModal isOpen={showSettings} onClose={() => setShowSettings(false)} />
     </div>
     );
   };
@@ -685,6 +683,14 @@ function App() {
       <Routes>
         <Route path="/" element={<MainApp />} />
         <Route path="/login" element={<Login />} />
+        <Route 
+          path="/settings" 
+          element={
+            <ProtectedRoute>
+              <SettingsPage />
+            </ProtectedRoute>
+          } 
+        />
         <Route path="/impressum" element={<Impressum />} />
         <Route path="/datenschutz" element={<Datenschutz />} />
         <Route path="/nutzungsbedingungen" element={<Nutzungsbedingungen />} />
