@@ -13,21 +13,15 @@ interface EnhancedSettingsModalProps {
 }
 
 const SettingsContent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
-  const { user } = useAuth();
+  const { user, tokens } = useAuth();
   const [activeTab, setActiveTab] = useState<'pipeline' | 'classes' | 'monitoring'>('pipeline');
 
   // Sync token with pipeline API when authenticated
   useEffect(() => {
-    const storedTokens = localStorage.getItem('auth_tokens');
-    if (storedTokens) {
-      try {
-        const tokens = JSON.parse(storedTokens);
-        pipelineApi.updateToken(tokens.access_token);
-      } catch (error) {
-        console.error('Error parsing stored tokens:', error);
-      }
+    if (tokens?.access_token) {
+      pipelineApi.updateToken(tokens.access_token);
     }
-  }, []);
+  }, [tokens]);
 
   const tabs = [
     { id: 'pipeline', label: 'Pipeline', icon: Workflow },
@@ -90,7 +84,7 @@ const SettingsContent: React.FC<{ onClose: () => void }> = ({ onClose }) => {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto">
             {activeTab === 'pipeline' && <PipelineBuilder />}
             {activeTab === 'classes' && <DocumentClassManager />}
             {activeTab === 'monitoring' && <FlowerDashboard />}

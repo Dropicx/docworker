@@ -29,8 +29,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  // Redirect to login if not authenticated
+  // Redirect to login if not authenticated (unless fallback is provided)
   if (!isAuthenticated) {
+    if (fallback) {
+      return <>{fallback}</>;
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
