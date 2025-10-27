@@ -286,14 +286,14 @@ async def update_ocr_config(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update OCR configuration",
-            ) from e
+            )
 
         logger.info(f"✅ OCR configuration updated: {config.selected_engine}")
         return config
 
     except Exception as e:
         logger.error(f"❌ Failed to update OCR config: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/ocr-engines", response_model=dict[str, EngineStatusResponse])
@@ -312,7 +312,7 @@ async def get_available_engines(
 
     except Exception as e:
         logger.error(f"❌ Failed to get OCR engines: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/ocr-engines/{engine}", response_model=EngineStatusResponse)
@@ -333,7 +333,7 @@ async def get_engine_status(
 
     except Exception as e:
         logger.error(f"❌ Failed to get engine status: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 # ==================== PIPELINE STEPS ENDPOINTS ====================
@@ -355,7 +355,7 @@ async def get_all_steps(
 
     except Exception as e:
         logger.error(f"❌ Failed to get pipeline steps: {e}")
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 @router.get("/steps/{step_id}", response_model=PipelineStepResponse)
