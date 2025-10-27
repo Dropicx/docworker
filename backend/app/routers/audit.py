@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.permissions import require_admin
-from app.database.auth_models import UserDB, AuditAction
+from app.database.auth_models import AuditAction, UserDB
 from app.database.connection import get_session
 from app.repositories.audit_log_repository import AuditLogRepository
 
