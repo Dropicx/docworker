@@ -67,22 +67,34 @@ def client(test_db):
 
 
 @pytest.fixture
-def mock_auth():
+def mock_auth(test_db):
     """Mock authentication for protected endpoints using FastAPI dependency override"""
-    from app.routers.settings_auth import verify_session_token
+    from app.core.permissions import get_current_user_required
+    from app.database.auth_models import UserDB, UserRole
 
-    # Create a mock dependency that always returns True
-    def mock_verify_token(authorization: str | None = None) -> bool:
-        return True
+    # Create a mock user
+    mock_user = UserDB(
+        email="test@example.com",
+        full_name="Test User",
+        role=UserRole.ADMIN,
+        is_active=True,
+        hashed_password="test_hash"
+    )
+    test_db.add(mock_user)
+    test_db.commit()
+
+    # Create a mock dependency that returns the mock user
+    async def mock_get_current_user() -> UserDB:
+        return mock_user
 
     # Override the dependency in the FastAPI app
-    app.dependency_overrides[verify_session_token] = mock_verify_token
+    app.dependency_overrides[get_current_user_required] = mock_get_current_user
 
     yield
 
     # Clean up after test
-    if verify_session_token in app.dependency_overrides:
-        del app.dependency_overrides[verify_session_token]
+    if get_current_user_required in app.dependency_overrides:
+        del app.dependency_overrides[get_current_user_required]
 
 
 @pytest.fixture

@@ -406,12 +406,13 @@ class Settings(BaseSettings):
 
 # Create a single global instance
 # This will be imported throughout the application
+settings: Settings
 try:
     settings = Settings()
     logger.info("✅ Settings loaded successfully")
 except Exception as e:
     logger.error(f"❌ Failed to load settings: {e}")
-    raise
+    raise  # Fail hard - all services MUST have proper environment variables
 
 
 # ==================
