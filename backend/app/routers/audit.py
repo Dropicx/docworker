@@ -5,8 +5,8 @@ Provides admin-only endpoints for viewing, filtering, and exporting audit logs.
 Supports comprehensive audit trail analysis for security monitoring and compliance.
 """
 
-import logging
 from datetime import datetime
+import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -536,7 +536,7 @@ async def export_audit_logs_csv(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="No audit logs found for the specified criteria"
-            ) from e
+            )
 
         # Generate CSV content
         import csv

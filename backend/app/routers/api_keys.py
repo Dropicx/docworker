@@ -257,7 +257,7 @@ async def update_api_key(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="API key not found or access denied"
-            ) from e
+            )
 
         # Update fields
         update_fields = {}
@@ -421,7 +421,7 @@ async def admin_revoke_api_key(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="API key not found"
-            ) from e
+            )
 
         # Revoke key
         success = api_key_repo.revoke_key(UUID(key_id))
@@ -430,7 +430,7 @@ async def admin_revoke_api_key(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to revoke API key"
-            ) from e
+            )
 
         # Log admin action
         from app.repositories.audit_log_repository import AuditLogRepository

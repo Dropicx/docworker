@@ -15,7 +15,6 @@ from sqlalchemy.orm import Session
 from app.core.permissions import (
     get_current_user_required,
     log_auth_failure,
-    log_permission_denied
 )
 from app.database.auth_models import UserDB, UserRole
 from app.database.connection import get_session
