@@ -245,7 +245,7 @@ async def get_user(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            ) from e
+            )
 
         return UserResponse(
             id=user.id,
@@ -301,14 +301,14 @@ async def update_user(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            ) from e
+            )
 
         # Check if admin is trying to update themselves
         if user.id == current_user.id and update_data.role and update_data.role != current_user.role:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot change your own role"
-            ) from e
+            )
 
         # Check if trying to demote last admin
         if user.role == UserRole.ADMIN and update_data.role and update_data.role != UserRole.ADMIN:
@@ -317,7 +317,7 @@ async def update_user(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Cannot demote the last admin user"
-                ) from e
+                )
 
         # Check email uniqueness if changing email
         if update_data.email and update_data.email != user.email:
@@ -325,7 +325,7 @@ async def update_user(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Email already taken"
-                ) from e
+                )
 
         # Update fields
         update_fields = {}
@@ -397,14 +397,14 @@ async def delete_user(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            ) from e
+            )
 
         # Check if admin is trying to delete themselves
         if user.id == current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Cannot delete your own account"
-            ) from e
+            )
 
         # Check if trying to delete last admin
         if user.role == UserRole.ADMIN:
@@ -413,7 +413,7 @@ async def delete_user(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Cannot delete the last admin user"
-                ) from e
+                )
 
         # Soft delete user
         success = user_repo.soft_delete_user(UUID(user_id))
@@ -422,7 +422,7 @@ async def delete_user(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to delete user"
-            ) from e
+            )
 
         # Log deletion
         from app.repositories.audit_log_repository import AuditLogRepository
@@ -476,7 +476,7 @@ async def activate_user(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            ) from e
+            )
 
         # Log activation
         from app.repositories.audit_log_repository import AuditLogRepository
@@ -532,7 +532,7 @@ async def deactivate_user(
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="Cannot deactivate the last admin user"
-                ) from e
+                )
 
         success = user_repo.deactivate_user(UUID(user_id))
 
@@ -540,7 +540,7 @@ async def deactivate_user(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            ) from e
+            )
 
         # Log deactivation
         from app.repositories.audit_log_repository import AuditLogRepository
@@ -597,7 +597,7 @@ async def reset_user_password(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found"
-            ) from e
+            )
 
         # Hash new password
         new_password_hash = hash_password(password_data.new_password)
@@ -609,7 +609,7 @@ async def reset_user_password(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to reset password"
-            ) from e
+            )
 
         # Revoke all user tokens for security
         auth_service = AuthService(db)
