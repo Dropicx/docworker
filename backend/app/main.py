@@ -17,14 +17,14 @@ from app.core.error_middleware import register_error_handlers
 from app.database.init_db import init_database
 from app.routers import health, process, upload
 from app.routers.admin.config import router as admin_config_router
+from app.routers.api_keys import router as api_keys_router
+from app.routers.audit import router as audit_router
+from app.routers.auth import router as auth_router
 from app.routers.modular_pipeline import router as modular_pipeline_router
 from app.routers.monitoring import router as monitoring_router
 from app.routers.process_multi_file import router as multi_file_router
 from app.routers.settings_auth import router as settings_auth_router
-from app.routers.auth import router as auth_router
 from app.routers.users import router as users_router
-from app.routers.api_keys import router as api_keys_router
-from app.routers.audit import router as audit_router
 from app.services.cleanup import cleanup_temp_files
 
 # Configure logging with centralized settings

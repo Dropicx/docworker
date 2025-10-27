@@ -6,29 +6,28 @@ and token management. It handles user creation, login, token refresh, and
 password management with proper security measures.
 """
 
+from datetime import datetime, timedelta
 import logging
-from datetime import timedelta, datetime
-
 from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.core.security import (
-    hash_password,
-    verify_password,
     create_access_token,
     create_refresh_token,
-    verify_token,
     generate_api_key,
     hash_api_key,
-    verify_api_key
+    hash_password,
+    verify_api_key,
+    verify_password,
+    verify_token,
 )
-from app.core.config import settings
-from app.database.auth_models import UserDB, UserRole, UserStatus, AuditAction
-from app.repositories.user_repository import UserRepository
-from app.repositories.refresh_token_repository import RefreshTokenRepository
+from app.database.auth_models import AuditAction, UserDB, UserRole, UserStatus
 from app.repositories.api_key_repository import APIKeyRepository
 from app.repositories.audit_log_repository import AuditLogRepository
+from app.repositories.refresh_token_repository import RefreshTokenRepository
+from app.repositories.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
 

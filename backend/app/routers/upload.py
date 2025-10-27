@@ -1,7 +1,7 @@
+from datetime import datetime
 import logging
 import os
 import uuid
-from datetime import datetime
 
 from celery import Celery
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile
@@ -10,9 +10,9 @@ from slowapi.util import get_remote_address
 from sqlalchemy.orm import Session
 
 from app.core.permissions import get_current_user_optional
+from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
-from app.database.auth_models import UserDB
 from app.models.document import DocumentType, ProcessingStatus, UploadResponse
 from app.services.file_validator import FileValidator
 

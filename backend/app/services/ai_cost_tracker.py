@@ -55,16 +55,15 @@ Example Cost Calculation:
     Total: $0.00243
 """
 
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 import logging
-
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.database.unified_models import AILogInteractionDB
 from app.repositories.ai_log_interaction_repository import AILogInteractionRepository
 from app.repositories.available_model_repository import AvailableModelRepository
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

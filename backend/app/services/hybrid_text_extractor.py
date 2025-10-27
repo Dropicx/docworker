@@ -5,7 +5,7 @@ Intelligently routes between local text extraction, local OCR, and Vision LLM OC
 
 from io import BytesIO
 import logging
-
+from typing import Any
 
 import pdfplumber
 from PIL import Image
@@ -18,7 +18,6 @@ from app.services.file_quality_detector import (
 )
 from app.services.file_sequence_detector import FileSequenceDetector
 from app.services.ovh_client import OVHClient
-from typing import Any
 
 # Optional imports for local OCR (fallback gracefully if not available)
 try:

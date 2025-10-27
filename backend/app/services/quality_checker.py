@@ -1,8 +1,7 @@
 import logging
-
+from typing import Any
 
 from app.models.document_types import DocumentClass
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

@@ -94,7 +94,7 @@ Note:
 
 from datetime import datetime
 import logging
-
+from typing import Any
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -102,7 +102,6 @@ from sqlalchemy.orm import Session
 from app.database.modular_pipeline_models import DocumentClassDB
 from app.repositories.document_class_repository import DocumentClassRepository
 from app.repositories.pipeline_step_repository import PipelineStepRepository
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

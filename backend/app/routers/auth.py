@@ -12,10 +12,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, EmailStr, Field
 from sqlalchemy.orm import Session
 
-from app.core.permissions import (
-    get_current_user_required,
-    log_auth_failure,
-)
+from app.core.permissions import get_current_user_required, log_auth_failure
 from app.database.auth_models import UserDB, UserRole
 from app.database.connection import get_session
 from app.services.auth_service import AuthService

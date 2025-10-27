@@ -79,13 +79,12 @@ from contextlib import contextmanager
 from datetime import datetime
 import logging
 import time
-
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.database.unified_models import AILogInteractionDB
 from app.repositories.ai_log_interaction_repository import AILogInteractionRepository
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

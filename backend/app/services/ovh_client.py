@@ -2,14 +2,13 @@ import base64
 from collections.abc import AsyncGenerator
 from io import BytesIO
 import logging
-
+from typing import Any
 
 import httpx
 from openai import AsyncOpenAI
 from PIL import Image
 
 from app.core.config import settings
-from typing import Any
 
 # ⚡ NOTE: PII removal now happens in worker (OptimizedPrivacyFilter)
 # This service receives already-cleaned text from the worker

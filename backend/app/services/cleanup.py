@@ -32,14 +32,13 @@ Module-level Constants:
     DB_RETENTION_HOURS (int): Database job retention from env (default 24h)
 """
 
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 import gc
 import logging
 import os
 from pathlib import Path
 import tempfile
 from typing import Any
-
 
 logger = logging.getLogger(__name__)
 

@@ -8,7 +8,7 @@ Supports multiple OCR engines based on database configuration.
 import json
 import logging
 import os
-
+from typing import Any
 
 import httpx
 from sqlalchemy.orm import Session
@@ -16,7 +16,6 @@ from sqlalchemy.orm import Session
 from app.database.modular_pipeline_models import OCRConfigurationDB, OCREngineEnum
 from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
 from app.services.hybrid_text_extractor import HybridTextExtractor
-from typing import Any
 
 logger = logging.getLogger(__name__)
 

@@ -14,10 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from app.core.permissions import (
-    get_current_user_required,
-    require_admin,
-)
+from app.core.permissions import get_current_user_required, require_admin
 from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.services.auth_service import AuthService

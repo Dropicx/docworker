@@ -6,12 +6,11 @@ Analyzes documents to determine the best text extraction strategy
 from enum import Enum
 from io import BytesIO
 import logging
-
+from typing import Any
 
 import pdfplumber
 from PIL import Image
 import PyPDF2
-from typing import Any
 
 # Optional OpenCV import - graceful fallback if not available
 try:

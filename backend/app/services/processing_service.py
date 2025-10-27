@@ -6,14 +6,13 @@ Coordinates between repositories and external services (Celery).
 """
 
 import logging
-
+from typing import Any
 
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import StepExecutionStatus
 from app.models.document import ProcessingStatus
 from app.repositories.pipeline_job_repository import PipelineJobRepository
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
