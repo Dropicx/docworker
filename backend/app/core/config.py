@@ -296,6 +296,40 @@ class Settings(BaseSettings):
             raise ValueError("max_file_size_mb must be between 1 and 100 MB")
         return v
 
+    @field_validator("allowed_origins", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, v):
+        """
+        Parse CORS allowed origins from environment variable.
+
+        Handles comma-separated strings and empty values gracefully.
+        """
+        # If it's already a list, return it
+        if isinstance(v, list):
+            return v
+
+        # Handle None or empty string - return default
+        if not v or v == "":
+            return [
+                "http://localhost:5173",
+                "http://localhost:9122",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:9122"
+            ]
+
+        # If it's a string, split by comma
+        if isinstance(v, str):
+            # Split and strip whitespace
+            origins = [origin.strip() for origin in v.split(",") if origin.strip()]
+            return origins if origins else [
+                "http://localhost:5173",
+                "http://localhost:9122",
+                "http://127.0.0.1:5173",
+                "http://127.0.0.1:9122"
+            ]
+
+        return v
+
     @field_validator("allowed_origins")
     @classmethod
     def validate_cors_origins(cls, v: list[str]) -> list[str]:
