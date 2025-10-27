@@ -6,8 +6,6 @@ and deletion. Admin-only endpoints for managing user accounts and roles.
 """
 
 import logging
-from datetime import datetime
-
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
