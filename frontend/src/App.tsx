@@ -387,12 +387,7 @@ function App() {
     };
 
     const handleSettingsClick = () => {
-      if (isAuthenticated) {
-        setShowSettings(true);
-      } else {
-        // Redirect to login, then back to settings
-        window.location.href = '/login?redirect=/settings';
-      }
+      setShowSettings(true);
     };
 
     return (
@@ -449,21 +444,12 @@ function App() {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={handleSettingsClick}
-                    className="p-2 text-primary-600 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200 group"
-                    title="Einstellungen (Anmeldung erforderlich)"
-                  >
-                    <Settings className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  </button>
-                  <a
-                    href="/login"
-                    className="px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors"
-                  >
-                    Anmelden
-                  </a>
-                </div>
+                <a
+                  href="/login"
+                  className="px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors"
+                >
+                  Anmelden
+                </a>
               )}
             </div>
           </div>
