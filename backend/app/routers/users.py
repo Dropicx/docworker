@@ -147,8 +147,8 @@ async def create_user(
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e) from e
-        )
+            detail=str(e)
+        ) from e
     except Exception as e:
         logger.error(f"Error creating user {user_data.email}: {e}")
         raise HTTPException(
