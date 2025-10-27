@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, Settings as SettingsIcon, FileText, Workflow, Activity, ArrowLeft, User, LogOut } from 'lucide-react';
+import { Stethoscope, Settings as SettingsIcon, FileText, Workflow, Activity, ArrowLeft, User, LogOut, Loader2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import PipelineBuilder from '../components/settings/PipelineBuilder';
 import DocumentClassManager from '../components/settings/DocumentClassManager';
@@ -10,15 +10,22 @@ import { pipelineApi } from '../services/pipelineApi';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
-  const { user, tokens, logout } = useAuth();
+  const { user, tokens, logout, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<'pipeline' | 'classes' | 'monitoring'>('pipeline');
+  const [tokenReady, setTokenReady] = useState(false);
 
   // Sync token with pipeline API when authenticated
   useEffect(() => {
     if (tokens?.access_token) {
+      console.log('Setting pipelineApi token:', tokens.access_token.substring(0, 20) + '...');
       pipelineApi.updateToken(tokens.access_token);
+      setTokenReady(true);
+    } else if (!isLoading) {
+      // If not loading and no tokens, authentication failed
+      console.warn('No tokens available after loading');
+      setTokenReady(false);
     }
-  }, [tokens]);
+  }, [tokens, isLoading]);
 
   const handleLogout = async () => {
     try {
@@ -138,9 +145,20 @@ const Settings: React.FC = () => {
 
               {/* Main Content Area */}
               <div className="flex-1 overflow-y-auto p-6">
-                {activeTab === 'pipeline' && <PipelineBuilder />}
-                {activeTab === 'classes' && <DocumentClassManager />}
-                {activeTab === 'monitoring' && <FlowerDashboard />}
+                {(isLoading || !tokenReady) ? (
+                  <div className="flex items-center justify-center h-full min-h-[400px]">
+                    <div className="flex flex-col items-center space-y-3">
+                      <Loader2 className="w-8 h-8 animate-spin text-brand-600" />
+                      <span className="text-sm text-neutral-600">Lade Einstellungen...</span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    {activeTab === 'pipeline' && <PipelineBuilder />}
+                    {activeTab === 'classes' && <DocumentClassManager />}
+                    {activeTab === 'monitoring' && <FlowerDashboard />}
+                  </>
+                )}
               </div>
             </div>
           </div>
