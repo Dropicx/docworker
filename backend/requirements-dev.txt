@@ -9,9 +9,9 @@ mypy==1.14.1  # Type checking
 pip-audit==2.7.0  # Security vulnerability scanning
 
 # Type stubs
-types-aiofiles==24.1.0.20250103
-types-Pillow==11.0.0.20241227
+types-aiofiles>=24.1.0
+types-Pillow>=10.2.0
 
 # Testing utilities
-httpx-mock==0.6.0
+httpx-mock>=0.6.0
 faker==33.1.0

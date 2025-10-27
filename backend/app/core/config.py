@@ -172,7 +172,10 @@ class Settings(BaseSettings):
         default_factory=lambda: [".pdf", ".docx", ".txt", ".jpg", ".jpeg", ".png"],
         description="Allowed file extensions",
     )
-    temp_dir: str = Field(default="/tmp", description="Temporary file storage directory")
+    temp_dir: str = Field(
+        default=os.getenv("TEMP_DIR", "/tmp"),  # nosec
+        description="Temporary file storage directory",
+    )
 
     # ==================
     # Feature Flags

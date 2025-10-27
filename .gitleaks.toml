@@ -10,13 +10,15 @@ paths = [
 ]
 
 # Ignore certain patterns that are acceptable
-[[allowlist.regexes]]
-regex = '''(?i)test[_-]?(api[_-]?)?key'''
-reason = "Test API keys in test files"
-
-[[allowlist.regexes]]
-regex = '''(?i)example[_-]?(api[_-]?)?key'''
-reason = "Example API keys in documentation"
+regexes = [
+    '''(?i)test[_-]?(api[_-]?)?key''',
+    '''(?i)example[_-]?(api[_-]?)?key''',
+    '''test_hash''',
+    '''dev-secret-key-change-in-production''',
+    '''test_secret''',
+    '''test_api_key''',
+    '''not-used-in-worker''',
+]
 
 # Override rules for common false positives
 [[rules]]

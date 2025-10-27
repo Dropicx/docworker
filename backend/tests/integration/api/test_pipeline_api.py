@@ -15,12 +15,12 @@ from app.database import auth_models, modular_pipeline_models, unified_models  #
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import (
     AvailableModelDB,
-    Base,
     DocumentClassDB,
     DynamicPipelineStepDB,
     OCRConfigurationDB,
     OCREngineEnum,
 )
+from app.database.unified_models import Base
 from app.main import app
 
 
@@ -31,12 +31,17 @@ def test_db():
     Uses StaticPool to ensure all connections share the same in-memory database.
     Without this, each connection would get its own separate in-memory database.
     """
+    from app.database.auth_models import Base as AuthBase
+    
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
         poolclass=StaticPool,
     )
+    # Create all tables from all bases
     Base.metadata.create_all(engine)
+    AuthBase.metadata.create_all(engine)
+    
     session_local = sessionmaker(bind=engine)
     session = session_local()
 
@@ -44,6 +49,7 @@ def test_db():
 
     session.close()
     Base.metadata.drop_all(engine)
+    AuthBase.metadata.drop_all(engine)
     engine.dispose()
 
 

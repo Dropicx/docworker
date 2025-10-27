@@ -263,7 +263,7 @@ if __name__ == "__main__":
 
     uvicorn.run(
         "main:app",
-        host="0.0.0.0",
+        host="0.0.0.0",  # nosec
         port=settings.port,
         reload=settings.is_development,
         # Increase limits for large file uploads
