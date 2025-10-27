@@ -56,8 +56,23 @@ jobs:
       - name: Run Bandit security scanner
         run: |
           pip install bandit
-          bandit -c pyproject.toml -r app/ -f json -o bandit-report.json
-        continue-on-error: false  # Fail on medium/high severity issues
+          bandit -c pyproject.toml -r app/ -f json -o bandit-report.json || true
+          # Check for medium/high severity issues
+          python3 << 'EOF'
+          import json
+          with open('bandit-report.json', 'r') as f:
+              report = json.load(f)
+          issues = [i for i in report.get('results', []) if i.get('issue_severity') in ['Medium', 'High']]
+          if issues:
+              print(f"\n❌ Found {len(issues)} medium/high severity security issues!")
+              for issue in issues:
+                  print(f"  - {issue.get('issue_severity')}: {issue.get('issue_text')} in {issue.get('filename')}:{issue.get('line_number')}")
+              exit(1)
+          else:
+              print("\n✅ Bandit scan passed - no medium/high severity issues")
+              exit(0)
+          EOF
+        continue-on-error: false  # Fail only on medium/high severity issues
 
       - name: Upload Bandit report
         if: always()
