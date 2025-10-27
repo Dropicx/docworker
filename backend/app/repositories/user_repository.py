@@ -9,8 +9,8 @@ import logging
 from datetime import datetime
 from uuid import UUID
 
-from sqlalchemy.orm import Session
 from sqlalchemy import and_, or_
+from sqlalchemy.orm import Session
 
 from app.database.auth_models import UserDB, UserRole, UserStatus
 from app.repositories.base_repository import BaseRepository

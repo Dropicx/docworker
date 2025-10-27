@@ -9,8 +9,8 @@ import logging
 from datetime import datetime, timedelta
 from uuid import UUID
 
-from sqlalchemy.orm import Session
 from sqlalchemy import and_
+from sqlalchemy.orm import Session
 
 from app.database.auth_models import APIKeyDB
 from app.repositories.base_repository import BaseRepository

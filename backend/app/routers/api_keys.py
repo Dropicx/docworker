@@ -15,9 +15,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.permissions import (
+    check_resource_access,
     get_current_user_required,
     require_admin,
-    check_resource_access
 )
 from app.database.auth_models import UserDB
 from app.database.connection import get_session

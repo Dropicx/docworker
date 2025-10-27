@@ -10,8 +10,8 @@ from datetime import datetime, timedelta
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy.orm import Session
 from sqlalchemy import and_, desc, or_
+from sqlalchemy.orm import Session
 
 from app.database.auth_models import AuditAction, AuditLogDB
 from app.repositories.base_repository import BaseRepository

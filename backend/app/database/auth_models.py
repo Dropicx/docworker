@@ -6,8 +6,8 @@ and audit logging. These models support the enterprise-grade security system
 with JWT tokens, role-based access control, and comprehensive audit trails.
 """
 
-import uuid
 from enum import Enum
+import uuid
 
 from sqlalchemy import (
     Boolean,

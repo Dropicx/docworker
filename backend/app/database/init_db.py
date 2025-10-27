@@ -11,8 +11,7 @@ from app.core.config import settings
 from app.core.security import hash_password
 from app.database.auth_models import UserRole
 from app.database.connection import get_session
-# Import modular pipeline models to register them with Base.metadata
-from app.database.unified_models import Base
+from app.database.unified_models import Base  # Import to register models with Base.metadata
 from app.repositories.user_repository import UserRepository
 
 logger = logging.getLogger(__name__)
