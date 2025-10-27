@@ -7,7 +7,7 @@ with JWT tokens, role-based access control, and comprehensive audit trails.
 """
 
 from enum import Enum
-import uuid
+from uuid import UUID as UUID_Type, uuid4
 
 from sqlalchemy import (
     Boolean,
@@ -52,7 +52,7 @@ class UserDB(Base):
     __tablename__ = "users"
 
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
 
     # Authentication
     email = Column(String(255), unique=True, nullable=False, index=True)
@@ -116,7 +116,7 @@ class RefreshTokenDB(Base):
     __tablename__ = "refresh_tokens"
 
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
 
     # Token information
     token_hash = Column(String(255), nullable=False, unique=True, index=True)
@@ -155,7 +155,7 @@ class APIKeyDB(Base):
     __tablename__ = "api_keys"
 
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
 
     # Key information
     key_hash = Column(String(255), nullable=False, unique=True, index=True)
@@ -237,7 +237,7 @@ class AuditLogDB(Base):
     __tablename__ = "audit_logs"
 
     # Primary key
-    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
 
     # User information
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)

@@ -10,6 +10,7 @@ API endpoints for managing user-configurable pipeline:
 
 from datetime import datetime
 import logging
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, field_validator
@@ -24,7 +25,6 @@ from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.services.document_class_manager import DocumentClassManager
 from app.services.modular_pipeline_executor import ModularPipelineManager
 from app.services.ocr_engine_manager import OCREngineManager
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
