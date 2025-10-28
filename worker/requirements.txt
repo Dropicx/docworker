@@ -20,7 +20,7 @@ aiofiles==24.1.0
 Pillow==11.1.0
 # pytesseract removed - Tesseract OCR deprecated
 pdf2image==1.17.0
-PyPDF2==3.0.1
+pypdf==6.1.3  # Replaced PyPDF2 (deprecated) - fixes GHSA-4vvm-4w3v-6mr8
 pdfplumber==0.11.5
 python-magic==0.4.27
 
