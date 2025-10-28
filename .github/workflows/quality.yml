@@ -281,10 +281,12 @@ jobs:
           mkdir -p /tmp/pip-audit-temp
           cp backend/requirements.txt /tmp/pip-audit-temp/
           cd /tmp/pip-audit-temp
+          # GHSA-wj6h-64fc-37mp: ecdsa timing attack - no fix available, out of scope per maintainers
           pip-audit -r requirements.txt \
             --format json \
             --output pip-audit-report.json \
-            --vulnerability-service osv
+            --vulnerability-service osv \
+            --ignore-vuln GHSA-wj6h-64fc-37mp
           mv pip-audit-report.json $GITHUB_WORKSPACE/backend/
         continue-on-error: false  # Fail on vulnerabilities
 
