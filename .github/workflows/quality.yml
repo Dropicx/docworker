@@ -279,7 +279,7 @@ jobs:
         working-directory: ./backend
         run: |
           pip install pip-audit
-          pip-audit --require requirements.txt \
+          pip-audit --requirement requirements.txt \
             --format json \
             --output pip-audit-report.json \
             --vulnerability-service osv \
