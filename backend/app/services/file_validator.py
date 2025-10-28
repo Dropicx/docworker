@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import UploadFile
 import magic
 from PIL import Image
-import PyPDF2
+import pypdf as PyPDF2
 
 logger = logging.getLogger(__name__)
 

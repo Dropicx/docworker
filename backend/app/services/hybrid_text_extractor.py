@@ -9,7 +9,7 @@ from typing import Any
 
 import pdfplumber
 from PIL import Image
-import PyPDF2
+import pypdf as PyPDF2
 
 from app.services.file_quality_detector import (
     DocumentComplexity,

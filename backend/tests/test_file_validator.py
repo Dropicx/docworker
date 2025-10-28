@@ -8,7 +8,7 @@ and format-specific validation for PDFs and images.
 import pytest
 from io import BytesIO
 from unittest.mock import Mock, AsyncMock, patch, MagicMock
-import PyPDF2
+import pypdf as PyPDF2
 from PIL import Image
 
 from app.services.file_validator import (
@@ -38,7 +38,7 @@ class TestFileValidator:
     @pytest.fixture
     def valid_pdf_content(self):
         """Create valid PDF content for testing using PyPDF2."""
-        from PyPDF2 import PdfWriter, PdfReader
+        from pypdf import PdfWriter, PdfReader
         from io import BytesIO
 
         # Create a larger PDF with some content

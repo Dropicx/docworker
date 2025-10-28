@@ -10,7 +10,7 @@ from typing import Any
 
 import pdfplumber
 from PIL import Image
-import PyPDF2
+import pypdf as PyPDF2
 
 # Optional OpenCV import - graceful fallback if not available
 try:

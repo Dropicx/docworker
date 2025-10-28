@@ -9,7 +9,7 @@ import logging
 from pdf2image import convert_from_bytes
 import pdfplumber
 from PIL import Image
-import PyPDF2
+import pypdf as PyPDF2
 import pytesseract
 
 from .improved_table_processor import ImprovedTableProcessor
