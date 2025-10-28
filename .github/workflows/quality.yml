@@ -314,6 +314,7 @@ jobs:
         if: always() && hashFiles('trivy-results.sarif') != ''
         with:
           sarif_file: 'trivy-results.sarif'
+        continue-on-error: true  # Requires GitHub Advanced Security (GHAS) - skip if not available
 
       - name: Upload Trivy results
         if: always() && hashFiles('trivy-results.sarif') != ''
