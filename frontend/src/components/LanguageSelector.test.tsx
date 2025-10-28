@@ -14,7 +14,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import { renderWithRouter, userEvent } from '../test/helpers/renderWithProviders';
-import { createMockLanguagesResponse, createMockLanguages } from '../test/helpers/testData';
+import { createMockLanguagesResponse } from '../test/helpers/testData';
 import LanguageSelector from './LanguageSelector';
 import ApiService from '../services/api';
 

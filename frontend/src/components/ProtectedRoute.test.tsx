@@ -12,7 +12,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { renderWithRouter, userEvent } from '../test/helpers/renderWithProviders';
 import { createMockUser } from '../test/helpers/testData';
 import ProtectedRoute from './ProtectedRoute';

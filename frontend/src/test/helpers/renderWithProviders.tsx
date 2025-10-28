@@ -8,7 +8,7 @@
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { ReactElement, ReactNode } from 'react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
-import { AuthProvider, AuthContextType, User, AuthTokens } from '../../contexts/AuthContext';
+import { AuthProvider, User, AuthTokens } from '../../contexts/AuthContext';
 import { createMockUser, createMockAuthTokens } from './testData';
 
 // ==================== Types ====================
@@ -52,7 +52,6 @@ function createWrapper(options: ProvidersOptions = {}) {
   const {
     initialRoute,
     initialEntries,
-    authState,
     withAuth = true,
   } = options;
 
@@ -100,9 +99,9 @@ export function renderWithProviders(
   ui: ReactElement,
   options: ExtendedRenderOptions = {}
 ): RenderResult {
-  const { initialRoute, initialEntries, authState, withAuth, ...renderOptions } = options;
+  const { initialRoute, initialEntries, withAuth, ...renderOptions } = options;
 
-  const Wrapper = createWrapper({ initialRoute, initialEntries, authState, withAuth });
+  const Wrapper = createWrapper({ initialRoute, initialEntries, withAuth });
 
   return render(ui, {
     wrapper: Wrapper,
@@ -211,5 +210,6 @@ export function renderWithRouter(
 // ==================== Re-exports ====================
 
 // Re-export everything from @testing-library/react for convenience
+// eslint-disable-next-line react-refresh/only-export-components
 export * from '@testing-library/react';
 export { default as userEvent } from '@testing-library/user-event';
