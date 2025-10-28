@@ -1,7 +1,7 @@
 # Core Web Framework
-fastapi==0.115.6
+fastapi==0.120.1  # Updated for starlette 0.49.0 (fixes CVE-2025-54121)
 uvicorn[standard]==0.34.0
-python-multipart==0.0.17
+python-multipart==0.0.18  # Security fix for CVE-2024-53981
 
 # File Processing
 aiofiles==24.1.0
@@ -44,7 +44,9 @@ tenacity==8.2.3
 # Authentication & Security
 bcrypt==4.1.2
 passlib[bcrypt]==1.7.4
-python-jose[cryptography]==3.3.0
+python-jose[cryptography]==3.4.0  # Security fixes for CVE-2024-33663, CVE-2024-33664
+# NOTE: ecdsa 0.19.1 has CVE-2024-23342 (timing attack) with no fix available
+# python-jose depends on ecdsa - maintainers consider timing attacks out of scope
 
 # NOTE: spaCy moved to worker requirements.txt
 # PII removal now happens in worker, not backend
