@@ -280,6 +280,7 @@ jobs:
           pip install pip-audit
           cd backend
           pip-audit -r requirements.txt \
+            --disable-pip \
             --format json \
             --output pip-audit-report.json \
             --vulnerability-service osv \
