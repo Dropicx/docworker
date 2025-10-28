@@ -284,8 +284,7 @@ jobs:
           pip-audit -r requirements.txt \
             --format json \
             --output pip-audit-report.json \
-            --vulnerability-service osv \
-            --severity high,critical
+            --vulnerability-service osv
           mv pip-audit-report.json $GITHUB_WORKSPACE/backend/
         continue-on-error: false  # Fail on vulnerabilities
 
