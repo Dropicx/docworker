@@ -6,6 +6,16 @@ This guide explains how to run the authentication system database migration for 
 
 ## Prerequisites
 
+### Database Credentials
+
+Get your database connection details from Railway:
+1. Go to your Railway project dashboard
+2. Click on your PostgreSQL service
+3. Go to the "Connect" tab
+4. Copy the connection string or individual credentials (host, port, username, password)
+
+### Required Tools
+
 You need one of the following PostgreSQL client tools installed:
 
 1. **psql** (PostgreSQL command-line client) - Recommended
@@ -20,11 +30,11 @@ Execute the following command to run the migration:
 
 ```bash
 # Using psql (recommended)
-psql 'postgresql://postgres:KfcqZpqRnRCTyvVxHKkDHjssedAjXZSp@turntable.proxy.rlwy.net:58299/railway' -f backend/migrations/001_add_authentication_tables.sql
+psql 'postgresql://postgres:YOUR_DATABASE_PASSWORD@your-host.proxy.rlwy.net:PORT/railway' -f backend/migrations/001_add_authentication_tables.sql
 
 # Alternative: Set PGPASSWORD and use shorter command
-export PGPASSWORD='KfcqZpqRnRCTyvVxHKkDHjssedAjXZSp'
-psql -h turntable.proxy.rlwy.net -p 58299 -U postgres -d railway -f backend/migrations/001_add_authentication_tables.sql
+export PGPASSWORD='YOUR_DATABASE_PASSWORD'
+psql -h your-host.proxy.rlwy.net -p PORT -U postgres -d railway -f backend/migrations/001_add_authentication_tables.sql
 ```
 
 ### Step 2: Verify the Migration
@@ -34,7 +44,7 @@ After running the migration, verify it was successful:
 ```bash
 # Run the verification script
 cd backend
-python3 scripts/verify_migration.py "postgresql://postgres:KfcqZpqRnRCTyvVxHKkDHjssedAjXZSp@turntable.proxy.rlwy.net:58299/railway"
+python3 scripts/verify_migration.py "postgresql://postgres:YOUR_DATABASE_PASSWORD@your-host.proxy.rlwy.net:PORT/railway"
 ```
 
 ### Step 3: Create Initial Admin User
