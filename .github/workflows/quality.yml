@@ -278,13 +278,13 @@ jobs:
       - name: Run pip-audit (Python dependencies)
         run: |
           pip install pip-audit
-          cd backend
-          pip-audit -r requirements.txt \
+          pip-audit -r backend/requirements.txt \
             --disable-pip \
             --format json \
             --output pip-audit-report.json \
             --vulnerability-service osv \
             --severity high,critical
+          mv pip-audit-report.json backend/
         continue-on-error: false  # Fail on vulnerabilities
 
       - name: Upload pip-audit report
