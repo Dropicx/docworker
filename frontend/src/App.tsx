@@ -519,9 +519,9 @@ function App() {
                     <p className="text-lead max-w-3xl mx-auto px-4 sm:px-0">
                       Verwandeln Sie komplexe Arztbriefe und medizinische Befunde in verständliche
                       Sprache.
-                      <span className="hidden sm:inline">Schnell, sicher und DSGVO-konform.</span>
+                      <span className="hidden sm:inline"> Schnell, sicher und DSGVO-konform.</span>
                       <span className="sm:hidden block mt-2">
-                        Schnell, sicher und DSGVO-konform.
+                         Schnell, sicher und DSGVO-konform.
                       </span>
                     </p>
                   </div>

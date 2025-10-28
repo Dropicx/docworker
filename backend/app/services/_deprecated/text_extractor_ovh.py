@@ -9,7 +9,7 @@ import base64
 from io import BytesIO
 import logging
 
-import PyPDF2
+import pypdf as PyPDF2
 import pdfplumber
 from pdf2image import convert_from_bytes
 from PIL import Image

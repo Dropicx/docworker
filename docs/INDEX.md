@@ -49,18 +49,21 @@ REST API endpoints and usage
 - Processing endpoints
 - Settings management
 - Pipeline configuration
+- Authentication endpoints
 
-### [Privacy Filter](PRIVACY_FILTER.md)
-PII detection and removal system
-- spaCy NER integration
-- Entity types detected
-- Configuration options
+### [Configuration Reference](CONFIGURATION.md)
+System configuration and settings
+- Environment variables
+- Feature flags
+- Pipeline configuration
+- Database settings
 
 ### [Optimized PII Filter](OPTIMIZED_PII_FILTER.md)
 Advanced PII removal implementation
 - Performance optimizations
 - Pattern matching
 - Entity recognition improvements
+- spaCy NER integration
 
 ---
 
@@ -89,9 +92,82 @@ Local development environment
 - CI/CD with GitHub Actions
 - Self-hosted ARC runners on Kubernetes
 
+### [Testing Guide](TESTING.md)
+Testing strategies and best practices
+- Unit testing
+- Integration testing
+- E2E testing
+- Test coverage
+
+### [Monitoring & Troubleshooting](MONITORING_TROUBLESHOOTING.md)
+System monitoring and debugging
+- Performance monitoring
+- Error tracking
+- Log analysis
+- Common issues and solutions
+
+---
+
+## ⚙️ Infrastructure & Performance
+
+### [Worker Scaling](WORKER_SCALING.md)
+Worker configuration and scaling strategies
+- Concurrency settings
+- Resource allocation
+- Performance tuning
+
+### [Concurrency vs Replicas](CONCURRENCY_VS_REPLICAS.md)
+Understanding worker concurrency and service replicas
+- Concurrency configuration
+- Replica scaling
+- Trade-offs and recommendations
+
+### [RAM Optimization](RAM_OPTIMIZATION.md)
+Memory usage optimization
+- Memory profiling
+- Optimization strategies
+- Resource limits
+
+### [Queue vs Active Tasks](QUEUE_VS_ACTIVE_TASKS.md)
+Understanding task queuing and active task limits
+- Queue management
+- Active task configuration
+- Performance implications
+
+### [Feature Flags](FEATURE_FLAGS.md)
+Feature flag system and usage
+- Available feature flags
+- Configuration
+- Runtime behavior
+
 ---
 
 ## 🔐 Security & Privacy
+
+### [Authentication Implementation](AUTHENTICATION_IMPLEMENTATION_SUMMARY.md)
+Complete authentication system overview
+- JWT-based authentication
+- Role-based access control (RBAC)
+- API key management
+- Audit logging
+
+### [Admin User Setup](ADMIN_USER_SETUP.md)
+Creating and managing admin users
+- Initial admin creation
+- User management
+- Password policies
+
+### [Migration Guide](MIGRATION_GUIDE.md)
+Database migration for authentication system
+- Migration steps
+- Verification procedures
+- Troubleshooting
+
+### [Deployment with Authentication](DEPLOYMENT_AUTH.md)
+Deploying the authentication system
+- Environment variables
+- Production deployment
+- Security considerations
 
 ### [PII Removal Toggle](PII_REMOVAL_TOGGLE.md)
 Global PII removal configuration
@@ -123,12 +199,29 @@ Comprehensive token usage tracking and cost analysis
 
 ## 📦 Archive
 
-Historical and implementation-specific documentation:
-- [Implementation Checklists](archive/IMPLEMENTATION_CHECKLIST.md)
-- [Frontend Integration Plans](archive/FRONTEND_INTEGRATION_ULTRAPLAN.md)
-- [Pipeline Termination Implementation](archive/PIPELINE_TERMINATION.md)
-- [Frontend Termination Guide](archive/FRONTEND_TERMINATION_GUIDE.md)
-- [Legacy Cleanup Summary](archive/LEGACY_CLEANUP_COMPLETE.md)
+Historical, planning, and implementation-specific documentation:
+
+**Planning & Analysis:**
+- [Phase 2 Summary](archive/PHASE_2_SUMMARY.md) - Phase 2 implementation summary
+- [Phase 3 Plan](archive/PHASE3_PLAN.md) - Security & compliance planning
+- [Architecture Assessment](archive/ARCHITECTURE_ASSESSMENT.md) - Architectural analysis
+- [Refactoring Notes](archive/REFACTORING_NOTES.md) - Code refactoring documentation
+
+**Implementation Guides:**
+- [Implementation Checklists](archive/IMPLEMENTATION_CHECKLIST.md) - Feature implementation checklists
+- [Frontend Integration Plans](archive/FRONTEND_INTEGRATION_ULTRAPLAN.md) - Frontend integration planning
+- [Pipeline Termination Implementation](archive/PIPELINE_TERMINATION.md) - Pipeline termination feature
+- [Frontend Termination Guide](archive/FRONTEND_TERMINATION_GUIDE.md) - Frontend termination UI
+
+**Technical Investigations:**
+- [Redis Cleanup Analysis](archive/REDIS_CLEANUP_ANALYSIS.md) - Redis cleanup investigation
+- [Redis Diagnostic Results](archive/REDIS_DIAGNOSTIC_RESULTS.md) - Redis diagnostics
+- [Phase Aware Ordering](archive/PHASE_AWARE_ORDERING.md) - Pipeline phase ordering
+- [Type Checking](archive/TYPE_CHECKING.md) - Type checking implementation
+
+**Legacy Documentation:**
+- [Legacy Cleanup Summary](archive/LEGACY_CLEANUP_COMPLETE.md) - Previous cleanup documentation
+- [Privacy Filter (Basic)](archive/PRIVACY_FILTER.md) - Basic privacy filter (superseded by OPTIMIZED_PII_FILTER.md)
 
 ---
 
@@ -144,11 +237,14 @@ Historical and implementation-specific documentation:
 2. **[API Reference](API.md)** - Understand the API endpoints
 3. **[Database Documentation](DATABASE.md)** - Learn the data model
 4. **[Pipeline Variables Reference](PIPELINE_VARIABLES.md)** - Master the pipeline system
+5. **[Authentication Implementation](AUTHENTICATION_IMPLEMENTATION_SUMMARY.md)** - Authentication system
 
 ### For DevOps
 1. **[Deployment Guide](DEPLOYMENT.md)** - Deploy to production
 2. **[Railway Deployment Guide](RAILWAY_DEPLOYMENT_GUIDE.md)** - Railway-specific setup
-3. **[Data Retention Policy](DATA_RETENTION.md)** - Configure retention policies
+3. **[Migration Guide](MIGRATION_GUIDE.md)** - Database migrations
+4. **[Worker Scaling](WORKER_SCALING.md)** - Configure worker scaling
+5. **[Data Retention Policy](DATA_RETENTION.md)** - Configure retention policies
 
 ---
 
@@ -168,13 +264,14 @@ Historical and implementation-specific documentation:
 
 ## 🔄 Recently Updated
 
+- **2025-10-28**: Major documentation cleanup - organized 43 docs into 26 active + 17 archived
+- **2025-10-28**: Added authentication system documentation (AUTHENTICATION_IMPLEMENTATION_SUMMARY.md, ADMIN_USER_SETUP.md, MIGRATION_GUIDE.md)
+- **2025-10-28**: Added Infrastructure & Performance section with scaling and optimization guides
+- **2025-10-28**: Archived legacy planning and analysis documents (Phase 2/3, Redis diagnostics, refactoring notes)
+- **2025-10-27**: Added database migration guide for authentication system
+- **2025-10-24**: Added authentication deployment documentation
 - **2025-10-14**: Added CI/CD and ARC runner documentation to DEVELOPMENT.md and DEPLOYMENT.md
-- **2025-10-14**: Enhanced README with self-hosted runners information
-- **2025-01-09**: Created comprehensive Pipeline User Guide
-- **2025-01-09**: Reorganized documentation structure
-- **2025-01-09**: Moved technical implementation docs to archive
-- **2024-10-09**: Added data retention documentation
-- **2024-10-09**: Updated architecture documentation
+- **2025-01-09**: Created comprehensive Pipeline User Guide and reorganized documentation structure
 
 ---
 
@@ -206,5 +303,5 @@ To add or update documentation:
 
 ---
 
-**Last Updated:** January 2025
+**Last Updated:** October 2025
 **Maintained by:** DocTranslator Team

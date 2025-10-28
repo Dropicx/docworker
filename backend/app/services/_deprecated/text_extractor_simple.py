@@ -9,7 +9,7 @@ import logging
 
 from io import BytesIO
 
-import PyPDF2
+import pypdf as PyPDF2
 import pdfplumber
 
 logger = logging.getLogger(__name__)

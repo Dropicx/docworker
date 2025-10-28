@@ -6,7 +6,7 @@ import asyncio
 
 import pytesseract
 from PIL import Image, ImageEnhance, ImageFilter
-import PyPDF2
+import pypdf as PyPDF2
 import pdfplumber
 from fastapi import UploadFile
 
