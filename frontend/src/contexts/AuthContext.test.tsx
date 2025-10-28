@@ -43,9 +43,7 @@ describe('AuthContext', () => {
   // Helper to render hook with AuthProvider
   const renderAuthHook = () => {
     return renderHook(() => useAuth(), {
-      wrapper: ({ children }: { children: ReactNode }) => (
-        <AuthProvider>{children}</AuthProvider>
-      ),
+      wrapper: ({ children }: { children: ReactNode }) => <AuthProvider>{children}</AuthProvider>,
     });
   };
 

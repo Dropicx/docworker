@@ -49,11 +49,7 @@ export interface ExtendedRenderOptions extends Omit<RenderOptions, 'wrapper'>, P
  * Creates a wrapper component with all necessary providers
  */
 function createWrapper(options: ProvidersOptions = {}) {
-  const {
-    initialRoute,
-    initialEntries,
-    withAuth = true,
-  } = options;
+  const { initialRoute, initialEntries, withAuth = true } = options;
 
   return function Wrapper({ children }: { children: ReactNode }) {
     // Choose router type based on options
@@ -61,8 +57,8 @@ function createWrapper(options: ProvidersOptions = {}) {
     const routerProps = initialRoute
       ? { initialEntries: [initialRoute], initialIndex: 0 }
       : initialEntries
-      ? { initialEntries, initialIndex: 0 }
-      : {};
+        ? { initialEntries, initialIndex: 0 }
+        : {};
 
     // If auth is disabled or custom auth state provided, render without AuthProvider
     if (!withAuth) {
@@ -127,7 +123,12 @@ export function renderWithAuth(
     isLoading?: boolean;
   } = {}
 ): RenderResult {
-  const { user = createMockUser(), tokens = createMockAuthTokens(), isLoading = false, ...rest } = options;
+  const {
+    user = createMockUser(),
+    tokens = createMockAuthTokens(),
+    isLoading = false,
+    ...rest
+  } = options;
 
   return renderWithProviders(ui, {
     ...rest,

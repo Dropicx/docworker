@@ -28,8 +28,8 @@ vi.mock('../services/api', () => ({
 
 // Mock termination utilities
 vi.mock('../utils/termination', () => ({
-  isTerminated: vi.fn((progress) => progress.terminated === true),
-  getTerminationMetadata: vi.fn((progress) => ({
+  isTerminated: vi.fn(progress => progress.terminated === true),
+  getTerminationMetadata: vi.fn(progress => ({
     message: progress.termination_message || 'Terminated',
     reason: progress.termination_reason,
     step: progress.termination_step,
@@ -183,7 +183,10 @@ describe('ProcessingStatus Component', () => {
     });
 
     it('should stop polling when status is completed', async () => {
-      const mockStatus = createMockProcessingProgress({ status: 'completed', progress_percent: 100 });
+      const mockStatus = createMockProcessingProgress({
+        status: 'completed',
+        progress_percent: 100,
+      });
       vi.mocked(ApiService.getProcessingStatus).mockResolvedValue(mockStatus);
 
       renderWithRouter(
@@ -210,7 +213,10 @@ describe('ProcessingStatus Component', () => {
     });
 
     it('should stop polling on error', async () => {
-      const mockStatus = createMockProcessingProgress({ status: 'error', error: 'Processing failed' });
+      const mockStatus = createMockProcessingProgress({
+        status: 'error',
+        error: 'Processing failed',
+      });
       vi.mocked(ApiService.getProcessingStatus).mockResolvedValue(mockStatus);
 
       renderWithRouter(
@@ -275,7 +281,7 @@ describe('ProcessingStatus Component', () => {
       vi.mocked(ApiService.getProcessingStatus).mockImplementation(async () => {
         callCount++;
         return createMockProcessingProgress({
-          progress_percent: callCount === 1 ? 30 : 60
+          progress_percent: callCount === 1 ? 30 : 60,
         });
       });
 

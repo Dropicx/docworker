@@ -12,10 +12,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor, act } from '@testing-library/react';
 import { renderWithRouter, userEvent } from '../test/helpers/renderWithProviders';
-import {
-  createMockFile,
-  createMockUploadResponse,
-} from '../test/helpers/testData';
+import { createMockFile, createMockUploadResponse } from '../test/helpers/testData';
 import FileUpload from './FileUpload';
 import ApiService from '../services/api';
 
@@ -124,10 +121,7 @@ describe('FileUpload Component', () => {
         <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
       );
 
-      const files = [
-        createMockFile('document1.pdf'),
-        createMockFile('document2.pdf'),
-      ];
+      const files = [createMockFile('document1.pdf'), createMockFile('document2.pdf')];
 
       simulateFileDrop(files);
 

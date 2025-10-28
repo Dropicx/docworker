@@ -373,9 +373,7 @@ describe('Login Component', () => {
       });
 
       // Mock login to be slow
-      mockLogin.mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 1000))
-      );
+      mockLogin.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)));
 
       renderWithRouter(<Login />);
 
@@ -406,9 +404,7 @@ describe('Login Component', () => {
         updateUser: vi.fn(),
       });
 
-      mockLogin.mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 1000))
-      );
+      mockLogin.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)));
 
       renderWithRouter(<Login />);
 
@@ -441,9 +437,7 @@ describe('Login Component', () => {
         updateUser: vi.fn(),
       });
 
-      mockLogin.mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 1000))
-      );
+      mockLogin.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)));
 
       renderWithRouter(<Login />);
 
@@ -666,9 +660,7 @@ describe('Login Component', () => {
         updateUser: vi.fn(),
       });
 
-      mockLogin.mockImplementation(
-        () => new Promise(resolve => setTimeout(resolve, 1000))
-      );
+      mockLogin.mockImplementation(() => new Promise(resolve => setTimeout(resolve, 1000)));
 
       renderWithRouter(<Login />);
 

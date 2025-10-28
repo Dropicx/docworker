@@ -313,7 +313,9 @@ describe('ProtectedRoute Component', () => {
 
       expect(screen.getByText('Zugriff verweigert')).toBeInTheDocument();
       expect(
-        screen.getByText('Sie haben nicht die erforderlichen Berechtigungen, um auf diese Seite zuzugreifen.')
+        screen.getByText(
+          'Sie haben nicht die erforderlichen Berechtigungen, um auf diese Seite zuzugreifen.'
+        )
       ).toBeInTheDocument();
       expect(screen.getByText(/Ihre Rolle:/)).toBeInTheDocument();
       expect(screen.getByText(/Benutzer/)).toBeInTheDocument();

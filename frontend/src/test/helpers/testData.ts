@@ -53,9 +53,7 @@ export const createMockAuthTokens = (overrides?: Partial<AuthTokens>): AuthToken
 
 // ==================== Upload & Processing ====================
 
-export const createMockUploadResponse = (
-  overrides?: Partial<UploadResponse>
-): UploadResponse => ({
+export const createMockUploadResponse = (overrides?: Partial<UploadResponse>): UploadResponse => ({
   processing_id: 'test-processing-id-001',
   filename: 'test-document.pdf',
   file_type: 'pdf',
@@ -108,9 +106,7 @@ export const createMockTerminatedResult = (
 
 // ==================== Languages ====================
 
-export const createMockLanguage = (
-  overrides?: Partial<SupportedLanguage>
-): SupportedLanguage => ({
+export const createMockLanguage = (overrides?: Partial<SupportedLanguage>): SupportedLanguage => ({
   code: 'en',
   name: 'English',
   popular: true,
@@ -166,9 +162,7 @@ export const createMockHealthCheck = (overrides?: Partial<HealthCheck>): HealthC
   ...overrides,
 });
 
-export const createMockActiveProcess = (
-  overrides?: Partial<ActiveProcess>
-): ActiveProcess => ({
+export const createMockActiveProcess = (overrides?: Partial<ActiveProcess>): ActiveProcess => ({
   processing_id: 'active-process-001',
   status: 'processing',
   progress_percent: 45,

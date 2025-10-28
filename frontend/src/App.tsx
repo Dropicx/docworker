@@ -521,7 +521,7 @@ function App() {
                       Sprache.
                       <span className="hidden sm:inline"> Schnell, sicher und DSGVO-konform.</span>
                       <span className="sm:hidden block mt-2">
-                         Schnell, sicher und DSGVO-konform.
+                        Schnell, sicher und DSGVO-konform.
                       </span>
                     </p>
                   </div>

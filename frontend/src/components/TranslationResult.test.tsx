@@ -224,9 +224,9 @@ describe('TranslationResult Component', () => {
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
-      const copyButton = screen.getAllByRole('button').find(btn =>
-        btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy')
-      );
+      const copyButton = screen
+        .getAllByRole('button')
+        .find(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
       expect(copyButton).toBeDefined();
 
       await user.click(copyButton!);
@@ -245,9 +245,9 @@ describe('TranslationResult Component', () => {
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
-      const copyButton = screen.getAllByRole('button').find(btn =>
-        btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy')
-      );
+      const copyButton = screen
+        .getAllByRole('button')
+        .find(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
 
       await user.click(copyButton!);
 
@@ -268,9 +268,9 @@ describe('TranslationResult Component', () => {
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
-      const copyButton = screen.getAllByRole('button').find(btn =>
-        btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy')
-      );
+      const copyButton = screen
+        .getAllByRole('button')
+        .find(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
 
       await user.click(copyButton!);
 
@@ -302,9 +302,9 @@ describe('TranslationResult Component', () => {
       await user.click(showButton);
 
       // Find and click copy button for original text
-      const copyButtons = screen.getAllByRole('button').filter(btn =>
-        btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy')
-      );
+      const copyButtons = screen
+        .getAllByRole('button')
+        .filter(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
       // Second copy button is for original text
       await user.click(copyButtons[1]);
 
@@ -377,9 +377,9 @@ describe('TranslationResult Component', () => {
       );
 
       // Initially, only main copy button (for translation)
-      const initialCopyButtons = screen.getAllByRole('button').filter(btn =>
-        btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy')
-      );
+      const initialCopyButtons = screen
+        .getAllByRole('button')
+        .filter(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
       expect(initialCopyButtons.length).toBe(1);
 
       // Show original text
@@ -387,9 +387,9 @@ describe('TranslationResult Component', () => {
       await user.click(showButton);
 
       // Now should have two copy buttons
-      const copyButtonsAfter = screen.getAllByRole('button').filter(btn =>
-        btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy')
-      );
+      const copyButtonsAfter = screen
+        .getAllByRole('button')
+        .filter(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
       expect(copyButtonsAfter.length).toBe(2);
     });
   });

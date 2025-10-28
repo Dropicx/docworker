@@ -49,9 +49,7 @@ describe('LanguageSelector Component', () => {
     });
 
     it('should show error state when loading fails', async () => {
-      vi.mocked(ApiService.getAvailableLanguages).mockRejectedValue(
-        new Error('Network error')
-      );
+      vi.mocked(ApiService.getAvailableLanguages).mockRejectedValue(new Error('Network error'));
 
       renderWithRouter(
         <LanguageSelector onLanguageSelect={mockOnLanguageSelect} selectedLanguage={null} />
@@ -118,9 +116,7 @@ describe('LanguageSelector Component', () => {
       const user = userEvent.setup();
 
       // First call fails
-      vi.mocked(ApiService.getAvailableLanguages).mockRejectedValueOnce(
-        new Error('Network error')
-      );
+      vi.mocked(ApiService.getAvailableLanguages).mockRejectedValueOnce(new Error('Network error'));
 
       renderWithRouter(
         <LanguageSelector onLanguageSelect={mockOnLanguageSelect} selectedLanguage={null} />
@@ -350,10 +346,7 @@ describe('LanguageSelector Component', () => {
       vi.mocked(ApiService.getAvailableLanguages).mockResolvedValue(mockResponse);
 
       renderWithRouter(
-        <LanguageSelector
-          onLanguageSelect={mockOnLanguageSelect}
-          selectedLanguage="en"
-        />
+        <LanguageSelector onLanguageSelect={mockOnLanguageSelect} selectedLanguage="en" />
       );
 
       await waitFor(() => {
@@ -379,10 +372,7 @@ describe('LanguageSelector Component', () => {
       vi.mocked(ApiService.getAvailableLanguages).mockResolvedValue(mockResponse);
 
       renderWithRouter(
-        <LanguageSelector
-          onLanguageSelect={mockOnLanguageSelect}
-          selectedLanguage="en"
-        />
+        <LanguageSelector onLanguageSelect={mockOnLanguageSelect} selectedLanguage="en" />
       );
 
       await waitFor(() => {
@@ -398,10 +388,7 @@ describe('LanguageSelector Component', () => {
       vi.mocked(ApiService.getAvailableLanguages).mockResolvedValue(mockResponse);
 
       renderWithRouter(
-        <LanguageSelector
-          onLanguageSelect={mockOnLanguageSelect}
-          selectedLanguage="en"
-        />
+        <LanguageSelector onLanguageSelect={mockOnLanguageSelect} selectedLanguage="en" />
       );
 
       await waitFor(() => {
@@ -420,10 +407,7 @@ describe('LanguageSelector Component', () => {
       vi.mocked(ApiService.getAvailableLanguages).mockResolvedValue(mockResponse);
 
       renderWithRouter(
-        <LanguageSelector
-          onLanguageSelect={mockOnLanguageSelect}
-          selectedLanguage="en"
-        />
+        <LanguageSelector onLanguageSelect={mockOnLanguageSelect} selectedLanguage="en" />
       );
 
       await waitFor(() => {
