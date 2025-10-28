@@ -4,9 +4,9 @@
 [allowlist]
 description = "Allowlist for test secrets and example data"
 paths = [
-    '''backend/tests/''',
-    '''**/test_*.py''',
-    '''**/*_test.py''',
+    '''backend/tests/.*''',
+    '''.*test_.*\.py$''',
+    '''.*_test\.py$''',
 ]
 
 # Ignore certain patterns that are acceptable
