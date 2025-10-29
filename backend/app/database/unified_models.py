@@ -6,7 +6,7 @@ Legacy prompt models have been removed - use modular_pipeline_models instead.
 """
 
 from sqlalchemy import JSON, Boolean, Column, DateTime, Float, Integer, String, Text
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 from sqlalchemy.sql import func
 
 Base = declarative_base()
