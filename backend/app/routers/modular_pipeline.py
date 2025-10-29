@@ -13,7 +13,7 @@ import logging
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_pipeline_step_repository
@@ -62,8 +62,8 @@ class OCRConfigResponse(BaseModel):
     pii_removal_enabled: bool
     last_modified: datetime
 
-    class Config:
-        from_attributes = True
+    # Pydantic V2 configuration
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PipelineStepRequest(BaseModel):
@@ -170,8 +170,8 @@ class PipelineStepResponse(BaseModel):
     # Stop conditions (early termination)
     stop_conditions: dict[str, Any] | None
 
-    class Config:
-        from_attributes = True
+    # Pydantic V2 configuration
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ModelResponse(BaseModel):
@@ -186,8 +186,8 @@ class ModelResponse(BaseModel):
     supports_vision: bool
     is_enabled: bool
 
-    class Config:
-        from_attributes = True
+    # Pydantic V2 configuration
+    model_config = ConfigDict(from_attributes=True)
 
 
 class StepReorderRequest(BaseModel):
@@ -238,8 +238,8 @@ class DocumentClassResponse(BaseModel):
     last_modified: datetime
     created_by: str | None
 
-    class Config:
-        from_attributes = True
+    # Pydantic V2 configuration
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==================== OCR CONFIGURATION ENDPOINTS ====================

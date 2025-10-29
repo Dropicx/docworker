@@ -11,7 +11,7 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.core.permissions import get_current_user_required, require_admin
@@ -59,8 +59,8 @@ class APIKeyResponse(BaseModel):
     usage_count: int = Field(..., description="Usage count")
     created_at: str = Field(..., description="Creation date")
 
-    class Config:
-        from_attributes = True
+    # Pydantic V2 configuration
+    model_config = ConfigDict(from_attributes=True)
 
 
 class APIKeyListResponse(BaseModel):

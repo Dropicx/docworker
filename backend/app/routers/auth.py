@@ -9,7 +9,7 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from app.core.permissions import get_current_user_required, log_auth_failure
@@ -77,8 +77,8 @@ class UserResponse(BaseModel):
     created_at: str = Field(..., description="Account creation date")
     last_login_at: str | None = Field(None, description="Last login date")
 
-    class Config:
-        from_attributes = True
+    # Pydantic V2 configuration
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ChangePasswordRequest(BaseModel):

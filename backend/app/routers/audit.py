@@ -11,7 +11,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy.orm import Session
 
 from app.core.permissions import require_admin
@@ -40,8 +40,8 @@ class AuditLogResponse(BaseModel):
     details: str | None = Field(None, description="Additional details (JSON)")
     timestamp: str = Field(..., description="Event timestamp")
 
-    class Config:
-        from_attributes = True
+    # Pydantic V2 configuration
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AuditLogListResponse(BaseModel):

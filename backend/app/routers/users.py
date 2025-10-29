@@ -9,7 +9,7 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 from sqlalchemy.orm import Session
 
 from app.core.permissions import require_admin
@@ -58,8 +58,8 @@ class UserResponse(BaseModel):
     last_login_at: str | None = Field(None, description="Last login date")
     created_by_admin_id: UUID | None = Field(None, description="Admin who created this user")
 
-    class Config:
-        from_attributes = True
+    # Pydantic V2 configuration
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserListResponse(BaseModel):

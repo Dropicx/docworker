@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class DocumentType(str, Enum):
@@ -134,9 +134,8 @@ class TranslationResult(BaseModel):
         None, description="AI pipeline processing time in seconds"
     )
 
-    class Config:
-        # Allow extra fields (forward compatibility)
-        extra = "allow"
+    # Pydantic V2 configuration
+    model_config = ConfigDict(extra="allow")  # Allow extra fields (forward compatibility)
 
 
 class ErrorResponse(BaseModel):
@@ -198,5 +197,5 @@ class CustomPrompts(BaseModel):
     final_check_prompt: str | None = Field(None, description="Final quality check prompt")
     formatting_prompt: str | None = Field(None, description="Document formatting prompt")
 
-    class Config:
-        extra = "allow"  # Allow additional prompt fields
+    # Pydantic V2 configuration
+    model_config = ConfigDict(extra="allow")  # Allow additional prompt fields
