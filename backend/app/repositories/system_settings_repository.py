@@ -2,12 +2,17 @@
 System Settings Repository
 
 Handles database operations for system-wide configuration settings.
+Supports conditional encryption based on is_encrypted flag.
 """
 
+import logging
 from sqlalchemy.orm import Session
 
+from app.core.encryption import encryptor
 from app.database.unified_models import SystemSettingsDB
 from app.repositories.base_repository import BaseRepository
+
+logger = logging.getLogger(__name__)
 
 
 class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
@@ -29,15 +34,27 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
 
     def get_by_key(self, key: str) -> SystemSettingsDB | None:
         """
-        Get a setting by its unique key.
+        Get a setting by its unique key with automatic decryption.
 
         Args:
             key: Setting key (e.g., 'enable_privacy_filter')
 
         Returns:
-            Setting instance or None if not found
+            Setting instance with decrypted value or None if not found
         """
-        return self.db.query(self.model).filter_by(key=key).first()
+        setting = self.db.query(self.model).filter_by(key=key).first()
+
+        # Decrypt if marked as encrypted
+        if setting and setting.is_encrypted and encryptor.is_enabled():
+            try:
+                setting.value = encryptor.decrypt_field(setting.value)
+                logger.debug(f"Decrypted setting: {key}")
+            except Exception as e:
+                logger.error(f"Failed to decrypt setting {key}: {e}")
+                # Return encrypted value for debugging
+                logger.warning(f"Returning encrypted value for {key}")
+
+        return setting
 
     def get_value(self, key: str, default: str | None = None) -> str | None:
         """
@@ -110,32 +127,57 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
         except (ValueError, TypeError):
             return default
 
-    def set_value(self, key: str, value: str, description: str | None = None) -> SystemSettingsDB:
+    def set_value(self, key: str, value: str, description: str | None = None, is_encrypted: bool = False) -> SystemSettingsDB:
         """
-        Set a setting value, creating if it doesn't exist.
+        Set a setting value with optional encryption, creating if it doesn't exist.
 
         Args:
             key: Setting key
             value: Setting value
             description: Optional description
+            is_encrypted: Whether to encrypt this value
 
         Returns:
-            Setting instance
+            Setting instance with decrypted value
         """
+        # Get existing setting (will be decrypted)
         setting = self.get_by_key(key)
+
+        # Encrypt value if requested
+        value_to_store = value
+        if is_encrypted and encryptor.is_enabled():
+            try:
+                value_to_store = encryptor.encrypt_field(value)
+                logger.debug(f"Encrypted setting: {key}")
+            except Exception as e:
+                logger.error(f"Failed to encrypt setting {key}: {e}")
+                raise
 
         if setting:
             # Update existing
-            setting.value = value
+            setting.value = value_to_store
+            setting.is_encrypted = is_encrypted
             if description:
                 setting.description = description
             self.db.commit()
             self.db.refresh(setting)
+
+            # Return with decrypted value for service layer
+            if is_encrypted and encryptor.is_enabled():
+                setting.value = value
         else:
             # Create new
             setting = self.create(
-                key=key, value=value, value_type="string", description=description or ""
+                key=key,
+                value=value_to_store,
+                value_type="string",
+                description=description or "",
+                is_encrypted=is_encrypted
             )
+
+            # Return with decrypted value for service layer
+            if is_encrypted and encryptor.is_enabled():
+                setting.value = value
 
         return setting
 

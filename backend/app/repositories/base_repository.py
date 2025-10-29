@@ -3,12 +3,16 @@ Base Repository Pattern
 
 Provides generic CRUD operations for database entities.
 All specific repositories should inherit from BaseRepository.
+
+Includes EncryptedRepositoryMixin for transparent field-level encryption.
 """
 
 import logging
 from typing import Any, Generic, TypeVar
 
 from sqlalchemy.orm import Session
+
+from app.core.encryption import encryptor
 
 logger = logging.getLogger(__name__)
 
@@ -204,3 +208,213 @@ class BaseRepository(Generic[ModelType]):
             filters: Dictionary of field:value filters
         """
         return self.count(filters) > 0
+
+
+class EncryptedRepositoryMixin:
+    """
+    Mixin for repositories that need transparent field-level encryption.
+
+    Usage:
+        class UserRepository(BaseRepository[UserDB], EncryptedRepositoryMixin):
+            encrypted_fields = ['email', 'full_name']
+
+            def __init__(self, db: Session):
+                super().__init__(db, UserDB)
+
+    The mixin automatically encrypts fields on write and decrypts on read.
+    Service layer code remains unchanged - encryption is completely transparent.
+    """
+
+    # Override this in subclasses to specify which fields to encrypt
+    encrypted_fields: list[str] = []
+
+    def _should_encrypt_field(self, field_name: str) -> bool:
+        """
+        Check if a field should be encrypted.
+
+        Args:
+            field_name: Name of the field to check
+
+        Returns:
+            True if field should be encrypted, False otherwise
+        """
+        return field_name in self.encrypted_fields
+
+    def _encrypt_fields(self, data: dict[str, Any]) -> dict[str, Any]:
+        """
+        Encrypt specified fields in a dictionary.
+
+        Args:
+            data: Dictionary containing fields to encrypt
+
+        Returns:
+            New dictionary with encrypted fields
+        """
+        if not self.encrypted_fields or not encryptor.is_enabled():
+            return data
+
+        encrypted_data = data.copy()
+
+        for field in self.encrypted_fields:
+            if field in encrypted_data and encrypted_data[field] is not None:
+                try:
+                    encrypted_data[field] = encryptor.encrypt_field(str(encrypted_data[field]))
+                    logger.debug(f"Encrypted field: {field}")
+                except Exception as e:
+                    logger.error(f"Failed to encrypt field {field}: {e}")
+                    raise
+
+        return encrypted_data
+
+    def _decrypt_entity(self, entity: ModelType | None) -> ModelType | None:
+        """
+        Decrypt encrypted fields in an entity.
+
+        Args:
+            entity: Database entity instance
+
+        Returns:
+            Entity with decrypted fields (modifies in-place)
+        """
+        if not entity or not self.encrypted_fields or not encryptor.is_enabled():
+            return entity
+
+        for field in self.encrypted_fields:
+            if hasattr(entity, field):
+                encrypted_value = getattr(entity, field)
+                if encrypted_value is not None:
+                    try:
+                        decrypted_value = encryptor.decrypt_field(encrypted_value)
+                        setattr(entity, field, decrypted_value)
+                        logger.debug(f"Decrypted field: {field}")
+                    except Exception as e:
+                        logger.error(f"Failed to decrypt field {field}: {e}")
+                        # Don't raise - return encrypted value for debugging
+                        logger.warning(f"Returning encrypted value for {field}")
+
+        return entity
+
+    def _decrypt_entities(self, entities: list[ModelType]) -> list[ModelType]:
+        """
+        Decrypt encrypted fields in a list of entities.
+
+        Args:
+            entities: List of database entity instances
+
+        Returns:
+            List of entities with decrypted fields
+        """
+        if not entities or not self.encrypted_fields or not encryptor.is_enabled():
+            return entities
+
+        for entity in entities:
+            self._decrypt_entity(entity)
+
+        return entities
+
+    # Override BaseRepository methods to add encryption/decryption
+
+    def create(self, **kwargs) -> ModelType:
+        """
+        Create new entity with automatic field encryption.
+
+        Also generates searchable hashes for encrypted fields if the model has
+        corresponding *_searchable columns (e.g., email -> email_searchable).
+
+        Args:
+            **kwargs: Field values for new entity
+
+        Returns:
+            Created entity with decrypted fields
+        """
+        # Generate searchable hashes for encrypted fields BEFORE encryption
+        for field in self.encrypted_fields:
+            if field in kwargs and kwargs[field] is not None:
+                searchable_field = f"{field}_searchable"
+                # Check if model has searchable column
+                if hasattr(self.model, searchable_field):
+                    # Generate hash from plaintext value
+                    kwargs[searchable_field] = encryptor.generate_searchable_hash(kwargs[field])
+
+        # Encrypt fields before creation
+        encrypted_kwargs = self._encrypt_fields(kwargs)
+
+        # Call parent create method
+        entity = super().create(**encrypted_kwargs)
+
+        # Decrypt fields for return (so service layer gets plaintext)
+        return self._decrypt_entity(entity)
+
+    def get_by_id(self, record_id: Any) -> ModelType | None:
+        """
+        Get entity by primary key with automatic decryption.
+
+        Args:
+            record_id: Primary key value
+
+        Returns:
+            Entity with decrypted fields or None
+        """
+        entity = super().get_by_id(record_id)
+        return self._decrypt_entity(entity)
+
+    def get_all(
+        self, skip: int = 0, limit: int = 100, filters: dict[str, Any] | None = None
+    ) -> list[ModelType]:
+        """
+        Get all entities with automatic decryption.
+
+        Args:
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+            filters: Dictionary of field:value filters
+
+        Returns:
+            List of entities with decrypted fields
+        """
+        entities = super().get_all(skip, limit, filters)
+        return self._decrypt_entities(entities)
+
+    def get_one(self, filters: dict[str, Any]) -> ModelType | None:
+        """
+        Get single entity with automatic decryption.
+
+        Args:
+            filters: Dictionary of field:value filters
+
+        Returns:
+            Entity with decrypted fields or None
+        """
+        entity = super().get_one(filters)
+        return self._decrypt_entity(entity)
+
+    def update(self, record_id: Any, **kwargs) -> ModelType | None:
+        """
+        Update entity with automatic field encryption.
+
+        Also updates searchable hashes for any encrypted fields being modified.
+
+        Args:
+            record_id: Primary key value
+            **kwargs: Fields to update
+
+        Returns:
+            Updated entity with decrypted fields or None
+        """
+        # Generate searchable hashes for encrypted fields being updated
+        for field in self.encrypted_fields:
+            if field in kwargs and kwargs[field] is not None:
+                searchable_field = f"{field}_searchable"
+                # Check if model has searchable column
+                if hasattr(self.model, searchable_field):
+                    # Generate hash from new plaintext value
+                    kwargs[searchable_field] = encryptor.generate_searchable_hash(kwargs[field])
+
+        # Encrypt fields before update
+        encrypted_kwargs = self._encrypt_fields(kwargs)
+
+        # Call parent update method
+        entity = super().update(record_id, **encrypted_kwargs)
+
+        # Decrypt fields for return
+        return self._decrypt_entity(entity)

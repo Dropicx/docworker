@@ -388,6 +388,36 @@ class FieldEncryptor:
         # Re-encrypt with current key
         return self.encrypt_field(decrypted)
 
+    @staticmethod
+    def generate_searchable_hash(value: str | None) -> str | None:
+        """
+        Generate SHA-256 hash for searchable encrypted field lookups.
+
+        This allows searching encrypted fields by comparing hashes instead of
+        decrypting every record. The hash is deterministic (same input = same hash).
+
+        Args:
+            value: Plaintext value to hash
+
+        Returns:
+            Hex string of SHA-256 hash (64 characters), or None if input is None
+
+        Example:
+            # Generate hash for email lookup
+            email_hash = encryptor.generate_searchable_hash("user@example.com")
+            # Query: WHERE email_searchable = :hash
+
+        Security Note:
+            - SHA-256 is one-way (can't reverse to get original value)
+            - Same input always produces same hash (enables search)
+            - Different from encryption (can't decrypt a hash)
+        """
+        if not value:
+            return None
+
+        import hashlib
+        return hashlib.sha256(value.encode('utf-8')).hexdigest()
+
 
 # Global singleton instance
 encryptor = FieldEncryptor()
