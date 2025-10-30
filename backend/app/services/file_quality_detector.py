@@ -187,6 +187,85 @@ class FileQualityDetector:
             {"reason": "unknown_file_type"},
         )
 
+    def get_quality_issues(self, analysis_metadata: dict[str, Any]) -> tuple[list[str], list[str]]:
+        """Identify specific quality issues and provide actionable suggestions.
+
+        Analyzes document quality metadata to determine specific problems and
+        generates user-friendly suggestions for improvement. Used by quality
+        gate to provide clear feedback when documents are rejected.
+
+        Args:
+            analysis_metadata: Analysis dict from analyze_file() containing:
+                - file_type: "pdf" or "image"
+                - text_quality_score: Quality score (0.0-1.0)
+                - image_quality: Image quality score (0.0-1.0) for images
+                - has_tables: Whether tables detected
+                - text_coverage: Text coverage ratio for PDFs
+                - text_density: Text density for images
+
+        Returns:
+            tuple[list[str], list[str]]:
+                - issues: List of detected problem identifiers
+                - suggestions: List of actionable improvement suggestions
+
+        Example:
+            >>> detector = FileQualityDetector()
+            >>> _, _, meta = await detector.analyze_file(content, "image", "scan.jpg")
+            >>> issues, suggestions = detector.get_quality_issues(meta)
+            >>> print(issues)
+            ['low_contrast', 'blur_detected']
+            >>> print(suggestions)
+            ['Ensure good lighting without shadows', 'Hold camera steady']
+        """
+        issues = []
+        suggestions = []
+
+        file_type = analysis_metadata.get("file_type")
+
+        if file_type == "image":
+            # Image-specific quality checks
+            image_quality = analysis_metadata.get("image_quality", 0.5)
+            text_density = analysis_metadata.get("text_density", 0.0)
+
+            if image_quality < 0.4:
+                issues.append("poor_image_quality")
+                suggestions.append("Ensure good lighting without shadows or glare")
+                suggestions.append("Hold camera steady to avoid blur")
+
+            if image_quality >= 0.4 and image_quality < 0.7:
+                issues.append("moderate_quality")
+                suggestions.append("Try to improve lighting conditions")
+
+            if text_density < 0.02:
+                issues.append("low_text_density")
+                suggestions.append("Ensure the entire document is visible in the frame")
+                suggestions.append("Move closer to the document or zoom in slightly")
+
+        elif file_type == "pdf":
+            # PDF-specific quality checks
+            text_coverage = analysis_metadata.get("text_coverage", 0.0)
+            text_quality = analysis_metadata.get("text_quality_score", 0.0)
+
+            if text_coverage < 0.3:
+                issues.append("low_text_coverage")
+                suggestions.append("Document appears to be mostly scanned images")
+                suggestions.append("Consider taking a higher quality photo/scan")
+
+            if text_quality < 0.4:
+                issues.append("poor_text_quality")
+                suggestions.append("Text extraction quality is low")
+                suggestions.append("Try re-scanning at higher resolution (300 DPI or more)")
+
+        # Common suggestions
+        if not suggestions:
+            # General advice for low quality
+            suggestions.append("Place document on a flat, well-lit surface")
+            suggestions.append("Take photo from directly above (not at an angle)")
+            suggestions.append("Ensure document fills most of the frame")
+            suggestions.append("Avoid shadows, reflections, and glare")
+
+        return issues, suggestions
+
     async def _analyze_pdf(
         self, content: bytes, filename: str
     ) -> tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:

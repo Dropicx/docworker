@@ -84,6 +84,14 @@ class OCRConfigurationDB(Base):
     vision_llm_config = Column(JSON, nullable=True)  # e.g., {"model": "Qwen2.5-VL-72B-Instruct"}
     hybrid_config = Column(JSON, nullable=True)  # e.g., {"quality_threshold": 0.7}
 
+    # Quality gate settings
+    min_ocr_confidence_threshold = Column(
+        Float, default=0.5, nullable=False
+    )  # Minimum confidence for accepting OCR results (0.0-1.0)
+    enable_markdown_tables = Column(
+        Boolean, default=True, nullable=False
+    )  # Convert tables to markdown format for better AI comprehension
+
     # Privacy settings
     pii_removal_enabled = Column(Boolean, default=True, nullable=False)  # Global PII removal toggle
 
