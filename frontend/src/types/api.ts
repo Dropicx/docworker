@@ -130,6 +130,18 @@ export interface ActiveProcessesResponse {
   timestamp: string;
 }
 
+// Quality Gate Error Details
+export interface QualityGateErrorDetails {
+  error: string;
+  message: string;
+  details: {
+    confidence_score: number;
+    min_threshold: number;
+    issues: string[];
+    suggestions: string[];
+  };
+}
+
 // API Error
 export class ApiError extends Error {
   constructor(
@@ -139,5 +151,25 @@ export class ApiError extends Error {
   ) {
     super(message);
     this.name = 'ApiError';
+  }
+
+  // Helper to check if this is a quality gate error
+  isQualityGateError(): boolean {
+    if (this.status !== 422) return false;
+    if (typeof this.response !== 'object' || this.response === null) return false;
+    if (!('detail' in this.response)) return false;
+
+    const detail = (this.response as Record<string, unknown>).detail;
+    if (typeof detail !== 'object' || detail === null) return false;
+
+    const detailObj = detail as Record<string, unknown>;
+    return detailObj.error === 'poor_document_quality';
+  }
+
+  // Get quality gate error details
+  getQualityGateDetails(): QualityGateErrorDetails | null {
+    if (!this.isQualityGateError()) return null;
+    const response = this.response as { detail: QualityGateErrorDetails };
+    return response.detail;
   }
 }
