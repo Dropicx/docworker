@@ -118,8 +118,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
       if (error instanceof ApiError && error.isQualityGateError()) {
         const qualityDetails = error.getQualityGateDetails();
         if (qualityDetails) {
+          // Quality gate errors are validation errors - show in FileUpload, don't propagate to App
           setQualityGateError(qualityDetails);
-          onUploadError(qualityDetails.message);
+          // Don't call onUploadError - keep FileUpload visible with error display
         } else {
           setValidationError(error.message);
           onUploadError(error.message);
