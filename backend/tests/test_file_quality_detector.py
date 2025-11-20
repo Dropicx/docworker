@@ -36,6 +36,16 @@ def quality_detector():
 @pytest.fixture
 def clear_image_bytes():
     """Create a clear, high-quality image for testing"""
+    import os
+    from pathlib import Path
+
+    # Try to load real test image first
+    fixture_path = Path(__file__).parent / "fixtures" / "images" / "clear_medical_document.jpg"
+    if fixture_path.exists():
+        with open(fixture_path, "rb") as f:
+            return f.read()
+
+    # Fallback: Create synthetic image
     # Create 1000x1000 white image with clear black text
     img = Image.new("RGB", (1000, 1000), color="white")
     draw = ImageDraw.Draw(img)
@@ -53,6 +63,16 @@ def clear_image_bytes():
 @pytest.fixture
 def blurry_image_bytes():
     """Create a blurry, low-quality image for testing"""
+    import os
+    from pathlib import Path
+
+    # Try to load real test image first
+    fixture_path = Path(__file__).parent / "fixtures" / "images" / "blurry_medical_document.jpg"
+    if fixture_path.exists():
+        with open(fixture_path, "rb") as f:
+            return f.read()
+
+    # Fallback: Create synthetic image
     # Create 1000x1000 white image with text
     img = Image.new("RGB", (800, 800), color="white")
     draw = ImageDraw.Draw(img)
@@ -154,9 +174,11 @@ async def test_clear_image_passes_quality_gate(quality_detector, clear_image_byt
     quality_score = analysis.get("image_quality", 0.0)
 
     if quality_detector.opencv_available:
-        # With OpenCV, blank/uniform images get lower scores (0.3-0.4)
-        # This is expected behavior - uniform images lack features/contrast
+        # Real medical documents: 0.5-0.9, Synthetic images: 0.3-0.4
+        # Accept lower threshold for synthetic fallback images
         assert quality_score > 0.2, f"Clear image should score > 0.2, got {quality_score}"
+        # Log actual score for reference when using real images
+        print(f"📊 Clear image quality score: {quality_score:.3f}")
     else:
         # Without OpenCV, defaults to 0.5
         assert quality_score == 0.5, f"Without OpenCV, should default to 0.5, got {quality_score}"
@@ -174,6 +196,8 @@ async def test_blurry_image_detected(quality_detector, blurry_image_bytes):
     if quality_detector.opencv_available:
         # With OpenCV, should detect poor quality
         assert quality_score < 0.6, f"Blurry image should score < 0.6, got {quality_score}"
+        # Log actual score for reference
+        print(f"📉 Blurry image quality score: {quality_score:.3f}")
 
         # Should recommend Vision LLM for poor quality
         assert strategy in [ExtractionStrategy.VISION_LLM, ExtractionStrategy.LOCAL_OCR]

@@ -1,0 +1,9 @@
+# Ignore actual test images (may contain sensitive medical data)
+*.jpg
+*.jpeg
+*.png
+*.pdf
+
+# Keep directory structure and documentation
+!README.md
+!.gitignore
