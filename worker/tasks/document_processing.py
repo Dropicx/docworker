@@ -127,13 +127,22 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                 pii_start_time = time.time()
                 original_length = len(extracted_text)
 
-                extracted_text = pii_filter.remove_pii(extracted_text)
+                # Phase 1.4: remove_pii() now returns (cleaned_text, metadata) tuple
+                extracted_text, pii_metadata = pii_filter.remove_pii(extracted_text)
 
                 pii_time_ms = (time.time() - pii_start_time) * 1000
                 cleaned_length = len(extracted_text)
 
                 logger.info(f"✅ PII removal completed in {pii_time_ms:.1f}ms")
                 logger.info(f"   Original: {original_length} chars → Cleaned: {cleaned_length} chars")
+
+                # Log enhanced metadata from Phase 1.4
+                if pii_metadata.get("entities_detected", 0) > 0:
+                    logger.info(
+                        f"   📊 Detected: {pii_metadata['entities_detected']} entities, "
+                        f"Preserved: {pii_metadata['eponyms_preserved']} eponyms, "
+                        f"Low confidence: {pii_metadata['low_confidence_count']}"
+                    )
             else:
                 logger.info("⏭️  PII removal disabled - skipping privacy filter")
 
