@@ -118,12 +118,13 @@ export class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Use shorter timeout for upload (30 seconds should be enough even for 50MB on mobile)
+    // Upload timeout - needs to account for file upload + quality analysis
+    // 60 seconds allows for large files over slower connections
     const response: AxiosResponse<UploadResponse> = await api.post('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 30000, // 30 seconds timeout for upload specifically
+      timeout: 60000, // 60 seconds timeout (upload + quality gate analysis)
     });
 
     return response.data;

@@ -126,8 +126,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
           onUploadError(error.message);
         }
       } else {
+        // Check if this is a timeout error
         const errorMessage = (error as Error).message || 'Upload fehlgeschlagen';
-        setValidationError(errorMessage);
+        if (errorMessage.includes('timeout')) {
+          setValidationError(
+            'Die Verbindung zum Server dauert länger als erwartet. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.'
+          );
+        } else {
+          setValidationError(errorMessage);
+        }
         onUploadError(errorMessage);
       }
       setIsUploading(false);
