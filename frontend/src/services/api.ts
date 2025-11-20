@@ -94,19 +94,33 @@ api.interceptors.response.use(
     }
 
     // Extract error message - handle both string and object detail formats
+    console.log('🔵 Axios interceptor - error caught');
+    console.log('🔵 error.response?.status:', error.response?.status);
+    console.log('🔵 error.response?.data:', error.response?.data);
+
     let message = 'Unknown API error';
     const detail = error.response?.data?.detail;
+
+    console.log('🔵 detail type:', typeof detail);
+    console.log('🔵 detail value:', detail);
 
     if (typeof detail === 'string') {
       // Simple string error
       message = detail;
+      console.log('🔵 Using string detail as message:', message);
     } else if (typeof detail === 'object' && detail !== null && 'message' in detail) {
       // Structured error (like quality gate) - extract message from nested object
       message = (detail as { message: string }).message;
+      console.log('🔵 Using nested message from detail object:', message);
     } else {
       // Fallback to other message fields
       message = error.response?.data?.message || error.message || 'Unknown API error';
+      console.log('🔵 Using fallback message:', message);
     }
+
+    console.log('🔵 Creating ApiError with message:', message);
+    console.log('🔵 Creating ApiError with status:', error.response?.status || 500);
+    console.log('🔵 Creating ApiError with response:', error.response?.data);
 
     throw new ApiError(message, error.response?.status || 500, error.response?.data);
   }
