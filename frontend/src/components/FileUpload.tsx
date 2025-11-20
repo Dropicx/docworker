@@ -114,38 +114,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
       // Immediately proceed on mobile for better UX
       onUploadSuccess(response);
     } catch (error) {
-      // Debug logging
-      console.log('🔴 Upload error caught:', error);
-      console.log('🔴 Error type:', error?.constructor?.name);
-      console.log('🔴 Is ApiError?', error instanceof ApiError);
-
-      if (error instanceof ApiError) {
-        console.log('🔴 ApiError status:', error.status);
-        console.log('🔴 ApiError message:', error.message);
-        console.log('🔴 ApiError response:', error.response);
-        console.log('🔴 Is quality gate error?', error.isQualityGateError());
-      }
-
       // Check if this is a quality gate error
       if (error instanceof ApiError && error.isQualityGateError()) {
         const qualityDetails = error.getQualityGateDetails();
-        console.log('🟢 Quality gate details:', qualityDetails);
-
         if (qualityDetails) {
           // Quality gate errors are validation errors - show in FileUpload, don't propagate to App
           setQualityGateError(qualityDetails);
-          console.log('✅ Quality gate error set, UI should show');
           // Don't call onUploadError - keep FileUpload visible with error display
         } else {
-          console.log('⚠️ Quality gate error but no details');
           setValidationError(error.message);
           onUploadError(error.message);
         }
       } else {
         // Check if this is a timeout error
         const errorMessage = (error as Error).message || 'Upload fehlgeschlagen';
-        console.log('🔴 Regular error, message:', errorMessage);
-
         if (errorMessage.includes('timeout')) {
           setValidationError(
             'Die Verbindung zum Server dauert länger als erwartet. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.'
