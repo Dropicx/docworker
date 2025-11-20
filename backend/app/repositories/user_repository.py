@@ -42,7 +42,7 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
         Get user by email address using searchable hash for efficient lookup.
 
         Uses email_searchable hash column to find user without decrypting
-        all emails in the database. Then returns user with decrypted fields.
+        all emails in the database. Falls back to plaintext search for legacy users.
 
         Args:
             email: User's email address (plaintext)
@@ -58,6 +58,35 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
 
             # Query using searchable hash (much faster than decrypting all emails)
             user = self.db.query(UserDB).filter(UserDB.email_searchable == email_hash).first()
+
+            if user:
+                # Decrypt and return (handled by EncryptedRepositoryMixin)
+                return self._decrypt_entity(user)
+
+            # FALLBACK: Search by plaintext email for legacy users (backward compatibility)
+            # This handles users created before encryption was enabled
+            logger.info(f"Hash lookup failed for {email}, trying plaintext fallback")
+            user = self.db.query(UserDB).filter(UserDB.email == email).first()
+
+            if user:
+                logger.info(f"Found legacy user {user.id}, migrating to encrypted storage")
+                # Auto-migrate: Encrypt the user's data on login
+                try:
+                    encrypted_email = encryptor.encrypt_field(email)
+                    encrypted_full_name = encryptor.encrypt_field(user.full_name)
+
+                    user.email = encrypted_email
+                    user.full_name = encrypted_full_name
+                    user.email_searchable = email_hash
+                    user.full_name_searchable = encryptor.generate_searchable_hash(user.full_name)
+                    user.encryption_version = 1
+
+                    self.db.commit()
+                    logger.info(f"Successfully migrated user {user.id} to encrypted storage")
+                except Exception as encrypt_error:
+                    logger.error(f"Failed to auto-migrate user {user.id}: {encrypt_error}")
+                    self.db.rollback()
+                    # Still return the user even if migration fails (don't block login)
 
             # Decrypt and return (handled by EncryptedRepositoryMixin)
             return self._decrypt_entity(user)
