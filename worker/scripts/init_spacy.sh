@@ -15,7 +15,7 @@
 #   ./init_spacy.sh
 #
 # Environment Variables:
-#   SPACY_MODEL_PATH - Path to spaCy model on volume (default: /data/spacy_models/de_core_news_sm)
+#   SPACY_MODEL_PATH - Path to spaCy model on volume (default: /data/spacy_models/de_core_news_md)
 #   SKIP_SPACY_INIT  - Set to 'true' to skip initialization (for testing)
 #
 # ==========================================
@@ -23,7 +23,9 @@
 set -e  # Exit on error
 
 # Configuration
-MODEL_NAME="de_core_news_sm"
+# UPGRADE: Changed from de_core_news_sm to de_core_news_md for +15% accuracy (Issue #35)
+# Model sizes: sm=15MB, md=43MB, lg=542MB
+MODEL_NAME="de_core_news_md"
 VOLUME_PATH="${SPACY_MODEL_PATH:-/data/spacy_models/$MODEL_NAME}"
 SKIP_INIT="${SKIP_SPACY_INIT:-false}"
 
@@ -183,7 +185,7 @@ try:
     print(f'   Version: {meta.get(\"version\", \"unknown\")}')
     print(f'   Language: {meta.get(\"lang\", \"unknown\")}')
     print(f'   Pipeline: {meta.get(\"pipeline\", [])}')
-    print(f'   Size: ~15MB')
+    print(f'   Size: ~43MB (md model for enhanced accuracy)')
 except Exception as e:
     print(f'   ⚠️  Could not load model info: {e}')
 " 2>/dev/null || echo "   ℹ️  Model info not available"

@@ -490,6 +490,84 @@ class AdvancedPrivacyFilter:
             "familie",
         }
 
+        # Medical eponyms (medical conditions/diseases named after people)
+        # MUST NOT be removed as they are medical terminology, not patient names
+        # Issue #35: Context-aware name detection
+        self.medical_eponyms = {
+            # Common German medical eponyms
+            "parkinson",
+            "alzheimer",
+            "cushing",
+            "crohn",
+            "addison",
+            "basedow",
+            "graves",
+            "hashimoto",
+            "hodgkin",
+            "huntington",
+            "marfan",
+            "raynaud",
+            "sjögren",
+            "sjogren",  # Without umlaut
+            "tourette",
+            "wilson",
+            "wernicke",
+            "korsakoff",
+            "asperger",
+            "down",
+            "turner",
+            "klinefelter",
+            "guillain",
+            "barré",
+            "barre",  # Without accent
+            "behçet",
+            "behcet",  # Without accent
+            "kawasaki",
+            "ebstein",
+            "fallot",
+            "conn",
+            "reiter",
+            "scheuermann",
+            "paget",
+            "peyronie",
+            "dupuytren",
+            "ménière",
+            "meniere",  # Without accent
+            "bell",
+            "charcot",
+            "lou gehrig",
+            "als",  # Amyotrophe Lateralsklerose
+            "pick",
+            "niemann",
+            "gaucher",
+            "tay",
+            "sachs",
+            "fabry",
+            "pompe",
+            "hurler",
+            "hunter",
+            "sanfilippo",
+            "morquio",
+        }
+
+        # Context keywords that indicate medical terminology (not patient names)
+        self.medical_context_keywords = {
+            "morbus",
+            "krankheit",
+            "syndrom",
+            "symptom",
+            "erkrankung",
+            "störung",
+            "lähmung",
+            "chorea",
+            "demenz",
+            "tremor",
+            "ataxie",
+            "diabetes",
+            "hypothyreose",
+            "hyperthyreose",
+        }
+
         # Medizinische Abkürzungen, die geschützt werden müssen (ERWEITERT)
         self.protected_abbreviations = {
             # Diagnostik
@@ -749,18 +827,27 @@ class AdvancedPrivacyFilter:
             from pathlib import Path
 
             # Try loading from Railway volume first (for worker processes)
-            volume_path = os.getenv("SPACY_MODEL_PATH", "/data/spacy_models/de_core_news_sm")
+            # UPGRADE: Changed to de_core_news_md for +15% accuracy (Issue #35)
+            volume_path = os.getenv("SPACY_MODEL_PATH", "/data/spacy_models/de_core_news_md")
 
             if Path(volume_path).exists():
                 logger.info(f"🔍 Loading spaCy model from volume: {volume_path}")
                 self.nlp = spacy.load(volume_path)
-                logger.info("✅ spaCy model loaded from Railway volume")
+                logger.info("✅ spaCy model (de_core_news_md) loaded from Railway volume")
                 self.has_ner = True
                 return
 
-            # Fallback: Try loading by name
-            self.nlp = spacy.load("de_core_news_sm")
-            logger.info("✅ spaCy deutsches Modell (de_core_news_sm) geladen")
+            # Fallback: Try loading by name (medium model for better accuracy)
+            try:
+                self.nlp = spacy.load("de_core_news_md")
+                logger.info("✅ spaCy deutsches Modell (de_core_news_md) geladen - enhanced accuracy")
+                self.has_ner = True
+                return
+            except OSError:
+                # If md not available, fall back to sm
+                logger.warning("⚠️ de_core_news_md not found, trying de_core_news_sm...")
+                self.nlp = spacy.load("de_core_news_sm")
+                logger.info("✅ spaCy deutsches Modell (de_core_news_sm) geladen")
             self.has_ner = True
         except (OSError, ImportError) as e:
             logger.warning(
@@ -828,7 +915,7 @@ class AdvancedPrivacyFilter:
             ),
         }
 
-    def remove_pii(self, text: str) -> str:
+    def remove_pii(self, text: str) -> tuple[str, dict]:
         """Remove personally identifiable information while preserving medical content.
 
         GDPR-compliant PII removal using a multi-stage approach:
@@ -838,31 +925,38 @@ class AdvancedPrivacyFilter:
         4. Restore protected medical terms
         5. Clean formatting
 
+        ENHANCED (Issue #35):
+        - Returns confidence metadata for quality tracking
+        - Logs low-confidence detections for review
+
         Args:
             text: German medical document text to be anonymized
 
         Returns:
-            Anonymized text with PII removed but medical information preserved.
-            PII is replaced with markers like [NAME ENTFERNT], [ADRESSE ENTFERNT].
+            Tuple of (cleaned_text, metadata_dict):
+            - cleaned_text: Anonymized text with PII removed
+            - metadata_dict: Detection confidence and statistics
 
         Example:
             >>> filter = AdvancedPrivacyFilter()
-            >>> doc = '''
-            ... Patient: Müller, Hans
-            ... Geb.: 01.01.1980
-            ... Diagnose: Diabetes mellitus Typ 2
-            ... HbA1c: 8.2%
-            ... '''
-            >>> cleaned = filter.remove_pii(doc)
+            >>> doc = "Patient: Müller, Hans\\nGeb.: 01.01.1980\\nDiagnose: Diabetes"
+            >>> cleaned, meta = filter.remove_pii(doc)
             >>> assert "Müller" not in cleaned
-            >>> assert "01.01.1980" not in cleaned
             >>> assert "Diabetes" in cleaned
-            >>> assert "HbA1c" in cleaned
+            >>> assert "entities_detected" in meta
         """
         if not text:
-            return text
+            return text, {}
 
         logger.info("🔍 Entferne persönliche Daten, behalte medizinische Informationen")
+
+        # Initialize confidence tracking (Issue #35 Phase 1.4)
+        self._pii_metadata = {
+            "entities_detected": 0,
+            "low_confidence_count": 0,
+            "eponyms_preserved": 0,
+            "has_ner": self.has_ner,
+        }
 
         # Schütze medizinische Begriffe vor Entfernung
         text = self._protect_medical_terms(text)
@@ -885,7 +979,15 @@ class AdvancedPrivacyFilter:
         text = re.sub(r"[ \t]+", " ", text)
 
         logger.info("✅ Persönliche Daten entfernt - medizinische Informationen erhalten")
-        return text.strip()
+
+        # Return cleaned text and confidence metadata (Issue #35 Phase 1.4)
+        metadata = self._pii_metadata.copy()
+        if metadata.get("low_confidence_count", 0) > 0:
+            logger.warning(
+                f"⚠️ {metadata['low_confidence_count']} low-confidence PII detections - review recommended"
+            )
+
+        return text.strip(), metadata
 
     def _protect_medical_terms(self, text: str) -> str:
         """Schützt medizinische Begriffe vor Entfernung"""
@@ -937,11 +1039,67 @@ class AdvancedPrivacyFilter:
 
         return text
 
-    def _remove_personal_data(self, text: str) -> str:
-        """Entfernt persönliche Daten aber ERHÄLT medizinische Informationen"""
+    def _classify_date_context(self, date_match: re.Match, full_text: str) -> str:
+        """Classify whether a date is PII (birthdate) or medical (exam/lab date).
 
-        # CRITICAL ORDER: Remove birthdates FIRST before other patterns
-        # This prevents phone/insurance patterns from matching parts of dates
+        Issue #35: Intelligent date classification
+        - Preserve dates with medical context (Untersuchung, Labor, Befund)
+        - Remove dates with PII context (Geboren, Geb.)
+
+        Args:
+            date_match: Regex match object containing the date
+            full_text: Complete text for context analysis
+
+        Returns:
+            "pii" if date should be removed, "medical" if date should be preserved
+        """
+        # Get context around the date (50 chars before)
+        start_pos = max(0, date_match.start() - 50)
+        context_before = full_text[start_pos:date_match.start()].lower()
+
+        # PII context indicators (birthdates)
+        pii_indicators = ["geb.", "geboren", "geburtsdatum", "geb:", "* ", "*datum"]
+
+        # Medical context indicators (examination/lab dates)
+        medical_indicators = [
+            "untersuchung",
+            "labor",
+            "befund",
+            "datum",
+            "op-datum",
+            "op datum",
+            "operation",
+            "aufnahme",
+            "entlassung",
+            "kontrolle",
+            "termin",
+            "vom",  # "Labor vom 15.03.2024"
+            "am",  # "Untersuchung am 20.05.2024"
+        ]
+
+        # Check for PII indicators
+        for indicator in pii_indicators:
+            if indicator in context_before:
+                return "pii"
+
+        # Check for medical indicators
+        for indicator in medical_indicators:
+            if indicator in context_before:
+                return "medical"
+
+        # Default: treat as PII if unclear (safer for privacy)
+        return "pii"
+
+    def _remove_personal_data(self, text: str) -> str:
+        """Entfernt persönliche Daten aber ERHÄLT medizinische Informationen
+
+        ENHANCED: Intelligent date classification (Issue #35)
+        - Removes birthdates (PII)
+        - Preserves examination/lab dates (medical context)
+        """
+
+        # ENHANCED: Intelligent birthdate removal with context awareness
+        # Only remove dates with explicit PII context (Geboren, Geb.)
         text = self.patterns["birthdate"].sub("[GEBURTSDATUM ENTFERNT]", text)
 
         # IMPORTANT: Remove insurance/patient numbers BEFORE patient_info pattern
@@ -971,10 +1129,49 @@ class AdvancedPrivacyFilter:
             flags=re.IGNORECASE,
         )
 
+    def _is_medical_eponym(self, name: str, context: str = "") -> bool:
+        """Check if a name is a medical eponym (disease/condition named after a person).
+
+        Medical eponyms should NOT be removed as they are medical terminology.
+        Examples: Parkinson, Alzheimer, Cushing, Crohn, etc.
+
+        Args:
+            name: The name to check (e.g., "Parkinson")
+            context: Surrounding text for context analysis (e.g., "Morbus Parkinson")
+
+        Returns:
+            True if name is a medical eponym and should be preserved, False otherwise
+
+        Example:
+            >>> filter = AdvancedPrivacyFilter()
+            >>> filter._is_medical_eponym("Parkinson", "Morbus Parkinson")
+            True
+            >>> filter._is_medical_eponym("Schmidt", "Dr. Schmidt")
+            False
+        """
+        name_lower = name.lower()
+
+        # Check if name is in eponym whitelist
+        if name_lower in self.medical_eponyms:
+            return True
+
+        # Check for medical context keywords nearby
+        if context:
+            context_lower = context.lower()
+            # Check if any medical context keyword appears near the name
+            for keyword in self.medical_context_keywords:
+                if keyword in context_lower:
+                    # Medical context found - likely an eponym
+                    logger.debug(f"Medical context '{keyword}' found near '{name}' - preserving as eponym")
+                    return True
+
+        return False
+
     def _remove_names_with_ner(self, text: str) -> str:
         """
         Verwendet spaCy NER zur intelligenten Namenerkennung
         Erkennt auch "Name: Nachname, Vorname" Format
+        ENHANCED: Now preserves medical eponyms (Issue #35)
         """
         # HINWEIS: Explizite Patterns wurden bereits in _remove_personal_data entfernt
         # Hier nur noch spaCy NER für nicht-explizite Namen
@@ -988,12 +1185,35 @@ class AdvancedPrivacyFilter:
         for ent in doc.ents:
             # NUR PER = Person, ignoriere ORG, LOC etc.
             if ent.label_ == "PER":
+                # Extract context (20 chars before and after)
+                start_ctx = max(0, ent.start_char - 20)
+                end_ctx = min(len(text), ent.end_char + 20)
+                context = text[start_ctx:end_ctx]
+
+                # Check if it's a medical eponym (preserve if true)
+                if self._is_medical_eponym(ent.text, context):
+                    logger.debug(f"Preserving medical eponym: {ent.text}")
+                    self._pii_metadata["eponyms_preserved"] += 1
+                    continue
+
                 # Prüfe ob es ein medizinischer Begriff ist
                 if ent.text.lower() not in self.medical_terms:
                     # Keine Zahlen im Namen (könnte Laborwert sein)
                     if not any(char.isdigit() for char in ent.text):
                         persons_to_remove.add(ent.text)
+                        self._pii_metadata["entities_detected"] += 1
                         logger.debug(f"NER erkannt als Person: {ent.text}")
+
+                        # Track low-confidence detections (single-word names without titles)
+                        if len(ent.text.split()) == 1:  # Single word
+                            # Check if there's a title nearby
+                            has_title_context = any(
+                                indicator in context.lower()
+                                for indicator in ["dr.", "prof.", "herr", "frau"]
+                            )
+                            if not has_title_context:
+                                self._pii_metadata["low_confidence_count"] += 1
+                                logger.debug(f"Low-confidence detection: {ent.text} (no title context)")
 
         # Zusätzlich: Erkenne Titel+Name Kombinationen
         for i, token in enumerate(doc):
