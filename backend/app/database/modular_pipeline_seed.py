@@ -198,24 +198,13 @@ def seed_modular_pipeline():
                     "branching_field": "document_type",
                     "document_class_id": None,  # Universal step
                 },
-                {
-                    "name": "PII Preprocessing",
-                    "description": "Removes personal identifiers while preserving medical information",
-                    "order": 3,
-                    "enabled": True,
-                    "prompt_template": "Entferne aus dem folgenden medizinischen Text alle persönlichen Identifikatoren (Namen, Adressen, Geburtsdaten, Telefonnummern, E-Mail-Adressen, Patientennummern), aber behalte alle medizinischen Informationen und den Kontext bei.\n\nErsetze entfernte PII durch '[ENTFERNT]'.\n\nText:\n{input_text}\n\nGib nur den bereinigten Text zurück.",
-                    "selected_model_id": llama_id,
-                    "temperature": 0.5,
-                    "max_tokens": 4096,
-                    "retry_on_failure": True,
-                    "max_retries": 2,
-                    "input_from_previous_step": True,
-                    "output_format": "text",
-                },
+                # NOTE: PII removal now happens LOCALLY via AdvancedPrivacyFilter
+                # BEFORE pipeline execution (GDPR-compliant, no PII sent to cloud)
+                # Previous LLM-based "PII Preprocessing" step has been removed
                 {
                     "name": "Patient-Friendly Translation",
                     "description": "Translates medical text into simple, patient-friendly language",
-                    "order": 4,
+                    "order": 3,
                     "enabled": True,
                     "prompt_template": "Übersetze diesen medizinischen Text in einfache, patientenfreundliche Sprache.\n\nVerwende kurze Sätze und vermeide medizinische Fachbegriffe. Strukturiere den Text mit klaren Abschnitten.\n\nText:\n{input_text}\n\nGib nur die vereinfachte Übersetzung zurück.",
                     "selected_model_id": llama_id,
@@ -229,7 +218,7 @@ def seed_modular_pipeline():
                 {
                     "name": "Medical Fact Check",
                     "description": "Verifies medical accuracy and completeness",
-                    "order": 5,
+                    "order": 4,
                     "enabled": True,
                     "prompt_template": "Überprüfe diesen medizinischen Text auf Korrektheit und Vollständigkeit.\n\nAchte besonders auf Diagnosen, Behandlungsempfehlungen und Medikamentennamen.\n\nText:\n{input_text}\n\nGib den Text mit korrigierten medizinischen Informationen zurück.",
                     "selected_model_id": llama_id,
@@ -243,7 +232,7 @@ def seed_modular_pipeline():
                 {
                     "name": "Grammar and Spelling Check",
                     "description": "Corrects German grammar and spelling",
-                    "order": 6,
+                    "order": 5,
                     "enabled": True,
                     "prompt_template": "Korrigiere Grammatik und Rechtschreibung in diesem Text.\n\nAchte auf korrekte medizinische Terminologie und professionelle Formulierung.\n\nText:\n{input_text}\n\nGib nur den korrigierten Text zurück.",
                     "selected_model_id": llama_id,
@@ -257,7 +246,7 @@ def seed_modular_pipeline():
                 {
                     "name": "Language Translation",
                     "description": "Translates text to target language",
-                    "order": 7,
+                    "order": 6,
                     "enabled": True,
                     "prompt_template": "Übersetze den folgenden Text EXAKT in {target_language}.\n\nAchte auf präzise medizinische Terminologie, wo angebracht, aber halte den Ton patientenfreundlich.\n\nText:\n{input_text}\n\nGib nur die Übersetzung zurück.",
                     "selected_model_id": llama_id,
@@ -271,7 +260,7 @@ def seed_modular_pipeline():
                 {
                     "name": "Final Quality Check",
                     "description": "Final quality assurance and completeness check",
-                    "order": 8,
+                    "order": 7,
                     "enabled": True,
                     "prompt_template": "Führe eine finale Qualitätskontrolle dieses Textes durch.\n\nPrüfe auf Verständlichkeit, Vollständigkeit und patientenfreundliche Formulierung.\n\nText:\n{input_text}\n\nGib den final geprüften Text zurück.",
                     "selected_model_id": llama_id,
@@ -285,7 +274,7 @@ def seed_modular_pipeline():
                 {
                     "name": "Text Formatting",
                     "description": "Applies markdown formatting and structure",
-                    "order": 9,
+                    "order": 8,
                     "enabled": True,
                     "prompt_template": "Formatiere diesen Text mit klaren Überschriften, Abschnitten und einer logischen Struktur.\n\nVerwende Markdown-Formatierung:\n- Überschriften mit #\n- Bullet Points für Listen\n- Fettschrift für wichtige Begriffe\n\nText:\n{input_text}\n\nGib nur den formatierten Markdown-Text zurück.",
                     "selected_model_id": llama_id,

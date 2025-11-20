@@ -24,8 +24,10 @@ from app.repositories.ocr_configuration_repository import OCRConfigurationReposi
 from app.repositories.pipeline_job_repository import PipelineJobRepository
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.services.ai_cost_tracker import AICostTracker
+from app.services.ai_logging_service import AILoggingService
 from app.services.document_class_manager import DocumentClassManager
 from app.services.ovh_client import OVHClient
+from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
 
 logger = logging.getLogger(__name__)
 
@@ -67,7 +69,11 @@ class ModularPipelineExecutor:
         self.ovh_client = OVHClient()
         self.doc_class_manager = DocumentClassManager(session)
         self.cost_tracker = AICostTracker(session)
+        self.ai_logger = AILoggingService(session)
+        self.privacy_filter = AdvancedPrivacyFilter()
         logger.info("💰 Cost tracker initialized for pipeline executor")
+        logger.info("📊 AI interaction logger initialized")
+        logger.info("🔒 Privacy filter initialized - GDPR-compliant local PII removal")
 
     # ==================== CONFIGURATION LOADING ====================
 
@@ -685,6 +691,67 @@ class ModularPipelineExecutor:
         logger.info(
             f"🚀 Starting modular pipeline execution with branching support: {processing_id[:8]}"
         )
+
+        # ==================== PHASE 0: LOCAL PII REMOVAL (GDPR COMPLIANCE) ====================
+        # CRITICAL: Remove PII locally BEFORE any cloud AI processing
+        logger.info("🔒 Phase 0: Applying local PII removal (GDPR compliance)")
+        pii_removal_start_time = time.time()
+
+        original_length = len(input_text)
+        pii_removal_error = None
+
+        try:
+            cleaned_text = self.privacy_filter.remove_pii(input_text)
+            pii_removal_time = time.time() - pii_removal_start_time
+            cleaned_length = len(cleaned_text)
+
+            logger.info(f"✅ PII removed locally in {pii_removal_time*1000:.2f}ms - no PII sent to cloud")
+
+            # Log PII removal metrics (GDPR-safe: no text stored, only metadata)
+            try:
+                self.ai_logger._log_ai_interaction(
+                    processing_id=processing_id,
+                    step_name="PII_REMOVAL",
+                    input_text=None,  # Don't log text (GDPR)
+                    output_text=None,  # Don't log text (GDPR)
+                    processing_time_ms=int(pii_removal_time * 1000),
+                    status="success",
+                    document_type=context.get("document_type"),
+                    model_name="spaCy_de_core_news_sm",
+                    input_metadata={
+                        "original_length": original_length,
+                        "cleaned_length": cleaned_length,
+                        "reduction_bytes": original_length - cleaned_length,
+                        "filter_type": "AdvancedPrivacyFilter",
+                        "spacy_available": self.privacy_filter.has_ner,
+                    },
+                )
+            except Exception as log_error:
+                logger.error(f"⚠️ Failed to log PII removal metrics: {log_error}")
+
+            input_text = cleaned_text
+
+        except Exception as e:
+            pii_removal_error = str(e)
+            logger.error(f"⚠️ PII removal failed: {e}")
+            # Continue pipeline without PII removal if filter fails (graceful degradation)
+            logger.warning("⚠️ Continuing without PII removal - review privacy implications!")
+
+            # Log PII removal failure
+            try:
+                self.ai_logger._log_ai_interaction(
+                    processing_id=processing_id,
+                    step_name="PII_REMOVAL",
+                    input_text=None,
+                    output_text=None,
+                    processing_time_ms=int((time.time() - pii_removal_start_time) * 1000),
+                    status="error",
+                    error_message=pii_removal_error,
+                    document_type=context.get("document_type"),
+                    model_name="spaCy_de_core_news_sm",
+                )
+            except Exception as log_error:
+                logger.error(f"⚠️ Failed to log PII removal error: {log_error}")
 
         # Load job using repository (must exist - created by upload endpoint)
         job = self.job_repository.get_by_processing_id(processing_id)
