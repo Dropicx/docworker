@@ -130,6 +130,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
         if (qualityDetails) {
           // Quality gate errors are validation errors - show in FileUpload, don't propagate to App
           setQualityGateError(qualityDetails);
+          // Clear selected files and file input so user must select a new file
+          setSelectedFiles([]);
+          setPrivacyAccepted(false);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
           // Don't call onUploadError - keep FileUpload visible with error display
         } else {
           setValidationError(error.message);
@@ -513,6 +519,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 onClick={() => {
                   setQualityGateError(null);
                   setSelectedFiles([]);
+                  setPrivacyAccepted(false);
+                  // Clear the file input so user must select a new file
+                  if (fileInputRef.current) {
+                    fileInputRef.current.value = '';
+                  }
                 }}
                 className="w-full btn-secondary text-sm py-2.5"
               >
