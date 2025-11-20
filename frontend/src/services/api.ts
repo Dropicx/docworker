@@ -93,11 +93,20 @@ api.interceptors.response.use(
       }
     }
 
-    const message =
-      error.response?.data?.detail ||
-      error.response?.data?.message ||
-      error.message ||
-      'Unknown API error';
+    // Extract error message - handle both string and object detail formats
+    let message = 'Unknown API error';
+    const detail = error.response?.data?.detail;
+
+    if (typeof detail === 'string') {
+      // Simple string error
+      message = detail;
+    } else if (typeof detail === 'object' && detail !== null && 'message' in detail) {
+      // Structured error (like quality gate) - extract message from nested object
+      message = (detail as { message: string }).message;
+    } else {
+      // Fallback to other message fields
+      message = error.response?.data?.message || error.message || 'Unknown API error';
+    }
 
     throw new ApiError(message, error.response?.status || 500, error.response?.data);
   }

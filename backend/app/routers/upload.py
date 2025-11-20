@@ -166,8 +166,8 @@ async def upload_document(
                         "error": "poor_document_quality",
                         "message": "Document quality is too low for reliable processing",
                         "details": {
-                            "confidence_score": round(confidence_score, 2),
-                            "min_threshold": min_confidence,
+                            "confidence_score": float(round(confidence_score, 2)),
+                            "min_threshold": float(min_confidence),
                             "issues": issues,
                             "suggestions": suggestions,
                         },
