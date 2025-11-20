@@ -38,23 +38,32 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     }
   }
 
-  // eslint-disable-next-line no-console
-  console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+  // Log requests in development only
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+  }
   return config;
 });
 
 // Response interceptor for error handling and token refresh
 api.interceptors.response.use(
   response => {
-    // eslint-disable-next-line no-console
-    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    // Log responses in development only
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    }
     return response;
   },
   async error => {
-    console.error(
-      `❌ API Error: ${error.response?.status} ${error.config?.url}`,
-      error.response?.data
-    );
+    // Log errors in development, or always log 5xx errors
+    if (import.meta.env.DEV || error.response?.status >= 500) {
+      console.error(
+        `❌ API Error: ${error.response?.status} ${error.config?.url}`,
+        error.response?.data
+      );
+    }
 
     // Handle 401 Unauthorized - try to refresh token
     if (error.response?.status === 401 && !error.config._retry) {

@@ -229,17 +229,17 @@ class FileQualityDetector:
 
             if image_quality < 0.4:
                 issues.append("poor_image_quality")
-                suggestions.append("Ensure good lighting without shadows or glare")
-                suggestions.append("Hold camera steady to avoid blur")
+                suggestions.append("Sorgen Sie für gute Beleuchtung ohne Schatten oder Blendung")
+                suggestions.append("Halten Sie die Kamera ruhig, um Unschärfe zu vermeiden")
 
             if image_quality >= 0.4 and image_quality < 0.7:
                 issues.append("moderate_quality")
-                suggestions.append("Try to improve lighting conditions")
+                suggestions.append("Versuchen Sie, die Beleuchtungsbedingungen zu verbessern")
 
             if text_density < 0.02:
                 issues.append("low_text_density")
-                suggestions.append("Ensure the entire document is visible in the frame")
-                suggestions.append("Move closer to the document or zoom in slightly")
+                suggestions.append("Stellen Sie sicher, dass das gesamte Dokument im Bild sichtbar ist")
+                suggestions.append("Gehen Sie näher an das Dokument heran oder zoomen Sie leicht hinein")
 
         elif file_type == "pdf":
             # PDF-specific quality checks
@@ -248,21 +248,21 @@ class FileQualityDetector:
 
             if text_coverage < 0.3:
                 issues.append("low_text_coverage")
-                suggestions.append("Document appears to be mostly scanned images")
-                suggestions.append("Consider taking a higher quality photo/scan")
+                suggestions.append("Das Dokument scheint hauptsächlich aus gescannten Bildern zu bestehen")
+                suggestions.append("Erwägen Sie, ein Foto/Scan in höherer Qualität zu machen")
 
             if text_quality < 0.4:
                 issues.append("poor_text_quality")
-                suggestions.append("Text extraction quality is low")
-                suggestions.append("Try re-scanning at higher resolution (300 DPI or more)")
+                suggestions.append("Die Qualität der Textextraktion ist niedrig")
+                suggestions.append("Versuchen Sie, mit höherer Auflösung (300 DPI oder mehr) neu zu scannen")
 
         # Common suggestions
         if not suggestions:
             # General advice for low quality
-            suggestions.append("Place document on a flat, well-lit surface")
-            suggestions.append("Take photo from directly above (not at an angle)")
-            suggestions.append("Ensure document fills most of the frame")
-            suggestions.append("Avoid shadows, reflections, and glare")
+            suggestions.append("Platzieren Sie das Dokument auf einer flachen, gut beleuchteten Oberfläche")
+            suggestions.append("Fotografieren Sie von direkt oben (nicht schräg)")
+            suggestions.append("Stellen Sie sicher, dass das Dokument den größten Teil des Bildes ausfüllt")
+            suggestions.append("Vermeiden Sie Schatten, Reflexionen und Blendung")
 
         return issues, suggestions
 
