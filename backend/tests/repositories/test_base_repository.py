@@ -25,10 +25,7 @@ class TestBaseRepository:
     def test_create_entity(self, repository, db_session):
         """Test creating a new entity."""
         setting = repository.create(
-            key="test.setting",
-            value="test_value",
-            value_type="string",
-            description="Test setting"
+            key="test.setting", value="test_value", value_type="string", description="Test setting"
         )
 
         assert setting.id is not None
@@ -40,11 +37,7 @@ class TestBaseRepository:
 
     def test_create_entity_with_defaults(self, repository):
         """Test creating entity with minimal required fields."""
-        setting = repository.create(
-            key="minimal.setting",
-            value="value",
-            value_type="string"
-        )
+        setting = repository.create(key="minimal.setting", value="value", value_type="string")
 
         assert setting.id is not None
         assert setting.key == "minimal.setting"
@@ -57,7 +50,7 @@ class TestBaseRepository:
             value="value",
             value_type="string",
             is_encrypted=True,
-            updated_by="test_user"
+            updated_by="test_user",
         )
 
         assert setting.is_encrypted is True
@@ -143,10 +136,7 @@ class TestBaseRepository:
         create_system_setting(key="test.2", value="value2", value_type="int", is_encrypted=True)
         create_system_setting(key="test.3", value="value3", value_type="string", is_encrypted=False)
 
-        results = repository.get_all(filters={
-            "value_type": "string",
-            "is_encrypted": True
-        })
+        results = repository.get_all(filters={"value_type": "string", "is_encrypted": True})
 
         assert len(results) == 1
         assert results[0].key == "test.1"
@@ -185,9 +175,7 @@ class TestBaseRepository:
         original_id = setting.id
 
         updated = repository.update(
-            setting.id,
-            value="new_value",
-            description="Updated description"
+            setting.id, value="new_value", description="Updated description"
         )
 
         assert updated is not None
@@ -204,18 +192,11 @@ class TestBaseRepository:
     def test_update_multiple_fields(self, repository, create_system_setting):
         """Test updating multiple fields at once."""
         setting = create_system_setting(
-            key="multi.update",
-            value="old",
-            value_type="string",
-            is_encrypted=False
+            key="multi.update", value="old", value_type="string", is_encrypted=False
         )
 
         updated = repository.update(
-            setting.id,
-            value="new",
-            value_type="int",
-            is_encrypted=True,
-            updated_by="test_user"
+            setting.id, value="new", value_type="int", is_encrypted=True, updated_by="test_user"
         )
 
         assert updated.value == "new"
@@ -228,9 +209,7 @@ class TestBaseRepository:
         setting = create_system_setting(key="invalid.test", value="value", value_type="string")
 
         updated = repository.update(
-            setting.id,
-            value="new_value",
-            nonexistent_field="should_be_ignored"
+            setting.id, value="new_value", nonexistent_field="should_be_ignored"
         )
 
         assert updated.value == "new_value"
@@ -280,9 +259,15 @@ class TestBaseRepository:
 
     def test_count_with_filters(self, repository, create_system_setting):
         """Test counting with filters."""
-        create_system_setting(key="count.encrypted.1", value="v1", value_type="string", is_encrypted=True)
-        create_system_setting(key="count.encrypted.2", value="v2", value_type="string", is_encrypted=True)
-        create_system_setting(key="count.plain.1", value="v3", value_type="string", is_encrypted=False)
+        create_system_setting(
+            key="count.encrypted.1", value="v1", value_type="string", is_encrypted=True
+        )
+        create_system_setting(
+            key="count.encrypted.2", value="v2", value_type="string", is_encrypted=True
+        )
+        create_system_setting(
+            key="count.plain.1", value="v3", value_type="string", is_encrypted=False
+        )
 
         encrypted_count = repository.count(filters={"is_encrypted": True})
         assert encrypted_count == 2
@@ -319,27 +304,20 @@ class TestBaseRepository:
     def test_exists_with_multiple_filters(self, repository, create_system_setting):
         """Test exists with multiple filter conditions."""
         create_system_setting(
-            key="exists.multi",
-            value="value",
-            value_type="string",
-            is_encrypted=True
+            key="exists.multi", value="value", value_type="string", is_encrypted=True
         )
 
         # All conditions match
-        assert repository.exists(filters={
-            "key": "exists.multi",
-            "is_encrypted": True
-        }) is True
+        assert repository.exists(filters={"key": "exists.multi", "is_encrypted": True}) is True
 
         # One condition doesn't match
-        assert repository.exists(filters={
-            "key": "exists.multi",
-            "is_encrypted": False
-        }) is False
+        assert repository.exists(filters={"key": "exists.multi", "is_encrypted": False}) is False
 
     # ==================== ERROR HANDLING TESTS ====================
 
-    def test_create_with_duplicate_unique_field_raises_error(self, repository, create_system_setting):
+    def test_create_with_duplicate_unique_field_raises_error(
+        self, repository, create_system_setting
+    ):
         """Test that creating duplicate unique key raises error."""
         create_system_setting(key="duplicate.key", value="v1", value_type="string")
 
@@ -364,7 +342,9 @@ class TestBaseRepository:
 
     def test_rollback_on_update_error(self, repository, create_system_setting):
         """Test that database is rolled back on update error."""
-        setting = create_system_setting(key="update.rollback", value="original", value_type="string")
+        setting = create_system_setting(
+            key="update.rollback", value="original", value_type="string"
+        )
         original_value = setting.value
 
         # Try invalid update (this is a simplified test, actual error depends on constraints)

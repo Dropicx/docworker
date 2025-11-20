@@ -16,6 +16,7 @@ from app.repositories.pipeline_job_repository import PipelineJobRepository
 
 # ==================== FIXTURES ====================
 
+
 @pytest.fixture(scope="function")
 def db_session() -> Session:
     """Create an in-memory SQLite database session for each test."""
@@ -55,7 +56,7 @@ def sample_job(db_session: Session) -> PipelineJobDB:
         status=StepExecutionStatus.PENDING,
         progress_percent=0,
         result_data=None,
-        error_message=None
+        error_message=None,
     )
     db_session.add(job)
     db_session.commit()
@@ -64,6 +65,7 @@ def sample_job(db_session: Session) -> PipelineJobDB:
 
 
 # ==================== BASE REPOSITORY TESTS ====================
+
 
 def test_create_job(repository: PipelineJobRepository):
     """Test creating a new pipeline job."""
@@ -83,7 +85,7 @@ def test_create_job(repository: PipelineJobRepository):
         pipeline_config={"steps": []},
         ocr_config={"enabled": True},
         status=StepExecutionStatus.PENDING,
-        progress_percent=0
+        progress_percent=0,
     )
 
     # Assert
@@ -129,7 +131,7 @@ def test_get_all_jobs(repository: PipelineJobRepository, db_session: Session):
             pipeline_config={"steps": []},
             ocr_config={"enabled": True},
             status=StepExecutionStatus.PENDING,
-            progress_percent=0
+            progress_percent=0,
         )
         db_session.add(job)
     db_session.commit()
@@ -149,11 +151,7 @@ def test_update_job(repository: PipelineJobRepository, sample_job: PipelineJobDB
     new_progress = 50
 
     # Act
-    updated_job = repository.update(
-        sample_job.id,
-        status=new_status,
-        progress_percent=new_progress
-    )
+    updated_job = repository.update(sample_job.id, status=new_status, progress_percent=new_progress)
 
     # Assert
     assert updated_job is not None
@@ -181,6 +179,7 @@ def test_delete_nonexistent_job(repository: PipelineJobRepository):
 
 
 # ==================== PIPELINE JOB REPOSITORY-SPECIFIC TESTS ====================
+
 
 def test_get_by_processing_id(repository: PipelineJobRepository, sample_job: PipelineJobDB):
     """Test retrieving a job by processing ID."""
@@ -210,7 +209,7 @@ def test_get_active_jobs(repository: PipelineJobRepository, db_session: Session)
         StepExecutionStatus.RUNNING,
         StepExecutionStatus.PENDING,
         StepExecutionStatus.COMPLETED,
-        StepExecutionStatus.FAILED
+        StepExecutionStatus.FAILED,
     ]
 
     for i, status in enumerate(statuses):
@@ -224,7 +223,7 @@ def test_get_active_jobs(repository: PipelineJobRepository, db_session: Session)
             pipeline_config={"steps": []},
             ocr_config={"enabled": True},
             status=status,
-            progress_percent=0
+            progress_percent=0,
         )
         db_session.add(job)
     db_session.commit()
@@ -244,7 +243,7 @@ def test_get_pending_jobs(repository: PipelineJobRepository, db_session: Session
         StepExecutionStatus.PENDING,
         StepExecutionStatus.PENDING,
         StepExecutionStatus.RUNNING,
-        StepExecutionStatus.COMPLETED
+        StepExecutionStatus.COMPLETED,
     ]
 
     for i, status in enumerate(statuses):
@@ -258,7 +257,7 @@ def test_get_pending_jobs(repository: PipelineJobRepository, db_session: Session
             pipeline_config={"steps": []},
             ocr_config={"enabled": True},
             status=status,
-            progress_percent=0
+            progress_percent=0,
         )
         db_session.add(job)
     db_session.commit()
@@ -313,7 +312,7 @@ def test_set_job_result(repository: PipelineJobRepository, sample_job: PipelineJ
     result_data = {
         "translated_text": "Übersetzter Text",
         "document_type": "ARZTBRIEF",
-        "target_language": "en"
+        "target_language": "en",
     }
 
     # Act
@@ -354,7 +353,7 @@ def test_get_jobs_by_status(repository: PipelineJobRepository, db_session: Sessi
             pipeline_config={"steps": []},
             ocr_config={"enabled": True},
             status=status,
-            progress_percent=100 if status == StepExecutionStatus.COMPLETED else 50
+            progress_percent=100 if status == StepExecutionStatus.COMPLETED else 50,
         )
         db_session.add(job)
     db_session.commit()
@@ -383,7 +382,7 @@ def test_get_recent_jobs(repository: PipelineJobRepository, db_session: Session)
             ocr_config={"enabled": True},
             status=StepExecutionStatus.COMPLETED,
             progress_percent=100,
-            created_at=now - timedelta(seconds=i)  # Each job is 1 second older
+            created_at=now - timedelta(seconds=i),  # Each job is 1 second older
         )
         db_session.add(job)
     db_session.commit()
@@ -416,7 +415,7 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
         ocr_config={"enabled": True},
         status=StepExecutionStatus.COMPLETED,
         progress_percent=100,
-        created_at=old_date
+        created_at=old_date,
     )
 
     # Recent completed job (should be kept)
@@ -431,7 +430,7 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
         ocr_config={"enabled": True},
         status=StepExecutionStatus.COMPLETED,
         progress_percent=100,
-        created_at=recent_date
+        created_at=recent_date,
     )
 
     # Old failed job (should be kept - only clean completed jobs)
@@ -446,7 +445,7 @@ def test_cleanup_old_jobs(repository: PipelineJobRepository, db_session: Session
         ocr_config={"enabled": True},
         status=StepExecutionStatus.FAILED,
         progress_percent=50,
-        created_at=old_date
+        created_at=old_date,
     )
 
     db_session.add_all([old_job, recent_job, old_failed_job])
@@ -472,7 +471,7 @@ def test_count_by_status(repository: PipelineJobRepository, db_session: Session)
         StepExecutionStatus.COMPLETED,
         StepExecutionStatus.COMPLETED,
         StepExecutionStatus.COMPLETED,
-        StepExecutionStatus.FAILED
+        StepExecutionStatus.FAILED,
     ]
 
     for i, status in enumerate(statuses):
@@ -486,7 +485,7 @@ def test_count_by_status(repository: PipelineJobRepository, db_session: Session)
             pipeline_config={"steps": []},
             ocr_config={"enabled": True},
             status=status,
-            progress_percent=0
+            progress_percent=0,
         )
         db_session.add(job)
     db_session.commit()
@@ -502,6 +501,7 @@ def test_count_by_status(repository: PipelineJobRepository, db_session: Session)
 
 
 # ==================== EDGE CASES AND ERROR HANDLING ====================
+
 
 def test_update_nonexistent_job(repository: PipelineJobRepository):
     """Test updating a job that doesn't exist."""

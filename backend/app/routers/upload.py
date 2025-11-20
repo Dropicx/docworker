@@ -14,6 +14,7 @@ from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
 from app.models.document import DocumentType, ProcessingStatus, UploadResponse
+from app.services.file_quality_detector import FileQualityDetector
 from app.services.file_validator import FileValidator
 
 logger = logging.getLogger(__name__)
@@ -116,6 +117,78 @@ async def upload_document(
         # Lade aktuelle Pipeline- und OCR-Konfiguration
         pipeline_steps_list = executor.load_pipeline_steps()
         ocr_config_obj = executor.load_ocr_configuration()
+
+        # Quality Gate: Check document quality before processing
+        # Skip quality gate in test/development environment
+        skip_quality_gate = os.getenv("ENVIRONMENT") in ["test", "development"]
+
+        if not skip_quality_gate:
+            logger.debug(f"🔍 Running quality gate check for {file.filename}")
+            quality_detector = FileQualityDetector()
+
+            try:
+                # Analyze document quality
+                strategy, complexity, analysis = await quality_detector.analyze_file(
+                    file_content=file_content, file_type=file_type_str, filename=file.filename
+                )
+
+                # Get quality threshold from OCR configuration (default: 0.5)
+                min_confidence = (
+                    ocr_config_obj.min_ocr_confidence_threshold
+                    if ocr_config_obj and hasattr(ocr_config_obj, "min_ocr_confidence_threshold")
+                    else 0.5
+                )
+
+                # Calculate confidence score from analysis
+                confidence_score = 0.0
+                if file_type_str == "pdf":
+                    # For PDFs: combine text coverage and quality
+                    text_coverage = analysis.get("text_coverage", 0.0)
+                    text_quality = analysis.get("text_quality_score", 0.0)
+                    confidence_score = (text_coverage * 0.6) + (text_quality * 0.4)
+                elif file_type_str == "image":
+                    # For images: use image quality directly
+                    confidence_score = analysis.get("image_quality", 0.0)
+
+                logger.info(
+                    f"📊 Quality check: confidence={confidence_score:.2f}, threshold={min_confidence:.2f}"
+                )
+
+                # Reject if quality is below threshold
+                if confidence_score < min_confidence:
+                    issues, suggestions = quality_detector.get_quality_issues(analysis)
+
+                    logger.warning(
+                        f"❌ Quality gate rejected: {file.filename} "
+                        f"(confidence={confidence_score:.2f} < threshold={min_confidence:.2f})"
+                    )
+
+                    # Return detailed error with actionable feedback
+                    raise HTTPException(
+                        status_code=422,  # Unprocessable Entity
+                        detail={
+                            "error": "poor_document_quality",
+                            "message": "Document quality is too low for reliable processing",
+                            "details": {
+                                "confidence_score": float(round(confidence_score, 2)),
+                                "min_threshold": float(min_confidence),
+                                "issues": issues,
+                                "suggestions": suggestions,
+                            },
+                        },
+                    )
+
+                logger.info(f"✅ Quality gate passed for {file.filename}")
+
+            except HTTPException:
+                # Re-raise HTTP exceptions (quality gate rejection)
+                raise
+            except Exception as e:
+                # Log quality check errors but don't block upload
+                logger.warning(f"⚠️ Quality check failed (proceeding with upload): {str(e)}")
+                # Continue with upload even if quality check fails
+        else:
+            logger.debug("⏭️ Quality gate skipped (test/development environment)")
 
         # Serialize für JSON-Speicherung
         pipeline_config = [

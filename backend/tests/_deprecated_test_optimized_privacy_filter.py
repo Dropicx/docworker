@@ -10,7 +10,7 @@ import os
 import sys
 
 # Add backend to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.services.optimized_privacy_filter import OptimizedPrivacyFilter
 
@@ -89,11 +89,11 @@ class TestOptimizedPrivacyFilter:
 
         # Lab values and their measurements should be preserved
         assert "14.5" in result  # Hämoglobin value
-        assert "7.2" in result   # Leukozyten value
-        assert "250" in result   # Thrombozyten value
-        assert "5.8" in result   # HbA1c value
-        assert "0.9" in result   # Kreatinin value
-        assert "2.1" in result   # TSH value
+        assert "7.2" in result  # Leukozyten value
+        assert "250" in result  # Thrombozyten value
+        assert "5.8" in result  # HbA1c value
+        assert "0.9" in result  # Kreatinin value
+        assert "2.1" in result  # TSH value
 
     def test_complex_document_with_names(self, filter):
         """Test complex document with embedded names"""
@@ -200,11 +200,11 @@ class TestOptimizedPrivacyFilter:
         """Test performance statistics"""
         stats = filter.get_performance_stats()
 
-        assert 'filter_type' in stats
-        assert stats['filter_type'] == 'OptimizedPrivacyFilter'
-        assert 'mode' in stats
-        assert 'spacy_available' in stats
-        assert 'expected_performance_ms' in stats
+        assert "filter_type" in stats
+        assert stats["filter_type"] == "OptimizedPrivacyFilter"
+        assert "mode" in stats
+        assert "spacy_available" in stats
+        assert "expected_performance_ms" in stats
 
     def test_empty_text(self, filter):
         """Test handling of empty text"""
@@ -296,13 +296,16 @@ class TestOptimizedPrivacyFilter:
         """Test performance on complex document (should be <200ms)"""
         import time
 
-        text = """
+        text = (
+            """
         Arztbrief für Patient Max Mustermann, geb. 01.01.1980
         Diagnose: Diabetes mellitus Typ 2, Hypertonie
         Behandelnder Arzt: Dr. Schmidt
         Laborwerte: HbA1c 8.2%, Glucose 145 mg/dl
         Medikation: Metformin 1000mg, Ramipril 5mg
-        """ * 5  # Repeat to make it more complex
+        """
+            * 5
+        )  # Repeat to make it more complex
 
         start = time.time()
         filter.remove_pii(text)

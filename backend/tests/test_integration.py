@@ -15,7 +15,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 # Add backend to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.database.modular_pipeline_models import (
     DynamicPipelineStepDB,
@@ -23,7 +23,7 @@ from app.database.modular_pipeline_models import (
     DocumentClassDB,
     PipelineJobDB,
     Base,
-    StepExecutionStatus
+    StepExecutionStatus,
 )
 from app.services.document_class_manager import DocumentClassManager
 from app.services.modular_pipeline_executor import ModularPipelineExecutor
@@ -60,7 +60,7 @@ def seed_document_classes(db_session):
             is_enabled=True,
             is_system_class=True,
             strong_indicators=["Arztbrief", "Entlassungsbrief"],
-            weak_indicators=["Klinik", "Station"]
+            weak_indicators=["Klinik", "Station"],
         ),
         DocumentClassDB(
             class_key="BEFUNDBERICHT",
@@ -70,7 +70,7 @@ def seed_document_classes(db_session):
             is_enabled=True,
             is_system_class=True,
             strong_indicators=["Befund", "Diagnose"],
-            weak_indicators=["Untersuchung"]
+            weak_indicators=["Untersuchung"],
         ),
         DocumentClassDB(
             class_key="LABORWERTE",
@@ -80,8 +80,8 @@ def seed_document_classes(db_session):
             is_enabled=True,
             is_system_class=True,
             strong_indicators=["Labor", "Blutwerte"],
-            weak_indicators=["mg/dl", "Referenzbereich"]
-        )
+            weak_indicators=["mg/dl", "Referenzbereich"],
+        ),
     ]
 
     for doc_class in classes:
@@ -103,7 +103,7 @@ def seed_models(db_session):
             price_input_per_1m_tokens=0.1,  # $0.10 per 1M input tokens
             price_output_per_1m_tokens=0.2,  # $0.20 per 1M output tokens
             is_enabled=True,
-            supports_vision=False
+            supports_vision=False,
         ),
         AvailableModelDB(
             name="Mistral-Nemo-Instruct-2407",
@@ -113,8 +113,8 @@ def seed_models(db_session):
             price_input_per_1m_tokens=0.05,  # $0.05 per 1M input tokens
             price_output_per_1m_tokens=0.1,  # $0.10 per 1M output tokens
             is_enabled=True,
-            supports_vision=False
-        )
+            supports_vision=False,
+        ),
     ]
 
     for model in models:
@@ -140,7 +140,7 @@ def seed_pipeline_steps(db_session, seed_models):
             retry_on_failure=False,
             document_class_id=None,
             post_branching=False,
-            is_branching_step=False
+            is_branching_step=False,
         ),
         DynamicPipelineStepDB(
             name="Document Classification",
@@ -155,7 +155,7 @@ def seed_pipeline_steps(db_session, seed_models):
             document_class_id=None,
             post_branching=False,
             is_branching_step=True,
-            branching_field="document_type"
+            branching_field="document_type",
         ),
         DynamicPipelineStepDB(
             name="Language Translation",
@@ -171,8 +171,8 @@ def seed_pipeline_steps(db_session, seed_models):
             document_class_id=None,
             post_branching=True,
             required_context_variables=["target_language"],
-            is_branching_step=False
-        )
+            is_branching_step=False,
+        ),
     ]
 
     for step in steps:
@@ -190,16 +190,18 @@ class TestDocumentClassManagerIntegration:
         manager = DocumentClassManager(session=db_session)
 
         # CREATE
-        new_class = manager.create_class({
-            "class_key": "THERAPIEPLAN",
-            "display_name": "Therapieplan",
-            "description": "Treatment plans",
-            "icon": "💊",
-            "is_enabled": True,
-            "is_system_class": False,
-            "strong_indicators": ["Therapie", "Behandlungsplan"],
-            "weak_indicators": ["Medikation"]
-        })
+        new_class = manager.create_class(
+            {
+                "class_key": "THERAPIEPLAN",
+                "display_name": "Therapieplan",
+                "description": "Treatment plans",
+                "icon": "💊",
+                "is_enabled": True,
+                "is_system_class": False,
+                "strong_indicators": ["Therapie", "Behandlungsplan"],
+                "weak_indicators": ["Medikation"],
+            }
+        )
 
         assert new_class is not None
         assert new_class.class_key == "THERAPIEPLAN"
@@ -210,9 +212,9 @@ class TestDocumentClassManagerIntegration:
         assert retrieved.id == new_class.id
 
         # UPDATE
-        updated = manager.update_class(new_class.id, {
-            "description": "Comprehensive therapy and treatment plans"
-        })
+        updated = manager.update_class(
+            new_class.id, {"description": "Comprehensive therapy and treatment plans"}
+        )
         assert updated.description == "Comprehensive therapy and treatment plans"
 
         # DELETE (should work for non-system class)
@@ -317,7 +319,7 @@ class TestFileValidationIntegration:
         upload_file = UploadFile(
             filename="test.pdf",
             file=BytesIO(pdf_content),
-            headers={"content-type": "application/pdf"}
+            headers={"content-type": "application/pdf"},
         )
 
         is_valid, error = await FileValidator.validate_file(upload_file)
@@ -329,17 +331,15 @@ class TestFileValidationIntegration:
     async def test_validate_image_file(self):
         """Test image file validation"""
         # Create a small test image (300x300 to be well above minimums)
-        img = Image.new('RGB', (300, 300), color='white')
+        img = Image.new("RGB", (300, 300), color="white")
         img_byte_arr = BytesIO()
-        img.save(img_byte_arr, format='PNG')
+        img.save(img_byte_arr, format="PNG")
         img_content = img_byte_arr.getvalue()
 
         from fastapi import UploadFile
 
         upload_file = UploadFile(
-            filename="test.png",
-            file=BytesIO(img_content),
-            headers={"content-type": "image/png"}
+            filename="test.png", file=BytesIO(img_content), headers={"content-type": "image/png"}
         )
 
         is_valid, error = await FileValidator.validate_file(upload_file)
@@ -377,16 +377,16 @@ class TestPipelineJobWorkflow:
             status=StepExecutionStatus.PENDING,
             progress_percent=0,
             pipeline_config={"steps": []},
-            ocr_config={"selected_engine": "PADDLEOCR"}
+            ocr_config={"selected_engine": "PADDLEOCR"},
         )
 
         db_session.add(job)
         db_session.commit()
 
         # Retrieve and verify
-        retrieved = db_session.query(PipelineJobDB).filter_by(
-            processing_id=job.processing_id
-        ).first()
+        retrieved = (
+            db_session.query(PipelineJobDB).filter_by(processing_id=job.processing_id).first()
+        )
 
         assert retrieved is not None
         assert retrieved.status == StepExecutionStatus.PENDING
@@ -398,9 +398,7 @@ class TestPipelineJobWorkflow:
         db_session.commit()
 
         # Verify update
-        updated = db_session.query(PipelineJobDB).filter_by(
-            processing_id=job.processing_id
-        ).first()
+        updated = db_session.query(PipelineJobDB).filter_by(processing_id=job.processing_id).first()
         assert updated.progress_percent == 50
         assert updated.status == StepExecutionStatus.RUNNING
 
@@ -413,23 +411,27 @@ class TestDatabaseConstraints:
         manager = DocumentClassManager(session=db_session)
 
         # Create first class
-        manager.create_class({
-            "class_key": "UNIQUE_KEY",
-            "display_name": "Test Class",
-            "description": "Test",
-            "icon": "📄",
-            "is_enabled": True
-        })
+        manager.create_class(
+            {
+                "class_key": "UNIQUE_KEY",
+                "display_name": "Test Class",
+                "description": "Test",
+                "icon": "📄",
+                "is_enabled": True,
+            }
+        )
 
         # Try to create duplicate - should raise error
         with pytest.raises(ValueError, match="already exists"):
-            manager.create_class({
-                "class_key": "UNIQUE_KEY",
-                "display_name": "Duplicate",
-                "description": "Test",
-                "icon": "📄",
-                "is_enabled": True
-            })
+            manager.create_class(
+                {
+                    "class_key": "UNIQUE_KEY",
+                    "display_name": "Duplicate",
+                    "description": "Test",
+                    "icon": "📄",
+                    "is_enabled": True,
+                }
+            )
 
     def test_pipeline_step_ordering(self, db_session, seed_models):
         """Test that pipeline steps maintain order"""
@@ -438,30 +440,28 @@ class TestDatabaseConstraints:
             order=1,
             prompt_template="Test",
             selected_model_id=seed_models[0].id,
-            enabled=True
+            enabled=True,
         )
         step2 = DynamicPipelineStepDB(
             name="Second Step",
             order=2,
             prompt_template="Test",
             selected_model_id=seed_models[0].id,
-            enabled=True
+            enabled=True,
         )
         step3 = DynamicPipelineStepDB(
             name="Third Step",
             order=3,
             prompt_template="Test",
             selected_model_id=seed_models[0].id,
-            enabled=True
+            enabled=True,
         )
 
         db_session.add_all([step3, step1, step2])  # Add out of order
         db_session.commit()
 
         # Query and verify correct ordering
-        steps = db_session.query(DynamicPipelineStepDB).order_by(
-            DynamicPipelineStepDB.order
-        ).all()
+        steps = db_session.query(DynamicPipelineStepDB).order_by(DynamicPipelineStepDB.order).all()
 
         assert len(steps) == 3
         assert steps[0].name == "First Step"

@@ -199,7 +199,9 @@ class TestDocumentClassifier:
     # ==================== ASYNC CLASSIFICATION TESTS ====================
 
     @pytest.mark.asyncio
-    async def test_classify_document_high_confidence_pattern(self, classifier_with_client, mock_ovh_client):
+    async def test_classify_document_high_confidence_pattern(
+        self, classifier_with_client, mock_ovh_client
+    ):
         """Test that high confidence pattern match doesn't call AI."""
         text = """
         Sehr geehrte Frau Kollegin,
@@ -217,7 +219,9 @@ class TestDocumentClassifier:
         mock_ovh_client.process_medical_text.assert_not_called()
 
     @pytest.mark.asyncio
-    async def test_classify_document_low_confidence_uses_ai(self, classifier_with_client, mock_ovh_client):
+    async def test_classify_document_low_confidence_uses_ai(
+        self, classifier_with_client, mock_ovh_client
+    ):
         """Test that low confidence pattern match triggers AI fallback."""
         text = "Patient wurde untersucht."  # Weak indicators only
 
@@ -253,7 +257,9 @@ class TestDocumentClassifier:
         assert result.method == "pattern"
 
     @pytest.mark.asyncio
-    async def test_classify_document_ai_better_than_pattern(self, classifier_with_client, mock_ovh_client):
+    async def test_classify_document_ai_better_than_pattern(
+        self, classifier_with_client, mock_ovh_client
+    ):
         """Test that AI result is used when better than pattern."""
         text = "Patient wurde mit Anamnese untersucht."  # Low pattern confidence
 
@@ -267,7 +273,9 @@ class TestDocumentClassifier:
         assert result.method == "ai"
 
     @pytest.mark.asyncio
-    async def test_classify_document_pattern_better_than_ai(self, classifier_with_client, mock_ovh_client):
+    async def test_classify_document_pattern_better_than_ai(
+        self, classifier_with_client, mock_ovh_client
+    ):
         """Test that pattern result is kept when better than AI."""
         text = """
         LABORWERTE - Blutbild
@@ -379,7 +387,7 @@ class TestDocumentClassifier:
 
         # Check that the text passed to AI was truncated
         call_args = mock_ovh_client.process_medical_text.call_args
-        assert len(call_args.kwargs['text']) == 2000
+        assert len(call_args.kwargs["text"]) == 2000
 
     @pytest.mark.asyncio
     async def test_classify_by_ai_correct_parameters(self, classifier_with_client, mock_ovh_client):
@@ -394,12 +402,12 @@ class TestDocumentClassifier:
         mock_ovh_client.process_medical_text.assert_called_once()
         call_kwargs = mock_ovh_client.process_medical_text.call_args.kwargs
 
-        assert call_kwargs['temperature'] == 0.1  # Low temperature for consistent results
-        assert call_kwargs['max_tokens'] == 10  # Only need one word
-        assert 'instruction' in call_kwargs
-        assert 'ARZTBRIEF' in call_kwargs['instruction']
-        assert 'BEFUNDBERICHT' in call_kwargs['instruction']
-        assert 'LABORWERTE' in call_kwargs['instruction']
+        assert call_kwargs["temperature"] == 0.1  # Low temperature for consistent results
+        assert call_kwargs["max_tokens"] == 10  # Only need one word
+        assert "instruction" in call_kwargs
+        assert "ARZTBRIEF" in call_kwargs["instruction"]
+        assert "BEFUNDBERICHT" in call_kwargs["instruction"]
+        assert "LABORWERTE" in call_kwargs["instruction"]
 
     @pytest.mark.asyncio
     async def test_classify_by_ai_case_insensitive(self, classifier_with_client, mock_ovh_client):
@@ -499,7 +507,7 @@ class TestDocumentClassifier:
         texts = {
             DocumentClass.ARZTBRIEF: "Sehr geehrte Frau Kollegin, Entlassung. Mit freundlichen Grüßen",
             DocumentClass.BEFUNDBERICHT: "BEFUNDBERICHT MRT vom 20.03. Kontrastmittel Befund zeigt Läsion",
-            DocumentClass.LABORWERTE: "LABORWERTE Blutbild: Cholesterin 220 mg/dl HbA1c 5.8% Referenzbereich"
+            DocumentClass.LABORWERTE: "LABORWERTE Blutbild: Cholesterin 220 mg/dl HbA1c 5.8% Referenzbereich",
         }
 
         for expected_class, text in texts.items():

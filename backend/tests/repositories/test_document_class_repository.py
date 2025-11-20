@@ -28,7 +28,7 @@ class TestDocumentClassRepository:
             description="Doctor's letter",
             icon="📨",
             is_enabled=True,
-            is_system_class=True
+            is_system_class=True,
         )
 
         assert doc_class.id is not None
@@ -147,7 +147,9 @@ class TestDocumentClassRepository:
 
         assert exists is False
 
-    def test_class_key_exists_with_exclusion_multiple_records(self, repository, create_document_class):
+    def test_class_key_exists_with_exclusion_multiple_records(
+        self, repository, create_document_class
+    ):
         """Test key existence check with exclusion when duplicates would exist."""
         doc_class1 = create_document_class(class_key="KEY_1")
         create_document_class(class_key="KEY_2")
@@ -192,13 +194,9 @@ class TestDocumentClassRepository:
     def test_get_classes_with_indicators_strong(self, repository, create_document_class):
         """Test retrieving classes with specific strong indicator."""
         create_document_class(
-            class_key="CLASS_1",
-            strong_indicators=["Arztbrief", "Entlassungsbericht"]
+            class_key="CLASS_1", strong_indicators=["Arztbrief", "Entlassungsbericht"]
         )
-        create_document_class(
-            class_key="CLASS_2",
-            strong_indicators=["Befund", "Labor"]
-        )
+        create_document_class(class_key="CLASS_2", strong_indicators=["Befund", "Labor"])
 
         classes = repository.get_classes_with_indicators("Arztbrief")
 
@@ -207,14 +205,8 @@ class TestDocumentClassRepository:
 
     def test_get_classes_with_indicators_weak(self, repository, create_document_class):
         """Test retrieving classes with specific weak indicator."""
-        create_document_class(
-            class_key="CLASS_1",
-            weak_indicators=["Patient", "Diagnose"]
-        )
-        create_document_class(
-            class_key="CLASS_2",
-            weak_indicators=["Laborwerte"]
-        )
+        create_document_class(class_key="CLASS_1", weak_indicators=["Patient", "Diagnose"])
+        create_document_class(class_key="CLASS_2", weak_indicators=["Laborwerte"])
 
         classes = repository.get_classes_with_indicators("Patient")
 
@@ -223,10 +215,7 @@ class TestDocumentClassRepository:
 
     def test_get_classes_with_indicators_no_match(self, repository, create_document_class):
         """Test searching for non-existent indicator returns empty list."""
-        create_document_class(
-            class_key="CLASS_1",
-            strong_indicators=["Arztbrief"]
-        )
+        create_document_class(class_key="CLASS_1", strong_indicators=["Arztbrief"])
 
         classes = repository.get_classes_with_indicators("Nonexistent")
 
@@ -234,10 +223,7 @@ class TestDocumentClassRepository:
 
     def test_add_strong_indicator(self, repository, create_document_class):
         """Test adding a strong indicator to a document class."""
-        doc_class = create_document_class(
-            class_key="INDICATOR_TEST",
-            strong_indicators=["Initial"]
-        )
+        doc_class = create_document_class(class_key="INDICATOR_TEST", strong_indicators=["Initial"])
 
         updated_class = repository.add_strong_indicator(doc_class.id, "NewIndicator")
 
@@ -247,10 +233,7 @@ class TestDocumentClassRepository:
 
     def test_add_strong_indicator_to_empty_list(self, repository, create_document_class):
         """Test adding strong indicator when list is None."""
-        doc_class = create_document_class(
-            class_key="EMPTY_INDICATORS",
-            strong_indicators=None
-        )
+        doc_class = create_document_class(class_key="EMPTY_INDICATORS", strong_indicators=None)
 
         updated_class = repository.add_strong_indicator(doc_class.id, "FirstIndicator")
 
@@ -259,10 +242,7 @@ class TestDocumentClassRepository:
 
     def test_add_strong_indicator_duplicate(self, repository, create_document_class):
         """Test adding duplicate strong indicator doesn't create duplicates."""
-        doc_class = create_document_class(
-            class_key="DUP_TEST",
-            strong_indicators=["Existing"]
-        )
+        doc_class = create_document_class(class_key="DUP_TEST", strong_indicators=["Existing"])
 
         repository.add_strong_indicator(doc_class.id, "Existing")
         updated_class = repository.get(doc_class.id)
@@ -271,10 +251,7 @@ class TestDocumentClassRepository:
 
     def test_add_weak_indicator(self, repository, create_document_class):
         """Test adding a weak indicator to a document class."""
-        doc_class = create_document_class(
-            class_key="WEAK_TEST",
-            weak_indicators=["Initial"]
-        )
+        doc_class = create_document_class(class_key="WEAK_TEST", weak_indicators=["Initial"])
 
         updated_class = repository.add_weak_indicator(doc_class.id, "NewWeak")
 
@@ -284,10 +261,7 @@ class TestDocumentClassRepository:
 
     def test_add_weak_indicator_to_empty_list(self, repository, create_document_class):
         """Test adding weak indicator when list is None."""
-        doc_class = create_document_class(
-            class_key="EMPTY_WEAK",
-            weak_indicators=None
-        )
+        doc_class = create_document_class(class_key="EMPTY_WEAK", weak_indicators=None)
 
         updated_class = repository.add_weak_indicator(doc_class.id, "FirstWeak")
 
@@ -298,14 +272,8 @@ class TestDocumentClassRepository:
 
     def test_get_classes_with_examples(self, repository, create_document_class):
         """Test retrieving classes with specific example."""
-        create_document_class(
-            class_key="CLASS_1",
-            examples=["Sehr geehrte", "Mit freundlichen"]
-        )
-        create_document_class(
-            class_key="CLASS_2",
-            examples=["Laborwerte", "Blutwerte"]
-        )
+        create_document_class(class_key="CLASS_1", examples=["Sehr geehrte", "Mit freundlichen"])
+        create_document_class(class_key="CLASS_2", examples=["Laborwerte", "Blutwerte"])
 
         classes = repository.get_classes_with_examples("Laborwerte")
 
@@ -314,10 +282,7 @@ class TestDocumentClassRepository:
 
     def test_get_classes_with_examples_no_match(self, repository, create_document_class):
         """Test searching for non-existent example returns empty list."""
-        create_document_class(
-            class_key="CLASS_1",
-            examples=["Example1"]
-        )
+        create_document_class(class_key="CLASS_1", examples=["Example1"])
 
         classes = repository.get_classes_with_examples("Nonexistent")
 
@@ -325,10 +290,7 @@ class TestDocumentClassRepository:
 
     def test_add_example(self, repository, create_document_class):
         """Test adding an example to a document class."""
-        doc_class = create_document_class(
-            class_key="EXAMPLE_TEST",
-            examples=["Initial example"]
-        )
+        doc_class = create_document_class(class_key="EXAMPLE_TEST", examples=["Initial example"])
 
         updated_class = repository.add_example(doc_class.id, "New example")
 
@@ -338,10 +300,7 @@ class TestDocumentClassRepository:
 
     def test_add_example_to_empty_list(self, repository, create_document_class):
         """Test adding example when list is None."""
-        doc_class = create_document_class(
-            class_key="EMPTY_EXAMPLES",
-            examples=None
-        )
+        doc_class = create_document_class(class_key="EMPTY_EXAMPLES", examples=None)
 
         updated_class = repository.add_example(doc_class.id, "First example")
 
@@ -350,10 +309,7 @@ class TestDocumentClassRepository:
 
     def test_add_example_duplicate(self, repository, create_document_class):
         """Test adding duplicate example doesn't create duplicates."""
-        doc_class = create_document_class(
-            class_key="DUP_EXAMPLE",
-            examples=["Existing example"]
-        )
+        doc_class = create_document_class(class_key="DUP_EXAMPLE", examples=["Existing example"])
 
         repository.add_example(doc_class.id, "Existing example")
         updated_class = repository.get(doc_class.id)
@@ -368,8 +324,7 @@ class TestDocumentClassRepository:
     def test_remove_example(self, repository, create_document_class):
         """Test removing an example from a document class."""
         doc_class = create_document_class(
-            class_key="REMOVE_EXAMPLE",
-            examples=["Keep this", "Remove this"]
+            class_key="REMOVE_EXAMPLE", examples=["Keep this", "Remove this"]
         )
 
         updated_class = repository.remove_example(doc_class.id, "Remove this")
@@ -380,10 +335,7 @@ class TestDocumentClassRepository:
 
     def test_remove_example_nonexistent(self, repository, create_document_class):
         """Test removing non-existent example returns class unchanged."""
-        doc_class = create_document_class(
-            class_key="REMOVE_TEST",
-            examples=["Example1"]
-        )
+        doc_class = create_document_class(class_key="REMOVE_TEST", examples=["Example1"])
 
         updated_class = repository.remove_example(doc_class.id, "Nonexistent")
 
@@ -392,10 +344,7 @@ class TestDocumentClassRepository:
 
     def test_remove_example_from_empty_list(self, repository, create_document_class):
         """Test removing example when list is None returns None."""
-        doc_class = create_document_class(
-            class_key="EMPTY_REMOVE",
-            examples=None
-        )
+        doc_class = create_document_class(class_key="EMPTY_REMOVE", examples=None)
 
         result = repository.remove_example(doc_class.id, "Any")
 
@@ -417,11 +366,7 @@ class TestDocumentClassRepository:
         assert has_steps is False
 
     def test_has_associated_steps_true(
-        self,
-        repository,
-        create_document_class,
-        create_pipeline_step,
-        sample_llama_model
+        self, repository, create_document_class, create_pipeline_step, sample_llama_model
     ):
         """Test checking for associated steps when they exist."""
         doc_class = create_document_class(class_key="WITH_STEPS")
@@ -430,7 +375,7 @@ class TestDocumentClassRepository:
         create_pipeline_step(
             name="Test Step",
             document_class_id=doc_class.id,
-            selected_model_id=sample_llama_model.id
+            selected_model_id=sample_llama_model.id,
         )
 
         has_steps = repository.has_associated_steps(doc_class.id)
@@ -458,24 +403,13 @@ class TestDocumentClassRepository:
             is_system_class=True,
             examples=["Example"],
             strong_indicators=["Strong"],
-            weak_indicators=["Weak"]
+            weak_indicators=["Weak"],
         )
+        create_document_class(class_key="SYS_DISABLED", is_enabled=False, is_system_class=True)
         create_document_class(
-            class_key="SYS_DISABLED",
-            is_enabled=False,
-            is_system_class=True
+            class_key="USER_ENABLED", is_enabled=True, is_system_class=False, examples=["Example2"]
         )
-        create_document_class(
-            class_key="USER_ENABLED",
-            is_enabled=True,
-            is_system_class=False,
-            examples=["Example2"]
-        )
-        create_document_class(
-            class_key="USER_DISABLED",
-            is_enabled=False,
-            is_system_class=False
-        )
+        create_document_class(class_key="USER_DISABLED", is_enabled=False, is_system_class=False)
 
         stats = repository.get_class_statistics()
 
@@ -523,14 +457,10 @@ class TestDocumentClassRepository:
     def test_search_by_description(self, repository, create_document_class):
         """Test searching classes by description."""
         create_document_class(
-            class_key="KEY1",
-            display_name="Class 1",
-            description="Medical letter from doctor"
+            class_key="KEY1", display_name="Class 1", description="Medical letter from doctor"
         )
         create_document_class(
-            class_key="KEY2",
-            display_name="Class 2",
-            description="Laboratory results"
+            class_key="KEY2", display_name="Class 2", description="Laboratory results"
         )
 
         results = repository.search_by_description("medical")
@@ -540,10 +470,7 @@ class TestDocumentClassRepository:
 
     def test_search_by_description_case_insensitive(self, repository, create_document_class):
         """Test that description search is case-insensitive."""
-        create_document_class(
-            class_key="KEY1",
-            description="Medical Letter"
-        )
+        create_document_class(class_key="KEY1", description="Medical Letter")
 
         results = repository.search_by_description("MEDICAL")
 
@@ -552,10 +479,7 @@ class TestDocumentClassRepository:
 
     def test_search_by_description_no_match(self, repository, create_document_class):
         """Test searching for non-existent description."""
-        create_document_class(
-            class_key="KEY1",
-            description="Medical letter"
-        )
+        create_document_class(class_key="KEY1", description="Medical letter")
 
         results = repository.search_by_description("Nonexistent")
 
@@ -570,7 +494,7 @@ class TestDocumentClassRepository:
             class_key="BASE_TEST",
             display_name="Base Test Class",
             is_enabled=True,
-            is_system_class=False
+            is_system_class=False,
         )
 
         # Test get_by_id (from base)

@@ -53,6 +53,11 @@ class UserDB(Base):
     # User information
     full_name = Column(String(255), nullable=False)
 
+    # Searchable hashes for encrypted fields (for efficient lookup)
+    email_searchable = Column(String(64), index=True, nullable=True)
+    full_name_searchable = Column(String(64), index=True, nullable=True)
+    encryption_version = Column(Integer, default=1, nullable=False)
+
     # Role and status (use values_callable to store enum values, not names)
     role = Column(
         SQLEnum(UserRole, values_callable=lambda x: [e.value for e in x]),

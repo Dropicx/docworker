@@ -3,6 +3,8 @@ User Repository
 
 Provides data access methods for user management including CRUD operations,
 authentication queries, and user status management.
+
+Includes transparent encryption for email and full_name fields.
 """
 
 from datetime import datetime, timezone
@@ -13,31 +15,55 @@ from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.database.auth_models import UserDB, UserRole, UserStatus
-from app.repositories.base_repository import BaseRepository
+from app.repositories.base_repository import BaseRepository, EncryptedRepositoryMixin
 
 logger = logging.getLogger(__name__)
 
 
-class UserRepository(BaseRepository[UserDB]):
-    """Repository for user data access operations."""
+class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
+    """
+    Repository for user data access operations.
+
+    Encrypted fields: email, full_name
+    Note: get_by_email() will need email_searchable hash field in Phase 3.
+
+    IMPORTANT: EncryptedRepositoryMixin must come FIRST in inheritance order
+    so that its create()/update()/get*() methods override BaseRepository methods.
+    """
+
+    # Define fields to encrypt
+    encrypted_fields = ["email", "full_name"]
 
     def __init__(self, db: Session):
         super().__init__(db, UserDB)
 
     def get_by_email(self, email: str) -> UserDB | None:
         """
-        Get user by email address.
+        Get user by email address using searchable hash for efficient lookup.
+
+        Uses email_searchable hash column to find user without decrypting
+        all emails in the database. Then returns user with decrypted fields.
 
         Args:
-            email: User's email address
+            email: User's email address (plaintext)
 
         Returns:
-            User instance or None if not found
+            User instance with decrypted fields, or None if not found
         """
+        from app.core.encryption import encryptor
+
         try:
-            return self.db.query(UserDB).filter(UserDB.email == email).first()
+            # Generate hash from plaintext email for lookup
+            email_hash = encryptor.generate_searchable_hash(email)
+
+            # Query using searchable hash (much faster than decrypting all emails)
+            user = self.db.query(UserDB).filter(UserDB.email_searchable == email_hash).first()
+
+            # Decrypt and return (handled by EncryptedRepositoryMixin)
+            return self._decrypt_entity(user)
+
         except Exception as e:
-            logger.error(f"Error getting user by email {email}: {e}")
+            logger.error(f"Error getting user by email: {e}")
             raise
 
     def get_by_id(self, user_id: UUID) -> UserDB | None:

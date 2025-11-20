@@ -133,6 +133,17 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
 
     request_id = request.headers.get("X-Request-ID")
 
+    # Check if detail is a structured object (like quality gate errors)
+    # If so, return it directly instead of wrapping in standard error format
+    if isinstance(exc.detail, dict) and "error" in exc.detail and "message" in exc.detail:
+        # This is a structured error (e.g., quality gate) - preserve the structure
+        # Return with "detail" key for FastAPI standard format
+        return JSONResponse(
+            status_code=exc.status_code,
+            content={"detail": exc.detail},
+        )
+
+    # Standard error handling for simple string details
     response = create_error_response(
         error_code=f"HTTP_{exc.status_code}",
         message=str(exc.detail),

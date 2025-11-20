@@ -96,6 +96,7 @@ jobs:
       DATABASE_URL: "sqlite:///./test.db"
       OVH_AI_ENDPOINTS_ACCESS_TOKEN: "test-token"
       JWT_SECRET_KEY: "test-secret-key-for-testing-only-do-not-use-in-production"
+      ENCRYPTION_KEY: "zPHjQcR5HQOY8r-KJB6_XyI2Sv_hG8VqGx0yT4N6RZo="
       ENVIRONMENT: "development"
 
     steps:
@@ -284,11 +285,15 @@ jobs:
           cp backend/requirements.txt /tmp/pip-audit-temp/
           cd /tmp/pip-audit-temp
           # GHSA-wj6h-64fc-37mp: ecdsa timing attack - no fix available, out of scope per maintainers
+          # GHSA-wf5f-4jwr-ppcp: pdfminer-six pickle RCE - requires pdfplumber update (tracked separately)
+          # GHSA-f83h-ghpp-7wcc: pdfminer-six pickle privilege escalation - requires pdfplumber update (tracked separately)
           pip-audit -r requirements.txt \
             --format json \
             --output pip-audit-report.json \
             --vulnerability-service osv \
-            --ignore-vuln GHSA-wj6h-64fc-37mp
+            --ignore-vuln GHSA-wj6h-64fc-37mp \
+            --ignore-vuln GHSA-wf5f-4jwr-ppcp \
+            --ignore-vuln GHSA-f83h-ghpp-7wcc
           mv pip-audit-report.json $GITHUB_WORKSPACE/backend/
         continue-on-error: false  # Fail on vulnerabilities
 

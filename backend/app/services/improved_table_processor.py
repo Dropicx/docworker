@@ -8,15 +8,19 @@ import re
 
 import numpy as np
 
+from app.services.markdown_table_formatter import MarkdownTableFormatter
+
 logger = logging.getLogger(__name__)
 
 
 class ImprovedTableProcessor:
     """Processes OCR output to extract meaningful content from medical tables"""
 
-    def __init__(self):
+    def __init__(self, enable_markdown_tables: bool = True):
         self.min_column_gap = 2
         self.column_alignment_tolerance = 30
+        self.enable_markdown_tables = enable_markdown_tables
+        self.markdown_formatter = MarkdownTableFormatter() if enable_markdown_tables else None
         # Common medical lab parameters for better recognition
         self.medical_parameters = {
             "hemoglobin": ["hämoglobin", "hb", "hemoglobin"],
@@ -49,6 +53,18 @@ class ImprovedTableProcessor:
         Returns:
             Cleaned and formatted text optimized for AI understanding
         """
+        # Try markdown table formatting first if enabled and OCR data available
+        if self.enable_markdown_tables and ocr_data and self.markdown_formatter:
+            logger.debug("🔍 Attempting markdown table formatting...")
+            markdown_result = self.markdown_formatter.format_table(ocr_data, text)
+
+            if markdown_result:
+                logger.info("✅ Successfully formatted table as markdown")
+                # Still enhance medical content on the markdown output
+                return self._enhance_medical_content(markdown_result)
+            logger.debug("⚠️ Markdown formatting failed, falling back to traditional processing")
+
+        # Fallback to traditional processing
         # First attempt with advanced row reconstruction if quality is poor
         if use_advanced and ocr_data and not self._has_good_quality_data(ocr_data):
             logger.info("🔍 Using advanced row reconstruction for low-quality OCR...")

@@ -188,7 +188,7 @@ class TestSystemSettingsRepository:
             key="existing.key",
             value="old_value",
             value_type="string",
-            description="Old description"
+            description="Old description",
         )
 
         updated = repository.set_value("existing.key", "new_value", "New description")
@@ -205,13 +205,15 @@ class TestSystemSettingsRepository:
         assert setting.value == "value"
         assert setting.description == ""
 
-    def test_set_value_update_preserves_description_if_not_provided(self, repository, create_system_setting):
+    def test_set_value_update_preserves_description_if_not_provided(
+        self, repository, create_system_setting
+    ):
         """Test that updating without description preserves original description."""
         original = create_system_setting(
             key="preserve.desc",
             value="old_value",
             value_type="string",
-            description="Original description"
+            description="Original description",
         )
 
         updated = repository.set_value("preserve.desc", "new_value")
@@ -408,11 +410,7 @@ class TestSystemSettingsRepository:
 
     def test_bulk_update_creates_new_settings(self, repository):
         """Test bulk_update creates new settings."""
-        settings = {
-            "key1": "value1",
-            "key2": "value2",
-            "key3": "value3"
-        }
+        settings = {"key1": "value1", "key2": "value2", "key3": "value3"}
 
         count = repository.bulk_update(settings)
 
@@ -426,10 +424,7 @@ class TestSystemSettingsRepository:
         create_system_setting(key="existing1", value="old1", value_type="string")
         create_system_setting(key="existing2", value="old2", value_type="string")
 
-        settings = {
-            "existing1": "new1",
-            "existing2": "new2"
-        }
+        settings = {"existing1": "new1", "existing2": "new2"}
 
         count = repository.bulk_update(settings)
 
@@ -441,10 +436,7 @@ class TestSystemSettingsRepository:
         """Test bulk_update with mix of new and existing keys."""
         create_system_setting(key="existing", value="old", value_type="string")
 
-        settings = {
-            "existing": "updated",
-            "new_key": "new_value"
-        }
+        settings = {"existing": "updated", "new_key": "new_value"}
 
         count = repository.bulk_update(settings)
 
@@ -462,10 +454,7 @@ class TestSystemSettingsRepository:
     def test_get_settings_for_export(self, repository, create_system_setting):
         """Test exporting settings with metadata."""
         create_system_setting(
-            key="export.test",
-            value="test_value",
-            value_type="string",
-            description="Test setting"
+            key="export.test", value="test_value", value_type="string", description="Test setting"
         )
 
         export = repository.get_settings_for_export()
@@ -499,10 +488,7 @@ class TestSystemSettingsRepository:
 
     def test_import_settings_new_keys(self, repository):
         """Test importing new settings."""
-        settings = {
-            "import.key1": "value1",
-            "import.key2": "value2"
-        }
+        settings = {"import.key1": "value1", "import.key2": "value2"}
 
         stats = repository.import_settings(settings)
 
@@ -516,10 +502,7 @@ class TestSystemSettingsRepository:
         """Test that existing settings are skipped by default."""
         create_system_setting(key="existing.key", value="original", value_type="string")
 
-        settings = {
-            "existing.key": "new_value",
-            "new.key": "value"
-        }
+        settings = {"existing.key": "new_value", "new.key": "value"}
 
         stats = repository.import_settings(settings, overwrite=False)
 
@@ -533,10 +516,7 @@ class TestSystemSettingsRepository:
         """Test importing with overwrite=True updates existing settings."""
         create_system_setting(key="existing.key", value="original", value_type="string")
 
-        settings = {
-            "existing.key": "new_value",
-            "new.key": "value"
-        }
+        settings = {"existing.key": "new_value", "new.key": "value"}
 
         stats = repository.import_settings(settings, overwrite=True)
 
@@ -558,9 +538,15 @@ class TestSystemSettingsRepository:
 
     def test_search_settings_by_key(self, repository, create_system_setting):
         """Test searching settings by key."""
-        create_system_setting(key="enable_feature_a", value="v1", value_type="string", description="Feature A")
-        create_system_setting(key="enable_feature_b", value="v2", value_type="string", description="Feature B")
-        create_system_setting(key="other_setting", value="v3", value_type="string", description="Other")
+        create_system_setting(
+            key="enable_feature_a", value="v1", value_type="string", description="Feature A"
+        )
+        create_system_setting(
+            key="enable_feature_b", value="v2", value_type="string", description="Feature B"
+        )
+        create_system_setting(
+            key="other_setting", value="v3", value_type="string", description="Other"
+        )
 
         results = repository.search_settings("enable")
 
@@ -569,9 +555,15 @@ class TestSystemSettingsRepository:
 
     def test_search_settings_by_description(self, repository, create_system_setting):
         """Test searching settings by description."""
-        create_system_setting(key="key1", value="v1", value_type="string", description="Database configuration")
-        create_system_setting(key="key2", value="v2", value_type="string", description="Database timeout")
-        create_system_setting(key="key3", value="v3", value_type="string", description="API settings")
+        create_system_setting(
+            key="key1", value="v1", value_type="string", description="Database configuration"
+        )
+        create_system_setting(
+            key="key2", value="v2", value_type="string", description="Database timeout"
+        )
+        create_system_setting(
+            key="key3", value="v3", value_type="string", description="API settings"
+        )
 
         results = repository.search_settings("database")
 
@@ -580,7 +572,9 @@ class TestSystemSettingsRepository:
 
     def test_search_settings_case_insensitive(self, repository, create_system_setting):
         """Test that search is case-insensitive."""
-        create_system_setting(key="EnableFeature", value="v", value_type="string", description="Test")
+        create_system_setting(
+            key="EnableFeature", value="v", value_type="string", description="Test"
+        )
 
         results_lower = repository.search_settings("enable")
         results_upper = repository.search_settings("ENABLE")
@@ -592,7 +586,9 @@ class TestSystemSettingsRepository:
 
     def test_search_settings_no_matches(self, repository, create_system_setting):
         """Test search returns empty list when no matches."""
-        create_system_setting(key="some.key", value="value", value_type="string", description="Description")
+        create_system_setting(
+            key="some.key", value="value", value_type="string", description="Description"
+        )
 
         results = repository.search_settings("nonexistent")
 
@@ -600,8 +596,12 @@ class TestSystemSettingsRepository:
 
     def test_search_settings_matches_key_or_description(self, repository, create_system_setting):
         """Test search matches either key or description."""
-        create_system_setting(key="search_in_key", value="v1", value_type="string", description="Other text")
-        create_system_setting(key="other_key", value="v2", value_type="string", description="search in description")
+        create_system_setting(
+            key="search_in_key", value="v1", value_type="string", description="Other text"
+        )
+        create_system_setting(
+            key="other_key", value="v2", value_type="string", description="search in description"
+        )
 
         results = repository.search_settings("search")
 
@@ -642,7 +642,9 @@ class TestSystemSettingsRepository:
         assert stats["boolean_settings"] == 0
         assert stats["numeric_settings"] == 0
 
-    def test_get_settings_statistics_counts_enabled_features_correctly(self, repository, create_system_setting):
+    def test_get_settings_statistics_counts_enabled_features_correctly(
+        self, repository, create_system_setting
+    ):
         """Test that enabled features are counted correctly."""
         create_system_setting(key="enable_feature_1", value="true", value_type="string")
         create_system_setting(key="enable_feature_2", value="1", value_type="string")
@@ -736,7 +738,7 @@ class TestSystemSettingsRepository:
             "string_key": "string_value",
             "number_key": "123",
             "bool_key": "true",
-            "empty_key": ""
+            "empty_key": "",
         }
 
         count = repository.bulk_update(settings)

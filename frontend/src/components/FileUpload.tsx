@@ -1,15 +1,42 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, FileText, Image, AlertCircle, Play, Shield } from 'lucide-react';
+import {
+  Upload,
+  X,
+  FileText,
+  Image,
+  AlertCircle,
+  Play,
+  Shield,
+  Camera,
+  Lightbulb,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ApiService from '../services/api';
-import { UploadResponse } from '../types/api';
+import { UploadResponse, ApiError, QualityGateErrorDetails } from '../types/api';
 
 interface FileUploadProps {
   onUploadSuccess: (response: UploadResponse) => void;
   onUploadError: (error: string) => void;
   disabled?: boolean;
 }
+
+// Helper function to translate quality issues to German
+const translateIssue = (issue: string): string => {
+  const translations: Record<string, string> = {
+    poor_image_quality: 'Schlechte Bildqualität',
+    significant_blur_detected: 'Starke Unschärfe erkannt',
+    low_blur_detection: 'Unscharfes Bild',
+    low_contrast: 'Niedriger Kontrast',
+    poor_lighting: 'Schlechte Beleuchtung',
+    document_too_small: 'Dokument zu klein',
+    text_density_low: 'Zu wenig Text erkennbar',
+    has_blur: 'Bild ist unscharf',
+    has_low_contrast: 'Kontrast ist zu niedrig',
+  };
+
+  return translations[issue] || issue;
+};
 
 const FileUpload: React.FC<FileUploadProps> = ({
   onUploadSuccess,
@@ -20,6 +47,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadingFileName, setUploadingFileName] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
+  const [qualityGateError, setQualityGateError] = useState<QualityGateErrorDetails | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +56,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const handleFileUpload = useCallback(
     async (files: File[]) => {
       setValidationError(null);
+      setQualityGateError(null);
 
       // Validate all files
       for (const file of files) {
@@ -61,6 +90,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     if (selectedFiles.length === 0 || !privacyAccepted) return;
 
     setValidationError(null);
+    setQualityGateError(null);
     setIsUploading(true);
     setUploadingFileName(`${selectedFiles.length} Datei${selectedFiles.length > 1 ? 'en' : ''}`);
     setUploadProgress(0);
@@ -94,9 +124,29 @@ const FileUpload: React.FC<FileUploadProps> = ({
       // Immediately proceed on mobile for better UX
       onUploadSuccess(response);
     } catch (error) {
-      const errorMessage = (error as Error).message || 'Upload fehlgeschlagen';
-      setValidationError(errorMessage);
-      onUploadError(errorMessage);
+      // Check if this is a quality gate error
+      if (error instanceof ApiError && error.isQualityGateError()) {
+        const qualityDetails = error.getQualityGateDetails();
+        if (qualityDetails) {
+          // Quality gate errors are validation errors - show in FileUpload, don't propagate to App
+          setQualityGateError(qualityDetails);
+          // Don't call onUploadError - keep FileUpload visible with error display
+        } else {
+          setValidationError(error.message);
+          onUploadError(error.message);
+        }
+      } else {
+        // Check if this is a timeout error
+        const errorMessage = (error as Error).message || 'Upload fehlgeschlagen';
+        if (errorMessage.includes('timeout')) {
+          setValidationError(
+            'Die Verbindung zum Server dauert länger als erwartet. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.'
+          );
+        } else {
+          setValidationError(errorMessage);
+        }
+        onUploadError(errorMessage);
+      }
       setIsUploading(false);
       setUploadProgress(0);
       setUploadingFileName('');
@@ -378,8 +428,103 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       )}
 
-      {/* Validation Error */}
-      {validationError && (
+      {/* Quality Gate Error - Special Display */}
+      {qualityGateError && (
+        <div className="card-elevated border-amber-200/50 bg-gradient-to-br from-amber-50/50 to-white animate-slide-up">
+          <div className="card-body space-y-4">
+            {/* Header */}
+            <div className="flex items-start space-x-3">
+              <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-amber-500 to-amber-600 rounded-xl flex items-center justify-center">
+                <Camera className="w-6 h-6 text-white" />
+              </div>
+              <div className="flex-1">
+                <h4 className="font-semibold text-amber-900 mb-1 text-lg">
+                  Bildqualität zu niedrig
+                </h4>
+                <p className="text-amber-700 text-sm leading-relaxed">
+                  Die Qualität Ihres Dokuments ist für eine zuverlässige Verarbeitung zu niedrig.
+                </p>
+              </div>
+            </div>
+
+            {/* Quality Score */}
+            <div className="glass-effect p-3 rounded-lg">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-primary-600 font-medium">Qualitätswert:</span>
+                <span className="font-semibold text-primary-900">
+                  {(qualityGateError.details.confidence_score * 100).toFixed(0)}%
+                  <span className="text-primary-500 font-normal">
+                    {' '}
+                    / {(qualityGateError.details.min_threshold * 100).toFixed(0)}% erforderlich
+                  </span>
+                </span>
+              </div>
+              <div className="mt-2 w-full bg-neutral-200 rounded-full h-2 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-500"
+                  style={{ width: `${qualityGateError.details.confidence_score * 100}%` }}
+                />
+              </div>
+            </div>
+
+            {/* Issues */}
+            {qualityGateError.details.issues && qualityGateError.details.issues.length > 0 && (
+              <div className="space-y-2">
+                <h5 className="text-sm font-semibold text-primary-900 flex items-center space-x-2">
+                  <AlertCircle className="w-4 h-4 text-amber-600" />
+                  <span>Erkannte Probleme:</span>
+                </h5>
+                <ul className="space-y-1.5">
+                  {qualityGateError.details.issues.map((issue, index) => (
+                    <li key={index} className="text-sm text-primary-700 flex items-start space-x-2">
+                      <span className="text-amber-500 mt-0.5">•</span>
+                      <span>{translateIssue(issue)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Suggestions */}
+            {qualityGateError.details.suggestions &&
+              qualityGateError.details.suggestions.length > 0 && (
+                <div className="space-y-3 bg-gradient-to-br from-accent-50/50 to-transparent p-4 rounded-lg border border-accent-200/50">
+                  <h5 className="text-sm font-semibold text-primary-900 flex items-center space-x-2">
+                    <Lightbulb className="w-4 h-4 text-accent-600" />
+                    <span>So können Sie die Qualität verbessern:</span>
+                  </h5>
+                  <ul className="space-y-2">
+                    {qualityGateError.details.suggestions.map((suggestion, index) => (
+                      <li
+                        key={index}
+                        className="text-sm text-primary-700 flex items-start space-x-2.5"
+                      >
+                        <span className="text-accent-600 font-bold mt-0.5">{index + 1}.</span>
+                        <span className="leading-relaxed">{suggestion}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+            {/* Try Again Button */}
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  setQualityGateError(null);
+                  setSelectedFiles([]);
+                }}
+                className="w-full btn-secondary text-sm py-2.5"
+              >
+                Neues Foto aufnehmen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Regular Validation Error */}
+      {validationError && !qualityGateError && (
         <div className="card-elevated border-error-200/50 bg-gradient-to-br from-error-50/50 to-white animate-slide-up">
           <div className="card-compact">
             <div className="flex items-start space-x-3">

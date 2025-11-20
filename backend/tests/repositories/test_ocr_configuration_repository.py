@@ -25,8 +25,7 @@ class TestOCRConfigurationRepository:
     def test_get_config_when_exists(self, repository, create_ocr_configuration):
         """Test retrieving existing OCR configuration."""
         created_config = create_ocr_configuration(
-            selected_engine=OCREngineEnum.PADDLEOCR,
-            pii_removal_enabled=True
+            selected_engine=OCREngineEnum.PADDLEOCR, pii_removal_enabled=True
         )
 
         config = repository.get_config()
@@ -57,8 +56,7 @@ class TestOCRConfigurationRepository:
     def test_get_or_create_config_when_exists(self, repository, create_ocr_configuration):
         """Test get_or_create_config returns existing configuration."""
         existing = create_ocr_configuration(
-            selected_engine=OCREngineEnum.PADDLEOCR,
-            pii_removal_enabled=False
+            selected_engine=OCREngineEnum.PADDLEOCR, pii_removal_enabled=False
         )
 
         config = repository.get_or_create_config()
@@ -151,10 +149,7 @@ class TestOCRConfigurationRepository:
 
     def test_update_engine_config_when_no_config(self, repository):
         """Test update_engine_config returns None when no configuration exists."""
-        result = repository.update_engine_config(
-            OCREngineEnum.PADDLEOCR,
-            {"use_gpu": True}
-        )
+        result = repository.update_engine_config(OCREngineEnum.PADDLEOCR, {"use_gpu": True})
         assert result is None
 
     def test_update_engine_config_persists(self, repository, create_ocr_configuration):
@@ -188,7 +183,7 @@ class TestOCRConfigurationRepository:
         """Test that updating engine config overwrites previous configuration."""
         create_ocr_configuration(
             selected_engine=OCREngineEnum.PADDLEOCR,
-            paddleocr_config={"use_gpu": False, "lang": "english"}
+            paddleocr_config={"use_gpu": False, "lang": "english"},
         )
 
         new_config = {"use_gpu": True, "lang": "german"}
@@ -263,7 +258,11 @@ class TestOCRConfigurationRepository:
 
     def test_get_selected_engine_all_types(self, repository, create_ocr_configuration):
         """Test getting all engine types."""
-        for engine_type in [OCREngineEnum.PADDLEOCR, OCREngineEnum.VISION_LLM, OCREngineEnum.HYBRID]:
+        for engine_type in [
+            OCREngineEnum.PADDLEOCR,
+            OCREngineEnum.VISION_LLM,
+            OCREngineEnum.HYBRID,
+        ]:
             create_ocr_configuration(selected_engine=engine_type)
 
             engine = repository.get_selected_engine()
@@ -367,7 +366,7 @@ class TestOCRConfigurationRepository:
         create_ocr_configuration(
             selected_engine=OCREngineEnum.PADDLEOCR,
             pii_removal_enabled=True,
-            paddleocr_config={"use_gpu": False}
+            paddleocr_config={"use_gpu": False},
         )
 
         # Update engine
@@ -406,12 +405,9 @@ class TestOCRConfigurationRepository:
 
         complex_config = {
             "quality_threshold": 0.7,
-            "engines": {
-                "primary": "paddleocr",
-                "fallback": "vision_llm"
-            },
+            "engines": {"primary": "paddleocr", "fallback": "vision_llm"},
             "timeouts": [30, 60, 120],
-            "enabled": True
+            "enabled": True,
         }
 
         updated = repository.update_engine_config(OCREngineEnum.HYBRID, complex_config)

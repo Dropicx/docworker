@@ -13,7 +13,7 @@ from datetime import datetime
 import time
 
 # Add backend to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.services.modular_pipeline_executor import ModularPipelineExecutor, ModularPipelineManager
 from app.database.modular_pipeline_models import (
@@ -22,7 +22,7 @@ from app.database.modular_pipeline_models import (
     OCRConfigurationDB,
     PipelineJobDB,
     StepExecutionStatus,
-    DocumentClassDB
+    DocumentClassDB,
 )
 
 
@@ -33,9 +33,11 @@ class TestModularPipelineExecutorInitialization:
         """Test executor initializes with database session"""
         mock_session = Mock()
 
-        with patch('app.services.modular_pipeline_executor.OVHClient'), \
-             patch('app.services.modular_pipeline_executor.DocumentClassManager'), \
-             patch('app.services.modular_pipeline_executor.AICostTracker'):
+        with (
+            patch("app.services.modular_pipeline_executor.OVHClient"),
+            patch("app.services.modular_pipeline_executor.DocumentClassManager"),
+            patch("app.services.modular_pipeline_executor.AICostTracker"),
+        ):
             executor = ModularPipelineExecutor(session=mock_session)
 
             assert executor is not None
@@ -52,9 +54,11 @@ class TestConfigurationLoading:
     def executor(self):
         """Create executor instance for testing"""
         mock_session = Mock()
-        with patch('app.services.modular_pipeline_executor.OVHClient'), \
-             patch('app.services.modular_pipeline_executor.DocumentClassManager'), \
-             patch('app.services.modular_pipeline_executor.AICostTracker'):
+        with (
+            patch("app.services.modular_pipeline_executor.OVHClient"),
+            patch("app.services.modular_pipeline_executor.DocumentClassManager"),
+            patch("app.services.modular_pipeline_executor.AICostTracker"),
+        ):
             return ModularPipelineExecutor(session=mock_session)
 
     @pytest.fixture
@@ -142,8 +146,7 @@ class TestConfigurationLoading:
 
         assert len(steps) == 1
         executor.session.query.return_value.filter_by.assert_called_with(
-            enabled=True,
-            document_class_id=3
+            enabled=True, document_class_id=3
         )
 
     def test_find_branching_step(self, executor, mock_step):
@@ -207,9 +210,11 @@ class TestStopConditions:
     def executor(self):
         """Create executor instance for testing"""
         mock_session = Mock()
-        with patch('app.services.modular_pipeline_executor.OVHClient'), \
-             patch('app.services.modular_pipeline_executor.DocumentClassManager'), \
-             patch('app.services.modular_pipeline_executor.AICostTracker'):
+        with (
+            patch("app.services.modular_pipeline_executor.OVHClient"),
+            patch("app.services.modular_pipeline_executor.DocumentClassManager"),
+            patch("app.services.modular_pipeline_executor.AICostTracker"),
+        ):
             return ModularPipelineExecutor(session=mock_session)
 
     @pytest.fixture
@@ -221,7 +226,7 @@ class TestStopConditions:
         step.stop_conditions = {
             "stop_on_values": ["NICHT_MEDIZINISCH"],
             "termination_reason": "Non-medical content detected",
-            "termination_message": "Document contains non-medical content"
+            "termination_message": "Document contains non-medical content",
         }
         return step
 
@@ -289,10 +294,13 @@ class TestBranchExtraction:
     def executor(self):
         """Create executor instance for testing"""
         mock_session = Mock()
-        with patch('app.services.modular_pipeline_executor.OVHClient'), \
-             patch('app.services.modular_pipeline_executor.DocumentClassManager') as MockDocClassManager, \
-             patch('app.services.modular_pipeline_executor.AICostTracker'):
-
+        with (
+            patch("app.services.modular_pipeline_executor.OVHClient"),
+            patch(
+                "app.services.modular_pipeline_executor.DocumentClassManager"
+            ) as MockDocClassManager,
+            patch("app.services.modular_pipeline_executor.AICostTracker"),
+        ):
             # Setup mock document class manager
             mock_doc_class = Mock(spec=DocumentClassDB)
             mock_doc_class.id = 3
@@ -379,19 +387,22 @@ class TestStepExecution:
     def executor(self):
         """Create executor instance for testing"""
         mock_session = Mock()
-        with patch('app.services.modular_pipeline_executor.OVHClient') as MockOVH, \
-             patch('app.services.modular_pipeline_executor.DocumentClassManager'), \
-             patch('app.services.modular_pipeline_executor.AICostTracker') as MockCostTracker:
-
+        with (
+            patch("app.services.modular_pipeline_executor.OVHClient") as MockOVH,
+            patch("app.services.modular_pipeline_executor.DocumentClassManager"),
+            patch("app.services.modular_pipeline_executor.AICostTracker") as MockCostTracker,
+        ):
             # Mock OVH client response
             mock_ovh = MockOVH.return_value
-            mock_ovh.process_medical_text_with_prompt = AsyncMock(return_value={
-                "text": "Processed output",
-                "input_tokens": 100,
-                "output_tokens": 50,
-                "total_tokens": 150,
-                "model": "Meta-Llama-3.3-70B"
-            })
+            mock_ovh.process_medical_text_with_prompt = AsyncMock(
+                return_value={
+                    "text": "Processed output",
+                    "input_tokens": 100,
+                    "output_tokens": 50,
+                    "total_tokens": 150,
+                    "model": "Meta-Llama-3.3-70B",
+                }
+            )
 
             # Mock cost tracker
             mock_tracker = MockCostTracker.return_value
@@ -429,10 +440,7 @@ class TestStepExecution:
         executor.get_model_info = Mock(return_value=mock_model)
 
         success, output, error = await executor.execute_step(
-            step=mock_step,
-            input_text="Test input",
-            context={},
-            processing_id="test123"
+            step=mock_step, input_text="Test input", context={}, processing_id="test123"
         )
 
         assert success is True
@@ -445,8 +453,7 @@ class TestStepExecution:
         executor.get_model_info = Mock(return_value=None)
 
         success, output, error = await executor.execute_step(
-            step=mock_step,
-            input_text="Test input"
+            step=mock_step, input_text="Test input"
         )
 
         assert success is False
@@ -462,7 +469,7 @@ class TestStepExecution:
         success, output, error = await executor.execute_step(
             step=mock_step,
             input_text="Test",
-            context={}  # Missing target_language
+            context={},  # Missing target_language
         )
 
         assert success is False
@@ -476,16 +483,21 @@ class TestStepExecution:
         mock_step.max_retries = 3
 
         # First two attempts fail, third succeeds
-        executor.ovh_client.process_medical_text_with_prompt = AsyncMock(side_effect=[
-            {"text": "Error: API timeout", "input_tokens": 0, "output_tokens": 0},
-            {"text": "Error: Connection failed", "input_tokens": 0, "output_tokens": 0},
-            {"text": "Success!", "input_tokens": 100, "output_tokens": 50, "total_tokens": 150, "model": "test"}
-        ])
-
-        success, output, error = await executor.execute_step(
-            step=mock_step,
-            input_text="Test"
+        executor.ovh_client.process_medical_text_with_prompt = AsyncMock(
+            side_effect=[
+                {"text": "Error: API timeout", "input_tokens": 0, "output_tokens": 0},
+                {"text": "Error: Connection failed", "input_tokens": 0, "output_tokens": 0},
+                {
+                    "text": "Success!",
+                    "input_tokens": 100,
+                    "output_tokens": 50,
+                    "total_tokens": 150,
+                    "model": "test",
+                },
+            ]
         )
+
+        success, output, error = await executor.execute_step(step=mock_step, input_text="Test")
 
         assert success is True
         assert output == "Success!"
@@ -534,11 +546,7 @@ class TestModularPipelineManager:
 
     def test_create_step(self, manager):
         """Test creating a new pipeline step"""
-        step_data = {
-            "name": "New Step",
-            "order": 5,
-            "enabled": True
-        }
+        step_data = {"name": "New Step", "order": 5, "enabled": True}
 
         step = manager.create_step(step_data)
 

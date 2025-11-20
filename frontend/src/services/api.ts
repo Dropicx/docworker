@@ -38,23 +38,32 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     }
   }
 
-  // eslint-disable-next-line no-console
-  console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+  // Log requests in development only
+  if (import.meta.env.DEV) {
+    // eslint-disable-next-line no-console
+    console.log(`🌐 API Request: ${config.method?.toUpperCase()} ${config.url}`);
+  }
   return config;
 });
 
 // Response interceptor for error handling and token refresh
 api.interceptors.response.use(
   response => {
-    // eslint-disable-next-line no-console
-    console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    // Log responses in development only
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.log(`✅ API Response: ${response.status} ${response.config.url}`);
+    }
     return response;
   },
   async error => {
-    console.error(
-      `❌ API Error: ${error.response?.status} ${error.config?.url}`,
-      error.response?.data
-    );
+    // Log errors in development, or always log 5xx errors
+    if (import.meta.env.DEV || error.response?.status >= 500) {
+      console.error(
+        `❌ API Error: ${error.response?.status} ${error.config?.url}`,
+        error.response?.data
+      );
+    }
 
     // Handle 401 Unauthorized - try to refresh token
     if (error.response?.status === 401 && !error.config._retry) {
@@ -93,11 +102,20 @@ api.interceptors.response.use(
       }
     }
 
-    const message =
-      error.response?.data?.detail ||
-      error.response?.data?.message ||
-      error.message ||
-      'Unknown API error';
+    // Extract error message - handle both string and object detail formats
+    let message = 'Unknown API error';
+    const detail = error.response?.data?.detail;
+
+    if (typeof detail === 'string') {
+      // Simple string error
+      message = detail;
+    } else if (typeof detail === 'object' && detail !== null && 'message' in detail) {
+      // Structured error (like quality gate) - extract message from nested object
+      message = (detail as { message: string }).message;
+    } else {
+      // Fallback to other message fields
+      message = error.response?.data?.message || error.message || 'Unknown API error';
+    }
 
     throw new ApiError(message, error.response?.status || 500, error.response?.data);
   }
@@ -109,12 +127,13 @@ export class ApiService {
     const formData = new FormData();
     formData.append('file', file);
 
-    // Use shorter timeout for upload (30 seconds should be enough even for 50MB on mobile)
+    // Upload timeout - needs to account for file upload + quality analysis
+    // 60 seconds allows for large files over slower connections
     const response: AxiosResponse<UploadResponse> = await api.post('/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },
-      timeout: 30000, // 30 seconds timeout for upload specifically
+      timeout: 60000, // 60 seconds timeout (upload + quality gate analysis)
     });
 
     return response.data;

@@ -187,6 +187,97 @@ class FileQualityDetector:
             {"reason": "unknown_file_type"},
         )
 
+    def get_quality_issues(self, analysis_metadata: dict[str, Any]) -> tuple[list[str], list[str]]:
+        """Identify specific quality issues and provide actionable suggestions.
+
+        Analyzes document quality metadata to determine specific problems and
+        generates user-friendly suggestions for improvement. Used by quality
+        gate to provide clear feedback when documents are rejected.
+
+        Args:
+            analysis_metadata: Analysis dict from analyze_file() containing:
+                - file_type: "pdf" or "image"
+                - text_quality_score: Quality score (0.0-1.0)
+                - image_quality: Image quality score (0.0-1.0) for images
+                - has_tables: Whether tables detected
+                - text_coverage: Text coverage ratio for PDFs
+                - text_density: Text density for images
+
+        Returns:
+            tuple[list[str], list[str]]:
+                - issues: List of detected problem identifiers
+                - suggestions: List of actionable improvement suggestions
+
+        Example:
+            >>> detector = FileQualityDetector()
+            >>> _, _, meta = await detector.analyze_file(content, "image", "scan.jpg")
+            >>> issues, suggestions = detector.get_quality_issues(meta)
+            >>> print(issues)
+            ['low_contrast', 'blur_detected']
+            >>> print(suggestions)
+            ['Ensure good lighting without shadows', 'Hold camera steady']
+        """
+        issues = []
+        suggestions = []
+
+        file_type = analysis_metadata.get("file_type")
+
+        if file_type == "image":
+            # Image-specific quality checks
+            image_quality = analysis_metadata.get("image_quality", 0.5)
+            text_density = analysis_metadata.get("text_density", 0.0)
+
+            if image_quality < 0.4:
+                issues.append("poor_image_quality")
+                suggestions.append("Sorgen Sie für gute Beleuchtung ohne Schatten oder Blendung")
+                suggestions.append("Halten Sie die Kamera ruhig, um Unschärfe zu vermeiden")
+
+            if image_quality >= 0.4 and image_quality < 0.7:
+                issues.append("moderate_quality")
+                suggestions.append("Versuchen Sie, die Beleuchtungsbedingungen zu verbessern")
+
+            if text_density < 0.02:
+                issues.append("low_text_density")
+                suggestions.append(
+                    "Stellen Sie sicher, dass das gesamte Dokument im Bild sichtbar ist"
+                )
+                suggestions.append(
+                    "Gehen Sie näher an das Dokument heran oder zoomen Sie leicht hinein"
+                )
+
+        elif file_type == "pdf":
+            # PDF-specific quality checks
+            text_coverage = analysis_metadata.get("text_coverage", 0.0)
+            text_quality = analysis_metadata.get("text_quality_score", 0.0)
+
+            if text_coverage < 0.3:
+                issues.append("low_text_coverage")
+                suggestions.append(
+                    "Das Dokument scheint hauptsächlich aus gescannten Bildern zu bestehen"
+                )
+                suggestions.append("Erwägen Sie, ein Foto/Scan in höherer Qualität zu machen")
+
+            if text_quality < 0.4:
+                issues.append("poor_text_quality")
+                suggestions.append("Die Qualität der Textextraktion ist niedrig")
+                suggestions.append(
+                    "Versuchen Sie, mit höherer Auflösung (300 DPI oder mehr) neu zu scannen"
+                )
+
+        # Common suggestions
+        if not suggestions:
+            # General advice for low quality
+            suggestions.append(
+                "Platzieren Sie das Dokument auf einer flachen, gut beleuchteten Oberfläche"
+            )
+            suggestions.append("Fotografieren Sie von direkt oben (nicht schräg)")
+            suggestions.append(
+                "Stellen Sie sicher, dass das Dokument den größten Teil des Bildes ausfüllt"
+            )
+            suggestions.append("Vermeiden Sie Schatten, Reflexionen und Blendung")
+
+        return issues, suggestions
+
     async def _analyze_pdf(
         self, content: bytes, filename: str
     ) -> tuple[ExtractionStrategy, DocumentComplexity, dict[str, Any]]:

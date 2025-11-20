@@ -34,7 +34,7 @@ class TestAILogInteractionRepository:
             total_cost_usd=0.003,
             model_provider="OVH",
             model_name="Meta-Llama-3_3-70B-Instruct",
-            document_type="ARZTBRIEF"
+            document_type="ARZTBRIEF",
         )
 
         assert log.id is not None
@@ -55,11 +55,7 @@ class TestAILogInteractionRepository:
 
     def test_get_by_processing_id_single(self, repository, create_ai_log_interaction):
         """Test retrieving logs for a specific processing ID."""
-        create_ai_log_interaction(
-            processing_id="proc-123",
-            step_name="step1",
-            total_cost_usd=0.005
-        )
+        create_ai_log_interaction(processing_id="proc-123", step_name="step1", total_cost_usd=0.005)
 
         logs = repository.get_by_processing_id("proc-123")
 
@@ -70,19 +66,13 @@ class TestAILogInteractionRepository:
         """Test retrieving multiple steps for same processing ID."""
         # Create logs for different steps in same processing
         create_ai_log_interaction(
-            processing_id="proc-multi",
-            step_name="extraction",
-            total_cost_usd=0.001
+            processing_id="proc-multi", step_name="extraction", total_cost_usd=0.001
         )
         create_ai_log_interaction(
-            processing_id="proc-multi",
-            step_name="translation",
-            total_cost_usd=0.002
+            processing_id="proc-multi", step_name="translation", total_cost_usd=0.002
         )
         create_ai_log_interaction(
-            processing_id="proc-multi",
-            step_name="validation",
-            total_cost_usd=0.003
+            processing_id="proc-multi", step_name="validation", total_cost_usd=0.003
         )
 
         logs = repository.get_by_processing_id("proc-multi")
@@ -97,18 +87,9 @@ class TestAILogInteractionRepository:
     def test_get_by_processing_id_chronological_order(self, repository, create_ai_log_interaction):
         """Test that logs are returned in chronological order (created_at)."""
         # Create logs with slight time differences
-        log1 = create_ai_log_interaction(
-            processing_id="proc-order",
-            step_name="step1"
-        )
-        log2 = create_ai_log_interaction(
-            processing_id="proc-order",
-            step_name="step2"
-        )
-        log3 = create_ai_log_interaction(
-            processing_id="proc-order",
-            step_name="step3"
-        )
+        log1 = create_ai_log_interaction(processing_id="proc-order", step_name="step1")
+        log2 = create_ai_log_interaction(processing_id="proc-order", step_name="step2")
+        log3 = create_ai_log_interaction(processing_id="proc-order", step_name="step3")
 
         logs = repository.get_by_processing_id("proc-order")
 
@@ -132,10 +113,7 @@ class TestAILogInteractionRepository:
         # Create log that should be included
         log_in_range = create_ai_log_interaction(processing_id="in-range")
 
-        logs = repository.get_by_date_range(
-            start_date=yesterday,
-            end_date=tomorrow
-        )
+        logs = repository.get_by_date_range(start_date=yesterday, end_date=tomorrow)
 
         assert len(logs) >= 1
         assert any(log.processing_id == "in-range" for log in logs)
@@ -185,18 +163,9 @@ class TestAILogInteractionRepository:
 
     def test_get_filtered_by_document_type(self, repository, create_ai_log_interaction):
         """Test filtered query by document type."""
-        create_ai_log_interaction(
-            processing_id="proc1",
-            document_type="ARZTBRIEF"
-        )
-        create_ai_log_interaction(
-            processing_id="proc2",
-            document_type="BEFUNDBERICHT"
-        )
-        create_ai_log_interaction(
-            processing_id="proc3",
-            document_type="ARZTBRIEF"
-        )
+        create_ai_log_interaction(processing_id="proc1", document_type="ARZTBRIEF")
+        create_ai_log_interaction(processing_id="proc2", document_type="BEFUNDBERICHT")
+        create_ai_log_interaction(processing_id="proc3", document_type="ARZTBRIEF")
 
         logs = repository.get_filtered(document_type="ARZTBRIEF")
 
@@ -209,20 +178,14 @@ class TestAILogInteractionRepository:
         yesterday = now - timedelta(days=1)
         tomorrow = now + timedelta(days=1)
 
-        create_ai_log_interaction(
-            processing_id="multi-filter",
-            document_type="ARZTBRIEF"
-        )
-        create_ai_log_interaction(
-            processing_id="other-proc",
-            document_type="ARZTBRIEF"
-        )
+        create_ai_log_interaction(processing_id="multi-filter", document_type="ARZTBRIEF")
+        create_ai_log_interaction(processing_id="other-proc", document_type="ARZTBRIEF")
 
         logs = repository.get_filtered(
             processing_id="multi-filter",
             start_date=yesterday,
             end_date=tomorrow,
-            document_type="ARZTBRIEF"
+            document_type="ARZTBRIEF",
         )
 
         assert len(logs) == 1
@@ -241,18 +204,9 @@ class TestAILogInteractionRepository:
 
     def test_get_by_step_name(self, repository, create_ai_log_interaction):
         """Test retrieving logs by pipeline step name."""
-        create_ai_log_interaction(
-            processing_id="proc1",
-            step_name="translation"
-        )
-        create_ai_log_interaction(
-            processing_id="proc2",
-            step_name="translation"
-        )
-        create_ai_log_interaction(
-            processing_id="proc3",
-            step_name="validation"
-        )
+        create_ai_log_interaction(processing_id="proc1", step_name="translation")
+        create_ai_log_interaction(processing_id="proc2", step_name="translation")
+        create_ai_log_interaction(processing_id="proc3", step_name="validation")
 
         logs = repository.get_by_step_name("translation")
 
@@ -268,18 +222,9 @@ class TestAILogInteractionRepository:
 
     def test_get_by_model(self, repository, create_ai_log_interaction):
         """Test retrieving logs by model name."""
-        create_ai_log_interaction(
-            processing_id="proc1",
-            model_name="Meta-Llama-3_3-70B-Instruct"
-        )
-        create_ai_log_interaction(
-            processing_id="proc2",
-            model_name="Meta-Llama-3_3-70B-Instruct"
-        )
-        create_ai_log_interaction(
-            processing_id="proc3",
-            model_name="Mistral-Nemo-Instruct-2407"
-        )
+        create_ai_log_interaction(processing_id="proc1", model_name="Meta-Llama-3_3-70B-Instruct")
+        create_ai_log_interaction(processing_id="proc2", model_name="Meta-Llama-3_3-70B-Instruct")
+        create_ai_log_interaction(processing_id="proc3", model_name="Mistral-Nemo-Instruct-2407")
 
         logs = repository.get_by_model("Meta-Llama-3_3-70B-Instruct")
 
@@ -304,19 +249,13 @@ class TestAILogInteractionRepository:
     def test_get_total_cost_single_processing(self, repository, create_ai_log_interaction):
         """Test calculating total cost for a single processing."""
         create_ai_log_interaction(
-            processing_id="cost-proc",
-            step_name="step1",
-            total_cost_usd=0.001
+            processing_id="cost-proc", step_name="step1", total_cost_usd=0.001
         )
         create_ai_log_interaction(
-            processing_id="cost-proc",
-            step_name="step2",
-            total_cost_usd=0.002
+            processing_id="cost-proc", step_name="step2", total_cost_usd=0.002
         )
         create_ai_log_interaction(
-            processing_id="cost-proc",
-            step_name="step3",
-            total_cost_usd=0.003
+            processing_id="cost-proc", step_name="step3", total_cost_usd=0.003
         )
 
         total_cost = repository.get_total_cost(processing_id="cost-proc")
@@ -341,10 +280,7 @@ class TestAILogInteractionRepository:
 
         create_ai_log_interaction(processing_id="recent", total_cost_usd=0.020)
 
-        total_cost = repository.get_total_cost(
-            start_date=yesterday,
-            end_date=tomorrow
-        )
+        total_cost = repository.get_total_cost(start_date=yesterday, end_date=tomorrow)
 
         assert total_cost >= 0.020
 
@@ -355,14 +291,8 @@ class TestAILogInteractionRepository:
 
     def test_get_total_cost_handles_none_values(self, repository, create_ai_log_interaction):
         """Test that None cost values are treated as 0."""
-        create_ai_log_interaction(
-            processing_id="none-cost",
-            total_cost_usd=None
-        )
-        create_ai_log_interaction(
-            processing_id="none-cost",
-            total_cost_usd=0.005
-        )
+        create_ai_log_interaction(processing_id="none-cost", total_cost_usd=None)
+        create_ai_log_interaction(processing_id="none-cost", total_cost_usd=0.005)
 
         total_cost = repository.get_total_cost(processing_id="none-cost")
 
@@ -372,16 +302,8 @@ class TestAILogInteractionRepository:
 
     def test_get_total_tokens_single_processing(self, repository, create_ai_log_interaction):
         """Test calculating total tokens for a processing."""
-        create_ai_log_interaction(
-            processing_id="token-proc",
-            step_name="step1",
-            total_tokens=100
-        )
-        create_ai_log_interaction(
-            processing_id="token-proc",
-            step_name="step2",
-            total_tokens=200
-        )
+        create_ai_log_interaction(processing_id="token-proc", step_name="step1", total_tokens=100)
+        create_ai_log_interaction(processing_id="token-proc", step_name="step2", total_tokens=200)
 
         total_tokens = repository.get_total_tokens(processing_id="token-proc")
 
@@ -398,14 +320,8 @@ class TestAILogInteractionRepository:
 
     def test_get_total_tokens_handles_none_values(self, repository, create_ai_log_interaction):
         """Test that None token values are treated as 0."""
-        create_ai_log_interaction(
-            processing_id="none-tokens",
-            total_tokens=None
-        )
-        create_ai_log_interaction(
-            processing_id="none-tokens",
-            total_tokens=250
-        )
+        create_ai_log_interaction(processing_id="none-tokens", total_tokens=None)
+        create_ai_log_interaction(processing_id="none-tokens", total_tokens=250)
 
         total_tokens = repository.get_total_tokens(processing_id="none-tokens")
 
@@ -441,10 +357,7 @@ class TestAILogInteractionRepository:
 
         create_ai_log_interaction(processing_id="recent-call")
 
-        count = repository.count_calls(
-            start_date=yesterday,
-            end_date=tomorrow
-        )
+        count = repository.count_calls(start_date=yesterday, end_date=tomorrow)
 
         assert count >= 1
 
@@ -483,13 +396,13 @@ class TestAILogInteractionRepository:
             processing_id="analytics-proc",
             step_name="step1",
             total_tokens=100,
-            total_cost_usd=0.005
+            total_cost_usd=0.005,
         )
         create_ai_log_interaction(
             processing_id="analytics-proc",
             step_name="step2",
             total_tokens=200,
-            total_cost_usd=0.010
+            total_cost_usd=0.010,
         )
 
         total_tokens = repository.get_total_tokens(processing_id="analytics-proc")
@@ -503,23 +416,11 @@ class TestAILogInteractionRepository:
     def test_analytics_by_model_performance(self, repository, create_ai_log_interaction):
         """Test analyzing performance by model."""
         # Model A
-        create_ai_log_interaction(
-            model_name="ModelA",
-            total_cost_usd=0.010,
-            total_tokens=500
-        )
-        create_ai_log_interaction(
-            model_name="ModelA",
-            total_cost_usd=0.012,
-            total_tokens=600
-        )
+        create_ai_log_interaction(model_name="ModelA", total_cost_usd=0.010, total_tokens=500)
+        create_ai_log_interaction(model_name="ModelA", total_cost_usd=0.012, total_tokens=600)
 
         # Model B
-        create_ai_log_interaction(
-            model_name="ModelB",
-            total_cost_usd=0.005,
-            total_tokens=300
-        )
+        create_ai_log_interaction(model_name="ModelB", total_cost_usd=0.005, total_tokens=300)
 
         model_a_logs = repository.get_by_model("ModelA")
         model_b_logs = repository.get_by_model("ModelB")
@@ -540,9 +441,7 @@ class TestAILogInteractionRepository:
         """Test that specialized repository inherits base CRUD methods."""
         # Test create (from base)
         log = repository.create(
-            processing_id="inherit-test",
-            step_name="test_step",
-            total_tokens=100
+            processing_id="inherit-test", step_name="test_step", total_tokens=100
         )
 
         # Test get_by_id (from base)

@@ -5,20 +5,22 @@ Test-Skript für den Advanced Privacy Filter mit NER
 
 import sys
 import os
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
 
+
 def test_advanced_filter():
     """Testet die erweiterte Privacy Filter Funktionalität"""
-    
+
     # Initialisiere Filter
     filter = AdvancedPrivacyFilter()
-    
+
     print("=" * 60)
     print("🧪 ADVANCED PRIVACY FILTER TEST")
     print("=" * 60)
-    
+
     # Test 1: Unbekannte Namen (nicht in statischer Liste)
     test_text_1 = """
     Sehr geehrte Frau Sabine Zimmermann-Huber,
@@ -30,7 +32,7 @@ def test_advanced_filter():
     Hämoglobin: 12.5 g/dl (Norm: 12-16)
     Die kardiale Funktion ist unauffällig.
     """
-    
+
     result_1 = filter.remove_pii(test_text_1)
     print("\n📝 TEST 1 - Unbekannte Namen:")
     print("Original:")
@@ -38,7 +40,7 @@ def test_advanced_filter():
     print("\nBereinigt:")
     print(result_1)
     print("-" * 50)
-    
+
     # Test 2: Medizinische Begriffe die wie Namen aussehen
     test_text_2 = """
     Patient: Unbekannt
@@ -55,34 +57,34 @@ def test_advanced_filter():
     - Mesalazin 500mg (Morbus Crohn)
     - Thiamazol 10mg (Morbus Basedow)
     """
-    
+
     result_2 = filter.remove_pii(test_text_2)
     print("\n📝 TEST 2 - Medizinische Eponyme vs. echte Namen:")
     print("Original:")
     print(test_text_2)
     print("\nBereinigt:")
     print(result_2)
-    
+
     # Prüfe ob medizinische Eponyme erhalten bleiben
-    medical_eponyms = ['Morbus Crohn', 'Morbus Basedow', 'Baker-Zyste']
+    medical_eponyms = ["Morbus Crohn", "Morbus Basedow", "Baker-Zyste"]
     print("\n✅ Erhaltene medizinische Eponyme:")
     for eponym in medical_eponyms:
         if eponym in result_2:
             print(f"  ✓ {eponym}")
         else:
             print(f"  ✗ {eponym} FEHLT!")
-    
+
     # Prüfe ob echte Namen entfernt wurden
-    real_names = ['Alexander Hartmann', 'Sabine Zimmermann-Huber', 'Maximilian von Grafenstein']
+    real_names = ["Alexander Hartmann", "Sabine Zimmermann-Huber", "Maximilian von Grafenstein"]
     print("\n🔒 Sollten entfernt sein:")
     for name in real_names:
         if name not in result_2:
             print(f"  ✓ {name} entfernt")
         else:
             print(f"  ✗ {name} NOCH VORHANDEN!")
-    
+
     print("-" * 50)
-    
+
     # Test 3: Verschiedene Namensformate
     test_text_3 = """
     Universitätsklinikum Berlin
@@ -102,7 +104,7 @@ def test_advanced_filter():
     Die Patientin Anna klagt über abdominale Schmerzen.
     Patient Max zeigt Zeichen einer Gastritis.
     """
-    
+
     result_3 = filter.remove_pii(test_text_3)
     print("\n📝 TEST 3 - Komplexe Namensformate:")
     print("Original (gekürzt):")
@@ -110,7 +112,7 @@ def test_advanced_filter():
     print("\nBereinigt (gekürzt):")
     print(result_3[:300] + "...")
     print("-" * 50)
-    
+
     # Test 4: Kontext-sensitive Erkennung
     test_text_4 = """
     Der Patient Frank wurde in der Frank-Starling-Kurve untersucht.
@@ -123,25 +125,25 @@ def test_advanced_filter():
     BMI aktuell: 28
     Patient Klaus hat einen BMI von 28.
     """
-    
+
     result_4 = filter.remove_pii(test_text_4)
     print("\n📝 TEST 4 - Kontext-sensitive Erkennung:")
     print("Original:")
     print(test_text_4)
     print("\nBereinigt:")
     print(result_4)
-    
+
     # Prüfe Erhaltung medizinischer Begriffe
     print("\n✅ Medizinische Begriffe (sollten erhalten bleiben):")
-    medical = ['Frank-Starling-Kurve', 'Weber-Fechner-Regel', 'Parkinson-Krankheit', 'BMI']
+    medical = ["Frank-Starling-Kurve", "Weber-Fechner-Regel", "Parkinson-Krankheit", "BMI"]
     for term in medical:
         if term in result_4:
             print(f"  ✓ {term}")
         else:
             print(f"  ✗ {term} FEHLT!")
-    
+
     print("-" * 50)
-    
+
     # Test 5: Großer realistischer Text
     test_text_5 = """
     Klinikum Großhadern München
@@ -198,49 +200,64 @@ def test_advanced_filter():
     Dr. med. Marie-Antoinette de la Rochefoucauld
     Oberärztin Endokrinologie
     """
-    
+
     result_5 = filter.remove_pii(test_text_5)
     print("\n📝 TEST 5 - Realistischer komplexer Arztbrief:")
     print(f"Original: {len(test_text_5)} Zeichen")
     print(f"Bereinigt: {len(result_5)} Zeichen")
-    
+
     # Prüfe wichtige medizinische Informationen
     print("\n✅ Erhaltene medizinische Informationen:")
     medical_info = [
-        'Diabetes mellitus Typ 2', 'ICD E11.9', 'HbA1c', '7.8%',
-        'Arterielle Hypertonie', 'ICD I10.90', '145/90 mmHg',
-        'Hashimoto-Thyreoiditis', 'ICD E06.3', 'TSH', '2.5 mU/l',
-        'Metformin 1000mg', 'Ramipril 5mg', 'L-Thyroxin 75µg',
-        'Penicillin-Allergie'
+        "Diabetes mellitus Typ 2",
+        "ICD E11.9",
+        "HbA1c",
+        "7.8%",
+        "Arterielle Hypertonie",
+        "ICD I10.90",
+        "145/90 mmHg",
+        "Hashimoto-Thyreoiditis",
+        "ICD E06.3",
+        "TSH",
+        "2.5 mU/l",
+        "Metformin 1000mg",
+        "Ramipril 5mg",
+        "L-Thyroxin 75µg",
+        "Penicillin-Allergie",
     ]
-    
+
     preserved = 0
     for info in medical_info:
         if info in result_5:
             preserved += 1
-    
+
     print(f"  {preserved}/{len(medical_info)} medizinische Informationen erhalten")
-    
+
     # Prüfe Entfernung von Namen
     print("\n🔒 Entfernte Personendaten:")
     names_to_remove = [
-        'Gertrud Elfriede Müller-Meier', 'Wolfgang Müller-Meier',
-        'Christina Müller-Meier', 'Angelika Bauer-Schmidt',
-        'Konstantin Alexandropoulos', 'Bernhard Hoffmann-Rüdiger',
-        'Friedrich-Wilhelm Schulze-Delitzsch', 'Anastasia Romanova-Petrov',
-        'Hans-Joachim Freiherr von und zu Löwenstein'
+        "Gertrud Elfriede Müller-Meier",
+        "Wolfgang Müller-Meier",
+        "Christina Müller-Meier",
+        "Angelika Bauer-Schmidt",
+        "Konstantin Alexandropoulos",
+        "Bernhard Hoffmann-Rüdiger",
+        "Friedrich-Wilhelm Schulze-Delitzsch",
+        "Anastasia Romanova-Petrov",
+        "Hans-Joachim Freiherr von und zu Löwenstein",
     ]
-    
+
     removed = 0
     for name in names_to_remove:
         if name not in result_5:
             removed += 1
-    
+
     print(f"  {removed}/{len(names_to_remove)} Namen erfolgreich entfernt")
-    
+
     # Zeige einen Ausschnitt des bereinigten Texts
     print("\n📄 Ausschnitt des bereinigten Texts:")
     print(result_5[:500] + "...")
+
 
 if __name__ == "__main__":
     print("🔬 Teste Advanced Privacy Filter mit NER...")
@@ -250,4 +267,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"\n❌ Fehler: {e}")
         import traceback
+
         traceback.print_exc()

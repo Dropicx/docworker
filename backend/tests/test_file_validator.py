@@ -26,6 +26,7 @@ class TestFileValidator:
     @pytest.fixture
     def create_upload_file(self):
         """Factory for creating mock UploadFile objects."""
+
         def _create(filename: str, content: bytes, content_type: str = "application/pdf"):
             file = Mock()
             file.filename = filename
@@ -33,6 +34,7 @@ class TestFileValidator:
             file.read = AsyncMock(return_value=content)
             file.seek = AsyncMock()
             return file
+
         return _create
 
     @pytest.fixture
@@ -61,7 +63,9 @@ class TestFileValidator:
             writer = PdfWriter()
             for _ in range(10):
                 writer.add_blank_page(width=612, height=792)
-            writer.add_metadata({"/Title": "Test PDF Document " * 50})  # Add metadata to increase size
+            writer.add_metadata(
+                {"/Title": "Test PDF Document " * 50}
+            )  # Add metadata to increase size
             writer.write(buffer)
             buffer.seek(0)
             content = buffer.read()
@@ -71,18 +75,18 @@ class TestFileValidator:
     @pytest.fixture
     def valid_jpeg_content(self):
         """Create valid JPEG image content for testing."""
-        img = Image.new('RGB', (800, 600), color='red')
+        img = Image.new("RGB", (800, 600), color="red")
         buffer = BytesIO()
-        img.save(buffer, format='JPEG')
+        img.save(buffer, format="JPEG")
         buffer.seek(0)
         return buffer.read()
 
     @pytest.fixture
     def valid_png_content(self):
         """Create valid PNG image content for testing."""
-        img = Image.new('RGB', (800, 600), color='blue')
+        img = Image.new("RGB", (800, 600), color="blue")
         buffer = BytesIO()
-        img.save(buffer, format='PNG')
+        img.save(buffer, format="PNG")
         buffer.seek(0)
         return buffer.read()
 
@@ -94,7 +98,7 @@ class TestFileValidator:
         tiny_content = b"x" * (MIN_FILE_SIZE - 1)
         file = create_upload_file("test.pdf", tiny_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/pdf"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="application/pdf"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is False
@@ -107,7 +111,7 @@ class TestFileValidator:
         huge_content = b"x" * (MAX_FILE_SIZE + 1)
         file = create_upload_file("test.pdf", huge_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/pdf"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="application/pdf"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is False
@@ -118,7 +122,7 @@ class TestFileValidator:
         """Test validation passes for files within valid size range."""
         file = create_upload_file("test.pdf", valid_pdf_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/pdf"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="application/pdf"):
             is_valid, error = await FileValidator.validate_file(file)
 
         # Should pass size validation (may fail on other checks)
@@ -133,18 +137,20 @@ class TestFileValidator:
         """Test validation with direct MIME type match for PDF."""
         file = create_upload_file("document.pdf", valid_pdf_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/pdf"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="application/pdf"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is True
         assert error is None
 
     @pytest.mark.asyncio
-    async def test_validate_file_direct_mime_match_jpeg(self, create_upload_file, valid_jpeg_content):
+    async def test_validate_file_direct_mime_match_jpeg(
+        self, create_upload_file, valid_jpeg_content
+    ):
         """Test validation with direct MIME type match for JPEG."""
         file = create_upload_file("photo.jpg", valid_jpeg_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="image/jpeg"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="image/jpeg"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is True
@@ -155,31 +161,37 @@ class TestFileValidator:
         """Test validation with direct MIME type match for PNG."""
         file = create_upload_file("scan.png", valid_png_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="image/png"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="image/png"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is True
         assert error is None
 
     @pytest.mark.asyncio
-    async def test_validate_file_fallback_mime_textplain_pdf(self, create_upload_file, valid_pdf_content):
+    async def test_validate_file_fallback_mime_textplain_pdf(
+        self, create_upload_file, valid_pdf_content
+    ):
         """Test validation with fallback MIME type (text/plain) for PDF."""
         file = create_upload_file("document.pdf", valid_pdf_content)
 
         # Some systems report PDFs as text/plain
-        with patch('app.services.file_validator.magic.from_buffer', return_value="text/plain"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="text/plain"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is True
         assert error is None
 
     @pytest.mark.asyncio
-    async def test_validate_file_fallback_mime_octetstream_jpeg(self, create_upload_file, valid_jpeg_content):
+    async def test_validate_file_fallback_mime_octetstream_jpeg(
+        self, create_upload_file, valid_jpeg_content
+    ):
         """Test validation with fallback MIME type (octet-stream) for JPEG."""
         file = create_upload_file("photo.jpg", valid_jpeg_content)
 
         # Generic binary type
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/octet-stream"):
+        with patch(
+            "app.services.file_validator.magic.from_buffer", return_value="application/octet-stream"
+        ):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is True
@@ -190,18 +202,20 @@ class TestFileValidator:
         """Test validation with alternative PNG MIME type (image/x-png)."""
         file = create_upload_file("scan.png", valid_png_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="image/x-png"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="image/x-png"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is True
         assert error is None
 
     @pytest.mark.asyncio
-    async def test_validate_file_alternative_jpeg_mime(self, create_upload_file, valid_jpeg_content):
+    async def test_validate_file_alternative_jpeg_mime(
+        self, create_upload_file, valid_jpeg_content
+    ):
         """Test validation with alternative JPEG MIME type (image/pjpeg)."""
         file = create_upload_file("photo.jpeg", valid_jpeg_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="image/pjpeg"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="image/pjpeg"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is True
@@ -213,18 +227,25 @@ class TestFileValidator:
         content = b"x" * 5000  # Valid size
         file = create_upload_file("document.docx", content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/vnd.openxmlformats"):
+        with patch(
+            "app.services.file_validator.magic.from_buffer",
+            return_value="application/vnd.openxmlformats",
+        ):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is False
         assert "nicht unterstützt" in error.lower()
 
     @pytest.mark.asyncio
-    async def test_validate_file_mime_extension_mismatch(self, create_upload_file, valid_pdf_content):
+    async def test_validate_file_mime_extension_mismatch(
+        self, create_upload_file, valid_pdf_content
+    ):
         """Test validation fails when MIME type doesn't match extension."""
-        file = create_upload_file("document.jpg", valid_pdf_content)  # PDF content with .jpg extension
+        file = create_upload_file(
+            "document.jpg", valid_pdf_content
+        )  # PDF content with .jpg extension
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/pdf"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="application/pdf"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is False
@@ -237,7 +258,7 @@ class TestFileValidator:
         file = create_upload_file("", content)  # Empty filename
         file.filename = None
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/pdf"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="application/pdf"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is False
@@ -256,7 +277,7 @@ class TestFileValidator:
     async def test_validate_pdf_empty(self):
         """Test PDF validation fails for PDFs with no pages."""
         # Create empty PDF (this is tricky, we'll use a mock)
-        with patch('app.services.file_validator.PyPDF2.PdfReader') as mock_reader:
+        with patch("app.services.file_validator.PyPDF2.PdfReader") as mock_reader:
             mock_reader.return_value.pages = []
 
             is_valid, error = await FileValidator._validate_pdf(b"fake pdf content")
@@ -267,7 +288,7 @@ class TestFileValidator:
     @pytest.mark.asyncio
     async def test_validate_pdf_too_many_pages(self):
         """Test PDF validation fails for PDFs with more than 50 pages."""
-        with patch('app.services.file_validator.PyPDF2.PdfReader') as mock_reader:
+        with patch("app.services.file_validator.PyPDF2.PdfReader") as mock_reader:
             # Create mock with 51 pages
             mock_reader.return_value.pages = [Mock()] * 51
 
@@ -280,7 +301,7 @@ class TestFileValidator:
     @pytest.mark.asyncio
     async def test_validate_pdf_exactly_50_pages(self):
         """Test PDF validation passes for PDFs with exactly 50 pages."""
-        with patch('app.services.file_validator.PyPDF2.PdfReader') as mock_reader:
+        with patch("app.services.file_validator.PyPDF2.PdfReader") as mock_reader:
             # Create mock with exactly 50 pages
             mock_page = Mock()
             mock_page.extract_text.return_value = "Some text"
@@ -304,7 +325,7 @@ class TestFileValidator:
     @pytest.mark.asyncio
     async def test_validate_pdf_checks_first_5_pages(self):
         """Test PDF validation only checks first 5 pages for text."""
-        with patch('app.services.file_validator.PyPDF2.PdfReader') as mock_reader:
+        with patch("app.services.file_validator.PyPDF2.PdfReader") as mock_reader:
             # Create mock with 10 pages
             mock_page = Mock()
             mock_page.extract_text.return_value = "Some text"
@@ -337,9 +358,9 @@ class TestFileValidator:
     async def test_validate_image_unsupported_format(self):
         """Test image validation fails for unsupported formats (e.g., BMP, TIFF)."""
         # Create a BMP image
-        img = Image.new('RGB', (800, 600), color='green')
+        img = Image.new("RGB", (800, 600), color="green")
         buffer = BytesIO()
-        img.save(buffer, format='BMP')
+        img.save(buffer, format="BMP")
         buffer.seek(0)
         content = buffer.read()
 
@@ -352,9 +373,9 @@ class TestFileValidator:
     async def test_validate_image_too_small(self):
         """Test image validation fails for images smaller than 100x100 pixels."""
         # Create 50x50 image
-        img = Image.new('RGB', (50, 50), color='red')
+        img = Image.new("RGB", (50, 50), color="red")
         buffer = BytesIO()
-        img.save(buffer, format='JPEG')
+        img.save(buffer, format="JPEG")
         buffer.seek(0)
         content = buffer.read()
 
@@ -368,9 +389,9 @@ class TestFileValidator:
     async def test_validate_image_too_large(self):
         """Test image validation fails for images larger than 8000x8000 pixels."""
         # Create 9000x9000 image (this will be slow, so we mock it)
-        with patch('PIL.Image.open') as mock_open:
+        with patch("PIL.Image.open") as mock_open:
             mock_img = MagicMock()
-            mock_img.format = 'JPEG'
+            mock_img.format = "JPEG"
             mock_img.size = (9000, 9000)
             mock_img.__enter__ = Mock(return_value=mock_img)
             mock_img.__exit__ = Mock(return_value=False)
@@ -385,9 +406,9 @@ class TestFileValidator:
     @pytest.mark.asyncio
     async def test_validate_image_exactly_minimum_size(self):
         """Test image validation passes for images exactly 100x100 pixels."""
-        img = Image.new('RGB', (100, 100), color='red')
+        img = Image.new("RGB", (100, 100), color="red")
         buffer = BytesIO()
-        img.save(buffer, format='JPEG')
+        img.save(buffer, format="JPEG")
         buffer.seek(0)
         content = buffer.read()
 
@@ -400,9 +421,9 @@ class TestFileValidator:
     async def test_validate_image_exactly_maximum_size(self):
         """Test image validation passes for images exactly 8000x8000 pixels."""
         # Mock to avoid creating huge image
-        with patch('PIL.Image.open') as mock_open:
+        with patch("PIL.Image.open") as mock_open:
             mock_img = MagicMock()
-            mock_img.format = 'JPEG'
+            mock_img.format = "JPEG"
             mock_img.size = (8000, 8000)
             mock_img.verify = Mock()
             mock_img.__enter__ = Mock(return_value=mock_img)
@@ -487,7 +508,7 @@ class TestFileValidator:
         """Test that file.seek(0) is called to reset file pointer."""
         file = create_upload_file("test.pdf", valid_pdf_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/pdf"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="application/pdf"):
             await FileValidator.validate_file(file)
 
         # Verify seek was called to reset file pointer
@@ -498,7 +519,7 @@ class TestFileValidator:
         """Test complete validation workflow for PDF file."""
         file = create_upload_file("medical_report.pdf", valid_pdf_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/pdf"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="application/pdf"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is True
@@ -509,7 +530,7 @@ class TestFileValidator:
         """Test complete validation workflow for JPEG image."""
         file = create_upload_file("medical_scan.jpg", valid_jpeg_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="image/jpeg"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="image/jpeg"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is True
@@ -520,7 +541,7 @@ class TestFileValidator:
         """Test complete validation workflow for PNG image."""
         file = create_upload_file("medical_document.png", valid_png_content)
 
-        with patch('app.services.file_validator.magic.from_buffer', return_value="image/png"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="image/png"):
             is_valid, error = await FileValidator.validate_file(file)
 
         assert is_valid is True
@@ -531,7 +552,7 @@ class TestFileValidator:
         """Test that validation enforces all constraints in order."""
         # Too small
         tiny_file = create_upload_file("test.pdf", b"x" * 10)
-        with patch('app.services.file_validator.magic.from_buffer', return_value="application/pdf"):
+        with patch("app.services.file_validator.magic.from_buffer", return_value="application/pdf"):
             is_valid, error = await FileValidator.validate_file(tiny_file)
             assert is_valid is False
             assert "klein" in error.lower()
