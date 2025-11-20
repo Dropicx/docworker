@@ -1031,7 +1031,12 @@ class FileQualityDetector:
         return cv2.cvtColor(open_cv_image, cv2.COLOR_RGB2BGR)
 
     def _assess_image_quality(self, cv_image) -> float:
-        """Assess the quality of an image for OCR"""
+        """Assess the quality of an image for OCR
+        
+        Uses weighted combination of blur detection (60%) and contrast analysis (40%)
+        as documented in QUALITY_GATE.md. Improved normalization for high-resolution
+        medical documents that may have lots of white space but clear, readable text.
+        """
         if not OPENCV_AVAILABLE or cv_image is None:
             return 0.5  # Default medium quality when OpenCV not available
 
@@ -1042,16 +1047,43 @@ class FileQualityDetector:
             # Calculate sharpness using Laplacian variance
             laplacian_var = cv2.Laplacian(gray, cv2.CV_64F).var()
 
-            # Normalize to 0-1 range (empirically determined thresholds)
-            sharpness_score = min(laplacian_var / 1000, 1.0)
+            # Improved normalization for high-resolution documents
+            # Medical documents often have high resolution but may not reach 1000 variance
+            # Use a more lenient threshold: 500 for good quality, 1000 for excellent
+            # This better handles high-res scans with lots of white space
+            if laplacian_var >= 1000:
+                sharpness_score = 1.0
+            elif laplacian_var >= 500:
+                # Linear interpolation between 500-1000: maps 500→0.5, 1000→1.0
+                sharpness_score = 0.5 + ((laplacian_var - 500) / 500) * 0.5
+            elif laplacian_var >= 200:
+                # For moderate sharpness (200-500), scale from 0.2 to 0.5
+                sharpness_score = 0.2 + ((laplacian_var - 200) / 300) * 0.3
+            else:
+                # Very blurry images (< 200), scale from 0 to 0.2
+                sharpness_score = (laplacian_var / 200) * 0.2
 
-            # Calculate contrast
-            contrast = gray.std() / 255.0
+            # Calculate contrast using standard deviation
+            # For medical documents with lots of white space, contrast might be lower
+            # but text regions are still readable. Use a more lenient normalization:
+            # Normalize by 120 (instead of 255) to give full score at std=120,
+            # which is typical for high-contrast black-on-white documents
+            contrast_std = gray.std()
+            contrast_score = min(contrast_std / 120.0, 1.0)
+            
+            # Use documented weighted formula: 60% blur, 40% contrast
+            quality_score = (sharpness_score * 0.6) + (contrast_score * 0.4)
+            
+            logger.debug(
+                f"Quality assessment: laplacian_var={laplacian_var:.1f}, "
+                f"sharpness={sharpness_score:.3f}, contrast_std={contrast_std:.1f}, "
+                f"contrast={contrast_score:.3f}, final={quality_score:.3f}"
+            )
 
-            # Overall quality score
-            return (sharpness_score + contrast) / 2
+            return quality_score
 
-        except Exception:
+        except Exception as e:
+            logger.warning(f"Image quality assessment failed: {e}")
             return 0.5  # Default medium quality
 
     def _detect_table_in_image(self, cv_image) -> bool:
