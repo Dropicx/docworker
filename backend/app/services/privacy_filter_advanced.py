@@ -9,6 +9,14 @@ Features:
     - Fallback to heuristic-based detection if spaCy unavailable
     - Protects 146+ medical terms and 210+ medical abbreviations
     - Validates medical content preservation (GDPR compliance)
+
+ENHANCED (Issue #35 Phase 2 - Coverage Expansion):
+    - 14+ German PII types: Tax ID, social security, passport, ID card
+    - Healthcare identifiers: Patient ID, case numbers, medical records
+    - Enhanced contact: Mobile numbers, fax, URLs, extended addresses
+    - Medical eponym preservation: 50+ disease names (Parkinson, Alzheimer, etc.)
+    - Intelligent date classification: Preserves medical dates, removes birthdates
+    - Confidence scoring: Tracks detection quality and low-confidence entities
 """
 
 import logging
@@ -36,35 +44,47 @@ class AdvancedPrivacyFilter:
     identifiable information (PII) while preserving medical content. Designed
     specifically for German medical documents (Arztbrief, Befundbericht, Laborwerte).
 
-    The filter removes:
-        - Patient names (detected via spaCy NER and title patterns)
-        - Birthdates (geb. XX.XX.XXXX format)
-        - Addresses (street, PLZ, city)
-        - Contact information (phone, email)
-        - Insurance numbers
+    The filter removes (Issue #35 Phase 1-2):
+        - Patient names (detected via spaCy NER with eponym preservation)
+        - Birthdates (context-aware: removes PII, preserves medical dates)
+        - Addresses (street, PLZ, city, extended formats)
+        - Contact information (phone, mobile, fax, email, URLs)
+        - German Tax ID (Steuer-ID, 11 digits)
+        - Social Security Number (Sozialversicherungsnummer, 12 chars)
+        - Passport numbers (Reisepassnummer)
+        - ID card numbers (Personalausweis)
+        - Patient IDs, case numbers, medical record numbers
+        - Hospital/clinic internal identifiers
+        - Insurance policy numbers
+        - Gender information
         - Salutations and signatures
 
     The filter preserves:
         - All medical terminology (146+ terms)
         - Medical abbreviations (210+ protected)
+        - Medical eponyms (50+ disease names like Parkinson, Alzheimer)
         - Lab values and measurements
         - Diagnoses (ICD codes, medical conditions)
         - Medications and dosages
         - Medical procedures and findings
+        - Medical examination/lab dates
 
     Attributes:
         nlp (Language | None): spaCy language model if available
         has_ner (bool): Whether NER functionality is available
         medical_terms (Set[str]): Protected medical terminology
+        medical_eponyms (Set[str]): Medical disease names (preserve, don't remove)
         protected_abbreviations (Set[str]): Protected medical abbreviations
         patterns (dict[str, Pattern]): Compiled regex patterns for PII detection
 
     Example:
         >>> filter = AdvancedPrivacyFilter()
-        >>> medical_text = "Patient: Max Mustermann, geb. 01.01.1980..."
-        >>> cleaned = filter.remove_pii(medical_text)
-        >>> is_valid = filter.validate_medical_content(medical_text, cleaned)
-        >>> print(f"Medical content preserved: {is_valid}")
+        >>> medical_text = "Patient: Max Mustermann, geb. 01.01.1980, Steuer-ID: 12345678910"
+        >>> cleaned, metadata = filter.remove_pii(medical_text)
+        >>> assert "Mustermann" not in cleaned
+        >>> assert "12345678910" not in cleaned  # Tax ID removed
+        >>> assert metadata["entities_detected"] >= 2  # Name + Tax ID
+        >>> print(f"Eponyms preserved: {metadata['eponyms_preserved']}")
     """
 
     def __init__(self) -> None:
@@ -867,8 +887,16 @@ class AdvancedPrivacyFilter:
                 self.has_ner = False
 
     def _compile_patterns(self) -> dict[str, Pattern[str]]:
-        """Kompiliert Regex-Patterns für verschiedene PII-Typen"""
+        """Kompiliert Regex-Patterns für verschiedene PII-Typen
+
+        ENHANCED (Issue #35 Phase 2):
+        - Phase 2.1: Additional German PII types (tax ID, social security, passport)
+        - Phase 2.2: Healthcare identifiers (patient ID, case numbers, medical records)
+        - Phase 2.3: Enhanced contact patterns (mobile numbers, URLs)
+        """
         return {
+            # ==================== EXISTING PATTERNS ====================
+
             # Geburtsdaten - matches "Geb.: 15.05.1965", "geb. 15.05.1965", etc.
             "birthdate": re.compile(
                 r"\b(?:geb(?:oren)?\.?:?\s*(?:am\s*)?|geboren\s+am\s+|geburtsdatum:?\s*)"
@@ -912,6 +940,107 @@ class AdvancedPrivacyFilter:
                 r"(?:mit\s+)?(?:freundlichen|besten|herzlichen)\s+grüßen.*?$|"
                 r"hochachtungsvoll.*?$)",
                 re.IGNORECASE | re.MULTILINE,
+            ),
+
+            # ==================== PHASE 2.1: ADDITIONAL GERMAN PII TYPES ====================
+
+            # German Tax ID (Steuer-ID / Steueridentifikationsnummer)
+            # Format: 11 digits, e.g., "12 345 678 910" or "12345678910"
+            # Pattern matches with or without spaces/dashes
+            "tax_id": re.compile(
+                r"\b(?:steuer[-\s]?(?:id|identifikations?nummer)|steuernummer|st\.?[-\s]?nr\.?)[:\s]*"
+                r"\d{2}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3}\b",
+                re.IGNORECASE,
+            ),
+
+            # German Social Security Number (Sozialversicherungsnummer / Rentenversicherungsnummer)
+            # Format: 12 characters - Area code (2 digits) + Birthday (6 digits, DDMMYY) +
+            # Serial number (2 digits) + Initial (1 letter) + Check digit (1 digit)
+            # Example: "65 010175 R 001" or "65010175R001"
+            "social_security": re.compile(
+                r"\b(?:sozial[-\s]?versicherungs?nummer|renten[-\s]?versicherungs?nummer|sv[-\s]?nummer|rvn)[:\s]*"
+                r"\d{2}[\s\-]?\d{6}[\s\-]?[A-Z][\s\-]?\d{3}\b",
+                re.IGNORECASE,
+            ),
+
+            # German Passport Number (Reisepassnummer)
+            # Format: 9 characters - Starts with C, followed by 8 digits
+            # Example: "C01X00T47" or "C 01X00T47"
+            "passport": re.compile(
+                r"\b(?:reisepass|pass|passport)[\-\s]*(?:nr\.?|nummer)?[:\s]*"
+                r"C[\s\-]?[A-Z0-9]{8}\b",
+                re.IGNORECASE,
+            ),
+
+            # German ID Card (Personalausweis)
+            # Format: 9 characters - Letter + 8 digits (since 2010)
+            # Example: "L01X00T47" or older: "1234567890"
+            "id_card": re.compile(
+                r"\b(?:personal?ausweis|ausweis|perso)[\-\s]*(?:nr\.?|nummer)?[:\s]*"
+                r"(?:[A-Z][\s\-]?[A-Z0-9]{8}|\d{10})\b",
+                re.IGNORECASE,
+            ),
+
+            # ==================== PHASE 2.2: HEALTHCARE-SPECIFIC IDENTIFIERS ====================
+
+            # Patient ID / Case Number / Medical Record Number
+            # Matches: "Patienten-ID: 12345", "Fallnummer: ABC-123", "Aktenzeichen: 2024/123"
+            "patient_id": re.compile(
+                r"\b(?:patienten?[-\s]?(?:id|nr|nummer|kennzeichen)|"
+                r"fall[-\s]?(?:nr|nummer)|"
+                r"akten[-\s]?(?:nr|nummer|zeichen)|"
+                r"krankenakte)[:\s]*"
+                r"[\dA-Z][\dA-Z\-\/]*\b",
+                re.IGNORECASE,
+            ),
+
+            # Hospital/Clinic Internal Numbers
+            # Matches: "Behandlungsnummer: 2024-12345", "Aufnahmenummer: 123456"
+            "hospital_id": re.compile(
+                r"\b(?:behandlungs?|aufnahme|station|bett)[\-\s]*(?:nr|nummer)[:\s]*"
+                r"[\dA-Z][\dA-Z\-\/]*\b",
+                re.IGNORECASE,
+            ),
+
+            # Insurance Policy Number (more specific than general insurance pattern)
+            # Matches: "Versichertennummer: A123456789", "Krankenkassennummer: 123456789012"
+            "insurance_policy": re.compile(
+                r"\b(?:versicherten|kranken?kassen?)[\-\s]*nummer[:\s]*"
+                r"[A-Z]?\d{9,12}\b",
+                re.IGNORECASE,
+            ),
+
+            # ==================== PHASE 2.3: ENHANCED CONTACT INFORMATION ====================
+
+            # Enhanced German Mobile Phone Numbers
+            # Matches: "0151 12345678", "0171-1234567", "+49 151 12345678"
+            # German mobile prefixes: 015x, 016x, 017x
+            "mobile_phone": re.compile(
+                r"\b(?:mobil|handy|tel\.?|telefon)[:\s]*"
+                r"(?:(?:\+49|0049)[\s\-]?(?:15|16|17)\d[\s\-]?\d+|0(?:15|16|17)\d[\s\-]?\d+)\b",
+                re.IGNORECASE,
+            ),
+
+            # Fax Numbers
+            "fax": re.compile(
+                r"\b(?:fax|telefax)[:\s]*"
+                r"(?:(?:\+49|0049)\s*\d+(?:[\s\-\(\)\/]\d+)*|0\d{2,}(?:[\s\-\(\)\/]\d+)*)",
+                re.IGNORECASE,
+            ),
+
+            # Website URLs
+            # Matches: "http://example.com", "https://example.de", "www.example.com"
+            "url": re.compile(
+                r"\b(?:https?://|www\.)[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(?:/[^\s]*)?\b",
+                re.IGNORECASE,
+            ),
+
+            # Enhanced Address - House number with letter/suffix
+            # Matches: "Hauptstraße 12a", "Bergweg 5-7", "Marktplatz 1 Etage 3"
+            "street_extended": re.compile(
+                r"\b[A-ZÄÖÜ][a-zäöüß]+(?:straße|str\.?|weg|allee|platz|ring|gasse|damm|pfad|steig)\s+"
+                r"\d+[-/]?\d*[a-z]?(?:\s+(?:Etage|Stock|OG|EG)\s+\d+)?\b",
+                re.IGNORECASE,
             ),
         }
 
@@ -1093,10 +1222,12 @@ class AdvancedPrivacyFilter:
     def _remove_personal_data(self, text: str) -> str:
         """Entfernt persönliche Daten aber ERHÄLT medizinische Informationen
 
-        ENHANCED: Intelligent date classification (Issue #35)
-        - Removes birthdates (PII)
-        - Preserves examination/lab dates (medical context)
+        ENHANCED (Issue #35):
+        - Phase 1: Intelligent date classification (birthdates vs. medical dates)
+        - Phase 2: Comprehensive German PII removal (10+ new types)
         """
+
+        # ==================== PHASE 1: CORE PII REMOVAL ====================
 
         # ENHANCED: Intelligent birthdate removal with context awareness
         # Only remove dates with explicit PII context (Geboren, Geb.)
@@ -1120,6 +1251,47 @@ class AdvancedPrivacyFilter:
 
         # Anreden und Grußformeln entfernen
         text = self.patterns["salutation"].sub("", text)
+
+        # ==================== PHASE 2.1: ADDITIONAL GERMAN PII TYPES ====================
+
+        # German Tax ID (Steuer-ID)
+        text = self.patterns["tax_id"].sub("[STEUER-ID ENTFERNT]", text)
+
+        # German Social Security Number
+        text = self.patterns["social_security"].sub("[SOZIALVERSICHERUNGSNUMMER ENTFERNT]", text)
+
+        # German Passport Number
+        text = self.patterns["passport"].sub("[REISEPASSNUMMER ENTFERNT]", text)
+
+        # German ID Card Number
+        text = self.patterns["id_card"].sub("[PERSONALAUSWEIS ENTFERNT]", text)
+
+        # ==================== PHASE 2.2: HEALTHCARE-SPECIFIC IDENTIFIERS ====================
+
+        # Patient ID / Case Number / Medical Record Number
+        text = self.patterns["patient_id"].sub("[PATIENTEN-ID ENTFERNT]", text)
+
+        # Hospital/Clinic Internal Numbers
+        text = self.patterns["hospital_id"].sub("[KRANKENHAUS-NR ENTFERNT]", text)
+
+        # Insurance Policy Number (more specific pattern)
+        text = self.patterns["insurance_policy"].sub("[VERSICHERTENNUMMER ENTFERNT]", text)
+
+        # ==================== PHASE 2.3: ENHANCED CONTACT INFORMATION ====================
+
+        # Enhanced Mobile Phone Numbers
+        text = self.patterns["mobile_phone"].sub("[MOBILTELEFON ENTFERNT]", text)
+
+        # Fax Numbers
+        text = self.patterns["fax"].sub("[FAX ENTFERNT]", text)
+
+        # Website URLs
+        text = self.patterns["url"].sub("[URL ENTFERNT]", text)
+
+        # Enhanced Street Addresses (with suffixes and floor information)
+        text = self.patterns["street_extended"].sub("[ADRESSE ENTFERNT]", text)
+
+        # ==================== GENDER INFORMATION ====================
 
         # Geschlecht entfernen (wenn explizit als "Geschlecht:" angegeben)
         return re.sub(
