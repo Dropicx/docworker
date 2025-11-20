@@ -13,6 +13,7 @@ from typing import List, Tuple
 MOCK_PDF_CONTENT = b"Mock PDF content with embedded text"
 MOCK_IMAGE_CONTENT = b"Mock image content"
 
+
 class TestEnhancedOCRSystem:
     """Test the complete enhanced OCR system"""
 
@@ -22,7 +23,7 @@ class TestEnhancedOCRSystem:
         return [
             (MOCK_PDF_CONTENT, "pdf", "page_1.pdf"),
             (MOCK_IMAGE_CONTENT, "image", "page_2.jpg"),
-            (MOCK_PDF_CONTENT, "pdf", "page_3.pdf")
+            (MOCK_PDF_CONTENT, "pdf", "page_3.pdf"),
         ]
 
     @pytest.mark.asyncio
@@ -71,7 +72,7 @@ class TestEnhancedOCRSystem:
         assert "confidence" in analysis
 
     @pytest.mark.asyncio
-    @patch('app.services.ovh_client.OVHClient')
+    @patch("app.services.ovh_client.OVHClient")
     async def test_hybrid_text_extractor_single_file(self, mock_ovh_client, mock_files):
         """Test hybrid text extractor with single file"""
         from app.services.hybrid_text_extractor import HybridTextExtractor
@@ -92,7 +93,7 @@ class TestEnhancedOCRSystem:
         assert 0.0 <= confidence <= 1.0
 
     @pytest.mark.asyncio
-    @patch('app.services.ovh_client.OVHClient')
+    @patch("app.services.ovh_client.OVHClient")
     async def test_hybrid_text_extractor_multi_file(self, mock_ovh_client, mock_files):
         """Test hybrid text extractor with multiple files"""
         from app.services.hybrid_text_extractor import HybridTextExtractor
@@ -115,7 +116,7 @@ class TestEnhancedOCRSystem:
         assert len(merged_text) > 0
 
     @pytest.mark.asyncio
-    @patch('app.services.ovh_client.OVHClient')
+    @patch("app.services.ovh_client.OVHClient")
     async def test_ovh_vision_integration(self, mock_ovh_client):
         """Test OVH Vision (Qwen 2.5 VL) integration"""
         from app.services.ovh_client import OVHClient
@@ -132,7 +133,7 @@ class TestEnhancedOCRSystem:
         import io
 
         # Create a simple test image
-        test_image = Image.new('RGB', (100, 100), color='white')
+        test_image = Image.new("RGB", (100, 100), color="white")
         text, confidence = await client.extract_text_with_vision(test_image)
 
         assert isinstance(text, str)
@@ -174,9 +175,9 @@ class TestEnhancedOCRSystem:
         lab_type = extractor._identify_medical_section_type(lab_text)
         diagnosis_type = extractor._identify_medical_section_type(diagnosis_text)
 
-        assert patient_type == 'patient_info'
-        assert lab_type == 'lab_values'
-        assert diagnosis_type == 'diagnosis'
+        assert patient_type == "patient_info"
+        assert lab_type == "lab_values"
+        assert diagnosis_type == "diagnosis"
 
     def test_configuration_and_imports(self):
         """Test that all required components can be imported and configured"""
@@ -202,7 +203,8 @@ class TestEnhancedOCRSystem:
 
         # Test that router is properly configured
         assert router is not None
-        assert hasattr(router, 'routes')
+        assert hasattr(router, "routes")
+
 
 class TestSystemIntegration:
     """Integration tests for the complete system"""
@@ -218,7 +220,7 @@ class TestSystemIntegration:
         expected_endpoints = [
             "/api/process-multi-file",
             "/api/multi-file/limits",
-            "/api/analyze-files"
+            "/api/analyze-files",
         ]
 
         for endpoint in expected_endpoints:
@@ -241,25 +243,23 @@ class TestSystemIntegration:
 
         extractor = HybridTextExtractor()
 
-        assert hasattr(extractor, 'quality_detector')
-        assert hasattr(extractor, 'sequence_detector')
-        assert hasattr(extractor, 'ovh_client')
-        assert hasattr(extractor, 'extract_from_multiple_files')
+        assert hasattr(extractor, "quality_detector")
+        assert hasattr(extractor, "sequence_detector")
+        assert hasattr(extractor, "ovh_client")
+        assert hasattr(extractor, "extract_from_multiple_files")
+
 
 def test_environment_setup():
     """Test that the environment is properly configured for the enhanced OCR system"""
 
     # Test that required environment variables are accessible
-    required_env_vars = [
-        'OVH_AI_ENDPOINTS_ACCESS_TOKEN',
-        'OVH_AI_BASE_URL',
-        'OVH_VISION_BASE_URL'
-    ]
+    required_env_vars = ["OVH_AI_ENDPOINTS_ACCESS_TOKEN", "OVH_AI_BASE_URL", "OVH_VISION_BASE_URL"]
 
     # Note: These might not be set in test environment, so we just check they can be accessed
     for var in required_env_vars:
         value = os.getenv(var)
         # Just ensure no exception is raised when accessing
+
 
 def test_api_endpoints_structure():
     """Test that the API endpoints have the correct structure"""
@@ -272,14 +272,11 @@ def test_api_endpoints_structure():
     # Check that we have the expected routes
     route_paths = [route.path for route in routes]
 
-    expected_paths = [
-        "/process-multi-file",
-        "/multi-file/limits",
-        "/analyze-files"
-    ]
+    expected_paths = ["/process-multi-file", "/multi-file/limits", "/analyze-files"]
 
     for expected_path in expected_paths:
         assert any(expected_path in path for path in route_paths), f"Missing route: {expected_path}"
+
 
 if __name__ == "__main__":
     # Run a simple verification
@@ -292,6 +289,7 @@ if __name__ == "__main__":
         from app.services.hybrid_text_extractor import HybridTextExtractor
         from app.services.ovh_client import OVHClient
         from app.routers.process_multi_file import router
+
         print("✅ All components imported successfully")
     except Exception as e:
         print(f"❌ Import failed: {e}")

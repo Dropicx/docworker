@@ -7,22 +7,26 @@ Verifies that steps are ordered correctly by execution phase:
 2. Document-specific (document_class_id != NULL)
 3. Post-branching universal (document_class_id = NULL, post_branching = True)
 """
+
 from sqlalchemy import create_engine, text, case
 
-DATABASE_URL = "postgresql://postgres:KfcqZpqRnRCTyvVxHKkDHjssedAjXZSp@turntable.proxy.rlwy.net:58299/railway"
+DATABASE_URL = (
+    "postgresql://postgres:KfcqZpqRnRCTyvVxHKkDHjssedAjXZSp@turntable.proxy.rlwy.net:58299/railway"
+)
 
 
 def test_phase_aware_ordering():
     """Test that steps are ordered by phase first, then by order field."""
     engine = create_engine(DATABASE_URL)
 
-    print("\n" + "="*120)
+    print("\n" + "=" * 120)
     print("TESTING PHASE-AWARE ORDERING")
-    print("="*120 + "\n")
+    print("=" * 120 + "\n")
 
     with engine.connect() as conn:
         # Query with phase-aware ordering using CASE expression
-        result = conn.execute(text("""
+        result = conn.execute(
+            text("""
             SELECT
                 id,
                 name,
@@ -43,14 +47,17 @@ def test_phase_aware_ordering():
                     ELSE 1
                 END,
                 "order"
-        """))
+        """)
+        )
 
         steps = result.fetchall()
 
         print(f"📊 Total steps: {len(steps)}\n")
         print("Execution order (phase-aware):")
         print("-" * 120)
-        print(f"{'#':<5} {'Phase':<20} {'Order':<7} {'Enabled':<9} {'DocClass':<12} {'PostBranch':<12} {'Name':<50}")
+        print(
+            f"{'#':<5} {'Phase':<20} {'Order':<7} {'Enabled':<9} {'DocClass':<12} {'PostBranch':<12} {'Name':<50}"
+        )
         print("-" * 120)
 
         current_phase = None
@@ -94,7 +101,9 @@ def test_phase_aware_ordering():
         phase_sequence = [step[6] for step in steps]  # phase_order is column 6
 
         # Check if phases are in correct order
-        is_correct = all(phase_sequence[i] <= phase_sequence[i+1] for i in range(len(phase_sequence)-1))
+        is_correct = all(
+            phase_sequence[i] <= phase_sequence[i + 1] for i in range(len(phase_sequence) - 1)
+        )
 
         if is_correct:
             print("✅ Phase ordering is CORRECT")
@@ -114,11 +123,12 @@ def test_phase_aware_ordering():
         print(f"   Phase 3 (Post-branching): {post_branching} steps")
 
         # Test enabled steps ordering
-        print("\n" + "="*120)
+        print("\n" + "=" * 120)
         print("TESTING ENABLED STEPS ORDERING")
-        print("="*120 + "\n")
+        print("=" * 120 + "\n")
 
-        result_enabled = conn.execute(text("""
+        result_enabled = conn.execute(
+            text("""
             SELECT
                 id,
                 name,
@@ -139,7 +149,8 @@ def test_phase_aware_ordering():
                     ELSE 1
                 END,
                 "order"
-        """))
+        """)
+        )
 
         enabled_steps = result_enabled.fetchall()
         print(f"📊 Enabled steps: {len(enabled_steps)}\n")
@@ -147,8 +158,8 @@ def test_phase_aware_ordering():
         phase_sequence_enabled = [step[5] for step in enabled_steps]  # phase_order is column 5
 
         is_correct_enabled = all(
-            phase_sequence_enabled[i] <= phase_sequence_enabled[i+1]
-            for i in range(len(phase_sequence_enabled)-1)
+            phase_sequence_enabled[i] <= phase_sequence_enabled[i + 1]
+            for i in range(len(phase_sequence_enabled) - 1)
         )
 
         if is_correct_enabled:
@@ -167,9 +178,9 @@ def test_phase_aware_ordering():
         print(f"   Phase 2 (Doc-specific):   {doc_specific_enabled} steps")
         print(f"   Phase 3 (Post-branching): {post_branching_enabled} steps")
 
-        print("\n" + "="*120)
+        print("\n" + "=" * 120)
         print("✅ PHASE-AWARE ORDERING TEST COMPLETE")
-        print("="*120)
+        print("=" * 120)
 
 
 if __name__ == "__main__":

@@ -38,6 +38,7 @@ from app.database.modular_pipeline_models import (
 
 # ==================== DATABASE FIXTURES ====================
 
+
 @pytest.fixture(scope="function")
 def test_db_engine():
     """
@@ -48,7 +49,7 @@ def test_db_engine():
     engine = create_engine(
         "sqlite:///:memory:",
         connect_args={"check_same_thread": False},
-        echo=False  # Set to True for SQL debugging
+        echo=False,  # Set to True for SQL debugging
     )
 
     # Create all tables
@@ -86,6 +87,7 @@ def db_session(test_db_engine) -> Generator[Session, None, None]:
 
 # ==================== MODEL FACTORY FIXTURES ====================
 
+
 @pytest.fixture
 def create_ai_log_interaction(db_session):
     """
@@ -94,6 +96,7 @@ def create_ai_log_interaction(db_session):
     Usage:
         log = create_ai_log_interaction(processing_id="test-123")
     """
+
     def _create(
         processing_id: str = "test-processing-id",
         step_name: str = "test_step",
@@ -106,7 +109,7 @@ def create_ai_log_interaction(db_session):
         model_provider: str = "OVH",
         model_name: str = "Meta-Llama-3_3-70B-Instruct",
         document_type: str = "ARZTBRIEF",
-        **kwargs
+        **kwargs,
     ) -> AILogInteractionDB:
         log = AILogInteractionDB(
             processing_id=processing_id,
@@ -120,7 +123,7 @@ def create_ai_log_interaction(db_session):
             model_provider=model_provider,
             model_name=model_name,
             document_type=document_type,
-            **kwargs
+            **kwargs,
         )
         db_session.add(log)
         db_session.commit()
@@ -138,13 +141,14 @@ def create_system_setting(db_session):
     Usage:
         setting = create_system_setting(key="feature.enabled", value="true")
     """
+
     def _create(
         key: str = "test.setting",
         value: str = "test_value",
         value_type: str = "string",
         description: str = "Test setting",
         is_encrypted: bool = False,
-        **kwargs
+        **kwargs,
     ) -> SystemSettingsDB:
         setting = SystemSettingsDB(
             key=key,
@@ -152,7 +156,7 @@ def create_system_setting(db_session):
             value_type=value_type,
             description=description,
             is_encrypted=is_encrypted,
-            **kwargs
+            **kwargs,
         )
         db_session.add(setting)
         db_session.commit()
@@ -170,20 +174,18 @@ def create_user_session(db_session):
     Usage:
         session = create_user_session(session_token="abc123")
     """
+
     def _create(
         session_token: str = "test-session-token",
         expires_at: datetime = None,
         user_id: str = None,
-        **kwargs
+        **kwargs,
     ) -> UserSessionDB:
         if expires_at is None:
             expires_at = datetime.now(timezone.utc) + timedelta(hours=24)
 
         session = UserSessionDB(
-            session_token=session_token,
-            expires_at=expires_at,
-            user_id=user_id,
-            **kwargs
+            session_token=session_token, expires_at=expires_at, user_id=user_id, **kwargs
         )
         db_session.add(session)
         db_session.commit()
@@ -201,13 +203,14 @@ def create_ocr_configuration(db_session):
     Usage:
         config = create_ocr_configuration(selected_engine=OCREngineEnum.PADDLEOCR)
     """
+
     def _create(
         selected_engine: OCREngineEnum = OCREngineEnum.PADDLEOCR,
         paddleocr_config: dict = None,
         vision_llm_config: dict = None,
         hybrid_config: dict = None,
         pii_removal_enabled: bool = True,
-        **kwargs
+        **kwargs,
     ) -> OCRConfigurationDB:
         config = OCRConfigurationDB(
             selected_engine=selected_engine,
@@ -215,7 +218,7 @@ def create_ocr_configuration(db_session):
             vision_llm_config=vision_llm_config,
             hybrid_config=hybrid_config,
             pii_removal_enabled=pii_removal_enabled,
-            **kwargs
+            **kwargs,
         )
         db_session.add(config)
         db_session.commit()
@@ -233,6 +236,7 @@ def create_document_class(db_session):
     Usage:
         doc_class = create_document_class(class_key="ARZTBRIEF")
     """
+
     def _create(
         class_key: str = "TEST_DOCUMENT",
         display_name: str = "Test Document",
@@ -243,7 +247,7 @@ def create_document_class(db_session):
         weak_indicators: list = None,
         is_enabled: bool = True,
         is_system_class: bool = False,
-        **kwargs
+        **kwargs,
     ) -> DocumentClassDB:
         doc_class = DocumentClassDB(
             class_key=class_key,
@@ -255,7 +259,7 @@ def create_document_class(db_session):
             weak_indicators=weak_indicators,
             is_enabled=is_enabled,
             is_system_class=is_system_class,
-            **kwargs
+            **kwargs,
         )
         db_session.add(doc_class)
         db_session.commit()
@@ -273,6 +277,7 @@ def create_available_model(db_session):
     Usage:
         model = create_available_model(name="Meta-Llama-3_3-70B-Instruct")
     """
+
     def _create(
         name: str = "Test-Model",
         display_name: str = "Test Model",
@@ -284,7 +289,7 @@ def create_available_model(db_session):
         price_output_per_1m_tokens: float = 0.81,
         model_config: dict = None,
         is_enabled: bool = True,
-        **kwargs
+        **kwargs,
     ) -> AvailableModelDB:
         model = AvailableModelDB(
             name=name,
@@ -297,7 +302,7 @@ def create_available_model(db_session):
             price_output_per_1m_tokens=price_output_per_1m_tokens,
             model_config=model_config,
             is_enabled=is_enabled,
-            **kwargs
+            **kwargs,
         )
         db_session.add(model)
         db_session.commit()
@@ -315,6 +320,7 @@ def create_pipeline_step(db_session):
     Usage:
         step = create_pipeline_step(name="Medical Validation", order=1)
     """
+
     def _create(
         name: str = "Test Step",
         description: str = "Test pipeline step",
@@ -334,7 +340,7 @@ def create_pipeline_step(db_session):
         output_format: str = "text",
         stop_conditions: dict = None,
         required_context_variables: list = None,
-        **kwargs
+        **kwargs,
     ) -> DynamicPipelineStepDB:
         step = DynamicPipelineStepDB(
             name=name,
@@ -355,7 +361,7 @@ def create_pipeline_step(db_session):
             output_format=output_format,
             stop_conditions=stop_conditions,
             required_context_variables=required_context_variables,
-            **kwargs
+            **kwargs,
         )
         db_session.add(step)
         db_session.commit()
@@ -373,6 +379,7 @@ def create_pipeline_job(db_session):
     Usage:
         job = create_pipeline_job(job_id="test-job-123")
     """
+
     def _create(
         job_id: str = "test-job-id",
         processing_id: str = "test-processing-id",
@@ -388,7 +395,7 @@ def create_pipeline_job(db_session):
         processing_options: dict = None,
         result_data: dict = None,
         error_message: str = None,
-        **kwargs
+        **kwargs,
     ) -> PipelineJobDB:
         if pipeline_config is None:
             pipeline_config = {"steps": []}
@@ -412,7 +419,7 @@ def create_pipeline_job(db_session):
             processing_options=processing_options,
             result_data=result_data,
             error_message=error_message,
-            **kwargs
+            **kwargs,
         )
         db_session.add(job)
         db_session.commit()
@@ -430,6 +437,7 @@ def create_pipeline_step_execution(db_session):
     Usage:
         execution = create_pipeline_step_execution(job_id="test-job-123")
     """
+
     def _create(
         job_id: str = "test-job-id",
         step_id: int = 1,
@@ -446,7 +454,7 @@ def create_pipeline_step_execution(db_session):
         error_message: str = None,
         retry_count: int = 0,
         step_metadata: dict = None,
-        **kwargs
+        **kwargs,
     ) -> PipelineStepExecutionDB:
         execution = PipelineStepExecutionDB(
             job_id=job_id,
@@ -464,7 +472,7 @@ def create_pipeline_step_execution(db_session):
             error_message=error_message,
             retry_count=retry_count,
             step_metadata=step_metadata,
-            **kwargs
+            **kwargs,
         )
         db_session.add(execution)
         db_session.commit()
@@ -475,6 +483,7 @@ def create_pipeline_step_execution(db_session):
 
 
 # ==================== SAMPLE DATA FIXTURES ====================
+
 
 @pytest.fixture
 def sample_arztbrief_document_class(create_document_class):
@@ -487,7 +496,7 @@ def sample_arztbrief_document_class(create_document_class):
         description="Doctor's letters and discharge summaries",
         icon="📨",
         strong_indicators=["Arztbrief", "Entlassungsbericht"],
-        is_system_class=True
+        is_system_class=True,
     )
 
 
@@ -505,16 +514,13 @@ def sample_llama_model(create_available_model):
         supports_vision=False,
         price_input_per_1m_tokens=0.54,
         price_output_per_1m_tokens=0.81,
-        is_enabled=True
+        is_enabled=True,
     )
 
 
 @pytest.fixture
 def sample_pipeline_with_steps(
-    db_session,
-    sample_llama_model,
-    sample_arztbrief_document_class,
-    create_pipeline_step
+    db_session, sample_llama_model, sample_arztbrief_document_class, create_pipeline_step
 ):
     """
     Create a complete sample pipeline with multiple steps for testing.
@@ -522,53 +528,62 @@ def sample_pipeline_with_steps(
     steps = []
 
     # Universal step: Medical Validation
-    steps.append(create_pipeline_step(
-        name="Medical Validation",
-        description="Validate medical content",
-        order=1,
-        prompt_template="Validate if this is medical content: {input}",
-        selected_model_id=sample_llama_model.id,
-        enabled=True
-    ))
+    steps.append(
+        create_pipeline_step(
+            name="Medical Validation",
+            description="Validate medical content",
+            order=1,
+            prompt_template="Validate if this is medical content: {input}",
+            selected_model_id=sample_llama_model.id,
+            enabled=True,
+        )
+    )
 
     # Branching step: Classification
-    steps.append(create_pipeline_step(
-        name="Classification",
-        description="Classify document type",
-        order=2,
-        is_branching_step=True,
-        branching_field="document_type",
-        prompt_template="Classify this document: {input}",
-        selected_model_id=sample_llama_model.id,
-        enabled=True
-    ))
+    steps.append(
+        create_pipeline_step(
+            name="Classification",
+            description="Classify document type",
+            order=2,
+            is_branching_step=True,
+            branching_field="document_type",
+            prompt_template="Classify this document: {input}",
+            selected_model_id=sample_llama_model.id,
+            enabled=True,
+        )
+    )
 
     # Document-specific step: ARZTBRIEF Translation
-    steps.append(create_pipeline_step(
-        name="Arztbrief Translation",
-        description="Translate ARZTBRIEF documents",
-        order=3,
-        document_class_id=sample_arztbrief_document_class.id,
-        prompt_template="Translate this Arztbrief: {input}",
-        selected_model_id=sample_llama_model.id,
-        enabled=True
-    ))
+    steps.append(
+        create_pipeline_step(
+            name="Arztbrief Translation",
+            description="Translate ARZTBRIEF documents",
+            order=3,
+            document_class_id=sample_arztbrief_document_class.id,
+            prompt_template="Translate this Arztbrief: {input}",
+            selected_model_id=sample_llama_model.id,
+            enabled=True,
+        )
+    )
 
     # Post-branching step: Final Check
-    steps.append(create_pipeline_step(
-        name="Final Check",
-        description="Quality assurance check",
-        order=4,
-        post_branching=True,
-        prompt_template="Perform final check: {input}",
-        selected_model_id=sample_llama_model.id,
-        enabled=True
-    ))
+    steps.append(
+        create_pipeline_step(
+            name="Final Check",
+            description="Quality assurance check",
+            order=4,
+            post_branching=True,
+            prompt_template="Perform final check: {input}",
+            selected_model_id=sample_llama_model.id,
+            enabled=True,
+        )
+    )
 
     return steps
 
 
 # ==================== MOCK FIXTURES ====================
+
 
 @pytest.fixture
 def mock_ovh_ai_client(monkeypatch):
@@ -580,14 +595,11 @@ def mock_ovh_ai_client(monkeypatch):
             # OVH AI calls will be mocked
             response = ai_client.generate("test prompt")
     """
+
     class MockOVHResponse:
         def __init__(self, content: str = "Mocked AI response"):
             self.content = content
-            self.usage = {
-                "input_tokens": 100,
-                "output_tokens": 50,
-                "total_tokens": 150
-            }
+            self.usage = {"input_tokens": 100, "output_tokens": 50, "total_tokens": 150}
 
     def mock_generate(*args, **kwargs):
         return MockOVHResponse()
@@ -605,6 +617,7 @@ def mock_redis_client(monkeypatch):
         def test_something(mock_redis_client):
             # Redis calls will be mocked
     """
+
     class MockRedis:
         def __init__(self):
             self.data = {}
@@ -622,6 +635,7 @@ def mock_redis_client(monkeypatch):
 
 
 # ==================== CLEANUP FIXTURES ====================
+
 
 @pytest.fixture(autouse=True)
 def cleanup_after_test():

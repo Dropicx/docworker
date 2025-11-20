@@ -168,12 +168,13 @@ def test_complete_image_upload_and_processing_flow(client, test_db, seed_full_pi
     mock_inspect.active.return_value = {"worker1": []}  # Non-empty dict = workers available
 
     # Mock file validation, OCR, and AI processing
-    with patch("app.services.file_validator.FileValidator.validate_file") as mock_validate, \
-         patch("app.services.ocr_engine_manager.OCREngineManager.extract_text") as mock_ocr, \
-         patch("app.services.ovh_client.OVHClient.process_medical_text_with_prompt") as mock_ai, \
-         patch("app.services.privacy_filter_advanced.AdvancedPrivacyFilter.remove_pii") as mock_pii, \
-         patch("app.routers.upload.Celery") as mock_celery:
-
+    with (
+        patch("app.services.file_validator.FileValidator.validate_file") as mock_validate,
+        patch("app.services.ocr_engine_manager.OCREngineManager.extract_text") as mock_ocr,
+        patch("app.services.ovh_client.OVHClient.process_medical_text_with_prompt") as mock_ai,
+        patch("app.services.privacy_filter_advanced.AdvancedPrivacyFilter.remove_pii") as mock_pii,
+        patch("app.routers.upload.Celery") as mock_celery,
+    ):
         # Mock file validation (always pass)
         mock_validate.return_value = (True, None)
 
@@ -193,8 +194,20 @@ def test_complete_image_upload_and_processing_flow(client, test_db, seed_full_pi
 
         # Mock AI responses - process_medical_text_with_prompt returns dict with 'text' key
         mock_ai.side_effect = [
-            {"text": "MEDIZINISCH", "input_tokens": 10, "output_tokens": 5, "total_tokens": 15, "model": "test-model"},  # Validation step
-            {"text": "ARZTBRIEF", "input_tokens": 10, "output_tokens": 5, "total_tokens": 15, "model": "test-model"},  # Classification step
+            {
+                "text": "MEDIZINISCH",
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "total_tokens": 15,
+                "model": "test-model",
+            },  # Validation step
+            {
+                "text": "ARZTBRIEF",
+                "input_tokens": 10,
+                "output_tokens": 5,
+                "total_tokens": 15,
+                "model": "test-model",
+            },  # Classification step
         ]
 
         # 1. Upload image
@@ -332,9 +345,10 @@ def test_concurrent_uploads_flow(client, seed_full_pipeline):
     mock_inspect = MagicMock()
     mock_inspect.active.return_value = {"worker1": []}
 
-    with patch("app.services.file_validator.FileValidator.validate_file") as mock_validate, \
-         patch("app.routers.upload.Celery") as mock_celery:
-
+    with (
+        patch("app.services.file_validator.FileValidator.validate_file") as mock_validate,
+        patch("app.routers.upload.Celery") as mock_celery,
+    ):
         # Mock file validation (always pass)
         mock_validate.return_value = (True, None)
 
@@ -378,9 +392,10 @@ def test_processing_timeout_flow(client, test_db, seed_full_pipeline):
     mock_inspect = MagicMock()
     mock_inspect.active.return_value = {"worker1": []}
 
-    with patch("app.services.file_validator.FileValidator.validate_file") as mock_validate, \
-         patch("app.routers.upload.Celery") as mock_celery:
-
+    with (
+        patch("app.services.file_validator.FileValidator.validate_file") as mock_validate,
+        patch("app.routers.upload.Celery") as mock_celery,
+    ):
         # Mock file validation (always pass)
         mock_validate.return_value = (True, None)
 

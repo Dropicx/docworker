@@ -61,7 +61,7 @@ class TestSystemSettingsRepositoryEncryption:
             key="api_secret",
             value="my_secret_api_key_12345",
             description="API secret key",
-            is_encrypted=True
+            is_encrypted=True,
         )
 
         # Service layer receives plaintext
@@ -70,8 +70,7 @@ class TestSystemSettingsRepositoryEncryption:
 
         # Verify database stores encrypted value
         raw_result = test_db_session.execute(
-            text("SELECT value FROM system_settings WHERE key = :key"),
-            {"key": "api_secret"}
+            text("SELECT value FROM system_settings WHERE key = :key"), {"key": "api_secret"}
         ).fetchone()
 
         stored_value = raw_result[0]
@@ -107,10 +106,7 @@ class TestSystemSettingsRepositoryEncryption:
 
         # Create plaintext setting
         setting = repo.set_value(
-            key="feature_flag",
-            value="enabled",
-            description="Feature flag",
-            is_encrypted=False
+            key="feature_flag", value="enabled", description="Feature flag", is_encrypted=False
         )
 
         # Service layer receives plaintext
@@ -207,7 +203,7 @@ class TestUserRepositoryEncryption:
             email="patient@hospital.de",
             full_name="Max Müller",
             password_hash="hashed_password_123",
-            role=UserRole.USER
+            role=UserRole.USER,
         )
 
         # Service layer receives plaintext
@@ -218,6 +214,7 @@ class TestUserRepositoryEncryption:
         # Close current session and create a new one to get raw database values
         test_db_session.close()
         from sqlalchemy.orm import sessionmaker
+
         TestSessionLocal = sessionmaker(bind=test_db_session.bind)
         fresh_session = TestSessionLocal()
 
@@ -228,8 +225,12 @@ class TestUserRepositoryEncryption:
             stored_full_name = db_user_raw.full_name
 
             # Database should have ciphertext (different from plaintext)
-            assert stored_email != "patient@hospital.de", f"Email not encrypted! Got: {stored_email}"
-            assert stored_full_name != "Max Müller", f"Full name not encrypted! Got: {stored_full_name}"
+            assert (
+                stored_email != "patient@hospital.de"
+            ), f"Email not encrypted! Got: {stored_email}"
+            assert (
+                stored_full_name != "Max Müller"
+            ), f"Full name not encrypted! Got: {stored_full_name}"
             # Values should be base64-encoded
             try:
                 base64.b64decode(stored_email.encode("ascii"))
@@ -237,7 +238,9 @@ class TestUserRepositoryEncryption:
                 is_valid_base64 = True
             except Exception:
                 is_valid_base64 = False
-            assert is_valid_base64, f"Values not base64 encoded: email={stored_email}, name={stored_full_name}"
+            assert (
+                is_valid_base64
+            ), f"Values not base64 encoded: email={stored_email}, name={stored_full_name}"
         finally:
             fresh_session.close()
 
@@ -250,7 +253,7 @@ class TestUserRepositoryEncryption:
             email="doctor@clinic.com",
             full_name="Dr. Schmidt",
             password_hash="hashed_password",
-            role=UserRole.ADMIN
+            role=UserRole.ADMIN,
         )
 
         # Retrieve user by ID
@@ -267,18 +270,11 @@ class TestUserRepositoryEncryption:
 
         # Create user
         user = repo.create_user(
-            email="old@email.com",
-            full_name="Old Name",
-            password_hash="hash",
-            role=UserRole.USER
+            email="old@email.com", full_name="Old Name", password_hash="hash", role=UserRole.USER
         )
 
         # Update encrypted fields
-        updated = repo.update(
-            user.id,
-            email="new@email.com",
-            full_name="New Name"
-        )
+        updated = repo.update(user.id, email="new@email.com", full_name="New Name")
 
         # Should receive new decrypted values
         assert updated.email == "new@email.com"
@@ -288,6 +284,7 @@ class TestUserRepositoryEncryption:
         # Use fresh session to get raw database values
         test_db_session.close()
         from sqlalchemy.orm import sessionmaker
+
         TestSessionLocal = sessionmaker(bind=test_db_session.bind)
         fresh_session = TestSessionLocal()
 
@@ -299,7 +296,9 @@ class TestUserRepositoryEncryption:
 
             # Values should be encrypted (different from plaintext)
             assert stored_email != "new@email.com", f"Email not encrypted! Got: {stored_email}"
-            assert stored_full_name != "New Name", f"Full name not encrypted! Got: {stored_full_name}"
+            assert (
+                stored_full_name != "New Name"
+            ), f"Full name not encrypted! Got: {stored_full_name}"
         finally:
             fresh_session.close()
 
@@ -316,10 +315,7 @@ class TestUserRepositoryEncryption:
 
         for email, full_name in users_data:
             repo.create_user(
-                email=email,
-                full_name=full_name,
-                password_hash="hash",
-                role=UserRole.USER
+                email=email, full_name=full_name, password_hash="hash", role=UserRole.USER
             )
 
         # Retrieve all users
@@ -344,7 +340,7 @@ class TestUserRepositoryEncryption:
             email="test@test.com",
             full_name="Test User",
             password_hash=password_hash,
-            role=UserRole.USER
+            role=UserRole.USER,
         )
 
         # password_hash should not be encrypted (not in encrypted_fields)
@@ -352,7 +348,9 @@ class TestUserRepositoryEncryption:
 
         # Verify database stores the hash as-is (not encrypted) - use ORM query
         test_db_session.expire_all()  # Force reload from DB
-        stored_password_hash = test_db_session.query(UserDB.password_hash).filter(UserDB.id == user.id).scalar()
+        stored_password_hash = (
+            test_db_session.query(UserDB.password_hash).filter(UserDB.id == user.id).scalar()
+        )
 
         assert stored_password_hash == password_hash
 
@@ -365,7 +363,7 @@ class TestUserRepositoryEncryption:
             email="müller@klinik.de",
             full_name="Dr. Müller-Schäfer",
             password_hash="hash",
-            role=UserRole.USER
+            role=UserRole.USER,
         )
 
         # Should handle umlauts correctly
@@ -393,7 +391,7 @@ class TestEncryptedRepositoryMixinBehavior:
             role=UserRole.USER,
             status=UserStatus.ACTIVE,
             is_active=True,
-            is_verified=True
+            is_verified=True,
         )
 
         # password_hash should remain as-is (not encrypted)
@@ -401,7 +399,9 @@ class TestEncryptedRepositoryMixinBehavior:
 
         # Verify database stores password_hash as plaintext - use ORM query
         test_db_session.expire_all()  # Force reload from DB
-        stored_password_hash = test_db_session.query(UserDB.password_hash).filter(UserDB.id == user.id).scalar()
+        stored_password_hash = (
+            test_db_session.query(UserDB.password_hash).filter(UserDB.id == user.id).scalar()
+        )
 
         assert stored_password_hash == "bcrypt_hash_12345"
 
@@ -430,7 +430,7 @@ class TestEncryptedRepositoryMixinBehavior:
             email="filter@test.com",
             full_name="Filter Test",
             password_hash="hash",
-            role=UserRole.USER
+            role=UserRole.USER,
         )
 
         # Use get_one with filters
@@ -458,7 +458,7 @@ class TestEncryptionPerformance:
                 email=f"user{i}@test.com",
                 full_name=f"User {i}",
                 password_hash="hash",
-                role=UserRole.USER
+                role=UserRole.USER,
             )
         elapsed = time.time() - start
 
@@ -475,7 +475,7 @@ class TestEncryptionPerformance:
                 email=f"user{i}@test.com",
                 full_name=f"User {i}",
                 password_hash="hash",
-                role=UserRole.USER
+                role=UserRole.USER,
             )
 
         import time
@@ -501,6 +501,7 @@ class TestEncryptionDisabledMode:
         # Force reload of encryptor to pick up new env var
         from importlib import reload
         from app.core import encryption
+
         reload(encryption)
 
         repo = UserRepository(test_db_session)
@@ -510,13 +511,15 @@ class TestEncryptionDisabledMode:
             email="plaintext@test.com",
             full_name="Plaintext User",
             password_hash="hash",
-            role=UserRole.USER
+            role=UserRole.USER,
         )
 
         # Verify database stores plaintext - use ORM query
         test_db_session.expire_all()  # Force reload from DB
         stored_email = test_db_session.query(UserDB.email).filter(UserDB.id == user.id).scalar()
-        stored_full_name = test_db_session.query(UserDB.full_name).filter(UserDB.id == user.id).scalar()
+        stored_full_name = (
+            test_db_session.query(UserDB.full_name).filter(UserDB.id == user.id).scalar()
+        )
 
         # Should be plaintext (encryption disabled)
         assert stored_email == "plaintext@test.com"

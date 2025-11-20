@@ -73,9 +73,7 @@ class TestFeatureFlags:
     def test_initialization_with_repository_injection(self, db_session, repository, mock_settings):
         """Test initialization with injected repository (dependency injection)."""
         flags = FeatureFlags(
-            session=db_session,
-            settings=mock_settings,
-            settings_repository=repository
+            session=db_session, settings=mock_settings, settings_repository=repository
         )
 
         assert flags.settings_repository is repository
@@ -107,25 +105,30 @@ class TestFeatureFlags:
 
         assert result is False
 
-    @pytest.mark.parametrize("env_value,expected", [
-        ("true", True),
-        ("True", True),
-        ("TRUE", True),
-        ("1", True),
-        ("yes", True),
-        ("YES", True),
-        ("on", True),
-        ("ON", True),
-        ("false", False),
-        ("False", False),
-        ("FALSE", False),
-        ("0", False),
-        ("no", False),
-        ("off", False),
-        ("invalid", False),
-        ("", False),
-    ])
-    def test_environment_variable_value_parsing(self, clear_env_vars, db_session, env_value, expected):
+    @pytest.mark.parametrize(
+        "env_value,expected",
+        [
+            ("true", True),
+            ("True", True),
+            ("TRUE", True),
+            ("1", True),
+            ("yes", True),
+            ("YES", True),
+            ("on", True),
+            ("ON", True),
+            ("false", False),
+            ("False", False),
+            ("FALSE", False),
+            ("0", False),
+            ("no", False),
+            ("off", False),
+            ("invalid", False),
+            ("", False),
+        ],
+    )
+    def test_environment_variable_value_parsing(
+        self, clear_env_vars, db_session, env_value, expected
+    ):
         """Test environment variable value parsing for various formats."""
         os.environ["FEATURE_FLAG_VISION_LLM_FALLBACK_ENABLED"] = env_value
         flags = FeatureFlags(session=db_session)
@@ -139,10 +142,7 @@ class TestFeatureFlags:
     ):
         """Test environment variable overrides database setting (priority test)."""
         # Set database to False
-        create_system_setting(
-            key="vision_llm_fallback_enabled",
-            value="false"
-        )
+        create_system_setting(key="vision_llm_fallback_enabled", value="false")
 
         # Set environment to True (should override)
         os.environ["FEATURE_FLAG_VISION_LLM_FALLBACK_ENABLED"] = "true"
@@ -156,44 +156,42 @@ class TestFeatureFlags:
 
     def test_is_enabled_from_database_true(self, clear_env_vars, db_session, create_system_setting):
         """Test feature enabled via database configuration."""
-        create_system_setting(
-            key="cost_tracking_enabled",
-            value="true"
-        )
+        create_system_setting(key="cost_tracking_enabled", value="true")
 
         flags = FeatureFlags(session=db_session)
         result = flags.is_enabled(Feature.COST_TRACKING)
 
         assert result is True
 
-    def test_is_enabled_from_database_false(self, clear_env_vars, db_session, create_system_setting):
+    def test_is_enabled_from_database_false(
+        self, clear_env_vars, db_session, create_system_setting
+    ):
         """Test feature disabled via database configuration."""
-        create_system_setting(
-            key="cost_tracking_enabled",
-            value="false"
-        )
+        create_system_setting(key="cost_tracking_enabled", value="false")
 
         flags = FeatureFlags(session=db_session)
         result = flags.is_enabled(Feature.COST_TRACKING)
 
         assert result is False
 
-    @pytest.mark.parametrize("db_value,expected", [
-        ("true", True),
-        ("1", True),
-        ("yes", True),
-        ("on", True),
-        ("false", False),
-        ("0", False),
-        ("no", False),
-        ("off", False),
-    ])
-    def test_database_value_parsing(self, clear_env_vars, db_session, create_system_setting, db_value, expected):
+    @pytest.mark.parametrize(
+        "db_value,expected",
+        [
+            ("true", True),
+            ("1", True),
+            ("yes", True),
+            ("on", True),
+            ("false", False),
+            ("0", False),
+            ("no", False),
+            ("off", False),
+        ],
+    )
+    def test_database_value_parsing(
+        self, clear_env_vars, db_session, create_system_setting, db_value, expected
+    ):
         """Test database value parsing for various formats."""
-        create_system_setting(
-            key="cost_tracking_enabled",
-            value=db_value
-        )
+        create_system_setting(key="cost_tracking_enabled", value=db_value)
 
         flags = FeatureFlags(session=db_session)
         result = flags.is_enabled(Feature.COST_TRACKING)
@@ -286,7 +284,7 @@ class TestFeatureFlags:
         flags = FeatureFlags(session=db_session, settings=None)
 
         # Create a mock feature not in defaults
-        with patch.object(Feature, '__iter__', return_value=iter([Mock(value="unknown_feature")])):
+        with patch.object(Feature, "__iter__", return_value=iter([Mock(value="unknown_feature")])):
             # Should not crash
             pass
 
@@ -380,7 +378,9 @@ class TestFeatureFlags:
         assert status["cost_tracking_enabled"] is True
         assert status["parallel_step_execution_enabled"] is False
 
-    def test_get_feature_status_comprehensive(self, clear_env_vars, db_session, create_system_setting):
+    def test_get_feature_status_comprehensive(
+        self, clear_env_vars, db_session, create_system_setting
+    ):
         """Test get_feature_status() with mixed sources."""
         # Mix of env, db, and defaults
         os.environ["FEATURE_FLAG_COST_TRACKING_ENABLED"] = "false"
@@ -416,9 +416,7 @@ class TestFeatureFlags:
     def test_global_is_feature_enabled(self, clear_env_vars, db_session, mock_settings):
         """Test global is_feature_enabled() helper function."""
         result = is_feature_enabled(
-            Feature.COST_TRACKING,
-            session=db_session,
-            settings=mock_settings
+            Feature.COST_TRACKING, session=db_session, settings=mock_settings
         )
 
         assert isinstance(result, bool)
@@ -426,9 +424,7 @@ class TestFeatureFlags:
     def test_global_is_feature_enabled_without_session(self, clear_env_vars, mock_settings):
         """Test global helper without session."""
         result = is_feature_enabled(
-            Feature.VISION_LLM_FALLBACK,
-            session=None,
-            settings=mock_settings
+            Feature.VISION_LLM_FALLBACK, session=None, settings=mock_settings
         )
 
         assert isinstance(result, bool)
@@ -437,30 +433,20 @@ class TestFeatureFlags:
         """Test global helper respects environment variables."""
         os.environ["FEATURE_FLAG_COST_TRACKING_ENABLED"] = "false"
 
-        result = is_feature_enabled(
-            Feature.COST_TRACKING,
-            session=None,
-            settings=mock_settings
-        )
+        result = is_feature_enabled(Feature.COST_TRACKING, session=None, settings=mock_settings)
 
         assert result is False
 
     def test_global_get_enabled_features(self, clear_env_vars, db_session, mock_settings):
         """Test global get_enabled_features() helper function."""
-        enabled = get_enabled_features(
-            session=db_session,
-            settings=mock_settings
-        )
+        enabled = get_enabled_features(session=db_session, settings=mock_settings)
 
         assert isinstance(enabled, list)
         assert len(enabled) > 0
 
     def test_global_get_enabled_features_without_session(self, clear_env_vars, mock_settings):
         """Test global helper without session."""
-        enabled = get_enabled_features(
-            session=None,
-            settings=mock_settings
-        )
+        enabled = get_enabled_features(session=None, settings=mock_settings)
 
         assert isinstance(enabled, list)
 
@@ -497,10 +483,7 @@ class TestFeatureFlags:
         self, clear_env_vars, db_session, create_system_setting
     ):
         """Test database value parsing is case-insensitive."""
-        create_system_setting(
-            key="cost_tracking_enabled",
-            value="TrUe"
-        )
+        create_system_setting(key="cost_tracking_enabled", value="TrUe")
 
         flags = FeatureFlags(session=db_session)
         result = flags.is_enabled(Feature.COST_TRACKING)
@@ -580,4 +563,6 @@ class TestFeatureFlags:
         assert flags.is_enabled(Feature.AI_LOGGING) is False  # From DB
         assert flags.is_enabled(Feature.MULTI_FILE_PROCESSING) is True  # From config
         assert flags.is_enabled(Feature.VISION_LLM_FALLBACK) is True  # From defaults
-        assert flags.is_enabled(Feature.PARALLEL_STEP_EXECUTION) is False  # From defaults (experimental)
+        assert (
+            flags.is_enabled(Feature.PARALLEL_STEP_EXECUTION) is False
+        )  # From defaults (experimental)

@@ -113,7 +113,9 @@ class TestAvailableModelRepository:
         assert result.id == enabled_model.id
         assert result.is_enabled is True
 
-    def test_get_enabled_model_by_id_disabled_returns_none(self, repository, create_available_model):
+    def test_get_enabled_model_by_id_disabled_returns_none(
+        self, repository, create_available_model
+    ):
         """Test that disabled model returns None even if ID exists."""
         disabled_model = create_available_model(name="Disabled-Model", is_enabled=False)
 
@@ -131,7 +133,9 @@ class TestAvailableModelRepository:
     def test_get_models_by_provider_ovh(self, repository, create_available_model):
         """Test retrieving models by OVH provider."""
         create_available_model(name="OVH-1", display_name="OVH Model 1", provider=ModelProvider.OVH)
-        create_available_model(name="OpenAI-1", display_name="OpenAI Model", provider=ModelProvider.OPENAI)
+        create_available_model(
+            name="OpenAI-1", display_name="OpenAI Model", provider=ModelProvider.OPENAI
+        )
         create_available_model(name="OVH-2", display_name="OVH Model 2", provider=ModelProvider.OVH)
 
         ovh_models = repository.get_models_by_provider(ModelProvider.OVH)
@@ -139,7 +143,9 @@ class TestAvailableModelRepository:
         assert len(ovh_models) == 2
         assert all(model.provider == ModelProvider.OVH for model in ovh_models)
 
-    def test_get_models_by_provider_ordered_by_display_name(self, repository, create_available_model):
+    def test_get_models_by_provider_ordered_by_display_name(
+        self, repository, create_available_model
+    ):
         """Test that models by provider are ordered by display name."""
         create_available_model(name="M3", display_name="Zebra", provider=ModelProvider.OVH)
         create_available_model(name="M1", display_name="Alpha", provider=ModelProvider.OVH)
@@ -170,7 +176,12 @@ class TestAvailableModelRepository:
 
     def test_get_models_by_provider_all_types(self, repository, create_available_model):
         """Test retrieving models for all provider types."""
-        providers = [ModelProvider.OVH, ModelProvider.OPENAI, ModelProvider.ANTHROPIC, ModelProvider.LOCAL]
+        providers = [
+            ModelProvider.OVH,
+            ModelProvider.OPENAI,
+            ModelProvider.ANTHROPIC,
+            ModelProvider.LOCAL,
+        ]
 
         for provider in providers:
             create_available_model(name=f"{provider.value}-Model", provider=provider)
@@ -278,7 +289,9 @@ class TestAvailableModelRepository:
         # With exclusion of the model itself
         assert repository.model_name_exists("Test-Model", exclude_id=model.id) is False
 
-    def test_model_name_exists_with_exclusion_multiple_records(self, repository, create_available_model):
+    def test_model_name_exists_with_exclusion_multiple_records(
+        self, repository, create_available_model
+    ):
         """Test model_name_exists with exclusion when multiple records exist."""
         model1 = create_available_model(name="Model-1")
         model2 = create_available_model(name="Model-2")
@@ -350,7 +363,7 @@ class TestAvailableModelRepository:
             supports_vision=False,
             price_input_per_1m_tokens=0.54,
             price_output_per_1m_tokens=0.81,
-            is_enabled=True
+            is_enabled=True,
         )
 
         # Verify created
@@ -422,7 +435,7 @@ class TestAvailableModelRepository:
             price_input_per_1m_tokens=1.0,
             price_output_per_1m_tokens=2.0,
             model_config={"temperature": 0.7, "top_p": 0.9},
-            is_enabled=True
+            is_enabled=True,
         )
 
         retrieved = repository.get_by_name("Full-Model")
@@ -434,9 +447,7 @@ class TestAvailableModelRepository:
     def test_model_with_minimal_fields(self, repository):
         """Test creating model with only required fields."""
         model = repository.create(
-            name="Minimal-Model",
-            display_name="Minimal Model",
-            provider=ModelProvider.LOCAL
+            name="Minimal-Model", display_name="Minimal Model", provider=ModelProvider.LOCAL
         )
 
         assert model.id is not None
@@ -451,7 +462,7 @@ class TestAvailableModelRepository:
             provider=ModelProvider.OVH,
             description="Original description",
             max_tokens=8192,
-            is_enabled=True
+            is_enabled=True,
         )
 
         # Disable model

@@ -7,6 +7,7 @@ Verifies that steps are ordered correctly by execution phase:
 2. Document-specific (document_class_id != NULL)
 3. Post-branching universal (document_class_id = NULL, post_branching = True)
 """
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -29,7 +30,7 @@ def test_db_session():
         display_name="Test Model",
         provider="OVH",
         max_tokens=4096,
-        is_enabled=True
+        is_enabled=True,
     )
     session.add(model)
     session.commit()
@@ -37,20 +38,37 @@ def test_db_session():
     # Add test steps
     steps = [
         DynamicPipelineStepDB(
-            name="Pre-branching 1", order=1, prompt_template="test",
-            selected_model_id=model.id, enabled=True, post_branching=False
+            name="Pre-branching 1",
+            order=1,
+            prompt_template="test",
+            selected_model_id=model.id,
+            enabled=True,
+            post_branching=False,
         ),
         DynamicPipelineStepDB(
-            name="Pre-branching 2", order=2, prompt_template="test",
-            selected_model_id=model.id, enabled=True, post_branching=False
+            name="Pre-branching 2",
+            order=2,
+            prompt_template="test",
+            selected_model_id=model.id,
+            enabled=True,
+            post_branching=False,
         ),
         DynamicPipelineStepDB(
-            name="Doc-specific 1", order=10, prompt_template="test",
-            selected_model_id=model.id, enabled=True, document_class_id=1, post_branching=False
+            name="Doc-specific 1",
+            order=10,
+            prompt_template="test",
+            selected_model_id=model.id,
+            enabled=True,
+            document_class_id=1,
+            post_branching=False,
         ),
         DynamicPipelineStepDB(
-            name="Post-branching 1", order=20, prompt_template="test",
-            selected_model_id=model.id, enabled=True, post_branching=True
+            name="Post-branching 1",
+            order=20,
+            prompt_template="test",
+            selected_model_id=model.id,
+            enabled=True,
+            post_branching=True,
         ),
     ]
     session.add_all(steps)
@@ -66,9 +84,9 @@ def test_phase_aware_ordering(test_db_session):
     """Test that steps are ordered by phase first, then by order field."""
     repo = PipelineStepRepository(test_db_session)
 
-    print("\n" + "="*120)
+    print("\n" + "=" * 120)
     print("TESTING PHASE-AWARE ORDERING")
-    print("="*120 + "\n")
+    print("=" * 120 + "\n")
 
     # Get all steps with new phase-aware ordering
     all_steps = repo.get_all_ordered()
@@ -76,7 +94,9 @@ def test_phase_aware_ordering(test_db_session):
     print(f"📊 Total steps: {len(all_steps)}\n")
     print("Execution order (phase-aware):")
     print("-" * 120)
-    print(f"{'#':<5} {'Phase':<20} {'Order':<7} {'Enabled':<9} {'DocClass':<12} {'PostBranch':<12} {'Name':<50}")
+    print(
+        f"{'#':<5} {'Phase':<20} {'Order':<7} {'Enabled':<9} {'DocClass':<12} {'PostBranch':<12} {'Name':<50}"
+    )
     print("-" * 120)
 
     current_phase = None
@@ -125,7 +145,7 @@ def test_phase_aware_ordering(test_db_session):
             phase_order.append(1)
 
     # Check if phases are in correct order
-    is_correct = all(phase_order[i] <= phase_order[i+1] for i in range(len(phase_order)-1))
+    is_correct = all(phase_order[i] <= phase_order[i + 1] for i in range(len(phase_order) - 1))
 
     if is_correct:
         print("✅ Phase ordering is CORRECT")
@@ -145,9 +165,9 @@ def test_phase_aware_ordering(test_db_session):
     print(f"   Phase 3 (Post-branching): {post_branching} steps")
 
     # Test enabled steps ordering
-    print("\n" + "="*120)
+    print("\n" + "=" * 120)
     print("TESTING ENABLED STEPS ORDERING")
-    print("="*120 + "\n")
+    print("=" * 120 + "\n")
 
     enabled_steps = repo.get_enabled_steps()
     print(f"📊 Enabled steps: {len(enabled_steps)}\n")
@@ -162,8 +182,8 @@ def test_phase_aware_ordering(test_db_session):
             phase_order_enabled.append(1)
 
     is_correct_enabled = all(
-        phase_order_enabled[i] <= phase_order_enabled[i+1]
-        for i in range(len(phase_order_enabled)-1)
+        phase_order_enabled[i] <= phase_order_enabled[i + 1]
+        for i in range(len(phase_order_enabled) - 1)
     )
 
     if is_correct_enabled:

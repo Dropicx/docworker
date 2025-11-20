@@ -13,7 +13,7 @@ from io import BytesIO
 from PIL import Image
 
 # Add backend to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.services.ovh_client import OVHClient
 
@@ -23,7 +23,7 @@ class TestOVHClientInitialization:
 
     def test_initialization_with_token(self):
         """Test client initializes with access token"""
-        with patch.dict(os.environ, {'OVH_AI_ENDPOINTS_ACCESS_TOKEN': 'test-token'}):
+        with patch.dict(os.environ, {"OVH_AI_ENDPOINTS_ACCESS_TOKEN": "test-token"}):
             client = OVHClient()
 
             assert client is not None
@@ -32,7 +32,7 @@ class TestOVHClientInitialization:
 
     def test_initialization_without_token(self):
         """Test client initialization without token logs warning and uses dummy key"""
-        with patch('app.services.ovh_client.settings') as mock_settings:
+        with patch("app.services.ovh_client.settings") as mock_settings:
             # Mock settings to return empty token
             mock_settings.ovh_api_token = ""
             mock_settings.ovh_ai_base_url = "https://test.com/v1"
@@ -53,12 +53,15 @@ class TestOVHClientInitialization:
 
     def test_initialization_custom_models(self):
         """Test client initialization with custom model configuration"""
-        with patch.dict(os.environ, {
-            'OVH_AI_ENDPOINTS_ACCESS_TOKEN': 'test-token',
-            'OVH_MAIN_MODEL': 'custom-main-model',
-            'OVH_PREPROCESSING_MODEL': 'custom-preprocessing-model',
-            'OVH_VISION_MODEL': 'custom-vision-model'
-        }):
+        with patch.dict(
+            os.environ,
+            {
+                "OVH_AI_ENDPOINTS_ACCESS_TOKEN": "test-token",
+                "OVH_MAIN_MODEL": "custom-main-model",
+                "OVH_PREPROCESSING_MODEL": "custom-preprocessing-model",
+                "OVH_VISION_MODEL": "custom-vision-model",
+            },
+        ):
             client = OVHClient()
 
             assert client is not None
@@ -71,7 +74,7 @@ class TestConnectionCheck:
     @pytest.fixture
     def client(self):
         """Create client instance for testing"""
-        with patch.dict(os.environ, {'OVH_AI_ENDPOINTS_ACCESS_TOKEN': 'test-token'}):
+        with patch.dict(os.environ, {"OVH_AI_ENDPOINTS_ACCESS_TOKEN": "test-token"}):
             return OVHClient()
 
     @pytest.mark.asyncio
@@ -80,7 +83,12 @@ class TestConnectionCheck:
         mock_response = Mock()
         mock_response.choices = [Mock(message=Mock(content="Hello from OVH AI!"))]
 
-        with patch.object(client.client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
+        with patch.object(
+            client.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            return_value=mock_response,
+        ):
             success, message = await client.check_connection()
 
             assert success is True
@@ -89,7 +97,9 @@ class TestConnectionCheck:
     @pytest.mark.asyncio
     async def test_check_connection_failure(self, client):
         """Test connection check handles failures gracefully"""
-        with patch.object(client.client.chat.completions, 'create', side_effect=Exception("Connection failed")):
+        with patch.object(
+            client.client.chat.completions, "create", side_effect=Exception("Connection failed")
+        ):
             success, message = await client.check_connection()
 
             assert success is False
@@ -101,7 +111,7 @@ class TestConnectionCheck:
         mock_response = Mock()
         mock_response.choices = []
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, "create", return_value=mock_response):
             success, message = await client.check_connection()
 
             assert success is False
@@ -114,7 +124,7 @@ class TestMedicalTextProcessing:
     @pytest.fixture
     def client(self):
         """Create client instance for testing"""
-        with patch.dict(os.environ, {'OVH_AI_ENDPOINTS_ACCESS_TOKEN': 'test-token'}):
+        with patch.dict(os.environ, {"OVH_AI_ENDPOINTS_ACCESS_TOKEN": "test-token"}):
             return OVHClient()
 
     @pytest.mark.asyncio
@@ -126,10 +136,13 @@ class TestMedicalTextProcessing:
         mock_response.choices = [Mock(message=Mock(content="DIAGNOSIS: Diabetes Type 2"))]
         mock_response.usage = Mock(prompt_tokens=50, completion_tokens=20, total_tokens=70)
 
-        with patch.object(client.client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
-            result = await client.process_medical_text_with_prompt(
-                full_prompt=full_prompt
-            )
+        with patch.object(
+            client.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            return_value=mock_response,
+        ):
+            result = await client.process_medical_text_with_prompt(full_prompt=full_prompt)
 
             assert result is not None
             assert isinstance(result, dict)
@@ -146,17 +159,20 @@ class TestMedicalTextProcessing:
         mock_response.choices = [Mock(message=Mock(content="Translated text"))]
         mock_response.usage = Mock(prompt_tokens=30, completion_tokens=15, total_tokens=45)
 
-        with patch.object(client.client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response) as mock_create:
-            result = await client.process_medical_text_with_prompt(
-                full_prompt=full_prompt
-            )
+        with patch.object(
+            client.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            return_value=mock_response,
+        ) as mock_create:
+            result = await client.process_medical_text_with_prompt(full_prompt=full_prompt)
 
             assert isinstance(result, dict)
             assert "Translated text" in result["text"]
             # Check that the prompt was sent to API
             call_args = mock_create.call_args
-            messages = call_args.kwargs['messages']
-            assert any('English' in str(msg) for msg in messages)
+            messages = call_args.kwargs["messages"]
+            assert any("English" in str(msg) for msg in messages)
 
     @pytest.mark.asyncio
     async def test_process_medical_text_temperature(self, client):
@@ -168,14 +184,15 @@ class TestMedicalTextProcessing:
         mock_response.choices = [Mock(message=Mock(content="Result"))]
         mock_response.usage = Mock(prompt_tokens=10, completion_tokens=5, total_tokens=15)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response) as mock_create:
+        with patch.object(
+            client.client.chat.completions, "create", return_value=mock_response
+        ) as mock_create:
             result = await client.process_medical_text_with_prompt(
-                full_prompt=full_prompt,
-                temperature=temperature
+                full_prompt=full_prompt, temperature=temperature
             )
 
             # Verify temperature was passed
-            assert mock_create.call_args.kwargs['temperature'] == 0.5
+            assert mock_create.call_args.kwargs["temperature"] == 0.5
             assert isinstance(result, dict)
 
     @pytest.mark.asyncio
@@ -188,23 +205,24 @@ class TestMedicalTextProcessing:
         mock_response.choices = [Mock(message=Mock(content="Summary"))]
         mock_response.usage = Mock(prompt_tokens=100, completion_tokens=50, total_tokens=150)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response) as mock_create:
+        with patch.object(
+            client.client.chat.completions, "create", return_value=mock_response
+        ) as mock_create:
             result = await client.process_medical_text_with_prompt(
-                full_prompt=full_prompt,
-                max_tokens=max_tokens
+                full_prompt=full_prompt, max_tokens=max_tokens
             )
 
             # Verify max_tokens was passed
-            assert mock_create.call_args.kwargs['max_tokens'] == 1000
+            assert mock_create.call_args.kwargs["max_tokens"] == 1000
             assert isinstance(result, dict)
 
     @pytest.mark.asyncio
     async def test_process_medical_text_api_error(self, client):
         """Test medical text processing handles API errors"""
-        with patch.object(client.client.chat.completions, 'create', side_effect=Exception("API Error")):
-            result = await client.process_medical_text_with_prompt(
-                full_prompt="Test: Text"
-            )
+        with patch.object(
+            client.client.chat.completions, "create", side_effect=Exception("API Error")
+        ):
+            result = await client.process_medical_text_with_prompt(full_prompt="Test: Text")
 
             assert isinstance(result, dict)
             assert "Error" in result["text"]
@@ -215,10 +233,8 @@ class TestMedicalTextProcessing:
         mock_response = Mock()
         mock_response.choices = []
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
-            result = await client.process_medical_text_with_prompt(
-                full_prompt="Test: Text"
-            )
+        with patch.object(client.client.chat.completions, "create", return_value=mock_response):
+            result = await client.process_medical_text_with_prompt(full_prompt="Test: Text")
 
             assert isinstance(result, dict)
             assert "Error" in result["text"] or "error" in result["text"].lower()
@@ -230,13 +246,13 @@ class TestVisionOCR:
     @pytest.fixture
     def client(self):
         """Create client instance for testing"""
-        with patch.dict(os.environ, {'OVH_AI_ENDPOINTS_ACCESS_TOKEN': 'test-token'}):
+        with patch.dict(os.environ, {"OVH_AI_ENDPOINTS_ACCESS_TOKEN": "test-token"}):
             return OVHClient()
 
     @pytest.fixture
     def test_image(self):
         """Create a test PIL image"""
-        return Image.new('RGB', (100, 100), color='white')
+        return Image.new("RGB", (100, 100), color="white")
 
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_success(self, client, test_image):
@@ -247,7 +263,7 @@ class TestVisionOCR:
             "choices": [{"message": {"content": "Extracted medical text from image"}}]
         }
 
-        with patch('httpx.AsyncClient') as mock_client_class:
+        with patch("httpx.AsyncClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = AsyncMock()
@@ -269,7 +285,7 @@ class TestVisionOCR:
             "choices": [{"message": {"content": "PDF content extracted"}}]
         }
 
-        with patch('httpx.AsyncClient') as mock_client_class:
+        with patch("httpx.AsyncClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = AsyncMock()
@@ -284,7 +300,7 @@ class TestVisionOCR:
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_error_handling(self, client, test_image):
         """Test vision OCR error handling"""
-        with patch('httpx.AsyncClient') as mock_client_class:
+        with patch("httpx.AsyncClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = AsyncMock()
@@ -305,7 +321,7 @@ class TestVisionOCR:
             "choices": []  # Empty response
         }
 
-        with patch('httpx.AsyncClient') as mock_client_class:
+        with patch("httpx.AsyncClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = AsyncMock()
@@ -330,7 +346,7 @@ class TestVisionOCR:
             "choices": [{"message": {"content": "Combined text from all pages"}}]
         }
 
-        with patch('httpx.AsyncClient') as mock_client_class:
+        with patch("httpx.AsyncClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = AsyncMock()
@@ -357,11 +373,9 @@ class TestVisionOCR:
 
         mock_http_response = Mock()
         mock_http_response.status_code = 200
-        mock_http_response.json.return_value = {
-            "choices": [{"message": {"content": "Page text"}}]
-        }
+        mock_http_response.json.return_value = {"choices": [{"message": {"content": "Page text"}}]}
 
-        with patch('httpx.AsyncClient') as mock_client_class:
+        with patch("httpx.AsyncClient") as mock_client_class:
             mock_client = AsyncMock()
             mock_client.__aenter__.return_value = mock_client
             mock_client.__aexit__.return_value = AsyncMock()
@@ -369,11 +383,15 @@ class TestVisionOCR:
             mock_client_class.return_value = mock_client
 
             # Test smart merge
-            text_smart, conf_smart = await client.process_multiple_images_ocr(images, merge_strategy="smart")
+            text_smart, conf_smart = await client.process_multiple_images_ocr(
+                images, merge_strategy="smart"
+            )
             assert len(text_smart) > 0
 
             # Test sequential merge
-            text_seq, conf_seq = await client.process_multiple_images_ocr(images, merge_strategy="sequential")
+            text_seq, conf_seq = await client.process_multiple_images_ocr(
+                images, merge_strategy="sequential"
+            )
             assert len(text_seq) > 0
 
 
@@ -383,7 +401,7 @@ class TestLanguageTranslation:
     @pytest.fixture
     def client(self):
         """Create client instance for testing"""
-        with patch.dict(os.environ, {'OVH_AI_ENDPOINTS_ACCESS_TOKEN': 'test-token'}):
+        with patch.dict(os.environ, {"OVH_AI_ENDPOINTS_ACCESS_TOKEN": "test-token"}):
             return OVHClient()
 
     @pytest.mark.asyncio
@@ -392,10 +410,12 @@ class TestLanguageTranslation:
         german_text = "Der Patient hat Diabetes mellitus Typ 2"
 
         mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="The patient has diabetes mellitus type 2"))]
+        mock_response.choices = [
+            Mock(message=Mock(content="The patient has diabetes mellitus type 2"))
+        ]
         mock_response.usage = Mock(prompt_tokens=30, completion_tokens=20, total_tokens=50)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, "create", return_value=mock_response):
             translated, confidence = await client.translate_to_language(german_text, "EN")
 
             assert isinstance(translated, str)
@@ -413,7 +433,7 @@ class TestLanguageTranslation:
         mock_response.choices = [Mock(message=Mock(content="Valeurs de laboratoire normales"))]
         mock_response.usage = Mock(prompt_tokens=20, completion_tokens=15, total_tokens=35)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, "create", return_value=mock_response):
             translated, confidence = await client.translate_to_language(german_text, "FR")
 
             assert isinstance(translated, str)
@@ -430,7 +450,7 @@ class TestLanguageTranslation:
         mock_response.choices = [Mock(message=Mock(content="Translated text"))]
         mock_response.usage = Mock(prompt_tokens=10, completion_tokens=5, total_tokens=15)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, "create", return_value=mock_response):
             # Should still attempt translation even for unusual codes
             translated, confidence = await client.translate_to_language(text, "XX")
 
@@ -441,7 +461,12 @@ class TestLanguageTranslation:
     @pytest.mark.asyncio
     async def test_translate_error_handling(self, client):
         """Test translation error handling - returns original text with 0.0 confidence"""
-        with patch.object(client.client.chat.completions, 'create', new_callable=AsyncMock, side_effect=Exception("Translation API Error")):
+        with patch.object(
+            client.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            side_effect=Exception("Translation API Error"),
+        ):
             translated, confidence = await client.translate_to_language("Text", "EN")
 
             assert isinstance(translated, str)
@@ -455,10 +480,12 @@ class TestLanguageTranslation:
         text = "HbA1c: 8.2%, Metformin 1000mg"
 
         mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="HbA1c: 8.2%, Metformin 1000mg (preserved)"))]
+        mock_response.choices = [
+            Mock(message=Mock(content="HbA1c: 8.2%, Metformin 1000mg (preserved)"))
+        ]
         mock_response.usage = Mock(prompt_tokens=40, completion_tokens=25, total_tokens=65)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, "create", return_value=mock_response):
             translated, confidence = await client.translate_to_language(text, "EN")
 
             # Medical terms and values should be preserved
@@ -476,7 +503,7 @@ class TestTokenUsageTracking:
     @pytest.fixture
     def client(self):
         """Create client instance for testing"""
-        with patch.dict(os.environ, {'OVH_AI_ENDPOINTS_ACCESS_TOKEN': 'test-token'}):
+        with patch.dict(os.environ, {"OVH_AI_ENDPOINTS_ACCESS_TOKEN": "test-token"}):
             return OVHClient()
 
     @pytest.mark.asyncio
@@ -486,10 +513,13 @@ class TestTokenUsageTracking:
         mock_response.choices = [Mock(message=Mock(content="Response"))]
         mock_response.usage = Mock(prompt_tokens=100, completion_tokens=50, total_tokens=150)
 
-        with patch.object(client.client.chat.completions, 'create', new_callable=AsyncMock, return_value=mock_response):
-            result = await client.process_medical_text_with_prompt(
-                full_prompt="Test: Text"
-            )
+        with patch.object(
+            client.client.chat.completions,
+            "create",
+            new_callable=AsyncMock,
+            return_value=mock_response,
+        ):
+            result = await client.process_medical_text_with_prompt(full_prompt="Test: Text")
 
             # Token tracking happens internally - verify result contains token info
             assert isinstance(result, dict)
@@ -498,13 +528,15 @@ class TestTokenUsageTracking:
     @pytest.mark.asyncio
     async def test_vision_token_usage_tracked(self, client):
         """Test that vision API token usage is tracked"""
-        test_image = Image.new('RGB', (100, 100), color='white')
+        test_image = Image.new("RGB", (100, 100), color="white")
 
         mock_response = Mock()
         mock_response.choices = [Mock(message=Mock(content="OCR text"))]
         mock_response.usage = Mock(prompt_tokens=1000, completion_tokens=200, total_tokens=1200)
 
-        with patch.object(client.vision_client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(
+            client.vision_client.chat.completions, "create", return_value=mock_response
+        ):
             await client.extract_text_with_vision(test_image, "image")
 
             # Token tracking happens internally - verify no errors
@@ -516,7 +548,7 @@ class TestEdgeCases:
     @pytest.fixture
     def client(self):
         """Create client instance for testing"""
-        with patch.dict(os.environ, {'OVH_AI_ENDPOINTS_ACCESS_TOKEN': 'test-token'}):
+        with patch.dict(os.environ, {"OVH_AI_ENDPOINTS_ACCESS_TOKEN": "test-token"}):
             return OVHClient()
 
     @pytest.mark.asyncio
@@ -526,10 +558,8 @@ class TestEdgeCases:
         mock_response.choices = [Mock(message=Mock(content=""))]
         mock_response.usage = Mock(prompt_tokens=5, completion_tokens=0, total_tokens=5)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
-            result = await client.process_medical_text_with_prompt(
-                full_prompt="Test: "
-            )
+        with patch.object(client.client.chat.completions, "create", return_value=mock_response):
+            result = await client.process_medical_text_with_prompt(full_prompt="Test: ")
 
             # Should handle gracefully
             assert result is not None
@@ -544,7 +574,7 @@ class TestEdgeCases:
         mock_response.choices = [Mock(message=Mock(content="Processed"))]
         mock_response.usage = Mock(prompt_tokens=50000, completion_tokens=100, total_tokens=50100)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, "create", return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
                 full_prompt=f"Summarize: {long_text}"
             )
@@ -561,7 +591,7 @@ class TestEdgeCases:
         mock_response.choices = [Mock(message=Mock(content="Processed special chars"))]
         mock_response.usage = Mock(prompt_tokens=30, completion_tokens=10, total_tokens=40)
 
-        with patch.object(client.client.chat.completions, 'create', return_value=mock_response):
+        with patch.object(client.client.chat.completions, "create", return_value=mock_response):
             result = await client.process_medical_text_with_prompt(
                 full_prompt=f"Analyze: {special_text}"
             )

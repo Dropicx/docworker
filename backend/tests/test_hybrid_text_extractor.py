@@ -12,7 +12,7 @@ from unittest.mock import Mock, patch, AsyncMock, MagicMock
 from io import BytesIO
 
 # Add backend to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from app.services.hybrid_text_extractor import HybridTextExtractor
 from app.services.file_quality_detector import ExtractionStrategy, DocumentComplexity
@@ -26,8 +26,14 @@ class TestHybridTextExtractorInitialization:
         # Mock TextExtractorWithOCR class where it's used after import
         # Use create=True because the attribute may be None when OCR isn't available
         mock_ocr_class = MagicMock()
-        with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', True), \
-             patch('app.services.hybrid_text_extractor.TextExtractorWithOCR', mock_ocr_class, create=True):
+        with (
+            patch("app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE", True),
+            patch(
+                "app.services.hybrid_text_extractor.TextExtractorWithOCR",
+                mock_ocr_class,
+                create=True,
+            ),
+        ):
             extractor = HybridTextExtractor()
 
             assert extractor is not None
@@ -37,7 +43,7 @@ class TestHybridTextExtractorInitialization:
 
     def test_initialization_without_local_ocr(self):
         """Test extractor initializes without local OCR"""
-        with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', False):
+        with patch("app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE", False):
             extractor = HybridTextExtractor()
 
             assert extractor is not None
@@ -47,8 +53,14 @@ class TestHybridTextExtractorInitialization:
     def test_initialization_ocr_failure_graceful(self):
         """Test extractor handles OCR initialization failure gracefully"""
         # Use create=True because the attribute may be None when OCR isn't available
-        with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', True), \
-             patch('app.services.hybrid_text_extractor.TextExtractorWithOCR', side_effect=Exception("OCR init failed"), create=True):
+        with (
+            patch("app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE", True),
+            patch(
+                "app.services.hybrid_text_extractor.TextExtractorWithOCR",
+                side_effect=Exception("OCR init failed"),
+                create=True,
+            ),
+        ):
             extractor = HybridTextExtractor()
 
             assert extractor is not None
@@ -62,7 +74,7 @@ class TestLocalTextExtraction:
     @pytest.fixture
     def extractor(self):
         """Create extractor instance for testing"""
-        with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', False):
+        with patch("app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE", False):
             return HybridTextExtractor()
 
     def test_evaluate_high_quality_text(self, extractor):
@@ -132,50 +144,50 @@ class TestMedicalSectionIdentification:
     @pytest.fixture
     def extractor(self):
         """Create extractor instance for testing"""
-        with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', False):
+        with patch("app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE", False):
             return HybridTextExtractor()
 
     def test_identify_patient_info(self, extractor):
         """Test identification of patient information section"""
         text = "Patient: Max Mustermann, Geburtsdatum: 01.01.1980"
         section_type = extractor._identify_medical_section_type(text)
-        assert section_type == 'patient_info'
+        assert section_type == "patient_info"
 
     def test_identify_lab_values(self, extractor):
         """Test identification of lab values section"""
         text = "Laborwerte: Hämoglobin 14.5 g/dl, Referenzbereich 12-16"
         section_type = extractor._identify_medical_section_type(text)
-        assert section_type == 'lab_values'
+        assert section_type == "lab_values"
 
     def test_identify_diagnosis(self, extractor):
         """Test identification of diagnosis section"""
         text = "Diagnose: Diabetes mellitus Typ 2 (ICD-10: E11.9)"
         section_type = extractor._identify_medical_section_type(text)
-        assert section_type == 'diagnosis'
+        assert section_type == "diagnosis"
 
     def test_identify_medication(self, extractor):
         """Test identification of medication section"""
         text = "Medikation: Metformin 1000mg täglich, Ramipril 5mg abends"
         section_type = extractor._identify_medical_section_type(text)
-        assert section_type == 'medication'
+        assert section_type == "medication"
 
     def test_identify_header(self, extractor):
         """Test identification of document header"""
         text = "Arztbrief - Universitätsklinikum München"
         section_type = extractor._identify_medical_section_type(text)
-        assert section_type == 'header'
+        assert section_type == "header"
 
     def test_identify_examination(self, extractor):
         """Test identification of examination section"""
         text = "Untersuchung: MRT des Schädels zeigt keine Auffälligkeiten"
         section_type = extractor._identify_medical_section_type(text)
-        assert section_type == 'examination'
+        assert section_type == "examination"
 
     def test_identify_general_section(self, extractor):
         """Test identification of general section (no specific type)"""
         text = "Some random text without specific medical context markers"
         section_type = extractor._identify_medical_section_type(text)
-        assert section_type == 'general'
+        assert section_type == "general"
 
 
 class TestTextMergingLogic:
@@ -184,57 +196,67 @@ class TestTextMergingLogic:
     @pytest.fixture
     def extractor(self):
         """Create extractor instance for testing"""
-        with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', False):
+        with patch("app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE", False):
             return HybridTextExtractor()
 
     def test_merge_sequential(self, extractor):
         """Test sequential merging with clear separators"""
         results = [
-            {'filename': 'page1.pdf', 'text': 'First page content', 'confidence': 0.9, 'file_index': 1},
-            {'filename': 'page2.pdf', 'text': 'Second page content', 'confidence': 0.9, 'file_index': 2}
+            {
+                "filename": "page1.pdf",
+                "text": "First page content",
+                "confidence": 0.9,
+                "file_index": 1,
+            },
+            {
+                "filename": "page2.pdf",
+                "text": "Second page content",
+                "confidence": 0.9,
+                "file_index": 2,
+            },
         ]
 
         merged = extractor._merge_sequential(results)
 
-        assert 'page1.pdf' in merged
-        assert 'page2.pdf' in merged
-        assert 'First page content' in merged
-        assert 'Second page content' in merged
+        assert "page1.pdf" in merged
+        assert "page2.pdf" in merged
+        assert "First page content" in merged
+        assert "Second page content" in merged
 
     def test_merge_single_result(self, extractor):
         """Test merging with only one file - sequential always adds headers"""
         results = [
-            {'filename': 'single.pdf', 'text': 'Only content', 'confidence': 0.9, 'file_index': 1}
+            {"filename": "single.pdf", "text": "Only content", "confidence": 0.9, "file_index": 1}
         ]
 
         merged = extractor._merge_sequential(results)
         # Sequential merge always adds file headers, even for single files
-        assert 'single.pdf' in merged
-        assert 'Only content' in merged
+        assert "single.pdf" in merged
+        assert "Only content" in merged
 
     def test_merge_smart_patient_info_first(self, extractor):
         """Test smart merge with patient info as first file"""
         results = [
             {
-                'filename': 'page1.pdf',
-                'text': 'Patient: Test Patient\nGeburtsdatum: 01.01.1980',
-                'confidence': 0.9,
-                'file_index': 1
+                "filename": "page1.pdf",
+                "text": "Patient: Test Patient\nGeburtsdatum: 01.01.1980",
+                "confidence": 0.9,
+                "file_index": 1,
             },
             {
-                'filename': 'page2.pdf',
-                'text': 'Diagnose: Diabetes mellitus Typ 2',
-                'confidence': 0.9,
-                'file_index': 2
-            }
+                "filename": "page2.pdf",
+                "text": "Diagnose: Diabetes mellitus Typ 2",
+                "confidence": 0.9,
+                "file_index": 2,
+            },
         ]
 
         merged = extractor._merge_smart(results)
 
-        assert 'Patient' in merged
-        assert 'Diagnose' in merged
+        assert "Patient" in merged
+        assert "Diagnose" in merged
         # First page should not have artificial header added
-        assert merged.count('#') >= 0  # May have headers
+        assert merged.count("#") >= 0  # May have headers
 
     def test_is_likely_continuation_comma(self, extractor):
         """Test continuation detection with comma"""
@@ -286,34 +308,28 @@ class TestTextMergingLogic:
     def test_should_merge_seamlessly_same_section(self, extractor):
         """Test seamless merge for same section types"""
         should_merge = extractor._should_merge_seamlessly(
-            "Lab values text",
-            "More lab values",
-            'lab_values',
-            'lab_values'
+            "Lab values text", "More lab values", "lab_values", "lab_values"
         )
         assert should_merge is True
 
     def test_should_not_merge_different_sections(self, extractor):
         """Test no seamless merge for different section types"""
         should_merge = extractor._should_merge_seamlessly(
-            "Patient info",
-            "Medication info",
-            'patient_info',
-            'medication'
+            "Patient info", "Medication info", "patient_info", "medication"
         )
         assert should_merge is False
 
     def test_get_section_header_patient_info(self, extractor):
         """Test section header generation for patient info"""
-        header = extractor._get_section_header('patient_info', 'file.pdf')
-        assert '##' in header
-        assert 'Patient' in header
+        header = extractor._get_section_header("patient_info", "file.pdf")
+        assert "##" in header
+        assert "Patient" in header
 
     def test_get_section_header_lab_values(self, extractor):
         """Test section header generation for lab values"""
-        header = extractor._get_section_header('lab_values', 'file.pdf')
-        assert '##' in header
-        assert 'Labor' in header
+        header = extractor._get_section_header("lab_values", "file.pdf")
+        assert "##" in header
+        assert "Labor" in header
 
     def test_post_process_merged_text(self, extractor):
         """Test post-processing removes excessive blank lines"""
@@ -321,7 +337,7 @@ class TestTextMergingLogic:
         processed = extractor._post_process_merged_text(text)
 
         # Should reduce multiple blank lines
-        assert '\n\n\n\n\n\n' not in processed
+        assert "\n\n\n\n\n\n" not in processed
 
     def test_post_process_header_spacing(self, extractor):
         """Test post-processing fixes header spacing"""
@@ -329,7 +345,7 @@ class TestTextMergingLogic:
         processed = extractor._post_process_merged_text(text)
 
         # Headers should have proper spacing
-        assert processed.count('\n') >= text.count('\n')
+        assert processed.count("\n") >= text.count("\n")
 
 
 @pytest.mark.asyncio
@@ -339,21 +355,27 @@ class TestExtractTextMethod:
     @pytest.fixture
     def extractor(self):
         """Create extractor instance for testing"""
-        with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', False):
+        with patch("app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE", False):
             return HybridTextExtractor()
 
     @pytest.mark.asyncio
     async def test_extract_local_text_strategy(self, extractor):
         """Test extraction with LOCAL_TEXT strategy"""
-        mock_analysis = {
-            'recommended_strategy': 'LOCAL_TEXT',
-            'recommended_complexity': 'SIMPLE'
-        }
+        mock_analysis = {"recommended_strategy": "LOCAL_TEXT", "recommended_complexity": "SIMPLE"}
 
-        with patch.object(extractor.quality_detector, 'analyze_file', new_callable=AsyncMock) as mock_analyze, \
-             patch.object(extractor, '_extract_with_local_text', new_callable=AsyncMock) as mock_extract:
-
-            mock_analyze.return_value = (ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.SIMPLE, mock_analysis)
+        with (
+            patch.object(
+                extractor.quality_detector, "analyze_file", new_callable=AsyncMock
+            ) as mock_analyze,
+            patch.object(
+                extractor, "_extract_with_local_text", new_callable=AsyncMock
+            ) as mock_extract,
+        ):
+            mock_analyze.return_value = (
+                ExtractionStrategy.LOCAL_TEXT,
+                DocumentComplexity.SIMPLE,
+                mock_analysis,
+            )
             mock_extract.return_value = ("Extracted text", 0.95)
 
             text, confidence = await extractor.extract_text(b"fake pdf content", "pdf", "test.pdf")
@@ -365,18 +387,26 @@ class TestExtractTextMethod:
     @pytest.mark.asyncio
     async def test_extract_vision_llm_strategy(self, extractor):
         """Test extraction with VISION_LLM strategy"""
-        mock_analysis = {
-            'recommended_strategy': 'VISION_LLM',
-            'recommended_complexity': 'COMPLEX'
-        }
+        mock_analysis = {"recommended_strategy": "VISION_LLM", "recommended_complexity": "COMPLEX"}
 
-        with patch.object(extractor.quality_detector, 'analyze_file', new_callable=AsyncMock) as mock_analyze, \
-             patch.object(extractor, '_extract_with_vision_llm', new_callable=AsyncMock) as mock_extract:
-
-            mock_analyze.return_value = (ExtractionStrategy.VISION_LLM, DocumentComplexity.COMPLEX, mock_analysis)
+        with (
+            patch.object(
+                extractor.quality_detector, "analyze_file", new_callable=AsyncMock
+            ) as mock_analyze,
+            patch.object(
+                extractor, "_extract_with_vision_llm", new_callable=AsyncMock
+            ) as mock_extract,
+        ):
+            mock_analyze.return_value = (
+                ExtractionStrategy.VISION_LLM,
+                DocumentComplexity.COMPLEX,
+                mock_analysis,
+            )
             mock_extract.return_value = ("Vision extracted text", 0.90)
 
-            text, confidence = await extractor.extract_text(b"fake image content", "image", "scan.jpg")
+            text, confidence = await extractor.extract_text(
+                b"fake image content", "image", "scan.jpg"
+            )
 
             assert text == "Vision extracted text"
             assert confidence == 0.90
@@ -385,7 +415,9 @@ class TestExtractTextMethod:
     @pytest.mark.asyncio
     async def test_extract_handles_errors_gracefully(self, extractor):
         """Test extraction handles errors and returns error message"""
-        with patch.object(extractor.quality_detector, 'analyze_file', new_callable=AsyncMock) as mock_analyze:
+        with patch.object(
+            extractor.quality_detector, "analyze_file", new_callable=AsyncMock
+        ) as mock_analyze:
             mock_analyze.side_effect = Exception("Analysis failed")
 
             text, confidence = await extractor.extract_text(b"content", "pdf", "test.pdf")
@@ -401,7 +433,7 @@ class TestExtractFromMultipleFiles:
     @pytest.fixture
     def extractor(self):
         """Create extractor instance for testing"""
-        with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', False):
+        with patch("app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE", False):
             return HybridTextExtractor()
 
     @pytest.mark.asyncio
@@ -418,31 +450,40 @@ class TestExtractFromMultipleFiles:
         files = [
             (b"content3", "image", "page3.jpg"),
             (b"content1", "image", "page1.jpg"),
-            (b"content2", "image", "page2.jpg")
+            (b"content2", "image", "page2.jpg"),
         ]
 
         # Mock sequence detector to reorder files
         ordered_files = [
             (b"content1", "image", "page1.jpg"),
             (b"content2", "image", "page2.jpg"),
-            (b"content3", "image", "page3.jpg")
+            (b"content3", "image", "page3.jpg"),
         ]
 
         mock_analysis = {
-            'recommended_strategy': ExtractionStrategy.LOCAL_TEXT,
-            'recommended_complexity': DocumentComplexity.SIMPLE
+            "recommended_strategy": ExtractionStrategy.LOCAL_TEXT,
+            "recommended_complexity": DocumentComplexity.SIMPLE,
         }
 
-        with patch.object(extractor.sequence_detector, 'detect_sequence', new_callable=AsyncMock) as mock_sequence, \
-             patch.object(extractor.quality_detector, 'analyze_multiple_files', new_callable=AsyncMock) as mock_analyze, \
-             patch.object(extractor, '_extract_with_local_text', new_callable=AsyncMock) as mock_extract:
-
+        with (
+            patch.object(
+                extractor.sequence_detector, "detect_sequence", new_callable=AsyncMock
+            ) as mock_sequence,
+            patch.object(
+                extractor.quality_detector, "analyze_multiple_files", new_callable=AsyncMock
+            ) as mock_analyze,
+            patch.object(
+                extractor, "_extract_with_local_text", new_callable=AsyncMock
+            ) as mock_extract,
+        ):
             mock_sequence.return_value = ordered_files
             # analyze_multiple_files returns a dict, not a tuple
             mock_analyze.return_value = mock_analysis
             mock_extract.return_value = ("Page content", 0.9)
 
-            text, confidence = await extractor.extract_from_multiple_files(files, merge_strategy="smart")
+            text, confidence = await extractor.extract_from_multiple_files(
+                files, merge_strategy="smart"
+            )
 
             # Should have called sequence detector
             mock_sequence.assert_called_once_with(files)
@@ -456,27 +497,37 @@ class TestExtractFromMultipleFiles:
     @pytest.mark.asyncio
     async def test_multi_file_all_fail(self, extractor):
         """Test multi-file extraction when all files fail"""
-        files = [
-            (b"content1", "image", "page1.jpg"),
-            (b"content2", "image", "page2.jpg")
-        ]
+        files = [(b"content1", "image", "page1.jpg"), (b"content2", "image", "page2.jpg")]
 
         mock_analysis = {
-            'recommended_strategy': ExtractionStrategy.LOCAL_TEXT,
-            'recommended_complexity': DocumentComplexity.SIMPLE
+            "recommended_strategy": ExtractionStrategy.LOCAL_TEXT,
+            "recommended_complexity": DocumentComplexity.SIMPLE,
         }
 
-        with patch.object(extractor.sequence_detector, 'detect_sequence', new_callable=AsyncMock) as mock_sequence, \
-             patch.object(extractor.quality_detector, 'analyze_multiple_files', new_callable=AsyncMock) as mock_analyze, \
-             patch.object(extractor, '_extract_with_local_text', new_callable=AsyncMock) as mock_extract:
-
+        with (
+            patch.object(
+                extractor.sequence_detector, "detect_sequence", new_callable=AsyncMock
+            ) as mock_sequence,
+            patch.object(
+                extractor.quality_detector, "analyze_multiple_files", new_callable=AsyncMock
+            ) as mock_analyze,
+            patch.object(
+                extractor, "_extract_with_local_text", new_callable=AsyncMock
+            ) as mock_extract,
+        ):
             mock_sequence.return_value = files
-            mock_analyze.return_value = (ExtractionStrategy.LOCAL_TEXT, DocumentComplexity.SIMPLE, mock_analysis)
+            mock_analyze.return_value = (
+                ExtractionStrategy.LOCAL_TEXT,
+                DocumentComplexity.SIMPLE,
+                mock_analysis,
+            )
             mock_extract.return_value = ("Error: extraction failed", 0.0)
 
             text, confidence = await extractor.extract_from_multiple_files(files)
 
-            assert "Failed to extract text from any file" in text or "extraction error" in text.lower()
+            assert (
+                "Failed to extract text from any file" in text or "extraction error" in text.lower()
+            )
             assert confidence == 0.0
 
 
@@ -487,13 +538,15 @@ class TestStrategyMethods:
     @pytest.fixture
     def extractor(self):
         """Create extractor instance for testing"""
-        with patch('app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE', False):
+        with patch("app.services.hybrid_text_extractor.LOCAL_OCR_AVAILABLE", False):
             return HybridTextExtractor()
 
     @pytest.mark.asyncio
     async def test_extract_local_text_non_pdf_fallback(self, extractor):
         """Test local text extraction falls back to vision for non-PDF"""
-        with patch.object(extractor, '_extract_with_vision_llm', new_callable=AsyncMock) as mock_vision:
+        with patch.object(
+            extractor, "_extract_with_vision_llm", new_callable=AsyncMock
+        ) as mock_vision:
             mock_vision.return_value = ("Vision result", 0.8)
 
             text, confidence = await extractor._extract_with_local_text(b"image", "image", {})
@@ -505,7 +558,9 @@ class TestStrategyMethods:
     @pytest.mark.asyncio
     async def test_extract_local_ocr_unavailable_fallback(self, extractor):
         """Test local OCR falls back to vision when unavailable"""
-        with patch.object(extractor, '_extract_with_vision_llm', new_callable=AsyncMock) as mock_vision:
+        with patch.object(
+            extractor, "_extract_with_vision_llm", new_callable=AsyncMock
+        ) as mock_vision:
             mock_vision.return_value = ("Vision result", 0.8)
 
             # Extractor has no local OCR
@@ -520,12 +575,14 @@ class TestStrategyMethods:
         from PIL import Image
 
         # Create a small test image
-        test_image = Image.new('RGB', (100, 100), color='white')
+        test_image = Image.new("RGB", (100, 100), color="white")
         img_byte_arr = BytesIO()
-        test_image.save(img_byte_arr, format='PNG')
+        test_image.save(img_byte_arr, format="PNG")
         img_content = img_byte_arr.getvalue()
 
-        with patch.object(extractor.ovh_client, 'extract_text_with_vision', new_callable=AsyncMock) as mock_ovh:
+        with patch.object(
+            extractor.ovh_client, "extract_text_with_vision", new_callable=AsyncMock
+        ) as mock_ovh:
             mock_ovh.return_value = ("Extracted via vision", 0.85)
 
             text, confidence = await extractor._extract_with_vision_llm(img_content, "image", {})
@@ -537,8 +594,13 @@ class TestStrategyMethods:
     @pytest.mark.asyncio
     async def test_extract_hybrid_local_success(self, extractor):
         """Test hybrid extraction uses local method when successful"""
-        with patch.object(extractor, '_extract_with_local_text', new_callable=AsyncMock) as mock_local:
-            mock_local.return_value = ("High quality local text" * 10, 0.85)  # Long enough and good confidence
+        with patch.object(
+            extractor, "_extract_with_local_text", new_callable=AsyncMock
+        ) as mock_local:
+            mock_local.return_value = (
+                "High quality local text" * 10,
+                0.85,
+            )  # Long enough and good confidence
 
             text, confidence = await extractor._extract_with_hybrid(b"pdf", "pdf", {})
 
@@ -549,9 +611,14 @@ class TestStrategyMethods:
     @pytest.mark.asyncio
     async def test_extract_hybrid_vision_fallback(self, extractor):
         """Test hybrid extraction falls back to vision on low quality"""
-        with patch.object(extractor, '_extract_with_local_text', new_callable=AsyncMock) as mock_local, \
-             patch.object(extractor, '_extract_with_vision_llm', new_callable=AsyncMock) as mock_vision:
-
+        with (
+            patch.object(
+                extractor, "_extract_with_local_text", new_callable=AsyncMock
+            ) as mock_local,
+            patch.object(
+                extractor, "_extract_with_vision_llm", new_callable=AsyncMock
+            ) as mock_vision,
+        ):
             mock_local.return_value = ("Short", 0.5)  # Low quality/short
             mock_vision.return_value = ("Much better vision result", 0.9)
 

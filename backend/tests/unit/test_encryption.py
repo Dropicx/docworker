@@ -208,7 +208,12 @@ class TestErrorHandling:
 
     def test_missing_encryption_key_raises_error(self):
         """Test that missing ENCRYPTION_KEY raises EncryptionKeyError"""
-        with patch.dict(os.environ, {}, clear=True):
+        # Remove ENCRYPTION_KEY from environment
+        env = os.environ.copy()
+        if "ENCRYPTION_KEY" in env:
+            del env["ENCRYPTION_KEY"]
+
+        with patch.dict(os.environ, env, clear=True):
             with pytest.raises(EncryptionKeyError):
                 FieldEncryptor()
 

@@ -137,7 +137,9 @@ class TestPipelineStepRepository:
         assert universal_steps[1].order == 2
         assert universal_steps[2].order == 3
 
-    def test_get_universal_steps_empty(self, repository, create_pipeline_step, create_document_class):
+    def test_get_universal_steps_empty(
+        self, repository, create_pipeline_step, create_document_class
+    ):
         """Test get_universal_steps when all steps are class-specific."""
         doc_class = create_document_class(class_key="ARZTBRIEF")
         create_pipeline_step(name="Specific", order=1, document_class_id=doc_class.id)
@@ -148,7 +150,9 @@ class TestPipelineStepRepository:
 
     # ==================== DOCUMENT CLASS STEPS TESTS ====================
 
-    def test_get_steps_by_document_class(self, repository, create_pipeline_step, create_document_class):
+    def test_get_steps_by_document_class(
+        self, repository, create_pipeline_step, create_document_class
+    ):
         """Test retrieving steps for a specific document class."""
         arztbrief = create_document_class(class_key="ARZTBRIEF")
         befund = create_document_class(class_key="BEFUNDBERICHT")
@@ -165,7 +169,9 @@ class TestPipelineStepRepository:
         assert arztbrief_steps[0].name == "Arztbrief 1"
         assert arztbrief_steps[1].name == "Arztbrief 2"
 
-    def test_get_steps_by_document_class_ordered(self, repository, create_pipeline_step, create_document_class):
+    def test_get_steps_by_document_class_ordered(
+        self, repository, create_pipeline_step, create_document_class
+    ):
         """Test that class-specific steps are returned in order."""
         doc_class = create_document_class(class_key="ARZTBRIEF")
 
@@ -403,18 +409,12 @@ class TestPipelineStepRepository:
         create_pipeline_step(
             name="Translation Step",
             order=1,
-            required_context_variables=["target_language", "source_language"]
+            required_context_variables=["target_language", "source_language"],
         )
         create_pipeline_step(
-            name="Validation Step",
-            order=2,
-            required_context_variables=["document_type"]
+            name="Validation Step", order=2, required_context_variables=["document_type"]
         )
-        create_pipeline_step(
-            name="OCR Step",
-            order=3,
-            required_context_variables=None
-        )
+        create_pipeline_step(name="OCR Step", order=3, required_context_variables=None)
 
         steps = repository.get_steps_requiring_context("target_language")
 
@@ -423,15 +423,9 @@ class TestPipelineStepRepository:
 
     def test_get_steps_requiring_context_multiple_matches(self, repository, create_pipeline_step):
         """Test finding multiple steps requiring same context variable."""
+        create_pipeline_step(name="Step 1", order=1, required_context_variables=["document_type"])
         create_pipeline_step(
-            name="Step 1",
-            order=1,
-            required_context_variables=["document_type"]
-        )
-        create_pipeline_step(
-            name="Step 2",
-            order=2,
-            required_context_variables=["document_type", "other_var"]
+            name="Step 2", order=2, required_context_variables=["document_type", "other_var"]
         )
 
         steps = repository.get_steps_requiring_context("document_type")
@@ -440,11 +434,7 @@ class TestPipelineStepRepository:
 
     def test_get_steps_requiring_context_no_matches(self, repository, create_pipeline_step):
         """Test get_steps_requiring_context when no steps require the variable."""
-        create_pipeline_step(
-            name="Step",
-            order=1,
-            required_context_variables=["other_variable"]
-        )
+        create_pipeline_step(name="Step", order=1, required_context_variables=["other_variable"])
 
         steps = repository.get_steps_requiring_context("target_language")
 
@@ -452,11 +442,7 @@ class TestPipelineStepRepository:
 
     def test_get_steps_requiring_context_null_requirements(self, repository, create_pipeline_step):
         """Test that steps with null requirements are not returned."""
-        create_pipeline_step(
-            name="Step",
-            order=1,
-            required_context_variables=None
-        )
+        create_pipeline_step(name="Step", order=1, required_context_variables=None)
 
         steps = repository.get_steps_requiring_context("any_variable")
 
@@ -471,20 +457,12 @@ class TestPipelineStepRepository:
             order=1,
             stop_conditions={
                 "stop_on_values": ["NICHT_MEDIZINISCH"],
-                "termination_reason": "Non-medical content"
-            }
+                "termination_reason": "Non-medical content",
+            },
         )
+        create_pipeline_step(name="Regular Step", order=2, stop_conditions=None)
         create_pipeline_step(
-            name="Regular Step",
-            order=2,
-            stop_conditions=None
-        )
-        create_pipeline_step(
-            name="Another Conditional",
-            order=3,
-            stop_conditions={
-                "stop_on_values": ["INVALID"]
-            }
+            name="Another Conditional", order=3, stop_conditions={"stop_on_values": ["INVALID"]}
         )
 
         steps = repository.get_steps_with_stop_conditions()
@@ -511,7 +489,7 @@ class TestPipelineStepRepository:
             order=1,
             enabled=True,
             prompt_template="Original prompt",
-            temperature=0.8
+            temperature=0.8,
         )
 
         duplicate = repository.duplicate_step(original.id, "Duplicated Step")
@@ -529,10 +507,7 @@ class TestPipelineStepRepository:
     def test_duplicate_step_branching_not_copied(self, repository, create_pipeline_step):
         """Test that branching flag is not copied during duplication."""
         original = create_pipeline_step(
-            name="Branching Step",
-            order=1,
-            is_branching_step=True,
-            branching_field="document_type"
+            name="Branching Step", order=1, is_branching_step=True, branching_field="document_type"
         )
 
         duplicate = repository.duplicate_step(original.id, "Duplicated Branching")
@@ -552,7 +527,7 @@ class TestPipelineStepRepository:
             name="Complex Step",
             order=1,
             required_context_variables=["var1", "var2"],
-            stop_conditions={"stop_on_values": ["ERROR"]}
+            stop_conditions={"stop_on_values": ["ERROR"]},
         )
 
         duplicate = repository.duplicate_step(original.id, "Duplicated Complex")
@@ -570,29 +545,35 @@ class TestPipelineStepRepository:
         doc_class = create_document_class(class_key="ARZTBRIEF")
 
         # Create various types of steps
-        create_pipeline_step(name="Universal Enabled", order=1, enabled=True, document_class_id=None)
-        create_pipeline_step(name="Universal Disabled", order=2, enabled=False, document_class_id=None)
-        create_pipeline_step(name="Class-Specific", order=3, enabled=True, document_class_id=doc_class.id)
+        create_pipeline_step(
+            name="Universal Enabled", order=1, enabled=True, document_class_id=None
+        )
+        create_pipeline_step(
+            name="Universal Disabled", order=2, enabled=False, document_class_id=None
+        )
+        create_pipeline_step(
+            name="Class-Specific", order=3, enabled=True, document_class_id=doc_class.id
+        )
         create_pipeline_step(
             name="Branching Step",
             order=4,
             enabled=True,
             is_branching_step=True,
-            document_class_id=None
+            document_class_id=None,
         )
         create_pipeline_step(
             name="Post-Branching",
             order=5,
             enabled=True,
             post_branching=True,
-            document_class_id=None
+            document_class_id=None,
         )
         create_pipeline_step(
             name="Conditional Step",
             order=6,
             enabled=True,
             stop_conditions={"stop_on_values": ["ERROR"]},
-            document_class_id=None
+            document_class_id=None,
         )
 
         stats = repository.get_step_statistics()
@@ -633,9 +614,7 @@ class TestPipelineStepRepository:
 
     # ==================== INTEGRATION TESTS ====================
 
-    def test_pipeline_execution_flow(
-        self, repository, create_pipeline_step, create_document_class
-    ):
+    def test_pipeline_execution_flow(self, repository, create_pipeline_step, create_document_class):
         """Test complete pipeline execution flow with various step types."""
         arztbrief = create_document_class(class_key="ARZTBRIEF")
 
@@ -646,19 +625,13 @@ class TestPipelineStepRepository:
             order=2,
             enabled=True,
             is_branching_step=True,
-            branching_field="document_type"
+            branching_field="document_type",
         )
         class_specific = create_pipeline_step(
-            name="Arztbrief Translation",
-            order=3,
-            enabled=True,
-            document_class_id=arztbrief.id
+            name="Arztbrief Translation", order=3, enabled=True, document_class_id=arztbrief.id
         )
         post_branch = create_pipeline_step(
-            name="Final Check",
-            order=4,
-            enabled=True,
-            post_branching=True
+            name="Final Check", order=4, enabled=True, post_branching=True
         )
 
         # Verify pipeline structure
@@ -705,16 +678,10 @@ class TestPipelineStepRepository:
     def test_reorder_maintains_step_integrity(self, repository, create_pipeline_step):
         """Test that reordering doesn't affect other step attributes."""
         step1 = create_pipeline_step(
-            name="First",
-            order=1,
-            enabled=True,
-            prompt_template="Prompt 1"
+            name="First", order=1, enabled=True, prompt_template="Prompt 1"
         )
         step2 = create_pipeline_step(
-            name="Second",
-            order=2,
-            enabled=False,
-            prompt_template="Prompt 2"
+            name="Second", order=2, enabled=False, prompt_template="Prompt 2"
         )
 
         # Reorder
