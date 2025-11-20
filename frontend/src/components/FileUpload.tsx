@@ -1,6 +1,16 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { Upload, X, FileText, Image, AlertCircle, Play, Shield, Camera, Lightbulb } from 'lucide-react';
+import {
+  Upload,
+  X,
+  FileText,
+  Image,
+  AlertCircle,
+  Play,
+  Shield,
+  Camera,
+  Lightbulb,
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ApiService from '../services/api';
 import { UploadResponse, ApiError, QualityGateErrorDetails } from '../types/api';
@@ -14,15 +24,15 @@ interface FileUploadProps {
 // Helper function to translate quality issues to German
 const translateIssue = (issue: string): string => {
   const translations: Record<string, string> = {
-    'poor_image_quality': 'Schlechte Bildqualität',
-    'significant_blur_detected': 'Starke Unschärfe erkannt',
-    'low_blur_detection': 'Unscharfes Bild',
-    'low_contrast': 'Niedriger Kontrast',
-    'poor_lighting': 'Schlechte Beleuchtung',
-    'document_too_small': 'Dokument zu klein',
-    'text_density_low': 'Zu wenig Text erkennbar',
-    'has_blur': 'Bild ist unscharf',
-    'has_low_contrast': 'Kontrast ist zu niedrig',
+    poor_image_quality: 'Schlechte Bildqualität',
+    significant_blur_detected: 'Starke Unschärfe erkannt',
+    low_blur_detection: 'Unscharfes Bild',
+    low_contrast: 'Niedriger Kontrast',
+    poor_lighting: 'Schlechte Beleuchtung',
+    document_too_small: 'Dokument zu klein',
+    text_density_low: 'Zu wenig Text erkennbar',
+    has_blur: 'Bild ist unscharf',
+    has_low_contrast: 'Kontrast ist zu niedrig',
   };
 
   return translations[issue] || issue;
@@ -428,7 +438,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <Camera className="w-6 h-6 text-white" />
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-amber-900 mb-1 text-lg">Bildqualität zu niedrig</h4>
+                <h4 className="font-semibold text-amber-900 mb-1 text-lg">
+                  Bildqualität zu niedrig
+                </h4>
                 <p className="text-amber-700 text-sm leading-relaxed">
                   Die Qualität Ihres Dokuments ist für eine zuverlässige Verarbeitung zu niedrig.
                 </p>
@@ -441,7 +453,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <span className="text-primary-600 font-medium">Qualitätswert:</span>
                 <span className="font-semibold text-primary-900">
                   {(qualityGateError.details.confidence_score * 100).toFixed(0)}%
-                  <span className="text-primary-500 font-normal"> / {(qualityGateError.details.min_threshold * 100).toFixed(0)}% erforderlich</span>
+                  <span className="text-primary-500 font-normal">
+                    {' '}
+                    / {(qualityGateError.details.min_threshold * 100).toFixed(0)}% erforderlich
+                  </span>
                 </span>
               </div>
               <div className="mt-2 w-full bg-neutral-200 rounded-full h-2 overflow-hidden">
@@ -471,22 +486,26 @@ const FileUpload: React.FC<FileUploadProps> = ({
             )}
 
             {/* Suggestions */}
-            {qualityGateError.details.suggestions && qualityGateError.details.suggestions.length > 0 && (
-              <div className="space-y-3 bg-gradient-to-br from-accent-50/50 to-transparent p-4 rounded-lg border border-accent-200/50">
-                <h5 className="text-sm font-semibold text-primary-900 flex items-center space-x-2">
-                  <Lightbulb className="w-4 h-4 text-accent-600" />
-                  <span>So können Sie die Qualität verbessern:</span>
-                </h5>
-                <ul className="space-y-2">
-                  {qualityGateError.details.suggestions.map((suggestion, index) => (
-                    <li key={index} className="text-sm text-primary-700 flex items-start space-x-2.5">
-                      <span className="text-accent-600 font-bold mt-0.5">{index + 1}.</span>
-                      <span className="leading-relaxed">{suggestion}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {qualityGateError.details.suggestions &&
+              qualityGateError.details.suggestions.length > 0 && (
+                <div className="space-y-3 bg-gradient-to-br from-accent-50/50 to-transparent p-4 rounded-lg border border-accent-200/50">
+                  <h5 className="text-sm font-semibold text-primary-900 flex items-center space-x-2">
+                    <Lightbulb className="w-4 h-4 text-accent-600" />
+                    <span>So können Sie die Qualität verbessern:</span>
+                  </h5>
+                  <ul className="space-y-2">
+                    {qualityGateError.details.suggestions.map((suggestion, index) => (
+                      <li
+                        key={index}
+                        className="text-sm text-primary-700 flex items-start space-x-2.5"
+                      >
+                        <span className="text-accent-600 font-bold mt-0.5">{index + 1}.</span>
+                        <span className="leading-relaxed">{suggestion}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
 
             {/* Try Again Button */}
             <div className="pt-2">

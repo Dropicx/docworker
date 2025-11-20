@@ -29,7 +29,6 @@ Usage:
 import base64
 import logging
 import os
-from functools import lru_cache
 from typing import Any
 
 from cryptography.fernet import Fernet, InvalidToken
@@ -95,7 +94,6 @@ class FieldEncryptor:
         """Check if encryption is enabled via environment variable"""
         return os.getenv("ENCRYPTION_ENABLED", "true").lower() == "true"
 
-    @lru_cache(maxsize=1)
     def _get_current_cipher(self) -> Fernet:
         """
         Get the current (primary) encryption cipher.
@@ -118,11 +116,8 @@ class FieldEncryptor:
         try:
             return Fernet(key.encode())
         except Exception as e:
-            raise EncryptionKeyError(
-                f"ENCRYPTION_KEY is invalid or corrupted: {e}"
-            ) from e
+            raise EncryptionKeyError(f"ENCRYPTION_KEY is invalid or corrupted: {e}") from e
 
-    @lru_cache(maxsize=1)
     def _get_previous_cipher(self) -> Fernet | None:
         """
         Get the previous encryption cipher for key rotation.
@@ -225,8 +220,7 @@ class FieldEncryptor:
                     logger.debug("Current key failed, trying previous key for decryption")
                     decrypted_bytes = previous_cipher.decrypt(encrypted_bytes)
                     return decrypted_bytes.decode("utf-8")
-                else:
-                    raise  # No previous key available, re-raise exception
+                raise  # No previous key available, re-raise exception
 
         except InvalidToken as e:
             logger.error(f"Decryption failed - invalid token or wrong key: {e}")
@@ -237,9 +231,7 @@ class FieldEncryptor:
             logger.error(f"Decryption failed: {e}")
             raise DecryptionError(f"Failed to decrypt field: {e}") from e
 
-    def encrypt_dict_fields(
-        self, data: dict[str, Any], fields: list[str]
-    ) -> dict[str, Any]:
+    def encrypt_dict_fields(self, data: dict[str, Any], fields: list[str]) -> dict[str, Any]:
         """
         Encrypt multiple fields in a dictionary.
 
@@ -267,9 +259,7 @@ class FieldEncryptor:
 
         return encrypted_data
 
-    def decrypt_dict_fields(
-        self, data: dict[str, Any], fields: list[str]
-    ) -> dict[str, Any]:
+    def decrypt_dict_fields(self, data: dict[str, Any], fields: list[str]) -> dict[str, Any]:
         """
         Decrypt multiple fields in a dictionary.
 
@@ -416,7 +406,8 @@ class FieldEncryptor:
             return None
 
         import hashlib
-        return hashlib.sha256(value.encode('utf-8')).hexdigest()
+
+        return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 # Global singleton instance

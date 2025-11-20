@@ -6,6 +6,7 @@ Supports conditional encryption based on is_encrypted flag.
 """
 
 import logging
+
 from sqlalchemy.orm import Session
 
 from app.core.encryption import encryptor
@@ -127,7 +128,9 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
         except (ValueError, TypeError):
             return default
 
-    def set_value(self, key: str, value: str, description: str | None = None, is_encrypted: bool = False) -> SystemSettingsDB:
+    def set_value(
+        self, key: str, value: str, description: str | None = None, is_encrypted: bool = False
+    ) -> SystemSettingsDB:
         """
         Set a setting value with optional encryption, creating if it doesn't exist.
 
@@ -172,7 +175,7 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
                 value=value_to_store,
                 value_type="string",
                 description=description or "",
-                is_encrypted=is_encrypted
+                is_encrypted=is_encrypted,
             )
 
             # Return with decrypted value for service layer

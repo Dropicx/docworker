@@ -32,7 +32,7 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
     """
 
     # Define fields to encrypt
-    encrypted_fields = ['email', 'full_name']
+    encrypted_fields = ["email", "full_name"]
 
     def __init__(self, db: Session):
         super().__init__(db, UserDB)

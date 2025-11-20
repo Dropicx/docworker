@@ -238,8 +238,12 @@ class FileQualityDetector:
 
             if text_density < 0.02:
                 issues.append("low_text_density")
-                suggestions.append("Stellen Sie sicher, dass das gesamte Dokument im Bild sichtbar ist")
-                suggestions.append("Gehen Sie näher an das Dokument heran oder zoomen Sie leicht hinein")
+                suggestions.append(
+                    "Stellen Sie sicher, dass das gesamte Dokument im Bild sichtbar ist"
+                )
+                suggestions.append(
+                    "Gehen Sie näher an das Dokument heran oder zoomen Sie leicht hinein"
+                )
 
         elif file_type == "pdf":
             # PDF-specific quality checks
@@ -248,20 +252,28 @@ class FileQualityDetector:
 
             if text_coverage < 0.3:
                 issues.append("low_text_coverage")
-                suggestions.append("Das Dokument scheint hauptsächlich aus gescannten Bildern zu bestehen")
+                suggestions.append(
+                    "Das Dokument scheint hauptsächlich aus gescannten Bildern zu bestehen"
+                )
                 suggestions.append("Erwägen Sie, ein Foto/Scan in höherer Qualität zu machen")
 
             if text_quality < 0.4:
                 issues.append("poor_text_quality")
                 suggestions.append("Die Qualität der Textextraktion ist niedrig")
-                suggestions.append("Versuchen Sie, mit höherer Auflösung (300 DPI oder mehr) neu zu scannen")
+                suggestions.append(
+                    "Versuchen Sie, mit höherer Auflösung (300 DPI oder mehr) neu zu scannen"
+                )
 
         # Common suggestions
         if not suggestions:
             # General advice for low quality
-            suggestions.append("Platzieren Sie das Dokument auf einer flachen, gut beleuchteten Oberfläche")
+            suggestions.append(
+                "Platzieren Sie das Dokument auf einer flachen, gut beleuchteten Oberfläche"
+            )
             suggestions.append("Fotografieren Sie von direkt oben (nicht schräg)")
-            suggestions.append("Stellen Sie sicher, dass das Dokument den größten Teil des Bildes ausfüllt")
+            suggestions.append(
+                "Stellen Sie sicher, dass das Dokument den größten Teil des Bildes ausfüllt"
+            )
             suggestions.append("Vermeiden Sie Schatten, Reflexionen und Blendung")
 
         return issues, suggestions

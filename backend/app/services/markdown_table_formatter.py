@@ -5,9 +5,9 @@ Converts OCR-extracted table data into clean markdown format for better AI compr
 Specializes in medical laboratory results and clinical data tables.
 """
 
+from collections import defaultdict
 import logging
 import re
-from collections import defaultdict
 
 logger = logging.getLogger(__name__)
 
@@ -210,9 +210,7 @@ class MarkdownTableFormatter:
 
         return columns
 
-    def _build_table_structure(
-        self, rows: list[list[dict]], columns: list[int]
-    ) -> list[list[str]]:
+    def _build_table_structure(self, rows: list[list[dict]], columns: list[int]) -> list[list[str]]:
         """Build 2D table structure by assigning words to cells"""
         table = []
 
@@ -295,9 +293,7 @@ class MarkdownTableFormatter:
         headers = []
         for col_idx in range(num_cols):
             # Check first few rows to determine column type
-            sample_values = [
-                row[col_idx] if col_idx < len(row) else "" for row in table_data[:3]
-            ]
+            sample_values = [row[col_idx] if col_idx < len(row) else "" for row in table_data[:3]]
 
             if col_idx == 0:
                 # First column is usually parameter name
@@ -309,8 +305,7 @@ class MarkdownTableFormatter:
                 # Column contains units
                 headers.append("Unit")
             elif any(
-                "-" in val or "bis" in val.lower() or "to" in val.lower()
-                for val in sample_values
+                "-" in val or "bis" in val.lower() or "to" in val.lower() for val in sample_values
             ):
                 # Column contains ranges - reference values
                 headers.append("Reference Range")
@@ -328,7 +323,7 @@ class MarkdownTableFormatter:
         header_matches = 0
         for cell in first_row:
             cell_lower = cell.lower()
-            for header_type, keywords in self.medical_headers.items():
+            for _header_type, keywords in self.medical_headers.items():
                 if any(keyword in cell_lower for keyword in keywords):
                     header_matches += 1
                     break
