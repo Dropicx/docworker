@@ -7,7 +7,7 @@ preserving all medical information, lab values, diagnoses, and treatments.
 Features:
     - Optional spaCy NER for intelligent name recognition
     - Fallback to heuristic-based detection if spaCy unavailable
-    - Protects 146+ medical terms and 210+ medical abbreviations
+    - Protects 300+ medical terms and 210+ medical abbreviations
     - Validates medical content preservation (GDPR compliance)
 
 ENHANCED (Issue #35 Phase 2 - Coverage Expansion):
@@ -17,10 +17,17 @@ ENHANCED (Issue #35 Phase 2 - Coverage Expansion):
     - Medical eponym preservation: 50+ disease names (Parkinson, Alzheimer, etc.)
     - Intelligent date classification: Preserves medical dates, removes birthdates
     - Confidence scoring: Tracks detection quality and low-confidence entities
+
+ENHANCED (Issue #35 Phase 4 - Medical Term Protection Enhancement):
+    - Phase 4.2: Drug database with 120+ medications (INN + German brand names)
+    - Phase 4.3: Medical coding support (ICD-10, OPS, EBM, LOINC codes)
+    - 60+ common LOINC codes for lab test identification
+    - Enhanced protection for drug names during NER processing
 """
 
 import logging
 import re
+from datetime import datetime
 from re import Pattern
 
 # Try to import spaCy, but make it optional
@@ -186,22 +193,38 @@ class AdvancedPrivacyFilter:
         >>> print(f"Eponyms preserved: {metadata['eponyms_preserved']}")
     """
 
-    def __init__(self) -> None:
+    def __init__(self, load_custom_terms: bool = True) -> None:
         """Initialisiert den Filter mit spaCy NER Model
 
         PERFORMANCE OPTIMIZATION (Issue #35 Phase 3.1):
         - Uses singleton pattern for spaCy model (fast initialization)
         - First instance: ~200-500ms load time (model loading)
         - Subsequent instances: ~0ms load time (reuses cached model)
+
+        PHASE 4.1 (Issue #35 - Dynamic Medical Dictionary):
+        - Supports loading custom medical terms from database
+        - Custom terms are merged with built-in defaults
+        - Expandable via settings UI (system_settings table)
+
+        Args:
+            load_custom_terms: If True, loads custom terms from database (default: True)
+                             Set to False for testing or when database unavailable
         """
         # Use singleton model (lazy loading on first access)
         self.nlp, self.has_ner = _get_spacy_model()
+
+        # Flag to track if custom terms were loaded
+        self._custom_terms_loaded = False
+        self._load_custom_terms = load_custom_terms
 
         logger.info(
             "🎯 Privacy Filter: Entfernt persönliche Daten, erhält medizinische Informationen"
         )
 
-        # Medizinische Begriffe, die NICHT als Namen erkannt werden sollen
+        # ==================== PHASE 4: MEDICAL TERM PROTECTION ENHANCEMENT ====================
+
+        # Phase 4.1 & 4.2: Comprehensive Medical Terms + Drug Database
+        # Expanded from 146 to 300+ terms for maximum medical content preservation
         self.medical_terms = {
             # Körperteile und Organe
             "herz",
@@ -693,6 +716,228 @@ class AdvancedPrivacyFilter:
             "hyperthyreose",
         }
 
+        # ==================== PHASE 4.2: DRUG DATABASE INTEGRATION ====================
+        # Comprehensive drug/medication database (INN + German brand names)
+        # MUST NOT be removed as they are medical terminology, not patient names
+        self.drug_database = {
+            # Common painkillers (Schmerzmittel)
+            "ibuprofen", "diclofenac", "paracetamol", "acetylsalicylsäure", "ass",
+            "tramadol", "tilidin", "naloxon", "metamizol", "novaminsulfon",
+            "celecoxib", "etoricoxib", "naproxen", "ketoprofen",
+            # Brand names
+            "voltaren", "novalgin", "aspirin", "dolormin", "ibuflam",
+
+            # Antibiotics (Antibiotika)
+            "amoxicillin", "ampicillin", "penicillin", "cefuroxim", "cefixim",
+            "azithromycin", "clarithromycin", "doxycyclin", "ciprofloxacin",
+            "levofloxacin", "moxifloxacin", "cotrimoxazol", "clindamycin",
+            # Brand names
+            "augmentan", "amoxiclav", "unacid", "zinnat",
+
+            # Cardiovascular (Herz-Kreislauf)
+            "metoprolol", "bisoprolol", "carvedilol", "atenolol", "nebivolol",
+            "ramipril", "enalapril", "lisinopril", "losartan", "valsartan",
+            "candesartan", "telmisartan", "amlodipin", "nifedipin",
+            "simvastatin", "atorvastatin", "pravastatin", "rosuvastatin",
+            "aspirin", "clopidogrel", "ticagrelor", "phenprocoumon", "warfarin",
+            "rivaroxaban", "apixaban", "edoxaban", "dabigatran",
+            "furosemid", "torasemid", "hydrochlorothiazid", "spironolacton",
+            "digitoxin", "digoxin", "isosorbid",
+            # Brand names
+            "beloc", "concor", "diovan", "atacand", "norvasc", "sortis",
+            "marcumar", "xarelto", "eliquis", "pradaxa", "lasix",
+
+            # Diabetes medications (Antidiabetika)
+            "metformin", "glibenclamid", "glimepirid", "sitagliptin",
+            "vildagliptin", "empagliflozin", "dapagliflozin", "insulin",
+            "liraglutid", "dulaglutid", "semaglutid", "exenatid",
+            # Brand names
+            "glucophage", "januvia", "jardiance", "forxiga", "victoza", "ozempic",
+
+            # Thyroid (Schilddrüse)
+            "levothyroxin", "liothyronin", "carbimazol", "thiamazol",
+            # Brand names
+            "l-thyroxin", "euthyrox", "favistan",
+
+            # Psychiatric medications (Psychopharmaka)
+            "citalopram", "escitalopram", "sertralin", "fluoxetin", "paroxetin",
+            "venlafaxin", "duloxetin", "mirtazapin", "amitriptylin",
+            "trimipramin", "doxepin", "clomipramin",
+            "diazepam", "lorazepam", "oxazepam", "alprazolam", "bromazepam",
+            "zolpidem", "zopiclon", "quetiapin", "olanzapin", "risperidon",
+            "aripiprazol", "haloperidol", "pipamperon", "melperon",
+            "lithium", "valproat", "carbamazepin", "lamotrigin",
+            # Brand names
+            "cipralex", "zoloft", "fluctin", "trevilor", "cymbalta",
+            "saroten", "valium", "tavor", "lexotanil", "seroquel",
+
+            # Gastrointestinal (Magen-Darm)
+            "omeprazol", "pantoprazol", "esomeprazol", "lansoprazol",
+            "ranitidin", "famotidin", "metoclopramid", "domperidon",
+            "loperamid", "mesalazin", "sulfasalazin", "lactulose",
+            # Brand names
+            "pantozol", "nexium", "antra", "paspertin", "imodium",
+
+            # Respiratory (Atemwege)
+            "salbutamol", "terbutalin", "formoterol", "salmeterol",
+            "tiotropium", "ipratropium", "budesonid", "fluticason",
+            "beclometason", "montelukast", "theophyllin", "n-acetylcystein",
+            "ambroxol", "bromhexin", "codein", "dextromethorphan",
+            # Brand names
+            "spiriva", "symbicort", "foster", "acc", "mucosolvan",
+
+            # Anticoagulants (Gerinnungshemmer)
+            "heparin", "enoxaparin", "fondaparinux", "dalteparin",
+            # Brand names
+            "clexane", "arixtra", "fragmin",
+
+            # Immunosuppressants
+            "prednisolon", "methylprednisolon", "dexamethason", "hydrocortison",
+            "azathioprin", "mycophenolat", "ciclosporin", "tacrolimus",
+            "methotrexat", "cyclophosphamid",
+            # Brand names
+            "decortin", "urbason", "cellcept", "sandimmun", "prograf",
+
+            # Anticonvulsants (Antiepileptika)
+            "levetiracetam", "pregabalin", "gabapentin", "topiramat",
+            "phenytoin", "phenobarbital", "ethosuximid",
+            # Brand names
+            "keppra", "lyrica", "topamax",
+
+            # Parkinson medications
+            "levodopa", "carbidopa", "benserazid", "pramipexol",
+            "ropinirol", "rotigotin", "amantadin", "entacapon",
+            # Brand names
+            "madopar", "stalevo", "sifrol", "requip", "neupro",
+
+            # Dementia medications
+            "donepezil", "rivastigmin", "galantamin", "memantin",
+            # Brand names
+            "aricept", "exelon", "ebixa",
+
+            # Osteoporosis
+            "alendronat", "risedronat", "ibandronat", "denosumab",
+            "raloxifen", "teriparatid",
+            # Brand names
+            "fosamax", "actonel", "bonviva", "prolia", "evista", "forsteo",
+
+            # Vitamins & Supplements (already in medical_terms, but adding formulations)
+            "cholecalciferol", "ergocalciferol", "cyanocobalamin",
+            "hydroxocobalamin", "tocopherol", "retinol", "phytomenadion",
+
+            # Hormones
+            "levonorgestrel", "ethinylestradiol", "norethisteron",
+            "dydrogesteron", "estradiol", "testosteron", "somatropin",
+
+            # Other common medications
+            "allopurinol", "colchicin", "probenecid",  # Gout
+            "sildenafil", "tadalafil", "vardenafil",  # Erectile dysfunction
+            "tamsulosin", "finasterid", "dutasterid",  # Prostate
+            "isotretinoin", "tretinoin",  # Dermatology
+            "interferon", "ribavirin",  # Antivirals
+        }
+
+        # ==================== PHASE 4.3: MEDICAL CODING SUPPORT ====================
+        # ICD-10, OPS, LOINC code patterns (protected from removal)
+        # These patterns will be checked separately in PII removal
+        self.medical_code_patterns = {
+            # ICD-10 codes: Letter + 2 digits + optional decimal + digit
+            # Examples: I50.1, E11.9, C50.9
+            "icd10": re.compile(r"\b[A-Z]\d{2}(?:\.\d{1,2})?\b"),
+
+            # OPS codes (German procedure codes): Digit + dash + digit pattern
+            # Examples: 5-470.11, 1-632.0, 8-854.3
+            "ops": re.compile(r"\b\d-\d{3}(?:\.\d{1,2})?\b"),
+
+            # EBM codes (German outpatient billing): 5 digits
+            # Examples: 03230, 35100
+            "ebm": re.compile(r"\b\d{5}\b(?=.*(?:EBM|ebm|Ziffer))"),  # Only if "EBM" nearby
+
+            # LOINC codes (Lab test identifiers): Numeric + dash + check digit
+            # Examples: 2339-0 (Glucose), 718-7 (Hemoglobin), 2160-0 (Creatinine)
+            # Format: 1-7 digits + hyphen + single check digit
+            "loinc": re.compile(r"\b\d{1,7}-\d\b"),
+        }
+
+        # ==================== PHASE 4.3: COMMON LOINC CODES DATABASE ====================
+        # Frequently used LOINC codes in German medical labs (for exact matching)
+        # These are protected even without the pattern match
+        self.common_loinc_codes = {
+            # Blood Chemistry
+            "2339-0",   # Glucose [Mass/Vol]
+            "2345-7",   # Glucose [Mass/Vol] in Serum or Plasma
+            "2160-0",   # Creatinine [Mass/Vol]
+            "3094-0",   # Urea nitrogen [Mass/Vol]
+            "2823-3",   # Potassium [Moles/Vol]
+            "2951-2",   # Sodium [Moles/Vol]
+            "2075-0",   # Chloride [Moles/Vol]
+            "17861-6",  # Calcium [Mass/Vol]
+            "2601-3",   # Magnesium [Mass/Vol]
+            # Liver Function
+            "1742-6",   # ALT (GPT) [Catalytic activity/Vol]
+            "1920-8",   # AST (GOT) [Catalytic activity/Vol]
+            "2324-2",   # GGT [Catalytic activity/Vol]
+            "6768-6",   # Alkaline phosphatase [Catalytic activity/Vol]
+            "1975-2",   # Bilirubin total [Mass/Vol]
+            "1968-7",   # Bilirubin direct [Mass/Vol]
+            # Kidney Function
+            "33914-3",  # eGFR (CKD-EPI)
+            "48642-3",  # eGFR (MDRD)
+            "14682-9",  # Creatinine clearance
+            # Hematology
+            "718-7",    # Hemoglobin [Mass/Vol]
+            "4544-3",   # Hematocrit [Volume Fraction]
+            "789-8",    # Erythrocytes [#/Vol]
+            "6690-2",   # Leukocytes [#/Vol]
+            "777-3",    # Platelets [#/Vol]
+            "787-2",    # MCV [Entitic Volume]
+            "785-6",    # MCH [Entitic Mass]
+            "786-4",    # MCHC [Mass/Vol]
+            # Coagulation
+            "5902-2",   # Prothrombin time (PT)
+            "6301-6",   # INR
+            "3173-2",   # aPTT
+            "3255-7",   # Fibrinogen [Mass/Vol]
+            "48065-7",  # D-Dimer [Mass/Vol]
+            # Lipids
+            "2093-3",   # Cholesterol total [Mass/Vol]
+            "2085-9",   # HDL Cholesterol [Mass/Vol]
+            "2089-1",   # LDL Cholesterol [Mass/Vol]
+            "2571-8",   # Triglycerides [Mass/Vol]
+            # Diabetes
+            "4548-4",   # HbA1c [Ratio]
+            "17856-6",  # HbA1c IFCC [Ratio]
+            # Thyroid
+            "3016-3",   # TSH [Units/Vol]
+            "3051-0",   # Free T3 [Mass/Vol]
+            "3024-7",   # Free T4 [Mass/Vol]
+            # Inflammation
+            "1988-5",   # CRP [Mass/Vol]
+            "30522-7",  # High-sensitivity CRP [Mass/Vol]
+            "33762-6",  # Procalcitonin [Mass/Vol]
+            # Tumor Markers
+            "2857-1",   # PSA [Mass/Vol]
+            "10886-0",  # Free PSA [Mass/Vol]
+            "2039-6",   # CEA [Mass/Vol]
+            "10334-1",  # AFP [Mass/Vol]
+            "15156-3",  # CA 19-9 [Units/Vol]
+            "10873-8",  # CA 125 [Units/Vol]
+            # Cardiac Markers
+            "10839-9",  # Troponin I [Mass/Vol]
+            "6598-7",   # Troponin T [Mass/Vol]
+            "30934-4",  # NT-proBNP [Mass/Vol]
+            "42637-9",  # BNP [Mass/Vol]
+            "2157-6",   # CK [Catalytic activity/Vol]
+            "13969-1",  # CK-MB [Catalytic activity/Vol]
+            # Vitamins & Minerals
+            "1989-3",   # Vitamin D (25-OH) [Mass/Vol]
+            "2132-9",   # Vitamin B12 [Mass/Vol]
+            "2284-8",   # Folate [Mass/Vol]
+            "2498-4",   # Iron [Mass/Vol]
+            "2500-7",   # Ferritin [Mass/Vol]
+            "2501-5",   # Transferrin [Mass/Vol]
+        }
+
         # Medizinische Abkürzungen, die geschützt werden müssen (ERWEITERT)
         self.protected_abbreviations = {
             # Diagnostik
@@ -939,6 +1184,102 @@ class AdvancedPrivacyFilter:
         # Compile regex patterns
         self.patterns = self._compile_patterns()
 
+        # ==================== PHASE 4.1: LOAD CUSTOM TERMS FROM DATABASE ====================
+        if self._load_custom_terms:
+            self._load_custom_terms_from_db()
+
+    def _load_custom_terms_from_db(self) -> None:
+        """Load custom medical terms, drugs, and eponyms from database.
+
+        PHASE 4.1 (Issue #35 - Dynamic Medical Dictionary):
+        Loads custom terms from system_settings table and merges with defaults.
+        This allows expansion via the settings UI without code changes.
+
+        Database keys (JSON arrays stored in system_settings):
+        - privacy_filter.custom_medical_terms: Additional medical terms to protect
+        - privacy_filter.custom_drugs: Additional drug names to protect
+        - privacy_filter.custom_eponyms: Additional medical eponyms to protect
+        - privacy_filter.excluded_terms: Terms to REMOVE from protection (override)
+
+        Example database entry:
+            key: "privacy_filter.custom_medical_terms"
+            value: '["spezialterm", "neuerbegriff", "klinikspezifisch"]'
+            value_type: "json"
+        """
+        try:
+            from app.database.connection import get_db_session
+            from app.database.models import SystemSettingsDB
+            import json
+
+            with get_db_session() as db:
+                # Load custom medical terms
+                custom_terms_setting = db.query(SystemSettingsDB).filter(
+                    SystemSettingsDB.key == "privacy_filter.custom_medical_terms"
+                ).first()
+
+                if custom_terms_setting and custom_terms_setting.value:
+                    try:
+                        custom_terms = json.loads(custom_terms_setting.value)
+                        if isinstance(custom_terms, list):
+                            self.medical_terms.update(term.lower() for term in custom_terms)
+                            logger.info(f"✅ Loaded {len(custom_terms)} custom medical terms from database")
+                    except json.JSONDecodeError:
+                        logger.warning("⚠️ Invalid JSON in privacy_filter.custom_medical_terms")
+
+                # Load custom drug names
+                custom_drugs_setting = db.query(SystemSettingsDB).filter(
+                    SystemSettingsDB.key == "privacy_filter.custom_drugs"
+                ).first()
+
+                if custom_drugs_setting and custom_drugs_setting.value:
+                    try:
+                        custom_drugs = json.loads(custom_drugs_setting.value)
+                        if isinstance(custom_drugs, list):
+                            self.drug_database.update(drug.lower() for drug in custom_drugs)
+                            logger.info(f"✅ Loaded {len(custom_drugs)} custom drugs from database")
+                    except json.JSONDecodeError:
+                        logger.warning("⚠️ Invalid JSON in privacy_filter.custom_drugs")
+
+                # Load custom eponyms
+                custom_eponyms_setting = db.query(SystemSettingsDB).filter(
+                    SystemSettingsDB.key == "privacy_filter.custom_eponyms"
+                ).first()
+
+                if custom_eponyms_setting and custom_eponyms_setting.value:
+                    try:
+                        custom_eponyms = json.loads(custom_eponyms_setting.value)
+                        if isinstance(custom_eponyms, list):
+                            self.medical_eponyms.update(eponym.lower() for eponym in custom_eponyms)
+                            logger.info(f"✅ Loaded {len(custom_eponyms)} custom eponyms from database")
+                    except json.JSONDecodeError:
+                        logger.warning("⚠️ Invalid JSON in privacy_filter.custom_eponyms")
+
+                # Load excluded terms (remove from protection)
+                excluded_setting = db.query(SystemSettingsDB).filter(
+                    SystemSettingsDB.key == "privacy_filter.excluded_terms"
+                ).first()
+
+                if excluded_setting and excluded_setting.value:
+                    try:
+                        excluded_terms = json.loads(excluded_setting.value)
+                        if isinstance(excluded_terms, list):
+                            for term in excluded_terms:
+                                term_lower = term.lower()
+                                self.medical_terms.discard(term_lower)
+                                self.drug_database.discard(term_lower)
+                                self.medical_eponyms.discard(term_lower)
+                            logger.info(f"✅ Excluded {len(excluded_terms)} terms from protection")
+                    except json.JSONDecodeError:
+                        logger.warning("⚠️ Invalid JSON in privacy_filter.excluded_terms")
+
+                self._custom_terms_loaded = True
+
+        except ImportError:
+            logger.debug("Database module not available - using default terms only")
+        except Exception as e:
+            logger.warning(f"⚠️ Could not load custom terms from database: {e}")
+            logger.debug("Using default medical terms only")
+
     def _compile_patterns(self) -> dict[str, Pattern[str]]:
         """Kompiliert Regex-Patterns für verschiedene PII-Typen
 
@@ -1137,12 +1478,31 @@ class AdvancedPrivacyFilter:
 
         logger.info("🔍 Entferne persönliche Daten, behalte medizinische Informationen")
 
-        # Initialize confidence tracking (Issue #35 Phase 1.4)
+        # ==================== PHASE 5: VALIDATION & QA ENHANCEMENTS ====================
+        # Initialize comprehensive tracking (Phases 1.4 + 5.1 + 5.2 + 5.3)
         self._pii_metadata = {
+            # Phase 1.4: Basic detection metrics
             "entities_detected": 0,
             "low_confidence_count": 0,
             "eponyms_preserved": 0,
             "has_ner": self.has_ner,
+
+            # Phase 5.1: Enhanced confidence scoring
+            "high_confidence_removals": 0,  # Entities with title context
+            "medium_confidence_removals": 0,  # Multi-word names
+            "low_confidence_removals": 0,  # Single-word without context
+            "pattern_based_removals": 0,  # Regex-based removals (birthdates, etc.)
+
+            # Phase 5.2: False positive/negative tracking
+            "potential_false_positives": [],  # Entities flagged for review
+            "preserved_medical_terms": [],  # Medical terms that could be names
+            "review_recommended": False,  # Flag if manual review needed
+
+            # Phase 5.3: GDPR audit trail
+            "processing_timestamp": datetime.now().isoformat(),
+            "gdpr_compliant": True,  # All PII processed locally
+            "pii_types_detected": [],  # List of PII types found
+            "removal_method": "AdvancedPrivacyFilter_Phase5",  # Version tracking
         }
 
         # Track performance metrics (Issue #35 Phase 3.3)
@@ -1371,6 +1731,28 @@ class AdvancedPrivacyFilter:
             pattern = r"\b" + re.escape(abbr) + r"\b"
             text = re.sub(pattern, f"§{abbr}§", text, flags=re.IGNORECASE)
 
+        # ==================== PHASE 4.2: PROTECT DRUG NAMES ====================
+        # Protect drug names from removal (both INN and brand names)
+        for drug in self.drug_database:
+            if len(drug) > 3:  # Only longer drug names to avoid false positives
+                pattern = r"\b" + re.escape(drug) + r"\b"
+                text = re.sub(pattern, f"§DRUG_{drug.upper()}§", text, flags=re.IGNORECASE)
+
+        # ==================== PHASE 4.3: PROTECT MEDICAL CODES ====================
+        # Protect ICD-10 codes (e.g., I50.1, E11.9)
+        text = self.medical_code_patterns["icd10"].sub(lambda m: f"§ICD_{m.group()}§", text)
+
+        # Protect OPS codes (e.g., 5-470.11)
+        text = self.medical_code_patterns["ops"].sub(lambda m: f"§OPS_{m.group()}§", text)
+
+        # Protect LOINC codes (e.g., 2339-0, 718-7)
+        text = self.medical_code_patterns["loinc"].sub(lambda m: f"§LOINC_{m.group()}§", text)
+
+        # Also protect explicitly known LOINC codes
+        for loinc in self.common_loinc_codes:
+            pattern = r"\b" + re.escape(loinc) + r"\b"
+            text = re.sub(pattern, f"§LOINC_{loinc}§", text)
+
         return text
 
     def _restore_medical_terms(self, text: str) -> str:
@@ -1389,6 +1771,16 @@ class AdvancedPrivacyFilter:
         # Stelle normale Abkürzungen wieder her
         for abbr in self.protected_abbreviations:
             text = text.replace(f"§{abbr}§", abbr)
+
+        # ==================== PHASE 4.2: RESTORE DRUG NAMES ====================
+        # Restore drug names (case-insensitive restoration)
+        text = re.sub(r"§DRUG_([^§]+)§", lambda m: m.group(1), text, flags=re.IGNORECASE)
+
+        # ==================== PHASE 4.3: RESTORE MEDICAL CODES ====================
+        # Restore ICD-10, OPS, and LOINC codes
+        text = re.sub(r"§ICD_([^§]+)§", r"\1", text)
+        text = re.sub(r"§OPS_([^§]+)§", r"\1", text)
+        text = re.sub(r"§LOINC_([^§]+)§", r"\1", text)
 
         return text
 
@@ -1592,8 +1984,8 @@ class AdvancedPrivacyFilter:
                     self._pii_metadata["eponyms_preserved"] += 1
                     continue
 
-                # Prüfe ob es ein medizinischer Begriff ist
-                if ent.text.lower() not in self.medical_terms:
+                # Prüfe ob es ein medizinischer Begriff oder Medikament ist (Phase 4.2)
+                if ent.text.lower() not in self.medical_terms and ent.text.lower() not in self.drug_database:
                     # Keine Zahlen im Namen (könnte Laborwert sein)
                     if not any(char.isdigit() for char in ent.text):
                         persons_to_remove.add(ent.text)

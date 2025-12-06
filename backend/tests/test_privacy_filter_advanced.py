@@ -20,8 +20,8 @@ class TestAdvancedPrivacyFilter:
 
     @pytest.fixture
     def filter(self):
-        """Create filter instance for testing"""
-        return AdvancedPrivacyFilter()
+        """Create filter instance for testing (without database loading)"""
+        return AdvancedPrivacyFilter(load_custom_terms=False)
 
     def test_initialization(self, filter):
         """Test filter initializes correctly"""
@@ -29,7 +29,7 @@ class TestAdvancedPrivacyFilter:
         assert filter.medical_terms is not None
         assert filter.protected_abbreviations is not None
         assert filter.patterns is not None
-        assert len(filter.medical_terms) >= 140  # Should have 146+ terms
+        assert len(filter.medical_terms) >= 140  # Should have 300+ terms now
         assert len(filter.protected_abbreviations) >= 200  # Should have 210+ abbreviations
 
     def test_remove_patient_names(self, filter):
@@ -38,7 +38,7 @@ class TestAdvancedPrivacyFilter:
         Patient: Müller, Hans
         Geburtsdatum: 15.05.1965
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         assert "Müller" not in result
         assert "Hans" not in result
@@ -47,7 +47,7 @@ class TestAdvancedPrivacyFilter:
     def test_remove_birthdates(self, filter):
         """Test removal of birthdates"""
         text = "Patient geb. 01.01.1980 wurde untersucht"
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         assert "01.01.1980" not in result
         assert "untersucht" in result
@@ -58,7 +58,7 @@ class TestAdvancedPrivacyFilter:
         Musterstraße 123, 12345 Berlin
         Hauptstraße 42
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         assert "Musterstraße" not in result
         assert "12345 Berlin" not in result or "PLZ/ORT ENTFERNT" in result
@@ -70,7 +70,7 @@ class TestAdvancedPrivacyFilter:
         Telefon: +49 30 12345678
         Email: patient@example.com
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         assert "+49 30 12345678" not in result
         assert "patient@example.com" not in result
@@ -81,7 +81,7 @@ class TestAdvancedPrivacyFilter:
         Versichertennummer: A123456789
         Patientennummer: 98765
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         assert "A123456789" not in result
         assert "98765" not in result
@@ -93,11 +93,11 @@ class TestAdvancedPrivacyFilter:
         Behandlung mit Metformin 1000mg
         Laborwerte: Hämoglobin 14.5 g/dl
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         # Medical terms must be preserved
         assert "Diabetes" in result or "diabetes" in result.lower()
-        assert "Metformin" in result or "metformin" in result.lower()
+        assert "Metformin" in result or "METFORMIN" in result
         assert "Hämoglobin" in result or "hämoglobin" in result.lower()
         assert "14.5" in result  # Lab value
 
@@ -109,7 +109,7 @@ class TestAdvancedPrivacyFilter:
         CRP: 5 mg/l
         eGFR: 90 ml/min
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         # All abbreviations should be preserved
         assert "HbA1c" in result or "hba1c" in result.lower()
@@ -130,7 +130,7 @@ class TestAdvancedPrivacyFilter:
         - Thrombozyten: 250 /nl
         - Glucose: 95 mg/dl
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         # Lab values must be preserved
         assert "14.5" in result
@@ -145,7 +145,7 @@ class TestAdvancedPrivacyFilter:
         Vitamin B12: 350 pg/ml
         25-OH-D3: 15 ng/ml
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         # Vitamin names should be preserved
         assert "Vitamin D3" in result or "D3" in result
@@ -181,7 +181,7 @@ class TestAdvancedPrivacyFilter:
         Mit freundlichen Grüßen
         Dr. med. Schmidt
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         # PII should be removed
         assert "Mustermann" not in result
@@ -197,8 +197,8 @@ class TestAdvancedPrivacyFilter:
         assert "8.2" in result
         assert "145" in result  # Glucose/RR value
         assert "28.5" in result  # BMI
-        assert "Metformin" in result or "metformin" in result.lower()
-        assert "Ramipril" in result or "ramipril" in result.lower()
+        assert "Metformin" in result or "METFORMIN" in result
+        assert "Ramipril" in result or "RAMIPRIL" in result
 
     def test_validate_medical_content_preservation(self, filter):
         """Test medical content validation method"""
@@ -208,7 +208,7 @@ class TestAdvancedPrivacyFilter:
         Laborwerte: Hämoglobin 14.5 g/dl, HbA1c 5.8%
         Medikament: Metformin 1000mg
         """
-        cleaned = filter.remove_pii(original)
+        cleaned, _ = filter.remove_pii(original)
 
         # Validation should pass (medical terms preserved)
         is_valid = filter.validate_medical_content(original, cleaned)
@@ -216,8 +216,13 @@ class TestAdvancedPrivacyFilter:
 
     def test_empty_text_handling(self, filter):
         """Test handling of empty or None text"""
-        assert filter.remove_pii("") == ""
-        assert filter.remove_pii(None) is None
+        result, meta = filter.remove_pii("")
+        assert result == ""
+        assert meta == {}
+
+        result2, meta2 = filter.remove_pii(None)
+        assert result2 is None
+        assert meta2 == {}
 
     def test_text_without_pii(self, filter):
         """Test text that has no PII (should be mostly unchanged)"""
@@ -227,7 +232,7 @@ class TestAdvancedPrivacyFilter:
         Leukozyten: 7.2 /nl
         Glucose: 95 mg/dl
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         # Should contain all original content
         assert "Hämoglobin" in result or "hämoglobin" in result.lower()
@@ -242,7 +247,7 @@ class TestAdvancedPrivacyFilter:
         Geb.: 01.01.1980
         Tel: +49 30 12345678
         """
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
 
         # Should have replacement markers
         assert "[NAME ENTFERNT]" in result or "NAME ENTFERNT" in result.upper()
@@ -253,8 +258,284 @@ class TestAdvancedPrivacyFilter:
         """Test that filter works with or without spaCy"""
         # Filter should work regardless of spaCy availability
         text = "Patient: Max Mustermann"
-        result = filter.remove_pii(text)
+        result, _ = filter.remove_pii(text)
         assert "Mustermann" not in result
+
+
+class TestPhase4DrugDatabase:
+    """Test Phase 4.2: Drug Database Integration (Issue #35)"""
+
+    @pytest.fixture
+    def filter(self):
+        """Create filter instance without database loading"""
+        return AdvancedPrivacyFilter(load_custom_terms=False)
+
+    def test_drug_database_initialized(self, filter):
+        """Test that drug database is initialized with 100+ medications"""
+        assert hasattr(filter, 'drug_database')
+        assert len(filter.drug_database) >= 100
+        # Check some specific drugs
+        assert "metoprolol" in filter.drug_database
+        assert "ibuprofen" in filter.drug_database
+        assert "ramipril" in filter.drug_database
+
+    def test_preserve_generic_drug_names(self, filter):
+        """Test preservation of generic (INN) drug names"""
+        text = """
+        Medikation:
+        - Metoprolol 100mg 1-0-0
+        - Ramipril 5mg 0-0-1
+        - Omeprazol 20mg 1-0-0
+        """
+        result, _ = filter.remove_pii(text)
+
+        # Generic drug names should be preserved
+        assert "Metoprolol" in result or "METOPROLOL" in result
+        assert "Ramipril" in result or "RAMIPRIL" in result
+        assert "Omeprazol" in result or "OMEPRAZOL" in result
+        # Dosages preserved
+        assert "100mg" in result
+        assert "5mg" in result
+
+    def test_preserve_brand_name_drugs(self, filter):
+        """Test preservation of German brand name medications"""
+        text = """
+        Patient erhält:
+        - Beloc 100mg (Metoprolol)
+        - Pantozol 40mg
+        - Marcumar nach INR
+        - Xarelto 20mg
+        """
+        result, _ = filter.remove_pii(text)
+
+        # Brand names should be preserved
+        assert "Beloc" in result or "BELOC" in result
+        assert "Pantozol" in result or "PANTOZOL" in result
+        assert "Marcumar" in result or "MARCUMAR" in result
+        assert "Xarelto" in result or "XARELTO" in result
+
+    def test_preserve_psychiatric_medications(self, filter):
+        """Test preservation of psychiatric drug names"""
+        text = """
+        Psychiatrische Medikation:
+        - Sertralin 50mg
+        - Quetiapin 25mg zur Nacht
+        - Lorazepam 0.5mg bei Bedarf
+        """
+        result, _ = filter.remove_pii(text)
+
+        assert "Sertralin" in result or "SERTRALIN" in result
+        assert "Quetiapin" in result or "QUETIAPIN" in result
+        assert "Lorazepam" in result or "LORAZEPAM" in result
+
+    def test_drugs_not_removed_as_names(self, filter):
+        """Test that drug names are not mistaken for patient names by NER"""
+        # Some drug names could be mistaken for surnames
+        text = """
+        Therapie: Duloxetin, Pregabalin, Gabapentin
+        Zusätzlich Marcumar nach Plan
+        """
+        result, _ = filter.remove_pii(text)
+
+        # These should NOT be removed as names
+        assert "Duloxetin" in result or "DULOXETIN" in result
+        assert "Pregabalin" in result or "PREGABALIN" in result
+        assert "Gabapentin" in result or "GABAPENTIN" in result
+
+
+class TestPhase4MedicalCodes:
+    """Test Phase 4.3: Medical Coding Support (Issue #35)"""
+
+    @pytest.fixture
+    def filter(self):
+        """Create filter instance without database loading"""
+        return AdvancedPrivacyFilter(load_custom_terms=False)
+
+    def test_medical_code_patterns_initialized(self, filter):
+        """Test that medical code patterns are compiled"""
+        assert hasattr(filter, 'medical_code_patterns')
+        assert "icd10" in filter.medical_code_patterns
+        assert "ops" in filter.medical_code_patterns
+        assert "loinc" in filter.medical_code_patterns
+
+    def test_preserve_icd10_codes(self, filter):
+        """Test preservation of ICD-10 diagnostic codes"""
+        text = """
+        Diagnosen:
+        1. Diabetes mellitus Typ 2 (E11.9)
+        2. Arterielle Hypertonie (I10)
+        3. Herzinsuffizienz (I50.1)
+        4. Mammakarzinom (C50.9)
+        """
+        result, _ = filter.remove_pii(text)
+
+        # ICD-10 codes should be preserved
+        assert "E11.9" in result
+        assert "I10" in result
+        assert "I50.1" in result
+        assert "C50.9" in result
+
+    def test_preserve_ops_codes(self, filter):
+        """Test preservation of OPS procedure codes"""
+        text = """
+        Durchgeführte Operationen:
+        - Appendektomie (5-470.11)
+        - Diagnostische Laparoskopie (1-632.0)
+        - Herzkatheter (8-854.3)
+        """
+        result, _ = filter.remove_pii(text)
+
+        # OPS codes should be preserved
+        assert "5-470.11" in result
+        assert "1-632.0" in result
+        assert "8-854.3" in result
+
+    def test_preserve_loinc_codes(self, filter):
+        """Test preservation of LOINC laboratory codes"""
+        text = """
+        Laboruntersuchungen (LOINC):
+        - Glucose: 2339-0
+        - Hämoglobin: 718-7
+        - Kreatinin: 2160-0
+        - HbA1c: 4548-4
+        """
+        result, _ = filter.remove_pii(text)
+
+        # LOINC codes should be preserved
+        assert "2339-0" in result
+        assert "718-7" in result
+        assert "2160-0" in result
+        assert "4548-4" in result
+
+    def test_loinc_database_initialized(self, filter):
+        """Test that LOINC code database is initialized"""
+        assert hasattr(filter, 'common_loinc_codes')
+        assert len(filter.common_loinc_codes) >= 50
+        # Check specific codes
+        assert "2339-0" in filter.common_loinc_codes  # Glucose
+        assert "718-7" in filter.common_loinc_codes   # Hemoglobin
+        assert "4548-4" in filter.common_loinc_codes  # HbA1c
+
+
+class TestPhase4DynamicDictionary:
+    """Test Phase 4.1: Dynamic Medical Dictionary (Issue #35)"""
+
+    def test_filter_works_without_database(self):
+        """Test filter works when database is unavailable"""
+        # Should not raise exception
+        filter = AdvancedPrivacyFilter(load_custom_terms=False)
+        assert filter is not None
+        assert filter._custom_terms_loaded is False
+
+    def test_default_terms_always_available(self):
+        """Test that default terms are available even without database"""
+        filter = AdvancedPrivacyFilter(load_custom_terms=False)
+
+        # Check core medical terms
+        assert "diabetes" in filter.medical_terms
+        assert "hypertonie" in filter.medical_terms
+        assert "hämoglobin" in filter.medical_terms
+
+        # Check drugs
+        assert "metformin" in filter.drug_database
+        assert "ramipril" in filter.drug_database
+
+        # Check eponyms
+        assert "parkinson" in filter.medical_eponyms
+        assert "alzheimer" in filter.medical_eponyms
+
+    def test_constructor_parameter(self):
+        """Test load_custom_terms constructor parameter"""
+        # With loading disabled
+        filter_no_load = AdvancedPrivacyFilter(load_custom_terms=False)
+        assert filter_no_load._load_custom_terms is False
+
+        # Default should be True
+        filter_default = AdvancedPrivacyFilter(load_custom_terms=True)
+        assert filter_default._load_custom_terms is True
+
+
+class TestPhase4Integration:
+    """Integration tests for Phase 4 features"""
+
+    @pytest.fixture
+    def filter(self):
+        """Create filter instance without database loading"""
+        return AdvancedPrivacyFilter(load_custom_terms=False)
+
+    def test_complex_document_with_drugs_and_codes(self, filter):
+        """Test realistic document with drugs, ICD codes, and LOINC codes"""
+        text = """
+        Arztbrief
+
+        Patient: Schmidt, Maria
+        Geb.: 22.03.1958
+        Adresse: Musterweg 5, 10115 Berlin
+
+        Diagnosen:
+        1. Diabetes mellitus Typ 2 (E11.9) - LOINC HbA1c: 4548-4
+        2. Arterielle Hypertonie (I10)
+        3. Morbus Parkinson (G20)
+
+        Aktuelle Medikation:
+        - Metformin 1000mg 1-0-1
+        - Ramipril 5mg 0-0-1
+        - Madopar 125mg 1-1-1
+        - Pantoprazol 20mg 1-0-0
+
+        Laborwerte (LOINC 718-7):
+        - Hämoglobin: 12.5 g/dl
+        - HbA1c: 7.2%
+
+        Geplante OP: 5-470.11 (Appendektomie)
+
+        Mit freundlichen Grüßen
+        Dr. med. Weber
+        """
+        result, metadata = filter.remove_pii(text)
+
+        # PII should be removed
+        assert "Schmidt" not in result
+        assert "Maria" not in result
+        assert "22.03.1958" not in result
+        assert "Musterweg" not in result
+        assert "10115 Berlin" not in result or "PLZ/ORT ENTFERNT" in result
+        assert "Weber" not in result
+
+        # Medical codes preserved
+        assert "E11.9" in result
+        assert "I10" in result
+        assert "G20" in result
+        assert "5-470.11" in result
+        assert "4548-4" in result
+        assert "718-7" in result
+
+        # Drugs preserved
+        assert "Metformin" in result or "METFORMIN" in result
+        assert "Ramipril" in result or "RAMIPRIL" in result
+        assert "Madopar" in result or "MADOPAR" in result
+        assert "Pantoprazol" in result or "PANTOPRAZOL" in result
+
+        # Eponyms preserved (Parkinson is medical)
+        assert "Parkinson" in result
+
+        # Lab values preserved
+        assert "12.5" in result
+        assert "7.2" in result
+
+        # Metadata should be populated
+        assert "entities_detected" in metadata
+        assert metadata["has_ner"] is not None
+
+    def test_metadata_returned(self, filter):
+        """Test that remove_pii returns metadata dictionary"""
+        text = "Patient: Test Person, Diagnose: Diabetes E11.9"
+        result, metadata = filter.remove_pii(text)
+
+        assert isinstance(metadata, dict)
+        assert "entities_detected" in metadata
+        assert "processing_timestamp" in metadata
+        assert "total_time_ms" in metadata
 
 
 if __name__ == "__main__":
