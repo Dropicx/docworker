@@ -23,6 +23,13 @@ ENHANCED (Issue #35 Phase 4 - Medical Term Protection Enhancement):
     - Phase 4.3: Medical coding support (ICD-10, OPS, EBM, LOINC codes)
     - 60+ common LOINC codes for lab test identification
     - Enhanced protection for drug names during NER processing
+
+ENHANCED (Issue #35 Phase 5 - Validation & Quality Assurance):
+    - Phase 5.1: Confidence scoring (high/medium/low) for all PII removals
+    - Phase 5.2: False positive tracking and review_recommended flag
+    - Phase 5.3: GDPR audit trail with pii_types_detected list
+    - Phase 5.4: Quality summary with quality_score and confidence breakdown
+    - Medical content validation to ensure medical info preserved
 """
 
 import logging
@@ -1543,10 +1550,38 @@ class AdvancedPrivacyFilter:
         text = re.sub(r"\n{3,}", "\n\n", text)
         text = re.sub(r"[ \t]+", " ", text)
 
+        # ==================== PHASE 5.2: SET REVIEW_RECOMMENDED FLAG ====================
+        # Determine if manual review is recommended based on quality metrics
+        low_conf_threshold = 2  # More than 2 low-confidence removals triggers review
+        has_false_positives = len(self._pii_metadata["potential_false_positives"]) > 0
+        has_many_low_confidence = self._pii_metadata["low_confidence_removals"] > low_conf_threshold
+
+        if has_false_positives or has_many_low_confidence:
+            self._pii_metadata["review_recommended"] = True
+            logger.warning(
+                f"⚠️ Review recommended: {self._pii_metadata['low_confidence_removals']} low-confidence, "
+                f"{len(self._pii_metadata['potential_false_positives'])} potential false positives"
+            )
+
+        # ==================== PHASE 5.3: MEDICAL CONTENT VALIDATION ====================
+        # Store original text reference for validation (before protection markers were applied)
+        # Note: We validate against the cleaned text to ensure medical terms survived processing
+        cleaned_text = text.strip()
+
+        # Validate medical content preservation
+        # Use a copy of original_text before any processing for accurate comparison
+        # Since we don't have the pure original, we check the cleaned output has medical keywords
+        medical_validation_passed = self._validate_output_has_medical_content(cleaned_text)
+
+        if not medical_validation_passed:
+            self._pii_metadata["gdpr_compliant"] = False
+            self._pii_metadata["review_recommended"] = True
+            logger.warning("⚠️ Medical content validation concern - output may have lost medical information")
+
         # Finalize performance metrics
         perf_metrics["total_time_ms"] = (time.time() - perf_start) * 1000
-        perf_metrics["cleaned_char_count"] = len(text)
-        perf_metrics["char_reduction"] = original_length - len(text)
+        perf_metrics["cleaned_char_count"] = len(cleaned_text)
+        perf_metrics["char_reduction"] = original_length - len(cleaned_text)
         perf_metrics["char_reduction_percent"] = round(
             (perf_metrics["char_reduction"] / original_length * 100) if original_length > 0 else 0,
             2
@@ -1559,15 +1594,19 @@ class AdvancedPrivacyFilter:
             f"NER: {perf_metrics['ner_removal_time_ms']:.1f}ms)"
         )
 
-        # Return cleaned text and comprehensive metadata (Issue #35 Phase 1.4 + 3.3)
+        # ==================== PHASE 5.4: QUALITY SUMMARY ====================
+        # Return cleaned text and comprehensive metadata (Issue #35 Phase 1.4 + 3.3 + 5)
         metadata = {**self._pii_metadata.copy(), **perf_metrics}
+
+        # Add quality summary
+        metadata["quality_summary"] = self._get_quality_summary()
 
         if metadata.get("low_confidence_count", 0) > 0:
             logger.warning(
-                f"⚠️ {metadata['low_confidence_count']} low-confidence PII detections - review recommended"
+                f"⚠️ {metadata['low_confidence_count']} low-confidence PII detections"
             )
 
-        return text.strip(), metadata
+        return cleaned_text, metadata
 
     def remove_pii_batch(self, texts: list[str], batch_size: int = 32) -> list[tuple[str, dict]]:
         """Remove PII from multiple documents efficiently using batch processing.
@@ -1835,87 +1874,252 @@ class AdvancedPrivacyFilter:
         # Default: treat as PII if unclear (safer for privacy)
         return "pii"
 
+    def _track_pii_removal(self, pii_type: str) -> None:
+        """Track PII type removal for GDPR audit trail.
+
+        Phase 5.3 (Issue #35 - GDPR Audit Trail):
+        Records which PII types were detected and removed for compliance tracking.
+
+        Args:
+            pii_type: The type of PII detected (e.g., "birthdate", "phone", "tax_id")
+        """
+        if pii_type not in self._pii_metadata["pii_types_detected"]:
+            self._pii_metadata["pii_types_detected"].append(pii_type)
+        self._pii_metadata["pattern_based_removals"] += 1
+
+    def _validate_output_has_medical_content(self, text: str) -> bool:
+        """Validate that the output text still contains medical content.
+
+        Phase 5.3 (Issue #35 - GDPR Compliance Validation):
+        Ensures that PII removal didn't accidentally strip medical information.
+        This is a lightweight check that looks for presence of key medical indicators.
+
+        Args:
+            text: The cleaned/processed text to validate
+
+        Returns:
+            True if medical content is present, False if validation fails
+
+        Note:
+            This is a soft validation - it flags concerns but doesn't block processing.
+            A False result sets review_recommended=True for manual verification.
+        """
+        if not text or len(text) < 50:
+            # Very short output might be suspicious but not necessarily invalid
+            return True
+
+        text_lower = text.lower()
+
+        # Check for presence of medical indicators (any one is sufficient)
+        medical_indicators = [
+            # Medical keywords
+            "diagnose", "befund", "therapie", "medikament", "behandlung",
+            "untersuchung", "labor", "patient", "klinik", "arzt",
+            # Common medical abbreviations
+            "mg", "ml", "mg/dl", "mmol", "g/dl",
+            # Lab-related
+            "wert", "ergebnis", "normal", "erhöht", "erniedrigt",
+            # Procedure markers
+            "mrt", "ct", "ekg", "röntgen",
+            # Replacement markers (indicate PII was processed)
+            "[name entfernt]", "[geburtsdatum entfernt]", "[adresse entfernt]",
+        ]
+
+        # At least one medical indicator should be present
+        has_medical_content = any(ind in text_lower for ind in medical_indicators)
+
+        # If no medical indicators but text is substantial, flag for review
+        if not has_medical_content and len(text) > 200:
+            logger.debug("Medical content validation: No medical indicators found in substantial output")
+            return False
+
+        return True
+
+    def _get_quality_summary(self) -> dict:
+        """Generate a quality summary from the current processing metadata.
+
+        Phase 5.4 (Issue #35 - Quality Metrics Summary):
+        Provides a consolidated view of processing quality for reporting and monitoring.
+
+        Returns:
+            Dictionary containing:
+            - quality_score: 0-100 score based on confidence levels
+            - confidence_breakdown: Distribution of removal confidence levels
+            - pii_coverage: Number and types of PII detected
+            - review_flags: List of issues that triggered review recommendation
+        """
+        # Calculate quality score (higher = more confident in removal accuracy)
+        high_conf = self._pii_metadata.get("high_confidence_removals", 0)
+        medium_conf = self._pii_metadata.get("medium_confidence_removals", 0)
+        low_conf = self._pii_metadata.get("low_confidence_removals", 0)
+        pattern_based = self._pii_metadata.get("pattern_based_removals", 0)
+
+        total_removals = high_conf + medium_conf + low_conf + pattern_based
+
+        if total_removals == 0:
+            quality_score = 100  # No removals needed = high quality input
+        else:
+            # Weight: pattern-based (100%), high (100%), medium (80%), low (50%)
+            weighted_score = (
+                (pattern_based * 100) +
+                (high_conf * 100) +
+                (medium_conf * 80) +
+                (low_conf * 50)
+            )
+            quality_score = round(weighted_score / total_removals, 1)
+
+        # Identify review flags
+        review_flags = []
+        if low_conf > 2:
+            review_flags.append(f"{low_conf} low-confidence name removals")
+        if len(self._pii_metadata.get("potential_false_positives", [])) > 0:
+            review_flags.append(f"{len(self._pii_metadata['potential_false_positives'])} potential false positives")
+        if not self._pii_metadata.get("gdpr_compliant", True):
+            review_flags.append("Medical content validation concern")
+
+        return {
+            "quality_score": quality_score,
+            "total_pii_removed": total_removals,
+            "confidence_breakdown": {
+                "high_confidence": high_conf,
+                "medium_confidence": medium_conf,
+                "low_confidence": low_conf,
+                "pattern_based": pattern_based,
+            },
+            "pii_types_found": self._pii_metadata.get("pii_types_detected", []),
+            "pii_type_count": len(self._pii_metadata.get("pii_types_detected", [])),
+            "eponyms_preserved": self._pii_metadata.get("eponyms_preserved", 0),
+            "review_recommended": self._pii_metadata.get("review_recommended", False),
+            "review_flags": review_flags,
+        }
+
     def _remove_personal_data(self, text: str) -> str:
         """Entfernt persönliche Daten aber ERHÄLT medizinische Informationen
 
         ENHANCED (Issue #35):
         - Phase 1: Intelligent date classification (birthdates vs. medical dates)
         - Phase 2: Comprehensive German PII removal (10+ new types)
+        - Phase 5.3: GDPR audit trail - tracks all PII types removed
         """
 
         # ==================== PHASE 1: CORE PII REMOVAL ====================
+        # ==================== PHASE 5.3: GDPR AUDIT TRAIL TRACKING ====================
 
         # ENHANCED: Intelligent birthdate removal with context awareness
         # Only remove dates with explicit PII context (Geboren, Geb.)
+        if self.patterns["birthdate"].search(text):
+            self._track_pii_removal("birthdate")
         text = self.patterns["birthdate"].sub("[GEBURTSDATUM ENTFERNT]", text)
 
         # IMPORTANT: Remove insurance/patient numbers BEFORE patient_info pattern
         # to avoid partial matches on compound words like "Versichertennummer"
+        if self.patterns["insurance"].search(text):
+            self._track_pii_removal("insurance_number")
         text = self.patterns["insurance"].sub("[NUMMER ENTFERNT]", text)
 
         # Now remove explicit patient name patterns
+        if self.patterns["patient_info"].search(text):
+            self._track_pii_removal("patient_name")
         text = self.patterns["patient_info"].sub("[NAME ENTFERNT]", text)
+
+        if self.patterns["name_format"].search(text):
+            self._track_pii_removal("patient_name")
         text = self.patterns["name_format"].sub("[NAME ENTFERNT]", text)
 
         # Adressen entfernen
+        if self.patterns["street_address"].search(text):
+            self._track_pii_removal("street_address")
         text = self.patterns["street_address"].sub("[ADRESSE ENTFERNT]", text)
+
+        if self.patterns["plz_city"].search(text):
+            self._track_pii_removal("postal_code_city")
         text = self.patterns["plz_city"].sub("[PLZ/ORT ENTFERNT]", text)
 
         # Kontaktdaten entfernen
+        if self.patterns["phone"].search(text):
+            self._track_pii_removal("phone_number")
         text = self.patterns["phone"].sub("[TELEFON ENTFERNT]", text)
+
+        if self.patterns["email"].search(text):
+            self._track_pii_removal("email_address")
         text = self.patterns["email"].sub("[EMAIL ENTFERNT]", text)
 
         # Anreden und Grußformeln entfernen
+        if self.patterns["salutation"].search(text):
+            self._track_pii_removal("salutation")
         text = self.patterns["salutation"].sub("", text)
 
         # ==================== PHASE 2.1: ADDITIONAL GERMAN PII TYPES ====================
 
         # German Tax ID (Steuer-ID)
+        if self.patterns["tax_id"].search(text):
+            self._track_pii_removal("tax_id")
         text = self.patterns["tax_id"].sub("[STEUER-ID ENTFERNT]", text)
 
         # German Social Security Number
+        if self.patterns["social_security"].search(text):
+            self._track_pii_removal("social_security_number")
         text = self.patterns["social_security"].sub("[SOZIALVERSICHERUNGSNUMMER ENTFERNT]", text)
 
         # German Passport Number
+        if self.patterns["passport"].search(text):
+            self._track_pii_removal("passport_number")
         text = self.patterns["passport"].sub("[REISEPASSNUMMER ENTFERNT]", text)
 
         # German ID Card Number
+        if self.patterns["id_card"].search(text):
+            self._track_pii_removal("id_card_number")
         text = self.patterns["id_card"].sub("[PERSONALAUSWEIS ENTFERNT]", text)
 
         # ==================== PHASE 2.2: HEALTHCARE-SPECIFIC IDENTIFIERS ====================
 
         # Patient ID / Case Number / Medical Record Number
+        if self.patterns["patient_id"].search(text):
+            self._track_pii_removal("patient_id")
         text = self.patterns["patient_id"].sub("[PATIENTEN-ID ENTFERNT]", text)
 
         # Hospital/Clinic Internal Numbers
+        if self.patterns["hospital_id"].search(text):
+            self._track_pii_removal("hospital_id")
         text = self.patterns["hospital_id"].sub("[KRANKENHAUS-NR ENTFERNT]", text)
 
         # Insurance Policy Number (more specific pattern)
+        if self.patterns["insurance_policy"].search(text):
+            self._track_pii_removal("insurance_policy")
         text = self.patterns["insurance_policy"].sub("[VERSICHERTENNUMMER ENTFERNT]", text)
 
         # ==================== PHASE 2.3: ENHANCED CONTACT INFORMATION ====================
 
         # Enhanced Mobile Phone Numbers
+        if self.patterns["mobile_phone"].search(text):
+            self._track_pii_removal("mobile_phone")
         text = self.patterns["mobile_phone"].sub("[MOBILTELEFON ENTFERNT]", text)
 
         # Fax Numbers
+        if self.patterns["fax"].search(text):
+            self._track_pii_removal("fax_number")
         text = self.patterns["fax"].sub("[FAX ENTFERNT]", text)
 
         # Website URLs
+        if self.patterns["url"].search(text):
+            self._track_pii_removal("url")
         text = self.patterns["url"].sub("[URL ENTFERNT]", text)
 
         # Enhanced Street Addresses (with suffixes and floor information)
+        if self.patterns["street_extended"].search(text):
+            self._track_pii_removal("street_address_extended")
         text = self.patterns["street_extended"].sub("[ADRESSE ENTFERNT]", text)
 
         # ==================== GENDER INFORMATION ====================
 
         # Geschlecht entfernen (wenn explizit als "Geschlecht:" angegeben)
-        return re.sub(
+        gender_pattern = re.compile(
             r"\b(?:geschlecht)[:\s]*(?:männlich|weiblich|divers|m|w|d)\b",
-            "[GESCHLECHT ENTFERNT]",
-            text,
-            flags=re.IGNORECASE,
+            re.IGNORECASE
         )
+        if gender_pattern.search(text):
+            self._track_pii_removal("gender")
+        return gender_pattern.sub("[GESCHLECHT ENTFERNT]", text)
 
     def _is_medical_eponym(self, name: str, context: str = "") -> bool:
         """Check if a name is a medical eponym (disease/condition named after a person).
@@ -1955,11 +2159,64 @@ class AdvancedPrivacyFilter:
 
         return False
 
+    def _is_potential_false_positive(self, name: str, context: str = "") -> bool:
+        """Check if a detected name might be a false positive.
+
+        Phase 5.2 (Issue #35 - False Positive Tracking):
+        Identifies entities that were removed but might be medical terms
+        or other non-PII content that was incorrectly classified.
+
+        Args:
+            name: The detected name/entity text
+            context: Surrounding text for context analysis
+
+        Returns:
+            True if the entity shows signs of being a potential false positive
+
+        Indicators of potential false positives:
+        - Very short names (2-3 chars) that could be abbreviations
+        - Names that partially match medical terms
+        - Names appearing in obviously medical context
+        - Names that look like place names or organizations
+        """
+        name_lower = name.lower()
+
+        # Very short "names" are suspicious
+        if len(name) <= 3:
+            return True
+
+        # Check if name partially matches any medical term (could be truncated)
+        for term in self.medical_terms:
+            if name_lower in term or term in name_lower:
+                if name_lower != term:  # Not exact match (those are already filtered)
+                    return True
+
+        # Check if name partially matches any drug name
+        for drug in self.drug_database:
+            if name_lower in drug or drug in name_lower:
+                if name_lower != drug:
+                    return True
+
+        # Check if context is heavily medical (many medical terms nearby)
+        if context:
+            context_lower = context.lower()
+            medical_term_count = sum(1 for term in self.medical_terms if term in context_lower)
+            if medical_term_count >= 3:  # Many medical terms in context
+                return True
+
+        # Check for common German location/organization indicators
+        location_indicators = ["klinik", "krankenhaus", "praxis", "zentrum", "institut"]
+        if any(ind in name_lower for ind in location_indicators):
+            return True
+
+        return False
+
     def _remove_names_with_ner(self, text: str) -> str:
         """
         Verwendet spaCy NER zur intelligenten Namenerkennung
         Erkennt auch "Name: Nachname, Vorname" Format
         ENHANCED: Now preserves medical eponyms (Issue #35)
+        ENHANCED: Phase 5.1 - Confidence scoring for name detection
         """
         # HINWEIS: Explizite Patterns wurden bereits in _remove_personal_data entfernt
         # Hier nur noch spaCy NER für nicht-explizite Namen
@@ -1973,15 +2230,21 @@ class AdvancedPrivacyFilter:
         for ent in doc.ents:
             # NUR PER = Person, ignoriere ORG, LOC etc.
             if ent.label_ == "PER":
-                # Extract context (20 chars before and after)
-                start_ctx = max(0, ent.start_char - 20)
-                end_ctx = min(len(text), ent.end_char + 20)
+                # Extract context (50 chars before and after for better analysis)
+                start_ctx = max(0, ent.start_char - 50)
+                end_ctx = min(len(text), ent.end_char + 50)
                 context = text[start_ctx:end_ctx]
 
                 # Check if it's a medical eponym (preserve if true)
                 if self._is_medical_eponym(ent.text, context):
                     logger.debug(f"Preserving medical eponym: {ent.text}")
                     self._pii_metadata["eponyms_preserved"] += 1
+                    # Phase 5.2: Track preserved terms that could be names
+                    self._pii_metadata["preserved_medical_terms"].append({
+                        "text": ent.text,
+                        "reason": "medical_eponym",
+                        "context": context[:100]  # Truncate for storage
+                    })
                     continue
 
                 # Prüfe ob es ein medizinischer Begriff oder Medikament ist (Phase 4.2)
@@ -1992,16 +2255,36 @@ class AdvancedPrivacyFilter:
                         self._pii_metadata["entities_detected"] += 1
                         logger.debug(f"NER erkannt als Person: {ent.text}")
 
-                        # Track low-confidence detections (single-word names without titles)
-                        if len(ent.text.split()) == 1:  # Single word
-                            # Check if there's a title nearby
-                            has_title_context = any(
-                                indicator in context.lower()
-                                for indicator in ["dr.", "prof.", "herr", "frau"]
-                            )
-                            if not has_title_context:
-                                self._pii_metadata["low_confidence_count"] += 1
-                                logger.debug(f"Low-confidence detection: {ent.text} (no title context)")
+                        # ==================== PHASE 5.1: CONFIDENCE SCORING ====================
+                        # Check if there's a title nearby (high confidence indicator)
+                        has_title_context = any(
+                            indicator in context.lower()
+                            for indicator in ["dr.", "prof.", "herr", "frau", "patient", "name:"]
+                        )
+
+                        # Classify confidence level
+                        word_count = len(ent.text.split())
+                        if word_count >= 2:
+                            # Multi-word names = high confidence
+                            self._pii_metadata["high_confidence_removals"] += 1
+                            logger.debug(f"High-confidence: {ent.text} (multi-word name)")
+                        elif has_title_context:
+                            # Single word with title context = high confidence
+                            self._pii_metadata["high_confidence_removals"] += 1
+                            logger.debug(f"High-confidence: {ent.text} (title context)")
+                        else:
+                            # Single-word, no title = low confidence
+                            self._pii_metadata["low_confidence_removals"] += 1
+                            self._pii_metadata["low_confidence_count"] += 1
+                            logger.debug(f"Low-confidence detection: {ent.text} (no title context)")
+
+                            # Phase 5.2: Check if this could be a false positive
+                            if self._is_potential_false_positive(ent.text, context):
+                                self._pii_metadata["potential_false_positives"].append({
+                                    "text": ent.text,
+                                    "context": context[:100],
+                                    "reason": "low_confidence_single_word"
+                                })
 
         # Zusätzlich: Erkenne Titel+Name Kombinationen
         for i, token in enumerate(doc):

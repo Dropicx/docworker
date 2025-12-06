@@ -538,6 +538,293 @@ class TestPhase4Integration:
         assert "total_time_ms" in metadata
 
 
+class TestPhase5ConfidenceScoring:
+    """Test Phase 5.1: Confidence Scoring (Issue #35)"""
+
+    @pytest.fixture
+    def filter(self):
+        """Create filter instance without database loading"""
+        return AdvancedPrivacyFilter(load_custom_terms=False)
+
+    def test_confidence_counters_exist(self, filter):
+        """Test that confidence counters are initialized in metadata"""
+        text = "Patient: Max Mustermann, Diagnose: Diabetes"
+        _, metadata = filter.remove_pii(text)
+
+        assert "high_confidence_removals" in metadata
+        assert "medium_confidence_removals" in metadata
+        assert "low_confidence_removals" in metadata
+        assert "pattern_based_removals" in metadata
+
+    def test_pattern_based_removals_tracked(self, filter):
+        """Test that pattern-based PII removals are counted"""
+        text = """
+        Patient: Müller, Hans
+        Geb.: 15.05.1965
+        Tel: +49 30 12345678
+        Email: test@example.com
+        """
+        _, metadata = filter.remove_pii(text)
+
+        # Pattern-based removals should be > 0
+        assert metadata["pattern_based_removals"] > 0
+
+    def test_quality_summary_included(self, filter):
+        """Test that quality_summary is included in metadata"""
+        text = "Patient: Test Person, Diagnose: Diabetes"
+        _, metadata = filter.remove_pii(text)
+
+        assert "quality_summary" in metadata
+        summary = metadata["quality_summary"]
+
+        # Check quality summary structure
+        assert "quality_score" in summary
+        assert "total_pii_removed" in summary
+        assert "confidence_breakdown" in summary
+        assert "pii_types_found" in summary
+        assert "review_recommended" in summary
+
+    def test_quality_score_calculated(self, filter):
+        """Test that quality score is calculated correctly"""
+        text = """
+        Arztbrief
+        Patient: Schmidt, Maria
+        Geb.: 22.03.1958
+        Diagnose: Diabetes mellitus Typ 2
+        """
+        _, metadata = filter.remove_pii(text)
+
+        quality_score = metadata["quality_summary"]["quality_score"]
+        # Score should be between 0 and 100
+        assert 0 <= quality_score <= 100
+
+
+class TestPhase5FalsePositiveTracking:
+    """Test Phase 5.2: False Positive Tracking (Issue #35)"""
+
+    @pytest.fixture
+    def filter(self):
+        """Create filter instance without database loading"""
+        return AdvancedPrivacyFilter(load_custom_terms=False)
+
+    def test_false_positive_list_initialized(self, filter):
+        """Test that potential_false_positives list exists"""
+        text = "Patient: Test Person"
+        _, metadata = filter.remove_pii(text)
+
+        assert "potential_false_positives" in metadata
+        assert isinstance(metadata["potential_false_positives"], list)
+
+    def test_preserved_medical_terms_tracked(self, filter):
+        """Test that preserved medical terms are tracked"""
+        text = """
+        Diagnose: Morbus Parkinson
+        Therapie: Madopar 125mg
+        """
+        _, metadata = filter.remove_pii(text)
+
+        assert "preserved_medical_terms" in metadata
+        assert isinstance(metadata["preserved_medical_terms"], list)
+
+    def test_review_recommended_flag_exists(self, filter):
+        """Test that review_recommended flag is in metadata"""
+        text = "Patient: Test Person"
+        _, metadata = filter.remove_pii(text)
+
+        assert "review_recommended" in metadata
+        assert isinstance(metadata["review_recommended"], bool)
+
+
+class TestPhase5GDPRAuditTrail:
+    """Test Phase 5.3: GDPR Audit Trail (Issue #35)"""
+
+    @pytest.fixture
+    def filter(self):
+        """Create filter instance without database loading"""
+        return AdvancedPrivacyFilter(load_custom_terms=False)
+
+    def test_pii_types_detected_populated(self, filter):
+        """Test that pii_types_detected is populated with removed PII types"""
+        text = """
+        Patient: Müller, Hans
+        Geb.: 15.05.1965
+        Tel: +49 30 12345678
+        Email: patient@example.com
+        """
+        _, metadata = filter.remove_pii(text)
+
+        pii_types = metadata["pii_types_detected"]
+        assert isinstance(pii_types, list)
+        assert len(pii_types) > 0
+
+        # Check for expected PII types
+        assert "birthdate" in pii_types
+        assert "phone_number" in pii_types
+        assert "email_address" in pii_types
+
+    def test_processing_timestamp_exists(self, filter):
+        """Test that processing timestamp is recorded"""
+        text = "Patient: Test Person"
+        _, metadata = filter.remove_pii(text)
+
+        assert "processing_timestamp" in metadata
+        assert metadata["processing_timestamp"] is not None
+
+    def test_gdpr_compliant_flag(self, filter):
+        """Test that GDPR compliant flag is set"""
+        text = """
+        Patient: Schmidt, Maria
+        Diagnose: Diabetes mellitus Typ 2
+        """
+        _, metadata = filter.remove_pii(text)
+
+        assert "gdpr_compliant" in metadata
+        assert isinstance(metadata["gdpr_compliant"], bool)
+
+    def test_removal_method_tracked(self, filter):
+        """Test that removal method version is tracked"""
+        text = "Patient: Test Person"
+        _, metadata = filter.remove_pii(text)
+
+        assert "removal_method" in metadata
+        assert "Phase5" in metadata["removal_method"]
+
+
+class TestPhase5QualitySummary:
+    """Test Phase 5.4: Quality Summary (Issue #35)"""
+
+    @pytest.fixture
+    def filter(self):
+        """Create filter instance without database loading"""
+        return AdvancedPrivacyFilter(load_custom_terms=False)
+
+    def test_quality_summary_structure(self, filter):
+        """Test complete quality summary structure"""
+        text = """
+        Arztbrief
+        Patient: Weber, Klaus
+        Geb.: 10.10.1970
+        Adresse: Musterweg 5, 10115 Berlin
+        Diagnose: Arterielle Hypertonie (I10)
+        Therapie: Ramipril 5mg
+        """
+        _, metadata = filter.remove_pii(text)
+
+        summary = metadata["quality_summary"]
+
+        # All expected fields
+        assert "quality_score" in summary
+        assert "total_pii_removed" in summary
+        assert "confidence_breakdown" in summary
+        assert "pii_types_found" in summary
+        assert "pii_type_count" in summary
+        assert "eponyms_preserved" in summary
+        assert "review_recommended" in summary
+        assert "review_flags" in summary
+
+    def test_confidence_breakdown_structure(self, filter):
+        """Test confidence breakdown has all levels"""
+        text = "Patient: Max Mustermann, Diagnose: Diabetes"
+        _, metadata = filter.remove_pii(text)
+
+        breakdown = metadata["quality_summary"]["confidence_breakdown"]
+
+        assert "high_confidence" in breakdown
+        assert "medium_confidence" in breakdown
+        assert "low_confidence" in breakdown
+        assert "pattern_based" in breakdown
+
+    def test_review_flags_list(self, filter):
+        """Test that review_flags is a list"""
+        text = "Patient: Test Person"
+        _, metadata = filter.remove_pii(text)
+
+        review_flags = metadata["quality_summary"]["review_flags"]
+        assert isinstance(review_flags, list)
+
+
+class TestPhase5MedicalValidation:
+    """Test Phase 5.3: Medical Content Validation (Issue #35)"""
+
+    @pytest.fixture
+    def filter(self):
+        """Create filter instance without database loading"""
+        return AdvancedPrivacyFilter(load_custom_terms=False)
+
+    def test_medical_content_preserved(self, filter):
+        """Test that medical content validation passes for valid documents"""
+        text = """
+        Arztbrief
+        Patient: Schmidt, Maria
+        Diagnose: Diabetes mellitus Typ 2
+        Laborwerte: HbA1c 7.2%
+        Therapie: Metformin 1000mg
+        """
+        result, metadata = filter.remove_pii(text)
+
+        # Medical content should be preserved
+        assert "Diabetes" in result
+        assert "HbA1c" in result or "hba1c" in result.lower()
+        assert "7.2" in result
+        assert "Metformin" in result or "METFORMIN" in result
+
+        # GDPR compliance should be True if medical content preserved
+        assert metadata["gdpr_compliant"] is True
+
+    def test_pii_removed_medical_preserved(self, filter):
+        """Test comprehensive PII removal with medical preservation"""
+        text = """
+        Universitätsklinikum München
+        Arztbrief
+
+        Patient: Mustermann, Max
+        Geb.: 15.05.1965
+        Adresse: Hauptstraße 42, 80331 München
+        Tel: +49 89 12345678
+
+        Diagnosen:
+        1. Diabetes mellitus Typ 2 (E11.9)
+        2. Arterielle Hypertonie (I10)
+        3. Morbus Parkinson (G20)
+
+        Aktuelle Medikation:
+        - Metformin 1000mg 1-0-1
+        - Ramipril 5mg 0-0-1
+        - Madopar 125mg 1-1-1
+
+        Laborwerte (LOINC 718-7):
+        - Hämoglobin: 12.5 g/dl
+        - HbA1c: 7.2%
+
+        Mit freundlichen Grüßen
+        Dr. med. Weber
+        """
+        result, metadata = filter.remove_pii(text)
+
+        # PII removed
+        assert "Mustermann" not in result
+        assert "15.05.1965" not in result
+        assert "80331" not in result or "PLZ/ORT ENTFERNT" in result
+        assert "+49 89 12345678" not in result
+        assert "Weber" not in result
+
+        # Medical codes preserved
+        assert "E11.9" in result
+        assert "I10" in result
+        assert "G20" in result
+
+        # Drugs preserved
+        assert "Metformin" in result or "METFORMIN" in result
+        assert "Ramipril" in result or "RAMIPRIL" in result
+
+        # Eponym preserved
+        assert "Parkinson" in result
+
+        # Quality summary exists
+        assert "quality_summary" in metadata
+        assert metadata["quality_summary"]["quality_score"] >= 0
+
+
 if __name__ == "__main__":
     # Run tests
     pytest.main([__file__, "-v"])
