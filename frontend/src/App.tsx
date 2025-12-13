@@ -537,19 +537,13 @@ function App() {
                   </div>
                 </div>
 
-                {/* Upload Component */}
+                {/* Upload Component with Language Selector */}
                 <div>
                   <FileUpload
                     onUploadSuccess={handleUploadSuccess}
                     onUploadError={handleUploadError}
+                    languageSelector={renderLanguageSelector()}
                   />
-                </div>
-
-                {/* Language Selection (Optional) */}
-                <div>
-                  <div className="card-elevated">
-                    <div className="card-body">{renderLanguageSelector()}</div>
-                  </div>
                 </div>
 
                 {/* Features - Mobile Optimized */}

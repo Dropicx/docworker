@@ -19,6 +19,7 @@ interface FileUploadProps {
   onUploadSuccess: (response: UploadResponse) => void;
   onUploadError: (error: string) => void;
   disabled?: boolean;
+  languageSelector?: React.ReactNode;
 }
 
 // Helper function to translate quality issues to German
@@ -42,6 +43,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   onUploadSuccess,
   onUploadError,
   disabled = false,
+  languageSelector,
 }) => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -371,6 +373,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Language Selector (Optional) - Rendered between files and privacy checkbox */}
+          {languageSelector && (
+            <div className="card-elevated">
+              <div className="card-body">{languageSelector}</div>
+            </div>
+          )}
 
           {/* Privacy Policy Checkbox */}
           <div ref={privacyCheckboxRef} className="card-elevated">
