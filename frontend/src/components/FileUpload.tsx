@@ -382,8 +382,35 @@ const FileUpload: React.FC<FileUploadProps> = ({
           )}
 
           {/* Privacy Policy Checkbox */}
-          <div ref={privacyCheckboxRef} className="card-elevated">
+          <div
+            ref={privacyCheckboxRef}
+            className={`card-elevated transition-all duration-300 ${
+              !privacyAccepted
+                ? 'ring-2 ring-amber-400 ring-offset-2 shadow-[0_0_15px_rgba(251,191,36,0.3)]'
+                : 'ring-2 ring-success-400 ring-offset-2'
+            }`}
+          >
             <div className="card-body">
+              {/* Header with status indicator */}
+              <div className={`flex items-center space-x-2 mb-3 pb-3 border-b ${
+                privacyAccepted ? 'border-success-200' : 'border-amber-200'
+              }`}>
+                <div className={`p-1.5 rounded-lg ${
+                  privacyAccepted ? 'bg-success-100' : 'bg-amber-100 animate-pulse'
+                }`}>
+                  {privacyAccepted ? (
+                    <Shield className="w-4 h-4 text-success-600" />
+                  ) : (
+                    <AlertCircle className="w-4 h-4 text-amber-600" />
+                  )}
+                </div>
+                <span className={`text-sm font-semibold ${
+                  privacyAccepted ? 'text-success-700' : 'text-amber-700'
+                }`}>
+                  {privacyAccepted ? 'Datenschutz bestätigt' : 'Bitte bestätigen'}
+                </span>
+              </div>
+
               <div className="flex items-start space-x-3">
                 <div className="flex-shrink-0 pt-0.5">
                   <input
@@ -391,7 +418,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     id="privacy-checkbox"
                     checked={privacyAccepted}
                     onChange={e => setPrivacyAccepted(e.target.checked)}
-                    className="w-4 h-4 text-brand-600 bg-neutral-100 border-neutral-300 rounded focus:ring-brand-500 focus:ring-2"
+                    className={`w-5 h-5 rounded focus:ring-2 transition-colors ${
+                      privacyAccepted
+                        ? 'text-success-600 bg-success-50 border-success-300 focus:ring-success-500'
+                        : 'text-brand-600 bg-amber-50 border-amber-300 focus:ring-amber-500'
+                    }`}
                   />
                 </div>
                 <div className="flex-1">
@@ -432,14 +463,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
             </button>
           </div>
 
-          {!privacyAccepted && (
-            <div className="text-center">
-              <p className="text-sm text-primary-500 flex items-center justify-center space-x-2">
-                <Shield className="w-4 h-4" />
-                <span>Bitte akzeptieren Sie die Datenschutzerklärung, um fortzufahren</span>
-              </p>
-            </div>
-          )}
         </div>
       )}
 
