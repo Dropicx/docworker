@@ -22,6 +22,7 @@ from app.routers.audit import router as audit_router
 from app.routers.auth import router as auth_router
 from app.routers.modular_pipeline import router as modular_pipeline_router
 from app.routers.monitoring import router as monitoring_router
+from app.routers.privacy_metrics import router as privacy_metrics_router
 from app.routers.process_multi_file import router as multi_file_router
 from app.routers.settings_auth import router as settings_auth_router
 from app.routers.users import router as users_router
@@ -246,6 +247,9 @@ app.include_router(admin_config_router, tags=["admin"])  # Admin configuration m
 app.include_router(
     monitoring_router, tags=["monitoring"]
 )  # Flower dashboard proxy and worker monitoring
+app.include_router(
+    privacy_metrics_router, tags=["privacy"]
+)  # Privacy filter metrics and monitoring (Issue #35)
 
 
 @app.get("/")
