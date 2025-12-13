@@ -118,6 +118,97 @@ logger.info(f"🔗 Celery client configured with Redis: {REDIS_URL.split('@')[0]
 logger.info("📋 Task routing: process_medical_document → high_priority queue")
 
 
+def test_privacy_filter_via_worker(text: str, timeout: int = 30) -> dict[str, Any]:
+    """Test privacy filter using the worker's NER capabilities.
+
+    Sends text to worker for PII detection and removal. Uses worker's spaCy model
+    for intelligent name recognition not available in backend service.
+
+    Args:
+        text: Text to process through privacy filter
+        timeout: Maximum seconds to wait for result (default: 30)
+
+    Returns:
+        dict: Processing result with cleaned text and metadata:
+            - status: "success" or "error"
+            - input_length: Original text length
+            - output_length: Cleaned text length
+            - cleaned_text: Text with PII removed
+            - processing_time_ms: Time taken in milliseconds
+            - pii_types_detected: List of PII types found
+            - entities_detected: Number of entities removed
+            - quality_score: Quality score (0-100)
+            - review_recommended: Whether manual review is suggested
+            - passes_performance_target: Whether <100ms target was met
+
+    Raises:
+        TimeoutError: If worker doesn't respond within timeout
+        Exception: If task fails or worker error occurs
+    """
+    try:
+        logger.info(f"📤 Sending privacy filter test to worker ({len(text)} chars)")
+
+        result = celery_client.send_task(
+            "test_privacy_filter",
+            args=(text,),
+            queue="default"
+        )
+
+        # Wait for result with timeout
+        task_result = result.get(timeout=timeout)
+
+        if task_result.get("status") == "error":
+            raise Exception(task_result.get("error", "Unknown worker error"))
+
+        logger.info(f"✅ Privacy filter test completed via worker")
+        return task_result
+
+    except Exception as e:
+        logger.error(f"❌ Privacy filter test failed: {str(e)}")
+        raise
+
+
+def get_privacy_filter_status_via_worker(timeout: int = 10) -> dict[str, Any]:
+    """Get privacy filter capabilities from worker.
+
+    Queries worker for filter status including NER availability, spaCy model,
+    and database counts. Reflects actual production processing capabilities.
+
+    Args:
+        timeout: Maximum seconds to wait for result (default: 10)
+
+    Returns:
+        dict: Filter capabilities and statistics:
+            - status: "success" or "error"
+            - filter_capabilities: {has_ner, spacy_model, removal_method, custom_terms_loaded}
+            - detection_stats: {pii_types_count, medical_terms_count, drug_database_count, ...}
+
+    Raises:
+        TimeoutError: If worker doesn't respond within timeout
+        Exception: If task fails or worker error occurs
+    """
+    try:
+        logger.info("📤 Requesting privacy filter status from worker")
+
+        result = celery_client.send_task(
+            "get_privacy_filter_status",
+            queue="default"
+        )
+
+        # Wait for result with timeout
+        task_result = result.get(timeout=timeout)
+
+        if task_result.get("status") == "error":
+            raise Exception(task_result.get("error", "Unknown worker error"))
+
+        logger.info(f"✅ Got privacy filter status from worker (NER: {task_result.get('filter_capabilities', {}).get('has_ner')})")
+        return task_result
+
+    except Exception as e:
+        logger.error(f"❌ Failed to get privacy filter status: {str(e)}")
+        raise
+
+
 def enqueue_document_processing(processing_id: str, options: dict[str, Any] | None = None) -> str:
     """Enqueue asynchronous document processing task to worker via Redis.
 

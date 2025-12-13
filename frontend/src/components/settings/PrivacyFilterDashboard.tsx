@@ -138,20 +138,20 @@ const PrivacyFilterDashboard: React.FC = () => {
         </div>
 
         <div className="flex items-center space-x-3">
-          {/* Health Status Badge */}
+          {/* Worker Connection Badge */}
           <div
             className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-sm font-medium ${
-              health?.status === 'healthy'
+              health?.worker_connected
                 ? 'bg-success-100 text-success-700'
                 : 'bg-error-100 text-error-700'
             }`}
           >
-            {health?.status === 'healthy' ? (
+            {health?.worker_connected ? (
               <CheckCircle className="w-4 h-4" />
             ) : (
               <AlertCircle className="w-4 h-4" />
             )}
-            <span>{health?.status === 'healthy' ? 'Aktiv' : 'Fehler'}</span>
+            <span>{health?.worker_connected ? 'Worker verbunden' : 'Worker offline'}</span>
           </div>
 
           <label className="flex items-center space-x-2 text-sm text-primary-700">

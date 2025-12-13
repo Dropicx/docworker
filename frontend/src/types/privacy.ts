@@ -25,6 +25,7 @@ export interface PrivacyMetrics {
   filter_capabilities: FilterCapabilities;
   detection_stats: DetectionStats;
   performance_target_ms: number;
+  worker_status: string;
 }
 
 export interface LiveTestResult {
@@ -55,8 +56,10 @@ export interface PrivacyHealth {
   status: 'healthy' | 'unhealthy';
   filter_ready: boolean;
   ner_available?: boolean;
+  spacy_model?: string;
   medical_terms_loaded?: boolean;
   drug_database_loaded?: boolean;
+  worker_connected?: boolean;
   error?: string;
   timestamp: string;
 }

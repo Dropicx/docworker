@@ -2,16 +2,22 @@
 
 Issue #35 Phase 6.3: Production Monitoring
 Provides endpoints for monitoring PII detection performance and statistics.
+
+Updated to use worker for all processing (ensures NER is available).
 """
 
 from datetime import datetime
-from typing import Optional
+import logging
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
+from app.services.celery_client import (
+    test_privacy_filter_via_worker,
+    get_privacy_filter_status_via_worker,
+)
 
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/privacy", tags=["Privacy Metrics"])
 
@@ -52,6 +58,7 @@ class PrivacyMetricsResponse(BaseModel):
     filter_capabilities: FilterCapabilities
     detection_stats: DetectionStats
     performance_target_ms: int = 100
+    worker_status: str = "connected"
 
 
 class LiveTestResult(BaseModel):
@@ -72,98 +79,71 @@ class LiveTestRequest(BaseModel):
     text: str
 
 
-# ==================== CACHED FILTER INSTANCE ====================
-
-# Singleton filter instance for metrics (avoid repeated initialization)
-_filter_instance: Optional[AdvancedPrivacyFilter] = None
-
-
-def get_filter() -> AdvancedPrivacyFilter:
-    """Get or create the privacy filter instance."""
-    global _filter_instance
-    if _filter_instance is None:
-        _filter_instance = AdvancedPrivacyFilter(load_custom_terms=False)
-    return _filter_instance
-
-
 # ==================== ENDPOINTS ====================
 
 
 @router.get("/metrics", response_model=PrivacyMetricsResponse)
 async def get_privacy_metrics():
-    """Get privacy filter capabilities and detection statistics.
+    """Get privacy filter capabilities and detection statistics from worker.
 
     Returns comprehensive information about the privacy filter's:
-    - NER availability and configuration
+    - NER availability and configuration (from worker)
     - Number of PII types supported
     - Medical term protection counts
     - Drug database size
     - Performance targets
     """
     try:
-        filter_instance = get_filter()
+        # Get status from worker (has NER loaded)
+        worker_status = get_privacy_filter_status_via_worker(timeout=10)
 
-        # List of PII types we detect
-        pii_types = [
-            "birthdate",
-            "patient_name",
-            "street_address",
-            "postal_code_city",
-            "phone_number",
-            "mobile_phone",
-            "fax_number",
-            "email_address",
-            "insurance_number",
-            "insurance_policy",
-            "patient_id",
-            "hospital_id",
-            "tax_id",
-            "social_security_number",
-            "passport_number",
-            "id_card_number",
-            "gender",
-            "url",
-            "salutation",
-        ]
+        caps = worker_status["filter_capabilities"]
+        stats = worker_status["detection_stats"]
 
         return PrivacyMetricsResponse(
             timestamp=datetime.now().isoformat(),
             filter_capabilities=FilterCapabilities(
-                has_ner=filter_instance.has_ner,
-                spacy_model="de_core_news_sm" if filter_instance.has_ner else "none",
-                removal_method="AdvancedPrivacyFilter_Phase5",
-                custom_terms_loaded=filter_instance._custom_terms_loaded,
+                has_ner=caps["has_ner"],
+                spacy_model=caps["spacy_model"],
+                removal_method=caps["removal_method"],
+                custom_terms_loaded=caps["custom_terms_loaded"],
             ),
             detection_stats=DetectionStats(
-                pii_types_supported=pii_types,
-                pii_types_count=len(pii_types),
-                medical_terms_count=len(filter_instance.medical_terms),
-                drug_database_count=len(filter_instance.drug_database),
-                abbreviations_count=len(filter_instance.protected_abbreviations),
-                eponyms_count=len(filter_instance.medical_eponyms),
-                loinc_codes_count=len(filter_instance.common_loinc_codes),
+                pii_types_supported=stats["pii_types_supported"],
+                pii_types_count=stats["pii_types_count"],
+                medical_terms_count=stats["medical_terms_count"],
+                drug_database_count=stats["drug_database_count"],
+                abbreviations_count=stats["abbreviations_count"],
+                eponyms_count=stats["eponyms_count"],
+                loinc_codes_count=stats["loinc_codes_count"],
             ),
             performance_target_ms=100,
+            worker_status="connected",
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to get metrics: {str(e)}")
+        logger.error(f"Failed to get metrics from worker: {str(e)}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Worker unavailable: {str(e)}. Please ensure the worker service is running."
+        )
 
 
 @router.post("/test", response_model=LiveTestResult)
 async def test_privacy_filter(request: LiveTestRequest):
-    """Live test the privacy filter with custom text.
+    """Live test the privacy filter with custom text via worker.
 
-    Processes the provided text and returns:
+    Processes the provided text using the worker's full NER capabilities:
+    - spaCy de_core_news_md model for intelligent name detection
+    - Pattern-based PII removal
+    - Medical term protection
+
+    Returns:
     - Processing time
     - PII types detected
     - Quality score
     - Review recommendations
-
-    This endpoint is useful for:
-    - Testing PII detection on sample documents
-    - Validating filter behavior
-    - Performance testing
+    - Cleaned text output
 
     Note: The input text is NOT stored or logged.
     """
@@ -174,56 +154,64 @@ async def test_privacy_filter(request: LiveTestRequest):
         raise HTTPException(status_code=400, detail="Text too long (max 50000 chars)")
 
     try:
-        import time
-        filter_instance = get_filter()
-
-        start = time.perf_counter()
-        cleaned_text, metadata = filter_instance.remove_pii(request.text)
-        processing_time_ms = (time.perf_counter() - start) * 1000
-
-        quality_summary = metadata.get("quality_summary", {})
+        # Process via worker (has NER loaded)
+        result = test_privacy_filter_via_worker(request.text, timeout=30)
 
         return LiveTestResult(
-            input_length=len(request.text),
-            output_length=len(cleaned_text),
-            cleaned_text=cleaned_text,
-            processing_time_ms=round(processing_time_ms, 2),
-            pii_types_detected=metadata.get("pii_types_detected", []),
-            entities_detected=metadata.get("entities_detected", 0),
-            quality_score=quality_summary.get("quality_score", 100.0),
-            review_recommended=metadata.get("review_recommended", False),
-            passes_performance_target=processing_time_ms < 100,
+            input_length=result["input_length"],
+            output_length=result["output_length"],
+            cleaned_text=result["cleaned_text"],
+            processing_time_ms=result["processing_time_ms"],
+            pii_types_detected=result["pii_types_detected"],
+            entities_detected=result["entities_detected"],
+            quality_score=result["quality_score"],
+            review_recommended=result["review_recommended"],
+            passes_performance_target=result["passes_performance_target"],
         )
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Processing failed: {str(e)}")
+        logger.error(f"Privacy filter test failed: {str(e)}")
+        raise HTTPException(
+            status_code=503,
+            detail=f"Worker processing failed: {str(e)}. Please ensure the worker service is running."
+        )
 
 
 @router.get("/health")
 async def privacy_filter_health():
-    """Check privacy filter health and readiness.
+    """Check privacy filter health and readiness via worker.
 
     Returns:
     - Filter initialization status
-    - NER model availability
+    - NER model availability (from worker)
     - Medical term database status
+    - Worker connection status
     """
     try:
-        filter_instance = get_filter()
+        # Get status from worker
+        worker_status = get_privacy_filter_status_via_worker(timeout=5)
+
+        caps = worker_status["filter_capabilities"]
+        stats = worker_status["detection_stats"]
 
         return {
             "status": "healthy",
             "filter_ready": True,
-            "ner_available": filter_instance.has_ner,
-            "medical_terms_loaded": len(filter_instance.medical_terms) > 0,
-            "drug_database_loaded": len(filter_instance.drug_database) > 0,
+            "ner_available": caps["has_ner"],
+            "spacy_model": caps["spacy_model"],
+            "medical_terms_loaded": stats["medical_terms_count"] > 0,
+            "drug_database_loaded": stats["drug_database_count"] > 0,
+            "worker_connected": True,
             "timestamp": datetime.now().isoformat(),
         }
 
     except Exception as e:
+        logger.warning(f"Worker health check failed: {str(e)}")
         return {
             "status": "unhealthy",
             "filter_ready": False,
+            "ner_available": False,
+            "worker_connected": False,
             "error": str(e),
             "timestamp": datetime.now().isoformat(),
         }
