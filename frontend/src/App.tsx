@@ -20,6 +20,7 @@ import TranslationResult from './components/TranslationResult';
 import TerminationCard from './components/TerminationCard';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
+import CookieFreeBanner from './components/CookieFreeBanner';
 import Impressum from './pages/Impressum';
 import Datenschutz from './pages/Datenschutz';
 import Nutzungsbedingungen from './pages/Nutzungsbedingungen';
@@ -675,6 +676,7 @@ function App() {
         </main>
 
         <Footer />
+        <CookieFreeBanner />
       </div>
     );
   };
