@@ -444,14 +444,7 @@ function App() {
                       <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
                     </button>
                   </div>
-                ) : (
-                  <a
-                    href="/login"
-                    className="px-4 py-2 text-sm font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 rounded-lg transition-colors"
-                  >
-                    Anmelden
-                  </a>
-                )}
+                ) : null}
               </div>
             </div>
           </div>

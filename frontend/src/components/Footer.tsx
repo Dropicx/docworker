@@ -28,6 +28,13 @@ const Footer: React.FC = () => {
             >
               Nutzungsbedingungen
             </Link>
+            <span className="hidden sm:inline text-primary-300">|</span>
+            <Link
+              to="/login"
+              className="text-primary-400 hover:text-primary-600 transition-colors text-xs"
+            >
+              Admin
+            </Link>
           </div>
 
           <div className="text-center space-y-2">
