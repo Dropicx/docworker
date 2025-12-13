@@ -457,6 +457,18 @@ const PrivacyFilterDashboard: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Cleaned Text Output */}
+              <div>
+                <h6 className="text-sm font-semibold text-primary-700 mb-2">
+                  Gefilterter Text:
+                </h6>
+                <div className="bg-white border border-primary-200 rounded-lg p-3 max-h-64 overflow-y-auto">
+                  <pre className="text-sm font-mono text-primary-800 whitespace-pre-wrap break-words">
+                    {testResult.cleaned_text}
+                  </pre>
+                </div>
+              </div>
             </div>
           )}
         </div>

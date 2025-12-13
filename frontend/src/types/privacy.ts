@@ -30,6 +30,7 @@ export interface PrivacyMetrics {
 export interface LiveTestResult {
   input_length: number;
   output_length: number;
+  cleaned_text: string;
   processing_time_ms: number;
   pii_types_detected: string[];
   entities_detected: number;

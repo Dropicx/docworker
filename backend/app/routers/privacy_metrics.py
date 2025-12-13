@@ -58,6 +58,7 @@ class LiveTestResult(BaseModel):
     """Result of a live privacy filter test."""
     input_length: int
     output_length: int
+    cleaned_text: str
     processing_time_ms: float
     pii_types_detected: list[str]
     entities_detected: int
@@ -185,6 +186,7 @@ async def test_privacy_filter(request: LiveTestRequest):
         return LiveTestResult(
             input_length=len(request.text),
             output_length=len(cleaned_text),
+            cleaned_text=cleaned_text,
             processing_time_ms=round(processing_time_ms, 2),
             pii_types_detected=metadata.get("pii_types_detected", []),
             entities_detected=metadata.get("entities_detected", 0),
