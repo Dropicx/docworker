@@ -132,6 +132,8 @@ export interface AIModel {
   max_tokens: number | null;
   supports_vision: boolean;
   is_enabled: boolean;
+  price_input_per_1m_tokens: number | null;
+  price_output_per_1m_tokens: number | null;
 }
 
 // ==================== OCR ENGINE STATUS ====================

@@ -318,6 +318,32 @@ class PipelineApiService {
     }
   }
 
+  /**
+   * Update AI model pricing information
+   */
+  async updateModel(
+    modelId: number,
+    updateData: {
+      price_input_per_1m_tokens?: number | null;
+      price_output_per_1m_tokens?: number | null;
+    }
+  ): Promise<AIModel> {
+    try {
+      const response = await axios.put<AIModel>(
+        `${PIPELINE_BASE_URL}/models/${modelId}`,
+        updateData,
+        {
+          headers: this.getAuthHeaders(),
+        }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        extractErrorMessage(error as AxiosError, `Failed to update model ${modelId}`)
+      );
+    }
+  }
+
   // ==================== BRANCHING PIPELINE STEPS ====================
 
   /**

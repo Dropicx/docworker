@@ -1465,3 +1465,30 @@ class ModularPipelineManager:
     def get_model(self, model_id: int) -> AvailableModelDB | None:
         """Get a single model by ID using repository pattern."""
         return self.model_repository.get(model_id)
+
+    def update_model(self, model_id: int, model_data: dict[str, Any]) -> AvailableModelDB | None:
+        """
+        Update an existing AI model.
+        
+        Args:
+            model_id: ID of the model to update
+            model_data: Dictionary of fields to update
+            
+        Returns:
+            Updated model instance or None if not found
+        """
+        model = self.get_model(model_id)
+        if not model:
+            return None
+
+        # Update fields
+        for key, value in model_data.items():
+            if hasattr(model, key):
+                setattr(model, key, value)
+
+        # Update timestamp
+        model.last_modified = datetime.now()
+        
+        self.session.commit()
+        self.session.refresh(model)
+        return model

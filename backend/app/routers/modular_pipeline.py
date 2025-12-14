@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_pipeline_step_repository
-from app.core.permissions import get_current_user_required, require_role
+from app.core.permissions import get_current_user_required, require_role, require_admin
 from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import OCREngineEnum
@@ -185,6 +185,8 @@ class ModelResponse(BaseModel):
     max_tokens: int | None
     supports_vision: bool
     is_enabled: bool
+    price_input_per_1m_tokens: float | None
+    price_output_per_1m_tokens: float | None
 
     # Pydantic V2 configuration
     model_config = ConfigDict(from_attributes=True)
@@ -194,6 +196,17 @@ class StepReorderRequest(BaseModel):
     """Request model for reordering steps"""
 
     step_ids: list[int] = Field(..., min_items=1)
+
+
+class ModelUpdateRequest(BaseModel):
+    """Request model for updating AI model pricing"""
+
+    price_input_per_1m_tokens: float | None = Field(
+        None, ge=0, description="Price per 1 million input tokens (USD)"
+    )
+    price_output_per_1m_tokens: float | None = Field(
+        None, ge=0, description="Price per 1 million output tokens (USD)"
+    )
 
 
 class EngineStatusResponse(BaseModel):
@@ -665,6 +678,51 @@ async def get_model(
         )
 
     return model
+
+
+@router.put("/models/{model_id}", response_model=ModelResponse)
+async def update_model(
+    model_id: int,
+    update_request: ModelUpdateRequest,
+    db: Session = Depends(get_session),
+    current_user: UserDB = Depends(require_admin()),
+):
+    """
+    Update AI model pricing information.
+    Requires admin authentication.
+    """
+
+    manager = ModularPipelineManager(db)
+
+    try:
+        # Get existing model to check if it exists
+        existing_model = manager.get_model(model_id)
+        if not existing_model:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Model {model_id} not found"
+            )
+
+        # Prepare update data (include all fields from request, even if None)
+        update_data = {
+            "price_input_per_1m_tokens": update_request.price_input_per_1m_tokens,
+            "price_output_per_1m_tokens": update_request.price_output_per_1m_tokens,
+        }
+
+        # Update model
+        updated_model = manager.update_model(model_id, update_data)
+        if not updated_model:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Model {model_id} not found"
+            )
+
+        logger.info(f"✅ Updated model pricing: {updated_model.name} (ID: {model_id})")
+        return updated_model
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to update model {model_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
 
 
 # ==================== DOCUMENT CLASS ENDPOINTS ====================

@@ -14,6 +14,7 @@ import {
   Users,
   DollarSign,
   MessageSquare,
+  Brain,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import PipelineBuilder from '../components/settings/PipelineBuilder';
@@ -23,13 +24,14 @@ import PrivacyFilterDashboard from '../components/settings/PrivacyFilterDashboar
 import UserManagement from '../components/settings/UserManagement';
 import CostDashboard from '../components/settings/CostDashboard';
 import FeedbackDashboard from '../components/settings/FeedbackDashboard';
+import AIModelManager from '../components/settings/AIModelManager';
 import Footer from '../components/Footer';
 import { pipelineApi } from '../services/pipelineApi';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { user, tokens, logout, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'pipeline' | 'classes' | 'privacy' | 'costs' | 'feedback' | 'users' | 'monitoring'>('pipeline');
+  const [activeTab, setActiveTab] = useState<'pipeline' | 'classes' | 'privacy' | 'costs' | 'feedback' | 'users' | 'monitoring' | 'models'>('pipeline');
   const [tokenReady, setTokenReady] = useState(false);
 
   // Sync token with pipeline API when authenticated
@@ -61,6 +63,7 @@ const Settings: React.FC = () => {
     { id: 'feedback', label: 'Feedback', icon: MessageSquare },
     { id: 'users', label: 'Benutzer', icon: Users },
     { id: 'monitoring', label: 'Monitoring', icon: Activity },
+    { id: 'models', label: 'AI Modelle', icon: Brain },
   ] as const;
 
   return (
@@ -182,6 +185,7 @@ const Settings: React.FC = () => {
                     {activeTab === 'feedback' && <FeedbackDashboard />}
                     {activeTab === 'users' && <UserManagement />}
                     {activeTab === 'monitoring' && <FlowerDashboard />}
+                    {activeTab === 'models' && <AIModelManager />}
                   </>
                 )}
               </div>
