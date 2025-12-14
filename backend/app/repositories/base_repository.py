@@ -280,9 +280,12 @@ class EncryptedRepositoryMixin:
                     if self._is_binary_field(field):
                         # Binary field: use binary encryption
                         if isinstance(encrypted_data[field], bytes):
-                            encrypted_data[field] = encryptor.encrypt_binary_field(
+                            # Encrypt binary → returns base64-encoded string
+                            encrypted_str = encryptor.encrypt_binary_field(
                                 encrypted_data[field]
                             )
+                            # Convert encrypted string to bytes for LargeBinary column
+                            encrypted_data[field] = encrypted_str.encode("utf-8") if encrypted_str else None
                             logger.debug(f"Encrypted binary field: {field}")
                         else:
                             # If it's already a string (from database), treat as text
@@ -324,7 +327,12 @@ class EncryptedRepositoryMixin:
                     try:
                         if self._is_binary_field(field):
                             # Binary field: use binary decryption
-                            decrypted_value = encryptor.decrypt_binary_field(encrypted_value)
+                            # First decode bytes to string if needed
+                            if isinstance(encrypted_value, bytes):
+                                encrypted_value_str = encrypted_value.decode("utf-8")
+                            else:
+                                encrypted_value_str = str(encrypted_value)
+                            decrypted_value = encryptor.decrypt_binary_field(encrypted_value_str)
                             setattr(entity, field, decrypted_value)
                             logger.debug(f"Decrypted binary field: {field}")
                         else:
