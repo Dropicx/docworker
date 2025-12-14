@@ -269,7 +269,12 @@ class EncryptedRepositoryMixin:
         Returns:
             New dictionary with encrypted fields
         """
-        if not self.encrypted_fields or not encryptor.is_enabled():
+        if not self.encrypted_fields:
+            logger.debug("No encrypted fields defined for this repository")
+            return data
+        
+        if not encryptor.is_enabled():
+            logger.warning("Encryption is disabled - fields will be stored in plaintext!")
             return data
 
         encrypted_data = data.copy()
@@ -286,7 +291,7 @@ class EncryptedRepositoryMixin:
                             )
                             # Convert encrypted string to bytes for LargeBinary column
                             encrypted_data[field] = encrypted_str.encode("utf-8") if encrypted_str else None
-                            logger.debug(f"Encrypted binary field: {field}")
+                            logger.info(f"✅ Encrypted binary field: {field} (original: {len(encrypted_data[field]) if isinstance(data[field], bytes) else 0} bytes → encrypted: {len(encrypted_data[field]) if encrypted_data[field] else 0} bytes)")
                         else:
                             # If it's already a string (from database), treat as text
                             encrypted_data[field] = encryptor.encrypt_field(
@@ -295,10 +300,12 @@ class EncryptedRepositoryMixin:
                             logger.debug(f"Encrypted field (as text): {field}")
                     else:
                         # Text field: use text encryption
+                        original_length = len(str(encrypted_data[field])) if encrypted_data[field] else 0
                         encrypted_data[field] = encryptor.encrypt_field(
                             str(encrypted_data[field])
                         )
-                        logger.debug(f"Encrypted text field: {field}")
+                        encrypted_length = len(str(encrypted_data[field])) if encrypted_data[field] else 0
+                        logger.info(f"✅ Encrypted text field: {field} (original: {original_length} chars → encrypted: {encrypted_length} chars)")
                 except Exception as e:
                     logger.error(f"Failed to encrypt field {field}: {e}")
                     raise
@@ -327,23 +334,50 @@ class EncryptedRepositoryMixin:
                     try:
                         if self._is_binary_field(field):
                             # Binary field: use binary decryption
-                            # First decode bytes to string if needed
+                            # First check if it's encrypted or plaintext binary
                             if isinstance(encrypted_value, bytes):
-                                encrypted_value_str = encrypted_value.decode("utf-8")
+                                # Try to decode as UTF-8 to check if it's encrypted
+                                try:
+                                    encrypted_value_str = encrypted_value.decode("utf-8")
+                                    # Check if it looks like an encrypted Fernet token
+                                    if encryptor.is_encrypted(encrypted_value_str):
+                                        # It's encrypted - decrypt it
+                                        decrypted_value = encryptor.decrypt_binary_field(encrypted_value_str)
+                                        setattr(entity, field, decrypted_value)
+                                        logger.debug(f"Decrypted binary field: {field}")
+                                    else:
+                                        # Not encrypted - return as-is (plaintext binary)
+                                        logger.debug(f"Binary field {field} is not encrypted, returning as-is")
+                                        # Already set correctly, no need to change
+                                except UnicodeDecodeError:
+                                    # Can't decode as UTF-8 - it's plaintext binary, not encrypted
+                                    logger.debug(f"Binary field {field} is plaintext binary (not encrypted), returning as-is")
+                                    # Already set correctly, no need to change
                             else:
-                                encrypted_value_str = str(encrypted_value)
-                            decrypted_value = encryptor.decrypt_binary_field(encrypted_value_str)
-                            setattr(entity, field, decrypted_value)
-                            logger.debug(f"Decrypted binary field: {field}")
+                                # It's already a string - try to decrypt
+                                if encryptor.is_encrypted(str(encrypted_value)):
+                                    decrypted_value = encryptor.decrypt_binary_field(str(encrypted_value))
+                                    setattr(entity, field, decrypted_value)
+                                    logger.debug(f"Decrypted binary field: {field}")
+                                else:
+                                    # Not encrypted - convert to bytes if needed
+                                    logger.debug(f"Binary field {field} is not encrypted")
+                                    # Already set correctly, no need to change
                         else:
                             # Text field: use text decryption
-                            decrypted_value = encryptor.decrypt_field(encrypted_value)
-                            setattr(entity, field, decrypted_value)
-                            logger.debug(f"Decrypted text field: {field}")
+                            # Check if it's encrypted first
+                            if encryptor.is_encrypted(str(encrypted_value)):
+                                decrypted_value = encryptor.decrypt_field(encrypted_value)
+                                setattr(entity, field, decrypted_value)
+                                logger.debug(f"Decrypted text field: {field}")
+                            else:
+                                # Not encrypted - return as-is
+                                logger.debug(f"Text field {field} is not encrypted, returning as-is")
+                                # Already set correctly, no need to change
                     except Exception as e:
                         logger.error(f"Failed to decrypt field {field}: {e}")
-                        # Don't raise - return encrypted value for debugging
-                        logger.warning(f"Returning encrypted value for {field}")
+                        # Don't raise - return value as-is (might be plaintext)
+                        logger.warning(f"Returning value as-is for {field} (may be plaintext or encrypted)")
 
         return entity
 
