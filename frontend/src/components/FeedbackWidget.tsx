@@ -142,6 +142,8 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
 
       await feedbackApi.submitFeedback(submission);
       setIsSubmitted(true);
+      // Mark feedback as submitted to prevent cleanup from running
+      setAlreadySubmitted(true);
       onFeedbackSubmitted?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Feedback konnte nicht gesendet werden.');

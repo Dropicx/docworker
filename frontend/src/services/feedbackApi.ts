@@ -79,17 +79,24 @@ class FeedbackApiService {
   /**
    * Cleanup content for a processing job (called when user leaves)
    * Uses sendBeacon for reliability on page close
+   * Note: Renamed endpoint from "cleanup" to "clear" to avoid ad blocker blocking
    * @param processingId - The processing job ID
    */
   cleanupContent(processingId: string): void {
     // Use sendBeacon for reliable delivery on page unload
+    // Note: Using "clear" instead of "cleanup" to avoid ad blocker blocking
+    const url = `${API_BASE}/clear/${processingId}`;
     if (navigator.sendBeacon) {
-      navigator.sendBeacon(`${API_BASE}/cleanup/${processingId}`);
+      const blob = new Blob([], { type: 'application/json' });
+      navigator.sendBeacon(url, blob);
     } else {
       // Fallback for older browsers
-      fetch(`${API_BASE}/cleanup/${processingId}`, {
+      fetch(url, {
         method: 'POST',
         keepalive: true,
+        headers: {
+          'Content-Type': 'application/json',
+        },
       }).catch(() => {
         // Ignore errors - cleanup is best effort
       });

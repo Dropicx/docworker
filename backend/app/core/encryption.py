@@ -401,7 +401,7 @@ class FieldEncryptor:
             # Returns: "gAAAAABk1x2y..." (base64-encoded Fernet token)
         """
         if not self.is_enabled():
-            logger.debug("Encryption disabled, returning base64-encoded binary")
+            logger.warning("⚠️ Encryption disabled in encrypt_binary_field, returning base64-encoded binary (NOT ENCRYPTED)")
             if binary_data is None:
                 return None
             return base64.b64encode(binary_data).decode("ascii")
@@ -411,16 +411,33 @@ class FieldEncryptor:
             return None
 
         try:
+            binary_size = len(binary_data)
+            logger.debug(f"   encrypt_binary_field: Input {binary_size} bytes")
+            
             # Step 1: Convert binary to base64 string
             base64_string = base64.b64encode(binary_data).decode("ascii")
+            base64_size = len(base64_string)
+            logger.debug(f"   encrypt_binary_field: Base64 encoded to {base64_size} chars")
 
             # Step 2: Encrypt the base64 string (treat as text)
             encrypted_string = self.encrypt_field(base64_string)
-
+            
+            if encrypted_string:
+                encrypted_size = len(encrypted_string)
+                logger.debug(f"   encrypt_binary_field: Encrypted to {encrypted_size} chars")
+                
+                # Verify it's actually encrypted
+                if encrypted_string.startswith("gAAAAA"):
+                    logger.debug(f"   ✅ encrypt_binary_field: Verified Fernet token format")
+                else:
+                    logger.warning(f"   ⚠️ encrypt_binary_field: Doesn't look like Fernet token: {encrypted_string[:20]}...")
+            
             return encrypted_string
 
         except Exception as e:
             logger.error(f"Binary encryption failed: {e}")
+            import traceback
+            logger.error(traceback.format_exc())
             raise EncryptionError(f"Failed to encrypt binary field: {e}") from e
 
     def decrypt_binary_field(self, encrypted_string: str | None) -> bytes | None:

@@ -254,6 +254,7 @@ async def check_feedback_exists(
 
 
 @router.post("/cleanup/{processing_id}", response_model=CleanupResponse)
+@router.post("/clear/{processing_id}", response_model=CleanupResponse)  # Alias to avoid ad blocker blocking
 async def cleanup_content(
     processing_id: str,
     db: Session = Depends(get_session),
@@ -263,6 +264,10 @@ async def cleanup_content(
 
     Called via sendBeacon when user leaves page without providing feedback.
     If feedback already exists, content is preserved.
+    
+    Note: Endpoint has two routes:
+    - /cleanup/{processing_id} (original)
+    - /clear/{processing_id} (alias to avoid ad blocker blocking)
     """
     try:
         service = FeedbackService(db)

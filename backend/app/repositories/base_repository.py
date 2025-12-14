@@ -270,28 +270,72 @@ class EncryptedRepositoryMixin:
             New dictionary with encrypted fields
         """
         if not self.encrypted_fields:
-            logger.debug("No encrypted fields defined for this repository")
+            logger.debug(f"No encrypted fields defined for {self.model.__name__}")
             return data
         
         if not encryptor.is_enabled():
-            logger.warning("Encryption is disabled - fields will be stored in plaintext!")
+            logger.warning(f"⚠️ Encryption is disabled for {self.model.__name__} - fields will be stored in plaintext!")
             return data
 
+        logger.info(f"🔐 Encrypting fields for {self.model.__name__}: {self.encrypted_fields}")
+        logger.info(f"   Encryption enabled: {encryptor.is_enabled()}")
         encrypted_data = data.copy()
 
         for field in self.encrypted_fields:
             if field in encrypted_data and encrypted_data[field] is not None:
                 try:
                     if self._is_binary_field(field):
+                        logger.debug(f"   Field {field} is binary (LargeBinary)")
                         # Binary field: use binary encryption
                         if isinstance(encrypted_data[field], bytes):
+                            original_binary = encrypted_data[field]
+                            original_size = len(original_binary)
+                            logger.info(f"   📦 Encrypting {field}: {original_size} bytes (type: bytes)")
+                            
+                            # Show first few bytes of original
+                            original_preview = original_binary[:20].hex()
+                            logger.debug(f"   Original preview (hex): {original_preview}...")
+                            
                             # Encrypt binary → returns base64-encoded string
-                            encrypted_str = encryptor.encrypt_binary_field(
-                                encrypted_data[field]
-                            )
-                            # Convert encrypted string to bytes for LargeBinary column
-                            encrypted_data[field] = encrypted_str.encode("utf-8") if encrypted_str else None
-                            logger.info(f"✅ Encrypted binary field: {field} (original: {len(encrypted_data[field]) if isinstance(data[field], bytes) else 0} bytes → encrypted: {len(encrypted_data[field]) if encrypted_data[field] else 0} bytes)")
+                            encrypted_str = encryptor.encrypt_binary_field(original_binary)
+                            
+                            if encrypted_str:
+                                logger.debug(f"   Encryption returned string of length: {len(encrypted_str)}")
+                                
+                                # Verify encryption actually happened
+                                try:
+                                    original_as_str = original_binary.decode("utf-8", errors="ignore")
+                                    if encrypted_str == original_as_str:
+                                        logger.error(f"❌ Encryption returned same value as input for {field}!")
+                                        raise ValueError(f"Encryption failed - returned plaintext")
+                                except UnicodeDecodeError:
+                                    # Can't decode as UTF-8, so definitely different
+                                    pass
+                                
+                                # Verify it looks encrypted (should start with Fernet token prefix)
+                                preview = encrypted_str[:20]
+                                logger.debug(f"   Encrypted preview: {preview}...")
+                                if not preview.startswith("gAAAAA"):
+                                    logger.warning(f"   ⚠️ Encrypted data doesn't look like Fernet token: {preview}...")
+                                else:
+                                    logger.debug(f"   ✅ Verified: Encrypted token starts with 'gAAAAA' (Fernet format)")
+                                
+                                # Convert encrypted string to bytes for LargeBinary column
+                                encrypted_bytes = encrypted_str.encode("utf-8")
+                                encrypted_size = len(encrypted_bytes)
+                                
+                                # Store encrypted bytes
+                                encrypted_data[field] = encrypted_bytes
+                                
+                                size_increase = (encrypted_size / original_size * 100) if original_size > 0 else 0
+                                logger.info(f"✅ Encrypted binary field: {field} ({original_size} bytes → {encrypted_size} bytes, {size_increase:.1f}% size increase)")
+                                
+                                # Final verification - check what we're about to store
+                                stored_preview = encrypted_bytes[:50].decode("utf-8", errors="ignore")
+                                logger.debug(f"   Will store (first 50 chars): {stored_preview}...")
+                            else:
+                                logger.error(f"❌ Encryption returned None for {field}!")
+                                raise ValueError(f"Encryption failed for {field} - returned None")
                         else:
                             # If it's already a string (from database), treat as text
                             encrypted_data[field] = encryptor.encrypt_field(
