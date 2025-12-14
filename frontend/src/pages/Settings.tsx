@@ -13,6 +13,7 @@ import {
   Shield,
   Users,
   DollarSign,
+  MessageSquare,
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import PipelineBuilder from '../components/settings/PipelineBuilder';
@@ -21,13 +22,14 @@ import FlowerDashboard from '../components/settings/FlowerDashboard';
 import PrivacyFilterDashboard from '../components/settings/PrivacyFilterDashboard';
 import UserManagement from '../components/settings/UserManagement';
 import CostDashboard from '../components/settings/CostDashboard';
+import FeedbackDashboard from '../components/settings/FeedbackDashboard';
 import Footer from '../components/Footer';
 import { pipelineApi } from '../services/pipelineApi';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { user, tokens, logout, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'pipeline' | 'classes' | 'privacy' | 'costs' | 'users' | 'monitoring'>('pipeline');
+  const [activeTab, setActiveTab] = useState<'pipeline' | 'classes' | 'privacy' | 'costs' | 'feedback' | 'users' | 'monitoring'>('pipeline');
   const [tokenReady, setTokenReady] = useState(false);
 
   // Sync token with pipeline API when authenticated
@@ -56,6 +58,7 @@ const Settings: React.FC = () => {
     { id: 'classes', label: 'Dokumentklassen', icon: FileText },
     { id: 'privacy', label: 'Datenschutz-Filter', icon: Shield },
     { id: 'costs', label: 'Kosten', icon: DollarSign },
+    { id: 'feedback', label: 'Feedback', icon: MessageSquare },
     { id: 'users', label: 'Benutzer', icon: Users },
     { id: 'monitoring', label: 'Monitoring', icon: Activity },
   ] as const;
@@ -176,6 +179,7 @@ const Settings: React.FC = () => {
                     {activeTab === 'classes' && <DocumentClassManager />}
                     {activeTab === 'privacy' && <PrivacyFilterDashboard />}
                     {activeTab === 'costs' && <CostDashboard />}
+                    {activeTab === 'feedback' && <FeedbackDashboard />}
                     {activeTab === 'users' && <UserManagement />}
                     {activeTab === 'monitoring' && <FlowerDashboard />}
                   </>

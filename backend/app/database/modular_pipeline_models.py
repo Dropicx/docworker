@@ -319,6 +319,11 @@ class PipelineJobDB(Base):
     ocr_time_seconds = Column(Float, nullable=True)
     ai_processing_time_seconds = Column(Float, nullable=True)
 
+    # GDPR Data Retention / Feedback tracking (Issue #47)
+    has_feedback = Column(Boolean, default=False, nullable=False, index=True)
+    data_consent_given = Column(Boolean, default=False, nullable=False, index=True)
+    content_cleared_at = Column(DateTime, nullable=True)  # When content was cleared for GDPR
+
     # Metadata
     created_at = Column(DateTime, default=func.now(), nullable=False)
     updated_at = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
@@ -382,3 +387,38 @@ class PipelineStepExecutionDB(Base):
 
     def __repr__(self):
         return f"<PipelineStepExecutionDB(job_id='{self.job_id}', step='{self.step_name}', status='{self.status}')>"
+
+
+class UserFeedbackDB(Base):
+    """
+    User feedback for document translations (Issue #47).
+    Stores feedback ratings and consent status.
+    Content is only preserved when user provides feedback AND gives consent.
+    """
+
+    __tablename__ = "user_feedback"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Link to processing job
+    processing_id = Column(String(255), nullable=False, unique=True, index=True)
+
+    # Overall rating (required, 1-5 stars)
+    overall_rating = Column(Integer, nullable=False)
+
+    # Detailed ratings (optional, stored as JSON)
+    # { "clarity": 4, "accuracy": 5, "formatting": 3, "speed": 5 }
+    detailed_ratings = Column(JSON, nullable=True)
+
+    # Optional text comment
+    comment = Column(Text, nullable=True)
+
+    # Explicit GDPR consent
+    data_consent_given = Column(Boolean, nullable=False)
+
+    # Metadata
+    submitted_at = Column(DateTime, default=func.now(), nullable=False)
+    client_ip = Column(String(100), nullable=True)
+
+    def __repr__(self):
+        return f"<UserFeedbackDB(processing_id='{self.processing_id}', rating={self.overall_rating}, consent={self.data_consent_given})>"

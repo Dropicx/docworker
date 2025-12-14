@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Copy,
   Download,
@@ -18,6 +18,8 @@ import ApiService from '../services/api';
 import { TranslationResult as TranslationData } from '../types/api';
 import { exportToPDF } from '../utils/pdfExportAdvanced';
 import { useAuth } from '../contexts/AuthContext';
+import FeedbackWidget from './FeedbackWidget';
+import { feedbackApi } from '../services/feedbackApi';
 
 interface TranslationResultProps {
   result: TranslationData;
@@ -34,6 +36,28 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
   const [activeTab, setActiveTab] = useState<'simplified' | 'language'>(
     result.language_translated_text ? 'language' : 'simplified'
   );
+  // Track if feedback was submitted (Issue #47)
+  const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  // Handle cleanup when "Neue Übersetzung" is clicked without feedback (Issue #47)
+  const handleNewTranslation = useCallback(() => {
+    if (!feedbackSubmitted) {
+      // Cleanup content since user is leaving without feedback
+      feedbackApi.cleanupContent(result.processing_id);
+    }
+    onNewTranslation();
+  }, [feedbackSubmitted, result.processing_id, onNewTranslation]);
+
+  // Cleanup on unmount if feedback wasn't submitted (Issue #47)
+  useEffect(() => {
+    return () => {
+      // Note: The FeedbackWidget also handles beforeunload cleanup
+      // This is a safety net for programmatic navigation
+      if (!feedbackSubmitted) {
+        feedbackApi.cleanupContent(result.processing_id);
+      }
+    };
+  }, [feedbackSubmitted, result.processing_id]);
 
   const handleCopy = async (text: string, type: 'original' | 'translated' | 'language') => {
     try {
@@ -539,9 +563,15 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
         </div>
       )}
 
+      {/* Feedback Widget (Issue #47) */}
+      <FeedbackWidget
+        processingId={result.processing_id}
+        onFeedbackSubmitted={() => setFeedbackSubmitted(true)}
+      />
+
       {/* Action Button - Centered */}
       <div className="flex justify-center pt-6">
-        <button onClick={onNewTranslation} className="btn-primary group">
+        <button onClick={handleNewTranslation} className="btn-primary group">
           <RefreshCw className="w-5 h-5 transition-transform duration-200 group-hover:rotate-180 flex-shrink-0" />
           <span>Neues Dokument übersetzen</span>
         </button>

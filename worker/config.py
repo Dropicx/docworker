@@ -43,6 +43,7 @@ CELERY_TASK_ROUTES = {
     'cleanup_celery_results': {'queue': 'maintenance'},
     'cleanup_old_files': {'queue': 'maintenance'},
     'database_maintenance': {'queue': 'maintenance'},
+    'cleanup_orphaned_content': {'queue': 'maintenance'},  # GDPR cleanup (Issue #47)
 }
 
 # ==================== RETRY CONFIGURATION ====================
@@ -132,6 +133,11 @@ CELERYBEAT_SCHEDULE = {
     'database-maintenance-daily': {
         'task': 'database_maintenance',
         'schedule': 86400.0,  # Run every 24 hours at midnight
+        'options': {'queue': 'maintenance'}
+    },
+    'cleanup-orphaned-content-hourly': {
+        'task': 'cleanup_orphaned_content',
+        'schedule': 3600.0,  # Run every hour - GDPR content cleanup (Issue #47)
         'options': {'queue': 'maintenance'}
     },
 }

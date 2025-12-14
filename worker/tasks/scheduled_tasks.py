@@ -272,3 +272,60 @@ def cleanup_old_files():
     except Exception as e:
         logger.error(f"❌ File cleanup error: {str(e)}")
         raise
+
+
+@celery_app.task(name='cleanup_orphaned_content')
+def cleanup_orphaned_content():
+    """
+    GDPR Compliance: Clean up document content from jobs without feedback (Issue #47).
+
+    Safety net task that runs hourly to catch edge cases where:
+    - sendBeacon failed when user left page
+    - Browser crashed before cleanup request was sent
+    - Network issues prevented cleanup request
+
+    Jobs that are:
+    - Completed more than 1 hour ago
+    - Have no feedback (has_feedback=False)
+    - Have not been cleared yet (content_cleared_at IS NULL)
+
+    Content is cleared but metadata is preserved for analytics.
+    """
+    logger.info("🔒 Running GDPR content cleanup for orphaned jobs...")
+
+    try:
+        import sys
+        sys.path.insert(0, '/app/backend')
+        from app.database.connection import get_session
+        from app.services.feedback_service import FeedbackService
+
+        # Get session from generator
+        session_gen = get_session()
+        session = next(session_gen)
+
+        try:
+            service = FeedbackService(session)
+
+            # Clean up content from jobs older than 1 hour without feedback
+            cleaned_count = service.cleanup_orphaned_content(older_than_hours=1)
+
+            if cleaned_count > 0:
+                logger.info(f"✅ GDPR cleanup complete: {cleaned_count} jobs had content cleared")
+            else:
+                logger.info("✅ GDPR cleanup: No orphaned content to clean")
+
+            return {
+                'status': 'completed',
+                'jobs_cleaned': cleaned_count
+            }
+
+        finally:
+            # Close the session generator
+            try:
+                next(session_gen)
+            except StopIteration:
+                pass
+
+    except Exception as e:
+        logger.error(f"❌ GDPR content cleanup error: {str(e)}")
+        raise
