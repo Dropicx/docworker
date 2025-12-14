@@ -353,7 +353,7 @@ const FeedbackDashboard: React.FC = () => {
           </div>
           <div className="flex items-baseline space-x-2">
             <span className="text-3xl font-bold text-primary-900">
-              {((stats?.consent_rate || 0) * 100).toFixed(0)}%
+              {(stats?.consent_rate || 0).toFixed(0)}%
             </span>
           </div>
         </div>

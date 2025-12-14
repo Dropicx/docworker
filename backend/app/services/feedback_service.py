@@ -226,13 +226,14 @@ class FeedbackService:
                 ),
             }
 
-            # Only include content if consent was given
-            if feedback.data_consent_given and job.result_data:
+            # Only include content if consent was given and content not cleared
+            if feedback.data_consent_given and job.result_data and not job.content_cleared_at:
                 result["job_data"]["original_text"] = job.result_data.get("original_text")
                 result["job_data"]["translated_text"] = job.result_data.get("translated_text")
                 result["job_data"]["language_translated_text"] = job.result_data.get(
                     "language_translated_text"
                 )
+                result["job_data"]["content_available"] = True
             else:
                 result["job_data"]["content_available"] = False
 
