@@ -49,7 +49,7 @@ class FeedbackService:
         Submit user feedback for a translation.
 
         If consent is given, content is preserved.
-        If consent is not given, content will be cleared by cleanup task.
+        If consent is not given, content is immediately cleared (GDPR compliance).
 
         Args:
             processing_id: The processing job ID
@@ -100,6 +100,13 @@ class FeedbackService:
 
         if not job:
             logger.warning(f"Job not found for processing_id: {processing_id}")
+        else:
+            # If consent was not given, immediately clear content (GDPR compliance)
+            if not data_consent_given:
+                logger.info(
+                    f"Clearing content for {processing_id} - consent not given"
+                )
+                self.job_feedback_repo.clear_content_for_job(processing_id)
 
         logger.info(
             f"Feedback submitted for {processing_id}: rating={overall_rating}, consent={data_consent_given}"

@@ -9,7 +9,11 @@ from datetime import datetime, timedelta
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.database.modular_pipeline_models import PipelineJobDB, UserFeedbackDB
+from app.database.modular_pipeline_models import (
+    PipelineJobDB,
+    PipelineStepExecutionDB,
+    UserFeedbackDB,
+)
 from app.repositories.base_repository import BaseRepository
 
 
@@ -242,9 +246,43 @@ class PipelineJobFeedbackRepository:
         self.db.refresh(job)
         return job
 
+    def clear_content_for_step_executions(self, job_id: str) -> int:
+        """
+        Clear document content from step executions for a job (GDPR compliance).
+        Preserves metadata like execution time, token counts, confidence scores.
+
+        Args:
+            job_id: Job ID (UUID string) to clear step executions for
+
+        Returns:
+            Number of step executions cleared
+        """
+        step_executions = (
+            self.db.query(PipelineStepExecutionDB)
+            .filter_by(job_id=job_id)
+            .all()
+        )
+
+        cleared_count = 0
+        for step_exec in step_executions:
+            # Clear text content fields
+            step_exec.input_text = None
+            step_exec.output_text = None
+            step_exec.prompt_used = None
+            step_exec.error_message = None
+
+            # Clear step_metadata JSON (may contain text content)
+            # Preserve structure by setting to empty dict rather than None
+            step_exec.step_metadata = {}
+
+            cleared_count += 1
+
+        # Note: No commit here - let the caller commit to ensure atomicity
+        return cleared_count
+
     def clear_content_for_job(self, processing_id: str) -> PipelineJobDB | None:
         """
-        Clear document content from a job (GDPR compliance).
+        Clear document content from a job and its step executions (GDPR compliance).
         Preserves metadata like costs, timing, document type.
 
         Args:
@@ -272,6 +310,10 @@ class PipelineJobFeedbackRepository:
             if "language_translated_text" in result_data:
                 result_data["language_translated_text"] = "[Content cleared - GDPR]"
             job.result_data = result_data
+
+        # Clear content from all step executions for this job
+        # Use job_id (UUID string) to find related step executions
+        self.clear_content_for_step_executions(job.job_id)
 
         job.content_cleared_at = datetime.now()
 
