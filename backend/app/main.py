@@ -22,6 +22,7 @@ from app.routers.audit import router as audit_router
 from app.routers.auth import router as auth_router
 from app.routers.modular_pipeline import router as modular_pipeline_router
 from app.routers.monitoring import router as monitoring_router
+from app.routers.cost_statistics import router as cost_statistics_router
 from app.routers.privacy_metrics import router as privacy_metrics_router
 from app.routers.process_multi_file import router as multi_file_router
 from app.routers.settings_auth import router as settings_auth_router
@@ -250,6 +251,9 @@ app.include_router(
 app.include_router(
     privacy_metrics_router, tags=["privacy"]
 )  # Privacy filter metrics and monitoring (Issue #35)
+app.include_router(
+    cost_statistics_router, tags=["cost-statistics"]
+)  # Cost statistics dashboard (Issue #51)
 
 
 @app.get("/")
