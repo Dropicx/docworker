@@ -378,6 +378,99 @@ class FieldEncryptor:
         # Re-encrypt with current key
         return self.encrypt_field(decrypted)
 
+    def encrypt_binary_field(self, binary_data: bytes | None) -> str | None:
+        """
+        Encrypt a binary field (e.g., file content) by converting to base64 first.
+
+        Binary data is first base64-encoded to a string, then encrypted using Fernet.
+        This allows storing encrypted binary data as text in the database.
+
+        Args:
+            binary_data: Binary data to encrypt (bytes or None)
+
+        Returns:
+            Base64-encoded encrypted value as string, or None if input is None
+
+        Raises:
+            EncryptionError: If encryption fails
+
+        Example:
+            with open("document.pdf", "rb") as f:
+                file_content = f.read()
+            encrypted = encryptor.encrypt_binary_field(file_content)
+            # Returns: "gAAAAABk1x2y..." (base64-encoded Fernet token)
+        """
+        if not self.is_enabled():
+            logger.debug("Encryption disabled, returning base64-encoded binary")
+            if binary_data is None:
+                return None
+            return base64.b64encode(binary_data).decode("ascii")
+
+        # Handle None
+        if binary_data is None:
+            return None
+
+        try:
+            # Step 1: Convert binary to base64 string
+            base64_string = base64.b64encode(binary_data).decode("ascii")
+
+            # Step 2: Encrypt the base64 string (treat as text)
+            encrypted_string = self.encrypt_field(base64_string)
+
+            return encrypted_string
+
+        except Exception as e:
+            logger.error(f"Binary encryption failed: {e}")
+            raise EncryptionError(f"Failed to encrypt binary field: {e}") from e
+
+    def decrypt_binary_field(self, encrypted_string: str | None) -> bytes | None:
+        """
+        Decrypt a binary field by decrypting then base64-decoding.
+
+        Args:
+            encrypted_string: Base64-encoded encrypted value (str or None)
+
+        Returns:
+            Decrypted binary data (bytes), or None if input is None
+
+        Raises:
+            DecryptionError: If decryption fails
+
+        Example:
+            encrypted = "gAAAAABk1x2y..."  # From encrypt_binary_field()
+            binary_data = encryptor.decrypt_binary_field(encrypted)
+            # Returns: b'%PDF-1.4...' (original binary data)
+        """
+        if not self.is_enabled():
+            logger.debug("Encryption disabled, returning base64-decoded binary")
+            if encrypted_string is None:
+                return None
+            try:
+                return base64.b64decode(encrypted_string.encode("ascii"))
+            except Exception:
+                # If it's not base64, return as-is (backward compatibility)
+                return encrypted_string.encode("utf-8") if encrypted_string else None
+
+        # Handle None
+        if encrypted_string is None:
+            return None
+
+        try:
+            # Step 1: Decrypt the encrypted string (returns base64 string)
+            base64_string = self.decrypt_field(encrypted_string)
+
+            if base64_string is None:
+                return None
+
+            # Step 2: Decode base64 string back to binary
+            binary_data = base64.b64decode(base64_string.encode("ascii"))
+
+            return binary_data
+
+        except Exception as e:
+            logger.error(f"Binary decryption failed: {e}")
+            raise DecryptionError(f"Failed to decrypt binary field: {e}") from e
+
     @staticmethod
     def generate_searchable_hash(value: str | None) -> str | None:
         """

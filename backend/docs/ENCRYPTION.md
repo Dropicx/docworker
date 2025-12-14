@@ -8,6 +8,9 @@ DocTranslator implements **field-level encryption at rest** for all personally i
 - User `email` (PII)
 - User `full_name` (PII)
 - System settings marked with `is_encrypted=True`
+- `PipelineJobDB.file_content` (Binary PDF/image files)
+- `PipelineStepExecutionDB.input_text` (OCR extracted text)
+- `PipelineStepExecutionDB.output_text` (AI processed text)
 
 **Encryption Method:** AES-128-CBC via Fernet (Python cryptography library)
 
@@ -69,6 +72,16 @@ DocTranslator implements **field-level encryption at rest** for all personally i
 - `encrypted_fields = ['email', 'full_name']`
 - Uses email_searchable for efficient lookups
 
+**4. PipelineJobRepository** (`app/repositories/pipeline_job_repository.py`)
+- Inherits EncryptedRepositoryMixin
+- `encrypted_fields = ['file_content']`
+- Handles binary field encryption (converts binary → base64 → encrypt → store as UTF-8 bytes)
+
+**5. PipelineStepExecutionRepository** (`app/repositories/pipeline_step_execution_repository.py`)
+- Inherits EncryptedRepositoryMixin
+- `encrypted_fields = ['input_text', 'output_text']`
+- Handles text field encryption
+
 ---
 
 ## How It Works
@@ -102,7 +115,7 @@ user_service.create_user(email="patient@hospital.de", full_name="Max Müller")
    )
 ```
 
-### Decryption Flow (Read)
+### Decryption Flow (Read) - Text Fields
 
 ```python
 # Service layer code (unchanged)
@@ -122,6 +135,26 @@ user = user_repo.get_by_email("patient@hospital.de")
 
 4. Return to service:
    user.email = "patient@hospital.de"  # Plaintext
+```
+
+### Decryption Flow (Read) - Binary Fields
+
+```python
+# Service layer code (unchanged)
+job = job_repo.get_by_processing_id("processing-123")
+
+# Repository intercepts (PipelineJobRepository.get_by_processing_id)
+1. Query database:
+   SELECT * FROM pipeline_jobs WHERE processing_id = 'processing-123'
+
+2. Detect binary field and decrypt:
+   encrypted_str = db_job.file_content.decode("utf-8")
+   base64_str = Fernet.decrypt(encrypted_str)
+   binary_data = base64.b64decode(base64_str)
+   → b'%PDF-1.4...'
+
+3. Return to service:
+   job.file_content = b'%PDF-1.4...'  # Plaintext binary
 ```
 
 ### Why Searchable Hashes?
@@ -232,6 +265,48 @@ CREATE TABLE users (
 -- Indexes for efficient encrypted field lookup
 CREATE INDEX idx_users_email_searchable ON users(email_searchable);
 CREATE INDEX idx_users_full_name_searchable ON users(full_name_searchable);
+```
+
+### Pipeline Jobs Table
+
+```sql
+CREATE TABLE pipeline_jobs (
+  id INTEGER PRIMARY KEY,
+
+  -- Encrypted document content
+  file_content BYTEA NOT NULL,  -- ENCRYPTED (binary PDF/image files)
+  -- Note: Encrypted content stored as UTF-8 bytes of base64-encoded Fernet token
+
+  -- Non-encrypted fields
+  job_id VARCHAR(255) NOT NULL UNIQUE,
+  processing_id VARCHAR(255) NOT NULL,
+  filename VARCHAR(255) NOT NULL,
+  file_type VARCHAR(50) NOT NULL,
+  file_size INTEGER NOT NULL,
+  -- ... other fields
+);
+
+-- Note: No searchable hash needed for file_content (not queried by content)
+```
+
+### Pipeline Step Executions Table
+
+```sql
+CREATE TABLE pipeline_step_executions (
+  id INTEGER PRIMARY KEY,
+
+  -- Encrypted text content
+  input_text TEXT,  -- ENCRYPTED (OCR extracted text)
+  output_text TEXT,  -- ENCRYPTED (AI processed text)
+
+  -- Non-encrypted fields
+  job_id VARCHAR(255) NOT NULL,
+  step_id INTEGER NOT NULL,
+  step_name VARCHAR(255) NOT NULL,
+  -- ... other fields
+);
+
+-- Note: No searchable hash needed for text fields (not queried by content)
 ```
 
 ### System Settings Table
@@ -404,6 +479,9 @@ WHERE email_searchable = '<hash>';
 ✅ **Email addresses** - Encrypted in database, decrypted in application
 ✅ **Full names** - Encrypted in database, decrypted in application
 ✅ **Sensitive system settings** - Optional encryption per setting
+✅ **Document file content** - Binary PDF/image files encrypted at rest
+✅ **OCR extracted text** - Input text from document processing encrypted
+✅ **AI processed text** - Output text from AI processing encrypted
 ✅ **Data at rest** - Protected if database is compromised
 
 ### What is NOT Protected

@@ -13,10 +13,12 @@ When a document is processed, the following data is stored in PostgreSQL:
 | Data Type | Stored? | Duration | Privacy Status |
 |-----------|---------|----------|----------------|
 | Original uploaded file | ✅ Yes | 24 hours | Binary (encrypted at rest) |
-| PII-cleaned OCR text | ✅ Yes | 24 hours | **Safe** - Sensitive data removed |
-| Translated output | ✅ Yes | 24 hours | **Safe** - No PII |
+| PII-cleaned OCR text | ✅ Yes | 24 hours | **Safe** - Sensitive data removed + encrypted at rest |
+| Translated output | ✅ Yes | 24 hours | **Safe** - No PII + encrypted at rest |
 | Processing metadata | ✅ Yes | 24 hours | Non-sensitive |
 | Client IP address | ✅ Yes | 24 hours | For security logging |
+
+**Note:** All document content (file_content, input_text, output_text) is encrypted at rest using field-level encryption, regardless of user consent status. Consent only determines retention (keep vs delete), not encryption.
 
 ### What Gets Removed
 
@@ -180,11 +182,21 @@ await emergency_cleanup()
 > The controller and processor shall implement appropriate technical and organisational measures to ensure a level of security appropriate to the risk.
 
 **Compliance**:
-- Encrypted transport (HTTPS)
-- Encrypted storage (Railway PostgreSQL)
+- Encrypted transport (HTTPS/TLS)
+- **Encrypted storage at rest** (field-level encryption for all document content)
+  - Binary files (file_content) encrypted using Fernet
+  - Text content (input_text, output_text) encrypted using Fernet
+  - Encryption is transparent to application layer
 - Secure file deletion
 - Limited retention period
 - Access logging
+
+**Encryption Details:**
+- All document content is encrypted when stored, regardless of user consent
+- Consent determines retention (keep vs delete), encryption is always applied
+- Binary fields: binary → base64 → encrypt → store as UTF-8 bytes
+- Text fields: text → encrypt → store as encrypted string
+- See `backend/docs/ENCRYPTION.md` for technical details
 
 ## Monitoring & Auditing
 

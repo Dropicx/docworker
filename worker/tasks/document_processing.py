@@ -35,6 +35,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
     # Import dependencies
     from app.database.connection import get_db_session
     from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus, OCRConfigurationDB
+    from app.repositories.pipeline_job_repository import PipelineJobRepository
     from app.services.modular_pipeline_executor import ModularPipelineExecutor
     from app.services.ocr_engine_manager import OCREngineManager
     from sqlalchemy.orm import Session
@@ -42,8 +43,9 @@ def process_medical_document(self, processing_id: str, options: dict = None):
     db: Session = next(get_db_session())
 
     try:
-        # Load job from database
-        job = db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
+        # Load job from database using repository (ensures file_content is decrypted)
+        job_repo = PipelineJobRepository(db)
+        job = job_repo.get_by_processing_id(processing_id)
 
         if not job:
             logger.error(f"❌ Job not found: {processing_id}")
@@ -60,15 +62,14 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             options = merged_options
             logger.info(f"📋 Processing options: {options}")
 
-        # Update job status to RUNNING
-        job.status = StepExecutionStatus.RUNNING
+        # Update job status to RUNNING (using repository to handle encryption)
+        update_data = {"status": StepExecutionStatus.RUNNING, "progress_percent": 0}
         # Preserve started_at from upload endpoint (includes queue time)
         # Only set if somehow missing (shouldn't happen in normal flow)
         if not job.started_at:
-            job.started_at = datetime.now()
+            update_data["started_at"] = datetime.now()
             logger.warning("⚠️ started_at was not set by upload endpoint, setting now")
-        job.progress_percent = 0
-        db.commit()
+        job = job_repo.update(job.id, **update_data)
 
         # Update Celery task state
         self.update_state(
@@ -209,12 +210,14 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                 logger.error(f"❌ Pipeline failed at step '{failed_step}': {error_msg}")
                 logger.error(f"   Error type: {error_type}, Step ID: {failed_step_id}")
 
-                # Store error details in job
-                job.status = StepExecutionStatus.FAILED
-                job.failed_at = datetime.now()
-                job.error_message = f"[{failed_step}] {error_msg}"
-                job.error_step_id = failed_step_id
-                db.commit()
+                # Store error details in job (using repository)
+                job = job_repo.update(
+                    job.id,
+                    status=StepExecutionStatus.FAILED,
+                    failed_at=datetime.now(),
+                    error_message=f"[{failed_step}] {error_msg}",
+                    error_step_id=failed_step_id,
+                )
 
                 # Update Celery state with proper serializable error (avoid exception serialization issues)
                 self.update_state(
@@ -286,13 +289,16 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         }
 
         # ==================== FINALIZE JOB (SINGLE SOURCE OF TRUTH) ====================
-        job.status = StepExecutionStatus.COMPLETED
-        job.completed_at = datetime.now()
-        job.progress_percent = 100
-        job.result_data = result_data
-        job.total_execution_time_seconds = total_time
+        # Update job using repository (ensures proper handling of encrypted fields)
+        job = job_repo.update(
+            job.id,
+            status=StepExecutionStatus.COMPLETED,
+            completed_at=datetime.now(),
+            progress_percent=100,
+            result_data=result_data,
+            total_execution_time_seconds=total_time,
+        )
         # Note: job.ocr_time_seconds and job.ai_processing_time_seconds already committed earlier
-        db.commit()
 
         logger.info(f"✅ Document processed successfully: {processing_id}")
 
@@ -307,20 +313,25 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             }
         }
 
-    except SoftTimeLimitExceeded:
+    except SoftTimeLimitExceeded as e:
         # Handle timeout gracefully
         logger.error(f"⏱️ Processing timeout for document {processing_id} (exceeded soft time limit)")
 
-        # Update job status to FAILED with timeout message
-        if 'job' in locals():
-            job.status = StepExecutionStatus.FAILED
-            job.failed_at = datetime.now()
-            job.error_message = (
-                "Processing timeout: Document processing took too long (>18 minutes). "
-                "This may happen with very large or complex documents. "
-                "Please try with a smaller document or contact support."
-            )
-            db.commit()
+        # Update job status using repository
+        try:
+            if 'job' in locals() and job:
+                job_repo.update(
+                    job.id,
+                    status=StepExecutionStatus.FAILED,
+                    failed_at=datetime.now(),
+                    error_message=(
+                        "Processing timeout: Document processing took too long (>18 minutes). "
+                        "This may happen with very large or complex documents. "
+                        "Please try with a smaller document or contact support."
+                    ),
+                )
+        except Exception as update_error:
+            logger.error(f"Failed to update job status after timeout: {update_error}")
 
         # Update Celery state with proper serializable error
         self.update_state(
@@ -344,12 +355,17 @@ def process_medical_document(self, processing_id: str, options: dict = None):
     except Exception as e:
         logger.error(f"❌ Error processing document {processing_id}: {str(e)}")
 
-        # Update job status to FAILED
-        if 'job' in locals():
-            job.status = StepExecutionStatus.FAILED
-            job.failed_at = datetime.now()
-            job.error_message = str(e)
-            db.commit()
+        # Update job status to FAILED using repository
+        try:
+            if 'job' in locals() and job:
+                job_repo.update(
+                    job.id,
+                    status=StepExecutionStatus.FAILED,
+                    failed_at=datetime.now(),
+                    error_message=str(e),
+                )
+        except Exception as update_error:
+            logger.error(f"Failed to update job status after error: {update_error}")
 
         # Update Celery state
         self.update_state(

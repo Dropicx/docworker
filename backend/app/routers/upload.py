@@ -214,14 +214,17 @@ async def upload_document(
             "vision_llm_config": ocr_config_obj.vision_llm_config if ocr_config_obj else {},
         }
 
-        # Erstelle Pipeline-Job in der Datenbank
-        pipeline_job = PipelineJobDB(
+        # Erstelle Pipeline-Job in der Datenbank (using repository for encryption)
+        from app.repositories.pipeline_job_repository import PipelineJobRepository
+
+        job_repo = PipelineJobRepository(db)
+        pipeline_job = job_repo.create(
             job_id=job_id,
             processing_id=processing_id,
             filename=file.filename,
             file_type=file_type_str,
             file_size=file_size,
-            file_content=file_content,
+            file_content=file_content,  # Will be encrypted by repository
             client_ip=get_remote_address(request),
             status=StepExecutionStatus.PENDING,
             progress_percent=0,
@@ -229,10 +232,6 @@ async def upload_document(
             pipeline_config=pipeline_config,  # Snapshot der Pipeline-Konfiguration
             ocr_config=ocr_config,  # Snapshot der OCR-Konfiguration
         )
-
-        db.add(pipeline_job)
-        db.commit()
-        db.refresh(pipeline_job)
 
         # NOTE: Worker is NOT enqueued here anymore!
         # It will be enqueued when frontend calls /process/{id} with options (target_language, etc.)

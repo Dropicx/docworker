@@ -22,6 +22,9 @@ from app.database.modular_pipeline_models import (
 from app.repositories.available_model_repository import AvailableModelRepository
 from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
 from app.repositories.pipeline_job_repository import PipelineJobRepository
+from app.repositories.pipeline_step_execution_repository import (
+    PipelineStepExecutionRepository,
+)
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.services.ai_cost_tracker import AICostTracker
 from app.services.ai_logging_service import AILoggingService
@@ -48,6 +51,7 @@ class ModularPipelineExecutor:
         session: Session,
         job_repository: PipelineJobRepository | None = None,
         step_repository: PipelineStepRepository | None = None,
+        step_execution_repository: PipelineStepExecutionRepository | None = None,
         ocr_config_repository: OCRConfigurationRepository | None = None,
         model_repository: AvailableModelRepository | None = None,
     ):
@@ -58,12 +62,16 @@ class ModularPipelineExecutor:
             session: SQLAlchemy session (kept for backward compatibility)
             job_repository: Pipeline job repository (injected for clean architecture)
             step_repository: Pipeline step repository (injected for clean architecture)
+            step_execution_repository: Pipeline step execution repository (injected for encryption)
             ocr_config_repository: OCR configuration repository (injected for clean architecture)
             model_repository: Available model repository (injected for clean architecture)
         """
         self.session = session
         self.job_repository = job_repository or PipelineJobRepository(session)
         self.step_repository = step_repository or PipelineStepRepository(session)
+        self.step_execution_repository = (
+            step_execution_repository or PipelineStepExecutionRepository(session)
+        )
         self.ocr_config_repository = ocr_config_repository or OCRConfigurationRepository(session)
         self.model_repository = model_repository or AvailableModelRepository(session)
         self.ovh_client = OVHClient()
@@ -264,7 +272,7 @@ class ModularPipelineExecutor:
 
     def _log_step_execution(
         self,
-        job_id: int,
+        job_id: str,
         step: DynamicPipelineStepDB,
         status: StepExecutionStatus,
         input_text: str,
@@ -276,17 +284,20 @@ class ModularPipelineExecutor:
         """
         Centralized step execution logging.
 
+        Uses encrypted repository to ensure input_text and output_text are encrypted.
+
         Args:
-            job_id: Pipeline job ID
+            job_id: Pipeline job ID (UUID string)
             step: Pipeline step configuration
             status: Execution status (COMPLETED, FAILED, SKIPPED, TERMINATED)
-            input_text: Input text for the step
-            output_text: Output text from the step (None if failed)
+            input_text: Input text for the step (will be encrypted)
+            output_text: Output text from the step (will be encrypted, None if failed)
             step_start_time: Step start timestamp
             error: Error message if step failed
             metadata: Additional metadata to store
         """
-        step_execution = PipelineStepExecutionDB(
+        # Use repository to create step execution (ensures encryption of input_text/output_text)
+        self.step_execution_repository.create(
             job_id=job_id,
             step_id=step.id,
             step_name=step.name,
@@ -302,8 +313,6 @@ class ModularPipelineExecutor:
             error_message=error,
             step_metadata=metadata,
         )
-        self.session.add(step_execution)
-        self.session.commit()
 
     def _handle_stop_condition(
         self,

@@ -1,328 +1,224 @@
 """
 Pipeline Job Repository
 
-Handles database operations for pipeline jobs (document processing tasks).
+Provides data access methods for pipeline job management including CRUD operations
+and job status tracking.
+
+Includes transparent encryption for file_content field (binary PDF/image files).
 """
 
-from datetime import datetime, timedelta
+import logging
+from typing import Any
 
+from sqlalchemy import and_, or_
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
-from app.repositories.base_repository import BaseRepository
+from app.repositories.base_repository import BaseRepository, EncryptedRepositoryMixin
+
+logger = logging.getLogger(__name__)
 
 
-class PipelineJobRepository(BaseRepository[PipelineJobDB]):
+class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJobDB]):
     """
-    Repository for Pipeline Job operations.
+    Repository for pipeline job data access operations.
 
-    Provides specialized queries for managing document processing jobs
-    beyond basic CRUD operations.
+    Encrypted fields: file_content (binary PDF/image files)
+
+    IMPORTANT: EncryptedRepositoryMixin must come FIRST in inheritance order
+    so that its create()/update()/get*() methods override BaseRepository methods.
     """
+
+    # Define fields to encrypt
+    encrypted_fields = ["file_content"]
 
     def __init__(self, db: Session):
+        super().__init__(db, PipelineJobDB)
+
+    def get_by_job_id(self, job_id: str) -> PipelineJobDB | None:
         """
-        Initialize pipeline job repository.
+        Get pipeline job by job_id (UUID string).
 
         Args:
-            db: Database session
+            job_id: Job UUID string
+
+        Returns:
+            Pipeline job instance with decrypted file_content, or None if not found
         """
-        super().__init__(db, PipelineJobDB)
+        try:
+            job = self.db.query(PipelineJobDB).filter(PipelineJobDB.job_id == job_id).first()
+            return self._decrypt_entity(job)
+        except Exception as e:
+            logger.error(f"Error getting pipeline job by job_id={job_id}: {e}")
+            raise
 
     def get_by_processing_id(self, processing_id: str) -> PipelineJobDB | None:
         """
-        Get job by processing ID (UUID).
+        Get pipeline job by processing_id.
 
         Args:
-            processing_id: Unique processing identifier
+            processing_id: Processing ID string
 
         Returns:
-            Job instance or None if not found
+            Pipeline job instance with decrypted file_content, or None if not found
         """
-        return self.db.query(self.model).filter_by(processing_id=processing_id).first()
+        try:
+            job = (
+                self.db.query(PipelineJobDB)
+                .filter(PipelineJobDB.processing_id == processing_id)
+                .first()
+            )
+            return self._decrypt_entity(job)
+        except Exception as e:
+            logger.error(f"Error getting pipeline job by processing_id={processing_id}: {e}")
+            raise
 
-    def get_active_jobs(self) -> list[PipelineJobDB]:
-        """
-        Get all active (running) jobs.
-
-        Returns:
-            List of jobs with RUNNING status
-        """
-        return self.db.query(self.model).filter_by(status=StepExecutionStatus.RUNNING).all()
-
-    def get_pending_jobs(self) -> list[PipelineJobDB]:
-        """
-        Get all pending jobs waiting to start.
-
-        Returns:
-            List of jobs with PENDING status
-        """
-        return self.db.query(self.model).filter_by(status=StepExecutionStatus.PENDING).all()
-
-    def get_completed_jobs(
-        self, limit: int | None = None, since: datetime | None = None
+    def get_by_status(
+        self, status: StepExecutionStatus, skip: int = 0, limit: int = 100
     ) -> list[PipelineJobDB]:
         """
-        Get completed jobs with optional filters.
-
-        Args:
-            limit: Maximum number of jobs to return
-            since: Only return jobs completed after this time
-
-        Returns:
-            List of completed jobs
-        """
-        query = self.db.query(self.model).filter_by(status=StepExecutionStatus.COMPLETED)
-
-        if since:
-            query = query.filter(self.model.updated_at >= since)
-
-        query = query.order_by(self.model.updated_at.desc())
-
-        if limit:
-            query = query.limit(limit)
-
-        return query.all()
-
-    def get_failed_jobs(
-        self, limit: int | None = None, since: datetime | None = None
-    ) -> list[PipelineJobDB]:
-        """
-        Get failed jobs with optional filters.
-
-        Args:
-            limit: Maximum number of jobs to return
-            since: Only return jobs that failed after this time
-
-        Returns:
-            List of failed jobs
-        """
-        query = self.db.query(self.model).filter_by(status=StepExecutionStatus.FAILED)
-
-        if since:
-            query = query.filter(self.model.updated_at >= since)
-
-        query = query.order_by(self.model.updated_at.desc())
-
-        if limit:
-            query = query.limit(limit)
-
-        return query.all()
-
-    def get_jobs_by_status(self, status: StepExecutionStatus) -> list[PipelineJobDB]:
-        """
-        Get all jobs with a specific status.
+        Get pipeline jobs by status.
 
         Args:
             status: Job status to filter by
+            skip: Number of records to skip
+            limit: Maximum number of records to return
 
         Returns:
-            List of jobs with the given status
+            List of pipeline job instances with decrypted file_content
         """
-        return self.db.query(self.model).filter_by(status=status).all()
+        try:
+            jobs = (
+                self.db.query(PipelineJobDB)
+                .filter(PipelineJobDB.status == status)
+                .offset(skip)
+                .limit(limit)
+                .all()
+            )
+            return self._decrypt_entities(jobs)
+        except Exception as e:
+            logger.error(f"Error getting pipeline jobs by status={status}: {e}")
+            raise
 
-    def get_recent_jobs(self, hours: int = 24, limit: int | None = None) -> list[PipelineJobDB]:
+    def get_pending_jobs(self, limit: int = 100) -> list[PipelineJobDB]:
         """
-        Get jobs created in the last N hours.
+        Get pending pipeline jobs.
 
         Args:
-            hours: Number of hours to look back
-            limit: Maximum number of jobs to return
+            limit: Maximum number of records to return
 
         Returns:
-            List of recent jobs
+            List of pending pipeline job instances
         """
-        since = datetime.now() - timedelta(hours=hours)
-        query = (
-            self.db.query(self.model)
-            .filter(self.model.created_at >= since)
-            .order_by(self.model.created_at.desc())
-        )
+        return self.get_by_status(StepExecutionStatus.PENDING, skip=0, limit=limit)
 
-        if limit:
-            query = query.limit(limit)
+    def get_completed_jobs(
+        self, skip: int = 0, limit: int = 100
+    ) -> list[PipelineJobDB]:
+        """
+        Get completed pipeline jobs.
 
-        return query.all()
+        Args:
+            skip: Number of records to skip
+            limit: Maximum number of records to return
 
-    def update_job_status(
-        self, processing_id: str, status: StepExecutionStatus, error_message: str | None = None
+        Returns:
+            List of completed pipeline job instances
+        """
+        return self.get_by_status(StepExecutionStatus.COMPLETED, skip=skip, limit=limit)
+
+    def get_failed_jobs(self, skip: int = 0, limit: int = 100) -> list[PipelineJobDB]:
+        """
+        Get failed pipeline jobs.
+
+        Args:
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+
+        Returns:
+            List of failed pipeline job instances
+        """
+        return self.get_by_status(StepExecutionStatus.FAILED, skip=skip, limit=limit)
+
+    def update_status(
+        self, job_id: str, status: StepExecutionStatus, **kwargs
     ) -> PipelineJobDB | None:
         """
-        Update job status and optional error message.
+        Update pipeline job status and optionally other fields.
 
         Args:
-            processing_id: Job processing ID
+            job_id: Job UUID string
             status: New status
-            error_message: Optional error message (for FAILED status)
+            **kwargs: Additional fields to update
 
         Returns:
-            Updated job or None if not found
+            Updated pipeline job instance with decrypted file_content, or None if not found
         """
-        job = self.get_by_processing_id(processing_id)
-        if not job:
-            return None
+        try:
+            kwargs["status"] = status
+            job = self.get_by_job_id(job_id)
+            if not job:
+                return None
 
-        job.status = status
-        if error_message:
-            job.error_message = error_message
+            return self.update(job.id, **kwargs)
+        except Exception as e:
+            logger.error(f"Error updating status for job_id={job_id}: {e}")
+            raise
 
-        job.updated_at = datetime.now()
-
-        self.db.commit()
-        self.db.refresh(job)
-        return job
-
-    def update_job_progress(
-        self, processing_id: str, progress_percent: int, current_step: str | None = None
-    ) -> PipelineJobDB | None:
+    def clear_file_content(self, job_id: str) -> PipelineJobDB | None:
         """
-        Update job progress information.
+        Clear file_content for a job (GDPR compliance).
+
+        Sets file_content to None, preserving other job data.
 
         Args:
-            processing_id: Job processing ID
-            progress_percent: Progress percentage (0-100)
-            current_step: Optional current step description
+            job_id: Job UUID string
 
         Returns:
-            Updated job or None if not found
+            Updated pipeline job instance, or None if not found
         """
-        job = self.get_by_processing_id(processing_id)
-        if not job:
-            return None
+        try:
+            job = self.get_by_job_id(job_id)
+            if not job:
+                return None
 
-        # Clamp progress to 0-100 range
-        job.progress_percent = max(0, min(100, progress_percent))
-        if current_step:
-            job.current_step = current_step
+            # Set file_content to None (will be stored as NULL in database)
+            return self.update(job.id, file_content=None)
+        except Exception as e:
+            logger.error(f"Error clearing file_content for job_id={job_id}: {e}")
+            raise
 
-        job.updated_at = datetime.now()
-
-        self.db.commit()
-        self.db.refresh(job)
-        return job
-
-    def set_job_result(
-        self,
-        processing_id: str,
-        result_data: dict,
-        status: StepExecutionStatus = StepExecutionStatus.COMPLETED,
-    ) -> PipelineJobDB | None:
+    def get_jobs_without_consent(
+        self, older_than_hours: int = 1
+    ) -> list[PipelineJobDB]:
         """
-        Set job result data and mark as completed.
+        Get jobs without user consent that are older than specified hours.
+
+        Used for GDPR cleanup of jobs where user did not give consent.
 
         Args:
-            processing_id: Job processing ID
-            result_data: Job result data dictionary
-            status: Final job status (default: COMPLETED)
+            older_than_hours: Minimum age in hours
 
         Returns:
-            Updated job or None if not found
+            List of pipeline job instances
         """
-        job = self.get_by_processing_id(processing_id)
-        if not job:
-            return None
+        try:
+            from datetime import datetime, timedelta
 
-        job.result_data = result_data
-        job.status = status
-        job.progress_percent = 100
-        job.updated_at = datetime.now()
+            cutoff_time = datetime.now() - timedelta(hours=older_than_hours)
 
-        self.db.commit()
-        self.db.refresh(job)
-        return job
+            jobs = (
+                self.db.query(PipelineJobDB)
+                .filter(
+                    and_(
+                        PipelineJobDB.data_consent_given == False,  # noqa: E712
+                        PipelineJobDB.created_at < cutoff_time,
+                    )
+                )
+                .all()
+            )
 
-    def set_job_error(
-        self,
-        processing_id: str,
-        error_message: str | None,
-    ) -> PipelineJobDB | None:
-        """
-        Set job error message and mark as failed.
-
-        Args:
-            processing_id: Job processing ID
-            error_message: Error message describing the failure
-
-        Returns:
-            Updated job or None if not found
-        """
-        job = self.get_by_processing_id(processing_id)
-        if not job:
-            return None
-
-        job.error_message = error_message
-        job.status = StepExecutionStatus.FAILED
-        job.updated_at = datetime.now()
-
-        self.db.commit()
-        self.db.refresh(job)
-        return job
-
-    def count_by_status(self) -> dict[StepExecutionStatus, int]:
-        """
-        Count jobs grouped by status.
-
-        Returns:
-            Dictionary mapping status to count
-        """
-        from collections import defaultdict
-
-        jobs = self.db.query(self.model).all()
-        counts = defaultdict(int)
-
-        for job in jobs:
-            counts[job.status] += 1
-
-        return dict(counts)
-
-    def cleanup_old_jobs(self, days: int = 7) -> int:
-        """
-        Delete completed jobs older than specified days.
-
-        Args:
-            days: Number of days to keep
-
-        Returns:
-            Number of jobs deleted
-        """
-        cutoff_date = datetime.now() - timedelta(days=days)
-        jobs_to_delete = (
-            self.db.query(self.model)
-            .filter(self.model.created_at < cutoff_date)
-            .filter(self.model.status == StepExecutionStatus.COMPLETED)
-            .all()
-        )
-
-        count = len(jobs_to_delete)
-
-        for job in jobs_to_delete:
-            self.db.delete(job)
-
-        self.db.commit()
-        return count
-
-    def get_job_statistics(self, since: datetime | None = None) -> dict:
-        """
-        Get aggregate statistics about jobs.
-
-        Args:
-            since: Only include jobs created after this time
-
-        Returns:
-            Dictionary with statistics (total, completed, failed, etc.)
-        """
-        query = self.db.query(self.model)
-
-        if since:
-            query = query.filter(self.model.created_at >= since)
-
-        jobs = query.all()
-
-        return {
-            "total": len(jobs),
-            "pending": sum(1 for j in jobs if j.status == StepExecutionStatus.PENDING),
-            "running": sum(1 for j in jobs if j.status == StepExecutionStatus.RUNNING),
-            "completed": sum(1 for j in jobs if j.status == StepExecutionStatus.COMPLETED),
-            "failed": sum(1 for j in jobs if j.status == StepExecutionStatus.FAILED),
-            "skipped": sum(1 for j in jobs if j.status == StepExecutionStatus.SKIPPED),
-        }
+            return self._decrypt_entities(jobs)
+        except Exception as e:
+            logger.error(f"Error getting jobs without consent: {e}")
+            raise

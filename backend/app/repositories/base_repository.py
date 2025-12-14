@@ -10,6 +10,7 @@ Includes EncryptedRepositoryMixin for transparent field-level encryption.
 import logging
 from typing import Any, Generic, TypeVar
 
+from sqlalchemy import LargeBinary
 from sqlalchemy.orm import Session
 
 from app.core.encryption import encryptor
@@ -240,9 +241,27 @@ class EncryptedRepositoryMixin:
         """
         return field_name in self.encrypted_fields
 
+    def _is_binary_field(self, field_name: str) -> bool:
+        """
+        Check if a field is a binary field (LargeBinary column type).
+
+        Args:
+            field_name: Name of the field to check
+
+        Returns:
+            True if field is binary, False otherwise
+        """
+        if not hasattr(self.model, field_name):
+            return False
+
+        column = getattr(self.model, field_name).property.columns[0]
+        return isinstance(column.type, LargeBinary)
+
     def _encrypt_fields(self, data: dict[str, Any]) -> dict[str, Any]:
         """
         Encrypt specified fields in a dictionary.
+
+        Handles both text fields (str) and binary fields (bytes) automatically.
 
         Args:
             data: Dictionary containing fields to encrypt
@@ -258,8 +277,25 @@ class EncryptedRepositoryMixin:
         for field in self.encrypted_fields:
             if field in encrypted_data and encrypted_data[field] is not None:
                 try:
-                    encrypted_data[field] = encryptor.encrypt_field(str(encrypted_data[field]))
-                    logger.debug(f"Encrypted field: {field}")
+                    if self._is_binary_field(field):
+                        # Binary field: use binary encryption
+                        if isinstance(encrypted_data[field], bytes):
+                            encrypted_data[field] = encryptor.encrypt_binary_field(
+                                encrypted_data[field]
+                            )
+                            logger.debug(f"Encrypted binary field: {field}")
+                        else:
+                            # If it's already a string (from database), treat as text
+                            encrypted_data[field] = encryptor.encrypt_field(
+                                str(encrypted_data[field])
+                            )
+                            logger.debug(f"Encrypted field (as text): {field}")
+                    else:
+                        # Text field: use text encryption
+                        encrypted_data[field] = encryptor.encrypt_field(
+                            str(encrypted_data[field])
+                        )
+                        logger.debug(f"Encrypted text field: {field}")
                 except Exception as e:
                     logger.error(f"Failed to encrypt field {field}: {e}")
                     raise
@@ -269,6 +305,8 @@ class EncryptedRepositoryMixin:
     def _decrypt_entity(self, entity: ModelType | None) -> ModelType | None:
         """
         Decrypt encrypted fields in an entity.
+
+        Handles both text fields (str) and binary fields (bytes) automatically.
 
         Args:
             entity: Database entity instance
@@ -284,9 +322,16 @@ class EncryptedRepositoryMixin:
                 encrypted_value = getattr(entity, field)
                 if encrypted_value is not None:
                     try:
-                        decrypted_value = encryptor.decrypt_field(encrypted_value)
-                        setattr(entity, field, decrypted_value)
-                        logger.debug(f"Decrypted field: {field}")
+                        if self._is_binary_field(field):
+                            # Binary field: use binary decryption
+                            decrypted_value = encryptor.decrypt_binary_field(encrypted_value)
+                            setattr(entity, field, decrypted_value)
+                            logger.debug(f"Decrypted binary field: {field}")
+                        else:
+                            # Text field: use text decryption
+                            decrypted_value = encryptor.decrypt_field(encrypted_value)
+                            setattr(entity, field, decrypted_value)
+                            logger.debug(f"Decrypted text field: {field}")
                     except Exception as e:
                         logger.error(f"Failed to decrypt field {field}: {e}")
                         # Don't raise - return encrypted value for debugging

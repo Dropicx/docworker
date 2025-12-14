@@ -15,6 +15,10 @@ from app.database.modular_pipeline_models import (
     UserFeedbackDB,
 )
 from app.repositories.base_repository import BaseRepository
+from app.repositories.pipeline_job_repository import PipelineJobRepository
+from app.repositories.pipeline_step_execution_repository import (
+    PipelineStepExecutionRepository,
+)
 
 
 class FeedbackRepository(BaseRepository[UserFeedbackDB]):
@@ -214,10 +218,14 @@ class FeedbackRepository(BaseRepository[UserFeedbackDB]):
 class PipelineJobFeedbackRepository:
     """
     Repository extension for feedback-related operations on PipelineJobDB.
+
+    Uses encrypted repositories to ensure content is properly encrypted/decrypted.
     """
 
     def __init__(self, db: Session):
         self.db = db
+        self.job_repo = PipelineJobRepository(db)
+        self.step_execution_repo = PipelineStepExecutionRepository(db)
 
     def mark_feedback_given(
         self, processing_id: str, consent_given: bool = True
@@ -230,26 +238,26 @@ class PipelineJobFeedbackRepository:
             consent_given: Whether user consented to data usage
 
         Returns:
-            Updated job or None if not found
+            Updated job or None if not found (with decrypted file_content)
         """
-        job = (
-            self.db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
-        )
+        job = self.job_repo.get_by_processing_id(processing_id)
 
         if not job:
             return None
 
-        job.has_feedback = True
-        job.data_consent_given = consent_given
+        # Update using repository to ensure encryption is handled
+        updated_job = self.job_repo.update(
+            job.id, has_feedback=True, data_consent_given=consent_given
+        )
 
-        self.db.commit()
-        self.db.refresh(job)
-        return job
+        return updated_job
 
     def clear_content_for_step_executions(self, job_id: str) -> int:
         """
         Clear document content from step executions for a job (GDPR compliance).
         Preserves metadata like execution time, token counts, confidence scores.
+
+        Uses encrypted repository to ensure proper handling of encrypted fields.
 
         Args:
             job_id: Job ID (UUID string) to clear step executions for
@@ -257,25 +265,21 @@ class PipelineJobFeedbackRepository:
         Returns:
             Number of step executions cleared
         """
+        # Use repository method which handles encryption properly
+        cleared_count = self.step_execution_repo.clear_text_content(job_id)
+
+        # Also clear prompt_used and error_message (not encrypted, but should be cleared)
         step_executions = (
             self.db.query(PipelineStepExecutionDB)
             .filter_by(job_id=job_id)
             .all()
         )
 
-        cleared_count = 0
         for step_exec in step_executions:
-            # Clear text content fields
-            step_exec.input_text = None
-            step_exec.output_text = None
             step_exec.prompt_used = None
             step_exec.error_message = None
-
             # Clear step_metadata JSON (may contain text content)
-            # Preserve structure by setting to empty dict rather than None
             step_exec.step_metadata = {}
-
-            cleared_count += 1
 
         # Note: No commit here - let the caller commit to ensure atomicity
         return cleared_count
@@ -285,21 +289,22 @@ class PipelineJobFeedbackRepository:
         Clear document content from a job and its step executions (GDPR compliance).
         Preserves metadata like costs, timing, document type.
 
+        Uses encrypted repositories to ensure proper handling of encrypted fields.
+
         Args:
             processing_id: Job processing ID
 
         Returns:
-            Updated job or None if not found
+            Updated job or None if not found (with decrypted file_content)
         """
-        job = (
-            self.db.query(PipelineJobDB).filter_by(processing_id=processing_id).first()
-        )
+        # Get job using repository (ensures decryption if needed)
+        job = self.job_repo.get_by_processing_id(processing_id)
 
         if not job:
             return None
 
-        # Clear binary file content
-        job.file_content = None
+        # Clear binary file content using repository (handles encryption)
+        self.job_repo.clear_file_content(job.job_id)
 
         # Clear text content from result_data while preserving metadata
         if job.result_data:
@@ -309,17 +314,19 @@ class PipelineJobFeedbackRepository:
             result_data["translated_text"] = "[Content cleared - GDPR]"
             if "language_translated_text" in result_data:
                 result_data["language_translated_text"] = "[Content cleared - GDPR]"
-            job.result_data = result_data
+            # Update using repository
+            self.job_repo.update(job.id, result_data=result_data)
 
         # Clear content from all step executions for this job
         # Use job_id (UUID string) to find related step executions
         self.clear_content_for_step_executions(job.job_id)
 
-        job.content_cleared_at = datetime.now()
+        # Update content_cleared_at timestamp
+        updated_job = self.job_repo.update(
+            job.id, content_cleared_at=datetime.now()
+        )
 
-        self.db.commit()
-        self.db.refresh(job)
-        return job
+        return updated_job
 
     def get_jobs_without_feedback(
         self, older_than_hours: int = 1
@@ -352,11 +359,14 @@ class PipelineJobFeedbackRepository:
         """
         Get feedback entry with associated job data (for admin view).
 
+        Uses encrypted repository to ensure job content is properly decrypted.
+
         Args:
             feedback_id: Feedback entry ID
 
         Returns:
             Tuple of (feedback, job) or (None, None)
+            Job will have decrypted file_content
         """
         feedback = (
             self.db.query(UserFeedbackDB).filter_by(id=feedback_id).first()
@@ -365,10 +375,7 @@ class PipelineJobFeedbackRepository:
         if not feedback:
             return None, None
 
-        job = (
-            self.db.query(PipelineJobDB)
-            .filter_by(processing_id=feedback.processing_id)
-            .first()
-        )
+        # Use repository to get job (ensures decryption)
+        job = self.job_repo.get_by_processing_id(feedback.processing_id)
 
         return feedback, job
