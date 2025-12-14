@@ -8,6 +8,8 @@ from slowapi import Limiter
 from slowapi.util import get_remote_address
 
 from app.core.dependencies import get_processing_service, get_statistics_service
+from app.core.permissions import get_current_user_optional
+from app.database.auth_models import UserDB
 from app.models.document import (
     LANGUAGE_NAMES,
     ProcessingOptions,
@@ -111,15 +113,26 @@ async def get_processing_status(
 
 @router.get("/process/{processing_id}/result", response_model=TranslationResult)
 async def get_processing_result(
-    processing_id: str, service: ProcessingService = Depends(get_processing_service)
+    processing_id: str,
+    current_user: UserDB | None = Depends(get_current_user_optional),
+    service: ProcessingService = Depends(get_processing_service),
 ):
     """
     Gibt das Verarbeitungsergebnis zurück (aus Datenbank)
 
     - **processing_id**: ID der Verarbeitung
+
+    Note: Original text is only returned for authenticated admin users.
+    Non-admin users receive a placeholder message instead.
     """
     try:
         result_data = service.get_processing_result(processing_id)
+
+        # Hide original text for non-admin users (security measure)
+        is_admin = current_user and current_user.role == "admin"
+        if not is_admin:
+            result_data["original_text"] = "[Nur für Administratoren sichtbar]"
+
         return TranslationResult(**result_data)
 
     except ValueError as e:

@@ -17,6 +17,7 @@ import ReactDOM from 'react-dom/client';
 import ApiService from '../services/api';
 import { TranslationResult as TranslationData } from '../types/api';
 import { exportToPDF } from '../utils/pdfExportAdvanced';
+import { useAuth } from '../contexts/AuthContext';
 
 interface TranslationResultProps {
   result: TranslationData;
@@ -24,6 +25,9 @@ interface TranslationResultProps {
 }
 
 const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTranslation }) => {
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
+
   const [showOriginal, setShowOriginal] = useState(false);
   const [copiedText, setCopiedText] = useState<'original' | 'translated' | 'language' | null>(null);
   // Wenn eine Sprachübersetzung vorhanden ist, zeige direkt den Sprach-Tab
@@ -412,126 +416,128 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
         </div>
       </div>
 
-      {/* Original Text Section - Mobile Optimized */}
-      <div className="card-elevated">
-        <div className="card-body">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg sm:rounded-xl flex items-center justify-center">
-                <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+      {/* Original Text Section - Only visible for Admin users */}
+      {isAdmin && (
+        <div className="card-elevated">
+          <div className="card-body">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 space-y-3 sm:space-y-0">
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg sm:rounded-xl flex items-center justify-center">
+                  <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-primary-900">Originaltext</h3>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-primary-900">Originaltext</h3>
-            </div>
 
-            <div className="flex space-x-2 sm:space-x-3">
-              <button
-                onClick={() => setShowOriginal(!showOriginal)}
-                className="btn-secondary group"
-              >
-                {showOriginal ? (
-                  <>
-                    <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                    <span className="hidden sm:inline">Ausblenden</span>
-                    <span className="sm:hidden">Hide</span>
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                    <span className="hidden sm:inline">Anzeigen</span>
-                    <span className="sm:hidden">Show</span>
-                  </>
-                )}
-              </button>
-
-              {showOriginal && (
+              <div className="flex space-x-2 sm:space-x-3">
                 <button
-                  onClick={() => handleCopy(result.original_text, 'original')}
-                  className="btn-ghost group"
-                  disabled={copiedText === 'original'}
+                  onClick={() => setShowOriginal(!showOriginal)}
+                  className="btn-secondary group"
                 >
-                  {copiedText === 'original' ? (
+                  {showOriginal ? (
                     <>
-                      <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-success-600 flex-shrink-0" />
-                      <span className="text-success-600 hidden sm:inline">Kopiert!</span>
-                      <span className="text-success-600 sm:hidden">✓</span>
+                      <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                      <span className="hidden sm:inline">Ausblenden</span>
+                      <span className="sm:hidden">Hide</span>
                     </>
                   ) : (
                     <>
-                      <Copy className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                      <span className="hidden sm:inline">Kopieren</span>
-                      <span className="sm:hidden">Copy</span>
+                      <Eye className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                      <span className="hidden sm:inline">Anzeigen</span>
+                      <span className="sm:hidden">Show</span>
                     </>
                   )}
                 </button>
-              )}
-            </div>
-          </div>
 
-          {showOriginal && (
-            <div className="animate-slide-down">
-              <div className="text-result bg-gradient-to-br from-neutral-50 to-primary-50/30 markdown-content">
-                <ReactMarkdown
-                  remarkPlugins={[remarkGfm]}
-                  components={{
-                    h1: ({ children }) => (
-                      <h1 className="text-2xl font-bold text-primary-900 mb-4 mt-3">{children}</h1>
-                    ),
-                    h2: ({ children }) => (
-                      <h2 className="text-xl font-bold text-primary-900 mb-3 mt-4">{children}</h2>
-                    ),
-                    h3: ({ children }) => (
-                      <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">
-                        {children}
-                      </h3>
-                    ),
-                    p: ({ children }) => (
-                      <p className="mb-3 text-primary-700 leading-relaxed">{children}</p>
-                    ),
-                    ul: ({ children }) => (
-                      <ul className="mb-3 space-y-2 text-primary-700">{children}</ul>
-                    ),
-                    ol: ({ children }) => (
-                      <ol className="list-decimal ml-6 mb-3 space-y-2 text-primary-700">
-                        {children}
-                      </ol>
-                    ),
-                    li: ({ children }) => <li className="pl-2 leading-relaxed">{children}</li>,
-                    strong: ({ children }) => (
-                      <strong className="font-semibold text-primary-900">{children}</strong>
-                    ),
-                    em: ({ children }) => <em className="italic text-primary-600">{children}</em>,
-                    code: ({ children, className }) => {
-                      const isInline = !className?.includes('language-');
-                      return isInline ? (
-                        <code className="bg-primary-100 text-primary-800 px-1 py-0.5 rounded text-xs font-mono">
+                {showOriginal && (
+                  <button
+                    onClick={() => handleCopy(result.original_text, 'original')}
+                    className="btn-ghost group"
+                    disabled={copiedText === 'original'}
+                  >
+                    {copiedText === 'original' ? (
+                      <>
+                        <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-success-600 flex-shrink-0" />
+                        <span className="text-success-600 hidden sm:inline">Kopiert!</span>
+                        <span className="text-success-600 sm:hidden">✓</span>
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
+                        <span className="hidden sm:inline">Kopieren</span>
+                        <span className="sm:hidden">Copy</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {showOriginal && (
+              <div className="animate-slide-down">
+                <div className="text-result bg-gradient-to-br from-neutral-50 to-primary-50/30 markdown-content">
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    components={{
+                      h1: ({ children }) => (
+                        <h1 className="text-2xl font-bold text-primary-900 mb-4 mt-3">{children}</h1>
+                      ),
+                      h2: ({ children }) => (
+                        <h2 className="text-xl font-bold text-primary-900 mb-3 mt-4">{children}</h2>
+                      ),
+                      h3: ({ children }) => (
+                        <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">
                           {children}
-                        </code>
-                      ) : (
-                        <pre className="bg-primary-100 text-primary-800 p-3 rounded-lg overflow-x-auto mb-3">
-                          <code className="font-mono text-xs">{children}</code>
-                        </pre>
-                      );
-                    },
-                  }}
-                >
-                  {result.original_text}
-                </ReactMarkdown>
+                        </h3>
+                      ),
+                      p: ({ children }) => (
+                        <p className="mb-3 text-primary-700 leading-relaxed">{children}</p>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="mb-3 space-y-2 text-primary-700">{children}</ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="list-decimal ml-6 mb-3 space-y-2 text-primary-700">
+                          {children}
+                        </ol>
+                      ),
+                      li: ({ children }) => <li className="pl-2 leading-relaxed">{children}</li>,
+                      strong: ({ children }) => (
+                        <strong className="font-semibold text-primary-900">{children}</strong>
+                      ),
+                      em: ({ children }) => <em className="italic text-primary-600">{children}</em>,
+                      code: ({ children, className }) => {
+                        const isInline = !className?.includes('language-');
+                        return isInline ? (
+                          <code className="bg-primary-100 text-primary-800 px-1 py-0.5 rounded text-xs font-mono">
+                            {children}
+                          </code>
+                        ) : (
+                          <pre className="bg-primary-100 text-primary-800 p-3 rounded-lg overflow-x-auto mb-3">
+                            <code className="font-mono text-xs">{children}</code>
+                          </pre>
+                        );
+                      },
+                    }}
+                  >
+                    {result.original_text}
+                  </ReactMarkdown>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {!showOriginal && (
-            <div className="text-center py-8">
-              <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Eye className="w-8 h-8 text-primary-500" />
+            {!showOriginal && (
+              <div className="text-center py-8">
+                <div className="w-16 h-16 bg-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                  <Eye className="w-8 h-8 text-primary-500" />
+                </div>
+                <p className="text-primary-600">
+                  Klicken Sie auf &quot;Anzeigen&quot;, um den Originaltext zu sehen
+                </p>
               </div>
-              <p className="text-primary-600">
-                Klicken Sie auf &quot;Anzeigen&quot;, um den Originaltext zu sehen
-              </p>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Action Button - Centered */}
       <div className="flex justify-center pt-6">
