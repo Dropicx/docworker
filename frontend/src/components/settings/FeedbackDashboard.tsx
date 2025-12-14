@@ -450,24 +450,22 @@ const FeedbackDashboard: React.FC = () => {
 
             {/* Filters */}
             <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <Filter className="w-4 h-4 text-primary-500" />
-                <select
-                  value={ratingFilter || ''}
-                  onChange={(e) => {
-                    setRatingFilter(e.target.value ? Number(e.target.value) : undefined);
-                    setCurrentPage(0);
-                  }}
-                  className="px-2 py-1 text-sm border border-primary-300 rounded focus:ring-2 focus:ring-brand-500 bg-white"
-                >
-                  <option value="">Alle Bewertungen</option>
-                  {[5, 4, 3, 2, 1].map((r) => (
-                    <option key={r} value={r}>
-                      {r} Stern{r !== 1 ? 'e' : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <Filter className="w-4 h-4 text-primary-500" />
+              <select
+                value={ratingFilter || ''}
+                onChange={(e) => {
+                  setRatingFilter(e.target.value ? Number(e.target.value) : undefined);
+                  setCurrentPage(0);
+                }}
+                className="px-3 py-2 text-sm border border-primary-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white"
+              >
+                <option value="">Alle Bewertungen</option>
+                {[5, 4, 3, 2, 1].map((r) => (
+                  <option key={r} value={r}>
+                    {r} Stern{r !== 1 ? 'e' : ''}
+                  </option>
+                ))}
+              </select>
 
               <select
                 value={consentFilter === undefined ? '' : consentFilter ? 'true' : 'false'}
@@ -479,7 +477,7 @@ const FeedbackDashboard: React.FC = () => {
                   }
                   setCurrentPage(0);
                 }}
-                className="px-2 py-1 text-sm border border-primary-300 rounded focus:ring-2 focus:ring-brand-500 bg-white"
+                className="px-3 py-2 text-sm border border-primary-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white"
               >
                 <option value="">Alle Zustimmungen</option>
                 <option value="true">Mit Zustimmung</option>
