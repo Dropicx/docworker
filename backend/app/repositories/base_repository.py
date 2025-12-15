@@ -547,16 +547,23 @@ class EncryptedRepositoryMixin:
             logger.info(f"🔍 Raw SQL verification: {self.encrypted_fields[0]} in DB = {db_length} bytes")
             
             # Check if it matches what we tried to save
-            expected_length = len(encrypted_kwargs.get(self.encrypted_fields[0], b""))
-            if isinstance(encrypted_kwargs.get(self.encrypted_fields[0]), bytes):
-                expected_length = len(encrypted_kwargs[self.encrypted_fields[0]])
+            encrypted_value = encrypted_kwargs.get(self.encrypted_fields[0])
+            if encrypted_value is None:
+                expected_length = 0
+            elif isinstance(encrypted_value, bytes):
+                expected_length = len(encrypted_value)
+            elif isinstance(encrypted_value, str):
+                # For text fields, encrypted value is a string, check its length
+                expected_length = len(encrypted_value.encode("utf-8"))  # Convert to bytes for comparison
             else:
                 expected_length = 0
                 
             if db_length == expected_length and expected_length > 0:
                 logger.info(f"   ✅ Verified: Database has correct encrypted size ({db_length} bytes)")
+            elif expected_length == 0 and db_length == 0:
+                logger.info(f"   ✅ Verified: Both expected and database are NULL/empty")
             else:
-                logger.error(f"   ❌ MISMATCH: Expected {expected_length} bytes, but database has {db_length} bytes!")
+                logger.warning(f"   ⚠️ Size mismatch: Expected {expected_length} bytes, but database has {db_length} bytes (this may be normal for text fields stored as TEXT vs BYTEA)")
         
         # Also refresh entity to see what ORM thinks is in the database
         self.db.refresh(entity)  # Force reload from database
