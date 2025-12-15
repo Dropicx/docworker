@@ -51,7 +51,34 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             logger.error(f"❌ Job not found: {processing_id}")
             raise ValueError(f"Job not found: {processing_id}")
 
-        logger.info(f"📋 Loaded job: {job.filename} ({job.file_size} bytes)")
+        # Verify file_content is decrypted (should be plaintext PDF bytes, not encrypted string)
+        if job.file_content:
+            file_content_len = len(job.file_content)
+            file_content_preview = job.file_content[:50] if isinstance(job.file_content, bytes) else str(job.file_content)[:50]
+            logger.info(f"📋 Loaded job: {job.filename} ({job.file_size} bytes)")
+            logger.info(f"🔍 file_content after load: {file_content_len} bytes")
+            
+            # Check if it's decrypted (should be PDF binary, not encrypted string)
+            if isinstance(job.file_content, bytes):
+                try:
+                    # Try to decode as UTF-8 to check if it's encrypted
+                    decoded = job.file_content[:100].decode('utf-8')
+                    if decoded.startswith('gAAAAA') or decoded.startswith('Z0FBQUFB'):
+                        logger.error(f"❌ ERROR: file_content is still ENCRYPTED! This should be decrypted!")
+                        logger.error(f"   Preview: {decoded[:50]}...")
+                        raise ValueError("file_content was not decrypted by repository!")
+                    else:
+                        logger.debug(f"   file_content preview (decoded): {decoded[:50]}...")
+                except UnicodeDecodeError:
+                    # Cannot decode as UTF-8 - this is good, it means it's binary (PDF)
+                    if job.file_content[:4] == b'%PDF':
+                        logger.info(f"   ✅ Verified: file_content is decrypted (starts with %PDF)")
+                    else:
+                        logger.warning(f"   ⚠️ file_content doesn't start with %PDF: {file_content_preview.hex()[:20]}...")
+            else:
+                logger.warning(f"   ⚠️ file_content is not bytes: {type(job.file_content)}")
+        else:
+            logger.warning(f"   ⚠️ file_content is None")
 
         # Merge options: Celery task options take priority, fallback to job's processing_options
         if not options:

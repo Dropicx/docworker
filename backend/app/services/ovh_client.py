@@ -416,15 +416,7 @@ class OVHClient:
         """
         Preprocess medical text - first removes PII locally, then optionally uses OVH
         """
-        # Log the original text (truncated for readability)
-        logger.info("=" * 80)
-        logger.info("📄 PREPROCESSING PIPELINE STARTED")
-        logger.info("=" * 80)
-        logger.info("📥 [1/3] ORIGINAL EXTRACTED TEXT (first 1000 chars):")
-        logger.info("-" * 40)
-        logger.info(text[:1000] + "..." if len(text) > 1000 else text)
-        logger.info(f"   Length: {len(text)} characters")
-        logger.info("-" * 40)
+        logger.info(f"📄 PREPROCESSING PIPELINE STARTED ({len(text)} characters)")
 
         # ⚡ PII REMOVAL NOW HAPPENS IN WORKER (before pipeline)
         # This preprocessing step no longer needs to remove PII
@@ -500,18 +492,7 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
 
             result = response.choices[0].message.content
 
-            # Log the OVH-preprocessed text
-            logger.info("🤖 [3/3] OVH-PREPROCESSED TEXT (first 1000 chars):")
-            logger.info("-" * 40)
-            logger.info(result[:1000] + "..." if len(result) > 1000 else result)
-            logger.info(f"   Length: {len(result)} characters")
-            logger.info(f"   Total reduction from original: {len(text) - len(result)} characters")
-            logger.info("-" * 40)
-
-            logger.debug(f"✅ OVH preprocessing successful with {self.preprocessing_model}")
-            logger.info("=" * 80)
-            logger.info("📄 PREPROCESSING PIPELINE COMPLETED")
-            logger.info("=" * 80)
+            logger.info(f"✅ OVH preprocessing completed: {len(result)} characters (reduced by {len(text) - len(result)})")
 
             # Clean up formatting
             import re
@@ -698,16 +679,7 @@ TEXT ZUM ÜBERSETZEN:
             tuple[str, str, float, str]: (translated_text, doc_type, confidence, cleaned_original)
         """
         try:
-            logger.info("=" * 80)
-            logger.info("🌍 TRANSLATION PIPELINE STARTED")
-            logger.info("=" * 80)
-            logger.info("📥 INPUT TEXT FOR TRANSLATION (first 1000 chars):")
-            logger.info("-" * 40)
-            logger.info(text[:1000] + "..." if len(text) > 1000 else text)
-            logger.info(f"   Length: {len(text)} characters")
-            logger.info("-" * 40)
-
-            logger.info("🏥 Starting medical document processing with OVH AI")
+            logger.info(f"🌍 TRANSLATION PIPELINE STARTED ({len(text)} characters)")
 
             # Create the comprehensive instruction for medical translation (in German)
             if custom_prompts and hasattr(custom_prompts, "translation_prompt"):
@@ -733,25 +705,13 @@ ORIGINAL MEDIZINISCHER TEXT:
                 use_fast_model=False,  # Main translation needs quality
             )
 
-            # Log the translated text
-            logger.info("📤 TRANSLATED TEXT (first 1000 chars):")
-            logger.info("-" * 40)
-            logger.info(
-                translated_text[:1000] + "..." if len(translated_text) > 1000 else translated_text
-            )
-            logger.info(f"   Length: {len(translated_text)} characters")
-            logger.info("-" * 40)
-
             # Improve formatting for bullet points and arrows
             translated_text = self._improve_formatting(translated_text)
 
             # Evaluate quality
             confidence = self._evaluate_translation_quality(text, translated_text)
 
-            logger.info(f"📊 Translation confidence: {confidence:.2%}")
-            logger.info("=" * 80)
-            logger.info("🌍 TRANSLATION PIPELINE COMPLETED")
-            logger.info("=" * 80)
+            logger.info(f"✅ TRANSLATION COMPLETED: {len(translated_text)} characters, confidence: {confidence:.2%}")
 
             return translated_text, document_type, confidence, text
 
@@ -1129,7 +1089,6 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             logger.info(
                 f"✅ Vision OCR successful: {len(extracted_text)} characters, confidence: {confidence:.2%}"
             )
-            logger.info(f"📄 Extracted text preview: {extracted_text[:500]}...")
 
             return extracted_text.strip(), confidence
 

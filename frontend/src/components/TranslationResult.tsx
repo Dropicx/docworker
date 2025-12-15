@@ -393,10 +393,16 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                   <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-primary-600" />
                 </div>
                 <div>
-                  <span className="text-xs text-primary-500">Verarbeitet in</span>
-                  <span className="font-semibold text-primary-700 ml-1 sm:ml-2">
-                    {ApiService.formatDuration(result.processing_time_seconds)}
-                  </span>
+                  <div>
+                    <span className="text-xs text-primary-500">Verarbeitet in</span>
+                    <span className="font-semibold text-primary-700 ml-1 sm:ml-2">
+                      {ApiService.formatDuration(result.processing_time_seconds)}
+                    </span>
+                  </div>
+                  <div className="mt-1">
+                    <span className="text-xs text-primary-500">Verarbeitungs-ID:</span>
+                    <span className="font-mono text-xs text-primary-500 ml-1">{result.processing_id}</span>
+                  </div>
                 </div>
               </div>
 

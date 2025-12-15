@@ -383,12 +383,43 @@ class EncryptedRepositoryMixin:
                                 # Try to decode as UTF-8 to check if it's encrypted
                                 try:
                                     encrypted_value_str = encrypted_value.decode("utf-8")
+                                    logger.debug(f"   Decoded {field} as UTF-8: {len(encrypted_value_str)} chars, starts with: {encrypted_value_str[:20]}")
+                                    
                                     # Check if it looks like an encrypted Fernet token
-                                    if encryptor.is_encrypted(encrypted_value_str):
+                                    # For binary fields encrypted with encrypt_binary_field():
+                                    # - The encrypted string is base64-encoded Fernet token
+                                    # - It should start with "gAAAAA" (Fernet token base64-encoded)
+                                    # - OR "Z0FBQUFB" if there's another layer of base64 encoding
+                                    is_enc = False
+                                    
+                                    # Quick heuristic check first (most common case)
+                                    if encrypted_value_str.startswith("gAAAAA"):
+                                        is_enc = True
+                                        logger.debug(f"   Heuristic check: Looks encrypted (starts with gAAAAA)")
+                                    elif encrypted_value_str.startswith("Z0FBQUFB"):
+                                        is_enc = True
+                                        logger.debug(f"   Heuristic check: Looks encrypted (starts with Z0FBQUFB - double base64)")
+                                    else:
+                                        # Try the is_encrypted() method (more thorough check)
+                                        is_enc = encryptor.is_encrypted(encrypted_value_str)
+                                        logger.debug(f"   is_encrypted() returned: {is_enc}")
+                                    
+                                    if is_enc:
                                         # It's encrypted - decrypt it
-                                        decrypted_value = encryptor.decrypt_binary_field(encrypted_value_str)
-                                        setattr(entity, field, decrypted_value)
-                                        logger.debug(f"Decrypted binary field: {field}")
+                                        logger.info(f"🔓 Decrypting binary field: {field} ({len(encrypted_value)} bytes → will decrypt)")
+                                        try:
+                                            decrypted_value = encryptor.decrypt_binary_field(encrypted_value_str)
+                                            setattr(entity, field, decrypted_value)
+                                            logger.info(f"✅ Decrypted binary field: {field} ({len(encrypted_value)} bytes → {len(decrypted_value)} bytes)")
+                                            
+                                            # Verify it's actually decrypted (should be PDF binary)
+                                            if isinstance(decrypted_value, bytes) and decrypted_value[:4] == b'%PDF':
+                                                logger.info(f"   ✅ Verified: Decrypted data is PDF (starts with %PDF)")
+                                            else:
+                                                logger.warning(f"   ⚠️ Decrypted data doesn't look like PDF: {decrypted_value[:20] if isinstance(decrypted_value, bytes) else str(decrypted_value)[:20]}")
+                                        except Exception as e:
+                                            logger.error(f"   ❌ Failed to decrypt {field}: {e}")
+                                            raise
                                     else:
                                         # Not encrypted - return as-is (plaintext binary)
                                         logger.debug(f"Binary field {field} is not encrypted, returning as-is")
@@ -645,5 +676,6 @@ class EncryptedRepositoryMixin:
         logger.info(f"Updated {self.model.__name__} with {pk_attr}={record_id} (affected rows: {result.rowcount})")
 
         # Reload entity with decryption for return
-        entity = super().get_by_id(record_id)
+        # Use our own get_by_id (not super()) to ensure decryption happens
+        entity = self.get_by_id(record_id)
         return entity
