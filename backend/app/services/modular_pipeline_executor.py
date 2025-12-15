@@ -297,16 +297,17 @@ class ModularPipelineExecutor:
             metadata: Additional metadata to store
         """
         # Use repository to create step execution (ensures encryption of input_text/output_text)
+        # IMPORTANT: Store FULL text (no truncation) - this is the primary source for user-facing results
         self.step_execution_repository.create(
             job_id=job_id,
             step_id=step.id,
             step_name=step.name,
             step_order=step.order,
             status=status,
-            input_text=input_text[:1000] if input_text else None,
-            output_text=output_text[:1000] if output_text else None,
+            input_text=input_text,  # FULL text (was truncated to 1000 chars before)
+            output_text=output_text,  # FULL text (was truncated to 1000 chars before)
             model_used=self.get_model_info(step.selected_model_id).name if output_text else None,
-            prompt_used=step.prompt_template[:500],
+            prompt_used=step.prompt_template[:500] if step.prompt_template else None,  # Metadata can be truncated
             started_at=datetime.fromtimestamp(step_start_time),
             completed_at=datetime.now(),
             execution_time_seconds=time.time() - step_start_time,
