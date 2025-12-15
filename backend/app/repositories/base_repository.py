@@ -588,6 +588,9 @@ class EncryptedRepositoryMixin:
 
         Also updates searchable hashes for any encrypted fields being modified.
 
+        IMPORTANT: Only fields in kwargs are updated. Encrypted fields not in kwargs
+        are preserved (not overwritten with decrypted values from memory).
+
         Args:
             record_id: Primary key value
             **kwargs: Fields to update
@@ -607,8 +610,29 @@ class EncryptedRepositoryMixin:
         # Encrypt fields before update
         encrypted_kwargs = self._encrypt_fields(kwargs)
 
-        # Call parent update method
-        entity = super().update(record_id, **encrypted_kwargs)
+        # Get entity first to check if it exists
+        entity = super().get_by_id(record_id)
+        if not entity:
+            logger.warning(f"{self.model.__name__} with id={record_id} not found")
+            return None
+
+        # IMPORTANT: Expire encrypted fields that are NOT being updated
+        # This prevents SQLAlchemy from saving decrypted values from memory
+        for field in self.encrypted_fields:
+            if field not in encrypted_kwargs:
+                # Expire this attribute so SQLAlchemy doesn't save it
+                self.db.expire(entity, [field])
+                logger.debug(f"Expired {field} attribute to prevent overwriting encrypted data")
+
+        # Update only the fields in kwargs
+        for key, value in encrypted_kwargs.items():
+            if hasattr(entity, key):
+                setattr(entity, key, value)
+
+        self.db.commit()
+        self.db.refresh(entity)
+
+        logger.info(f"Updated {self.model.__name__} with id={record_id}")
 
         # Decrypt fields for return
         return self._decrypt_entity(entity)

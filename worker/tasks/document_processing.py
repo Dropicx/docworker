@@ -84,8 +84,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         extracted_text = ""
         if job.file_type in ["pdf", "image", "jpg", "jpeg", "png"]:
             logger.info(f"🔍 Starting OCR for {job.file_type.upper()}...")
-            job.progress_percent = 10
-            db.commit()
+            # Use repository update to avoid overwriting encrypted file_content
+            job = job_repo.update(job.id, progress_percent=10)
             self.update_state(
                 state='PROCESSING',
                 meta={'progress': 10, 'status': 'ocr', 'current_step': 'Texterkennung (OCR)'}
@@ -104,8 +104,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             )
 
             ocr_time = time.time() - start_time
-            job.ocr_time_seconds = ocr_time
-            db.commit()  # Persist OCR time immediately
+            # Use repository update to avoid overwriting encrypted file_content
+            job = job_repo.update(job.id, ocr_time_seconds=ocr_time)
             logger.info(f"✅ OCR completed in {ocr_time:.2f}s: {len(extracted_text)} characters, confidence: {ocr_confidence:.2%}")
 
             # ⚡ Step 1.5: LOCAL PII Removal (BEFORE sending to AI pipeline)
@@ -115,8 +115,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
             if pii_enabled:
                 logger.info("🔒 Starting local PII removal...")
-                job.progress_percent = 15
-                db.commit()
+                # Use repository update to avoid overwriting encrypted file_content
+                job = job_repo.update(job.id, progress_percent=15)
                 self.update_state(
                     state='PROCESSING',
                     meta={'progress': 15, 'status': 'pii_removal', 'current_step': 'Entfernung persönlicher Daten'}
@@ -147,9 +147,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             else:
                 logger.info("⏭️  PII removal disabled - skipping privacy filter")
 
-        # Update progress
-        job.progress_percent = 20
-        db.commit()
+        # Update progress (use repository to avoid overwriting encrypted file_content)
+        job = job_repo.update(job.id, progress_percent=20)
 
         # Step 2: Execute pipeline steps
         logger.info("🔄 Starting pipeline execution...")
@@ -178,8 +177,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         )
 
         pipeline_time = time.time() - pipeline_start
-        job.ai_processing_time_seconds = pipeline_time
-        db.commit()  # Persist AI processing time immediately
+        # Use repository update to avoid overwriting encrypted file_content
+        job = job_repo.update(job.id, ai_processing_time_seconds=pipeline_time)
 
         # Check if pipeline succeeded or terminated early
         if not success:
