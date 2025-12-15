@@ -51,15 +51,14 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             logger.error(f"❌ Job not found: {processing_id}")
             raise ValueError(f"Job not found: {processing_id}")
 
-        # CRITICAL: Copy file_content to local variable and expunge entity from session
-        # This prevents SQLAlchemy from tracking the decrypted file_content and accidentally
-        # saving it back to the database when we commit updates.
+        # CRITICAL: Copy file_content to local variable
+        # The repository already expunges the entity after decryption, so it's already
+        # detached from the session and safe from accidental overwrites.
         file_content_for_processing = job.file_content
         job_id_for_updates = job.id  # Store ID for updates
         
-        # Expunge the entity from session to prevent SQLAlchemy from tracking it
-        db.expunge(job)
-        logger.debug(f"Expunged job entity (id={job_id_for_updates}) from session to prevent tracking decrypted file_content")
+        # Note: No need to expunge here - the repository already did it when returning the entity.
+        logger.debug(f"Entity already expunged by repository (id={job_id_for_updates}), proceeding with processing")
 
         # Verify file_content is decrypted (should be plaintext PDF bytes, not encrypted string)
         if file_content_for_processing:
