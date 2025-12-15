@@ -299,6 +299,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             "document_class": document_class_info,  # Document classification details
             "total_steps": metadata.get('total_steps', 0),
             "pipeline_execution_time": metadata.get('pipeline_execution_time', 0.0),
+            "pipeline_config": job.pipeline_config,  # Metadata needed for step identification
 
             # ==================== PROCESSING METADATA ====================
             "processing_id": processing_id,

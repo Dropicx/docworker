@@ -173,23 +173,30 @@ class ProcessingService:
             original_text = first_step.input_text
 
         # Find the final translated/simplified text
-        # Strategy: Use pipeline config to identify branching steps (validation/classification)
-        # and exclude them to find the actual content-generating steps
+        # Strategy: Multi-tier approach to identify content-generating steps
         translated_text = None
         language_translated_text = None
         
         completed_steps = [s for s in step_executions if s.status == StepExecutionStatus.COMPLETED and s.output_text]
         if completed_steps:
-            # Get pipeline config to identify branching steps
+            # Tier 1: Use pipeline config to identify branching steps (if available)
             pipeline_config = result_data.get('pipeline_config', [])
-            branching_step_names = {
-                step['name'] for step in pipeline_config 
-                if isinstance(step, dict) and step.get('is_branching_step', False)
-            }
+            branching_step_names = set()
             
-            logger.debug(
-                f"Pipeline has {len(branching_step_names)} branching steps: {branching_step_names}"
-            )
+            if pipeline_config:
+                branching_step_names = {
+                    step['name'] for step in pipeline_config 
+                    if isinstance(step, dict) and step.get('is_branching_step', False)
+                }
+                logger.debug(f"Pipeline config found: {len(branching_step_names)} branching steps")
+            else:
+                # Tier 2: Fallback to known branching step patterns
+                branching_patterns = ['validation', 'classification']
+                branching_step_names = {
+                    s.step_name for s in completed_steps
+                    if any(pattern in s.step_name.lower() for pattern in branching_patterns)
+                }
+                logger.debug(f"No pipeline config, using patterns: {len(branching_step_names)} branching steps")
             
             # Filter out branching steps (validation/classification) to get content steps
             content_steps = [
@@ -197,9 +204,17 @@ class ProcessingService:
                 if s.step_name not in branching_step_names
             ]
             
+            # Tier 3: If no content steps, use length heuristic (exclude short outputs like "ARZTBRIEF")
+            if not content_steps:
+                logger.warning("No content steps via metadata, using length heuristic")
+                content_steps = [s for s in completed_steps if len(s.output_text) > 200]
+            
             if content_steps:
-                # Sort by step_order to get execution sequence
-                content_steps_sorted = sorted(content_steps, key=lambda s: s.step_order)
+                # Sort by (step_order, length) for stable selection
+                content_steps_sorted = sorted(
+                    content_steps, 
+                    key=lambda s: (s.step_order, -len(s.output_text))
+                )
                 
                 # Check if language translation was executed
                 language_step = next(
@@ -208,28 +223,38 @@ class ProcessingService:
                 )
                 
                 if language_step and language_step.output_text:
-                    # If language translation exists, it's the final output
+                    # Language translation exists - it's the final output
                     language_translated_text = language_step.output_text
-                    # The step before translation is the simplified text
-                    simplified_step = next(
-                        (s for s in content_steps_sorted if s.step_order < language_step.step_order),
-                        None
-                    )
-                    translated_text = simplified_step.output_text if simplified_step else language_step.output_text
+                    # Find the simplified text (longest output before translation)
+                    pre_translation_steps = [
+                        s for s in content_steps_sorted 
+                        if s.step_order <= language_step.step_order and s.step_name != language_step.step_name
+                    ]
+                    if pre_translation_steps:
+                        simplified_step = max(pre_translation_steps, key=lambda s: len(s.output_text))
+                        translated_text = simplified_step.output_text
+                    else:
+                        translated_text = language_step.output_text
                 else:
-                    # No language translation - use the last content step
-                    last_content_step = content_steps_sorted[-1]
-                    translated_text = last_content_step.output_text
+                    # No language translation - use the step with longest output
+                    # (handles cases where multiple steps have same order)
+                    longest_step = max(content_steps, key=lambda s: len(s.output_text))
+                    translated_text = longest_step.output_text
                 
                 logger.info(
-                    f"Selected content steps: simplified={bool(translated_text)}, "
-                    f"translated={bool(language_translated_text)}"
+                    f"Content selection successful: "
+                    f"translated_text={len(translated_text) if translated_text else 0} chars, "
+                    f"language_text={len(language_translated_text) if language_translated_text else 0} chars"
                 )
             else:
-                # Fallback: No content steps identified, use longest output
-                logger.warning("No content steps found, falling back to longest output")
+                # Last resort fallback: use step with longest output
+                logger.error("No content steps identified at all, using longest output as last resort")
                 longest_output_step = max(completed_steps, key=lambda s: len(s.output_text))
                 translated_text = longest_output_step.output_text
+                logger.warning(
+                    f"Fallback selected: {longest_output_step.step_name} "
+                    f"({len(translated_text)} chars)"
+                )
 
         # Add the decrypted medical content to result_data for API response
         result_with_content = result_data.copy()
