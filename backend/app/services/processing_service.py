@@ -52,15 +52,13 @@ class ProcessingService:
             ValueError: If job not found
             RuntimeError: If failed to queue task
         """
-        # Get job from repository
+        # Get job from repository (entity is already expunged/detached)
         job = self.job_repository.get_by_processing_id(processing_id)
         if not job:
             raise ValueError(f"Processing job {processing_id} not found or expired")
 
-        # CRITICAL: Expire the entity from SQLAlchemy session to prevent it from tracking
-        # the decrypted file_content and accidentally saving it back to the database.
-        # We only want to update processing_options, not the entire entity.
-        self.db.expire(job)
+        # Note: The repository already expunges the entity, so it's detached from the session.
+        # No need to expire or expunge here - it's already safe from accidental overwrites.
 
         # Update job with processing options using repository to avoid overwriting encrypted fields
         self.job_repository.update(job.id, processing_options=options)
