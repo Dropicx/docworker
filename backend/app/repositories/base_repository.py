@@ -583,7 +583,15 @@ class EncryptedRepositoryMixin:
                             logger.warning(f"   ⚠️ Cannot decode as UTF-8 in database (might be plaintext binary)")
 
         # Decrypt fields for return (so service layer gets plaintext)
-        return self._decrypt_entity(entity)
+        decrypted_entity = self._decrypt_entity(entity)
+        
+        # CRITICAL: Expunge the entity after decrypting to prevent SQLAlchemy from
+        # tracking the decrypted values and accidentally saving them back to the database.
+        # The entity is now detached and won't be auto-saved on session flush/close.
+        self.db.expunge(decrypted_entity)
+        logger.debug(f"Expunged {self.model.__name__} entity (id={decrypted_entity.id}) after decryption in create()")
+        
+        return decrypted_entity
 
     def get_by_id(self, record_id: Any) -> ModelType | None:
         """
@@ -593,10 +601,17 @@ class EncryptedRepositoryMixin:
             record_id: Primary key value
 
         Returns:
-            Entity with decrypted fields or None
+            Entity with decrypted fields or None (detached from session)
         """
         entity = super().get_by_id(record_id)
-        return self._decrypt_entity(entity)
+        decrypted_entity = self._decrypt_entity(entity)
+        
+        # Expunge to prevent accidental overwrites of decrypted data
+        if decrypted_entity:
+            self.db.expunge(decrypted_entity)
+            logger.debug(f"Expunged {self.model.__name__} entity (id={decrypted_entity.id}) after decryption in get_by_id()")
+        
+        return decrypted_entity
 
     def get_all(
         self, skip: int = 0, limit: int = 100, filters: dict[str, Any] | None = None
@@ -610,10 +625,17 @@ class EncryptedRepositoryMixin:
             filters: Dictionary of field:value filters
 
         Returns:
-            List of entities with decrypted fields
+            List of entities with decrypted fields (detached from session)
         """
         entities = super().get_all(skip, limit, filters)
-        return self._decrypt_entities(entities)
+        decrypted_entities = self._decrypt_entities(entities)
+        
+        # Expunge all to prevent accidental overwrites of decrypted data
+        for entity in decrypted_entities:
+            self.db.expunge(entity)
+        logger.debug(f"Expunged {len(decrypted_entities)} {self.model.__name__} entities after decryption in get_all()")
+        
+        return decrypted_entities
 
     def get_one(self, filters: dict[str, Any]) -> ModelType | None:
         """
@@ -623,10 +645,17 @@ class EncryptedRepositoryMixin:
             filters: Dictionary of field:value filters
 
         Returns:
-            Entity with decrypted fields or None
+            Entity with decrypted fields or None (detached from session)
         """
         entity = super().get_one(filters)
-        return self._decrypt_entity(entity)
+        decrypted_entity = self._decrypt_entity(entity)
+        
+        # Expunge to prevent accidental overwrites of decrypted data
+        if decrypted_entity:
+            self.db.expunge(decrypted_entity)
+            logger.debug(f"Expunged {self.model.__name__} entity after decryption in get_one()")
+        
+        return decrypted_entity
 
     def update(self, record_id: Any, **kwargs) -> ModelType | None:
         """

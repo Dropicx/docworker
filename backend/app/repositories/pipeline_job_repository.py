@@ -43,11 +43,18 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
             job_id: Job UUID string
 
         Returns:
-            Pipeline job instance with decrypted file_content, or None if not found
+            Pipeline job instance with decrypted file_content (detached from session), or None if not found
         """
         try:
             job = self.db.query(PipelineJobDB).filter(PipelineJobDB.job_id == job_id).first()
-            return self._decrypt_entity(job)
+            decrypted_job = self._decrypt_entity(job)
+            
+            # Expunge to prevent accidental overwrites of decrypted data
+            if decrypted_job:
+                self.db.expunge(decrypted_job)
+                logger.debug(f"Expunged PipelineJobDB entity (id={decrypted_job.id}) after decryption in get_by_job_id()")
+            
+            return decrypted_job
         except Exception as e:
             logger.error(f"Error getting pipeline job by job_id={job_id}: {e}")
             raise
@@ -60,7 +67,7 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
             processing_id: Processing ID string
 
         Returns:
-            Pipeline job instance with decrypted file_content, or None if not found
+            Pipeline job instance with decrypted file_content (detached from session), or None if not found
         """
         try:
             job = (
@@ -68,7 +75,14 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
                 .filter(PipelineJobDB.processing_id == processing_id)
                 .first()
             )
-            return self._decrypt_entity(job)
+            decrypted_job = self._decrypt_entity(job)
+            
+            # Expunge to prevent accidental overwrites of decrypted data
+            if decrypted_job:
+                self.db.expunge(decrypted_job)
+                logger.debug(f"Expunged PipelineJobDB entity (id={decrypted_job.id}) after decryption in get_by_processing_id()")
+            
+            return decrypted_job
         except Exception as e:
             logger.error(f"Error getting pipeline job by processing_id={processing_id}: {e}")
             raise
@@ -85,7 +99,7 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
             limit: Maximum number of records to return
 
         Returns:
-            List of pipeline job instances with decrypted file_content
+            List of pipeline job instances with decrypted file_content (detached from session)
         """
         try:
             jobs = (
@@ -95,7 +109,14 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
                 .limit(limit)
                 .all()
             )
-            return self._decrypt_entities(jobs)
+            decrypted_jobs = self._decrypt_entities(jobs)
+            
+            # Expunge all to prevent accidental overwrites of decrypted data
+            for job in decrypted_jobs:
+                self.db.expunge(job)
+            logger.debug(f"Expunged {len(decrypted_jobs)} PipelineJobDB entities after decryption in get_by_status()")
+            
+            return decrypted_jobs
         except Exception as e:
             logger.error(f"Error getting pipeline jobs by status={status}: {e}")
             raise
@@ -200,7 +221,7 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
             older_than_hours: Minimum age in hours
 
         Returns:
-            List of pipeline job instances
+            List of pipeline job instances (detached from session)
         """
         try:
             from datetime import datetime, timedelta
@@ -218,7 +239,14 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
                 .all()
             )
 
-            return self._decrypt_entities(jobs)
+            decrypted_jobs = self._decrypt_entities(jobs)
+            
+            # Expunge all to prevent accidental overwrites of decrypted data
+            for job in decrypted_jobs:
+                self.db.expunge(job)
+            logger.debug(f"Expunged {len(decrypted_jobs)} PipelineJobDB entities after decryption in get_jobs_without_consent()")
+            
+            return decrypted_jobs
         except Exception as e:
             logger.error(f"Error getting jobs without consent: {e}")
             raise
