@@ -855,29 +855,21 @@ class ModularPipelineExecutor:
                         f"⏭️  Skipping step '{step.name}' - missing required context variables: {missing_vars}"
                     )
 
-                    # Log skipped step
-                    step_execution = PipelineStepExecutionDB(
+                    # Log skipped step using encrypted repository
+                    self._log_step_execution(
                         job_id=job_id,
-                        step_id=step.id,
-                        step_name=step.name,
-                        step_order=step.order,
+                        step=step,
                         status=StepExecutionStatus.SKIPPED,
-                        input_text=current_output[:1000],
+                        input_text=current_output,
                         output_text=None,
-                        model_used=None,
-                        prompt_used=step.prompt_template[:500],
-                        started_at=datetime.fromtimestamp(step_start_time),
-                        completed_at=datetime.now(),
-                        execution_time_seconds=time.time() - step_start_time,
-                        error_message=None,
-                        step_metadata={
+                        step_start_time=step_start_time,
+                        error=None,
+                        metadata={
                             "skip_reason": "missing_required_context_variables",
                             "missing_variables": missing_vars,
                             "required_variables": step.required_context_variables,
                         },
                     )
-                    self.session.add(step_execution)
-                    self.session.commit()
 
                     execution_metadata["steps_executed"].append(
                         {
@@ -1185,30 +1177,22 @@ class ModularPipelineExecutor:
                             f"⏭️  Skipping post-branching step '{step.name}' - missing required context variables: {missing_vars}"
                         )
 
-                        # Log skipped step
-                        step_execution = PipelineStepExecutionDB(
+                        # Log skipped step using encrypted repository
+                        self._log_step_execution(
                             job_id=job_id,
-                            step_id=step.id,
-                            step_name=step.name,
-                            step_order=step.order,
+                            step=step,
                             status=StepExecutionStatus.SKIPPED,
-                            input_text=current_output[:1000],
+                            input_text=current_output,
                             output_text=None,
-                            model_used=None,
-                            prompt_used=step.prompt_template[:500],
-                            started_at=datetime.fromtimestamp(step_start_time),
-                            completed_at=datetime.now(),
-                            execution_time_seconds=time.time() - step_start_time,
-                            error_message=None,
-                            step_metadata={
+                            step_start_time=step_start_time,
+                            error=None,
+                            metadata={
                                 "post_branching": True,
                                 "skip_reason": "missing_required_context_variables",
                                 "missing_variables": missing_vars,
                                 "required_variables": step.required_context_variables,
                             },
                         )
-                        self.session.add(step_execution)
-                        self.session.commit()
 
                         execution_metadata["steps_executed"].append(
                             {
