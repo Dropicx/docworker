@@ -500,27 +500,35 @@ class EncryptedRepositoryMixin:
         # Call parent create method
         entity = super().create(**encrypted_kwargs)
         
-        # Verify what was actually saved to database
-        # Use a fresh query to ensure we're reading from the database, not the entity object
-        self.db.refresh(entity)  # Force reload from database
+        # CRITICAL: Flush and commit to ensure data is persisted before any other operations
+        self.db.flush()
+        self.db.commit()
         
-        # Also query directly from database to verify
-        fresh_entity = self.db.query(self.model).filter(self.model.id == entity.id).first()
-        if fresh_entity:
-            for field in self.encrypted_fields:
-                if hasattr(fresh_entity, field):
-                    saved_value = getattr(fresh_entity, field)
-                    if saved_value is not None:
-                        if isinstance(saved_value, bytes):
-                            logger.info(f"🔍 Direct DB query: {field} = {len(saved_value)} bytes")
-                            try:
-                                preview = saved_value[:50].decode("utf-8")
-                                if preview.startswith("gAAAAA"):
-                                    logger.info(f"   ✅ Verified: Encrypted token format in database (direct query)")
-                                else:
-                                    logger.warning(f"   ⚠️ Doesn't look encrypted in database (direct query): {preview[:20]}...")
-                            except UnicodeDecodeError:
-                                logger.warning(f"   ⚠️ Cannot decode as UTF-8 in database (direct query) - might be plaintext binary")
+        # Verify what was actually saved to database using raw SQL to bypass ORM
+        from sqlalchemy import text
+        verify_result = self.db.execute(
+            text(f"SELECT LENGTH({self.encrypted_fields[0]}) as len FROM {self.model.__tablename__} WHERE id = :id"),
+            {"id": entity.id}
+        )
+        db_row = verify_result.fetchone()
+        if db_row:
+            db_length = db_row[0]
+            logger.info(f"🔍 Raw SQL verification: {self.encrypted_fields[0]} in DB = {db_length} bytes")
+            
+            # Check if it matches what we tried to save
+            expected_length = len(encrypted_kwargs.get(self.encrypted_fields[0], b""))
+            if isinstance(encrypted_kwargs.get(self.encrypted_fields[0]), bytes):
+                expected_length = len(encrypted_kwargs[self.encrypted_fields[0]])
+            else:
+                expected_length = 0
+                
+            if db_length == expected_length and expected_length > 0:
+                logger.info(f"   ✅ Verified: Database has correct encrypted size ({db_length} bytes)")
+            else:
+                logger.error(f"   ❌ MISMATCH: Expected {expected_length} bytes, but database has {db_length} bytes!")
+        
+        # Also refresh entity to see what ORM thinks is in the database
+        self.db.refresh(entity)  # Force reload from database
         for field in self.encrypted_fields:
             if hasattr(entity, field):
                 saved_value = getattr(entity, field)
