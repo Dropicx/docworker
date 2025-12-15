@@ -111,20 +111,35 @@ def main():
             file_length = job_row[6]
             print(f"   file_content length: {file_length} bytes")
             
-            # Get first 200 bytes to check
+            # Get first 200 bytes to check (read as raw bytes, not text)
             result = session.execute(
                 text("""
-                    SELECT SUBSTRING(file_content::text, 1, 200) as preview
+                    SELECT file_content
                     FROM pipeline_jobs
                     WHERE id = :job_id
                 """),
                 {"job_id": job_row[0]}
             )
-            preview_row = result.fetchone()
+            file_content_row = result.fetchone()
             
-            if preview_row and preview_row[0]:
-                preview = preview_row[0]
-                is_encrypted = check_if_encrypted_heuristic(preview)
+            if file_content_row and file_content_row[0]:
+                file_content_raw = file_content_row[0]
+                # Convert memoryview to bytes if needed
+                if isinstance(file_content_raw, memoryview):
+                    file_content_bytes = bytes(file_content_raw)
+                else:
+                    file_content_bytes = file_content_raw
+                
+                # Try to decode as UTF-8 to check if it's encrypted
+                try:
+                    preview_str = file_content_bytes[:200].decode("utf-8")
+                    preview = preview_str
+                    is_encrypted = check_if_encrypted_heuristic(preview_str)
+                except UnicodeDecodeError:
+                    # If it can't be decoded as UTF-8, it's likely plaintext binary
+                    preview_hex = file_content_bytes[:50].hex()
+                    preview = f"\\x{preview_hex}"
+                    is_encrypted = False
                 
                 if is_encrypted:
                     print("   ✅ ENCRYPTED (appears to be Fernet token)")
