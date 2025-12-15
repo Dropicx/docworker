@@ -306,7 +306,7 @@ class PipelineJobDB(Base):
     failed_at = Column(DateTime, nullable=True)
 
     # Results and errors
-    result_data = Column(JSON, nullable=True)  # Final output
+    result_data = Column(Text, nullable=True)  # Final output (encrypted JSON string)
     error_message = Column(Text, nullable=True)
     error_step_id = Column(Integer, nullable=True)  # Step that caused failure
 
