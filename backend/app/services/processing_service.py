@@ -172,24 +172,38 @@ class ProcessingService:
             first_step = min(step_executions, key=lambda s: s.step_order)
             original_text = first_step.input_text
 
-        # Find the final translated/simplified text (last completed step's output_text)
+        # Find the final translated/simplified text
+        # Strategy: Select the step with the LONGEST output_text (actual content)
+        # This avoids selecting classification/validation steps that output short strings
+        # like "ARZTBRIEF" or "MEDIZINISCH"
         translated_text = None
         language_translated_text = None
         
-        # Sort by step_order to get the last completed step
         completed_steps = [s for s in step_executions if s.status == StepExecutionStatus.COMPLETED and s.output_text]
         if completed_steps:
-            # Get the last completed step (highest order)
-            last_step = max(completed_steps, key=lambda s: s.step_order)
-            translated_text = last_step.output_text
+            # Exclude validation/classification steps (short outputs like "ARZTBRIEF")
+            # Simplification steps typically have 500+ characters
+            content_steps = [s for s in completed_steps if len(s.output_text) > 200]
             
-            # Check if there's a language translation step
-            language_step = next(
-                (s for s in completed_steps if "translation" in s.step_name.lower() and s.output_text),
-                None
-            )
-            if language_step and language_step.output_text != translated_text:
-                language_translated_text = language_step.output_text
+            if content_steps:
+                # Get the step with the longest output (the actual simplified/translated content)
+                longest_output_step = max(content_steps, key=lambda s: len(s.output_text))
+                translated_text = longest_output_step.output_text
+                
+                # Check if there's a separate language translation step with different content
+                language_step = next(
+                    (s for s in content_steps 
+                     if "translation" in s.step_name.lower() 
+                     and s.output_text 
+                     and s.output_text != translated_text),
+                    None
+                )
+                if language_step:
+                    language_translated_text = language_step.output_text
+            else:
+                # Fallback: if all outputs are short, use the last one
+                last_step = max(completed_steps, key=lambda s: s.step_order)
+                translated_text = last_step.output_text
 
         # Add the decrypted medical content to result_data for API response
         result_with_content = result_data.copy()
