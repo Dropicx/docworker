@@ -57,9 +57,13 @@ class ProcessingService:
         if not job:
             raise ValueError(f"Processing job {processing_id} not found or expired")
 
-        # Update job with processing options
-        job.processing_options = options
-        self.db.commit()
+        # CRITICAL: Expire the entity from SQLAlchemy session to prevent it from tracking
+        # the decrypted file_content and accidentally saving it back to the database.
+        # We only want to update processing_options, not the entire entity.
+        self.db.expire(job)
+
+        # Update job with processing options using repository to avoid overwriting encrypted fields
+        self.job_repository.update(job.id, processing_options=options)
 
         logger.info(f"📋 Processing options saved for {processing_id[:8]}: {options}")
 

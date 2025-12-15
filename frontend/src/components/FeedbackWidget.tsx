@@ -142,8 +142,8 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
 
       await feedbackApi.submitFeedback(submission);
       setIsSubmitted(true);
-      // Mark feedback as submitted to prevent cleanup from running
-      setAlreadySubmitted(true);
+      // Note: Don't set alreadySubmitted here - that flag is only for feedback
+      // that existed BEFORE this session. isSubmitted alone prevents cleanup.
       onFeedbackSubmitted?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Feedback konnte nicht gesendet werden.');
