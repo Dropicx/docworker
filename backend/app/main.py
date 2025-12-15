@@ -28,6 +28,7 @@ from app.routers.privacy_metrics import router as privacy_metrics_router
 from app.routers.process_multi_file import router as multi_file_router
 from app.routers.settings_auth import router as settings_auth_router
 from app.routers.users import router as users_router
+from app.services.cache_service import CacheService
 from app.services.cleanup import cleanup_temp_files
 
 # Configure logging with centralized settings
@@ -83,6 +84,16 @@ async def lifespan(app: FastAPI):
         except Exception as e:
             logger.error(f"❌ Database initialization error: {e}")
 
+    # Initialize Redis cache (skip in test environment)
+    cache_service = None
+    if not is_testing and settings.cache_enabled:
+        logger.info("🔄 Initializing Redis cache...")
+        cache_service = CacheService()
+        if await cache_service.health_check():
+            logger.info("✅ Redis cache initialized successfully")
+        else:
+            logger.warning("⚠️ Redis cache unavailable - using database only")
+
     # Cleanup task - runs every 30 seconds (skip in test environment)
     cleanup_task = None
     if not is_testing:
@@ -97,6 +108,11 @@ async def lifespan(app: FastAPI):
         cleanup_task.cancel()
         with suppress(asyncio.CancelledError):
             await cleanup_task
+
+    # Close Redis cache connections
+    if cache_service is not None:
+        await cache_service.close()
+        logger.info("✅ Redis cache connections closed")
 
     # Final cleanup (skip in test environment to avoid cleanup conflicts)
     if not is_testing:

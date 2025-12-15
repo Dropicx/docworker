@@ -50,6 +50,22 @@ class Settings(BaseSettings):
     redis_max_connections: int = Field(default=50, description="Maximum Redis connections")
 
     # ==================
+    # Cache Settings
+    # ==================
+    cache_enabled: bool = Field(
+        default=True, description="Enable Redis caching for configuration data"
+    )
+    cache_default_ttl_seconds: int = Field(
+        default=300, description="Default cache TTL in seconds (5 minutes)"
+    )
+    cache_pipeline_ttl_seconds: int = Field(
+        default=600, description="Pipeline/model config cache TTL in seconds (10 minutes)"
+    )
+    cache_key_prefix: str = Field(
+        default="doctranslator", description="Redis cache key prefix"
+    )
+
+    # ==================
     # OVH AI Endpoints
     # ==================
     ovh_ai_endpoints_access_token: SecretStr = Field(

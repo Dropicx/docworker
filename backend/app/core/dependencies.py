@@ -18,6 +18,14 @@ from app.repositories.pipeline_step_execution_repository import PipelineStepExec
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.repositories.system_settings_repository import SystemSettingsRepository
 from app.services.ai_cost_tracker import AICostTracker
+from app.services.cache_service import CacheService, get_cache_service
+from app.services.cached_repositories import (
+    CachedAvailableModelRepository,
+    CachedDocumentClassRepository,
+    CachedOCRConfigurationRepository,
+    CachedPipelineStepRepository,
+    CachedSystemSettingsRepository,
+)
 from app.services.processing_service import ProcessingService
 from app.services.statistics_service import StatisticsService
 
@@ -199,3 +207,101 @@ def get_ai_log_interaction_repository(
         AILogInteractionRepository instance
     """
     return AILogInteractionRepository(db)
+
+
+# ==================== Cached Repository Factories ====================
+
+
+def get_cached_pipeline_step_repository(
+    db: Session = Depends(get_session),
+    cache: CacheService = Depends(get_cache_service),
+) -> CachedPipelineStepRepository:
+    """
+    Dependency injection factory for CachedPipelineStepRepository.
+
+    Provides pipeline step repository with Redis caching layer.
+
+    Args:
+        db: Database session (injected by FastAPI)
+        cache: Cache service (injected by FastAPI)
+
+    Returns:
+        CachedPipelineStepRepository instance
+    """
+    return CachedPipelineStepRepository(db, cache)
+
+
+def get_cached_document_class_repository(
+    db: Session = Depends(get_session),
+    cache: CacheService = Depends(get_cache_service),
+) -> CachedDocumentClassRepository:
+    """
+    Dependency injection factory for CachedDocumentClassRepository.
+
+    Provides document class repository with Redis caching layer.
+
+    Args:
+        db: Database session (injected by FastAPI)
+        cache: Cache service (injected by FastAPI)
+
+    Returns:
+        CachedDocumentClassRepository instance
+    """
+    return CachedDocumentClassRepository(db, cache)
+
+
+def get_cached_available_model_repository(
+    db: Session = Depends(get_session),
+    cache: CacheService = Depends(get_cache_service),
+) -> CachedAvailableModelRepository:
+    """
+    Dependency injection factory for CachedAvailableModelRepository.
+
+    Provides available model repository with Redis caching layer.
+
+    Args:
+        db: Database session (injected by FastAPI)
+        cache: Cache service (injected by FastAPI)
+
+    Returns:
+        CachedAvailableModelRepository instance
+    """
+    return CachedAvailableModelRepository(db, cache)
+
+
+def get_cached_system_settings_repository(
+    db: Session = Depends(get_session),
+    cache: CacheService = Depends(get_cache_service),
+) -> CachedSystemSettingsRepository:
+    """
+    Dependency injection factory for CachedSystemSettingsRepository.
+
+    Provides system settings repository with Redis caching layer.
+
+    Args:
+        db: Database session (injected by FastAPI)
+        cache: Cache service (injected by FastAPI)
+
+    Returns:
+        CachedSystemSettingsRepository instance
+    """
+    return CachedSystemSettingsRepository(db, cache)
+
+
+def get_cached_ocr_configuration_repository(
+    db: Session = Depends(get_session),
+    cache: CacheService = Depends(get_cache_service),
+) -> CachedOCRConfigurationRepository:
+    """
+    Dependency injection factory for CachedOCRConfigurationRepository.
+
+    Provides OCR configuration repository with Redis caching layer.
+
+    Args:
+        db: Database session (injected by FastAPI)
+        cache: Cache service (injected by FastAPI)
+
+    Returns:
+        CachedOCRConfigurationRepository instance
+    """
+    return CachedOCRConfigurationRepository(db, cache)

@@ -22,6 +22,7 @@ from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import OCREngineEnum
 from app.repositories.pipeline_step_repository import PipelineStepRepository
+from app.services.cache_service import CacheService, get_cache_service
 from app.services.document_class_manager import DocumentClassManager
 from app.services.modular_pipeline_executor import ModularPipelineManager
 from app.services.ocr_engine_manager import OCREngineManager
@@ -283,6 +284,7 @@ async def update_ocr_config(
     config_request: OCRConfigRequest,
     db: Session = Depends(get_session),
     current_user: UserDB = Depends(require_user_auth),
+    cache: CacheService = Depends(get_cache_service),
 ):
     """
     Update OCR engine configuration.
@@ -302,6 +304,9 @@ async def update_ocr_config(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to update OCR configuration",
             )
+
+        # Invalidate OCR config cache
+        await cache.delete_namespace(CacheService.NS_OCR_CONFIG)
 
         logger.info(f"✅ OCR configuration updated: {config.selected_engine}")
         return config
@@ -400,6 +405,7 @@ async def create_step(
     step_request: PipelineStepRequest,
     db: Session = Depends(get_session),
     current_user: UserDB = Depends(require_user_auth),
+    cache: CacheService = Depends(get_cache_service),
 ):
     """
     Create a new pipeline step.
@@ -413,6 +419,9 @@ async def create_step(
         step_data["modified_by"] = "settings_ui"
 
         step = manager.create_step(step_data)
+
+        # Invalidate pipeline steps cache
+        await cache.delete_namespace(CacheService.NS_PIPELINE_STEPS)
 
         logger.info(f"✅ Created pipeline step: {step.name} (order: {step.order})")
         return step
@@ -428,6 +437,7 @@ async def update_step(
     step_request: PipelineStepRequest,
     db: Session = Depends(get_session),
     current_user: UserDB = Depends(require_user_auth),
+    cache: CacheService = Depends(get_cache_service),
 ):
     """
     Update an existing pipeline step.
@@ -447,6 +457,9 @@ async def update_step(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
             )
 
+        # Invalidate pipeline steps cache
+        await cache.delete_namespace(CacheService.NS_PIPELINE_STEPS)
+
         logger.info(f"✅ Updated pipeline step: {step.name} (ID: {step_id})")
         return step
 
@@ -460,6 +473,7 @@ async def delete_step(
     step_id: int,
     db: Session = Depends(get_session),
     current_user: UserDB = Depends(require_user_auth),
+    cache: CacheService = Depends(get_cache_service),
 ):
     """
     Delete a pipeline step.
@@ -475,6 +489,9 @@ async def delete_step(
             status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
         )
 
+    # Invalidate pipeline steps cache
+    await cache.delete_namespace(CacheService.NS_PIPELINE_STEPS)
+
     logger.info(f"✅ Deleted pipeline step ID: {step_id}")
     return
 
@@ -484,6 +501,7 @@ async def reorder_steps(
     reorder_request: StepReorderRequest,
     db: Session = Depends(get_session),
     current_user: UserDB = Depends(require_user_auth),
+    cache: CacheService = Depends(get_cache_service),
 ):
     """
     Reorder pipeline steps.
@@ -499,6 +517,9 @@ async def reorder_steps(
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to reorder steps"
             )
+
+        # Invalidate pipeline steps cache
+        await cache.delete_namespace(CacheService.NS_PIPELINE_STEPS)
 
         logger.info(f"✅ Reordered pipeline steps: {reorder_request.step_ids}")
         return {"success": True, "message": "Steps reordered successfully"}
@@ -686,6 +707,7 @@ async def update_model(
     update_request: ModelUpdateRequest,
     db: Session = Depends(get_session),
     current_user: UserDB = Depends(require_admin()),
+    cache: CacheService = Depends(get_cache_service),
 ):
     """
     Update AI model pricing information.
@@ -714,6 +736,9 @@ async def update_model(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"Model {model_id} not found"
             )
+
+        # Invalidate models cache
+        await cache.delete_namespace(CacheService.NS_AVAILABLE_MODELS)
 
         logger.info(f"✅ Updated model pricing: {updated_model.name} (ID: {model_id})")
         return updated_model
@@ -781,6 +806,7 @@ async def create_document_class(
     class_request: DocumentClassRequest,
     db: Session = Depends(get_session),
     current_user: UserDB = Depends(require_user_auth),
+    cache: CacheService = Depends(get_cache_service),
 ):
     """
     Create a new document class.
@@ -802,6 +828,9 @@ async def create_document_class(
                 detail="Failed to create document class",
             )
 
+        # Invalidate document classes cache
+        await cache.delete_namespace(CacheService.NS_DOCUMENT_CLASSES)
+
         logger.info(f"✅ Created document class: {doc_class.class_key}")
         return doc_class
 
@@ -820,6 +849,7 @@ async def update_document_class(
     class_request: DocumentClassRequest,
     db: Session = Depends(get_session),
     current_user: UserDB = Depends(require_user_auth),
+    cache: CacheService = Depends(get_cache_service),
 ):
     """
     Update an existing document class.
@@ -838,6 +868,9 @@ async def update_document_class(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found"
             )
 
+        # Invalidate document classes cache
+        await cache.delete_namespace(CacheService.NS_DOCUMENT_CLASSES)
+
         logger.info(f"✅ Updated document class: {doc_class.class_key}")
         return doc_class
 
@@ -855,6 +888,7 @@ async def delete_document_class(
     class_id: int,
     db: Session = Depends(get_session),
     current_user: UserDB = Depends(require_user_auth),
+    cache: CacheService = Depends(get_cache_service),
 ):
     """
     Delete a document class.
@@ -871,6 +905,9 @@ async def delete_document_class(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail=f"Document class {class_id} not found"
             )
+
+        # Invalidate document classes cache
+        await cache.delete_namespace(CacheService.NS_DOCUMENT_CLASSES)
 
         logger.info(f"✅ Deleted document class ID: {class_id}")
         return
