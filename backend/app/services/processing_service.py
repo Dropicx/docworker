@@ -173,37 +173,63 @@ class ProcessingService:
             original_text = first_step.input_text
 
         # Find the final translated/simplified text
-        # Strategy: Select the step with the LONGEST output_text (actual content)
-        # This avoids selecting classification/validation steps that output short strings
-        # like "ARZTBRIEF" or "MEDIZINISCH"
+        # Strategy: Use pipeline config to identify branching steps (validation/classification)
+        # and exclude them to find the actual content-generating steps
         translated_text = None
         language_translated_text = None
         
         completed_steps = [s for s in step_executions if s.status == StepExecutionStatus.COMPLETED and s.output_text]
         if completed_steps:
-            # Exclude validation/classification steps (short outputs like "ARZTBRIEF")
-            # Simplification steps typically have 500+ characters
-            content_steps = [s for s in completed_steps if len(s.output_text) > 200]
+            # Get pipeline config to identify branching steps
+            pipeline_config = result_data.get('pipeline_config', [])
+            branching_step_names = {
+                step['name'] for step in pipeline_config 
+                if isinstance(step, dict) and step.get('is_branching_step', False)
+            }
+            
+            logger.debug(
+                f"Pipeline has {len(branching_step_names)} branching steps: {branching_step_names}"
+            )
+            
+            # Filter out branching steps (validation/classification) to get content steps
+            content_steps = [
+                s for s in completed_steps 
+                if s.step_name not in branching_step_names
+            ]
             
             if content_steps:
-                # Get the step with the longest output (the actual simplified/translated content)
-                longest_output_step = max(content_steps, key=lambda s: len(s.output_text))
-                translated_text = longest_output_step.output_text
+                # Sort by step_order to get execution sequence
+                content_steps_sorted = sorted(content_steps, key=lambda s: s.step_order)
                 
-                # Check if there's a separate language translation step with different content
+                # Check if language translation was executed
                 language_step = next(
-                    (s for s in content_steps 
-                     if "translation" in s.step_name.lower() 
-                     and s.output_text 
-                     and s.output_text != translated_text),
+                    (s for s in content_steps_sorted if "translation" in s.step_name.lower()),
                     None
                 )
-                if language_step:
+                
+                if language_step and language_step.output_text:
+                    # If language translation exists, it's the final output
                     language_translated_text = language_step.output_text
+                    # The step before translation is the simplified text
+                    simplified_step = next(
+                        (s for s in content_steps_sorted if s.step_order < language_step.step_order),
+                        None
+                    )
+                    translated_text = simplified_step.output_text if simplified_step else language_step.output_text
+                else:
+                    # No language translation - use the last content step
+                    last_content_step = content_steps_sorted[-1]
+                    translated_text = last_content_step.output_text
+                
+                logger.info(
+                    f"Selected content steps: simplified={bool(translated_text)}, "
+                    f"translated={bool(language_translated_text)}"
+                )
             else:
-                # Fallback: if all outputs are short, use the last one
-                last_step = max(completed_steps, key=lambda s: s.step_order)
-                translated_text = last_step.output_text
+                # Fallback: No content steps identified, use longest output
+                logger.warning("No content steps found, falling back to longest output")
+                longest_output_step = max(completed_steps, key=lambda s: len(s.output_text))
+                translated_text = longest_output_step.output_text
 
         # Add the decrypted medical content to result_data for API response
         result_with_content = result_data.copy()
