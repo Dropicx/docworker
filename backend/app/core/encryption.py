@@ -426,11 +426,24 @@ class FieldEncryptor:
                 encrypted_size = len(encrypted_string)
                 logger.debug(f"   encrypt_binary_field: Encrypted to {encrypted_size} chars")
                 
-                # Verify it's actually encrypted
-                if encrypted_string.startswith("gAAAAA"):
-                    logger.debug(f"   ✅ encrypt_binary_field: Verified Fernet token format")
-                else:
-                    logger.warning(f"   ⚠️ encrypt_binary_field: Doesn't look like Fernet token: {encrypted_string[:20]}...")
+            # Verify it's actually encrypted
+            # Note: Fernet tokens start with "gAAAAA" in base64, which is "Z0FBQUFB" in base64 encoding
+            # But the encrypted_string is already base64-encoded, so we check for the base64 representation
+            if encrypted_string.startswith("gAAAAA"):
+                logger.debug(f"   ✅ encrypt_binary_field: Verified Fernet token format (starts with 'gAAAAA')")
+            elif encrypted_string.startswith("Z0FBQUFB"):
+                logger.debug(f"   ✅ encrypt_binary_field: Verified Fernet token format (base64 encoded, starts with 'Z0FBQUFB')")
+            else:
+                # Decode base64 to check if it's a Fernet token
+                try:
+                    import base64 as b64
+                    decoded = b64.b64decode(encrypted_string)
+                    if decoded.startswith(b"gAAAAA"):
+                        logger.debug(f"   ✅ encrypt_binary_field: Verified Fernet token format (after base64 decode)")
+                    else:
+                        logger.warning(f"   ⚠️ encrypt_binary_field: Doesn't look like Fernet token: {encrypted_string[:20]}...")
+                except Exception:
+                    logger.warning(f"   ⚠️ encrypt_binary_field: Cannot verify token format: {encrypted_string[:20]}...")
             
             return encrypted_string
 

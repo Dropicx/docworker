@@ -469,9 +469,41 @@ class EncryptedRepositoryMixin:
 
         # Encrypt fields before creation
         encrypted_kwargs = self._encrypt_fields(kwargs)
+        
+        # Log what we're about to save
+        for field in self.encrypted_fields:
+            if field in encrypted_kwargs and encrypted_kwargs[field] is not None:
+                if isinstance(encrypted_kwargs[field], bytes):
+                    logger.info(f"🔐 About to save encrypted {field}: {len(encrypted_kwargs[field])} bytes")
+                    # Check if it looks encrypted
+                    try:
+                        preview = encrypted_kwargs[field][:50].decode("utf-8")
+                        if preview.startswith("gAAAAA"):
+                            logger.info(f"   ✅ Verified: Encrypted token format before save")
+                        else:
+                            logger.warning(f"   ⚠️ Doesn't look encrypted before save: {preview[:20]}...")
+                    except UnicodeDecodeError:
+                        logger.warning(f"   ⚠️ Cannot decode as UTF-8 before save (might be plaintext binary)")
 
         # Call parent create method
         entity = super().create(**encrypted_kwargs)
+        
+        # Verify what was actually saved to database
+        self.db.refresh(entity)  # Force reload from database
+        for field in self.encrypted_fields:
+            if hasattr(entity, field):
+                saved_value = getattr(entity, field)
+                if saved_value is not None:
+                    if isinstance(saved_value, bytes):
+                        logger.info(f"🔍 After save, {field} in DB: {len(saved_value)} bytes")
+                        try:
+                            preview = saved_value[:50].decode("utf-8")
+                            if preview.startswith("gAAAAA"):
+                                logger.info(f"   ✅ Verified: Encrypted token format in database")
+                            else:
+                                logger.warning(f"   ⚠️ Doesn't look encrypted in database: {preview[:20]}...")
+                        except UnicodeDecodeError:
+                            logger.warning(f"   ⚠️ Cannot decode as UTF-8 in database (might be plaintext binary)")
 
         # Decrypt fields for return (so service layer gets plaintext)
         return self._decrypt_entity(entity)
