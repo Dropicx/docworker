@@ -501,6 +501,110 @@ class FieldEncryptor:
             logger.error(f"Binary decryption failed: {e}")
             raise DecryptionError(f"Failed to decrypt binary field: {e}") from e
 
+    def encrypt_json_field(self, json_data: dict | None) -> str | None:
+        """
+        Encrypt a JSON/dict field by serializing to JSON string first.
+
+        This allows encrypting complex data structures (dicts, lists) that are
+        stored in PostgreSQL JSON columns.
+
+        Args:
+            json_data: Dictionary or JSON-serializable object to encrypt
+
+        Returns:
+            Encrypted string (Fernet token), or None if input is None
+
+        Example:
+            result_data = {"original_text": "...", "translated_text": "..."}
+            encrypted = encryptor.encrypt_json_field(result_data)
+            # Store encrypted string in database JSON column
+
+        Note:
+            The JSON serialization is done before encryption, so the encrypted
+            value is a string, not a JSON object. The database column should
+            store this as TEXT or VARCHAR, not JSON type.
+        """
+        if not json_data:
+            logger.debug("No JSON data to encrypt (None or empty)")
+            return None
+
+        if not self.is_enabled():
+            logger.warning("Encryption disabled - returning JSON as string")
+            import json
+            return json.dumps(json_data)
+
+        try:
+            import json
+
+            # Step 1: Serialize dict to JSON string
+            json_string = json.dumps(json_data, ensure_ascii=False)
+            logger.debug(f"Serialized JSON to {len(json_string)} chars")
+
+            # Step 2: Encrypt the JSON string
+            encrypted_string = self.encrypt_field(json_string)
+            logger.debug(f"Encrypted JSON field: {len(json_string)} chars → {len(encrypted_string) if encrypted_string else 0} chars")
+
+            return encrypted_string
+
+        except Exception as e:
+            logger.error(f"JSON encryption failed: {e}")
+            raise EncryptionError(f"Failed to encrypt JSON field: {e}") from e
+
+    def decrypt_json_field(self, encrypted_string: str | None) -> dict | None:
+        """
+        Decrypt a JSON field back to dict.
+
+        Args:
+            encrypted_string: Encrypted Fernet token from database
+
+        Returns:
+            Decrypted dictionary, or None if input is None
+
+        Example:
+            encrypted = job.result_data  # From database
+            result_data = encryptor.decrypt_json_field(encrypted)
+            original_text = result_data["original_text"]
+
+        Note:
+            Handles both encrypted and plaintext JSON (for backward compatibility
+            with data that was stored before encryption was enabled).
+        """
+        if not encrypted_string:
+            return None
+
+        if not self.is_enabled():
+            logger.warning("Encryption disabled - parsing JSON directly")
+            import json
+            return json.loads(encrypted_string)
+
+        try:
+            import json
+
+            # Check if it's encrypted (Fernet token) or plaintext JSON
+            if self.is_encrypted(encrypted_string):
+                # Step 1: Decrypt to JSON string
+                json_string = self.decrypt_field(encrypted_string)
+
+                if json_string is None:
+                    return None
+
+                logger.debug(f"Decrypted JSON field: {len(encrypted_string)} chars → {len(json_string)} chars")
+
+                # Step 2: Parse JSON string to dict
+                json_data = json.loads(json_string)
+                return json_data
+            else:
+                # Plaintext JSON (backward compatibility)
+                logger.debug("JSON field is plaintext (not encrypted), parsing directly")
+                return json.loads(encrypted_string)
+
+        except json.JSONDecodeError as e:
+            logger.error(f"JSON parsing failed: {e}")
+            raise DecryptionError(f"Failed to parse JSON after decryption: {e}") from e
+        except Exception as e:
+            logger.error(f"JSON decryption failed: {e}")
+            raise DecryptionError(f"Failed to decrypt JSON field: {e}") from e
+
     @staticmethod
     def generate_searchable_hash(value: str | None) -> str | None:
         """

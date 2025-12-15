@@ -13,9 +13,6 @@ from sqlalchemy.orm import Session
 from app.database.modular_pipeline_models import StepExecutionStatus
 from app.models.document import ProcessingStatus
 from app.repositories.pipeline_job_repository import PipelineJobRepository
-from app.repositories.pipeline_step_execution_repository import (
-    PipelineStepExecutionRepository,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -29,23 +26,16 @@ class ProcessingService:
     external services like Celery workers.
     """
 
-    def __init__(
-        self,
-        db: Session,
-        job_repository: PipelineJobRepository | None = None,
-        step_execution_repository: PipelineStepExecutionRepository | None = None,
-    ):
+    def __init__(self, db: Session, job_repository: PipelineJobRepository | None = None):
         """
         Initialize processing service.
 
         Args:
             db: Database session
             job_repository: Optional job repository (for dependency injection)
-            step_execution_repository: Optional step execution repository
         """
         self.db = db
         self.job_repository = job_repository or PipelineJobRepository(db)
-        self.step_execution_repository = step_execution_repository or PipelineStepExecutionRepository(db)
 
     def start_processing(self, processing_id: str, options: dict[str, Any]) -> dict[str, Any]:
         """
@@ -133,20 +123,19 @@ class ProcessingService:
         """
         Get processing result for a completed job.
 
-        Fetches metadata from result_data and medical content from encrypted
-        step executions to ensure GDPR compliance (no plaintext in result_data).
+        Returns result_data which contains medical content (original_text, translated_text).
+        The content is automatically decrypted by the repository layer (transparent encryption).
 
         Args:
             processing_id: Unique processing identifier
 
         Returns:
-            Processing result data with original_text and translated_text from
-            encrypted step executions
+            Processing result data with all fields decrypted
 
         Raises:
             ValueError: If job not found or not completed
         """
-        # Get job from repository (file_content is already decrypted by repository)
+        # Get job from repository (result_data is automatically decrypted)
         job = self.job_repository.get_by_processing_id(processing_id)
         if not job:
             raise ValueError(f"Processing job {processing_id} not found")
@@ -155,123 +144,18 @@ class ProcessingService:
         if job.status != StepExecutionStatus.COMPLETED:
             raise ValueError(f"Processing not completed yet. Status: {job.status}")
 
-        # Get result data (metadata only, no medical content)
+        # Get result data (already decrypted by repository)
         result_data = job.result_data
         if not result_data:
             raise ValueError("Processing result not available")
 
-        # Fetch medical content from encrypted step executions
-        # Step executions are automatically decrypted by the repository
-        step_executions = self.step_execution_repository.get_all(
-            filters={"job_id": job.job_id}
-        )
-
-        # Find the original OCR text (first step's input_text)
-        original_text = None
-        if step_executions:
-            first_step = min(step_executions, key=lambda s: s.step_order)
-            original_text = first_step.input_text
-
-        # Find the final translated/simplified text
-        # Strategy: Multi-tier approach to identify content-generating steps
-        translated_text = None
-        language_translated_text = None
-        
-        completed_steps = [s for s in step_executions if s.status == StepExecutionStatus.COMPLETED and s.output_text]
-        if completed_steps:
-            # Tier 1: Use pipeline config to identify branching steps (if available)
-            pipeline_config = result_data.get('pipeline_config', [])
-            branching_step_names = set()
-            
-            if pipeline_config:
-                branching_step_names = {
-                    step['name'] for step in pipeline_config 
-                    if isinstance(step, dict) and step.get('is_branching_step', False)
-                }
-                logger.debug(f"Pipeline config found: {len(branching_step_names)} branching steps")
-            else:
-                # Tier 2: Fallback to known branching step patterns
-                branching_patterns = ['validation', 'classification']
-                branching_step_names = {
-                    s.step_name for s in completed_steps
-                    if any(pattern in s.step_name.lower() for pattern in branching_patterns)
-                }
-                logger.debug(f"No pipeline config, using patterns: {len(branching_step_names)} branching steps")
-            
-            # Filter out branching steps (validation/classification) to get content steps
-            content_steps = [
-                s for s in completed_steps 
-                if s.step_name not in branching_step_names
-            ]
-            
-            # Tier 3: If no content steps, use length heuristic (exclude short outputs like "ARZTBRIEF")
-            if not content_steps:
-                logger.warning("No content steps via metadata, using length heuristic")
-                content_steps = [s for s in completed_steps if len(s.output_text) > 200]
-            
-            if content_steps:
-                # Sort by (step_order, length) for stable selection
-                content_steps_sorted = sorted(
-                    content_steps, 
-                    key=lambda s: (s.step_order, -len(s.output_text))
-                )
-                
-                # Check if language translation was executed
-                language_step = next(
-                    (s for s in content_steps_sorted if "translation" in s.step_name.lower()),
-                    None
-                )
-                
-                if language_step and language_step.output_text:
-                    # Language translation exists - it's the final output
-                    language_translated_text = language_step.output_text
-                    # Find the simplified text (longest output before translation)
-                    pre_translation_steps = [
-                        s for s in content_steps_sorted 
-                        if s.step_order <= language_step.step_order and s.step_name != language_step.step_name
-                    ]
-                    if pre_translation_steps:
-                        simplified_step = max(pre_translation_steps, key=lambda s: len(s.output_text))
-                        translated_text = simplified_step.output_text
-                    else:
-                        translated_text = language_step.output_text
-                else:
-                    # No language translation - use the step with longest output
-                    # (handles cases where multiple steps have same order)
-                    longest_step = max(content_steps, key=lambda s: len(s.output_text))
-                    translated_text = longest_step.output_text
-                
-                logger.info(
-                    f"Content selection successful: "
-                    f"translated_text={len(translated_text) if translated_text else 0} chars, "
-                    f"language_text={len(language_translated_text) if language_translated_text else 0} chars"
-                )
-            else:
-                # Last resort fallback: use step with longest output
-                logger.error("No content steps identified at all, using longest output as last resort")
-                longest_output_step = max(completed_steps, key=lambda s: len(s.output_text))
-                translated_text = longest_output_step.output_text
-                logger.warning(
-                    f"Fallback selected: {longest_output_step.step_name} "
-                    f"({len(translated_text)} chars)"
-                )
-
-        # Add the decrypted medical content to result_data for API response
-        result_with_content = result_data.copy()
-        result_with_content["original_text"] = original_text or "[Keine OCR-Daten verfügbar]"
-        result_with_content["translated_text"] = translated_text or "[Keine Verarbeitung durchgeführt]"
-        
-        # Only add language_translated_text if it exists and is different
-        if language_translated_text:
-            result_with_content["language_translated_text"] = language_translated_text
-
         logger.info(
             f"✅ Processing result retrieved for {processing_id}: "
-            f"original_text={len(original_text or '')} chars, "
-            f"translated_text={len(translated_text or '')} chars"
+            f"original_text={len(result_data.get('original_text', '')) if result_data.get('original_text') else 0} chars, "
+            f"translated_text={len(result_data.get('translated_text', '')) if result_data.get('translated_text') else 0} chars"
         )
 
-        return result_with_content
+        return result_data
 
     def get_active_processes(self) -> dict[str, Any]:
         """
