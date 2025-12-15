@@ -697,15 +697,9 @@ class EncryptedRepositoryMixin:
         # This ensures that any entity loaded after this update will be fresh from the database
         self.db.expire_all()
 
-        # Reload entity with decryption for return
-        # Use our own get_by_id (not super()) to ensure decryption happens
-        entity = self.get_by_id(record_id)
+        # CRITICAL: Do NOT reload the entity after update!
+        # Reloading would decrypt it and add it to the session, risking accidental overwrites.
+        # The worker doesn't need the return value, and services can query again if needed.
+        logger.debug(f"Update complete for {self.model.__name__} (id={record_id}). Not reloading entity to prevent session tracking.")
         
-        # CRITICAL: Expunge the entity before returning it to prevent it from
-        # being tracked by the session. The caller gets a detached entity with
-        # decrypted fields, but it won't accidentally be saved back to the database.
-        if entity:
-            self.db.expunge(entity)
-            logger.debug(f"Expunged {self.model.__name__} entity (id={record_id}) before returning from update()")
-        
-        return entity
+        return None  # Return None instead of reloaded entity
