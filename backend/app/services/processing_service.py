@@ -13,6 +13,9 @@ from sqlalchemy.orm import Session
 from app.database.modular_pipeline_models import StepExecutionStatus
 from app.models.document import ProcessingStatus
 from app.repositories.pipeline_job_repository import PipelineJobRepository
+from app.repositories.pipeline_step_execution_repository import (
+    PipelineStepExecutionRepository,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -26,16 +29,23 @@ class ProcessingService:
     external services like Celery workers.
     """
 
-    def __init__(self, db: Session, job_repository: PipelineJobRepository | None = None):
+    def __init__(
+        self,
+        db: Session,
+        job_repository: PipelineJobRepository | None = None,
+        step_execution_repository: PipelineStepExecutionRepository | None = None,
+    ):
         """
         Initialize processing service.
 
         Args:
             db: Database session
             job_repository: Optional job repository (for dependency injection)
+            step_execution_repository: Optional step execution repository
         """
         self.db = db
         self.job_repository = job_repository or PipelineJobRepository(db)
+        self.step_execution_repository = step_execution_repository or PipelineStepExecutionRepository(db)
 
     def start_processing(self, processing_id: str, options: dict[str, Any]) -> dict[str, Any]:
         """
@@ -123,16 +133,20 @@ class ProcessingService:
         """
         Get processing result for a completed job.
 
+        Fetches metadata from result_data and medical content from encrypted
+        step executions to ensure GDPR compliance (no plaintext in result_data).
+
         Args:
             processing_id: Unique processing identifier
 
         Returns:
-            Processing result data
+            Processing result data with original_text and translated_text from
+            encrypted step executions
 
         Raises:
             ValueError: If job not found or not completed
         """
-        # Get job from repository
+        # Get job from repository (file_content is already decrypted by repository)
         job = self.job_repository.get_by_processing_id(processing_id)
         if not job:
             raise ValueError(f"Processing job {processing_id} not found")
@@ -141,12 +155,58 @@ class ProcessingService:
         if job.status != StepExecutionStatus.COMPLETED:
             raise ValueError(f"Processing not completed yet. Status: {job.status}")
 
-        # Get result data
+        # Get result data (metadata only, no medical content)
         result_data = job.result_data
         if not result_data:
             raise ValueError("Processing result not available")
 
-        return result_data
+        # Fetch medical content from encrypted step executions
+        # Step executions are automatically decrypted by the repository
+        step_executions = self.step_execution_repository.get_all(
+            filters={"job_id": job.job_id}
+        )
+
+        # Find the original OCR text (first step's input_text)
+        original_text = None
+        if step_executions:
+            first_step = min(step_executions, key=lambda s: s.step_order)
+            original_text = first_step.input_text
+
+        # Find the final translated/simplified text (last completed step's output_text)
+        translated_text = None
+        language_translated_text = None
+        
+        # Sort by step_order to get the last completed step
+        completed_steps = [s for s in step_executions if s.status == StepExecutionStatus.COMPLETED and s.output_text]
+        if completed_steps:
+            # Get the last completed step (highest order)
+            last_step = max(completed_steps, key=lambda s: s.step_order)
+            translated_text = last_step.output_text
+            
+            # Check if there's a language translation step
+            language_step = next(
+                (s for s in completed_steps if "translation" in s.step_name.lower() and s.output_text),
+                None
+            )
+            if language_step and language_step.output_text != translated_text:
+                language_translated_text = language_step.output_text
+
+        # Add the decrypted medical content to result_data for API response
+        result_with_content = result_data.copy()
+        result_with_content["original_text"] = original_text or "[Keine OCR-Daten verfügbar]"
+        result_with_content["translated_text"] = translated_text or "[Keine Verarbeitung durchgeführt]"
+        
+        # Only add language_translated_text if it exists and is different
+        if language_translated_text:
+            result_with_content["language_translated_text"] = language_translated_text
+
+        logger.info(
+            f"✅ Processing result retrieved for {processing_id}: "
+            f"original_text={len(original_text or '')} chars, "
+            f"translated_text={len(translated_text or '')} chars"
+        )
+
+        return result_with_content
 
     def get_active_processes(self) -> dict[str, Any]:
         """

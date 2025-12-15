@@ -291,6 +291,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         document_class_key = document_class_info.get('class_key', 'UNKNOWN') if isinstance(document_class_info, dict) else 'UNKNOWN'
 
         # Build comprehensive result_data from all processing stages
+        # NOTE: Medical content (original_text, translated_text) is NOT stored here
+        # to avoid GDPR issues. It's stored encrypted in pipeline_step_executions table.
         result_data = {
             # ==================== PIPELINE EXECUTION METADATA ====================
             "branching_path": metadata.get('branching_path', []),  # Complete decision tree
@@ -300,8 +302,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
             # ==================== PROCESSING METADATA ====================
             "processing_id": processing_id,
-            "original_text": extracted_text,
-            "translated_text": final_output,
+            # REMOVED: "original_text" and "translated_text" - stored encrypted in step executions
             "document_type_detected": document_class_key,
 
             # ==================== TIMING BREAKDOWN ====================
@@ -311,7 +312,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
             # ==================== QUALITY METRICS ====================
             "confidence_score": metadata.get('confidence_score', 0.0),
-            "language_translated_text": metadata.get('language_translation', None),
+            # REMOVED: "language_translated_text" - would contain medical content
             "language_confidence_score": metadata.get('language_confidence', None),
 
             # ==================== TERMINATION INFO (if applicable) ====================
