@@ -51,6 +51,11 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             logger.error(f"❌ Job not found: {processing_id}")
             raise ValueError(f"Job not found: {processing_id}")
 
+        # CRITICAL: Expire the entity from SQLAlchemy session to prevent it from tracking
+        # the decrypted file_content and accidentally saving it back to the database.
+        # We only want to update specific fields via job_repo.update(), not the entire entity.
+        db.expire(job)
+
         # Verify file_content is decrypted (should be plaintext PDF bytes, not encrypted string)
         if job.file_content:
             file_content_len = len(job.file_content)

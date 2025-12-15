@@ -682,6 +682,11 @@ class EncryptedRepositoryMixin:
 
         logger.info(f"Updated {self.model.__name__} with {pk_attr}={record_id} (affected rows: {result.rowcount})")
 
+        # CRITICAL: Expire all objects in the session to prevent SQLAlchemy from
+        # tracking decrypted entities and accidentally saving them back to the database
+        # This ensures that any entity loaded after this update will be fresh from the database
+        self.db.expire_all()
+
         # Reload entity with decryption for return
         # Use our own get_by_id (not super()) to ensure decryption happens
         entity = self.get_by_id(record_id)
