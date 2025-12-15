@@ -51,18 +51,28 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             logger.error(f"❌ Job not found: {processing_id}")
             raise ValueError(f"Job not found: {processing_id}")
 
+        # CRITICAL: Copy file_content to local variable and expunge entity from session
+        # This prevents SQLAlchemy from tracking the decrypted file_content and accidentally
+        # saving it back to the database when we commit updates.
+        file_content_for_processing = job.file_content
+        job_id_for_updates = job.id  # Store ID for updates
+        
+        # Expunge the entity from session to prevent SQLAlchemy from tracking it
+        db.expunge(job)
+        logger.debug(f"Expunged job entity (id={job_id_for_updates}) from session to prevent tracking decrypted file_content")
+
         # Verify file_content is decrypted (should be plaintext PDF bytes, not encrypted string)
-        if job.file_content:
-            file_content_len = len(job.file_content)
-            file_content_preview = job.file_content[:50] if isinstance(job.file_content, bytes) else str(job.file_content)[:50]
+        if file_content_for_processing:
+            file_content_len = len(file_content_for_processing)
+            file_content_preview = file_content_for_processing[:50] if isinstance(file_content_for_processing, bytes) else str(file_content_for_processing)[:50]
             logger.info(f"📋 Loaded job: {job.filename} ({job.file_size} bytes)")
             logger.info(f"🔍 file_content after load: {file_content_len} bytes")
             
             # Check if it's decrypted (should be PDF binary, not encrypted string)
-            if isinstance(job.file_content, bytes):
+            if isinstance(file_content_for_processing, bytes):
                 try:
                     # Try to decode as UTF-8 to check if it's encrypted
-                    decoded = job.file_content[:100].decode('utf-8')
+                    decoded = file_content_for_processing[:100].decode('utf-8')
                     if decoded.startswith('gAAAAA') or decoded.startswith('Z0FBQUFB'):
                         logger.error(f"❌ ERROR: file_content is still ENCRYPTED! This should be decrypted!")
                         logger.error(f"   Preview: {decoded[:50]}...")
@@ -71,20 +81,14 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                         logger.debug(f"   file_content preview (decoded): {decoded[:50]}...")
                 except UnicodeDecodeError:
                     # Cannot decode as UTF-8 - this is good, it means it's binary (PDF)
-                    if job.file_content[:4] == b'%PDF':
+                    if file_content_for_processing[:4] == b'%PDF':
                         logger.info(f"   ✅ Verified: file_content is decrypted (starts with %PDF)")
                     else:
                         logger.warning(f"   ⚠️ file_content doesn't start with %PDF: {file_content_preview.hex()[:20]}...")
             else:
-                logger.warning(f"   ⚠️ file_content is not bytes: {type(job.file_content)}")
+                logger.warning(f"   ⚠️ file_content is not bytes: {type(file_content_for_processing)}")
         else:
             logger.warning(f"   ⚠️ file_content is None")
-
-        # NOTE: We do NOT expire the entity here because:
-        # 1. The update() method uses SQLAlchemy's update() statement which only updates specified fields
-        # 2. Expiring would cause SQLAlchemy to reload file_content from DB (encrypted) when accessed
-        # 3. We need the decrypted file_content for OCR processing
-        # The update() method already prevents overwriting encrypted fields not in kwargs
 
         # Merge options: Celery task options take priority, fallback to job's processing_options
         if not options:
@@ -96,13 +100,14 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             logger.info(f"📋 Processing options: {options}")
 
         # Update job status to RUNNING (using repository to handle encryption)
+        # Use job_id_for_updates since job entity is expunged
         update_data = {"status": StepExecutionStatus.RUNNING, "progress_percent": 0}
         # Preserve started_at from upload endpoint (includes queue time)
         # Only set if somehow missing (shouldn't happen in normal flow)
         if not job.started_at:
             update_data["started_at"] = datetime.now()
             logger.warning("⚠️ started_at was not set by upload endpoint, setting now")
-        job = job_repo.update(job.id, **update_data)
+        job_repo.update(job_id_for_updates, **update_data)
 
         # Update Celery task state
         self.update_state(
@@ -118,7 +123,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         if job.file_type in ["pdf", "image", "jpg", "jpeg", "png"]:
             logger.info(f"🔍 Starting OCR for {job.file_type.upper()}...")
             # Use repository update to avoid overwriting encrypted file_content
-            job = job_repo.update(job.id, progress_percent=10)
+            job_repo.update(job_id_for_updates, progress_percent=10)
             self.update_state(
                 state='PROCESSING',
                 meta={'progress': 10, 'status': 'ocr', 'current_step': 'Texterkennung (OCR)'}
@@ -128,9 +133,10 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             start_time = time.time()
 
             # Call OCR engine (selected engine from database configuration)
+            # Use file_content_for_processing (local copy) instead of job.file_content
             extracted_text, ocr_confidence = await_sync(
                 ocr_manager.extract_text(
-                    file_content=job.file_content,
+                    file_content=file_content_for_processing,
                     file_type=job.file_type,
                     filename=job.filename
                 )
@@ -138,7 +144,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
             ocr_time = time.time() - start_time
             # Use repository update to avoid overwriting encrypted file_content
-            job = job_repo.update(job.id, ocr_time_seconds=ocr_time)
+            job_repo.update(job_id_for_updates, ocr_time_seconds=ocr_time)
             logger.info(f"✅ OCR completed in {ocr_time:.2f}s: {len(extracted_text)} characters, confidence: {ocr_confidence:.2%}")
 
             # ⚡ Step 1.5: LOCAL PII Removal (BEFORE sending to AI pipeline)
@@ -149,7 +155,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             if pii_enabled:
                 logger.info("🔒 Starting local PII removal...")
                 # Use repository update to avoid overwriting encrypted file_content
-                job = job_repo.update(job.id, progress_percent=15)
+                job_repo.update(job_id_for_updates, progress_percent=15)
                 self.update_state(
                     state='PROCESSING',
                     meta={'progress': 15, 'status': 'pii_removal', 'current_step': 'Entfernung persönlicher Daten'}
@@ -181,7 +187,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                 logger.info("⏭️  PII removal disabled - skipping privacy filter")
 
         # Update progress (use repository to avoid overwriting encrypted file_content)
-        job = job_repo.update(job.id, progress_percent=20)
+        job_repo.update(job_id_for_updates, progress_percent=20)
 
         # Step 2: Execute pipeline steps
         logger.info("🔄 Starting pipeline execution...")
@@ -211,7 +217,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         pipeline_time = time.time() - pipeline_start
         # Use repository update to avoid overwriting encrypted file_content
-        job = job_repo.update(job.id, ai_processing_time_seconds=pipeline_time)
+        job_repo.update(job_id_for_updates, ai_processing_time_seconds=pipeline_time)
 
         # Check if pipeline succeeded or terminated early
         if not success:
@@ -243,8 +249,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                 logger.error(f"   Error type: {error_type}, Step ID: {failed_step_id}")
 
                 # Store error details in job (using repository)
-                job = job_repo.update(
-                    job.id,
+                job_repo.update(
+                    job_id_for_updates,
                     status=StepExecutionStatus.FAILED,
                     failed_at=datetime.now(),
                     error_message=f"[{failed_step}] {error_msg}",
@@ -322,8 +328,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         # ==================== FINALIZE JOB (SINGLE SOURCE OF TRUTH) ====================
         # Update job using repository (ensures proper handling of encrypted fields)
-        job = job_repo.update(
-            job.id,
+        job_repo.update(
+            job_id_for_updates,
             status=StepExecutionStatus.COMPLETED,
             completed_at=datetime.now(),
             progress_percent=100,
@@ -351,9 +357,9 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         # Update job status using repository
         try:
-            if 'job' in locals() and job:
+            if 'job_id_for_updates' in locals():
                 job_repo.update(
-                    job.id,
+                    job_id_for_updates,
                     status=StepExecutionStatus.FAILED,
                     failed_at=datetime.now(),
                     error_message=(
@@ -389,9 +395,9 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         # Update job status to FAILED using repository
         try:
-            if 'job' in locals() and job:
+            if 'job_id_for_updates' in locals():
                 job_repo.update(
-                    job.id,
+                    job_id_for_updates,
                     status=StepExecutionStatus.FAILED,
                     failed_at=datetime.now(),
                     error_message=str(e),

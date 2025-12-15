@@ -673,6 +673,16 @@ class EncryptedRepositoryMixin:
             .values(**encrypted_kwargs)
         )
         
+        # CRITICAL: Before executing the update, expire any existing entity with this ID
+        # from the session to prevent SQLAlchemy from tracking the decrypted file_content
+        # and accidentally saving it back when we commit
+        existing_entity = self.db.query(self.model).filter(getattr(self.model, pk_attr) == record_id).first()
+        if existing_entity:
+            # Expunge the entity to remove it from session entirely
+            # This prevents SQLAlchemy from tracking any changes to decrypted fields
+            self.db.expunge(existing_entity)
+            logger.debug(f"Expunged existing {self.model.__name__} entity (id={record_id}) from session before update")
+
         result = self.db.execute(update_stmt)
         self.db.commit()
         
@@ -690,4 +700,12 @@ class EncryptedRepositoryMixin:
         # Reload entity with decryption for return
         # Use our own get_by_id (not super()) to ensure decryption happens
         entity = self.get_by_id(record_id)
+        
+        # CRITICAL: Expunge the entity before returning it to prevent it from
+        # being tracked by the session. The caller gets a detached entity with
+        # decrypted fields, but it won't accidentally be saved back to the database.
+        if entity:
+            self.db.expunge(entity)
+            logger.debug(f"Expunged {self.model.__name__} entity (id={record_id}) before returning from update()")
+        
         return entity
