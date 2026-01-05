@@ -711,10 +711,10 @@ async def root():
 
 
 if __name__ == "__main__":
-    # Use :: for IPv6 to support Railway internal networking
+    # Use 0.0.0.0 to listen on all interfaces (IPv4 and IPv6)
     uvicorn.run(
         "app.main:app",
-        host="::",
+        host="0.0.0.0",
         port=9123,
         log_level="info"
     )

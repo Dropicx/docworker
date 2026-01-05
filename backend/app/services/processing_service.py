@@ -149,6 +149,19 @@ class ProcessingService:
         if not result_data:
             raise ValueError("Processing result not available")
 
+        # Handle case where decryption failed and result_data is still a string
+        if isinstance(result_data, str):
+            logger.warning(f"result_data is string (decryption may have failed), attempting JSON parse")
+            import json
+            try:
+                result_data = json.loads(result_data)
+            except json.JSONDecodeError as e:
+                logger.error(f"Failed to parse result_data as JSON: {e}")
+                raise ValueError(f"Processing result data is corrupted or could not be decrypted: {e}")
+
+        if not isinstance(result_data, dict):
+            raise ValueError(f"Processing result data is not a valid dict: {type(result_data)}")
+
         logger.info(
             f"✅ Processing result retrieved for {processing_id}: "
             f"original_text={len(result_data.get('original_text', '')) if result_data.get('original_text') else 0} chars, "
