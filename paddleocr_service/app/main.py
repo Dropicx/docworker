@@ -435,6 +435,9 @@ async def extract_text(
     - `markdown`: Structured Markdown output (structured mode only)
     - `structured_output`: JSON structure with layout info (structured mode only)
     """
+    # Log request immediately (before any processing)
+    logger.info(f"📥 INCOMING REQUEST: /extract (mode={mode}, filename={file.filename})")
+
     # Check service availability
     if structure_pipeline is None and legacy_ocr is None:
         raise HTTPException(
@@ -510,9 +513,10 @@ async def extract_text(
         processing_time = time.time() - start_time
 
         logger.info(
-            f"Extraction complete: {len(text)} chars, {confidence:.0%} confidence, "
+            f"✅ Extraction complete: {len(text)} chars, {confidence:.0%} confidence, "
             f"{processing_time:.2f}s ({engine})"
         )
+        logger.info(f"📤 SENDING RESPONSE for {file.filename}")
 
         return OCRResponse(
             text=text,
