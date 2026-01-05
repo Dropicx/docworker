@@ -64,7 +64,7 @@ logger.info(f"PADDLEX_HOME: {os.environ.get('PADDLEX_HOME')}")
 # ==================== IMPORTS ====================
 
 PPSTRUCTUREV3_AVAILABLE = False
-PADDLEOCR_LEGACY_AVAILABLE = False
+PADDLEOCR_AVAILABLE = False
 
 try:
     from paddleocr import PPStructureV3
@@ -76,14 +76,15 @@ except ImportError as e:
 
 try:
     from paddleocr import PaddleOCR
-    PADDLEOCR_LEGACY_AVAILABLE = True
-    logger.info("PaddleOCR (legacy) available")
+    PADDLEOCR_AVAILABLE = True
+    logger.info("PaddleOCR 3.x available")
 except ImportError:
     PaddleOCR = None
+    PADDLEOCR_AVAILABLE = False
 
 # Global pipeline instance (initialized at startup)
 structure_pipeline = None
-legacy_ocr = None
+ocr_engine = None  # PaddleOCR 3.x standard OCR
 
 
 # ==================== ENUMS & MODELS ====================
@@ -121,24 +122,24 @@ class HealthResponse(BaseModel):
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Initialize PP-StructureV3 at startup"""
-    global structure_pipeline, legacy_ocr
+    global structure_pipeline, ocr_engine
 
     logger.info("PaddleOCR Microservice v2.0 starting up...")
     logger.info(f"   PPStructureV3 available: {PPSTRUCTUREV3_AVAILABLE}")
-    logger.info(f"   PaddleOCR legacy available: {PADDLEOCR_LEGACY_AVAILABLE}")
+    logger.info(f"   PaddleOCR 3.x available: {PADDLEOCR_AVAILABLE}")
 
     # PP-StructureV3 DISABLED - uses 32GB+ RAM regardless of parameters
     # The use_chart_recognition=False parameter doesn't prevent model loading
     logger.warning("⚠️ PP-StructureV3 DISABLED - too memory hungry (32GB+)")
-    logger.info("Using lightweight legacy PaddleOCR instead (~500MB)")
+    logger.info("Using PaddleOCR 3.x standard mode instead (~500MB)")
     structure_pipeline = None
 
-    # Initialize legacy PaddleOCR (lightweight, ~500MB RAM)
-    if PADDLEOCR_LEGACY_AVAILABLE:
+    # Initialize PaddleOCR 3.x (standard mode, ~500MB RAM)
+    if PADDLEOCR_AVAILABLE:
         try:
-            logger.info("Initializing PaddleOCR (lightweight mode, ~500MB RAM)...")
+            logger.info("Initializing PaddleOCR 3.x (standard mode, ~500MB RAM)...")
             start_init = time.time()
-            legacy_ocr = PaddleOCR(
+            ocr_engine = PaddleOCR(
                 lang='german',
                 device='cpu',
             )
@@ -150,7 +151,7 @@ async def lifespan(app: FastAPI):
             logger.error(f"Failed to initialize PaddleOCR: {e}")
             logger.exception(e)
 
-    if structure_pipeline or legacy_ocr:
+    if structure_pipeline or ocr_engine:
         logger.info("Service ready to process requests")
     else:
         logger.error("No OCR engine available!")
@@ -385,9 +386,9 @@ def _parse_ocr_result(result: Any, all_text: list, all_confidences: list) -> Non
             all_confidences.append(0.9)
 
 
-def extract_with_legacy_ocr(file_content: bytes, is_pdf: bool) -> tuple[str, float, int]:
+def extract_with_ocr_engine(file_content: bytes, is_pdf: bool) -> tuple[str, float, int]:
     """
-    Extract text using legacy PaddleOCR.
+    Extract text using PaddleOCR 3.x standard mode.
 
     Returns: (text, confidence, lines_detected)
     """
@@ -412,7 +413,7 @@ def extract_with_legacy_ocr(file_content: bytes, is_pdf: bool) -> tuple[str, flo
             image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             image_array = np.array(image)
 
-            result = legacy_ocr.ocr(image_array)
+            result = ocr_engine.ocr(image_array)
             _parse_ocr_result(result, all_text, all_confidences)
             logger.info(f"📄 Page {page_num + 1}/{total_pages} OCR completed in {time.time() - page_start:.2f}s")
         pdf_document.close()
@@ -423,7 +424,7 @@ def extract_with_legacy_ocr(file_content: bytes, is_pdf: bool) -> tuple[str, flo
         image_array = np.array(image)
         logger.info(f"🖼️ Image size: {image_array.shape}")
 
-        result = legacy_ocr.ocr(image_array)
+        result = ocr_engine.ocr(image_array)
         _parse_ocr_result(result, all_text, all_confidences)
 
     full_text = "\n".join(all_text)
@@ -444,11 +445,11 @@ async def health_check():
         status="healthy",
         service="PaddleOCR Microservice v2.0",
         version="2.0.0",
-        paddleocr_available=structure_pipeline is not None or legacy_ocr is not None,
+        paddleocr_available=structure_pipeline is not None or ocr_engine is not None,
         available_modes={
             "structured": structure_pipeline is not None,
-            "text": legacy_ocr is not None or structure_pipeline is not None,
-            "auto": structure_pipeline is not None or legacy_ocr is not None
+            "text": ocr_engine is not None or structure_pipeline is not None,
+            "auto": structure_pipeline is not None or ocr_engine is not None
         }
     )
 
@@ -476,11 +477,12 @@ async def extract_text(
     - `markdown`: Structured Markdown output (structured mode only)
     - `structured_output`: JSON structure with layout info (structured mode only)
     """
-    # Log request immediately (before any processing)
+    # Log request immediately (before any processing) - use both logger and stderr for visibility
+    print(f"📥 INCOMING REQUEST: /extract (mode={mode}, filename={file.filename})", file=sys.stderr, flush=True)
     logger.info(f"📥 INCOMING REQUEST: /extract (mode={mode}, filename={file.filename})")
 
     # Check service availability
-    if structure_pipeline is None and legacy_ocr is None:
+    if structure_pipeline is None and ocr_engine is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="No OCR engine available. Service not properly initialized."
@@ -493,6 +495,7 @@ async def extract_text(
         file_content = await file.read()
         file_size = len(file_content)
 
+        print(f"📄 Processing: {file.filename} ({file_size} bytes, type: {file.content_type})", file=sys.stderr, flush=True)
         logger.info(f"Processing: {file.filename} ({file_size} bytes, type: {file.content_type})")
 
         # Detect file type
@@ -537,12 +540,12 @@ async def extract_text(
                 # Clean up temp file
                 os.unlink(tmp_path)
 
-        elif legacy_ocr:
-            # Legacy PaddleOCR extraction
-            text, confidence, lines_detected = extract_with_legacy_ocr(file_content, is_pdf)
+        elif ocr_engine:
+            # PaddleOCR 3.x standard extraction
+            text, confidence, lines_detected = extract_with_ocr_engine(file_content, is_pdf)
             markdown = None
             structured_output = None
-            engine = "PaddleOCR"
+            engine = "PaddleOCR-3.x"
             used_mode = "text"
 
         else:
@@ -553,10 +556,10 @@ async def extract_text(
 
         processing_time = time.time() - start_time
 
-        logger.info(
-            f"✅ Extraction complete: {len(text)} chars, {confidence:.0%} confidence, "
-            f"{processing_time:.2f}s ({engine})"
-        )
+        result_msg = f"✅ Extraction complete: {len(text)} chars, {confidence:.0%} confidence, {processing_time:.2f}s ({engine})"
+        print(result_msg, file=sys.stderr, flush=True)
+        logger.info(result_msg)
+        print(f"📤 SENDING RESPONSE for {file.filename}", file=sys.stderr, flush=True)
         logger.info(f"📤 SENDING RESPONSE for {file.filename}")
 
         return OCRResponse(
