@@ -296,32 +296,50 @@ class OCREngineManager:
         self, file_content: bytes, file_type: str, filename: str
     ) -> tuple[str, float]:
         """
-        Extract text using PaddleOCR microservice.
+        Extract text using PaddleOCR microservice (PP-StructureV3).
 
-        Calls the separate PaddleOCR service via HTTP.
+        Calls the separate PaddleOCR service via HTTP with structured mode
+        for Markdown/JSON output. Prefers markdown output when available
+        for better table and layout preservation.
+
         Falls back to hybrid extraction on failure.
         """
         logger.info(f"🤖 Calling PaddleOCR microservice at {PADDLEOCR_SERVICE_URL}")
 
         try:
-            # Check if PaddleOCR service is available
-            async with httpx.AsyncClient(timeout=60.0) as client:
+            # Extended timeout for PP-StructureV3 (larger models, more processing)
+            async with httpx.AsyncClient(timeout=120.0) as client:
                 # Prepare multipart form data
                 files = {"file": (filename, file_content, f"image/{file_type}")}
 
+                # Request structured mode for Markdown output
+                params = {"mode": "structured"}
+
                 # Call PaddleOCR microservice
-                response = await client.post(f"{PADDLEOCR_SERVICE_URL}/extract", files=files)
+                response = await client.post(
+                    f"{PADDLEOCR_SERVICE_URL}/extract",
+                    files=files,
+                    params=params
+                )
 
                 if response.status_code == 200:
                     result = response.json()
-                    extracted_text = result.get("text", "")
+
+                    # Prefer markdown output for structured content (tables, etc.)
+                    extracted_text = result.get("markdown") or result.get("text", "")
                     confidence = result.get("confidence", 0.0)
                     processing_time = result.get("processing_time", 0.0)
+                    engine = result.get("engine", "PaddleOCR")
+                    mode = result.get("mode", "text")
 
-                    logger.info(f"✅ PaddleOCR extraction completed in {processing_time:.2f}s")
+                    logger.info(f"✅ {engine} extraction completed in {processing_time:.2f}s (mode: {mode})")
                     logger.info(
                         f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars"
                     )
+
+                    # Log if we got markdown output
+                    if result.get("markdown"):
+                        logger.info("📝 Using Markdown output (structured)")
 
                     return extracted_text, confidence
 
@@ -329,7 +347,7 @@ class OCREngineManager:
                 raise Exception(f"PaddleOCR service returned {response.status_code}")
 
         except httpx.TimeoutException:
-            logger.error("❌ PaddleOCR service timeout (60s)")
+            logger.error("❌ PaddleOCR service timeout (120s)")
             logger.info("🔄 Falling back to hybrid extraction")
             return await self._extract_with_hybrid(file_content, file_type, filename)
 
@@ -466,9 +484,9 @@ class OCREngineManager:
         return {
             "PADDLEOCR": {
                 "engine": "PADDLEOCR",
-                "name": "PaddleOCR",
-                "description": "CPU-based OCR for complex documents",
-                "speed": "Fast (~2-5s per page)",
+                "name": "PP-StructureV3",
+                "description": "Document parsing with table/chart recognition, Markdown output",
+                "speed": "Fast (~3-10s per page)",
                 "accuracy": "Excellent",
                 "available": paddleocr_available,
                 "cost": "Free (CPU-based microservice)",
