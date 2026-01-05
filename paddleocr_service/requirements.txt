@@ -5,9 +5,10 @@ fastapi==0.115.6
 uvicorn[standard]==0.34.0
 python-multipart==0.0.20
 
-# PaddleOCR 3.x with PP-StructureV3 document parsing
-paddleocr[doc-parser]>=3.3.0
-paddlepaddle>=3.1.0  # CPU version
+# PaddleOCR - lightweight OCR (no PP-StructureV3 to save memory)
+# Using basic paddleocr without [doc-parser] extras (~500MB vs 32GB)
+paddleocr>=2.9.0
+paddlepaddle>=3.0.0  # CPU version
 
 # Image processing
 Pillow==11.0.0

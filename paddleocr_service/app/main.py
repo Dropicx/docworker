@@ -121,47 +121,31 @@ async def lifespan(app: FastAPI):
     logger.info(f"   PPStructureV3 available: {PPSTRUCTUREV3_AVAILABLE}")
     logger.info(f"   PaddleOCR legacy available: {PADDLEOCR_LEGACY_AVAILABLE}")
 
-    # Initialize PP-StructureV3 (primary engine) - LITE configuration
-    if PPSTRUCTUREV3_AVAILABLE:
+    # PP-StructureV3 DISABLED - uses 32GB+ RAM regardless of parameters
+    # The use_chart_recognition=False parameter doesn't prevent model loading
+    logger.warning("⚠️ PP-StructureV3 DISABLED - too memory hungry (32GB+)")
+    logger.info("Using lightweight legacy PaddleOCR instead (~500MB)")
+    structure_pipeline = None
+
+    # Initialize legacy PaddleOCR (lightweight, ~500MB RAM)
+    if PADDLEOCR_LEGACY_AVAILABLE:
         try:
-            logger.info("Initializing PP-StructureV3 LITE (CPU mode, ~2GB RAM)...")
-            logger.info("   Disabled: chart_recognition, formula_recognition, doc_orientation, doc_unwarping")
+            logger.info("Initializing PaddleOCR (lightweight mode, ~500MB RAM)...")
             start_init = time.time()
-
-            # MEMORY OPTIMIZED configuration for Railway Pro (~4GB)
-            # Disabling chart and formula recognition saves ~1.5GB RAM
-            structure_pipeline = PPStructureV3(
-                use_doc_orientation_classify=False,  # Saves ~100MB
-                use_doc_unwarping=False,             # Saves ~100MB
-                use_textline_orientation=False,      # Saves ~50MB
-                use_chart_recognition=False,         # Saves ~500MB (transformer model!)
-                use_formula_recognition=False,       # Saves ~300MB
-                device="cpu",
-            )
-
-            init_time = time.time() - start_init
-            logger.info(f"PP-StructureV3 LITE initialized in {init_time:.2f}s")
-            logger.info("   Features: Layout + Tables + Text Recognition")
-            logger.info("   Output: Markdown + JSON structure")
-
-        except Exception as e:
-            logger.error(f"Failed to initialize PP-StructureV3: {e}")
-            logger.exception(e)
-            structure_pipeline = None
-
-    # Initialize legacy PaddleOCR as fallback
-    if PADDLEOCR_LEGACY_AVAILABLE and structure_pipeline is None:
-        try:
-            logger.info("Initializing PaddleOCR (legacy fallback)...")
             legacy_ocr = PaddleOCR(
                 use_angle_cls=True,
                 lang='german',
                 use_gpu=False,
-                show_log=False
+                show_log=False,
+                det_db_score_mode='slow',  # Better accuracy
             )
-            logger.info("PaddleOCR legacy initialized")
+            init_time = time.time() - start_init
+            logger.info(f"✅ PaddleOCR initialized in {init_time:.2f}s")
+            logger.info("   Features: Text detection + Recognition + Angle classification")
+            logger.info("   Languages: German (de)")
         except Exception as e:
-            logger.error(f"Failed to initialize legacy PaddleOCR: {e}")
+            logger.error(f"Failed to initialize PaddleOCR: {e}")
+            logger.exception(e)
 
     if structure_pipeline or legacy_ocr:
         logger.info("Service ready to process requests")

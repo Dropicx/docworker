@@ -44,8 +44,8 @@ RUN chmod +x /entrypoint.sh \
 # Switch to non-root user
 USER appuser
 
-# Health check with extended start period for PP-StructureV3 model loading
-HEALTHCHECK --interval=30s --timeout=30s --start-period=180s --retries=3 \
+# Health check - reduced start period since we use lightweight PaddleOCR now
+HEALTHCHECK --interval=30s --timeout=30s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:9123/health || exit 1
 
 # Expose port
