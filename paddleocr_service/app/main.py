@@ -342,17 +342,49 @@ def _parse_ocr_result(result: Any, all_text: list, all_confidences: list) -> Non
     """
     Parse OCR result from PaddleOCR 3.x (handles multiple result formats).
     """
+    # Debug: Log what we received
+    print(f"🔍 DEBUG _parse_ocr_result: result type={type(result)}", file=sys.stderr, flush=True)
+
     if not result:
+        print(f"🔍 DEBUG: result is empty/None", file=sys.stderr, flush=True)
         return
+
+    # Log structure
+    if hasattr(result, '__len__'):
+        print(f"🔍 DEBUG: result length={len(result)}", file=sys.stderr, flush=True)
+    if hasattr(result, '__dict__'):
+        print(f"🔍 DEBUG: result attrs={list(result.__dict__.keys())[:10]}", file=sys.stderr, flush=True)
 
     # PaddleOCR 3.x can return different structures
     # Try to handle both old format and new format
     try:
-        for page_result in result:
+        for idx, page_result in enumerate(result):
+            print(f"🔍 DEBUG: page_result[{idx}] type={type(page_result)}", file=sys.stderr, flush=True)
             if not page_result:
+                print(f"🔍 DEBUG: page_result[{idx}] is empty", file=sys.stderr, flush=True)
                 continue
 
-            for line in page_result:
+            # Check if page_result itself has the text attributes (not nested)
+            if hasattr(page_result, 'rec_text'):
+                print(f"🔍 DEBUG: page_result has rec_text directly", file=sys.stderr, flush=True)
+                texts = page_result.rec_text
+                scores = getattr(page_result, 'rec_score', [0.9] * len(texts) if isinstance(texts, list) else [0.9])
+                if isinstance(texts, list):
+                    for t, s in zip(texts, scores if isinstance(scores, list) else [scores]):
+                        if t:
+                            all_text.append(str(t))
+                            all_confidences.append(float(s) if s else 0.9)
+                elif texts:
+                    all_text.append(str(texts))
+                    all_confidences.append(float(scores[0]) if isinstance(scores, list) else float(scores))
+                continue
+
+            for line_idx, line in enumerate(page_result):
+                if line_idx == 0:
+                    print(f"🔍 DEBUG: first line type={type(line)}", file=sys.stderr, flush=True)
+                    if hasattr(line, '__dict__'):
+                        print(f"🔍 DEBUG: first line attrs={list(line.__dict__.keys())}", file=sys.stderr, flush=True)
+
                 if not line:
                     continue
 
@@ -415,9 +447,12 @@ def extract_with_ocr_engine(file_content: bytes, is_pdf: bool) -> tuple[str, flo
             pix = page.get_pixmap(matrix=fitz.Matrix(300/72, 300/72))
             image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             image_array = np.array(image)
+            print(f"🔍 DEBUG: Page {page_num+1} image shape={image_array.shape}", file=sys.stderr, flush=True)
 
             result = ocr_engine.ocr(image_array)
+            print(f"🔍 DEBUG: OCR returned type={type(result)}, is_none={result is None}", file=sys.stderr, flush=True)
             _parse_ocr_result(result, all_text, all_confidences)
+            print(f"🔍 DEBUG: After parsing, text count={len(all_text)}", file=sys.stderr, flush=True)
             logger.info(f"📄 Page {page_num + 1}/{total_pages} OCR completed in {time.time() - page_start:.2f}s")
         pdf_document.close()
     else:
