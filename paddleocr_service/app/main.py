@@ -133,10 +133,8 @@ async def lifespan(app: FastAPI):
             logger.info("Initializing PaddleOCR (lightweight mode, ~500MB RAM)...")
             start_init = time.time()
             legacy_ocr = PaddleOCR(
-                use_angle_cls=True,
                 lang='german',
-                use_gpu=False,
-                show_log=False,
+                device='cpu',
             )
             init_time = time.time() - start_init
             logger.info(f"✅ PaddleOCR initialized in {init_time:.2f}s")
