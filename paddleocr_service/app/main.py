@@ -165,6 +165,9 @@ def extract_with_ppstructurev3(file_path: str, filename: str) -> tuple[str, str,
 
     Returns: (text, markdown, confidence, structured_data)
     """
+    import json as json_module
+    import glob
+
     logger.info(f"Running PP-StructureV3 on: {filename}")
 
     output = structure_pipeline.predict(input=file_path)
@@ -173,66 +176,109 @@ def extract_with_ppstructurev3(file_path: str, filename: str) -> tuple[str, str,
     all_text = []
     structured_pages = []
 
+    # Log output type for debugging
+    logger.info(f"PP-StructureV3 output type: {type(output)}, length: {len(output) if hasattr(output, '__len__') else 'N/A'}")
+
     for idx, result in enumerate(output):
         page_markdown = ""
         page_text = ""
         page_structure = {}
 
-        # Try to get markdown output
+        # Log result type for debugging
+        logger.debug(f"Result {idx} type: {type(result)}")
+        if hasattr(result, '__dict__'):
+            logger.debug(f"Result {idx} attributes: {list(result.__dict__.keys())[:10]}")
+
+        # Method 1: Try save_to_markdown (most reliable)
         try:
             if hasattr(result, 'save_to_markdown'):
-                # Save to temp and read back
                 with tempfile.TemporaryDirectory() as tmpdir:
                     result.save_to_markdown(save_path=tmpdir)
-                    # Find the generated markdown file
-                    import glob
                     md_files = glob.glob(f"{tmpdir}/**/*.md", recursive=True)
                     if md_files:
                         with open(md_files[0], 'r', encoding='utf-8') as f:
                             page_markdown = f.read()
+                        logger.debug(f"Got markdown from save_to_markdown: {len(page_markdown)} chars")
         except Exception as e:
-            logger.warning(f"Could not extract markdown: {e}")
+            logger.warning(f"save_to_markdown failed: {e}")
 
-        # Try to get JSON structure
+        # Method 2: Try save_to_json
         try:
             if hasattr(result, 'save_to_json'):
                 with tempfile.TemporaryDirectory() as tmpdir:
                     result.save_to_json(save_path=tmpdir)
-                    import glob
-                    import json
                     json_files = glob.glob(f"{tmpdir}/**/*.json", recursive=True)
                     if json_files:
                         with open(json_files[0], 'r', encoding='utf-8') as f:
-                            page_structure = json.load(f)
+                            page_structure = json_module.load(f)
+                        logger.debug(f"Got JSON structure: {type(page_structure)}")
         except Exception as e:
-            logger.warning(f"Could not extract JSON: {e}")
+            logger.warning(f"save_to_json failed: {e}")
 
-        # Try direct attribute access (PaddleOCR 3.x style)
+        # Method 3: Try direct attribute access with type checking
         try:
-            if hasattr(result, 'markdown') and result.markdown:
-                page_markdown = result.markdown
-            if hasattr(result, 'text') and result.text:
-                page_text = result.text
-            if hasattr(result, 'json') and result.json:
-                page_structure = result.json
+            # Handle markdown attribute (might be str or dict)
+            if hasattr(result, 'markdown'):
+                md_val = result.markdown
+                if isinstance(md_val, str):
+                    page_markdown = md_val
+                elif isinstance(md_val, dict):
+                    # If it's a dict, try to extract text content
+                    page_structure = md_val
+                    logger.debug(f"markdown attribute is dict with keys: {list(md_val.keys())[:5]}")
+
+            # Handle text attribute
+            if hasattr(result, 'text'):
+                txt_val = result.text
+                if isinstance(txt_val, str):
+                    page_text = txt_val
+                elif isinstance(txt_val, list):
+                    # Join list of text blocks
+                    page_text = "\n".join(str(t) for t in txt_val if t)
+
+            # Handle json attribute
+            if hasattr(result, 'json'):
+                json_val = result.json
+                if isinstance(json_val, dict):
+                    page_structure = json_val
         except Exception as e:
             logger.debug(f"Direct attribute access failed: {e}")
 
+        # Method 4: If result is a dict itself, extract from it
+        if isinstance(result, dict):
+            logger.debug(f"Result is dict with keys: {list(result.keys())[:10]}")
+            page_text = result.get('text', '') or result.get('content', '')
+            if isinstance(page_text, list):
+                page_text = "\n".join(str(t) for t in page_text if t)
+            page_structure = result
+
+        # Method 5: Try to get rec_text from result (common in PaddleOCR)
+        if not page_text:
+            try:
+                if hasattr(result, 'rec_text'):
+                    rec_texts = result.rec_text
+                    if isinstance(rec_texts, list):
+                        page_text = "\n".join(str(t) for t in rec_texts if t)
+                    elif isinstance(rec_texts, str):
+                        page_text = rec_texts
+            except Exception as e:
+                logger.debug(f"rec_text extraction failed: {e}")
+
         # Use markdown as text if no plain text available
         if page_markdown and not page_text:
-            # Strip markdown formatting for plain text
             page_text = page_markdown
 
-        if page_markdown:
+        # Ensure we only append strings
+        if page_markdown and isinstance(page_markdown, str):
             all_markdown.append(page_markdown)
-        if page_text:
+        if page_text and isinstance(page_text, str):
             all_text.append(page_text)
         if page_structure:
             structured_pages.append({"page": idx + 1, "content": page_structure})
 
-    # Combine all pages
-    full_markdown = "\n\n---\n\n".join(all_markdown) if all_markdown else ""
-    full_text = "\n\n".join(all_text) if all_text else full_markdown
+    # Combine all pages - ensure all items are strings
+    full_markdown = "\n\n---\n\n".join(str(m) for m in all_markdown) if all_markdown else ""
+    full_text = "\n\n".join(str(t) for t in all_text) if all_text else full_markdown
 
     # PP-StructureV3 doesn't provide confidence scores, use default
     confidence = 0.90 if full_text else 0.0
@@ -241,6 +287,8 @@ def extract_with_ppstructurev3(file_path: str, filename: str) -> tuple[str, str,
         "pages": structured_pages,
         "total_pages": len(output)
     } if structured_pages else {}
+
+    logger.info(f"Extraction complete: {len(full_text)} chars text, {len(full_markdown)} chars markdown")
 
     return full_text, full_markdown, confidence, structured_output
 
