@@ -364,6 +364,42 @@ def _parse_ocr_result(result: Any, all_text: list, all_confidences: list) -> Non
                 print(f"🔍 DEBUG: page_result[{idx}] is empty", file=sys.stderr, flush=True)
                 continue
 
+            # Handle PaddleX OCRResult object
+            type_name = type(page_result).__name__
+            if type_name == 'OCRResult' or 'OCRResult' in str(type(page_result)):
+                print(f"🔍 DEBUG: Detected OCRResult object", file=sys.stderr, flush=True)
+                # Try to get attributes from OCRResult
+                if hasattr(page_result, 'rec_text'):
+                    texts = page_result.rec_text
+                    scores = getattr(page_result, 'rec_score', None)
+                    print(f"🔍 DEBUG: rec_text type={type(texts)}, length={len(texts) if hasattr(texts, '__len__') else 'N/A'}", file=sys.stderr, flush=True)
+                    if isinstance(texts, list):
+                        for i, t in enumerate(texts):
+                            if t:
+                                all_text.append(str(t))
+                                s = scores[i] if scores and isinstance(scores, list) and i < len(scores) else 0.9
+                                all_confidences.append(float(s) if s else 0.9)
+                    elif texts:
+                        all_text.append(str(texts))
+                        all_confidences.append(0.9)
+                # Also try 'text' attribute
+                elif hasattr(page_result, 'text'):
+                    texts = page_result.text
+                    print(f"🔍 DEBUG: text attr type={type(texts)}", file=sys.stderr, flush=True)
+                    if isinstance(texts, list):
+                        for t in texts:
+                            if t:
+                                all_text.append(str(t))
+                                all_confidences.append(0.9)
+                    elif texts:
+                        all_text.append(str(texts))
+                        all_confidences.append(0.9)
+                # Try to print all attributes for debugging
+                else:
+                    attrs = [a for a in dir(page_result) if not a.startswith('_')]
+                    print(f"🔍 DEBUG: OCRResult public attrs: {attrs[:20]}", file=sys.stderr, flush=True)
+                continue
+
             # Check if page_result itself has the text attributes (not nested)
             if hasattr(page_result, 'rec_text'):
                 print(f"🔍 DEBUG: page_result has rec_text directly", file=sys.stderr, flush=True)
