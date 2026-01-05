@@ -433,6 +433,7 @@ class EncryptedRepositoryMixin:
         Decrypt encrypted fields in an entity.
 
         Handles both text fields (str) and binary fields (bytes) automatically.
+        Also parses JSON-encrypted fields (stored as TEXT) even when encryption is disabled.
 
         Args:
             entity: Database entity instance
@@ -440,15 +441,54 @@ class EncryptedRepositoryMixin:
         Returns:
             Entity with decrypted fields (modifies in-place)
         """
-        if not entity or not self.encrypted_fields or not encryptor.is_enabled():
+        if not entity or not self.encrypted_fields:
             return entity
+
+        # Even if encryption is disabled, we still need to parse JSON fields stored as TEXT
+        encryption_enabled = encryptor.is_enabled()
 
         for field in self.encrypted_fields:
             if hasattr(entity, field):
                 encrypted_value = getattr(entity, field)
                 if encrypted_value is not None:
                     try:
-                        if self._is_binary_field(field):
+                        # ALWAYS handle JSON-encrypted fields (like result_data) regardless of encryption status
+                        # These are TEXT columns that store JSON strings and need parsing
+                        if isinstance(encrypted_value, str) and self._is_json_encrypted_field(field):
+                            # JSON-encrypted field (result_data): encrypted string that decrypts to JSON
+                            # These are stored in Text columns, not JSON columns
+                            logger.debug(f"   Field {field} is JSON-encrypted (Text column with encrypted JSON)")
+
+                            # Heuristic check: Fernet tokens start with 'g' or 'Z0FBQUFB' (base64 'gAAAAA')
+                            looks_encrypted = (
+                                encrypted_value.startswith('gAAAAA') or  # Direct Fernet token
+                                encrypted_value.startswith('Z0FBQUFB') or  # Base64-encoded Fernet token
+                                (encryption_enabled and encryptor.is_encrypted(encrypted_value))  # Full validation only if encryption enabled
+                            )
+
+                            if looks_encrypted and encryption_enabled:
+                                logger.info(f"🔓 Decrypting JSON-encrypted field: {field} ({len(encrypted_value)} chars)")
+                                try:
+                                    decrypted_dict = encryptor.decrypt_json_field(encrypted_value)
+                                    setattr(entity, field, decrypted_dict)
+                                    logger.info(f"✅ Decrypted JSON field: {field} (dict with {len(decrypted_dict) if decrypted_dict else 0} keys)")
+                                except Exception as e:
+                                    logger.error(f"Failed to decrypt JSON field {field}: {e}")
+                                    # Keep as-is if decryption fails
+                            else:
+                                # Not encrypted - parse JSON directly
+                                logger.debug(f"JSON field {field} is not encrypted, parsing as plaintext JSON")
+                                import json
+                                try:
+                                    decrypted_dict = json.loads(encrypted_value)
+                                    setattr(entity, field, decrypted_dict)
+                                except json.JSONDecodeError:
+                                    logger.warning(f"Failed to parse plaintext JSON for {field}, keeping as-is")
+                        elif not encryption_enabled:
+                            # Skip other encryption/decryption operations when encryption is disabled
+                            logger.debug(f"Encryption disabled, skipping field {field}")
+                            continue
+                        elif self._is_binary_field(field):
                             # Binary field: use binary decryption
                             # First check if it's encrypted or plaintext binary
                             if isinstance(encrypted_value, bytes):
@@ -456,14 +496,14 @@ class EncryptedRepositoryMixin:
                                 try:
                                     encrypted_value_str = encrypted_value.decode("utf-8")
                                     logger.debug(f"   Decoded {field} as UTF-8: {len(encrypted_value_str)} chars, starts with: {encrypted_value_str[:20]}")
-                                    
+
                                     # Check if it looks like an encrypted Fernet token
                                     # For binary fields encrypted with encrypt_binary_field():
                                     # - The encrypted string is base64-encoded Fernet token
                                     # - It should start with "gAAAAA" (Fernet token base64-encoded)
                                     # - OR "Z0FBQUFB" if there's another layer of base64 encoding
                                     is_enc = False
-                                    
+
                                     # Quick heuristic check first (most common case)
                                     if encrypted_value_str.startswith("gAAAAA"):
                                         is_enc = True
@@ -475,7 +515,7 @@ class EncryptedRepositoryMixin:
                                         # Try the is_encrypted() method (more thorough check)
                                         is_enc = encryptor.is_encrypted(encrypted_value_str)
                                         logger.debug(f"   is_encrypted() returned: {is_enc}")
-                                    
+
                                     if is_enc:
                                         # It's encrypted - decrypt it
                                         logger.info(f"🔓 Decrypting binary field: {field} ({len(encrypted_value)} bytes → will decrypt)")
@@ -483,7 +523,7 @@ class EncryptedRepositoryMixin:
                                             decrypted_value = encryptor.decrypt_binary_field(encrypted_value_str)
                                             setattr(entity, field, decrypted_value)
                                             logger.info(f"✅ Decrypted binary field: {field} ({len(encrypted_value)} bytes → {len(decrypted_value)} bytes)")
-                                            
+
                                             # Verify it's actually decrypted (should be PDF binary)
                                             if isinstance(decrypted_value, bytes) and decrypted_value[:4] == b'%PDF':
                                                 logger.info(f"   ✅ Verified: Decrypted data is PDF (starts with %PDF)")
@@ -510,36 +550,6 @@ class EncryptedRepositoryMixin:
                                     # Not encrypted - convert to bytes if needed
                                     logger.debug(f"Binary field {field} is not encrypted")
                                     # Already set correctly, no need to change
-                        elif isinstance(encrypted_value, str) and self._is_json_encrypted_field(field):
-                            # JSON-encrypted field (result_data): encrypted string that decrypts to JSON
-                            # These are stored in Text columns, not JSON columns
-                            logger.debug(f"   Field {field} is JSON-encrypted (Text column with encrypted JSON)")
-                            
-                            # Heuristic check: Fernet tokens start with 'g' or 'Z0FBQUFB' (base64 'gAAAAA')
-                            looks_encrypted = (
-                                encrypted_value.startswith('gAAAAA') or  # Direct Fernet token
-                                encrypted_value.startswith('Z0FBQUFB') or  # Base64-encoded Fernet token
-                                encryptor.is_encrypted(encrypted_value)  # Full validation
-                            )
-                            
-                            if looks_encrypted:
-                                logger.info(f"🔓 Decrypting JSON-encrypted field: {field} ({len(encrypted_value)} chars)")
-                                try:
-                                    decrypted_dict = encryptor.decrypt_json_field(encrypted_value)
-                                    setattr(entity, field, decrypted_dict)
-                                    logger.info(f"✅ Decrypted JSON field: {field} (dict with {len(decrypted_dict) if decrypted_dict else 0} keys)")
-                                except Exception as e:
-                                    logger.error(f"Failed to decrypt JSON field {field}: {e}")
-                                    # Keep as-is if decryption fails
-                            else:
-                                # Not encrypted - parse JSON directly
-                                logger.debug(f"JSON field {field} is not encrypted, parsing as plaintext JSON")
-                                import json
-                                try:
-                                    decrypted_dict = json.loads(encrypted_value)
-                                    setattr(entity, field, decrypted_dict)
-                                except json.JSONDecodeError:
-                                    logger.warning(f"Failed to parse plaintext JSON for {field}, keeping as-is")
                         else:
                             # Text field: use text decryption
                             # Check if it's encrypted first
