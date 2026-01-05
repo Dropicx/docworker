@@ -1032,7 +1032,7 @@ class FileQualityDetector:
 
     def _assess_image_quality(self, cv_image) -> float:
         """Assess the quality of an image for OCR
-        
+
         Uses weighted combination of blur detection (60%) and contrast analysis (40%)
         as documented in QUALITY_GATE.md. Improved normalization for high-resolution
         medical documents that may have lots of white space but clear, readable text.
@@ -1070,10 +1070,10 @@ class FileQualityDetector:
             # which is typical for high-contrast black-on-white documents
             contrast_std = gray.std()
             contrast_score = min(contrast_std / 120.0, 1.0)
-            
+
             # Use documented weighted formula: 60% blur, 40% contrast
             quality_score = (sharpness_score * 0.6) + (contrast_score * 0.4)
-            
+
             logger.debug(
                 f"Quality assessment: laplacian_var={laplacian_var:.1f}, "
                 f"sharpness={sharpness_score:.3f}, contrast_std={contrast_std:.1f}, "

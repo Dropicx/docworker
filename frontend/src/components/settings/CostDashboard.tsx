@@ -131,33 +131,25 @@ const CostDashboard: React.FC = () => {
   // Fetch overview and breakdown data
   const fetchOverviewData = useCallback(async () => {
     const { start, end } = getDateRange(datePreset);
-    try {
-      const [overviewData, breakdownData] = await Promise.all([
-        costApi.getOverview(start, end),
-        costApi.getBreakdown(start, end),
-      ]);
-      setOverview(overviewData);
-      setBreakdown(breakdownData);
-    } catch (err) {
-      throw err;
-    }
+    const [overviewData, breakdownData] = await Promise.all([
+      costApi.getOverview(start, end),
+      costApi.getBreakdown(start, end),
+    ]);
+    setOverview(overviewData);
+    setBreakdown(breakdownData);
   }, [datePreset]);
 
   // Fetch jobs data
   const fetchJobsData = useCallback(async () => {
-    try {
-      const response = await costApi.getProcessingJobs({
-        skip: currentPage * ITEMS_PER_PAGE,
-        limit: ITEMS_PER_PAGE,
-        sort_by: sortBy,
-        sort_order: sortOrder,
-        search: searchQuery || undefined,
-      });
-      setJobs(response.jobs);
-      setJobsTotal(response.total);
-    } catch (err) {
-      throw err;
-    }
+    const response = await costApi.getProcessingJobs({
+      skip: currentPage * ITEMS_PER_PAGE,
+      limit: ITEMS_PER_PAGE,
+      sort_by: sortBy,
+      sort_order: sortOrder,
+      search: searchQuery || undefined,
+    });
+    setJobs(response.jobs);
+    setJobsTotal(response.total);
   }, [currentPage, sortBy, sortOrder, searchQuery]);
 
   // Main data fetch

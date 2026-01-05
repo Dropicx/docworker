@@ -140,22 +140,21 @@ class CacheService:
         if hasattr(value, "__dict__"):
             # SQLAlchemy model or similar object
             return json.dumps(self._model_to_dict(value))
-        elif isinstance(value, list):
+        if isinstance(value, list):
             return json.dumps([self._model_to_dict(item) for item in value])
-        elif isinstance(value, dict):
+        if isinstance(value, dict):
             return json.dumps(value)
-        else:
-            return json.dumps(value)
+        return json.dumps(value)
 
     def _model_to_dict(self, obj: Any) -> dict:
         """Convert SQLAlchemy model or Pydantic model to dict."""
         if hasattr(obj, "model_dump"):
             # Pydantic v2
             return obj.model_dump()
-        elif hasattr(obj, "dict"):
+        if hasattr(obj, "dict"):
             # Pydantic v1
             return obj.dict()
-        elif hasattr(obj, "__dict__"):
+        if hasattr(obj, "__dict__"):
             # SQLAlchemy model - filter out internal attributes
             result = {}
             for key, value in obj.__dict__.items():
@@ -166,8 +165,7 @@ class CacheService:
                     else:
                         result[key] = value
             return result
-        else:
-            return obj
+        return obj
 
     def _deserialize(self, value: str) -> Any:
         """Deserialize JSON string to value."""

@@ -5,15 +5,12 @@ Business logic for user feedback system (Issue #47).
 Handles feedback submission, retrieval, and GDPR content management.
 """
 
-import logging
 from datetime import datetime
+import logging
 
 from sqlalchemy.orm import Session
 
-from app.repositories.feedback_repository import (
-    FeedbackRepository,
-    PipelineJobFeedbackRepository,
-)
+from app.repositories.feedback_repository import FeedbackRepository, PipelineJobFeedbackRepository
 
 logger = logging.getLogger(__name__)
 
@@ -154,9 +151,8 @@ class FeedbackService:
         if job:
             logger.info(f"Content cleared for {processing_id}")
             return {"status": "cleared", "processing_id": processing_id}
-        else:
-            logger.warning(f"Job not found for cleanup: {processing_id}")
-            return {"status": "not_found", "processing_id": processing_id}
+        logger.warning(f"Job not found for cleanup: {processing_id}")
+        return {"status": "not_found", "processing_id": processing_id}
 
     def get_feedback_list(
         self,

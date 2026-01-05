@@ -160,7 +160,7 @@ def test_privacy_filter_via_worker(text: str, timeout: int = 30) -> dict[str, An
         if task_result.get("status") == "error":
             raise Exception(task_result.get("error", "Unknown worker error"))
 
-        logger.info(f"✅ Privacy filter test completed via worker")
+        logger.info("✅ Privacy filter test completed via worker")
         return task_result
 
     except Exception as e:

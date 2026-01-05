@@ -32,9 +32,9 @@ ENHANCED (Issue #35 Phase 5 - Validation & Quality Assurance):
     - Medical content validation to ensure medical info preserved
 """
 
+from datetime import datetime
 import logging
 import re
-from datetime import datetime
 from re import Pattern
 
 # Try to import spaCy, but make it optional
@@ -746,7 +746,7 @@ class AdvancedPrivacyFilter:
             "ramipril", "enalapril", "lisinopril", "losartan", "valsartan",
             "candesartan", "telmisartan", "amlodipin", "nifedipin",
             "simvastatin", "atorvastatin", "pravastatin", "rosuvastatin",
-            "aspirin", "clopidogrel", "ticagrelor", "phenprocoumon", "warfarin",
+            "clopidogrel", "ticagrelor", "phenprocoumon", "warfarin",
             "rivaroxaban", "apixaban", "edoxaban", "dabigatran",
             "furosemid", "torasemid", "hydrochlorothiazid", "spironolacton",
             "digitoxin", "digoxin", "isosorbid",
@@ -1214,9 +1214,10 @@ class AdvancedPrivacyFilter:
             value_type: "json"
         """
         try:
+            import json
+
             from app.database.connection import get_db_session
             from app.database.models import SystemSettingsDB
-            import json
 
             with get_db_session() as db:
                 # Load custom medical terms
@@ -1819,9 +1820,8 @@ class AdvancedPrivacyFilter:
         # Restore ICD-10, OPS, and LOINC codes
         text = re.sub(r"§ICD_([^§]+)§", r"\1", text)
         text = re.sub(r"§OPS_([^§]+)§", r"\1", text)
-        text = re.sub(r"§LOINC_([^§]+)§", r"\1", text)
+        return re.sub(r"§LOINC_([^§]+)§", r"\1", text)
 
-        return text
 
     def _classify_date_context(self, date_match: re.Match, full_text: str) -> str:
         """Classify whether a date is PII (birthdate) or medical (exam/lab date).
@@ -2206,10 +2206,7 @@ class AdvancedPrivacyFilter:
 
         # Check for common German location/organization indicators
         location_indicators = ["klinik", "krankenhaus", "praxis", "zentrum", "institut"]
-        if any(ind in name_lower for ind in location_indicators):
-            return True
-
-        return False
+        return bool(any(ind in name_lower for ind in location_indicators))
 
     def _remove_names_with_ner(self, text: str) -> str:
         """

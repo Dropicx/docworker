@@ -8,15 +8,11 @@ Includes transparent encryption for input_text and output_text fields.
 """
 
 import logging
-from typing import Any
 
 from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
-from app.database.modular_pipeline_models import (
-    PipelineStepExecutionDB,
-    StepExecutionStatus,
-)
+from app.database.modular_pipeline_models import PipelineStepExecutionDB, StepExecutionStatus
 from app.repositories.base_repository import BaseRepository, EncryptedRepositoryMixin
 
 logger = logging.getLogger(__name__)

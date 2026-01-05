@@ -13,8 +13,8 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from app.services.celery_client import (
-    test_privacy_filter_via_worker,
     get_privacy_filter_status_via_worker,
+    test_privacy_filter_via_worker,
 )
 
 logger = logging.getLogger(__name__)
@@ -126,7 +126,7 @@ async def get_privacy_metrics():
         raise HTTPException(
             status_code=503,
             detail=f"Worker unavailable: {str(e)}. Please ensure the worker service is running."
-        )
+        ) from e
 
 
 @router.post("/test", response_model=LiveTestResult)
@@ -174,7 +174,7 @@ async def test_privacy_filter(request: LiveTestRequest):
         raise HTTPException(
             status_code=503,
             detail=f"Worker processing failed: {str(e)}. Please ensure the worker service is running."
-        )
+        ) from e
 
 
 @router.get("/health")

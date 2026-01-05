@@ -276,7 +276,7 @@ class EncryptedRepositoryMixin:
     def _is_json_encrypted_field(self, field_name: str) -> bool:
         """
         Check if a field contains encrypted JSON (dict → JSON string → encrypted string).
-        
+
         These fields are stored as Text columns but contain encrypted JSON data that should
         be decrypted to a dict.
 
@@ -304,7 +304,7 @@ class EncryptedRepositoryMixin:
         if not self.encrypted_fields:
             logger.debug(f"No encrypted fields defined for {self.model.__name__}")
             return data
-        
+
         if not encryptor.is_enabled():
             logger.warning(f"⚠️ Encryption is disabled for {self.model.__name__} - fields will be stored in plaintext!")
             return data
@@ -323,45 +323,45 @@ class EncryptedRepositoryMixin:
                             original_binary = encrypted_data[field]
                             original_size = len(original_binary)
                             logger.info(f"   📦 Encrypting {field}: {original_size} bytes (type: bytes)")
-                            
+
                             # Show first few bytes of original
                             original_preview = original_binary[:20].hex()
                             logger.debug(f"   Original preview (hex): {original_preview}...")
-                            
+
                             # Encrypt binary → returns base64-encoded string
                             encrypted_str = encryptor.encrypt_binary_field(original_binary)
-                            
+
                             if encrypted_str:
                                 logger.debug(f"   Encryption returned string of length: {len(encrypted_str)}")
-                                
+
                                 # Verify encryption actually happened
                                 try:
                                     original_as_str = original_binary.decode("utf-8", errors="ignore")
                                     if encrypted_str == original_as_str:
                                         logger.error(f"❌ Encryption returned same value as input for {field}!")
-                                        raise ValueError(f"Encryption failed - returned plaintext")
+                                        raise ValueError("Encryption failed - returned plaintext")
                                 except UnicodeDecodeError:
                                     # Can't decode as UTF-8, so definitely different
                                     pass
-                                
+
                                 # Verify it looks encrypted (should start with Fernet token prefix)
                                 preview = encrypted_str[:20]
                                 logger.debug(f"   Encrypted preview: {preview}...")
                                 if not preview.startswith("gAAAAA"):
                                     logger.warning(f"   ⚠️ Encrypted data doesn't look like Fernet token: {preview}...")
                                 else:
-                                    logger.debug(f"   ✅ Verified: Encrypted token starts with 'gAAAAA' (Fernet format)")
-                                
+                                    logger.debug("   ✅ Verified: Encrypted token starts with 'gAAAAA' (Fernet format)")
+
                                 # Convert encrypted string to bytes for LargeBinary column
                                 encrypted_bytes = encrypted_str.encode("utf-8")
                                 encrypted_size = len(encrypted_bytes)
-                                
+
                                 # Store encrypted bytes
                                 encrypted_data[field] = encrypted_bytes
-                                
+
                                 size_increase = (encrypted_size / original_size * 100) if original_size > 0 else 0
                                 logger.info(f"✅ Encrypted binary field: {field} ({original_size} bytes → {encrypted_size} bytes, {size_increase:.1f}% size increase)")
-                                
+
                                 # Final verification - check what we're about to store
                                 stored_preview = encrypted_bytes[:50].decode("utf-8", errors="ignore")
                                 logger.debug(f"   Will store (first 50 chars): {stored_preview}...")
@@ -380,10 +380,10 @@ class EncryptedRepositoryMixin:
                         if isinstance(encrypted_data[field], dict):
                             original_json = encrypted_data[field]
                             logger.info(f"   📋 Encrypting {field}: JSON dict with {len(original_json)} keys")
-                            
+
                             # Encrypt dict → returns encrypted string
                             encrypted_str = encryptor.encrypt_json_field(original_json)
-                            
+
                             if encrypted_str:
                                 encrypted_data[field] = encrypted_str
                                 logger.info(f"✅ Encrypted JSON field: {field} ({len(str(original_json))} chars → {len(encrypted_str)} chars)")
@@ -401,10 +401,10 @@ class EncryptedRepositoryMixin:
                         if isinstance(encrypted_data[field], dict):
                             original_json = encrypted_data[field]
                             logger.info(f"   📋 Encrypting {field}: JSON dict with {len(original_json)} keys")
-                            
+
                             # Encrypt dict → returns encrypted string
                             encrypted_str = encryptor.encrypt_json_field(original_json)
-                            
+
                             if encrypted_str:
                                 encrypted_data[field] = encrypted_str
                                 logger.info(f"✅ Encrypted JSON field: {field} ({len(str(original_json))} chars → {len(encrypted_str)} chars)")
@@ -503,10 +503,10 @@ class EncryptedRepositoryMixin:
                                     # Quick heuristic check first (most common case)
                                     if encrypted_value_str.startswith("gAAAAA"):
                                         is_enc = True
-                                        logger.debug(f"   Heuristic check: Looks encrypted (starts with gAAAAA)")
+                                        logger.debug("   Heuristic check: Looks encrypted (starts with gAAAAA)")
                                     elif encrypted_value_str.startswith("Z0FBQUFB"):
                                         is_enc = True
-                                        logger.debug(f"   Heuristic check: Looks encrypted (starts with Z0FBQUFB - double base64)")
+                                        logger.debug("   Heuristic check: Looks encrypted (starts with Z0FBQUFB - double base64)")
                                     else:
                                         # Try the is_encrypted() method (more thorough check)
                                         is_enc = encryptor.is_encrypted(encrypted_value_str)
@@ -522,7 +522,7 @@ class EncryptedRepositoryMixin:
 
                                             # Verify it's actually decrypted (should be PDF binary)
                                             if isinstance(decrypted_value, bytes) and decrypted_value[:4] == b'%PDF':
-                                                logger.info(f"   ✅ Verified: Decrypted data is PDF (starts with %PDF)")
+                                                logger.info("   ✅ Verified: Decrypted data is PDF (starts with %PDF)")
                                             else:
                                                 logger.warning(f"   ⚠️ Decrypted data doesn't look like PDF: {decrypted_value[:20] if isinstance(decrypted_value, bytes) else str(decrypted_value)[:20]}")
                                         except Exception as e:
@@ -624,7 +624,7 @@ class EncryptedRepositoryMixin:
 
         # Encrypt fields before creation
         encrypted_kwargs = self._encrypt_fields(kwargs)
-        
+
         # Log what we're about to save
         for field in self.encrypted_fields:
             if field in encrypted_kwargs and encrypted_kwargs[field] is not None:
@@ -634,14 +634,14 @@ class EncryptedRepositoryMixin:
                     try:
                         preview = encrypted_kwargs[field][:50].decode("utf-8")
                         if preview.startswith("gAAAAA"):
-                            logger.info(f"   ✅ Verified: Encrypted token format before save")
+                            logger.info("   ✅ Verified: Encrypted token format before save")
                         else:
                             logger.warning(f"   ⚠️ Doesn't look encrypted before save: {preview[:20]}...")
                     except UnicodeDecodeError:
-                        logger.warning(f"   ⚠️ Cannot decode as UTF-8 before save (might be plaintext binary)")
+                        logger.warning("   ⚠️ Cannot decode as UTF-8 before save (might be plaintext binary)")
 
         # Log what we're passing to super().create()
-        logger.info(f"🔐 Calling super().create() with encrypted_kwargs containing:")
+        logger.info("🔐 Calling super().create() with encrypted_kwargs containing:")
         for field in self.encrypted_fields:
             if field in encrypted_kwargs and encrypted_kwargs[field] is not None:
                 if isinstance(encrypted_kwargs[field], bytes):
@@ -650,15 +650,15 @@ class EncryptedRepositoryMixin:
                         preview = encrypted_kwargs[field][:50].decode("utf-8")
                         logger.info(f"      Preview: {preview[:30]}...")
                     except UnicodeDecodeError:
-                        logger.warning(f"      Cannot decode as UTF-8 (might be plaintext binary)")
-        
+                        logger.warning("      Cannot decode as UTF-8 (might be plaintext binary)")
+
         # Call parent create method
         entity = super().create(**encrypted_kwargs)
-        
+
         # CRITICAL: Flush and commit to ensure data is persisted before any other operations
         self.db.flush()
         self.db.commit()
-        
+
         # Verify what was actually saved to database using raw SQL to bypass ORM
         from sqlalchemy import text
         verify_result = self.db.execute(
@@ -669,7 +669,7 @@ class EncryptedRepositoryMixin:
         if db_row:
             db_length = db_row[0]
             logger.info(f"🔍 Raw SQL verification: {self.encrypted_fields[0]} in DB = {db_length} bytes")
-            
+
             # Check if it matches what we tried to save
             encrypted_value = encrypted_kwargs.get(self.encrypted_fields[0])
             if encrypted_value is None:
@@ -681,14 +681,14 @@ class EncryptedRepositoryMixin:
                 expected_length = len(encrypted_value.encode("utf-8"))  # Convert to bytes for comparison
             else:
                 expected_length = 0
-                
+
             if db_length == expected_length and expected_length > 0:
                 logger.info(f"   ✅ Verified: Database has correct encrypted size ({db_length} bytes)")
             elif expected_length == 0 and db_length == 0:
-                logger.info(f"   ✅ Verified: Both expected and database are NULL/empty")
+                logger.info("   ✅ Verified: Both expected and database are NULL/empty")
             else:
                 logger.warning(f"   ⚠️ Size mismatch: Expected {expected_length} bytes, but database has {db_length} bytes (this may be normal for text fields stored as TEXT vs BYTEA)")
-        
+
         # Also refresh entity to see what ORM thinks is in the database
         self.db.refresh(entity)  # Force reload from database
         for field in self.encrypted_fields:
@@ -700,21 +700,21 @@ class EncryptedRepositoryMixin:
                         try:
                             preview = saved_value[:50].decode("utf-8")
                             if preview.startswith("gAAAAA"):
-                                logger.info(f"   ✅ Verified: Encrypted token format in database")
+                                logger.info("   ✅ Verified: Encrypted token format in database")
                             else:
                                 logger.warning(f"   ⚠️ Doesn't look encrypted in database: {preview[:20]}...")
                         except UnicodeDecodeError:
-                            logger.warning(f"   ⚠️ Cannot decode as UTF-8 in database (might be plaintext binary)")
+                            logger.warning("   ⚠️ Cannot decode as UTF-8 in database (might be plaintext binary)")
 
         # Decrypt fields for return (so service layer gets plaintext)
         decrypted_entity = self._decrypt_entity(entity)
-        
+
         # CRITICAL: Expunge the entity after decrypting to prevent SQLAlchemy from
         # tracking the decrypted values and accidentally saving them back to the database.
         # The entity is now detached and won't be auto-saved on session flush/close.
         self.db.expunge(decrypted_entity)
         logger.debug(f"Expunged {self.model.__name__} entity (id={decrypted_entity.id}) after decryption in create()")
-        
+
         return decrypted_entity
 
     def get_by_id(self, record_id: Any) -> ModelType | None:
@@ -729,12 +729,12 @@ class EncryptedRepositoryMixin:
         """
         entity = super().get_by_id(record_id)
         decrypted_entity = self._decrypt_entity(entity)
-        
+
         # Expunge to prevent accidental overwrites of decrypted data
         if decrypted_entity:
             self.db.expunge(decrypted_entity)
             logger.debug(f"Expunged {self.model.__name__} entity (id={decrypted_entity.id}) after decryption in get_by_id()")
-        
+
         return decrypted_entity
 
     def get_all(
@@ -753,12 +753,12 @@ class EncryptedRepositoryMixin:
         """
         entities = super().get_all(skip, limit, filters)
         decrypted_entities = self._decrypt_entities(entities)
-        
+
         # Expunge all to prevent accidental overwrites of decrypted data
         for entity in decrypted_entities:
             self.db.expunge(entity)
         logger.debug(f"Expunged {len(decrypted_entities)} {self.model.__name__} entities after decryption in get_all()")
-        
+
         return decrypted_entities
 
     def get_one(self, filters: dict[str, Any]) -> ModelType | None:
@@ -773,12 +773,12 @@ class EncryptedRepositoryMixin:
         """
         entity = super().get_one(filters)
         decrypted_entity = self._decrypt_entity(entity)
-        
+
         # Expunge to prevent accidental overwrites of decrypted data
         if decrypted_entity:
             self.db.expunge(decrypted_entity)
             logger.debug(f"Expunged {self.model.__name__} entity after decryption in get_one()")
-        
+
         return decrypted_entity
 
     def update(self, record_id: Any, **kwargs) -> ModelType | None:
@@ -813,19 +813,19 @@ class EncryptedRepositoryMixin:
         # This prevents overwriting encrypted fields that are not in kwargs
         from sqlalchemy import update
         from sqlalchemy.inspection import inspect
-        
+
         # Get primary key column name
         mapper = inspect(self.model)
         pk_column = mapper.primary_key[0]
         pk_attr = pk_column.name
-        
+
         # Build update statement - only update fields in encrypted_kwargs
         update_stmt = (
             update(self.model)
             .where(getattr(self.model, pk_attr) == record_id)
             .values(**encrypted_kwargs)
         )
-        
+
         # CRITICAL: Before executing the update, expire any existing entity with this ID
         # from the session to prevent SQLAlchemy from tracking the decrypted file_content
         # and accidentally saving it back when we commit
@@ -838,7 +838,7 @@ class EncryptedRepositoryMixin:
 
         result = self.db.execute(update_stmt)
         self.db.commit()
-        
+
         if result.rowcount == 0:
             logger.warning(f"{self.model.__name__} with {pk_attr}={record_id} not found")
             return None
@@ -854,5 +854,5 @@ class EncryptedRepositoryMixin:
         # Reloading would decrypt it and add it to the session, risking accidental overwrites.
         # The worker doesn't need the return value, and services can query again if needed.
         logger.debug(f"Update complete for {self.model.__name__} (id={record_id}). Not reloading entity to prevent session tracking.")
-        
+
         return None  # Return None instead of reloaded entity

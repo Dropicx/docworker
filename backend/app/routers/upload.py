@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.core.permissions import get_current_user_optional
 from app.database.auth_models import UserDB
 from app.database.connection import get_session
-from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
+from app.database.modular_pipeline_models import StepExecutionStatus
 from app.models.document import DocumentType, ProcessingStatus, UploadResponse
 from app.services.file_quality_detector import FileQualityDetector
 from app.services.file_validator import FileValidator
@@ -218,7 +218,7 @@ async def upload_document(
         from app.repositories.pipeline_job_repository import PipelineJobRepository
 
         job_repo = PipelineJobRepository(db)
-        pipeline_job = job_repo.create(
+        job_repo.create(
             job_id=job_id,
             processing_id=processing_id,
             filename=file.filename,

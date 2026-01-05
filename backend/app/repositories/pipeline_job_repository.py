@@ -8,9 +8,8 @@ Includes transparent encryption for file_content field (binary PDF/image files).
 """
 
 import logging
-from typing import Any
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import PipelineJobDB, StepExecutionStatus
@@ -50,12 +49,12 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
         try:
             job = self.db.query(PipelineJobDB).filter(PipelineJobDB.job_id == job_id).first()
             decrypted_job = self._decrypt_entity(job)
-            
+
             # Expunge to prevent accidental overwrites of decrypted data
             if decrypted_job:
                 self.db.expunge(decrypted_job)
                 logger.debug(f"Expunged PipelineJobDB entity (id={decrypted_job.id}) after decryption in get_by_job_id()")
-            
+
             return decrypted_job
         except Exception as e:
             logger.error(f"Error getting pipeline job by job_id={job_id}: {e}")
@@ -78,12 +77,12 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
                 .first()
             )
             decrypted_job = self._decrypt_entity(job)
-            
+
             # Expunge to prevent accidental overwrites of decrypted data
             if decrypted_job:
                 self.db.expunge(decrypted_job)
                 logger.debug(f"Expunged PipelineJobDB entity (id={decrypted_job.id}) after decryption in get_by_processing_id()")
-            
+
             return decrypted_job
         except Exception as e:
             logger.error(f"Error getting pipeline job by processing_id={processing_id}: {e}")
@@ -112,12 +111,12 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
                 .all()
             )
             decrypted_jobs = self._decrypt_entities(jobs)
-            
+
             # Expunge all to prevent accidental overwrites of decrypted data
             for job in decrypted_jobs:
                 self.db.expunge(job)
             logger.debug(f"Expunged {len(decrypted_jobs)} PipelineJobDB entities after decryption in get_by_status()")
-            
+
             return decrypted_jobs
         except Exception as e:
             logger.error(f"Error getting pipeline jobs by status={status}: {e}")
@@ -242,12 +241,12 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
             )
 
             decrypted_jobs = self._decrypt_entities(jobs)
-            
+
             # Expunge all to prevent accidental overwrites of decrypted data
             for job in decrypted_jobs:
                 self.db.expunge(job)
             logger.debug(f"Expunged {len(decrypted_jobs)} PipelineJobDB entities after decryption in get_jobs_without_consent()")
-            
+
             return decrypted_jobs
         except Exception as e:
             logger.error(f"Error getting jobs without consent: {e}")

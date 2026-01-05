@@ -16,7 +16,6 @@ import {
   ChevronUp,
   MessageCircle,
   BarChart3,
-  Calendar,
   Filter,
   FileText,
   Eye,
@@ -146,12 +145,8 @@ const FeedbackDashboard: React.FC = () => {
   // Fetch stats data
   const fetchStats = useCallback(async () => {
     const { start } = getDateRange(datePreset);
-    try {
-      const statsData = await feedbackApi.getStats(start);
-      setStats(statsData);
-    } catch (err) {
-      throw err;
-    }
+    const statsData = await feedbackApi.getStats(start);
+    setStats(statsData);
   }, [datePreset]);
 
   // Fetch feedback entries
@@ -168,13 +163,9 @@ const FeedbackDashboard: React.FC = () => {
       consent_filter: consentFilter,
     };
 
-    try {
-      const response = await feedbackApi.listFeedback(query);
-      setEntries(response.entries);
-      setTotalEntries(response.total);
-    } catch (err) {
-      throw err;
-    }
+    const response = await feedbackApi.listFeedback(query);
+    setEntries(response.entries);
+    setTotalEntries(response.total);
   }, [datePreset, currentPage, sortBy, sortOrder, ratingFilter, consentFilter]);
 
   // Main data fetch

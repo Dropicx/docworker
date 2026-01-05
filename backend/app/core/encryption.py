@@ -413,7 +413,7 @@ class FieldEncryptor:
         try:
             binary_size = len(binary_data)
             logger.debug(f"   encrypt_binary_field: Input {binary_size} bytes")
-            
+
             # Step 1: Convert binary to base64 string
             base64_string = base64.b64encode(binary_data).decode("ascii")
             base64_size = len(base64_string)
@@ -421,30 +421,30 @@ class FieldEncryptor:
 
             # Step 2: Encrypt the base64 string (treat as text)
             encrypted_string = self.encrypt_field(base64_string)
-            
+
             if encrypted_string:
                 encrypted_size = len(encrypted_string)
                 logger.debug(f"   encrypt_binary_field: Encrypted to {encrypted_size} chars")
-                
+
             # Verify it's actually encrypted
             # Note: Fernet tokens start with "gAAAAA" in base64, which is "Z0FBQUFB" in base64 encoding
             # But the encrypted_string is already base64-encoded, so we check for the base64 representation
             if encrypted_string.startswith("gAAAAA"):
-                logger.debug(f"   ✅ encrypt_binary_field: Verified Fernet token format (starts with 'gAAAAA')")
+                logger.debug("   ✅ encrypt_binary_field: Verified Fernet token format (starts with 'gAAAAA')")
             elif encrypted_string.startswith("Z0FBQUFB"):
-                logger.debug(f"   ✅ encrypt_binary_field: Verified Fernet token format (base64 encoded, starts with 'Z0FBQUFB')")
+                logger.debug("   ✅ encrypt_binary_field: Verified Fernet token format (base64 encoded, starts with 'Z0FBQUFB')")
             else:
                 # Decode base64 to check if it's a Fernet token
                 try:
                     import base64 as b64
                     decoded = b64.b64decode(encrypted_string)
                     if decoded.startswith(b"gAAAAA"):
-                        logger.debug(f"   ✅ encrypt_binary_field: Verified Fernet token format (after base64 decode)")
+                        logger.debug("   ✅ encrypt_binary_field: Verified Fernet token format (after base64 decode)")
                     else:
                         logger.warning(f"   ⚠️ encrypt_binary_field: Doesn't look like Fernet token: {encrypted_string[:20]}...")
                 except Exception:
                     logger.warning(f"   ⚠️ encrypt_binary_field: Cannot verify token format: {encrypted_string[:20]}...")
-            
+
             return encrypted_string
 
         except Exception as e:
@@ -493,9 +493,8 @@ class FieldEncryptor:
                 return None
 
             # Step 2: Decode base64 string back to binary
-            binary_data = base64.b64decode(base64_string.encode("ascii"))
+            return base64.b64decode(base64_string.encode("ascii"))
 
-            return binary_data
 
         except Exception as e:
             logger.error(f"Binary decryption failed: {e}")
@@ -591,12 +590,10 @@ class FieldEncryptor:
                 logger.debug(f"Decrypted JSON field: {len(encrypted_string)} chars → {len(json_string)} chars")
 
                 # Step 2: Parse JSON string to dict
-                json_data = json.loads(json_string)
-                return json_data
-            else:
-                # Plaintext JSON (backward compatibility)
-                logger.debug("JSON field is plaintext (not encrypted), parsing directly")
-                return json.loads(encrypted_string)
+                return json.loads(json_string)
+            # Plaintext JSON (backward compatibility)
+            logger.debug("JSON field is plaintext (not encrypted), parsing directly")
+            return json.loads(encrypted_string)
 
         except json.JSONDecodeError as e:
             logger.error(f"JSON parsing failed: {e}")

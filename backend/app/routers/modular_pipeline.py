@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_pipeline_step_repository
-from app.core.permissions import get_current_user_required, require_role, require_admin
+from app.core.permissions import get_current_user_required, require_admin, require_role
 from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import OCREngineEnum

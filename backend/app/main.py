@@ -20,10 +20,10 @@ from app.routers.admin.config import router as admin_config_router
 from app.routers.api_keys import router as api_keys_router
 from app.routers.audit import router as audit_router
 from app.routers.auth import router as auth_router
-from app.routers.modular_pipeline import router as modular_pipeline_router
-from app.routers.monitoring import router as monitoring_router
 from app.routers.cost_statistics import router as cost_statistics_router
 from app.routers.feedback import router as feedback_router
+from app.routers.modular_pipeline import router as modular_pipeline_router
+from app.routers.monitoring import router as monitoring_router
 from app.routers.privacy_metrics import router as privacy_metrics_router
 from app.routers.process_multi_file import router as multi_file_router
 from app.routers.settings_auth import router as settings_auth_router

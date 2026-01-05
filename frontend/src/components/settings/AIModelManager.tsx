@@ -16,8 +16,6 @@ import {
   Loader2,
   Save,
   X,
-  Eye,
-  EyeOff,
   Cpu,
   DollarSign,
 } from 'lucide-react';
@@ -47,11 +45,6 @@ const AIModelManager: React.FC = () => {
     }
   }, [tokens]);
 
-  // Load models on mount
-  useEffect(() => {
-    loadModels();
-  }, []);
-
   const loadModels = useCallback(async () => {
     try {
       setLoading(true);
@@ -64,6 +57,11 @@ const AIModelManager: React.FC = () => {
       setLoading(false);
     }
   }, []);
+
+  // Load models on mount
+  useEffect(() => {
+    loadModels();
+  }, [loadModels]);
 
   const handleEdit = (model: AIModel) => {
     setEditingModel({

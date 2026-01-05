@@ -6,7 +6,6 @@ Handles database operations for user feedback on translations (Issue #47).
 
 from datetime import datetime, timedelta
 
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import (
@@ -16,9 +15,7 @@ from app.database.modular_pipeline_models import (
 )
 from app.repositories.base_repository import BaseRepository
 from app.repositories.pipeline_job_repository import PipelineJobRepository
-from app.repositories.pipeline_step_execution_repository import (
-    PipelineStepExecutionRepository,
-)
+from app.repositories.pipeline_step_execution_repository import PipelineStepExecutionRepository
 
 
 class FeedbackRepository(BaseRepository[UserFeedbackDB]):
@@ -246,11 +243,10 @@ class PipelineJobFeedbackRepository:
             return None
 
         # Update using repository to ensure encryption is handled
-        updated_job = self.job_repo.update(
+        return self.job_repo.update(
             job.id, has_feedback=True, data_consent_given=consent_given
         )
 
-        return updated_job
 
     def clear_content_for_step_executions(self, job_id: str) -> int:
         """
@@ -322,11 +318,10 @@ class PipelineJobFeedbackRepository:
         self.clear_content_for_step_executions(job.job_id)
 
         # Update content_cleared_at timestamp
-        updated_job = self.job_repo.update(
+        return self.job_repo.update(
             job.id, content_cleared_at=datetime.now()
         )
 
-        return updated_job
 
     def get_jobs_without_feedback(
         self, older_than_hours: int = 1

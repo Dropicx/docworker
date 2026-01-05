@@ -5,9 +5,9 @@ Provides endpoints for user feedback submission and admin feedback management.
 Part of Issue #47 - User Feedback System with GDPR Data Protection.
 """
 
-import logging
 from datetime import datetime
 from enum import Enum
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from pydantic import BaseModel, Field
@@ -264,7 +264,7 @@ async def cleanup_content(
 
     Called via sendBeacon when user leaves page without providing feedback.
     If feedback already exists, content is preserved.
-    
+
     Note: Endpoint has two routes:
     - /cleanup/{processing_id} (original)
     - /clear/{processing_id} (alias to avoid ad blocker blocking)

@@ -16,15 +16,12 @@ from app.database.modular_pipeline_models import (
     AvailableModelDB,
     DynamicPipelineStepDB,
     OCRConfigurationDB,
-    PipelineStepExecutionDB,
     StepExecutionStatus,
 )
 from app.repositories.available_model_repository import AvailableModelRepository
 from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
 from app.repositories.pipeline_job_repository import PipelineJobRepository
-from app.repositories.pipeline_step_execution_repository import (
-    PipelineStepExecutionRepository,
-)
+from app.repositories.pipeline_step_execution_repository import PipelineStepExecutionRepository
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.services.ai_cost_tracker import AICostTracker
 from app.services.ai_logging_service import AILoggingService
@@ -1463,11 +1460,11 @@ class ModularPipelineManager:
     def update_model(self, model_id: int, model_data: dict[str, Any]) -> AvailableModelDB | None:
         """
         Update an existing AI model.
-        
+
         Args:
             model_id: ID of the model to update
             model_data: Dictionary of fields to update
-            
+
         Returns:
             Updated model instance or None if not found
         """
@@ -1482,7 +1479,7 @@ class ModularPipelineManager:
 
         # Update timestamp
         model.last_modified = datetime.now()
-        
+
         self.session.commit()
         self.session.refresh(model)
         return model
