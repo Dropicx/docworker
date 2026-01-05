@@ -484,10 +484,6 @@ class EncryptedRepositoryMixin:
                                     setattr(entity, field, decrypted_dict)
                                 except json.JSONDecodeError:
                                     logger.warning(f"Failed to parse plaintext JSON for {field}, keeping as-is")
-                        elif not encryption_enabled:
-                            # Skip other encryption/decryption operations when encryption is disabled
-                            logger.debug(f"Encryption disabled, skipping field {field}")
-                            continue
                         elif self._is_binary_field(field):
                             # Binary field: use binary decryption
                             # First check if it's encrypted or plaintext binary
@@ -552,11 +548,27 @@ class EncryptedRepositoryMixin:
                                     # Already set correctly, no need to change
                         else:
                             # Text field: use text decryption
-                            # Check if it's encrypted first
-                            if encryptor.is_encrypted(str(encrypted_value)):
-                                decrypted_value = encryptor.decrypt_field(encrypted_value)
-                                setattr(entity, field, decrypted_value)
-                                logger.debug(f"Decrypted text field: {field}")
+                            # Check if value looks encrypted (Fernet tokens start with gAAAAA or Z0FBQUFB)
+                            value_str = str(encrypted_value)
+                            looks_encrypted = (
+                                value_str.startswith('gAAAAA') or  # Direct Fernet token
+                                value_str.startswith('Z0FBQUFB') or  # Base64-encoded Fernet token
+                                (encryption_enabled and encryptor.is_encrypted(value_str))
+                            )
+
+                            if looks_encrypted:
+                                # Value looks encrypted - try to decrypt
+                                if encryption_enabled:
+                                    decrypted_value = encryptor.decrypt_field(encrypted_value)
+                                    setattr(entity, field, decrypted_value)
+                                    logger.debug(f"Decrypted text field: {field}")
+                                else:
+                                    # Encryption disabled but value is encrypted - log error
+                                    logger.error(
+                                        f"❌ Field {field} contains encrypted data but encryption is disabled. "
+                                        f"Set ENCRYPTION_KEY environment variable to decrypt."
+                                    )
+                                    # Keep encrypted value as-is (can't decrypt without key)
                             else:
                                 # Not encrypted - return as-is
                                 logger.debug(f"Text field {field} is not encrypted, returning as-is")
