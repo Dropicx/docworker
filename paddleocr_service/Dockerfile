@@ -59,8 +59,8 @@ ENV PYTHONPATH=/app \
     ENVIRONMENT=production \
     PIP_NO_CACHE_DIR=1 \
     PADDLEOCR_DEFAULT_MODE=structured \
-    PADDLEX_HOME=/home/appuser/.paddleocr \
-    HF_HOME=/home/appuser/.paddleocr/huggingface \
+    PADDLEX_HOME=/home/appuser/.paddlex \
+    HF_HOME=/home/appuser/.paddlex/huggingface \
     DISABLE_MODEL_SOURCE_CHECK=True
 
 # Run the application via entrypoint (fixes permissions, checks model cache)

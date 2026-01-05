@@ -24,7 +24,7 @@ from contextlib import asynccontextmanager
 # Must set environment variables BEFORE importing paddleocr/paddlex
 # These control model cache location and behavior
 
-MODEL_CACHE_DIR = os.environ.get("PADDLEX_HOME", "/home/appuser/.paddleocr")
+MODEL_CACHE_DIR = os.environ.get("PADDLEX_HOME", "/home/appuser/.paddlex")
 
 # Set all relevant cache directories to the mounted volume
 os.environ["PADDLEX_HOME"] = MODEL_CACHE_DIR

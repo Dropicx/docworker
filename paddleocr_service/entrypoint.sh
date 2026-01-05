@@ -1,11 +1,11 @@
 #!/bin/sh
 # PaddleOCR Service Entrypoint
 # Fixes volume permissions and starts the service
-# Models are cached on persistent volume at /home/appuser/.paddleocr
+# Models are cached on persistent volume at /home/appuser/.paddlex
 
 set -e
 
-MODEL_CACHE="/home/appuser/.paddleocr"
+MODEL_CACHE="/home/appuser/.paddlex"
 
 # Export environment variables for PaddleX model caching
 # These MUST be set before Python starts
