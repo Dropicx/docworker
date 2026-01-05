@@ -584,11 +584,15 @@ class FieldEncryptor:
             import json
 
             # Check if it's encrypted (Fernet token) or plaintext JSON
+            # Use heuristic check: Fernet tokens start with 'gAAAAA' or base64-encoded 'Z0FBQUFB'
+            looks_encrypted = (
+                encrypted_string.startswith('gAAAAA') or  # Direct Fernet token
+                encrypted_string.startswith('Z0FBQUFB')   # Base64-encoded Fernet token
+            )
             logger.debug(f"Checking if encrypted: first 50 chars: {encrypted_string[:50] if encrypted_string else 'EMPTY'}...")
-            is_enc = self.is_encrypted(encrypted_string)
-            logger.info(f"is_encrypted() returned: {is_enc}")
+            logger.info(f"looks_encrypted (heuristic): {looks_encrypted}")
 
-            if is_enc:
+            if looks_encrypted:
                 # Step 1: Decrypt to JSON string
                 json_string = self.decrypt_field(encrypted_string)
 
