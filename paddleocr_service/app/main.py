@@ -1,12 +1,12 @@
 """
-PaddleOCR Microservice v2.0 - PP-StructureV3 Document Parsing
+PaddleOCR Microservice v2.1 - PP-StructureV3 Document Parsing (Lite)
 
 Provides OCR extraction using PaddleOCR 3.x with PP-StructureV3 for:
-- Complex document parsing (tables, charts, seals)
-- Markdown/JSON output preserving document structure
+- Document layout detection and text extraction
+- Table recognition with Markdown output
 - Support for both images (PNG/JPG) and PDFs
-- 109 language support
 
+MEMORY OPTIMIZED: Disabled chart/formula recognition to fit Railway Pro (~4GB)
 Designed as a standalone microservice for Railway deployment.
 """
 
@@ -19,6 +19,23 @@ import time
 from enum import Enum
 from typing import Dict, Any, Optional, List
 from contextlib import asynccontextmanager
+
+# ==================== ENVIRONMENT SETUP ====================
+# Must set environment variables BEFORE importing paddleocr/paddlex
+# These control model cache location and behavior
+
+MODEL_CACHE_DIR = os.environ.get("PADDLEX_HOME", "/home/appuser/.paddleocr")
+
+# Set all relevant cache directories to the mounted volume
+os.environ["PADDLEX_HOME"] = MODEL_CACHE_DIR
+os.environ["HF_HOME"] = f"{MODEL_CACHE_DIR}/huggingface"
+os.environ["HF_HUB_CACHE"] = f"{MODEL_CACHE_DIR}/huggingface/hub"
+os.environ["HUGGINGFACE_HUB_CACHE"] = f"{MODEL_CACHE_DIR}/huggingface/hub"
+os.environ["TRANSFORMERS_CACHE"] = f"{MODEL_CACHE_DIR}/transformers"
+
+# Disable connectivity checks for faster startup
+os.environ["DISABLE_MODEL_SOURCE_CHECK"] = "True"
+os.environ["HF_HUB_OFFLINE"] = "0"  # Allow downloads but skip checks
 
 from fastapi import FastAPI, File, UploadFile, HTTPException, Query, status
 from fastapi.responses import JSONResponse
@@ -34,6 +51,9 @@ logging.basicConfig(
     force=True
 )
 logger = logging.getLogger(__name__)
+
+logger.info(f"Model cache directory: {MODEL_CACHE_DIR}")
+logger.info(f"PADDLEX_HOME: {os.environ.get('PADDLEX_HOME')}")
 
 # ==================== IMPORTS ====================
 
@@ -101,26 +121,32 @@ async def lifespan(app: FastAPI):
     logger.info(f"   PPStructureV3 available: {PPSTRUCTUREV3_AVAILABLE}")
     logger.info(f"   PaddleOCR legacy available: {PADDLEOCR_LEGACY_AVAILABLE}")
 
-    # Initialize PP-StructureV3 (primary engine)
+    # Initialize PP-StructureV3 (primary engine) - LITE configuration
     if PPSTRUCTUREV3_AVAILABLE:
         try:
-            logger.info("Initializing PP-StructureV3 (CPU mode)...")
+            logger.info("Initializing PP-StructureV3 LITE (CPU mode, ~2GB RAM)...")
+            logger.info("   Disabled: chart_recognition, formula_recognition, doc_orientation, doc_unwarping")
             start_init = time.time()
 
+            # MEMORY OPTIMIZED configuration for Railway Pro (~4GB)
+            # Disabling chart and formula recognition saves ~1.5GB RAM
             structure_pipeline = PPStructureV3(
-                use_doc_orientation_classify=False,  # CPU optimization
-                use_doc_unwarping=False,             # CPU optimization
-                use_textline_orientation=False,      # CPU optimization
+                use_doc_orientation_classify=False,  # Saves ~100MB
+                use_doc_unwarping=False,             # Saves ~100MB
+                use_textline_orientation=False,      # Saves ~50MB
+                use_chart_recognition=False,         # Saves ~500MB (transformer model!)
+                use_formula_recognition=False,       # Saves ~300MB
                 device="cpu",
             )
 
             init_time = time.time() - start_init
-            logger.info(f"PP-StructureV3 initialized in {init_time:.2f}s")
+            logger.info(f"PP-StructureV3 LITE initialized in {init_time:.2f}s")
             logger.info("   Features: Layout + Tables + Text Recognition")
             logger.info("   Output: Markdown + JSON structure")
 
         except Exception as e:
             logger.error(f"Failed to initialize PP-StructureV3: {e}")
+            logger.exception(e)
             structure_pipeline = None
 
     # Initialize legacy PaddleOCR as fallback
