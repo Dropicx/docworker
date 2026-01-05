@@ -159,6 +159,29 @@ app = FastAPI(
 
 # ==================== HELPER FUNCTIONS ====================
 
+def sanitize_for_json(obj: Any) -> Any:
+    """
+    Recursively convert numpy arrays and other non-JSON-serializable types to Python native types.
+    This is necessary because PP-StructureV3 returns numpy arrays in its output.
+    """
+    import numpy as np
+
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, dict):
+        return {k: sanitize_for_json(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [sanitize_for_json(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(sanitize_for_json(item) for item in obj)
+    else:
+        return obj
+
+
 def extract_with_ppstructurev3(file_path: str, filename: str) -> tuple[str, str, float, Dict]:
     """
     Extract content using PP-StructureV3.
@@ -274,7 +297,9 @@ def extract_with_ppstructurev3(file_path: str, filename: str) -> tuple[str, str,
         if page_text and isinstance(page_text, str):
             all_text.append(page_text)
         if page_structure:
-            structured_pages.append({"page": idx + 1, "content": page_structure})
+            # Sanitize page_structure to convert numpy arrays to lists
+            sanitized_structure = sanitize_for_json(page_structure)
+            structured_pages.append({"page": idx + 1, "content": sanitized_structure})
 
     # Combine all pages - ensure all items are strings
     full_markdown = "\n\n---\n\n".join(str(m) for m in all_markdown) if all_markdown else ""
@@ -287,6 +312,9 @@ def extract_with_ppstructurev3(file_path: str, filename: str) -> tuple[str, str,
         "pages": structured_pages,
         "total_pages": len(output)
     } if structured_pages else {}
+
+    # Final sanitization pass to ensure no numpy arrays remain
+    structured_output = sanitize_for_json(structured_output)
 
     logger.info(f"Extraction complete: {len(full_text)} chars text, {len(full_markdown)} chars markdown")
 
