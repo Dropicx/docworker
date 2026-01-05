@@ -5,12 +5,15 @@ Worker-ready service for managing OCR engine selection and configuration.
 Supports multiple OCR engines based on database configuration.
 """
 
+import base64
 import json
 import logging
 import os
+from io import BytesIO
 from typing import Any
 
 import httpx
+from pdf2image import convert_from_bytes
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import OCRConfigurationDB, OCREngineEnum
@@ -76,6 +79,16 @@ if EXTERNAL_OCR_URL:
     logger.info(f"🌐 External OCR URL configured: {EXTERNAL_OCR_URL}")
     logger.info(f"🔑 External OCR API key: {'configured' if EXTERNAL_API_KEY else 'not set'}")
     logger.info(f"🔧 Use external OCR: {USE_EXTERNAL_OCR}")
+
+# Vast.ai PaddleOCR-VL configuration (GPU-accelerated, OpenAI-compatible API)
+VASTAI_ENDPOINT_URL = os.getenv("VASTAI_ENDPOINT_URL", "")
+VASTAI_API_KEY = os.getenv("VASTAI_API_KEY", "")
+USE_VASTAI_OCR = os.getenv("USE_VASTAI_OCR", "false").lower() == "true"
+
+if VASTAI_ENDPOINT_URL:
+    logger.info(f"🚀 Vast.ai OCR endpoint: {VASTAI_ENDPOINT_URL}")
+    logger.info(f"🔑 Vast.ai API key: {'configured' if VASTAI_API_KEY else 'not set'}")
+    logger.info(f"🔧 Use Vast.ai OCR: {USE_VASTAI_OCR}")
 
 
 class OCREngineManager:
@@ -306,15 +319,28 @@ class OCREngineManager:
         self, file_content: bytes, file_type: str, filename: str
     ) -> tuple[str, float]:
         """
-        Extract text using PaddleOCR microservice (PP-StructureV3).
+        Extract text using PaddleOCR or PaddleOCR-VL services.
 
-        Tries external OCR service first if USE_EXTERNAL_OCR=true and EXTERNAL_OCR_URL is set.
-        Falls back to internal Railway PaddleOCR service, then to hybrid extraction.
+        Priority (fallback chain):
+        1. Vast.ai PaddleOCR-VL (GPU, fastest) - if USE_VASTAI_OCR=true
+        2. Hetzner external PaddleOCR (CPU) - if USE_EXTERNAL_OCR=true
+        3. Railway internal PaddleOCR (CPU)
+        4. Hybrid extraction (final fallback)
 
-        Calls the PaddleOCR service via HTTP with structured mode for Markdown/JSON output.
+        Calls services via HTTP with structured mode for Markdown/JSON output.
         Prefers markdown output when available for better table and layout preservation.
         """
-        # Try external OCR first if configured
+        # Try Vast.ai PaddleOCR-VL first (GPU-accelerated)
+        if USE_VASTAI_OCR and VASTAI_ENDPOINT_URL:
+            try:
+                logger.info(f"🚀 Trying Vast.ai PaddleOCR-VL (GPU)")
+                return await self._extract_with_vastai_vl(
+                    file_content, file_type, filename
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ Vast.ai OCR failed: {e}, trying fallback")
+
+        # Try external Hetzner OCR if configured
         if USE_EXTERNAL_OCR and EXTERNAL_OCR_URL:
             try:
                 logger.info(f"🌐 Trying external OCR at {EXTERNAL_OCR_URL}")
@@ -385,6 +411,80 @@ class OCREngineManager:
             else:
                 logger.error(f"❌ External OCR service error: {response.status_code}")
                 raise Exception(f"External OCR service returned {response.status_code}")
+
+    async def _extract_with_vastai_vl(
+        self, file_content: bytes, file_type: str, filename: str
+    ) -> tuple[str, float]:
+        """
+        Extract text using Vast.ai PaddleOCR-VL via OpenAI-compatible API.
+
+        GPU-accelerated OCR using PaddlePaddle/PaddleOCR-VL model on Vast.ai serverless.
+        Uses existing pdf2image for PDF→image conversion.
+        Raises exception on failure to allow fallback to other services.
+        """
+        logger.info(f"🚀 Calling Vast.ai PaddleOCR-VL (OpenAI API)")
+        logger.info(f"📄 File: {filename}, Type: {file_type}, Size: {len(file_content)} bytes")
+
+        # Convert PDF pages to images, or use image directly
+        images_base64 = []
+        if file_type.lower() == "pdf":
+            # Use pdf2image (already in requirements.txt)
+            pil_images = convert_from_bytes(file_content, dpi=150)
+            for img in pil_images:
+                buffer = BytesIO()
+                img.save(buffer, format="PNG")
+                images_base64.append(base64.b64encode(buffer.getvalue()).decode())
+            logger.info(f"📄 Converted PDF to {len(images_base64)} images")
+        else:
+            images_base64.append(base64.b64encode(file_content).decode())
+
+        # Process each image with OCR via OpenAI-compatible API
+        all_text = []
+        async with httpx.AsyncClient(timeout=300.0) as client:
+            for i, img_b64 in enumerate(images_base64):
+                messages = [{
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {
+                                "url": f"data:image/png;base64,{img_b64}"
+                            }
+                        },
+                        {"type": "text", "text": "OCR:"}
+                    ]
+                }]
+
+                response = await client.post(
+                    f"{VASTAI_ENDPOINT_URL}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {VASTAI_API_KEY}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "model": "PaddlePaddle/PaddleOCR-VL",
+                        "messages": messages,
+                        "temperature": 0.0,
+                        "max_tokens": 4096
+                    }
+                )
+
+                if response.status_code == 200:
+                    result = response.json()
+                    text = result["choices"][0]["message"]["content"]
+                    all_text.append(text)
+                    logger.info(f"✅ Page {i+1}/{len(images_base64)}: {len(text)} chars")
+                elif response.status_code in (401, 403):
+                    logger.error(f"❌ Vast.ai authentication failed: {response.status_code}")
+                    raise Exception(f"Vast.ai authentication failed: {response.status_code}")
+                else:
+                    logger.error(f"❌ Vast.ai error: {response.status_code}")
+                    raise Exception(f"Vast.ai returned {response.status_code}")
+
+        extracted_text = "\n\n---\n\n".join(all_text)
+        logger.info(f"✅ Vast.ai PaddleOCR-VL completed: {len(extracted_text)} chars total")
+
+        return extracted_text, 0.95
 
     async def _extract_with_internal_paddleocr(
         self, file_content: bytes, file_type: str, filename: str
