@@ -137,7 +137,6 @@ async def lifespan(app: FastAPI):
                 lang='german',
                 use_gpu=False,
                 show_log=False,
-                det_db_score_mode='slow',  # Better accuracy
             )
             init_time = time.time() - start_init
             logger.info(f"✅ PaddleOCR initialized in {init_time:.2f}s")
