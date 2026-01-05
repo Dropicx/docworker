@@ -364,40 +364,60 @@ def _parse_ocr_result(result: Any, all_text: list, all_confidences: list) -> Non
                 print(f"🔍 DEBUG: page_result[{idx}] is empty", file=sys.stderr, flush=True)
                 continue
 
-            # Handle PaddleX OCRResult object
+            # Handle PaddleX OCRResult object (dict-like)
             type_name = type(page_result).__name__
             if type_name == 'OCRResult' or 'OCRResult' in str(type(page_result)):
                 print(f"🔍 DEBUG: Detected OCRResult object", file=sys.stderr, flush=True)
-                # Try to get attributes from OCRResult
-                if hasattr(page_result, 'rec_text'):
-                    texts = page_result.rec_text
-                    scores = getattr(page_result, 'rec_score', None)
-                    print(f"🔍 DEBUG: rec_text type={type(texts)}, length={len(texts) if hasattr(texts, '__len__') else 'N/A'}", file=sys.stderr, flush=True)
-                    if isinstance(texts, list):
-                        for i, t in enumerate(texts):
+
+                # OCRResult is dict-like, try to get keys first
+                if hasattr(page_result, 'keys'):
+                    keys = list(page_result.keys())
+                    print(f"🔍 DEBUG: OCRResult keys: {keys}", file=sys.stderr, flush=True)
+
+                # Try to get rec_text from dict
+                rec_texts = page_result.get('rec_text') if hasattr(page_result, 'get') else None
+                rec_scores = page_result.get('rec_score') if hasattr(page_result, 'get') else None
+
+                if rec_texts:
+                    print(f"🔍 DEBUG: rec_text from dict: type={type(rec_texts)}, len={len(rec_texts) if hasattr(rec_texts, '__len__') else 'N/A'}", file=sys.stderr, flush=True)
+                    if isinstance(rec_texts, list):
+                        for i, t in enumerate(rec_texts):
                             if t:
                                 all_text.append(str(t))
-                                s = scores[i] if scores and isinstance(scores, list) and i < len(scores) else 0.9
+                                s = rec_scores[i] if rec_scores and isinstance(rec_scores, list) and i < len(rec_scores) else 0.9
                                 all_confidences.append(float(s) if s else 0.9)
-                    elif texts:
-                        all_text.append(str(texts))
+                    elif rec_texts:
+                        all_text.append(str(rec_texts))
                         all_confidences.append(0.9)
-                # Also try 'text' attribute
-                elif hasattr(page_result, 'text'):
-                    texts = page_result.text
-                    print(f"🔍 DEBUG: text attr type={type(texts)}", file=sys.stderr, flush=True)
-                    if isinstance(texts, list):
-                        for t in texts:
-                            if t:
-                                all_text.append(str(t))
-                                all_confidences.append(0.9)
-                    elif texts:
-                        all_text.append(str(texts))
-                        all_confidences.append(0.9)
-                # Try to print all attributes for debugging
                 else:
-                    attrs = [a for a in dir(page_result) if not a.startswith('_')]
-                    print(f"🔍 DEBUG: OCRResult public attrs: {attrs[:20]}", file=sys.stderr, flush=True)
+                    # Try str() method which might return formatted text
+                    if hasattr(page_result, 'str'):
+                        str_result = page_result.str
+                        print(f"🔍 DEBUG: str method result type: {type(str_result)}", file=sys.stderr, flush=True)
+                        if callable(str_result):
+                            str_result = str_result()
+                        if str_result:
+                            print(f"🔍 DEBUG: str result (first 200 chars): {str(str_result)[:200]}", file=sys.stderr, flush=True)
+
+                    # Try json() method
+                    if hasattr(page_result, 'json'):
+                        try:
+                            json_data = page_result.json if not callable(page_result.json) else page_result.json()
+                            print(f"🔍 DEBUG: json data type: {type(json_data)}", file=sys.stderr, flush=True)
+                            if isinstance(json_data, dict):
+                                print(f"🔍 DEBUG: json keys: {list(json_data.keys())[:10]}", file=sys.stderr, flush=True)
+                                # Try to extract text from json
+                                if 'rec_text' in json_data:
+                                    texts = json_data['rec_text']
+                                    scores = json_data.get('rec_score', [])
+                                    if isinstance(texts, list):
+                                        for i, t in enumerate(texts):
+                                            if t:
+                                                all_text.append(str(t))
+                                                s = scores[i] if i < len(scores) else 0.9
+                                                all_confidences.append(float(s) if s else 0.9)
+                        except Exception as e:
+                            print(f"🔍 DEBUG: json() failed: {e}", file=sys.stderr, flush=True)
                 continue
 
             # Check if page_result itself has the text attributes (not nested)
