@@ -137,11 +137,15 @@ async def lifespan(app: FastAPI):
     # Initialize PaddleOCR 3.x (standard mode, ~500MB RAM)
     if PADDLEOCR_AVAILABLE:
         try:
-            logger.info("Initializing PaddleOCR 3.x (standard mode, ~500MB RAM)...")
+            logger.info("Initializing PaddleOCR 3.x (minimal mode)...")
             start_init = time.time()
+            # Disable optional models to reduce startup time and memory
             ocr_engine = PaddleOCR(
                 lang='german',
                 device='cpu',
+                use_doc_orientation_classify=False,  # Skip document orientation detection
+                use_doc_unwarping=False,             # Skip document unwarping
+                use_textline_orientation_classify=False,  # Skip textline orientation
             )
             init_time = time.time() - start_init
             logger.info(f"✅ PaddleOCR initialized in {init_time:.2f}s")
