@@ -328,6 +328,57 @@ def extract_with_ppstructurev3(file_path: str, filename: str) -> tuple[str, str,
     return full_text, full_markdown, confidence, structured_output
 
 
+def _parse_ocr_result(result: Any, all_text: list, all_confidences: list) -> None:
+    """
+    Parse OCR result from PaddleOCR 3.x (handles multiple result formats).
+    """
+    if not result:
+        return
+
+    # PaddleOCR 3.x can return different structures
+    # Try to handle both old format and new format
+    try:
+        for page_result in result:
+            if not page_result:
+                continue
+
+            for line in page_result:
+                if not line:
+                    continue
+
+                # New format: line might be a dict or have 'rec_text' attribute
+                if hasattr(line, 'rec_text'):
+                    text = line.rec_text
+                    score = getattr(line, 'rec_score', 0.9)
+                    if text:
+                        all_text.append(str(text))
+                        all_confidences.append(float(score) if score else 0.9)
+                elif isinstance(line, dict):
+                    text = line.get('rec_text') or line.get('text', '')
+                    score = line.get('rec_score') or line.get('score', 0.9)
+                    if text:
+                        all_text.append(str(text))
+                        all_confidences.append(float(score) if score else 0.9)
+                elif isinstance(line, (list, tuple)) and len(line) >= 2:
+                    # Old format: [[box], (text, confidence)]
+                    text_part = line[1]
+                    if isinstance(text_part, (list, tuple)) and len(text_part) >= 2:
+                        text, conf = text_part[0], text_part[1]
+                    elif isinstance(text_part, str):
+                        text, conf = text_part, 0.9
+                    else:
+                        continue
+                    if text:
+                        all_text.append(str(text))
+                        all_confidences.append(float(conf) if conf else 0.9)
+    except Exception as e:
+        logger.warning(f"Error parsing OCR result: {e}, result type: {type(result)}")
+        # Try to extract any text we can find
+        if isinstance(result, str):
+            all_text.append(result)
+            all_confidences.append(0.9)
+
+
 def extract_with_legacy_ocr(file_content: bytes, is_pdf: bool) -> tuple[str, float, int]:
     """
     Extract text using legacy PaddleOCR.
@@ -350,11 +401,7 @@ def extract_with_legacy_ocr(file_content: bytes, is_pdf: bool) -> tuple[str, flo
             image_array = np.array(image)
 
             result = legacy_ocr.ocr(image_array)
-            if result and result[0]:
-                for line in result[0]:
-                    if line and len(line) >= 2:
-                        all_text.append(line[1][0])
-                        all_confidences.append(line[1][1])
+            _parse_ocr_result(result, all_text, all_confidences)
         pdf_document.close()
     else:
         image = Image.open(io.BytesIO(file_content))
@@ -363,11 +410,7 @@ def extract_with_legacy_ocr(file_content: bytes, is_pdf: bool) -> tuple[str, flo
         image_array = np.array(image)
 
         result = legacy_ocr.ocr(image_array)
-        if result and result[0]:
-            for line in result[0]:
-                if line and len(line) >= 2:
-                    all_text.append(line[1][0])
-                    all_confidences.append(line[1][1])
+        _parse_ocr_result(result, all_text, all_confidences)
 
     full_text = "\n".join(all_text)
     avg_confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
