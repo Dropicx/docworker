@@ -374,9 +374,9 @@ def _parse_ocr_result(result: Any, all_text: list, all_confidences: list) -> Non
                     keys = list(page_result.keys())
                     print(f"🔍 DEBUG: OCRResult keys: {keys}", file=sys.stderr, flush=True)
 
-                # Try to get rec_text from dict
-                rec_texts = page_result.get('rec_text') if hasattr(page_result, 'get') else None
-                rec_scores = page_result.get('rec_score') if hasattr(page_result, 'get') else None
+                # Try to get rec_texts from dict (note: plural 'rec_texts' not 'rec_text')
+                rec_texts = page_result.get('rec_texts') if hasattr(page_result, 'get') else None
+                rec_scores = page_result.get('rec_scores') if hasattr(page_result, 'get') else None
 
                 if rec_texts:
                     print(f"🔍 DEBUG: rec_text from dict: type={type(rec_texts)}, len={len(rec_texts) if hasattr(rec_texts, '__len__') else 'N/A'}", file=sys.stderr, flush=True)
