@@ -67,6 +67,16 @@ PADDLEOCR_SERVICE_URL = _normalize_paddleocr_url(_raw_url)
 # Log the URL being used at startup
 logger.info(f"🔗 PaddleOCR service URL (after normalization): {PADDLEOCR_SERVICE_URL}")
 
+# External PaddleOCR service configuration (for Hetzner/external deployments)
+EXTERNAL_OCR_URL = os.getenv("EXTERNAL_OCR_URL", "")
+EXTERNAL_API_KEY = os.getenv("EXTERNAL_API_KEY", "")
+USE_EXTERNAL_OCR = os.getenv("USE_EXTERNAL_OCR", "false").lower() == "true"
+
+if EXTERNAL_OCR_URL:
+    logger.info(f"🌐 External OCR URL configured: {EXTERNAL_OCR_URL}")
+    logger.info(f"🔑 External OCR API key: {'configured' if EXTERNAL_API_KEY else 'not set'}")
+    logger.info(f"🔧 Use external OCR: {USE_EXTERNAL_OCR}")
+
 
 class OCREngineManager:
     """Database-driven OCR engine manager with intelligent strategy selection.
@@ -298,13 +308,93 @@ class OCREngineManager:
         """
         Extract text using PaddleOCR microservice (PP-StructureV3).
 
-        Calls the separate PaddleOCR service via HTTP with structured mode
-        for Markdown/JSON output. Prefers markdown output when available
-        for better table and layout preservation.
+        Tries external OCR service first if USE_EXTERNAL_OCR=true and EXTERNAL_OCR_URL is set.
+        Falls back to internal Railway PaddleOCR service, then to hybrid extraction.
+
+        Calls the PaddleOCR service via HTTP with structured mode for Markdown/JSON output.
+        Prefers markdown output when available for better table and layout preservation.
+        """
+        # Try external OCR first if configured
+        if USE_EXTERNAL_OCR and EXTERNAL_OCR_URL:
+            try:
+                logger.info(f"🌐 Trying external OCR at {EXTERNAL_OCR_URL}")
+                return await self._extract_with_external_paddleocr(
+                    file_content, file_type, filename
+                )
+            except Exception as e:
+                logger.warning(f"⚠️ External OCR failed: {e}, trying internal service")
+
+        # Fall back to internal Railway PaddleOCR service
+        return await self._extract_with_internal_paddleocr(file_content, file_type, filename)
+
+    async def _extract_with_external_paddleocr(
+        self, file_content: bytes, file_type: str, filename: str
+    ) -> tuple[str, float]:
+        """
+        Extract text using external PaddleOCR service (Hetzner/external deployment).
+
+        Uses API key authentication via X-API-Key header.
+        Raises exception on failure to allow fallback to internal service.
+        """
+        logger.info(f"🌐 Calling external PaddleOCR at {EXTERNAL_OCR_URL}")
+        logger.info(f"📄 File: {filename}, Type: {file_type}, Size: {len(file_content)} bytes")
+
+        # Extended timeout for external service (may be slower due to network)
+        async with httpx.AsyncClient(timeout=180.0) as client:
+            # Prepare multipart form data with correct MIME type
+            mime_type = "application/pdf" if file_type.lower() == "pdf" else f"image/{file_type}"
+            files = {"file": (filename, file_content, mime_type)}
+
+            # Request structured mode for Markdown output
+            params = {"mode": "structured"}
+
+            # Prepare headers with API key
+            headers = {}
+            if EXTERNAL_API_KEY:
+                headers["X-API-Key"] = EXTERNAL_API_KEY
+
+            # Call external PaddleOCR service
+            response = await client.post(
+                f"{EXTERNAL_OCR_URL}/extract",
+                files=files,
+                params=params,
+                headers=headers
+            )
+
+            if response.status_code == 200:
+                result = response.json()
+
+                # Prefer markdown output for structured content (tables, etc.)
+                extracted_text = result.get("markdown") or result.get("text", "")
+                confidence = result.get("confidence", 0.0)
+                processing_time = result.get("processing_time", 0.0)
+                engine = result.get("engine", "PaddleOCR")
+                mode = result.get("mode", "text")
+
+                logger.info(f"✅ External {engine} extraction completed in {processing_time:.2f}s (mode: {mode})")
+                logger.info(f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars")
+
+                if result.get("markdown"):
+                    logger.info("📝 Using Markdown output (structured)")
+
+                return extracted_text, confidence
+
+            elif response.status_code in (401, 403):
+                logger.error(f"❌ External OCR authentication failed: {response.status_code}")
+                raise Exception(f"External OCR authentication failed: {response.status_code}")
+            else:
+                logger.error(f"❌ External OCR service error: {response.status_code}")
+                raise Exception(f"External OCR service returned {response.status_code}")
+
+    async def _extract_with_internal_paddleocr(
+        self, file_content: bytes, file_type: str, filename: str
+    ) -> tuple[str, float]:
+        """
+        Extract text using internal PaddleOCR microservice (Railway deployment).
 
         Falls back to hybrid extraction on failure.
         """
-        logger.info(f"🤖 Calling PaddleOCR microservice at {PADDLEOCR_SERVICE_URL}")
+        logger.info(f"🤖 Calling internal PaddleOCR at {PADDLEOCR_SERVICE_URL}")
         logger.info(f"📄 File: {filename}, Type: {file_type}, Size: {len(file_content)} bytes")
 
         try:

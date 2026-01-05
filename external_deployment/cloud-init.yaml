@@ -1,0 +1,225 @@
+#cloud-config
+# ============================================================================
+# PaddleOCR External Server - Cloud Init Script for Hetzner
+# ============================================================================
+# Use this cloud-init script when creating a Hetzner VM (CPX62 recommended)
+# Paste into Hetzner's "Cloud config" field during server creation.
+#
+# This script:
+# - Updates system packages
+# - Installs Docker and docker-compose
+# - Sets up firewall (SSH + port 9123 only)
+# - Creates 8GB swap for model loading
+# - Optimizes kernel for ML workloads
+# - Pre-creates directory structure and docker-compose file
+# ============================================================================
+
+# Update system
+package_update: true
+package_upgrade: true
+
+# Install packages
+packages:
+  - docker.io
+  - docker-compose
+  - git
+  - curl
+  - htop
+  - ufw
+  - fail2ban
+
+# Enable Docker
+runcmd:
+  # Enable Docker service
+  - systemctl enable docker
+  - systemctl start docker
+
+  # Setup firewall (allow SSH + PaddleOCR)
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 22/tcp
+  - ufw allow 9123/tcp
+  - ufw --force enable
+
+  # Create app directory
+  - mkdir -p /opt/paddleocr/app
+  - chown -R root:root /opt/paddleocr
+
+  # Generate secure API key at boot time and save to .env
+  - ["sh", "-c", "openssl rand -hex 32 > /tmp/api_key.txt"]
+  - ["sh", "-c", "echo API_SECRET_KEY=$(cat /tmp/api_key.txt) > /opt/paddleocr/.env"]
+  - chmod 600 /opt/paddleocr/.env
+  - ["sh", "-c", "cat /tmp/api_key.txt > /opt/paddleocr/API_KEY.txt"]
+  - chmod 600 /opt/paddleocr/API_KEY.txt
+  - rm -f /tmp/api_key.txt
+
+  # Setup swap (8GB for model loading spikes)
+  - fallocate -l 8G /swapfile
+  - chmod 600 /swapfile
+  - mkswap /swapfile
+  - swapon /swapfile
+  - ["sh", "-c", "echo '/swapfile none swap sw 0 0' >> /etc/fstab"]
+
+  # Optimize for ML workloads
+  - ["sh", "-c", "echo 'vm.swappiness=10' >> /etc/sysctl.conf"]
+  - ["sh", "-c", "echo 'vm.vfs_cache_pressure=50' >> /etc/sysctl.conf"]
+  - sysctl -p
+
+  # Enable fail2ban for SSH protection
+  - systemctl enable fail2ban
+  - systemctl start fail2ban
+
+# Write configuration files
+write_files:
+  # Welcome message
+  - path: /etc/motd
+    content: |
+      =====================================
+      PaddleOCR External Server
+      Hetzner CPX62 | 32GB RAM | 16 vCPU
+
+      Service: /opt/paddleocr
+      Port: 9123
+
+      Quick commands:
+        cd /opt/paddleocr
+        docker-compose up -d
+        docker-compose logs -f
+        docker-compose down
+      =====================================
+    permissions: '0644'
+
+  # Docker Compose file
+  - path: /opt/paddleocr/docker-compose.yml
+    content: |
+      version: '3.8'
+
+      services:
+        paddleocr:
+          build: .
+          container_name: paddleocr
+          ports:
+            - "9123:9123"
+          environment:
+            - API_SECRET_KEY=${API_SECRET_KEY}
+            - PYTHONUNBUFFERED=1
+          volumes:
+            - paddleocr_models:/home/appuser/.paddleocr
+            - paddleocr_paddlex:/home/appuser/.paddlex
+          restart: unless-stopped
+          deploy:
+            resources:
+              limits:
+                memory: 28G
+          healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:9123/health"]
+            interval: 30s
+            timeout: 10s
+            retries: 3
+            start_period: 120s
+
+      volumes:
+        paddleocr_models:
+        paddleocr_paddlex:
+    permissions: '0644'
+
+  # Environment example file (template only - real .env is generated at boot)
+  - path: /opt/paddleocr/.env.example
+    content: |
+      # PaddleOCR External Service Configuration
+      # ========================================
+      # The .env file is auto-generated at boot with a secure API key.
+      # To regenerate: openssl rand -hex 32
+
+      # API Key for authentication (required for security)
+      API_SECRET_KEY=<auto_generated_at_boot>
+
+      # Optional: Model cache directory (default: /home/appuser/.paddleocr)
+      # PADDLEX_HOME=/data/models
+    permissions: '0644'
+
+  # Quick deployment script
+  - path: /opt/paddleocr/deploy.sh
+    content: |
+      #!/bin/bash
+      set -e
+
+      echo "🚀 PaddleOCR Deployment Script"
+      echo "=============================="
+
+      cd /opt/paddleocr
+
+      # Check for .env file (should be auto-generated at boot)
+      if [ ! -f .env ]; then
+          echo "⚠️  .env file not found! Generating new API key..."
+          API_KEY=$(openssl rand -hex 32)
+          echo "# Auto-generated at $(date -Iseconds)" > .env
+          echo "API_SECRET_KEY=${API_KEY}" >> .env
+          chmod 600 .env
+          echo "✅ Generated new API key"
+      fi
+
+      echo ""
+      echo "🔑 Your API key:"
+      cat .env | grep API_SECRET_KEY
+      echo ""
+
+      # Check for Dockerfile
+      if [ ! -f Dockerfile ]; then
+          echo "❌ Dockerfile not found!"
+          echo "Please copy paddleocr_service files first:"
+          echo "   scp -r paddleocr_service/* root@<IP>:/opt/paddleocr/"
+          exit 1
+      fi
+
+      # Build and start
+      echo "🔨 Building Docker image (this may take a few minutes)..."
+      docker-compose build
+
+      echo "🚀 Starting service..."
+      docker-compose up -d
+
+      echo "⏳ Waiting for service to start (model loading takes ~30-60s)..."
+      sleep 15
+
+      echo "🔍 Checking health..."
+      for i in {1..10}; do
+          if curl -sf http://localhost:9123/health > /dev/null 2>&1; then
+              echo "✅ Service is healthy!"
+              curl -s http://localhost:9123/health | python3 -m json.tool 2>/dev/null || curl -s http://localhost:9123/health
+              break
+          fi
+          echo "   Attempt $i/10 - waiting..."
+          sleep 10
+      done
+
+      echo ""
+      echo "✅ Deployment complete!"
+      echo ""
+      echo "📋 Add these to Railway environment variables:"
+      echo "   EXTERNAL_OCR_URL=http://$(curl -s ifconfig.me):9123"
+      echo "   EXTERNAL_API_KEY=$(grep API_SECRET_KEY .env | cut -d= -f2)"
+      echo "   USE_EXTERNAL_OCR=true"
+      echo ""
+      echo "📊 Useful commands:"
+      echo "   View logs: docker-compose logs -f"
+      echo "   Stop: docker-compose down"
+      echo "   Restart: docker-compose restart"
+    permissions: '0755'
+
+# Final message
+final_message: |
+  =====================================
+  PaddleOCR VM Ready!
+
+  SSH: ssh root@<your_ip>
+
+  Your API key was auto-generated at boot.
+  View it with: cat /opt/paddleocr/API_KEY.txt
+
+  Next steps:
+  1. Copy code: scp -r paddleocr_service/* root@<IP>:/opt/paddleocr/
+  2. View API key: cat /opt/paddleocr/API_KEY.txt
+  3. Deploy: cd /opt/paddleocr && ./deploy.sh
+  4. Add to Railway: EXTERNAL_API_KEY=<your_key>
+  =====================================

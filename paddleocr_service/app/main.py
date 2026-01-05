@@ -37,9 +37,11 @@ os.environ["TRANSFORMERS_CACHE"] = f"{MODEL_CACHE_DIR}/transformers"
 os.environ["DISABLE_MODEL_SOURCE_CHECK"] = "True"
 os.environ["HF_HUB_OFFLINE"] = "0"  # Allow downloads but skip checks
 
-from fastapi import FastAPI, File, UploadFile, HTTPException, Query, status
+from fastapi import FastAPI, File, UploadFile, HTTPException, Query, status, Depends
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+
+from app.auth import verify_api_key
 import uvicorn
 
 # Logging configuration - Standardized format with immediate flushing
@@ -548,7 +550,7 @@ async def health_check():
     )
 
 
-@app.post("/extract", response_model=OCRResponse)
+@app.post("/extract", response_model=OCRResponse, dependencies=[Depends(verify_api_key)])
 async def extract_text(
     file: UploadFile = File(..., description="Image file (JPEG, PNG) or PDF"),
     mode: ExtractionMode = Query(
@@ -558,6 +560,8 @@ async def extract_text(
 ):
     """
     Extract text from document using PP-StructureV3 or legacy PaddleOCR.
+
+    **Authentication:** Requires X-API-Key header if API_SECRET_KEY is set.
 
     **Modes:**
     - `structured` (default): PP-StructureV3 with Markdown/JSON output - best for tables

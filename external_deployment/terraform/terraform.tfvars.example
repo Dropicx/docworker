@@ -1,0 +1,27 @@
+# =============================================================================
+# PaddleOCR Terraform Variables
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in the values
+# Or set environment variables: export TF_VAR_hcloud_token="your-token"
+# =============================================================================
+
+# Required: Hetzner Cloud API Token
+# Get from: https://console.hetzner.cloud/ -> Project -> Security -> API Tokens
+hcloud_token = "cjh6cXX8YJQaCtdmjobwcdJlyinueeQ1o0DoxsKcgTdkpi0DDYc17FrMgHgRmRmJ"
+
+# Optional: Server name (default: paddleocr)
+#server_name = "paddleocr"
+
+# Optional: Server type (default: cpx51 = 16 vCPU, 32GB RAM)
+# Options: cpx51 (~€67/mo), cpx41 (~€35/mo), cpx31 (~€18/mo)
+#server_type = "cpx62"
+
+# Optional: Datacenter location (default: fsn1)
+# Options: fsn1 (Falkenstein), nbg1 (Nuremberg), hel1 (Helsinki), ash (Ashburn)
+#location = "nbg1"
+
+# Optional: Path to SSH public key (default: ~/.ssh/id_rsa.pub)
+#ssh_public_key_path = "~/.ssh/id_ras.pub"
+
+# Optional: SSH public key content (overrides path if set)
+# ssh_public_key = "ssh-rsa AAAA..."
