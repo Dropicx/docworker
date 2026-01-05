@@ -349,7 +349,7 @@ def extract_with_legacy_ocr(file_content: bytes, is_pdf: bool) -> tuple[str, flo
             image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             image_array = np.array(image)
 
-            result = legacy_ocr.ocr(image_array, cls=True)
+            result = legacy_ocr.ocr(image_array)
             if result and result[0]:
                 for line in result[0]:
                     if line and len(line) >= 2:
@@ -362,7 +362,7 @@ def extract_with_legacy_ocr(file_content: bytes, is_pdf: bool) -> tuple[str, flo
             image = image.convert('RGB')
         image_array = np.array(image)
 
-        result = legacy_ocr.ocr(image_array, cls=True)
+        result = legacy_ocr.ocr(image_array)
         if result and result[0]:
             for line in result[0]:
                 if line and len(line) >= 2:
