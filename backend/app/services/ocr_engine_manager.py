@@ -305,12 +305,15 @@ class OCREngineManager:
         Falls back to hybrid extraction on failure.
         """
         logger.info(f"🤖 Calling PaddleOCR microservice at {PADDLEOCR_SERVICE_URL}")
+        logger.info(f"📄 File: {filename}, Type: {file_type}, Size: {len(file_content)} bytes")
 
         try:
-            # Extended timeout for PP-StructureV3 (larger models, more processing)
-            async with httpx.AsyncClient(timeout=120.0) as client:
-                # Prepare multipart form data
-                files = {"file": (filename, file_content, f"image/{file_type}")}
+            # Extended timeout for PP-StructureV3 (first request may trigger model downloads)
+            # PP-StructureV3 can take 2-3 minutes on first request while loading models
+            async with httpx.AsyncClient(timeout=300.0) as client:
+                # Prepare multipart form data with correct MIME type
+                mime_type = "application/pdf" if file_type.lower() == "pdf" else f"image/{file_type}"
+                files = {"file": (filename, file_content, mime_type)}
 
                 # Request structured mode for Markdown output
                 params = {"mode": "structured"}
@@ -347,7 +350,7 @@ class OCREngineManager:
                 raise Exception(f"PaddleOCR service returned {response.status_code}")
 
         except httpx.TimeoutException:
-            logger.error("❌ PaddleOCR service timeout (120s)")
+            logger.error("❌ PaddleOCR service timeout (300s) - PP-StructureV3 may be loading models")
             logger.info("🔄 Falling back to hybrid extraction")
             return await self._extract_with_hybrid(file_content, file_type, filename)
 
