@@ -52,12 +52,18 @@ HEALTHCHECK --interval=30s --timeout=30s --start-period=180s --retries=3 \
 EXPOSE 9123
 
 # Environment variables
+# PADDLEX_HOME points to the Railway volume mount for persistent model storage
+# This prevents re-downloading ~2GB of models on every container restart
 ENV PYTHONPATH=/app \
     PYTHONUNBUFFERED=1 \
     ENVIRONMENT=production \
     PIP_NO_CACHE_DIR=1 \
-    PADDLEOCR_DEFAULT_MODE=structured
+    PADDLEOCR_DEFAULT_MODE=structured \
+    PADDLEX_HOME=/home/appuser/.paddleocr \
+    HF_HOME=/home/appuser/.paddleocr/huggingface \
+    DISABLE_MODEL_SOURCE_CHECK=True
 
-# Run the application
-# PP-StructureV3 models downloaded on first startup (~1-2 min)
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9123"]
+# Run the application via entrypoint (fixes permissions, checks model cache)
+# PP-StructureV3 models cached on volume after first startup
+USER root
+ENTRYPOINT ["/entrypoint.sh"]
