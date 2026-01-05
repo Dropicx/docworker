@@ -206,13 +206,17 @@ class FieldEncryptor:
 
         try:
             # Decode from base64
+            logger.debug(f"Decrypting field: input {len(ciphertext)} chars")
             encrypted_bytes = base64.b64decode(ciphertext.encode("ascii"))
+            logger.debug(f"Base64 decoded: {len(encrypted_bytes)} bytes")
 
             # Try current key first
             cipher = self._get_current_cipher()
             try:
                 decrypted_bytes = cipher.decrypt(encrypted_bytes)
-                return decrypted_bytes.decode("utf-8")
+                result = decrypted_bytes.decode("utf-8")
+                logger.debug(f"Decryption successful: {len(result)} chars")
+                return result
             except InvalidToken:
                 # If current key fails, try previous key (key rotation support)
                 previous_cipher = self._get_previous_cipher()
@@ -580,19 +584,31 @@ class FieldEncryptor:
             import json
 
             # Check if it's encrypted (Fernet token) or plaintext JSON
-            if self.is_encrypted(encrypted_string):
+            logger.debug(f"Checking if encrypted: first 50 chars: {encrypted_string[:50] if encrypted_string else 'EMPTY'}...")
+            is_enc = self.is_encrypted(encrypted_string)
+            logger.info(f"is_encrypted() returned: {is_enc}")
+
+            if is_enc:
                 # Step 1: Decrypt to JSON string
                 json_string = self.decrypt_field(encrypted_string)
 
                 if json_string is None:
+                    logger.error("decrypt_field returned None")
                     return None
 
-                logger.debug(f"Decrypted JSON field: {len(encrypted_string)} chars → {len(json_string)} chars")
+                logger.info(f"Decrypted JSON field: {len(encrypted_string)} chars → {len(json_string)} chars")
+
+                # Debug: Log first 100 chars of decrypted string
+                if json_string:
+                    logger.debug(f"Decrypted content preview: {json_string[:100]}...")
+                else:
+                    logger.error("decrypt_field returned empty string!")
 
                 # Step 2: Parse JSON string to dict
                 return json.loads(json_string)
-            # Plaintext JSON (backward compatibility)
-            logger.debug("JSON field is plaintext (not encrypted), parsing directly")
+
+            # Plaintext JSON (backward compatibility) - is_encrypted returned False
+            logger.warning(f"is_encrypted=False, treating as plaintext JSON. First 50 chars: {encrypted_string[:50]}...")
             return json.loads(encrypted_string)
 
         except json.JSONDecodeError as e:
