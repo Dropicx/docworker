@@ -42,12 +42,18 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import uvicorn
 
-# Logging configuration - Standardized format
+# Logging configuration - Standardized format with immediate flushing
+class FlushingStreamHandler(logging.StreamHandler):
+    """Stream handler that flushes after every emit for real-time logs."""
+    def emit(self, record):
+        super().emit(record)
+        self.flush()
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s | %(levelname)-8s | %(name)s | %(message)s',
     datefmt='%Y-%m-%d %H:%M:%S',
-    handlers=[logging.StreamHandler(sys.stdout)],
+    handlers=[FlushingStreamHandler(sys.stdout)],
     force=True
 )
 logger = logging.getLogger(__name__)
@@ -392,9 +398,15 @@ def extract_with_legacy_ocr(file_content: bytes, is_pdf: bool) -> tuple[str, flo
     all_text = []
     all_confidences = []
 
+    ocr_start = time.time()
+    logger.info(f"🔍 Starting OCR extraction (is_pdf={is_pdf})")
+
     if is_pdf:
         pdf_document = fitz.open(stream=file_content, filetype="pdf")
-        for page_num in range(len(pdf_document)):
+        total_pages = len(pdf_document)
+        logger.info(f"📄 PDF has {total_pages} pages")
+        for page_num in range(total_pages):
+            page_start = time.time()
             page = pdf_document[page_num]
             pix = page.get_pixmap(matrix=fitz.Matrix(300/72, 300/72))
             image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
@@ -402,18 +414,23 @@ def extract_with_legacy_ocr(file_content: bytes, is_pdf: bool) -> tuple[str, flo
 
             result = legacy_ocr.ocr(image_array)
             _parse_ocr_result(result, all_text, all_confidences)
+            logger.info(f"📄 Page {page_num + 1}/{total_pages} OCR completed in {time.time() - page_start:.2f}s")
         pdf_document.close()
     else:
         image = Image.open(io.BytesIO(file_content))
         if image.mode != 'RGB':
             image = image.convert('RGB')
         image_array = np.array(image)
+        logger.info(f"🖼️ Image size: {image_array.shape}")
 
         result = legacy_ocr.ocr(image_array)
         _parse_ocr_result(result, all_text, all_confidences)
 
     full_text = "\n".join(all_text)
     avg_confidence = sum(all_confidences) / len(all_confidences) if all_confidences else 0.0
+
+    total_time = time.time() - ocr_start
+    logger.info(f"✅ OCR extraction completed: {len(all_text)} lines, {len(full_text)} chars in {total_time:.2f}s")
 
     return full_text, avg_confidence, len(all_text)
 
