@@ -119,72 +119,19 @@ echo "API: $MODEL_SERVER_URL"
 echo "Health: $MODEL_HEALTH_ENDPOINT"
 echo "=============================================="
 
-# Debug: Print serverless-related env vars
+# ==================== VAST.AI SERVERLESS INFO ====================
+# NOTE: PyWorker is started by Vast.ai's serverless system via PYWORKER_REPO
+# We do NOT start PyWorker here to avoid port 9123 conflicts
+# Our job is just to start uvicorn on port 9124 (MODEL_SERVER_PORT)
 echo ""
-echo "DEBUG: Environment variables check:"
-echo "  SERVERLESS='$SERVERLESS'"
-echo "  REPORT_ADDR='$REPORT_ADDR'"
-echo "  CONTAINER_ID='$CONTAINER_ID'"
-echo "  VAST_CONTAINERLABEL='$VAST_CONTAINERLABEL'"
+echo "Serverless environment:"
+echo "  CONTAINER_ID: ${CONTAINER_ID:-not set}"
+echo "  VAST_TCP_PORT_9123: ${VAST_TCP_PORT_9123:-not set}"
+echo "  PYWORKER_REPO: ${PYWORKER_REPO:-not set}"
 echo ""
-
-# ==================== VAST.AI SERVERLESS PYWORKER ====================
-# Check if we're running in Vast.ai Serverless
-# Triggers: REPORT_ADDR set, SERVERLESS=true, or CONTAINER_ID set (auto by Vast.ai)
-if [ -n "$REPORT_ADDR" ] || [ "$SERVERLESS" = "true" ] || [ -n "$CONTAINER_ID" ]; then
-    echo ""
-    echo "Vast.ai Serverless mode enabled"
-
-    # Set defaults for required PyWorker environment variables
-    # These are normally set by Vast.ai template startup scripts
-    # REPORT_ADDR: The autoscaler control server (defaults to https://run.vast.ai)
-    # MASTER_TOKEN: Authentication token (defaults to "mtoken" per vast-pyworker)
-    # CONTAINER_ID: Auto-set by Vast.ai for all instances
-    # WORKER_PORT: The port the model server listens on (needed by vastai-sdk)
-    export REPORT_ADDR="${REPORT_ADDR:-https://run.vast.ai}"
-    export MASTER_TOKEN="${MASTER_TOKEN:-mtoken}"
-    export WORKER_PORT="${WORKER_PORT:-9123}"
-
-    echo "  REPORT_ADDR: $REPORT_ADDR"
-    echo "  MASTER_TOKEN: ${MASTER_TOKEN:0:4}****"
-    echo "  CONTAINER_ID: ${CONTAINER_ID:-not set (will use fallback)}"
-    echo "  WORKER_PORT: $WORKER_PORT"
-    echo "  VAST_TCP_PORT_9123: ${VAST_TCP_PORT_9123:-not set}"
-    echo "  SERVERLESS: ${SERVERLESS:-not set}"
-
-    # Fallback CONTAINER_ID if not set (use hostname or random)
-    if [ -z "$CONTAINER_ID" ]; then
-        export CONTAINER_ID="${VAST_CONTAINERLABEL:-$(hostname)}"
-        echo "  CONTAINER_ID (fallback): $CONTAINER_ID"
-    fi
-
-    echo "Starting PyWorker for autoscaler registration..."
-
-    # Install PyWorker dependencies if needed
-    pip install --quiet vastai-sdk aiohttp psutil 2>/dev/null || true
-
-    # Start PyWorker in background
-    cd /app
-    python pyworker/worker.py 2>&1 &
-    PYWORKER_PID=$!
-    echo "PyWorker started with PID: $PYWORKER_PID"
-
-    # Wait a moment and check if PyWorker is running
-    sleep 5
-    if kill -0 $PYWORKER_PID 2>/dev/null; then
-        echo "PyWorker running successfully!"
-        echo "=============================================="
-    else
-        echo "WARNING: PyWorker may have failed to start"
-        echo "Check logs above for errors"
-        echo "=============================================="
-    fi
-else
-    echo ""
-    echo "Standalone mode (no REPORT_ADDR or SERVERLESS=true set)"
-    echo "PyWorker not started - direct API access only"
-    echo "=============================================="
-fi
+echo "PyWorker will be started by Vast.ai via PYWORKER_REPO"
+echo "Model server ready on port 9124 for PyWorker to proxy"
+echo "=============================================="
 
 # Keep script running - wait for uvicorn
 wait $UVICORN_PID

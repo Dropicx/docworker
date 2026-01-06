@@ -90,12 +90,10 @@ ENV PYTHONPATH=/app \
     USE_GPU=true
 
 # Vast.ai serverless variables
-# Model server on 9124 (internal), PyWorker on 9123 (external)
-# SERVERLESS=true ensures PyWorker starts automatically
+# Model server on 9124 (internal), PyWorker on 9123 (external, started by Vast.ai)
 ENV MODEL_SERVER_URL=http://127.0.0.1:9124 \
     MODEL_HEALTH_ENDPOINT=http://127.0.0.1:9124/health \
     MODEL_LOG=/var/log/portal/ppstructure.log \
-    SERVERLESS=true \
     WORKER_PORT=9123
 
 # Health check - check internal model server port
