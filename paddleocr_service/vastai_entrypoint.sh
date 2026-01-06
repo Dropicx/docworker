@@ -57,9 +57,9 @@ else
 fi
 
 # ==================== VAST.AI SERVERLESS VARIABLES ====================
-# These are picked up by Vast.ai's routing layer
-export MODEL_SERVER_URL="${MODEL_SERVER_URL:-http://127.0.0.1:9123}"
-export MODEL_HEALTH_ENDPOINT="${MODEL_HEALTH_ENDPOINT:-http://127.0.0.1:9123/health}"
+# Model server runs on 9124 internally, PyWorker exposes 9123 externally
+export MODEL_SERVER_URL="${MODEL_SERVER_URL:-http://127.0.0.1:9124}"
+export MODEL_HEALTH_ENDPOINT="${MODEL_HEALTH_ENDPOINT:-http://127.0.0.1:9124/health}"
 export MODEL_LOG="${MODEL_LOG:-/var/log/portal/ppstructure.log}"
 
 echo "MODEL_SERVER_URL: $MODEL_SERVER_URL"
@@ -71,11 +71,12 @@ echo "Starting PP-StructureV3 service on port 9123..."
 # Create log directory
 mkdir -p "$(dirname "$MODEL_LOG")" 2>/dev/null || true
 
-# Start uvicorn in background (0.0.0.0 for external access)
+# Start uvicorn in background on internal port 9124
+# PyWorker will listen on 9123 and proxy to 9124
 cd /app
 python -W ignore::UserWarning -m uvicorn app.main:app \
-    --host 0.0.0.0 \
-    --port 9123 \
+    --host 127.0.0.1 \
+    --port 9124 \
     --log-level info \
     2>&1 | tee "$MODEL_LOG" &
 

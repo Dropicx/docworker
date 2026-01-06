@@ -15,8 +15,9 @@ Setup:
 from vastai import Worker, WorkerConfig, HandlerConfig, LogActionConfig, BenchmarkConfig
 
 # PP-StructureV3 model configuration
+# Model server runs on 9124, PyWorker listens on 9123 and proxies
 MODEL_SERVER_URL           = 'http://127.0.0.1'
-MODEL_SERVER_PORT          = 9123
+MODEL_SERVER_PORT          = 9124  # Internal port where uvicorn runs
 MODEL_LOG_FILE             = '/var/log/portal/ppstructure.log'
 MODEL_HEALTHCHECK_ENDPOINT = "/health"
 
