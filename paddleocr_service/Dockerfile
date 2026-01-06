@@ -78,10 +78,10 @@ FROM base-${USE_GPU} AS final
 WORKDIR /app
 
 # Install PaddleOCR with doc-parser for PP-StructureV3
-# Use --no-deps first to avoid pulling paddlepaddle again, then install deps
+# Use --no-deps for paddleocr AND paddlex to avoid pulling paddlepaddle-gpu
 RUN pip install --no-cache-dir --no-deps "paddleocr>=3.3.0" && \
+    pip install --no-cache-dir --no-deps paddlex && \
     pip install --no-cache-dir \
-    paddlex \
     docx2pdf \
     fastapi==0.115.6 \
     "uvicorn[standard]==0.34.0" \
@@ -104,7 +104,20 @@ RUN pip install --no-cache-dir --no-deps "paddleocr>=3.3.0" && \
     premailer \
     openpyxl \
     attrdict3 \
-    PyYAML
+    PyYAML \
+    scikit-learn \
+    scipy \
+    pandas \
+    matplotlib \
+    seaborn \
+    filelock \
+    regex \
+    tokenizers \
+    safetensors \
+    huggingface-hub \
+    requests \
+    urllib3 \
+    charset-normalizer
 
 # Copy application code
 COPY app/ app/
