@@ -68,8 +68,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Install PaddlePaddle CPU
-RUN pip install --no-cache-dir paddlepaddle
+# Install PaddlePaddle CPU FIRST (before paddleocr to prevent GPU version)
+# Pin to CPU version explicitly
+RUN pip install --no-cache-dir paddlepaddle==3.0.0b2 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
 
 # ============ FINAL STAGE ============
 FROM base-${USE_GPU} AS final
@@ -77,8 +78,11 @@ FROM base-${USE_GPU} AS final
 WORKDIR /app
 
 # Install PaddleOCR with doc-parser for PP-StructureV3
-RUN pip install --no-cache-dir \
-    "paddleocr[doc-parser]>=3.3.0" \
+# Use --no-deps first to avoid pulling paddlepaddle again, then install deps
+RUN pip install --no-cache-dir --no-deps "paddleocr>=3.3.0" && \
+    pip install --no-cache-dir \
+    paddlex \
+    docx2pdf \
     fastapi==0.115.6 \
     "uvicorn[standard]==0.34.0" \
     Pillow==11.0.0 \
@@ -86,7 +90,21 @@ RUN pip install --no-cache-dir \
     PyMuPDF==1.24.14 \
     pydantic==2.10.3 \
     python-multipart==0.0.9 \
-    psutil>=5.9.0
+    psutil>=5.9.0 \
+    opencv-python-headless \
+    shapely \
+    pyclipper \
+    imgaug \
+    lmdb \
+    tqdm \
+    visualdl \
+    rapidfuzz \
+    cython \
+    lxml \
+    premailer \
+    openpyxl \
+    attrdict3 \
+    PyYAML
 
 # Copy application code
 COPY app/ app/
