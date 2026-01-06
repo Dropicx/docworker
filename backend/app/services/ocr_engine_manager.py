@@ -9,6 +9,7 @@ import base64
 import json
 import logging
 import os
+import re
 from io import BytesIO
 from typing import Any
 
@@ -538,6 +539,9 @@ class OCREngineManager:
         # Post-process: Convert pipe-delimited tables to markdown format
         extracted_text = self._convert_pipe_tables_to_markdown(extracted_text)
 
+        # Post-process: Normalize line breaks (join paragraph lines, keep intentional breaks)
+        extracted_text = self._normalize_line_breaks(extracted_text)
+
         logger.info(f"✅ Vast.ai PaddleOCR-VL completed: {len(extracted_text)} chars total")
 
         return extracted_text, 0.95
@@ -549,8 +553,6 @@ class OCREngineManager:
         Input:  "Header1 | Header2 | Header3\\nVal1 | Val2 | Val3"
         Output: "| Header1 | Header2 | Header3 |\\n|---------|---------|---------|\\n| Val1 | Val2 | Val3 |"
         """
-        import re
-
         lines = text.split('\n')
         result_lines = []
         in_table = False
@@ -602,6 +604,117 @@ class OCREngineManager:
                 result.append(separator)
 
         return result
+
+    def _normalize_line_breaks(self, text: str) -> str:
+        """
+        Normalize line breaks by joining paragraph lines while preserving structure.
+
+        OCR output often has line breaks after every visual line on the page.
+        This method joins lines that belong to the same paragraph while keeping
+        intentional breaks for headings, lists, tables, and page separators.
+
+        Approach: Join lines UNLESS there's a clear structural boundary.
+        Works with German text where nouns are capitalized mid-sentence.
+
+        Preserves line breaks:
+        - After headings (lines ending with :)
+        - Before/after numbered items (1., 2., etc.)
+        - Before/after bullet points (·, -, ∞, •, o)
+        - Around tables (lines with | or markdown table format)
+        - Around page separators (---)
+        - After complete sentences (ends with . ! ?)
+        - Empty lines (paragraph breaks)
+        - Short standalone lines (< 30 chars, likely headers)
+        """
+        lines = text.split('\n')
+        result = []
+        i = 0
+
+        while i < len(lines):
+            line = lines[i]
+            stripped = line.strip()
+
+            # Skip empty lines - they mark paragraph breaks
+            if not stripped:
+                result.append('')
+                i += 1
+                continue
+
+            # Check if this line is a clear block boundary (should NOT be joined)
+            # Bullet point check: "o " or "· " etc, but NOT "o.B." (German abbreviation)
+            is_bullet = (
+                len(stripped) > 1 and
+                stripped[0] in '·∞•' and stripped[1] == ' '
+            ) or (
+                # "o text" style bullet (but not "o.B." abbreviation)
+                len(stripped) > 2 and
+                stripped[0] == 'o' and stripped[1] == ' '
+            ) or (
+                # "- text" bullet (but not negative numbers like "-5")
+                len(stripped) > 2 and
+                stripped[0] == '-' and stripped[1] == ' '
+            )
+
+            is_block_end = (
+                # Page separator
+                stripped == '---' or
+                # Heading (ends with :)
+                stripped.endswith(':') or
+                # Table row (has | separators)
+                '|' in stripped or
+                # Complete sentence (ends with terminal punctuation)
+                stripped[-1] in '.!?' or
+                # Numbered list item
+                bool(re.match(r'^\d+[\.\)]\s', stripped)) or
+                # Bullet point
+                is_bullet or
+                # Very short line (likely header/label, not wrapped text)
+                len(stripped) < 30
+            )
+
+            # Check if next line starts a new block
+            has_next = i + 1 < len(lines)
+            next_line = lines[i + 1].strip() if has_next else ''
+
+            # Check if next line is a bullet point
+            next_is_bullet = next_line and (
+                (len(next_line) > 1 and next_line[0] in '·∞•' and next_line[1] == ' ') or
+                (len(next_line) > 2 and next_line[0] == 'o' and next_line[1] == ' ') or
+                (len(next_line) > 2 and next_line[0] == '-' and next_line[1] == ' ')
+            )
+
+            next_is_block_start = (
+                # Empty line (paragraph break)
+                not next_line or
+                # Page separator
+                next_line == '---' or
+                # Numbered list item
+                bool(re.match(r'^\d+[\.\)]\s', next_line)) or
+                # Bullet point
+                next_is_bullet or
+                # Table row
+                '|' in next_line or
+                # Starts with special characters (except letters/numbers)
+                (next_line and not next_line[0].isalnum())
+            )
+
+            # Join if no structural boundary detected
+            should_join = (
+                not is_block_end and
+                has_next and
+                not next_is_block_start
+            )
+
+            if should_join:
+                # Join with next line (same paragraph)
+                joined = stripped + ' ' + next_line
+                lines[i + 1] = joined
+                i += 1
+            else:
+                result.append(line)
+                i += 1
+
+        return '\n'.join(result)
 
     async def _extract_with_internal_paddleocr(
         self, file_content: bytes, file_type: str, filename: str
