@@ -128,12 +128,24 @@ async def lifespan(app: FastAPI):
 
     # Check if GPU mode is enabled via environment variable
     use_gpu = os.environ.get("USE_GPU", "false").lower() == "true"
+    # Allow forcing PP-StructureV3 on CPU (requires ~28GB RAM)
+    force_ppstructure = os.environ.get("FORCE_PPSTRUCTUREV3", "false").lower() == "true"
     device = 'gpu' if use_gpu else 'cpu'
+
+    # Check available system RAM
+    try:
+        import psutil
+        ram_gb = psutil.virtual_memory().total / (1024**3)
+    except ImportError:
+        ram_gb = 0
+        logger.warning("psutil not available, cannot check RAM")
 
     logger.info("PaddleOCR Microservice v2.1 starting up...")
     logger.info(f"   PPStructureV3 available: {PPSTRUCTUREV3_AVAILABLE}")
     logger.info(f"   PaddleOCR 3.x available: {PADDLEOCR_AVAILABLE}")
     logger.info(f"   USE_GPU: {use_gpu}")
+    logger.info(f"   FORCE_PPSTRUCTUREV3: {force_ppstructure}")
+    logger.info(f"   System RAM: {ram_gb:.1f} GB")
     logger.info(f"   Device: {device}")
 
     # Set PaddlePaddle device if GPU mode
@@ -149,14 +161,26 @@ async def lifespan(app: FastAPI):
 
     # PP-StructureV3 initialization
     # On GPU: Enable PP-StructureV3 (GPU has sufficient VRAM)
-    # On CPU: Disable PP-StructureV3 (uses 32GB+ RAM)
+    # On CPU: Enable if FORCE_PPSTRUCTUREV3=true AND sufficient RAM (>=28GB)
+    enable_ppstructure = False
     if use_gpu and PPSTRUCTUREV3_AVAILABLE:
+        enable_ppstructure = True
+        logger.info("🚀 PP-StructureV3 enabled (GPU mode)")
+    elif force_ppstructure and PPSTRUCTUREV3_AVAILABLE:
+        if ram_gb >= 28:
+            enable_ppstructure = True
+            logger.info(f"🚀 PP-StructureV3 enabled (CPU mode, {ram_gb:.1f}GB RAM available)")
+        else:
+            logger.warning(f"⚠️ FORCE_PPSTRUCTUREV3 requested but only {ram_gb:.1f}GB RAM (need 28GB+)")
+
+    if enable_ppstructure:
         try:
-            logger.info("🚀 Initializing PP-StructureV3 (GPU mode)...")
+            mode_str = "GPU" if use_gpu else "CPU"
+            logger.info(f"🚀 Initializing PP-StructureV3 ({mode_str} mode)...")
             start_init = time.time()
             # PaddleOCR 3.x API: use 'device' instead of 'use_gpu'
             structure_pipeline = PPStructureV3(
-                device='gpu:0',
+                device='gpu:0' if use_gpu else 'cpu',
                 lang="german"
             )
             init_time = time.time() - start_init
@@ -168,9 +192,9 @@ async def lifespan(app: FastAPI):
             logger.exception(e)
             structure_pipeline = None
     else:
-        # CPU mode: PP-StructureV3 disabled due to high RAM usage
-        if not use_gpu:
-            logger.warning("⚠️ PP-StructureV3 DISABLED on CPU - uses 32GB+ RAM")
+        # PP-StructureV3 not enabled
+        if not use_gpu and not force_ppstructure:
+            logger.info("ℹ️ PP-StructureV3 disabled on CPU (set FORCE_PPSTRUCTUREV3=true to enable)")
             logger.info("Using PaddleOCR 3.x standard mode instead (~500MB)")
         structure_pipeline = None
 

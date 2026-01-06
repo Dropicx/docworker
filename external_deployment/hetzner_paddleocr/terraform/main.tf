@@ -6,8 +6,8 @@
 #   2. terraform init
 #   3. terraform plan
 #   4. terraform apply
+#   5. SSH in and run: cd /opt/paddleocr && ./deploy.sh
 #
-# With auto_deploy=true (default), deployment runs automatically.
 # Get API key: terraform output -raw api_key
 # =============================================================================
 
@@ -26,10 +26,6 @@ terraform {
     local = {
       source  = "hashicorp/local"
       version = "~> 2.4"
-    }
-    null = {
-      source  = "hashicorp/null"
-      version = "~> 3.2"
     }
   }
 }
@@ -61,7 +57,7 @@ variable "server_name" {
 variable "server_type" {
   description = "Hetzner server type (CPX51 = 16 vCPU, 32GB RAM for PP-StructureV3)"
   type        = string
-  default     = "cpx51" # cpx51 = 16 vCPU, 32GB RAM, ~€67/mo - good for PP-StructureV3 CPU
+  default     = "cpx51"
 }
 
 variable "github_repo" {
@@ -86,7 +82,7 @@ variable "github_token" {
 variable "location" {
   description = "Hetzner datacenter location"
   type        = string
-  default     = "fsn1" # Falkenstein, Germany (closest to most EU regions)
+  default     = "fsn1"
 }
 
 variable "ssh_public_key_path" {
@@ -99,18 +95,6 @@ variable "ssh_public_key" {
   description = "SSH public key content (overrides ssh_public_key_path if set)"
   type        = string
   default     = ""
-}
-
-variable "ssh_private_key_path" {
-  description = "Path to SSH private key file (for auto-deploy)"
-  type        = string
-  default     = "~/.ssh/id_rsa"
-}
-
-variable "auto_deploy" {
-  description = "Automatically run deploy.sh after VM creation"
-  type        = bool
-  default     = true
 }
 
 # -----------------------------------------------------------------------------
@@ -137,210 +121,129 @@ resource "random_password" "api_key" {
 
 locals {
   cloud_init = <<-EOF
-    #cloud-config
-    package_update: true
-    package_upgrade: true
+#cloud-config
+package_update: true
+package_upgrade: true
 
-    packages:
-      - docker.io
-      - docker-compose
-      - git
-      - curl
-      - htop
-      - ufw
-      - fail2ban
+packages:
+  - docker.io
+  - docker-compose
+  - git
+  - curl
+  - htop
+  - ufw
+  - fail2ban
 
-    # bootcmd runs BEFORE write_files - create directory first!
-    bootcmd:
-      - mkdir -p /opt/paddleocr
+bootcmd:
+  - mkdir -p /opt/paddleocr
 
-    write_files:
-      - path: /etc/motd
-        content: |
-          =====================================
-          PP-StructureV3 OCR Server
-          Managed by Terraform
+write_files:
+  - path: /etc/motd
+    content: |
+      =====================================
+      PP-StructureV3 OCR Server
+      Managed by Terraform
 
-          Service: /opt/paddleocr
-          Port: 9124
+      Service: /opt/paddleocr
+      Port: 9124
 
-          Commands:
-            cd /opt/paddleocr
-            ./deploy.sh          # First-time setup
-            docker-compose up -d
-            docker-compose logs -f
-            docker-compose down
-          =====================================
-        permissions: '0644'
+      Commands:
+        cd /opt/paddleocr
+        ./deploy.sh          # First-time setup
+        docker-compose up -d
+        docker-compose logs -f
+        docker-compose down
+      =====================================
+    permissions: '0644'
 
-      - path: /opt/paddleocr/.env
-        content: |
-          API_SECRET_KEY=${random_password.api_key.result}
-          USE_GPU=false
-        permissions: '0600'
+  - path: /opt/paddleocr/.env
+    content: |
+      API_SECRET_KEY=${random_password.api_key.result}
+      USE_GPU=false
+      FORCE_PPSTRUCTUREV3=true
+    permissions: '0600'
 
-      - path: /opt/paddleocr/API_KEY.txt
-        content: |
-          ${random_password.api_key.result}
-        permissions: '0600'
+  - path: /opt/paddleocr/API_KEY.txt
+    content: |
+      ${random_password.api_key.result}
+    permissions: '0600'
 
-      - path: /opt/paddleocr/.github_token
-        content: |
-          ${var.github_token}
-        permissions: '0600'
+  - path: /opt/paddleocr/.github_token
+    content: |
+      ${var.github_token}
+    permissions: '0600'
 
-      - path: /opt/paddleocr/deploy.sh
-        content: |
-          #!/bin/bash
-          set -e
+  - path: /opt/paddleocr/.repo
+    content: |
+      ${var.github_repo}
+    permissions: '0644'
 
-          echo "=========================================="
-          echo "PP-StructureV3 Deployment Script"
-          echo "=========================================="
+  - path: /opt/paddleocr/.branch
+    content: |
+      ${var.github_branch}
+    permissions: '0644'
 
-          cd /opt/paddleocr
+  - path: /opt/paddleocr/deploy.sh
+    encoding: b64
+    content: ${filebase64("${path.module}/scripts/deploy.sh")}
+    permissions: '0755'
 
-          # Read GitHub token if available
-          GITHUB_TOKEN=""
-          if [ -f ".github_token" ] && [ -s ".github_token" ]; then
-              GITHUB_TOKEN=$$(cat .github_token | tr -d '[:space:]')
-          fi
+  - path: /opt/paddleocr/docker-compose.yml
+    content: |
+      version: '3.8'
 
-          # Build repo URL (with or without token)
-          REPO="${var.github_repo}"
-          BRANCH="${var.github_branch}"
-          if [ -n "$$GITHUB_TOKEN" ]; then
-              REPO_URL="https://$$GITHUB_TOKEN@github.com/$${REPO}.git"
-              echo "🔐 Using authenticated GitHub access"
-          else
-              REPO_URL="https://github.com/$${REPO}.git"
-              echo "🔓 Using public GitHub access"
-          fi
-
-          # Clone or update repo
-          if [ ! -d "doctranslator" ]; then
-              echo "📥 Cloning repository..."
-              git clone -b $$BRANCH "$$REPO_URL" doctranslator
-          else
-              echo "📥 Updating repository..."
-              cd doctranslator
-              git remote set-url origin "$$REPO_URL"
-              git pull origin $$BRANCH
-              cd ..
-          fi
-
-          # Copy paddleocr_service files to /opt/paddleocr
-          echo "📁 Copying service files..."
-          cp -r doctranslator/paddleocr_service/* /opt/paddleocr/
-
-          # Build Docker image (CPU mode)
-          echo "🔨 Building Docker image (CPU mode)..."
-          echo "   This will take 5-10 minutes on first build..."
-          docker build --build-arg USE_GPU=false -t ppstructure:cpu .
-
-          # Stop old container if running
-          docker-compose down 2>/dev/null || true
-
-          # Start service
-          echo "🚀 Starting service..."
-          docker-compose up -d
-
-          echo ""
-          echo "⏳ Waiting for PP-StructureV3 to start..."
-          echo "   (First startup downloads ~2GB of models)"
-
-          for i in {1..30}; do
-              if curl -sf http://localhost:9124/health > /dev/null 2>&1; then
-                  echo ""
-                  echo "✅ Service is healthy!"
-                  curl -s http://localhost:9124/health | python3 -m json.tool 2>/dev/null || curl -s http://localhost:9124/health
-                  break
-              fi
-              echo "   Waiting... ($$i/30)"
-              sleep 10
-          done
-
-          # Final check
-          if ! curl -sf http://localhost:9124/health > /dev/null 2>&1; then
-              echo "⚠️  Service not responding yet. Check logs:"
-              echo "   docker-compose logs -f"
-              exit 1
-          fi
-
-          echo ""
-          echo "=========================================="
-          echo "✅ Deployment complete!"
-          echo "=========================================="
-          echo ""
-          echo "📋 Add these to your backend environment:"
-          echo ""
-          echo "   EXTERNAL_OCR_URL=http://$$(curl -s ifconfig.me):9124"
-          echo "   EXTERNAL_API_KEY=$$(cat /opt/paddleocr/API_KEY.txt | tr -d '[:space:]')"
-          echo "   USE_EXTERNAL_OCR=true"
-          echo ""
-          echo "📊 Useful commands:"
-          echo "   View logs:  docker-compose logs -f"
-          echo "   Restart:    docker-compose restart"
-          echo "   Stop:       docker-compose down"
-          echo "   Update:     ./deploy.sh"
-        permissions: '0755'
-
-      - path: /opt/paddleocr/docker-compose.yml
-        content: |
-          version: '3.8'
-
-          services:
-            ppstructure:
-              image: ppstructure:cpu
-              container_name: ppstructure
-              ports:
-                - "9124:9124"
-              env_file:
-                - .env
-              environment:
-                - PYTHONUNBUFFERED=1
-                - PADDLEOCR_DEFAULT_MODE=structured
-              volumes:
-                - paddle_models:/home/appuser/.paddlex
-              restart: unless-stopped
-              deploy:
-                resources:
-                  limits:
-                    memory: 28G
-              healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:9124/health"]
-                interval: 30s
-                timeout: 10s
-                retries: 5
-                start_period: 300s
-
+      services:
+        ppstructure:
+          image: ppstructure:cpu
+          container_name: ppstructure
+          ports:
+            - "9124:9124"
+          env_file:
+            - .env
+          environment:
+            - PYTHONUNBUFFERED=1
+            - PADDLEOCR_DEFAULT_MODE=structured
           volumes:
-            paddle_models:
-        permissions: '0644'
+            - paddle_models:/home/appuser/.paddlex
+          restart: unless-stopped
+          deploy:
+            resources:
+              limits:
+                memory: 28G
+          healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:9124/health"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+            start_period: 300s
 
-    runcmd:
-      - systemctl enable docker
-      - systemctl start docker
-      - ufw default deny incoming
-      - ufw default allow outgoing
-      - ufw allow 22/tcp
-      - ufw allow 9124/tcp
-      - ufw --force enable
-      - chown -R root:root /opt/paddleocr
-      - chmod 755 /opt/paddleocr/deploy.sh
-      - fallocate -l 8G /swapfile
-      - chmod 600 /swapfile
-      - mkswap /swapfile
-      - swapon /swapfile
-      - ["sh", "-c", "echo '/swapfile none swap sw 0 0' >> /etc/fstab"]
-      - ["sh", "-c", "echo 'vm.swappiness=10' >> /etc/sysctl.conf"]
-      - ["sh", "-c", "echo 'vm.vfs_cache_pressure=50' >> /etc/sysctl.conf"]
-      - sysctl -p
-      - systemctl enable fail2ban
-      - systemctl start fail2ban
+      volumes:
+        paddle_models:
+    permissions: '0644'
 
-    final_message: "PP-StructureV3 VM ready! SSH in and run: cd /opt/paddleocr && ./deploy.sh"
-  EOF
+runcmd:
+  - systemctl enable docker
+  - systemctl start docker
+  - ufw default deny incoming
+  - ufw default allow outgoing
+  - ufw allow 22/tcp
+  - ufw allow 9124/tcp
+  - ufw --force enable
+  - chown -R root:root /opt/paddleocr
+  - chmod 755 /opt/paddleocr/deploy.sh
+  - fallocate -l 8G /swapfile
+  - chmod 600 /swapfile
+  - mkswap /swapfile
+  - swapon /swapfile
+  - echo '/swapfile none swap sw 0 0' >> /etc/fstab
+  - echo 'vm.swappiness=10' >> /etc/sysctl.conf
+  - echo 'vm.vfs_cache_pressure=50' >> /etc/sysctl.conf
+  - sysctl -p
+  - systemctl enable fail2ban
+  - systemctl start fail2ban
+
+final_message: "PP-StructureV3 VM ready! SSH in and run: cd /opt/paddleocr && ./deploy.sh"
+EOF
 }
 
 # -----------------------------------------------------------------------------
@@ -400,37 +303,6 @@ resource "hcloud_firewall" "paddleocr" {
 resource "hcloud_firewall_attachment" "paddleocr" {
   firewall_id = hcloud_firewall.paddleocr.id
   server_ids  = [hcloud_server.paddleocr.id]
-}
-
-# -----------------------------------------------------------------------------
-# Auto Deploy (runs deploy.sh automatically)
-# -----------------------------------------------------------------------------
-
-resource "null_resource" "deploy" {
-  count = var.auto_deploy ? 1 : 0
-
-  depends_on = [hcloud_server.paddleocr, hcloud_firewall_attachment.paddleocr]
-
-  connection {
-    type        = "ssh"
-    user        = "root"
-    host        = hcloud_server.paddleocr.ipv4_address
-    private_key = file(pathexpand(var.ssh_private_key_path))
-    timeout     = "10m"
-  }
-
-  provisioner "remote-exec" {
-    inline = [
-      "echo '⏳ Waiting for cloud-init to complete...'",
-      "cloud-init status --wait || true",
-      "echo '✅ Cloud-init complete, starting deployment...'",
-      "cd /opt/paddleocr && ./deploy.sh",
-      "echo ''",
-      "echo '=========================================='",
-      "echo '✅ PP-StructureV3 deployed successfully!'",
-      "echo '=========================================='",
-    ]
-  }
 }
 
 # -----------------------------------------------------------------------------

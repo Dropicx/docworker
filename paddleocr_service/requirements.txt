@@ -20,3 +20,4 @@ PyMuPDF==1.24.14  # fitz - PDF to image conversion
 # Utilities
 pydantic==2.10.3
 pydantic-settings==2.7.0
+psutil>=5.9.0  # RAM detection for PP-StructureV3

@@ -85,7 +85,8 @@ RUN pip install --no-cache-dir \
     "numpy<2.0" \
     PyMuPDF==1.24.14 \
     pydantic==2.10.3 \
-    python-multipart==0.0.9
+    python-multipart==0.0.9 \
+    psutil>=5.9.0
 
 # Copy application code
 COPY app/ app/
