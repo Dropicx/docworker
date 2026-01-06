@@ -124,8 +124,26 @@ echo "=============================================="
 if [ -n "$REPORT_ADDR" ] || [ "$SERVERLESS" = "true" ]; then
     echo ""
     echo "Vast.ai Serverless mode enabled"
-    echo "  REPORT_ADDR: ${REPORT_ADDR:-not set}"
+
+    # Set defaults for required PyWorker environment variables
+    # These are normally set by Vast.ai template startup scripts
+    # REPORT_ADDR: The autoscaler control server (defaults to https://run.vast.ai)
+    # MASTER_TOKEN: Authentication token (defaults to "mtoken" per vast-pyworker)
+    # CONTAINER_ID: Auto-set by Vast.ai for all instances
+    export REPORT_ADDR="${REPORT_ADDR:-https://run.vast.ai}"
+    export MASTER_TOKEN="${MASTER_TOKEN:-mtoken}"
+
+    echo "  REPORT_ADDR: $REPORT_ADDR"
+    echo "  MASTER_TOKEN: ${MASTER_TOKEN:0:4}****"
+    echo "  CONTAINER_ID: ${CONTAINER_ID:-not set (will use fallback)}"
     echo "  SERVERLESS: ${SERVERLESS:-not set}"
+
+    # Fallback CONTAINER_ID if not set (use hostname or random)
+    if [ -z "$CONTAINER_ID" ]; then
+        export CONTAINER_ID="${VAST_CONTAINERLABEL:-$(hostname)}"
+        echo "  CONTAINER_ID (fallback): $CONTAINER_ID"
+    fi
+
     echo "Starting PyWorker for autoscaler registration..."
 
     # Install PyWorker dependencies if needed
@@ -138,17 +156,18 @@ if [ -n "$REPORT_ADDR" ] || [ "$SERVERLESS" = "true" ]; then
     echo "PyWorker started with PID: $PYWORKER_PID"
 
     # Wait a moment and check if PyWorker is running
-    sleep 3
+    sleep 5
     if kill -0 $PYWORKER_PID 2>/dev/null; then
         echo "PyWorker running successfully!"
         echo "=============================================="
     else
         echo "WARNING: PyWorker may have failed to start"
+        echo "Check logs above for errors"
         echo "=============================================="
     fi
 else
     echo ""
-    echo "Standalone mode (no REPORT_ADDR set)"
+    echo "Standalone mode (no REPORT_ADDR or SERVERLESS=true set)"
     echo "PyWorker not started - direct API access only"
     echo "=============================================="
 fi
