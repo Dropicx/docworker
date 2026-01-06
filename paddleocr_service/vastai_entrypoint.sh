@@ -118,6 +118,15 @@ echo "API: $MODEL_SERVER_URL"
 echo "Health: $MODEL_HEALTH_ENDPOINT"
 echo "=============================================="
 
+# Debug: Print serverless-related env vars
+echo ""
+echo "DEBUG: Environment variables check:"
+echo "  SERVERLESS='$SERVERLESS'"
+echo "  REPORT_ADDR='$REPORT_ADDR'"
+echo "  CONTAINER_ID='$CONTAINER_ID'"
+echo "  VAST_CONTAINERLABEL='$VAST_CONTAINERLABEL'"
+echo ""
+
 # ==================== VAST.AI SERVERLESS PYWORKER ====================
 # Check if we're running in Vast.ai Serverless
 # REPORT_ADDR is set automatically by Vast.ai, or user can set SERVERLESS=true
