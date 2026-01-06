@@ -18,6 +18,7 @@ from pdf2image import convert_from_bytes
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import OCRConfigurationDB, OCREngineEnum
+from app.models.ocr_result import OCRResult
 from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
 from app.services.hybrid_text_extractor import HybridTextExtractor
 
@@ -202,7 +203,7 @@ class OCREngineManager:
         file_type: str,
         filename: str,
         override_engine: OCREngineEnum | None = None,
-    ) -> tuple[str, float]:
+    ) -> OCRResult:
         """Extract text from document using database-configured OCR engine.
 
         Loads OCR configuration from database and dispatches to the appropriate
@@ -217,31 +218,13 @@ class OCREngineManager:
                 ignores database configuration. Default None.
 
         Returns:
-            tuple[str, float]: A tuple containing:
-                - str: Extracted text with preserved formatting
-                - float: Confidence score (0.0-1.0) based on OCR quality
-
-        Raises:
-            Returns error message as text with 0.0 confidence instead of raising.
-            Logs detailed error information for debugging.
-
-        Example:
-            >>> manager = OCREngineManager(db_session)
-            >>> # Use database-configured engine
-            >>> text, conf = await manager.extract_text(
-            ...     file_content=pdf_bytes,
-            ...     file_type="pdf",
-            ...     filename="report.pdf"
-            ... )
-            >>> print(f"Confidence: {conf:.0%}")
-            >>>
-            >>> # Override for testing
-            >>> text, conf = await manager.extract_text(
-            ...     file_content=pdf_bytes,
-            ...     file_type="pdf",
-            ...     filename="report.pdf",
-            ...     override_engine=OCREngineEnum.VISION_LLM
-            ... )
+            OCRResult: Complete OCR result containing:
+                - text: Extracted text with preserved formatting
+                - confidence: Score (0.0-1.0) based on OCR quality
+                - markdown: Markdown-formatted text (if available)
+                - structured_output: PP-StructureV3 JSON with tables/pages
+                - processing_time: Time taken for extraction
+                - engine: OCR engine used
 
         Note:
             **Engine Selection Priority**:
@@ -280,25 +263,50 @@ class OCREngineManager:
 
         except Exception as e:
             logger.error(f"❌ OCR extraction failed: {e}")
-            return f"OCR extraction error: {str(e)}", 0.0
+            return OCRResult(
+                text=f"OCR extraction error: {str(e)}",
+                confidence=0.0,
+                engine=str(selected_engine)
+            )
+
+    async def extract_text_legacy(
+        self,
+        file_content: bytes,
+        file_type: str,
+        filename: str,
+        override_engine: OCREngineEnum | None = None,
+    ) -> tuple[str, float]:
+        """Legacy method returning only text and confidence for backward compatibility.
+
+        Use extract_text() for full OCRResult with structured_output.
+        """
+        result = await self.extract_text(file_content, file_type, filename, override_engine)
+        return result.text, result.confidence
 
     # ==================== ENGINE-SPECIFIC EXTRACTION ====================
 
     async def _extract_with_hybrid(
         self, file_content: bytes, file_type: str, filename: str
-    ) -> tuple[str, float]:
+    ) -> OCRResult:
         """
         Extract text using hybrid strategy (intelligent routing).
 
         This is the current production system that automatically selects
         the best OCR method based on document quality analysis.
+        Note: Hybrid extractor returns legacy tuple, wrap in OCRResult.
         """
         logger.info("🎯 Using HYBRID extraction (intelligent routing)")
-        return await self.hybrid_extractor.extract_text(file_content, file_type, filename)
+        text, confidence = await self.hybrid_extractor.extract_text(file_content, file_type, filename)
+        return OCRResult(
+            text=text,
+            confidence=confidence,
+            engine="HYBRID",
+            mode="hybrid"
+        )
 
     async def _extract_with_vision_llm(
         self, file_content: bytes, file_type: str, filename: str
-    ) -> tuple[str, float]:
+    ) -> OCRResult:
         """
         Extract text using Vision Language Model (Qwen 2.5 VL).
 
@@ -310,8 +318,14 @@ class OCREngineManager:
         vision_config = self.get_engine_config(OCREngineEnum.VISION_LLM)
 
         try:
-            return await self.hybrid_extractor._extract_with_vision_llm(
+            text, confidence = await self.hybrid_extractor._extract_with_vision_llm(
                 file_content, file_type, vision_config
+            )
+            return OCRResult(
+                text=text,
+                confidence=confidence,
+                engine="VISION_LLM",
+                mode="vision"
             )
         except Exception as e:
             logger.error(f"❌ Vision LLM extraction failed: {e}")
@@ -320,23 +334,23 @@ class OCREngineManager:
 
     async def _extract_with_paddleocr(
         self, file_content: bytes, file_type: str, filename: str
-    ) -> tuple[str, float]:
+    ) -> OCRResult:
         """
         Extract text using PaddleOCR or PaddleOCR-VL services.
 
         Priority (fallback chain):
-        1. Vast.ai PaddleOCR-VL (GPU, fastest) - if USE_VASTAI_OCR=true
+        1. Vast.ai PP-StructureV3 (GPU, fastest) - if USE_VASTAI_OCR=true
         2. Hetzner external PaddleOCR (CPU) - if USE_EXTERNAL_OCR=true
         3. Railway internal PaddleOCR (CPU)
         4. Hybrid extraction (final fallback)
 
         Calls services via HTTP with structured mode for Markdown/JSON output.
-        Prefers markdown output when available for better table and layout preservation.
+        Returns OCRResult with structured_output for semantic table processing.
         """
-        # Try Vast.ai PaddleOCR-VL first (GPU-accelerated)
+        # Try Vast.ai PP-StructureV3 first (GPU-accelerated)
         if USE_VASTAI_OCR and VASTAI_ENDPOINT_NAME and VASTAI_API_KEY:
             try:
-                logger.info(f"🚀 Trying Vast.ai PaddleOCR-VL (GPU)")
+                logger.info(f"🚀 Trying Vast.ai PP-StructureV3 (GPU)")
                 return await self._extract_with_vastai_vl(
                     file_content, file_type, filename
                 )
@@ -358,11 +372,12 @@ class OCREngineManager:
 
     async def _extract_with_external_paddleocr(
         self, file_content: bytes, file_type: str, filename: str
-    ) -> tuple[str, float]:
+    ) -> OCRResult:
         """
         Extract text using external PaddleOCR service (Hetzner/external deployment).
 
         Uses API key authentication via X-API-Key header.
+        Returns OCRResult with structured_output for semantic table processing.
         Raises exception on failure to allow fallback to internal service.
         """
         logger.info(f"🌐 Calling external PaddleOCR at {EXTERNAL_OCR_URL}")
@@ -400,13 +415,27 @@ class OCREngineManager:
                 engine = result.get("engine", "PaddleOCR")
                 mode = result.get("mode", "text")
 
+                # Capture structured_output for semantic table processing
+                structured_output = result.get("structured_output")
+                markdown = result.get("markdown")
+
                 logger.info(f"✅ External {engine} extraction completed in {processing_time:.2f}s (mode: {mode})")
                 logger.info(f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars")
 
-                if result.get("markdown"):
+                if markdown:
                     logger.info("📝 Using Markdown output (structured)")
+                if structured_output:
+                    logger.info(f"📊 Captured structured_output with {len(structured_output.get('pages', []))} pages")
 
-                return extracted_text, confidence
+                return OCRResult(
+                    text=extracted_text,
+                    confidence=confidence,
+                    markdown=markdown,
+                    structured_output=structured_output,
+                    processing_time=processing_time,
+                    engine=engine,
+                    mode=mode
+                )
 
             elif response.status_code in (401, 403):
                 logger.error(f"❌ External OCR authentication failed: {response.status_code}")
@@ -417,7 +446,7 @@ class OCREngineManager:
 
     async def _extract_with_vastai_vl(
         self, file_content: bytes, file_type: str, filename: str
-    ) -> tuple[str, float]:
+    ) -> OCRResult:
         """
         Extract text using Vast.ai PP-StructureV3 GPU service via serverless API.
 
@@ -426,7 +455,7 @@ class OCREngineManager:
         1. POST to /route endpoint to get worker URL
         2. POST to worker's /extract endpoint with multipart form data
 
-        Returns structured output with text, markdown, and confidence.
+        Returns OCRResult with structured_output for semantic table processing.
         Raises exception on failure to allow fallback to other services.
         """
         logger.info(f"🚀 Calling Vast.ai PP-StructureV3 (GPU serverless)")
@@ -492,16 +521,31 @@ class OCREngineManager:
                 engine = result.get("engine", "PPStructureV3")
                 mode = result.get("mode", "structured")
 
+                # Capture structured_output for semantic table processing
+                structured_output = result.get("structured_output")
+                markdown = result.get("markdown")
+
                 logger.info(f"✅ PP-StructureV3 extraction completed in {processing_time:.2f}s (mode: {mode})")
                 logger.info(f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars")
 
-                if result.get("markdown"):
+                if markdown:
                     logger.info("📝 Using Markdown output (structured)")
+                if structured_output:
+                    pages = structured_output.get("pages", [])
+                    logger.info(f"📊 Captured structured_output with {len(pages)} pages")
 
                 # Post-process: Normalize line breaks (join paragraph lines, keep intentional breaks)
                 extracted_text = self._normalize_line_breaks(extracted_text)
 
-                return extracted_text, float(confidence)
+                return OCRResult(
+                    text=extracted_text,
+                    confidence=float(confidence),
+                    markdown=markdown,
+                    structured_output=structured_output,
+                    processing_time=processing_time,
+                    engine=engine,
+                    mode=mode
+                )
 
             elif ocr_response.status_code in (401, 403):
                 logger.error(f"❌ Vast.ai authentication failed: {ocr_response.status_code}")
@@ -704,10 +748,11 @@ class OCREngineManager:
 
     async def _extract_with_internal_paddleocr(
         self, file_content: bytes, file_type: str, filename: str
-    ) -> tuple[str, float]:
+    ) -> OCRResult:
         """
         Extract text using internal PaddleOCR microservice (Railway deployment).
 
+        Returns OCRResult with structured_output for semantic table processing.
         Falls back to hybrid extraction on failure.
         """
         logger.info(f"🤖 Calling internal PaddleOCR at {PADDLEOCR_SERVICE_URL}")
@@ -741,16 +786,31 @@ class OCREngineManager:
                     engine = result.get("engine", "PaddleOCR")
                     mode = result.get("mode", "text")
 
+                    # Capture structured_output for semantic table processing
+                    structured_output = result.get("structured_output")
+                    markdown = result.get("markdown")
+
                     logger.info(f"✅ {engine} extraction completed in {processing_time:.2f}s (mode: {mode})")
                     logger.info(
                         f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars"
                     )
 
-                    # Log if we got markdown output
-                    if result.get("markdown"):
+                    # Log if we got markdown or structured output
+                    if markdown:
                         logger.info("📝 Using Markdown output (structured)")
+                    if structured_output:
+                        pages = structured_output.get("pages", [])
+                        logger.info(f"📊 Captured structured_output with {len(pages)} pages")
 
-                    return extracted_text, confidence
+                    return OCRResult(
+                        text=extracted_text,
+                        confidence=confidence,
+                        markdown=markdown,
+                        structured_output=structured_output,
+                        processing_time=processing_time,
+                        engine=engine,
+                        mode=mode
+                    )
 
                 logger.error(f"❌ PaddleOCR service error: {response.status_code}")
                 raise Exception(f"PaddleOCR service returned {response.status_code}")
