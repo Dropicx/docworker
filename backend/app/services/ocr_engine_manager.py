@@ -81,12 +81,14 @@ if EXTERNAL_OCR_URL:
     logger.info(f"🔧 Use external OCR: {USE_EXTERNAL_OCR}")
 
 # Vast.ai PaddleOCR-VL configuration (GPU-accelerated, OpenAI-compatible API)
-VASTAI_ENDPOINT_URL = os.getenv("VASTAI_ENDPOINT_URL", "")
+# Uses 2-step routing: /route/ to get signed URL, then request to worker
+VASTAI_ENDPOINT_NAME = os.getenv("VASTAI_ENDPOINT_NAME", "")  # e.g., "rze2xxm9"
 VASTAI_API_KEY = os.getenv("VASTAI_API_KEY", "")
 USE_VASTAI_OCR = os.getenv("USE_VASTAI_OCR", "false").lower() == "true"
+VASTAI_ROUTE_URL = "https://run.vast.ai/route/"
 
-if VASTAI_ENDPOINT_URL:
-    logger.info(f"🚀 Vast.ai OCR endpoint: {VASTAI_ENDPOINT_URL}")
+if VASTAI_ENDPOINT_NAME:
+    logger.info(f"🚀 Vast.ai OCR endpoint: {VASTAI_ENDPOINT_NAME}")
     logger.info(f"🔑 Vast.ai API key: {'configured' if VASTAI_API_KEY else 'not set'}")
     logger.info(f"🔧 Use Vast.ai OCR: {USE_VASTAI_OCR}")
 
@@ -331,7 +333,7 @@ class OCREngineManager:
         Prefers markdown output when available for better table and layout preservation.
         """
         # Try Vast.ai PaddleOCR-VL first (GPU-accelerated)
-        if USE_VASTAI_OCR and VASTAI_ENDPOINT_URL:
+        if USE_VASTAI_OCR and VASTAI_ENDPOINT_NAME and VASTAI_API_KEY:
             try:
                 logger.info(f"🚀 Trying Vast.ai PaddleOCR-VL (GPU)")
                 return await self._extract_with_vastai_vl(
@@ -416,13 +418,17 @@ class OCREngineManager:
         self, file_content: bytes, file_type: str, filename: str
     ) -> tuple[str, float]:
         """
-        Extract text using Vast.ai PaddleOCR-VL via OpenAI-compatible API.
+        Extract text using Vast.ai PaddleOCR-VL via serverless API.
 
         GPU-accelerated OCR using PaddlePaddle/PaddleOCR-VL model on Vast.ai serverless.
+        Uses 2-step routing:
+        1. GET /route/ to get signed worker URL with authentication signature
+        2. POST to worker with auth_data + payload
+
         Uses existing pdf2image for PDF→image conversion.
         Raises exception on failure to allow fallback to other services.
         """
-        logger.info(f"🚀 Calling Vast.ai PaddleOCR-VL (OpenAI API)")
+        logger.info(f"🚀 Calling Vast.ai PaddleOCR-VL (GPU serverless)")
         logger.info(f"📄 File: {filename}, Type: {file_type}, Size: {len(file_content)} bytes")
 
         # Convert PDF pages to images, or use image directly
@@ -438,10 +444,43 @@ class OCREngineManager:
         else:
             images_base64.append(base64.b64encode(file_content).decode())
 
-        # Process each image with OCR via OpenAI-compatible API
+        # Process each image with OCR via Vast.ai serverless API
         all_text = []
-        async with httpx.AsyncClient(timeout=300.0) as client:
+        async with httpx.AsyncClient(timeout=300.0, verify=False) as client:
             for i, img_b64 in enumerate(images_base64):
+                # Step 1: Get signed worker URL from /route/
+                # Cost estimate: ~500 tokens per page for OCR
+                route_response = await client.post(
+                    VASTAI_ROUTE_URL,
+                    headers={
+                        "Authorization": f"Bearer {VASTAI_API_KEY}",
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    json={
+                        "endpoint": VASTAI_ENDPOINT_NAME,
+                        "cost": 1000  # Token cost estimate for OCR request
+                    }
+                )
+
+                if route_response.status_code != 200:
+                    error_text = route_response.text
+                    logger.error(f"❌ Vast.ai route failed: {route_response.status_code} - {error_text}")
+                    raise Exception(f"Vast.ai route failed: {route_response.status_code}")
+
+                route_data = route_response.json()
+                worker_url = route_data.get("url")
+                signature = route_data.get("signature")
+                reqnum = route_data.get("reqnum")
+                request_idx = route_data.get("request_idx")
+
+                if not worker_url or not signature:
+                    logger.error(f"❌ Vast.ai route response missing data: {route_data}")
+                    raise Exception("Vast.ai route response missing url or signature")
+
+                logger.debug(f"🔗 Got worker URL: {worker_url}, request_idx: {request_idx}")
+
+                # Step 2: Send OCR request to worker with auth_data + payload
                 messages = [{
                     "role": "user",
                     "content": [
@@ -455,31 +494,41 @@ class OCREngineManager:
                     ]
                 }]
 
-                response = await client.post(
-                    f"{VASTAI_ENDPOINT_URL}/chat/completions",
-                    headers={
-                        "Authorization": f"Bearer {VASTAI_API_KEY}",
-                        "Content-Type": "application/json"
-                    },
+                ocr_response = await client.post(
+                    f"{worker_url}/v1/chat/completions",
+                    headers={"Content-Type": "application/json"},
                     json={
-                        "model": "PaddlePaddle/PaddleOCR-VL",
-                        "messages": messages,
-                        "temperature": 0.0,
-                        "max_tokens": 4096
+                        "auth_data": {
+                            "cost": 1000.0,
+                            "endpoint": VASTAI_ENDPOINT_NAME,
+                            "reqnum": reqnum,
+                            "request_idx": request_idx,
+                            "signature": signature,
+                            "url": worker_url
+                        },
+                        "payload": {
+                            "model": "PaddlePaddle/PaddleOCR-VL",
+                            "messages": messages,
+                            "temperature": 0.0,
+                            "max_tokens": 4096
+                        }
                     }
                 )
 
-                if response.status_code == 200:
-                    result = response.json()
+                if ocr_response.status_code == 200:
+                    result = ocr_response.json()
                     text = result["choices"][0]["message"]["content"]
                     all_text.append(text)
-                    logger.info(f"✅ Page {i+1}/{len(images_base64)}: {len(text)} chars")
-                elif response.status_code in (401, 403):
-                    logger.error(f"❌ Vast.ai authentication failed: {response.status_code}")
-                    raise Exception(f"Vast.ai authentication failed: {response.status_code}")
+                    usage = result.get("usage", {})
+                    tokens = usage.get("total_tokens", 0)
+                    logger.info(f"✅ Page {i+1}/{len(images_base64)}: {len(text)} chars, {tokens} tokens")
+                elif ocr_response.status_code in (401, 403):
+                    logger.error(f"❌ Vast.ai authentication failed: {ocr_response.status_code}")
+                    raise Exception(f"Vast.ai authentication failed: {ocr_response.status_code}")
                 else:
-                    logger.error(f"❌ Vast.ai error: {response.status_code}")
-                    raise Exception(f"Vast.ai returned {response.status_code}")
+                    error_text = ocr_response.text[:500]
+                    logger.error(f"❌ Vast.ai OCR error: {ocr_response.status_code} - {error_text}")
+                    raise Exception(f"Vast.ai OCR returned {ocr_response.status_code}")
 
         extracted_text = "\n\n---\n\n".join(all_text)
         logger.info(f"✅ Vast.ai PaddleOCR-VL completed: {len(extracted_text)} chars total")
