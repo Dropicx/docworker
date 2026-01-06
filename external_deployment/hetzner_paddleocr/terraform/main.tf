@@ -1,11 +1,16 @@
 # =============================================================================
-# PaddleOCR External Server - Hetzner Terraform Configuration
+# PP-StructureV3 OCR Server - Hetzner Terraform Configuration
 # =============================================================================
 # Usage:
 #   1. Set HCLOUD_TOKEN environment variable or create terraform.tfvars
 #   2. terraform init
 #   3. terraform plan
 #   4. terraform apply
+#
+# After deployment:
+#   1. SSH to server: terraform output -raw ssh_command
+#   2. Deploy: ./deploy.sh
+#   3. Get API key: terraform output -raw api_key
 # =============================================================================
 
 terraform {
@@ -52,9 +57,21 @@ variable "server_name" {
 }
 
 variable "server_type" {
-  description = "Hetzner server type (CPX62 = 16 vCPU, 32GB RAM)"
+  description = "Hetzner server type (CPX51 = 16 vCPU, 32GB RAM for PP-StructureV3)"
   type        = string
-  default     = "cpx51"  # cpx51 = 16 vCPU, 32GB RAM, ~€67/mo
+  default     = "cpx51"  # cpx51 = 16 vCPU, 32GB RAM, ~€67/mo - good for PP-StructureV3 CPU
+}
+
+variable "github_repo" {
+  description = "GitHub repository URL for doctranslator"
+  type        = string
+  default     = "https://github.com/Dropicx/doctranslator.git"
+}
+
+variable "github_branch" {
+  description = "Git branch to deploy"
+  type        = string
+  default     = "dev"
 }
 
 variable "location" {
@@ -116,14 +133,15 @@ locals {
       - path: /etc/motd
         content: |
           =====================================
-          PaddleOCR External Server
+          PP-StructureV3 OCR Server
           Managed by Terraform
 
           Service: /opt/paddleocr
-          Port: 9123
+          Port: 9124
 
           Commands:
             cd /opt/paddleocr
+            ./deploy.sh          # First-time setup
             docker-compose up -d
             docker-compose logs -f
             docker-compose down
@@ -133,6 +151,7 @@ locals {
       - path: /opt/paddleocr/.env
         content: |
           API_SECRET_KEY=${random_password.api_key.result}
+          USE_GPU=false
         permissions: '0600'
 
       - path: /opt/paddleocr/API_KEY.txt
@@ -140,76 +159,114 @@ locals {
           ${random_password.api_key.result}
         permissions: '0600'
 
+      - path: /opt/paddleocr/deploy.sh
+        content: |
+          #!/bin/bash
+          set -e
+
+          echo "=========================================="
+          echo "PP-StructureV3 Deployment Script"
+          echo "=========================================="
+
+          cd /opt/paddleocr
+
+          # Clone or update repo
+          if [ ! -d "doctranslator" ]; then
+              echo "📥 Cloning repository..."
+              git clone -b ${var.github_branch} ${var.github_repo} doctranslator
+          else
+              echo "📥 Updating repository..."
+              cd doctranslator && git pull origin ${var.github_branch} && cd ..
+          fi
+
+          # Copy paddleocr_service files to /opt/paddleocr
+          echo "📁 Copying service files..."
+          cp -r doctranslator/paddleocr_service/* /opt/paddleocr/
+
+          # Build Docker image (CPU mode)
+          echo "🔨 Building Docker image (CPU mode)..."
+          echo "   This will take 5-10 minutes on first build..."
+          docker build --build-arg USE_GPU=false -t ppstructure:cpu .
+
+          # Stop old container if running
+          docker-compose down 2>/dev/null || true
+
+          # Start service
+          echo "🚀 Starting service..."
+          docker-compose up -d
+
+          echo ""
+          echo "⏳ Waiting for PP-StructureV3 to start..."
+          echo "   (First startup downloads ~2GB of models)"
+
+          for i in {1..30}; do
+              if curl -sf http://localhost:9124/health > /dev/null 2>&1; then
+                  echo ""
+                  echo "✅ Service is healthy!"
+                  curl -s http://localhost:9124/health | python3 -m json.tool 2>/dev/null || curl -s http://localhost:9124/health
+                  break
+              fi
+              echo "   Waiting... ($i/30)"
+              sleep 10
+          done
+
+          # Final check
+          if ! curl -sf http://localhost:9124/health > /dev/null 2>&1; then
+              echo "⚠️  Service not responding yet. Check logs:"
+              echo "   docker-compose logs -f"
+              exit 1
+          fi
+
+          echo ""
+          echo "=========================================="
+          echo "✅ Deployment complete!"
+          echo "=========================================="
+          echo ""
+          echo "📋 Add these to your backend environment:"
+          echo ""
+          echo "   EXTERNAL_OCR_URL=http://$$(curl -s ifconfig.me):9124"
+          echo "   EXTERNAL_API_KEY=$$(cat /opt/paddleocr/API_KEY.txt)"
+          echo "   USE_EXTERNAL_OCR=true"
+          echo ""
+          echo "📊 Useful commands:"
+          echo "   View logs:  docker-compose logs -f"
+          echo "   Restart:    docker-compose restart"
+          echo "   Stop:       docker-compose down"
+          echo "   Update:     ./deploy.sh"
+        permissions: '0755'
+
       - path: /opt/paddleocr/docker-compose.yml
         content: |
           version: '3.8'
 
           services:
-            paddleocr:
-              build: .
-              container_name: paddleocr
+            ppstructure:
+              image: ppstructure:cpu
+              container_name: ppstructure
               ports:
-                - "9123:9123"
+                - "9124:9124"
+              env_file:
+                - .env
               environment:
-                - API_SECRET_KEY=$${API_SECRET_KEY}
                 - PYTHONUNBUFFERED=1
+                - PADDLEOCR_DEFAULT_MODE=structured
               volumes:
-                - paddleocr_models:/home/appuser/.paddleocr
-                - paddleocr_paddlex:/home/appuser/.paddlex
+                - paddle_models:/home/appuser/.paddlex
               restart: unless-stopped
               deploy:
                 resources:
                   limits:
                     memory: 28G
               healthcheck:
-                test: ["CMD", "curl", "-f", "http://localhost:9123/health"]
+                test: ["CMD", "curl", "-f", "http://localhost:9124/health"]
                 interval: 30s
                 timeout: 10s
-                retries: 3
-                start_period: 120s
+                retries: 5
+                start_period: 300s
 
           volumes:
-            paddleocr_models:
-            paddleocr_paddlex:
+            paddle_models:
         permissions: '0644'
-
-      - path: /opt/paddleocr/deploy.sh
-        content: |
-          #!/bin/bash
-          set -e
-          cd /opt/paddleocr
-
-          if [ ! -f Dockerfile ]; then
-              echo "Dockerfile not found! Copy paddleocr_service files first:"
-              echo "  scp -r paddleocr_service/* root@$$(curl -s ifconfig.me):/opt/paddleocr/"
-              exit 1
-          fi
-
-          echo "Building Docker image..."
-          docker-compose build
-
-          echo "Starting service..."
-          docker-compose up -d
-
-          echo "Waiting for service..."
-          sleep 15
-
-          for i in {1..10}; do
-              if curl -sf http://localhost:9123/health > /dev/null 2>&1; then
-                  echo "Service is healthy!"
-                  break
-              fi
-              echo "Attempt $i/10 - waiting..."
-              sleep 10
-          done
-
-          echo ""
-          echo "Deployment complete!"
-          echo "Railway environment variables:"
-          echo "  EXTERNAL_OCR_URL=http://$$(curl -s ifconfig.me):9123"
-          echo "  EXTERNAL_API_KEY=$$(cat /opt/paddleocr/API_KEY.txt)"
-          echo "  USE_EXTERNAL_OCR=true"
-        permissions: '0755'
 
     runcmd:
       - systemctl enable docker
@@ -217,9 +274,10 @@ locals {
       - ufw default deny incoming
       - ufw default allow outgoing
       - ufw allow 22/tcp
-      - ufw allow 9123/tcp
+      - ufw allow 9124/tcp
       - ufw --force enable
-      - mkdir -p /opt/paddleocr/app
+      - mkdir -p /opt/paddleocr
+      - chown -R root:root /opt/paddleocr
       - fallocate -l 8G /swapfile
       - chmod 600 /swapfile
       - mkswap /swapfile
@@ -231,7 +289,7 @@ locals {
       - systemctl enable fail2ban
       - systemctl start fail2ban
 
-    final_message: "PaddleOCR VM ready! SSH in and run ./deploy.sh"
+    final_message: "PP-StructureV3 VM ready! SSH in and run: cd /opt/paddleocr && ./deploy.sh"
   EOF
 }
 
@@ -274,10 +332,10 @@ resource "hcloud_firewall" "paddleocr" {
   }
 
   rule {
-    description = "Allow PaddleOCR API"
+    description = "Allow PP-StructureV3 API"
     direction   = "in"
     protocol    = "tcp"
-    port        = "9123"
+    port        = "9124"
     source_ips  = ["0.0.0.0/0", "::/0"]
   }
 
@@ -319,16 +377,21 @@ output "ssh_command" {
   value       = "ssh root@${hcloud_server.paddleocr.ipv4_address}"
 }
 
-output "scp_command" {
-  description = "SCP command to copy service files"
-  value       = "scp -r paddleocr_service/* root@${hcloud_server.paddleocr.ipv4_address}:/opt/paddleocr/"
+output "deploy_command" {
+  description = "Command to deploy after SSH"
+  value       = "cd /opt/paddleocr && ./deploy.sh"
 }
 
-output "railway_env_vars" {
-  description = "Environment variables for Railway"
+output "backend_env_vars" {
+  description = "Environment variables for your backend"
   value       = <<-EOF
-    EXTERNAL_OCR_URL=http://${hcloud_server.paddleocr.ipv4_address}:9123
+    EXTERNAL_OCR_URL=http://${hcloud_server.paddleocr.ipv4_address}:9124
     EXTERNAL_API_KEY=<run: terraform output -raw api_key>
     USE_EXTERNAL_OCR=true
   EOF
+}
+
+output "health_check_url" {
+  description = "Health check URL"
+  value       = "http://${hcloud_server.paddleocr.ipv4_address}:9124/health"
 }
