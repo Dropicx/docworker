@@ -83,17 +83,22 @@ if EXTERNAL_OCR_URL:
     logger.info(f"🔑 External OCR API key: {'configured' if EXTERNAL_API_KEY else 'not set'}")
     logger.info(f"🔧 Use external OCR: {USE_EXTERNAL_OCR}")
 
-# Vast.ai PaddleOCR-VL configuration (GPU-accelerated, OpenAI-compatible API)
-# Uses 2-step routing: /route/ to get signed URL, then request to worker
+# Vast.ai PaddleOCR-VL configuration (GPU-accelerated)
+# Option 1: Serverless - uses 2-step routing: /route/ to get signed URL, then request to worker
+# Option 2: Direct URL - bypass routing, call worker directly (for regular instances)
 VASTAI_ENDPOINT_NAME = os.getenv("VASTAI_ENDPOINT_NAME", "")  # e.g., "rze2xxm9"
 VASTAI_API_KEY = os.getenv("VASTAI_API_KEY", "")
 USE_VASTAI_OCR = os.getenv("USE_VASTAI_OCR", "false").lower() == "true"
 VASTAI_ROUTE_URL = "https://run.vast.ai/route/"
+VASTAI_DIRECT_URL = os.getenv("VASTAI_DIRECT_URL", "")  # e.g., "http://ip:port" - bypasses routing
 
-if VASTAI_ENDPOINT_NAME:
+if VASTAI_DIRECT_URL:
+    logger.info(f"🚀 Vast.ai OCR direct URL: {VASTAI_DIRECT_URL}")
+elif VASTAI_ENDPOINT_NAME:
     logger.info(f"🚀 Vast.ai OCR endpoint: {VASTAI_ENDPOINT_NAME}")
     logger.info(f"🔑 Vast.ai API key: {'configured' if VASTAI_API_KEY else 'not set'}")
-    logger.info(f"🔧 Use Vast.ai OCR: {USE_VASTAI_OCR}")
+if USE_VASTAI_OCR:
+    logger.info(f"🔧 Vast.ai OCR enabled")
 
 
 class OCREngineManager:
@@ -349,7 +354,11 @@ class OCREngineManager:
         Returns OCRResult with structured_output for semantic table processing.
         """
         # Try Vast.ai PP-StructureV3 first (GPU-accelerated)
-        if USE_VASTAI_OCR and VASTAI_ENDPOINT_NAME and VASTAI_API_KEY:
+        # Direct URL mode bypasses serverless routing (for regular instances)
+        vastai_available = USE_VASTAI_OCR and (
+            VASTAI_DIRECT_URL or (VASTAI_ENDPOINT_NAME and VASTAI_API_KEY)
+        )
+        if vastai_available:
             try:
                 logger.info(f"🚀 Trying Vast.ai PP-StructureV3 (GPU)")
                 return await self._extract_with_vastai_vl(
@@ -459,68 +468,76 @@ class OCREngineManager:
         Returns OCRResult with structured_output for semantic table processing.
         Raises exception on failure to allow fallback to other services.
         """
-        logger.info(f"🚀 Calling Vast.ai PP-StructureV3 (GPU serverless)")
+        logger.info(f"🚀 Calling Vast.ai PP-StructureV3 (GPU)")
         logger.info(f"📄 File: {filename}, Type: {file_type}, Size: {len(file_content)} bytes")
 
         # Extended timeout for GPU OCR (PP-StructureV3 can take 2-3 minutes)
         async with httpx.AsyncClient(timeout=300.0, verify=False) as client:
-            # Step 1: Get worker URL from Vast.ai route endpoint
-            # Per docs: https://docs.vast.ai/serverless/route
-            route_url = VASTAI_ROUTE_URL  # https://run.vast.ai/route/
-            logger.info(f"🔗 Calling route endpoint: {route_url}")
-            logger.info(f"📍 Endpoint name: {VASTAI_ENDPOINT_NAME}")
-
-            # Retry loop - workers may be loading (cold start takes ~60-90s)
-            max_retries = 12  # 12 retries * 5s = 60s max wait
-            retry_delay = 5.0
             worker_url = None
 
-            for attempt in range(max_retries):
-                route_response = await client.post(
-                    route_url,
-                    headers={
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    json={
-                        "endpoint": VASTAI_ENDPOINT_NAME,
-                        "api_key": VASTAI_API_KEY,
-                        "cost": 242.0  # Estimated compute units for OCR request
-                    }
-                )
+            # Option 1: Direct URL mode - bypass serverless routing
+            if VASTAI_DIRECT_URL:
+                worker_url = VASTAI_DIRECT_URL.rstrip("/")
+                logger.info(f"🔗 Using direct URL (bypassing route): {worker_url}")
 
-                if route_response.status_code != 200:
-                    error_text = route_response.text
-                    logger.error(f"❌ Vast.ai route failed: {route_response.status_code} - {error_text}")
-                    raise Exception(f"Vast.ai route failed: {route_response.status_code}")
+            # Option 2: Serverless routing mode
+            else:
+                # Step 1: Get worker URL from Vast.ai route endpoint
+                # Per docs: https://docs.vast.ai/serverless/route
+                route_url = VASTAI_ROUTE_URL  # https://run.vast.ai/route/
+                logger.info(f"🔗 Calling route endpoint: {route_url}")
+                logger.info(f"📍 Endpoint name: {VASTAI_ENDPOINT_NAME}")
 
-                route_data = route_response.json()
-                logger.info(f"📍 Route response (attempt {attempt + 1}): {route_data}")
+                # Retry loop - workers may be loading (cold start takes ~60-90s)
+                max_retries = 12  # 12 retries * 5s = 60s max wait
+                retry_delay = 5.0
 
-                # Get worker URL - per docs: response contains 'url' field
-                worker_url = route_data.get("url") or route_data.get("endpoint_url")
+                for attempt in range(max_retries):
+                    route_response = await client.post(
+                        route_url,
+                        headers={
+                            "Content-Type": "application/json",
+                            "Accept": "application/json"
+                        },
+                        json={
+                            "endpoint": VASTAI_ENDPOINT_NAME,
+                            "api_key": VASTAI_API_KEY,
+                            "cost": 242.0  # Estimated compute units for OCR request
+                        }
+                    )
 
-                if worker_url:
-                    break  # Got a worker URL, proceed
+                    if route_response.status_code != 200:
+                        error_text = route_response.text
+                        logger.error(f"❌ Vast.ai route failed: {route_response.status_code} - {error_text}")
+                        raise Exception(f"Vast.ai route failed: {route_response.status_code}")
 
-                # No URL - check if workers are loading
-                status = route_data.get("status", "")
-                if "loading" in status.lower():
-                    logger.info(f"⏳ Workers loading, waiting {retry_delay}s... ({status})")
-                    await asyncio.sleep(retry_delay)
-                    continue
-                elif "error" in status.lower():
-                    logger.error(f"❌ Vast.ai worker error: {status}")
-                    raise Exception(f"Vast.ai worker error: {status}")
-                else:
-                    # Unknown status, wait and retry
-                    logger.warning(f"⚠️ Unexpected route response, retrying... ({status})")
-                    await asyncio.sleep(retry_delay)
-                    continue
+                    route_data = route_response.json()
+                    logger.info(f"📍 Route response (attempt {attempt + 1}): {route_data}")
 
-            if not worker_url:
-                logger.error(f"❌ No Vast.ai worker available after {max_retries} attempts")
-                raise Exception("No Vast.ai worker available - workers may still be loading")
+                    # Get worker URL - per docs: response contains 'url' field
+                    worker_url = route_data.get("url") or route_data.get("endpoint_url")
+
+                    if worker_url:
+                        break  # Got a worker URL, proceed
+
+                    # No URL - check if workers are loading
+                    status = route_data.get("status", "")
+                    if "loading" in status.lower():
+                        logger.info(f"⏳ Workers loading, waiting {retry_delay}s... ({status})")
+                        await asyncio.sleep(retry_delay)
+                        continue
+                    elif "error" in status.lower():
+                        logger.error(f"❌ Vast.ai worker error: {status}")
+                        raise Exception(f"Vast.ai worker error: {status}")
+                    else:
+                        # Unknown status, wait and retry
+                        logger.warning(f"⚠️ Unexpected route response, retrying... ({status})")
+                        await asyncio.sleep(retry_delay)
+                        continue
+
+                if not worker_url:
+                    logger.error(f"❌ No Vast.ai worker available after {max_retries} attempts")
+                    raise Exception("No Vast.ai worker available - workers may still be loading")
 
             # Remove trailing slash if present
             worker_url = worker_url.rstrip("/")
