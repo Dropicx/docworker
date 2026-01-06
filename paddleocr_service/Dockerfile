@@ -104,7 +104,7 @@ RUN pip install --no-cache-dir --no-deps "paddleocr>=3.3.0" && \
     premailer \
     openpyxl \
     attrdict3 \
-    PyYAML \
+    "PyYAML==6.0.2" \
     scikit-learn \
     scipy \
     pandas \
@@ -117,7 +117,15 @@ RUN pip install --no-cache-dir --no-deps "paddleocr>=3.3.0" && \
     huggingface-hub \
     requests \
     urllib3 \
-    charset-normalizer
+    charset-normalizer \
+    "aistudio-sdk>=0.3.5" \
+    chardet \
+    colorlog \
+    "modelscope>=1.28.0" \
+    prettytable \
+    py-cpuinfo \
+    "ruamel.yaml" \
+    ujson
 
 # Copy application code
 COPY app/ app/
