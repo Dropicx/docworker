@@ -61,7 +61,7 @@ variable "server_name" {
 variable "server_type" {
   description = "Hetzner server type (CPX51 = 16 vCPU, 32GB RAM for PP-StructureV3)"
   type        = string
-  default     = "cpx51"  # cpx51 = 16 vCPU, 32GB RAM, ~€67/mo - good for PP-StructureV3 CPU
+  default     = "cpx51" # cpx51 = 16 vCPU, 32GB RAM, ~€67/mo - good for PP-StructureV3 CPU
 }
 
 variable "github_repo" {
@@ -86,7 +86,7 @@ variable "github_token" {
 variable "location" {
   description = "Hetzner datacenter location"
   type        = string
-  default     = "fsn1"  # Falkenstein, Germany (closest to most EU regions)
+  default     = "fsn1" # Falkenstein, Germany (closest to most EU regions)
 }
 
 variable "ssh_public_key_path" {
@@ -149,6 +149,10 @@ locals {
       - htop
       - ufw
       - fail2ban
+
+    # bootcmd runs BEFORE write_files - create directory first!
+    bootcmd:
+      - mkdir -p /opt/paddleocr
 
     write_files:
       - path: /etc/motd
@@ -252,7 +256,7 @@ locals {
                   curl -s http://localhost:9124/health | python3 -m json.tool 2>/dev/null || curl -s http://localhost:9124/health
                   break
               fi
-              echo "   Waiting... ($i/30)"
+              echo "   Waiting... ($$i/30)"
               sleep 10
           done
 
@@ -271,7 +275,7 @@ locals {
           echo "📋 Add these to your backend environment:"
           echo ""
           echo "   EXTERNAL_OCR_URL=http://$$(curl -s ifconfig.me):9124"
-          echo "   EXTERNAL_API_KEY=$$(cat /opt/paddleocr/API_KEY.txt)"
+          echo "   EXTERNAL_API_KEY=$$(cat /opt/paddleocr/API_KEY.txt | tr -d '[:space:]')"
           echo "   USE_EXTERNAL_OCR=true"
           echo ""
           echo "📊 Useful commands:"
@@ -322,8 +326,8 @@ locals {
       - ufw allow 22/tcp
       - ufw allow 9124/tcp
       - ufw --force enable
-      - mkdir -p /opt/paddleocr
       - chown -R root:root /opt/paddleocr
+      - chmod 755 /opt/paddleocr/deploy.sh
       - fallocate -l 8G /swapfile
       - chmod 600 /swapfile
       - mkswap /swapfile
