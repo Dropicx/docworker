@@ -5,6 +5,7 @@ Worker-ready service for managing OCR engine selection and configuration.
 Supports multiple OCR engines based on database configuration.
 """
 
+import asyncio
 import base64
 import json
 import logging
@@ -469,32 +470,57 @@ class OCREngineManager:
             logger.info(f"🔗 Calling route endpoint: {route_url}")
             logger.info(f"📍 Endpoint name: {VASTAI_ENDPOINT_NAME}")
 
-            route_response = await client.post(
-                route_url,
-                headers={
-                    "Content-Type": "application/json",
-                    "Accept": "application/json"
-                },
-                json={
-                    "endpoint": VASTAI_ENDPOINT_NAME,
-                    "api_key": VASTAI_API_KEY,
-                    "cost": 242.0  # Estimated compute units for OCR request
-                }
-            )
+            # Retry loop - workers may be loading (cold start takes ~60-90s)
+            max_retries = 12  # 12 retries * 5s = 60s max wait
+            retry_delay = 5.0
+            worker_url = None
 
-            if route_response.status_code != 200:
-                error_text = route_response.text
-                logger.error(f"❌ Vast.ai route failed: {route_response.status_code} - {error_text}")
-                raise Exception(f"Vast.ai route failed: {route_response.status_code}")
+            for attempt in range(max_retries):
+                route_response = await client.post(
+                    route_url,
+                    headers={
+                        "Content-Type": "application/json",
+                        "Accept": "application/json"
+                    },
+                    json={
+                        "endpoint": VASTAI_ENDPOINT_NAME,
+                        "api_key": VASTAI_API_KEY,
+                        "cost": 242.0  # Estimated compute units for OCR request
+                    }
+                )
 
-            route_data = route_response.json()
-            logger.info(f"📍 Route response: {route_data}")
+                if route_response.status_code != 200:
+                    error_text = route_response.text
+                    logger.error(f"❌ Vast.ai route failed: {route_response.status_code} - {error_text}")
+                    raise Exception(f"Vast.ai route failed: {route_response.status_code}")
 
-            # Get worker URL - per docs: response contains 'url' field
-            worker_url = route_data.get("url") or route_data.get("endpoint_url")
+                route_data = route_response.json()
+                logger.info(f"📍 Route response (attempt {attempt + 1}): {route_data}")
+
+                # Get worker URL - per docs: response contains 'url' field
+                worker_url = route_data.get("url") or route_data.get("endpoint_url")
+
+                if worker_url:
+                    break  # Got a worker URL, proceed
+
+                # No URL - check if workers are loading
+                status = route_data.get("status", "")
+                if "loading" in status.lower():
+                    logger.info(f"⏳ Workers loading, waiting {retry_delay}s... ({status})")
+                    await asyncio.sleep(retry_delay)
+                    continue
+                elif "error" in status.lower():
+                    logger.error(f"❌ Vast.ai worker error: {status}")
+                    raise Exception(f"Vast.ai worker error: {status}")
+                else:
+                    # Unknown status, wait and retry
+                    logger.warning(f"⚠️ Unexpected route response, retrying... ({status})")
+                    await asyncio.sleep(retry_delay)
+                    continue
+
             if not worker_url:
-                logger.error(f"❌ Vast.ai route response missing url: {route_data}")
-                raise Exception("Vast.ai route response missing url field")
+                logger.error(f"❌ No Vast.ai worker available after {max_retries} attempts")
+                raise Exception("No Vast.ai worker available - workers may still be loading")
 
             # Remove trailing slash if present
             worker_url = worker_url.rstrip("/")
