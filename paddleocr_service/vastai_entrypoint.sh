@@ -119,19 +119,53 @@ echo "API: $MODEL_SERVER_URL"
 echo "Health: $MODEL_HEALTH_ENDPOINT"
 echo "=============================================="
 
-# ==================== VAST.AI SERVERLESS INFO ====================
-# NOTE: PyWorker is started by Vast.ai's serverless system via PYWORKER_REPO
-# We do NOT start PyWorker here to avoid port 9123 conflicts
-# Our job is just to start uvicorn on port 9124 (MODEL_SERVER_PORT)
+# ==================== VAST.AI SERVERLESS - START PYWORKER ====================
 echo ""
 echo "Serverless environment:"
 echo "  CONTAINER_ID: ${CONTAINER_ID:-not set}"
 echo "  VAST_TCP_PORT_9123: ${VAST_TCP_PORT_9123:-not set}"
-echo "  PYWORKER_REPO: ${PYWORKER_REPO:-not set}"
-echo ""
-echo "PyWorker will be started by Vast.ai via PYWORKER_REPO"
-echo "Model server ready on port 9124 for PyWorker to proxy"
+echo "  REPORT_ADDR: ${REPORT_ADDR:-not set}"
 echo "=============================================="
 
-# Keep script running - wait for uvicorn
+# Start PyWorker if we have serverless env vars (CONTAINER_ID set by Vast.ai)
+if [ -n "$CONTAINER_ID" ]; then
+    echo "Serverless mode detected (CONTAINER_ID=$CONTAINER_ID)"
+    echo "Starting PyWorker on port 9123..."
+
+    # Check if port 9123 is already in use
+    if curl -s http://127.0.0.1:9123/health > /dev/null 2>&1; then
+        echo "Port 9123 already responding - PyWorker may already be running"
+    else
+        # Start PyWorker in background
+        cd /app/pyworker
+        python worker.py 2>&1 | tee /var/log/portal/pyworker.log &
+        PYWORKER_PID=$!
+        echo "PyWorker started with PID: $PYWORKER_PID"
+
+        # Wait a moment for PyWorker to start
+        sleep 3
+
+        # Verify PyWorker is running
+        if kill -0 $PYWORKER_PID 2>/dev/null; then
+            echo "PyWorker is running"
+        else
+            echo "WARNING: PyWorker may have failed to start"
+            cat /var/log/portal/pyworker.log | tail -20
+        fi
+    fi
+else
+    echo "Standalone mode (no CONTAINER_ID) - PyWorker not started"
+    echo "Model server available directly on port 9124"
+fi
+
+echo "=============================================="
+echo "PP-StructureV3 Service READY"
+echo "  Model server: http://127.0.0.1:9124"
+if [ -n "$CONTAINER_ID" ]; then
+    echo "  PyWorker: http://127.0.0.1:9123"
+    echo "  External: https://run.vast.ai/route/..."
+fi
+echo "=============================================="
+
+# Keep script running - wait for uvicorn (primary process)
 wait $UVICORN_PID
