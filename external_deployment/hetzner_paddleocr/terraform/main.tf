@@ -7,10 +7,8 @@
 #   3. terraform plan
 #   4. terraform apply
 #
-# After deployment:
-#   1. SSH to server: terraform output -raw ssh_command
-#   2. Deploy: ./deploy.sh
-#   3. Get API key: terraform output -raw api_key
+# With auto_deploy=true (default), deployment runs automatically.
+# Get API key: terraform output -raw api_key
 # =============================================================================
 
 terraform {
@@ -28,6 +26,10 @@ terraform {
     local = {
       source  = "hashicorp/local"
       version = "~> 2.4"
+    }
+    null = {
+      source  = "hashicorp/null"
+      version = "~> 3.2"
     }
   }
 }
@@ -97,6 +99,18 @@ variable "ssh_public_key" {
   description = "SSH public key content (overrides ssh_public_key_path if set)"
   type        = string
   default     = ""
+}
+
+variable "ssh_private_key_path" {
+  description = "Path to SSH private key file (for auto-deploy)"
+  type        = string
+  default     = "~/.ssh/id_rsa"
+}
+
+variable "auto_deploy" {
+  description = "Automatically run deploy.sh after VM creation"
+  type        = bool
+  default     = true
 }
 
 # -----------------------------------------------------------------------------
@@ -382,6 +396,37 @@ resource "hcloud_firewall" "paddleocr" {
 resource "hcloud_firewall_attachment" "paddleocr" {
   firewall_id = hcloud_firewall.paddleocr.id
   server_ids  = [hcloud_server.paddleocr.id]
+}
+
+# -----------------------------------------------------------------------------
+# Auto Deploy (runs deploy.sh automatically)
+# -----------------------------------------------------------------------------
+
+resource "null_resource" "deploy" {
+  count = var.auto_deploy ? 1 : 0
+
+  depends_on = [hcloud_server.paddleocr, hcloud_firewall_attachment.paddleocr]
+
+  connection {
+    type        = "ssh"
+    user        = "root"
+    host        = hcloud_server.paddleocr.ipv4_address
+    private_key = file(pathexpand(var.ssh_private_key_path))
+    timeout     = "10m"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "echo '⏳ Waiting for cloud-init to complete...'",
+      "cloud-init status --wait || true",
+      "echo '✅ Cloud-init complete, starting deployment...'",
+      "cd /opt/paddleocr && ./deploy.sh",
+      "echo ''",
+      "echo '=========================================='",
+      "echo '✅ PP-StructureV3 deployed successfully!'",
+      "echo '=========================================='",
+    ]
+  }
 }
 
 # -----------------------------------------------------------------------------

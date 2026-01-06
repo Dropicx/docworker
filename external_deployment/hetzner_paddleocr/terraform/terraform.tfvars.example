@@ -36,3 +36,11 @@ github_token = "ghp_your_github_token_here"
 
 # Optional: SSH public key content (overrides path if set)
 #ssh_public_key = "ssh-rsa AAAA..."
+
+# Optional: Path to SSH private key (default: ~/.ssh/id_rsa)
+# Used for auto-deploy to SSH into server and run deploy.sh
+#ssh_private_key_path = "~/.ssh/id_rsa"
+
+# Optional: Auto-deploy after VM creation (default: true)
+# Set to false to manually run deploy.sh via SSH
+#auto_deploy = true
