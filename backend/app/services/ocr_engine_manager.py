@@ -655,6 +655,25 @@ class OCREngineManager:
                 stripped[0] == '-' and stripped[1] == ' '
             )
 
+            # Document header elements that should stay on separate lines
+            is_header_element = (
+                # German greeting
+                'Sehr geehrt' in stripped or
+                # Date of birth
+                'geb. am' in stripped or
+                'geb.am' in stripped or
+                # Address indicators (German street types)
+                bool(re.search(r'\b(Straße|Strasse|Weg|Platz|Allee|Ring|Gasse)\b', stripped, re.IGNORECASE)) or
+                # Postal code pattern (5 digits followed by city, or masked XXXXX)
+                bool(re.search(r'\b(\d{5}|XXXXX|xxxxx)\s+[A-ZÄÖÜa-zäöü]', stripped)) or
+                # Date pattern at end of line (DD.MM.YYYY or XX.XX.XXXX masked)
+                bool(re.search(r'[\dXx]{2}\.[\dXx]{2}\.[\dXx]{4}\s*$', stripped)) or
+                # Doctor titles / signatures
+                bool(re.match(r'^Dr\.?\s*(med\.?)?', stripped, re.IGNORECASE)) or
+                # Fax/Tel patterns
+                bool(re.search(r'\b(Fax|Tel|Telefon)\b', stripped, re.IGNORECASE))
+            )
+
             is_block_end = (
                 # Page separator
                 stripped == '---' or
@@ -668,6 +687,8 @@ class OCREngineManager:
                 bool(re.match(r'^\d+[\.\)]\s', stripped)) or
                 # Bullet point
                 is_bullet or
+                # Document header element (address, date, greeting, etc.)
+                is_header_element or
                 # Very short line (likely header/label, not wrapped text)
                 len(stripped) < 30
             )
