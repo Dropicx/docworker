@@ -90,16 +90,17 @@ ENV PYTHONPATH=/app \
     USE_GPU=true
 
 # Vast.ai serverless variables
-ENV MODEL_SERVER_URL=http://127.0.0.1:9123 \
-    MODEL_HEALTH_ENDPOINT=http://127.0.0.1:9123/health \
+# Model server on 9124 (internal), PyWorker on 9123 (external)
+ENV MODEL_SERVER_URL=http://127.0.0.1:9124 \
+    MODEL_HEALTH_ENDPOINT=http://127.0.0.1:9124/health \
     MODEL_LOG=/var/log/portal/ppstructure.log
 
-# Health check - extended start period for model loading
+# Health check - check internal model server port
 HEALTHCHECK --interval=30s --timeout=60s --start-period=180s --retries=5 \
-    CMD curl -f http://localhost:9123/health || exit 1
+    CMD curl -f http://localhost:9124/health || exit 1
 
-# Expose port
-EXPOSE 9123
+# Expose both ports (9123 for PyWorker, 9124 for direct access)
+EXPOSE 9123 9124
 
 # Default: Run uvicorn directly (for Railway/standalone)
 # For Vast.ai serverless: override with vastai_entrypoint.sh
