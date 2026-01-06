@@ -113,10 +113,47 @@ if ! curl -s "$MODEL_HEALTH_ENDPOINT" > /dev/null 2>&1; then
 fi
 
 echo "=============================================="
-echo "PP-StructureV3 READY"
+echo "PP-StructureV3 Model Server READY"
 echo "API: $MODEL_SERVER_URL"
 echo "Health: $MODEL_HEALTH_ENDPOINT"
 echo "=============================================="
 
-# Keep script running (for Vast.ai to maintain the service)
-wait $UVICORN_PID
+# ==================== START PYWORKER (Serverless Registration) ====================
+# PyWorker registers with Vast.ai autoscaler for /route/ endpoint support
+
+PYWORKER_DIR="/app/pyworker"
+
+if [ -d "$PYWORKER_DIR" ] && [ -f "$PYWORKER_DIR/worker.py" ]; then
+    echo ""
+    echo "Starting PyWorker for serverless registration..."
+
+    # Install PyWorker dependencies if needed
+    if [ -f "$PYWORKER_DIR/requirements.txt" ]; then
+        pip install -q -r "$PYWORKER_DIR/requirements.txt" 2>/dev/null || true
+    fi
+
+    # Start PyWorker in background
+    cd "$PYWORKER_DIR"
+    python worker.py 2>&1 | tee -a "$MODEL_LOG" &
+    PYWORKER_PID=$!
+    echo "PyWorker started with PID: $PYWORKER_PID"
+
+    # Wait a moment for registration
+    sleep 5
+
+    echo "=============================================="
+    echo "PP-StructureV3 + PyWorker READY"
+    echo "Serverless routing enabled!"
+    echo "=============================================="
+
+    # Wait for both processes
+    wait $UVICORN_PID $PYWORKER_PID
+else
+    echo ""
+    echo "PyWorker not found - running in direct mode only"
+    echo "(Set PYWORKER_REPO or include pyworker/ in Docker image)"
+    echo "=============================================="
+
+    # Keep script running (for Vast.ai to maintain the service)
+    wait $UVICORN_PID
+fi

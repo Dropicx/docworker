@@ -62,11 +62,15 @@ RUN pip install --no-cache-dir \
     pydantic==2.10.3 \
     python-multipart==0.0.9
 
+# Install Vast.ai PyWorker SDK for serverless registration
+RUN pip install --no-cache-dir "vastai-sdk>=0.3.0" aiohttp psutil || echo "vastai-sdk install failed, will retry at runtime"
+
 # Create non-root user
 RUN useradd -m -u 1000 appuser
 
-# Copy application code and entrypoint
+# Copy application code, PyWorker, and entrypoint
 COPY app/ app/
+COPY pyworker/ pyworker/
 COPY vastai_entrypoint.sh /app/vastai_entrypoint.sh
 RUN chmod +x /app/vastai_entrypoint.sh
 
