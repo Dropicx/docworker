@@ -504,53 +504,11 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
 
             {showOriginal && (
               <div className="animate-slide-down">
-                <div className="text-result bg-gradient-to-br from-neutral-50 to-primary-50/30 markdown-content">
-                  <ReactMarkdown
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      h1: ({ children }) => (
-                        <h1 className="text-2xl font-bold text-primary-900 mb-4 mt-3">{children}</h1>
-                      ),
-                      h2: ({ children }) => (
-                        <h2 className="text-xl font-bold text-primary-900 mb-3 mt-4">{children}</h2>
-                      ),
-                      h3: ({ children }) => (
-                        <h3 className="text-lg font-semibold text-primary-900 mb-2 mt-3">
-                          {children}
-                        </h3>
-                      ),
-                      p: ({ children }) => (
-                        <p className="mb-3 text-primary-700 leading-relaxed">{children}</p>
-                      ),
-                      ul: ({ children }) => (
-                        <ul className="mb-3 space-y-2 text-primary-700">{children}</ul>
-                      ),
-                      ol: ({ children }) => (
-                        <ol className="list-decimal ml-6 mb-3 space-y-2 text-primary-700">
-                          {children}
-                        </ol>
-                      ),
-                      li: ({ children }) => <li className="pl-2 leading-relaxed">{children}</li>,
-                      strong: ({ children }) => (
-                        <strong className="font-semibold text-primary-900">{children}</strong>
-                      ),
-                      em: ({ children }) => <em className="italic text-primary-600">{children}</em>,
-                      code: ({ children, className }) => {
-                        const isInline = !className?.includes('language-');
-                        return isInline ? (
-                          <code className="bg-primary-100 text-primary-800 px-1 py-0.5 rounded text-xs font-mono">
-                            {children}
-                          </code>
-                        ) : (
-                          <pre className="bg-primary-100 text-primary-800 p-3 rounded-lg overflow-x-auto mb-3">
-                            <code className="font-mono text-xs">{children}</code>
-                          </pre>
-                        );
-                      },
-                    }}
-                  >
+                <div className="text-result bg-gradient-to-br from-neutral-50 to-primary-50/30">
+                  {/* Raw text display - no markdown formatting, preserves whitespace */}
+                  <pre className="whitespace-pre-wrap font-mono text-sm text-primary-800 leading-relaxed overflow-x-auto">
                     {result.original_text}
-                  </ReactMarkdown>
+                  </pre>
                 </div>
               </div>
             )}
