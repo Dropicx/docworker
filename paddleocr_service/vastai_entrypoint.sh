@@ -129,8 +129,8 @@ echo ""
 
 # ==================== VAST.AI SERVERLESS PYWORKER ====================
 # Check if we're running in Vast.ai Serverless
-# REPORT_ADDR is set automatically by Vast.ai, or user can set SERVERLESS=true
-if [ -n "$REPORT_ADDR" ] || [ "$SERVERLESS" = "true" ]; then
+# Triggers: REPORT_ADDR set, SERVERLESS=true, or CONTAINER_ID set (auto by Vast.ai)
+if [ -n "$REPORT_ADDR" ] || [ "$SERVERLESS" = "true" ] || [ -n "$CONTAINER_ID" ]; then
     echo ""
     echo "Vast.ai Serverless mode enabled"
 
