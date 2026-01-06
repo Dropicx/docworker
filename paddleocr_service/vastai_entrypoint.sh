@@ -127,9 +127,9 @@ echo "  VAST_TCP_PORT_9123: ${VAST_TCP_PORT_9123:-not set}"
 echo "  REPORT_ADDR: ${REPORT_ADDR:-not set}"
 echo "=============================================="
 
-# Start PyWorker if we have serverless env vars (CONTAINER_ID set by Vast.ai)
-if [ -n "$CONTAINER_ID" ]; then
-    echo "Serverless mode detected (CONTAINER_ID=$CONTAINER_ID)"
+# Start PyWorker if serverless mode (SERVERLESS=true or CONTAINER_ID set)
+if [ "$SERVERLESS" = "true" ] || [ -n "$CONTAINER_ID" ]; then
+    echo "Serverless mode detected (SERVERLESS=$SERVERLESS, CONTAINER_ID=${CONTAINER_ID:-not set})"
     echo "Starting PyWorker on port 9123..."
 
     # Check if port 9123 is already in use
