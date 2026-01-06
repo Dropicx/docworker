@@ -419,132 +419,97 @@ class OCREngineManager:
         self, file_content: bytes, file_type: str, filename: str
     ) -> tuple[str, float]:
         """
-        Extract text using Vast.ai PaddleOCR-VL via serverless API.
+        Extract text using Vast.ai PP-StructureV3 GPU service via serverless API.
 
-        GPU-accelerated OCR using PaddlePaddle/PaddleOCR-VL model on Vast.ai serverless.
+        GPU-accelerated OCR using PP-StructureV3 on Vast.ai serverless.
         Uses 2-step routing:
-        1. GET /route/ to get signed worker URL with authentication signature
-        2. POST to worker with auth_data + payload
+        1. POST to /route endpoint to get worker URL
+        2. POST to worker's /extract endpoint with multipart form data
 
-        Uses existing pdf2image for PDF→image conversion.
+        Returns structured output with text, markdown, and confidence.
         Raises exception on failure to allow fallback to other services.
         """
-        logger.info(f"🚀 Calling Vast.ai PaddleOCR-VL (GPU serverless)")
+        logger.info(f"🚀 Calling Vast.ai PP-StructureV3 (GPU serverless)")
         logger.info(f"📄 File: {filename}, Type: {file_type}, Size: {len(file_content)} bytes")
 
-        # Convert PDF pages to images, or use image directly
-        images_base64 = []
-        if file_type.lower() == "pdf":
-            # Use pdf2image (already in requirements.txt)
-            pil_images = convert_from_bytes(file_content, dpi=150)
-            for img in pil_images:
-                buffer = BytesIO()
-                img.save(buffer, format="PNG")
-                images_base64.append(base64.b64encode(buffer.getvalue()).decode())
-            logger.info(f"📄 Converted PDF to {len(images_base64)} images")
-        else:
-            images_base64.append(base64.b64encode(file_content).decode())
-
-        # Process each image with OCR via Vast.ai serverless API
-        all_text = []
+        # Extended timeout for GPU OCR (PP-StructureV3 can take 2-3 minutes)
         async with httpx.AsyncClient(timeout=300.0, verify=False) as client:
-            for i, img_b64 in enumerate(images_base64):
-                # Step 1: Get signed worker URL from /route/
-                # Cost estimate: ~500 tokens per page for OCR
-                route_response = await client.post(
-                    VASTAI_ROUTE_URL,
-                    headers={
-                        "Authorization": f"Bearer {VASTAI_API_KEY}",
-                        "Content-Type": "application/json",
-                        "Accept": "application/json"
-                    },
-                    json={
-                        "endpoint": VASTAI_ENDPOINT_NAME,
-                        "cost": 1000  # Token cost estimate for OCR request
-                    }
-                )
+            # Step 1: Get worker URL from Vast.ai route endpoint
+            route_url = f"https://api.vast.ai/v1/endpoints/{VASTAI_ENDPOINT_NAME}/route"
+            logger.info(f"🔗 Calling route endpoint: {route_url}")
 
-                if route_response.status_code != 200:
-                    error_text = route_response.text
-                    logger.error(f"❌ Vast.ai route failed: {route_response.status_code} - {error_text}")
-                    raise Exception(f"Vast.ai route failed: {route_response.status_code}")
+            route_response = await client.post(
+                route_url,
+                headers={
+                    "Authorization": f"Bearer {VASTAI_API_KEY}",
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                json={}  # Empty body for route request
+            )
 
-                route_data = route_response.json()
-                worker_url = route_data.get("url")
-                signature = route_data.get("signature")
-                reqnum = route_data.get("reqnum")
-                request_idx = route_data.get("request_idx")
+            if route_response.status_code != 200:
+                error_text = route_response.text
+                logger.error(f"❌ Vast.ai route failed: {route_response.status_code} - {error_text}")
+                raise Exception(f"Vast.ai route failed: {route_response.status_code}")
 
-                if not worker_url or not signature:
-                    logger.error(f"❌ Vast.ai route response missing data: {route_data}")
-                    raise Exception("Vast.ai route response missing url or signature")
+            route_data = route_response.json()
+            logger.info(f"📍 Route response: {route_data}")
 
-                logger.debug(f"🔗 Got worker URL: {worker_url}, request_idx: {request_idx}")
+            # Get worker URL (field name is 'endpoint_url' from Vast.ai)
+            worker_url = route_data.get("endpoint_url") or route_data.get("url")
+            if not worker_url:
+                logger.error(f"❌ Vast.ai route response missing endpoint_url: {route_data}")
+                raise Exception("Vast.ai route response missing endpoint_url")
 
-                # Step 2: Send OCR request to worker with auth_data + payload
-                # PaddleOCR-VL supports: OCR, Table Recognition, Formula Recognition, Chart Recognition
-                # "OCR:" outputs pipe-delimited tables (col1 | col2 | col3) - easy to convert to markdown
-                # "Table Recognition:" outputs <fcel>/<nl> format - needs parsing
-                messages = [{
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/png;base64,{img_b64}"
-                            }
-                        },
-                        {"type": "text", "text": "OCR:"}
-                    ]
-                }]
+            # Remove trailing slash if present
+            worker_url = worker_url.rstrip("/")
+            logger.info(f"🔗 Using worker URL: {worker_url}")
 
-                ocr_response = await client.post(
-                    f"{worker_url}/v1/chat/completions",
-                    headers={"Content-Type": "application/json"},
-                    json={
-                        "auth_data": {
-                            "cost": 1000.0,
-                            "endpoint": VASTAI_ENDPOINT_NAME,
-                            "reqnum": reqnum,
-                            "request_idx": request_idx,
-                            "signature": signature,
-                            "url": worker_url
-                        },
-                        "payload": {
-                            "model": "PaddlePaddle/PaddleOCR-VL",
-                            "messages": messages,
-                            "temperature": 0.0,
-                            "max_tokens": 4096
-                        }
-                    }
-                )
+            # Step 2: Call PP-StructureV3 /extract endpoint with multipart form data
+            mime_type = "application/pdf" if file_type.lower() == "pdf" else f"image/{file_type}"
+            files = {"file": (filename, file_content, mime_type)}
+            params = {"mode": "structured"}  # Request structured output with markdown
 
-                if ocr_response.status_code == 200:
-                    result = ocr_response.json()
-                    text = result["choices"][0]["message"]["content"]
-                    all_text.append(text)
-                    usage = result.get("usage", {})
-                    tokens = usage.get("total_tokens", 0)
-                    logger.info(f"✅ Page {i+1}/{len(images_base64)}: {len(text)} chars, {tokens} tokens")
-                elif ocr_response.status_code in (401, 403):
-                    logger.error(f"❌ Vast.ai authentication failed: {ocr_response.status_code}")
-                    raise Exception(f"Vast.ai authentication failed: {ocr_response.status_code}")
-                else:
-                    error_text = ocr_response.text[:500]
-                    logger.error(f"❌ Vast.ai OCR error: {ocr_response.status_code} - {error_text}")
-                    raise Exception(f"Vast.ai OCR returned {ocr_response.status_code}")
+            extract_url = f"{worker_url}/extract"
+            logger.info(f"📤 Calling extract endpoint: {extract_url}")
 
-        extracted_text = "\n\n---\n\n".join(all_text)
+            ocr_response = await client.post(
+                extract_url,
+                files=files,
+                params=params,
+                timeout=300.0  # Extended timeout for large documents
+            )
 
-        # Post-process: Convert pipe-delimited tables to markdown format
-        extracted_text = self._convert_pipe_tables_to_markdown(extracted_text)
+            if ocr_response.status_code == 200:
+                result = ocr_response.json()
+                logger.info(f"📥 Raw response keys: {list(result.keys())}")
 
-        # Post-process: Normalize line breaks (join paragraph lines, keep intentional breaks)
-        extracted_text = self._normalize_line_breaks(extracted_text)
+                # Extract text - prefer markdown for structured content (tables, etc.)
+                extracted_text = result.get("markdown") or result.get("text", "")
+                confidence = result.get("confidence", 0.90)
+                processing_time = result.get("processing_time", 0.0)
+                engine = result.get("engine", "PPStructureV3")
+                mode = result.get("mode", "structured")
 
-        logger.info(f"✅ Vast.ai PaddleOCR-VL completed: {len(extracted_text)} chars total")
+                logger.info(f"✅ PP-StructureV3 extraction completed in {processing_time:.2f}s (mode: {mode})")
+                logger.info(f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars")
 
-        return extracted_text, 0.95
+                if result.get("markdown"):
+                    logger.info("📝 Using Markdown output (structured)")
+
+                # Post-process: Normalize line breaks (join paragraph lines, keep intentional breaks)
+                extracted_text = self._normalize_line_breaks(extracted_text)
+
+                return extracted_text, float(confidence)
+
+            elif ocr_response.status_code in (401, 403):
+                logger.error(f"❌ Vast.ai authentication failed: {ocr_response.status_code}")
+                raise Exception(f"Vast.ai authentication failed: {ocr_response.status_code}")
+            else:
+                error_text = ocr_response.text[:500]
+                logger.error(f"❌ Vast.ai OCR error: {ocr_response.status_code} - {error_text}")
+                raise Exception(f"Vast.ai OCR returned {ocr_response.status_code}")
 
     def _convert_pipe_tables_to_markdown(self, text: str) -> str:
         """

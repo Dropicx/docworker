@@ -126,27 +126,64 @@ async def lifespan(app: FastAPI):
     """Initialize PP-StructureV3 at startup"""
     global structure_pipeline, ocr_engine
 
-    logger.info("PaddleOCR Microservice v2.0 starting up...")
+    # Check if GPU mode is enabled via environment variable
+    use_gpu = os.environ.get("USE_GPU", "false").lower() == "true"
+    device = 'gpu' if use_gpu else 'cpu'
+
+    logger.info("PaddleOCR Microservice v2.1 starting up...")
     logger.info(f"   PPStructureV3 available: {PPSTRUCTUREV3_AVAILABLE}")
     logger.info(f"   PaddleOCR 3.x available: {PADDLEOCR_AVAILABLE}")
+    logger.info(f"   USE_GPU: {use_gpu}")
+    logger.info(f"   Device: {device}")
 
-    # PP-StructureV3 DISABLED - uses 32GB+ RAM regardless of parameters
-    # The use_chart_recognition=False parameter doesn't prevent model loading
-    logger.warning("⚠️ PP-StructureV3 DISABLED - too memory hungry (32GB+)")
-    logger.info("Using PaddleOCR 3.x standard mode instead (~500MB)")
-    structure_pipeline = None
-
-    # Initialize PaddleOCR 3.x (standard mode, ~500MB RAM)
-    if PADDLEOCR_AVAILABLE:
+    # Set PaddlePaddle device if GPU mode
+    if use_gpu:
         try:
-            logger.info("Initializing PaddleOCR 3.x...")
+            import paddle
+            paddle.set_device('gpu:0')
+            logger.info("✅ PaddlePaddle GPU device set to gpu:0")
+        except Exception as e:
+            logger.warning(f"⚠️ Failed to set GPU device: {e}, falling back to CPU")
+            use_gpu = False
+            device = 'cpu'
+
+    # PP-StructureV3 initialization
+    # On GPU: Enable PP-StructureV3 (GPU has sufficient VRAM)
+    # On CPU: Disable PP-StructureV3 (uses 32GB+ RAM)
+    if use_gpu and PPSTRUCTUREV3_AVAILABLE:
+        try:
+            logger.info("🚀 Initializing PP-StructureV3 (GPU mode)...")
             start_init = time.time()
-            # Disable optional preprocessing models to reduce startup time
+            # PaddleOCR 3.x API: use 'device' instead of 'use_gpu'
+            structure_pipeline = PPStructureV3(
+                device='gpu:0',
+                lang="german"
+            )
+            init_time = time.time() - start_init
+            logger.info(f"✅ PP-StructureV3 initialized in {init_time:.2f}s")
+            logger.info("   Features: Document layout + Tables + Text extraction")
+            logger.info("   Output: Markdown + JSON structured data")
+        except Exception as e:
+            logger.error(f"❌ Failed to initialize PP-StructureV3: {e}")
+            logger.exception(e)
+            structure_pipeline = None
+    else:
+        # CPU mode: PP-StructureV3 disabled due to high RAM usage
+        if not use_gpu:
+            logger.warning("⚠️ PP-StructureV3 DISABLED on CPU - uses 32GB+ RAM")
+            logger.info("Using PaddleOCR 3.x standard mode instead (~500MB)")
+        structure_pipeline = None
+
+    # Initialize PaddleOCR 3.x as fallback (standard mode, ~500MB RAM)
+    if PADDLEOCR_AVAILABLE and structure_pipeline is None:
+        try:
+            logger.info(f"Initializing PaddleOCR 3.x ({device} mode)...")
+            start_init = time.time()
             ocr_engine = PaddleOCR(
                 lang='german',
-                device='cpu',
-                use_doc_orientation_classify=False,  # Skip document orientation detection
-                use_doc_unwarping=False,             # Skip document unwarping
+                device=device,
+                use_doc_orientation_classify=False,
+                use_doc_unwarping=False,
             )
             init_time = time.time() - start_init
             logger.info(f"✅ PaddleOCR initialized in {init_time:.2f}s")
@@ -157,9 +194,10 @@ async def lifespan(app: FastAPI):
             logger.exception(e)
 
     if structure_pipeline or ocr_engine:
-        logger.info("Service ready to process requests")
+        engine_name = "PP-StructureV3 (GPU)" if structure_pipeline else f"PaddleOCR 3.x ({device})"
+        logger.info(f"🟢 Service ready: {engine_name}")
     else:
-        logger.error("No OCR engine available!")
+        logger.error("🔴 No OCR engine available!")
 
     yield
 
@@ -181,24 +219,70 @@ app = FastAPI(
 def sanitize_for_json(obj: Any) -> Any:
     """
     Recursively convert numpy arrays and other non-JSON-serializable types to Python native types.
-    This is necessary because PP-StructureV3 returns numpy arrays in its output.
+    This is necessary because PP-StructureV3 returns numpy arrays, Font objects, and other
+    non-serializable types in its output.
     """
     import numpy as np
 
+    # Handle None
+    if obj is None:
+        return None
+
+    # Handle numpy types
     if isinstance(obj, np.ndarray):
         return obj.tolist()
     elif isinstance(obj, np.integer):
         return int(obj)
     elif isinstance(obj, np.floating):
         return float(obj)
-    elif isinstance(obj, dict):
-        return {k: sanitize_for_json(v) for k, v in obj.items()}
-    elif isinstance(obj, list):
-        return [sanitize_for_json(item) for item in obj]
-    elif isinstance(obj, tuple):
-        return tuple(sanitize_for_json(item) for item in obj)
-    else:
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+
+    # Handle basic Python types (return as-is)
+    if isinstance(obj, (str, int, float, bool)):
         return obj
+
+    # Handle dict
+    if isinstance(obj, dict):
+        return {str(k): sanitize_for_json(v) for k, v in obj.items()}
+
+    # Handle list
+    if isinstance(obj, list):
+        return [sanitize_for_json(item) for item in obj]
+
+    # Handle tuple
+    if isinstance(obj, tuple):
+        return [sanitize_for_json(item) for item in obj]
+
+    # Handle bytes
+    if isinstance(obj, bytes):
+        try:
+            return obj.decode('utf-8')
+        except UnicodeDecodeError:
+            return f"<bytes:{len(obj)}>"
+
+    # Handle PaddleX/PaddleOCR special types that aren't JSON-serializable
+    # Check by type name to avoid import dependencies
+    type_name = type(obj).__name__
+    module_name = type(obj).__module__ if hasattr(type(obj), '__module__') else ''
+
+    # Known non-serializable PaddleX types
+    if type_name in ('Font', 'Image', 'PILImage') or 'paddlex' in module_name or 'PIL' in module_name:
+        # Return string representation for debugging
+        return f"<{type_name}>"
+
+    # Try to convert to dict if object has __dict__
+    if hasattr(obj, '__dict__'):
+        try:
+            return sanitize_for_json(vars(obj))
+        except Exception:
+            return f"<{type_name}>"
+
+    # Last resort: try str conversion
+    try:
+        return str(obj)
+    except Exception:
+        return f"<unserializable:{type_name}>"
 
 
 def extract_with_ppstructurev3(file_path: str, filename: str) -> tuple[str, str, float, Dict]:
@@ -660,20 +744,28 @@ async def extract_text(
         print(f"📤 SENDING RESPONSE for {file.filename}", file=sys.stderr, flush=True)
         logger.info(f"📤 SENDING RESPONSE for {file.filename}")
 
+        # Final sanitization to ensure all response fields are JSON-serializable
+        # This catches any PaddleX Font objects or other non-serializable types
+        safe_structured_output = sanitize_for_json(structured_output) if structured_output else None
+        safe_markdown = str(markdown) if markdown else None
+        safe_text = str(text) if text else ""
+
+        details_dict = {
+            "filename": file.filename,
+            "file_size_bytes": file_size,
+            "file_type": "PDF" if is_pdf else "Image",
+            "pages_processed": safe_structured_output.get("total_pages", 1) if safe_structured_output else 1
+        }
+
         return OCRResponse(
-            text=text,
-            confidence=confidence,
-            processing_time=processing_time,
-            engine=engine,
-            mode=used_mode,
-            markdown=markdown,
-            structured_output=structured_output,
-            details={
-                "filename": file.filename,
-                "file_size_bytes": file_size,
-                "file_type": "PDF" if is_pdf else "Image",
-                "pages_processed": structured_output.get("total_pages", 1) if structured_output else 1
-            }
+            text=safe_text,
+            confidence=float(confidence),
+            processing_time=float(processing_time),
+            engine=str(engine),
+            mode=str(used_mode),
+            markdown=safe_markdown,
+            structured_output=safe_structured_output,
+            details=details_dict
         )
 
     except HTTPException:
