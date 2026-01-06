@@ -12,7 +12,7 @@ Setup:
 4. The /route/ endpoint will now work!
 """
 
-from vastai import Worker, WorkerConfig, HandlerConfig, LogActionConfig, BenchmarkConfig
+from vastai import Worker, WorkerConfig, HandlerConfig, LogActionConfig
 
 # PP-StructureV3 model configuration
 # Model server runs on 9124, PyWorker listens on 9123 and proxies
@@ -40,16 +40,6 @@ MODEL_INFO_LOG_MSGS = [
 ]
 
 
-def extract_benchmark_generator() -> dict:
-    """Generate a minimal benchmark payload for OCR."""
-    # For OCR we can't easily generate test images,
-    # so we use a minimal payload that the /extract endpoint accepts
-    return {
-        "mode": "structured",
-        "benchmark": True
-    }
-
-
 def ocr_workload_calculator(data: dict) -> float:
     """
     Calculate workload for OCR requests.
@@ -69,16 +59,13 @@ worker_config = WorkerConfig(
     model_healthcheck_url=MODEL_HEALTHCHECK_ENDPOINT,
     handlers=[
         # Main OCR extraction endpoint
+        # Note: No benchmark_config because /extract expects multipart file upload
+        # Vast.ai will use /health endpoint to verify readiness instead
         HandlerConfig(
             route="/extract",
             workload_calculator=ocr_workload_calculator,
             allow_parallel_requests=False,  # OCR is GPU-intensive, sequential processing
             max_queue_time=300.0,  # 5 minutes for large documents
-            benchmark_config=BenchmarkConfig(
-                generator=extract_benchmark_generator,
-                concurrency=1,
-                runs=1
-            )
         ),
         # Health check (lightweight)
         HandlerConfig(
