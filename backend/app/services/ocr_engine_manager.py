@@ -481,6 +481,9 @@ class OCREngineManager:
                 logger.debug(f"🔗 Got worker URL: {worker_url}, request_idx: {request_idx}")
 
                 # Step 2: Send OCR request to worker with auth_data + payload
+                # PaddleOCR-VL supports: OCR, Table Recognition, Formula Recognition, Chart Recognition
+                # "OCR:" outputs pipe-delimited tables (col1 | col2 | col3) - easy to convert to markdown
+                # "Table Recognition:" outputs <fcel>/<nl> format - needs parsing
                 messages = [{
                     "role": "user",
                     "content": [
@@ -531,9 +534,74 @@ class OCREngineManager:
                     raise Exception(f"Vast.ai OCR returned {ocr_response.status_code}")
 
         extracted_text = "\n\n---\n\n".join(all_text)
+
+        # Post-process: Convert pipe-delimited tables to markdown format
+        extracted_text = self._convert_pipe_tables_to_markdown(extracted_text)
+
         logger.info(f"✅ Vast.ai PaddleOCR-VL completed: {len(extracted_text)} chars total")
 
         return extracted_text, 0.95
+
+    def _convert_pipe_tables_to_markdown(self, text: str) -> str:
+        """
+        Convert pipe-delimited table rows from PaddleOCR-VL to proper markdown tables.
+
+        Input:  "Header1 | Header2 | Header3\\nVal1 | Val2 | Val3"
+        Output: "| Header1 | Header2 | Header3 |\\n|---------|---------|---------|\\n| Val1 | Val2 | Val3 |"
+        """
+        import re
+
+        lines = text.split('\n')
+        result_lines = []
+        in_table = False
+        table_lines = []
+
+        for line in lines:
+            # Check if line looks like a table row (has | separators and multiple columns)
+            stripped = line.strip()
+            if ' | ' in stripped and stripped.count('|') >= 1:
+                # Looks like a table row
+                if not in_table:
+                    in_table = True
+                    table_lines = []
+                table_lines.append(stripped)
+            else:
+                # Not a table row
+                if in_table and table_lines:
+                    # End of table - convert accumulated table lines
+                    result_lines.extend(self._format_markdown_table(table_lines))
+                    table_lines = []
+                    in_table = False
+                result_lines.append(line)
+
+        # Handle table at end of text
+        if in_table and table_lines:
+            result_lines.extend(self._format_markdown_table(table_lines))
+
+        return '\n'.join(result_lines)
+
+    def _format_markdown_table(self, table_lines: list[str]) -> list[str]:
+        """Convert list of pipe-delimited rows to markdown table format."""
+        if not table_lines:
+            return []
+
+        result = []
+        for i, line in enumerate(table_lines):
+            # Ensure line starts and ends with |
+            if not line.startswith('|'):
+                line = '| ' + line
+            if not line.endswith('|'):
+                line = line + ' |'
+            result.append(line)
+
+            # Add separator row after first row (header)
+            if i == 0:
+                # Count columns
+                cols = line.count('|') - 1
+                separator = '|' + '|'.join(['---'] * cols) + '|'
+                result.append(separator)
+
+        return result
 
     async def _extract_with_internal_paddleocr(
         self, file_content: bytes, file_type: str, filename: str
