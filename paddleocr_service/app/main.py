@@ -778,6 +778,15 @@ async def extract_text(
         )
 
 
+@app.post("/benchmark")
+async def benchmark():
+    """
+    Benchmark endpoint for Vast.ai PyWorker.
+    Accepts JSON payload and returns quickly to verify service is working.
+    """
+    return {"status": "ok", "service": "PP-StructureV3", "ready": structure_pipeline is not None or ocr_engine is not None}
+
+
 @app.get("/")
 async def root():
     """Root endpoint with service info"""
