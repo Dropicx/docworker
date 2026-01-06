@@ -139,12 +139,16 @@ if [ -n "$REPORT_ADDR" ] || [ "$SERVERLESS" = "true" ] || [ -n "$CONTAINER_ID" ]
     # REPORT_ADDR: The autoscaler control server (defaults to https://run.vast.ai)
     # MASTER_TOKEN: Authentication token (defaults to "mtoken" per vast-pyworker)
     # CONTAINER_ID: Auto-set by Vast.ai for all instances
+    # WORKER_PORT: The port the model server listens on (needed by vastai-sdk)
     export REPORT_ADDR="${REPORT_ADDR:-https://run.vast.ai}"
     export MASTER_TOKEN="${MASTER_TOKEN:-mtoken}"
+    export WORKER_PORT="${WORKER_PORT:-9123}"
 
     echo "  REPORT_ADDR: $REPORT_ADDR"
     echo "  MASTER_TOKEN: ${MASTER_TOKEN:0:4}****"
     echo "  CONTAINER_ID: ${CONTAINER_ID:-not set (will use fallback)}"
+    echo "  WORKER_PORT: $WORKER_PORT"
+    echo "  VAST_TCP_PORT_9123: ${VAST_TCP_PORT_9123:-not set}"
     echo "  SERVERLESS: ${SERVERLESS:-not set}"
 
     # Fallback CONTAINER_ID if not set (use hostname or random)
