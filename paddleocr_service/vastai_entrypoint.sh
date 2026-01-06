@@ -118,15 +118,40 @@ echo "API: $MODEL_SERVER_URL"
 echo "Health: $MODEL_HEALTH_ENDPOINT"
 echo "=============================================="
 
-# ==================== VAST.AI SERVERLESS ====================
-# For Vast.ai Serverless: PyWorker is started by Vast.ai's system via PYWORKER_REPO
-# This entrypoint only starts the model server
-# Set PYWORKER_REPO=https://github.com/Dropicx/doctranslator
-# Set PYWORKER_PATH=paddleocr_service/pyworker
+# ==================== VAST.AI SERVERLESS PYWORKER ====================
+# Check if we're running in Vast.ai Serverless
+# REPORT_ADDR is set automatically by Vast.ai, or user can set SERVERLESS=true
+if [ -n "$REPORT_ADDR" ] || [ "$SERVERLESS" = "true" ]; then
+    echo ""
+    echo "Vast.ai Serverless mode enabled"
+    echo "  REPORT_ADDR: ${REPORT_ADDR:-not set}"
+    echo "  SERVERLESS: ${SERVERLESS:-not set}"
+    echo "Starting PyWorker for autoscaler registration..."
 
-echo ""
-echo "Model server running. For Vast.ai Serverless, set PYWORKER_REPO."
-echo "=============================================="
+    # Install PyWorker dependencies if needed
+    pip install --quiet vastai-sdk aiohttp psutil 2>/dev/null || true
 
-# Keep script running
+    # Start PyWorker in background
+    cd /app
+    python pyworker/worker.py 2>&1 &
+    PYWORKER_PID=$!
+    echo "PyWorker started with PID: $PYWORKER_PID"
+
+    # Wait a moment and check if PyWorker is running
+    sleep 3
+    if kill -0 $PYWORKER_PID 2>/dev/null; then
+        echo "PyWorker running successfully!"
+        echo "=============================================="
+    else
+        echo "WARNING: PyWorker may have failed to start"
+        echo "=============================================="
+    fi
+else
+    echo ""
+    echo "Standalone mode (no REPORT_ADDR set)"
+    echo "PyWorker not started - direct API access only"
+    echo "=============================================="
+fi
+
+# Keep script running - wait for uvicorn
 wait $UVICORN_PID
