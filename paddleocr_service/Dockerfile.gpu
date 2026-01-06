@@ -91,9 +91,12 @@ ENV PYTHONPATH=/app \
 
 # Vast.ai serverless variables
 # Model server on 9124 (internal), PyWorker on 9123 (external)
+# SERVERLESS=true ensures PyWorker starts automatically
 ENV MODEL_SERVER_URL=http://127.0.0.1:9124 \
     MODEL_HEALTH_ENDPOINT=http://127.0.0.1:9124/health \
-    MODEL_LOG=/var/log/portal/ppstructure.log
+    MODEL_LOG=/var/log/portal/ppstructure.log \
+    SERVERLESS=true \
+    WORKER_PORT=9123
 
 # Health check - check internal model server port
 HEALTHCHECK --interval=30s --timeout=60s --start-period=180s --retries=5 \
@@ -102,6 +105,6 @@ HEALTHCHECK --interval=30s --timeout=60s --start-period=180s --retries=5 \
 # Expose both ports (9123 for PyWorker, 9124 for direct access)
 EXPOSE 9123 9124
 
-# Default: Run uvicorn directly (for Railway/standalone)
-# For Vast.ai serverless: override with vastai_entrypoint.sh
-CMD ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9123"]
+# Default: Run entrypoint script which starts uvicorn + PyWorker
+# The entrypoint handles both serverless (with PyWorker) and standalone modes
+CMD ["/app/vastai_entrypoint.sh"]
