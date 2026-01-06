@@ -63,15 +63,22 @@ variable "server_type" {
 }
 
 variable "github_repo" {
-  description = "GitHub repository URL for doctranslator"
+  description = "GitHub repository (format: owner/repo)"
   type        = string
-  default     = "https://github.com/Dropicx/doctranslator.git"
+  default     = "Dropicx/doctranslator"
 }
 
 variable "github_branch" {
   description = "Git branch to deploy"
   type        = string
   default     = "dev"
+}
+
+variable "github_token" {
+  description = "GitHub Personal Access Token (for private repos)"
+  type        = string
+  sensitive   = true
+  default     = ""
 }
 
 variable "location" {
@@ -159,6 +166,11 @@ locals {
           ${random_password.api_key.result}
         permissions: '0600'
 
+      - path: /opt/paddleocr/.github_token
+        content: |
+          ${var.github_token}
+        permissions: '0600'
+
       - path: /opt/paddleocr/deploy.sh
         content: |
           #!/bin/bash
@@ -170,13 +182,33 @@ locals {
 
           cd /opt/paddleocr
 
+          # Read GitHub token if available
+          GITHUB_TOKEN=""
+          if [ -f ".github_token" ] && [ -s ".github_token" ]; then
+              GITHUB_TOKEN=$$(cat .github_token | tr -d '[:space:]')
+          fi
+
+          # Build repo URL (with or without token)
+          REPO="${var.github_repo}"
+          BRANCH="${var.github_branch}"
+          if [ -n "$$GITHUB_TOKEN" ]; then
+              REPO_URL="https://$$GITHUB_TOKEN@github.com/$${REPO}.git"
+              echo "🔐 Using authenticated GitHub access"
+          else
+              REPO_URL="https://github.com/$${REPO}.git"
+              echo "🔓 Using public GitHub access"
+          fi
+
           # Clone or update repo
           if [ ! -d "doctranslator" ]; then
               echo "📥 Cloning repository..."
-              git clone -b ${var.github_branch} ${var.github_repo} doctranslator
+              git clone -b $$BRANCH "$$REPO_URL" doctranslator
           else
               echo "📥 Updating repository..."
-              cd doctranslator && git pull origin ${var.github_branch} && cd ..
+              cd doctranslator
+              git remote set-url origin "$$REPO_URL"
+              git pull origin $$BRANCH
+              cd ..
           fi
 
           # Copy paddleocr_service files to /opt/paddleocr
