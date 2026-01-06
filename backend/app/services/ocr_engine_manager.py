@@ -464,17 +464,22 @@ class OCREngineManager:
         # Extended timeout for GPU OCR (PP-StructureV3 can take 2-3 minutes)
         async with httpx.AsyncClient(timeout=300.0, verify=False) as client:
             # Step 1: Get worker URL from Vast.ai route endpoint
-            route_url = f"https://api.vast.ai/v1/endpoints/{VASTAI_ENDPOINT_NAME}/route"
+            # Per docs: https://docs.vast.ai/serverless/route
+            route_url = VASTAI_ROUTE_URL  # https://run.vast.ai/route/
             logger.info(f"🔗 Calling route endpoint: {route_url}")
+            logger.info(f"📍 Endpoint name: {VASTAI_ENDPOINT_NAME}")
 
             route_response = await client.post(
                 route_url,
                 headers={
-                    "Authorization": f"Bearer {VASTAI_API_KEY}",
                     "Content-Type": "application/json",
                     "Accept": "application/json"
                 },
-                json={}  # Empty body for route request
+                json={
+                    "endpoint": VASTAI_ENDPOINT_NAME,
+                    "api_key": VASTAI_API_KEY,
+                    "cost": 242.0  # Estimated compute units for OCR request
+                }
             )
 
             if route_response.status_code != 200:
@@ -485,11 +490,11 @@ class OCREngineManager:
             route_data = route_response.json()
             logger.info(f"📍 Route response: {route_data}")
 
-            # Get worker URL (field name is 'endpoint_url' from Vast.ai)
-            worker_url = route_data.get("endpoint_url") or route_data.get("url")
+            # Get worker URL - per docs: response contains 'url' field
+            worker_url = route_data.get("url") or route_data.get("endpoint_url")
             if not worker_url:
-                logger.error(f"❌ Vast.ai route response missing endpoint_url: {route_data}")
-                raise Exception("Vast.ai route response missing endpoint_url")
+                logger.error(f"❌ Vast.ai route response missing url: {route_data}")
+                raise Exception("Vast.ai route response missing url field")
 
             # Remove trailing slash if present
             worker_url = worker_url.rstrip("/")
