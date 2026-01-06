@@ -1,0 +1,30 @@
+# PP-StructureV3 Docker Compose
+# Usage:
+#   CPU: docker-compose up -d
+#   GPU: docker-compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+
+services:
+  ppstructure:
+    build:
+      context: .
+      args:
+        USE_GPU: "false"
+    ports:
+      - "9124:9124"
+    environment:
+      - USE_GPU=false
+      - API_SECRET_KEY=${API_SECRET_KEY:-}
+      - PADDLEOCR_DEFAULT_MODE=structured
+    volumes:
+      # Persist model cache to avoid re-downloading on restart
+      - paddle_models:/home/appuser/.paddlex
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9124/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 300s
+
+volumes:
+  paddle_models:

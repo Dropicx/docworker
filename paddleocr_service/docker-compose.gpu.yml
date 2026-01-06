@@ -1,0 +1,17 @@
+# GPU Override for PP-StructureV3
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.gpu.yml up -d
+
+services:
+  ppstructure:
+    build:
+      args:
+        USE_GPU: "true"
+    environment:
+      - USE_GPU=true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
