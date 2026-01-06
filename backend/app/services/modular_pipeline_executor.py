@@ -419,7 +419,7 @@ class ModularPipelineExecutor:
             return None
 
         # Clean and uppercase the output
-        branch_value = output_text.strip().upper()
+        cleaned_output = output_text.strip().upper()
 
         # Remove common prefixes/suffixes
         for prefix in [
@@ -428,11 +428,36 @@ class ModularPipelineExecutor:
             "CLASSIFICATION:",
             f"{branching_field.upper()}:",
         ]:
-            if branch_value.startswith(prefix):
-                branch_value = branch_value[len(prefix) :].strip()
+            if cleaned_output.startswith(prefix):
+                cleaned_output = cleaned_output[len(prefix) :].strip()
 
-        # Extract first word (should be the decision value)
-        branch_value = branch_value.split()[0] if branch_value.split() else branch_value
+        # For document_type branching, look for valid class keys ANYWHERE in the output
+        # This handles cases where LLM responds with "DIESER BERICHT IST EIN BEFUNDBERICHT"
+        if branching_field == "document_type":
+            # Get all valid document class keys from database
+            try:
+                all_classes = self.doc_class_manager.get_all_classes()
+                valid_classes = [c.class_key.upper() for c in all_classes if c.is_enabled]
+            except Exception:
+                # Fallback to hardcoded values if database lookup fails
+                valid_classes = ["ARZTBRIEF", "BEFUNDBERICHT", "LABORWERTE"]
+
+            found_class = None
+            for class_key in valid_classes:
+                if class_key in cleaned_output:
+                    found_class = class_key
+                    logger.info(f"🔍 Found document class '{class_key}' in output")
+                    break
+
+            if found_class:
+                branch_value = found_class
+            else:
+                # Fallback to first word if no valid class found
+                branch_value = cleaned_output.split()[0] if cleaned_output.split() else cleaned_output
+                logger.warning(f"⚠️ No valid document class found in output, using first word: {branch_value}")
+        else:
+            # For other branching fields, extract first word
+            branch_value = cleaned_output.split()[0] if cleaned_output.split() else cleaned_output
 
         # Determine branch type based on field name
         if branching_field == "document_type":
