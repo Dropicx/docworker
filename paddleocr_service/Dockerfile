@@ -78,9 +78,11 @@ FROM base-${USE_GPU} AS final
 WORKDIR /app
 
 # Install PaddleOCR with doc-parser for PP-StructureV3
-# Use --no-deps for paddleocr AND paddlex to avoid pulling paddlepaddle-gpu
+# paddlex[ocr-core] includes OCR dependencies
+# Reinstall paddlepaddle CPU AFTER paddlex to ensure GPU version doesn't override
 RUN pip install --no-cache-dir --no-deps "paddleocr>=3.3.0" && \
-    pip install --no-cache-dir --no-deps paddlex && \
+    pip install --no-cache-dir "paddlex[ocr-core]" && \
+    pip install --no-cache-dir --force-reinstall paddlepaddle==3.0.0b2 -i https://www.paddlepaddle.org.cn/packages/stable/cpu/ && \
     pip install --no-cache-dir \
     docx2pdf \
     fastapi==0.115.6 \
@@ -104,28 +106,11 @@ RUN pip install --no-cache-dir --no-deps "paddleocr>=3.3.0" && \
     premailer \
     openpyxl \
     attrdict3 \
-    "PyYAML==6.0.2" \
     scikit-learn \
     scipy \
     pandas \
     matplotlib \
-    seaborn \
-    filelock \
-    regex \
-    tokenizers \
-    safetensors \
-    huggingface-hub \
-    requests \
-    urllib3 \
-    charset-normalizer \
-    "aistudio-sdk>=0.3.5" \
-    chardet \
-    colorlog \
-    "modelscope>=1.28.0" \
-    prettytable \
-    py-cpuinfo \
-    "ruamel.yaml" \
-    ujson
+    seaborn
 
 # Copy application code
 COPY app/ app/
