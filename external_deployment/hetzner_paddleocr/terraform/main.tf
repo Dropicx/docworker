@@ -119,12 +119,24 @@ variable "network_zone" {
 }
 
 # -----------------------------------------------------------------------------
-# Generate API Key (shared across all servers)
+# API Key (shared across all servers)
 # -----------------------------------------------------------------------------
 
+variable "api_key" {
+  description = "API key for PaddleOCR service (optional - auto-generated if not set)"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 resource "random_password" "api_key" {
+  count   = var.api_key == "" ? 1 : 0
   length  = 64
   special = false
+}
+
+locals {
+  api_key = var.api_key != "" ? var.api_key : random_password.api_key[0].result
 }
 
 # -----------------------------------------------------------------------------
@@ -201,13 +213,13 @@ write_files:
 
   - path: /opt/paddleocr/.env
     content: |
-      API_SECRET_KEY=${random_password.api_key.result}
+      API_SECRET_KEY=${local.api_key}
       USE_GPU=false
     permissions: '0600'
 
   - path: /opt/paddleocr/API_KEY.txt
     content: |
-      ${random_password.api_key.result}
+      ${local.api_key}
     permissions: '0600'
 
   - path: /opt/paddleocr/.github_token
@@ -276,8 +288,16 @@ runcmd:
   - sysctl -p
   - systemctl enable fail2ban
   - systemctl start fail2ban
+  # Wait for Docker to be fully ready, then auto-deploy
+  - |
+    until docker info >/dev/null 2>&1; do
+      echo "Waiting for Docker..."
+      sleep 5
+    done
+    echo "Docker ready, starting PaddleOCR deployment..."
+    cd /opt/paddleocr && ./deploy.sh >> /var/log/paddleocr-deploy.log 2>&1 &
 
-final_message: "PaddleOCR VM ready! Run: cd /opt/paddleocr && ./deploy.sh"
+final_message: "PaddleOCR deployment started! Check /var/log/paddleocr-deploy.log for progress."
 EOF
 }
 
@@ -446,7 +466,7 @@ output "api_endpoint" {
 
 output "api_key" {
   description = "API key for PaddleOCR service"
-  value       = random_password.api_key.result
+  value       = local.api_key
   sensitive   = true
 }
 

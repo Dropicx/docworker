@@ -47,3 +47,8 @@ location = "fsn1"
 
 # Optional: Git branch (default: dev)
 # github_branch = "dev"
+
+# Optional: API key for PaddleOCR service
+# If not set, a random 64-char key will be generated
+# Same key is shared across all servers (required for load balancer)
+# api_key = "your-custom-api-key-here"
