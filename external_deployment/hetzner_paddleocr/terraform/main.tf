@@ -23,11 +23,7 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "~> 1.45"
-    }
-    hetznerdns = {
-      source  = "timohirt/hetznerdns"
-      version = "~> 2.2"
+      version = "~> 1.56"  # DNS support added in 1.56.0
     }
     random = {
       source  = "hashicorp/random"
@@ -48,22 +44,12 @@ provider "hcloud" {
   token = var.hcloud_token
 }
 
-provider "hetznerdns" {
-  apitoken = var.hetzner_dns_token
-}
-
 # -----------------------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------------------
 
 variable "hcloud_token" {
-  description = "Hetzner Cloud API Token"
-  type        = string
-  sensitive   = true
-}
-
-variable "hetzner_dns_token" {
-  description = "Hetzner DNS API Token (from dns.hetzner.com)"
+  description = "Hetzner Cloud API Token (used for both Cloud and DNS)"
   type        = string
   sensitive   = true
 }
@@ -429,21 +415,19 @@ resource "hcloud_load_balancer_service" "http_redirect" {
 }
 
 # -----------------------------------------------------------------------------
-# DNS Configuration
+# DNS Configuration (Hetzner Cloud integrated DNS)
 # -----------------------------------------------------------------------------
 
-# Get existing DNS zone
-data "hetznerdns_zone" "main" {
-  name = var.dns_zone
-}
-
 # Create A record for subdomain pointing to load balancer
-resource "hetznerdns_record" "ocr" {
-  zone_id = data.hetznerdns_zone.main.id
-  name    = var.dns_subdomain
-  value   = hcloud_load_balancer.paddleocr.ipv4
-  type    = "A"
-  ttl     = 300
+# Note: Zone must already exist in Hetzner DNS (transferred domain)
+resource "hcloud_zone_rrset" "ocr" {
+  zone = var.dns_zone
+  name = var.dns_subdomain
+  type = "A"
+  ttl  = 300
+  records = [
+    { value = hcloud_load_balancer.paddleocr.ipv4 }
+  ]
 }
 
 # -----------------------------------------------------------------------------
