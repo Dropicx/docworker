@@ -19,16 +19,17 @@ logger = logging.getLogger(__name__)
 
 
 class OVHClient:
-    """OVH AI Endpoints client for medical text processing and vision OCR.
+    """OVH AI Endpoints client for medical text processing.
 
     This client provides a comprehensive interface to OVH's AI infrastructure,
-    supporting both text-based LLM operations and vision-based OCR. It handles
-    medical document translation, multi-image processing, and streaming responses.
+    supporting text-based LLM operations for medical document translation,
+    processing, and streaming responses.
 
     The client uses different models optimized for specific tasks:
     - Main Model (Llama 3.3 70B): High-quality translation and processing
     - Preprocessing Model (Mistral Nemo): Fast routine tasks
-    - Vision Model (Qwen 2.5 VL): Advanced OCR and image understanding
+
+    Note: OCR is now handled by OCREngineManager (Mistral OCR + PaddleOCR Hetzner)
 
     Attributes:
         access_token (str): OVH API access token from settings
@@ -36,19 +37,15 @@ class OVHClient:
         main_model (str): Primary LLM model for high-quality tasks
         preprocessing_model (str): Fast model for routine operations
         translation_model (str): Model for language translation
-        vision_model (str): Vision model for OCR tasks
-        vision_base_url (str): Base URL for vision API
         client (AsyncOpenAI): OpenAI-compatible client for text models
-        vision_client (AsyncOpenAI): OpenAI-compatible client for vision
         timeout (int): Request timeout in seconds
 
     Example:
         >>> client = OVHClient()
-        >>> text, confidence = await client.extract_text_with_vision(
-        ...     image_data=pdf_bytes,
-        ...     file_type="pdf"
+        >>> result = await client.translate_medical_document(
+        ...     text="Medical text...",
+        ...     document_type="ARZTBRIEF"
         ... )
-        >>> print(f"Extracted {len(text)} characters with {confidence:.0%} confidence")
 
     Note:
         All methods that call AI models return token usage information for
@@ -66,10 +63,6 @@ class OVHClient:
         self.preprocessing_model = settings.ovh_preprocessing_model
         self.translation_model = settings.ovh_translation_model
 
-        # Vision model for OCR tasks
-        self.vision_model = settings.ovh_vision_model
-        self.vision_base_url = settings.ovh_vision_base_url
-
         # Define which prompt types should use fast model for speed optimization
         self.fast_model_prompt_types = {
             "preprocessing_prompt",
@@ -81,6 +74,7 @@ class OVHClient:
 
         # ⚡ NOTE: PII filtering now happens in worker before pipeline execution
         # No privacy filter needed here - text arrives pre-cleaned
+        # ⚡ NOTE: OCR is now handled by OCREngineManager (Mistral OCR + PaddleOCR)
 
         # Debug logging for configuration (only if debug enabled)
         if logger.isEnabledFor(logging.DEBUG):
@@ -91,8 +85,6 @@ class OVHClient:
             )
             logger.debug(f"   - Base URL: {self.base_url}")
             logger.debug(f"   - Main Model: {self.main_model}")
-            logger.debug(f"   - Vision Model: {self.vision_model}")
-            logger.debug(f"   - Vision URL: {self.vision_base_url}")
             logger.debug(f"   - USE_OVH_ONLY: {settings.use_ovh_only}")
 
         if not self.access_token:
@@ -107,15 +99,9 @@ class OVHClient:
                 base_url=self.base_url,
                 api_key=self.access_token or "dummy-key-not-set",  # Use dummy key if not set
             )
-
-            # Initialize separate client for vision model
-            self.vision_client = AsyncOpenAI(
-                base_url=self.vision_base_url, api_key=self.access_token or "dummy-key-not-set"
-            )
         except Exception as e:
-            logger.error(f"Failed to initialize OVH clients: {e}")
+            logger.error(f"Failed to initialize OVH client: {e}")
             self.client = None
-            self.vision_client = None
 
         # Alternative HTTP client for direct API calls
         self.timeout = settings.ai_timeout_seconds
@@ -959,163 +945,28 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
         file_type: str = "image",
         confidence_threshold: float = 0.7,
     ) -> tuple[str, float]:
-        """Extract text from images using Qwen 2.5 VL vision model with OCR.
+        """DEPRECATED: Vision OCR has been removed.
 
-        Performs advanced OCR on images using OVH's vision AI model. Handles
-        complex medical documents including tables, multi-column layouts, and
-        handwritten text. Provides confidence scoring based on text quality.
-
-        Args:
-            image_data: Image content as raw bytes or PIL Image object
-            file_type: Type of source file ("image", "pdf", "jpg", "png").
-                Used for format detection and logging.
-            confidence_threshold: Minimum confidence score (0.0-1.0) to consider
-                extraction successful. Default 0.7.
-
-        Returns:
-            tuple[str, float]: A tuple containing:
-                - str: Extracted text with preserved formatting (tables use pipe syntax)
-                - float: Confidence score (0.0-1.0) based on text quality indicators
-
-        Raises:
-            Exception: On API failures, returns error message as text with 0.0 confidence
+        Use OCREngineManager instead with:
+        - Mistral OCR (primary)
+        - PaddleOCR Hetzner (fallback)
 
         Example:
-            >>> client = OVHClient()
-            >>> with open("medical_report.pdf", "rb") as f:
-            ...     pdf_bytes = f.read()
-            >>> text, confidence = await client.extract_text_with_vision(
-            ...     image_data=pdf_bytes,
-            ...     file_type="pdf"
-            ... )
-            >>> if confidence > 0.7:
-            ...     print(f"High quality extraction: {len(text)} characters")
-
-        Note:
-            - Table formatting: Uses pipe separators (| Col1 | Col2 |)
-            - Medical terms: Preserved exactly as written
-            - Unclear text: Marked with [unclear] placeholder
-            - Timeout: 180 seconds for complex multi-page documents
-            - Confidence factors: Text length, medical terms, table structure
+            >>> from app.services.ocr_engine_manager import OCREngineManager
+            >>> manager = OCREngineManager(db_session)
+            >>> result = await manager.extract_text(file_content, file_type, filename)
         """
-        if not self.access_token or not self.vision_client:
-            logger.error("❌ OVH vision client not configured")
-            return "Error: OVH vision client not configured", 0.0
+        logger.warning("⚠️ DEPRECATED: extract_text_with_vision called - use OCREngineManager instead")
+        return "DEPRECATED: Vision OCR removed. Use OCREngineManager with Mistral OCR or PaddleOCR.", 0.0
 
-        try:
-            logger.info(f"🔍 Starting vision OCR with Qwen 2.5 VL for {file_type}")
-
-            # Convert image to base64 with proper MIME type detection (like OVH example)
-
-            if isinstance(image_data, Image.Image):
-                # Convert PIL Image to bytes
-                buffered = BytesIO()
-                # Save as PNG for best quality
-                image_data.save(buffered, format="PNG")
-                image_bytes = buffered.getvalue()
-                mime_type = "image/png"
-            else:
-                image_bytes = image_data
-                # Try to detect MIME type, default to PNG for PDFs converted to images
-                mime_type = "image/png"  # Default for PDF->image conversion
-
-            # Encode to base64 exactly like OVH example
-            encoded_image = (
-                f"data:{mime_type};base64,{base64.b64encode(image_bytes).decode('utf-8')}"
-            )
-
-            # Create medical OCR prompt
-            ocr_prompt = self._get_medical_ocr_prompt()
-
-            # Prepare messages for vision model (exactly like OVH example)
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {"type": "text", "text": ocr_prompt},
-                        {"type": "image_url", "image_url": {"url": encoded_image}},
-                    ],
-                }
-            ]
-
-            # Make API call to Qwen 2.5 VL using direct HTTP request
-            # OVH endpoints may have different structure than OpenAI
-            logger.info(f"🚀 Calling Qwen 2.5 VL vision API at {self.vision_base_url}")
-
-            # Try direct HTTP call with reasonable timeout for vision processing
-            vision_timeout = 180.0  # 3 minutes timeout for complex multi-page vision processing
-            async with httpx.AsyncClient(timeout=vision_timeout) as client:
-                headers = {
-                    "Authorization": f"Bearer {self.access_token}",
-                    "Content-Type": "application/json",
-                }
-
-                # Payload structure exactly matching OVH example
-                payload = {
-                    "max_tokens": 4000,
-                    "messages": messages,
-                    "model": self.vision_model,
-                    "temperature": 0.1,
-                }
-
-                # Use the correct OVH vision endpoint only
-                endpoint_url = f"{self.vision_base_url}/api/openai_compat/v1/chat/completions"
-
-                logger.info(f"🔄 Calling endpoint: {endpoint_url}")
-                response = await client.post(endpoint_url, headers=headers, json=payload)
-
-                if response.status_code == 200:
-                    response_data = response.json()
-                    logger.info(f"✅ Success with endpoint: {endpoint_url}")
-                else:
-                    error_text = response.text
-                    logger.error(f"❌ Vision API failed {response.status_code}: {error_text[:200]}")
-                    raise Exception(f"Vision API error {response.status_code}: {error_text}")
-
-            # Parse response from the successful endpoint call
-            if "choices" in response_data and len(response_data["choices"]) > 0:
-                extracted_text = response_data["choices"][0]["message"]["content"]
-            else:
-                logger.error(f"❌ Unexpected response format: {response_data}")
-                extracted_text = "Unerwartetes Antwortformat vom Vision-API."
-
-            if not extracted_text or len(extracted_text.strip()) < 10:
-                logger.warning("⚠️ Vision OCR returned very short text")
-                return "Kein Text im Bild erkannt.", 0.1
-
-            # Calculate confidence based on text quality
-            confidence = self._calculate_vision_ocr_confidence(extracted_text)
-
-            logger.info(
-                f"✅ Vision OCR successful: {len(extracted_text)} characters, confidence: {confidence:.2%}"
-            )
-
-            return extracted_text.strip(), confidence
-
-        except Exception as e:
-            error_msg = str(e) if str(e) else "Unknown error occurred"
-            logger.error(f"❌ Vision OCR failed: {error_msg}")
-            logger.error(f"❌ Exception type: {type(e).__name__}")
-
-            # Provide specific error messages based on common failure patterns
-            if "timeout" in error_msg.lower() or "TimeoutError" in str(type(e)):
-                error_text = "Vision OCR timeout - document may be too complex or server overloaded"
-            elif "404" in error_msg or "Not Found" in error_msg:
-                error_text = (
-                    "Vision API endpoint not found - service may be temporarily unavailable"
-                )
-            elif "401" in error_msg or "unauthorized" in error_msg.lower():
-                error_text = "Vision API authentication failed - token may be invalid"
-            elif "429" in error_msg or "rate" in error_msg.lower():
-                error_text = "Vision API rate limit exceeded - too many concurrent requests"
-            elif "500" in error_msg or "Internal Server Error" in error_msg:
-                error_text = "Vision API internal server error - temporary service issue"
-            elif not error_msg or error_msg.strip() == "":
-                error_text = "Vision API call failed with empty response - network or server issue"
-            else:
-                error_text = f"Vision OCR error: {error_msg}"
-
-            return error_text, 0.0
+    async def _deprecated_extract_text_with_vision(
+        self,
+        image_data: bytes | Image.Image,
+        file_type: str = "image",
+        confidence_threshold: float = 0.7,
+    ) -> tuple[str, float]:
+        """DEPRECATED: Vision OCR removed - use OCREngineManager."""
+        return "DEPRECATED: Vision OCR removed", 0.0
 
     def _get_medical_ocr_prompt(self) -> str:
         """
@@ -1228,48 +1079,24 @@ Begin text extraction with perfect structure preservation:"""
     async def process_multiple_images_ocr(
         self, images: list[bytes | Image.Image], merge_strategy: str = "sequential"
     ) -> tuple[str, float]:
-        """Process multiple images with parallel OCR and intelligent merging.
+        """DEPRECATED: Vision OCR has been removed.
 
-        Extracts text from multiple images concurrently using vision AI, then
-        merges the results using the specified strategy. Includes retry logic,
-        concurrency control, and comprehensive error handling for production use.
-
-        Args:
-            images: List of images to process. Each can be raw bytes or PIL Image.
-            merge_strategy: Strategy for combining results. Options:
-                - "sequential": Adds page separators between each page
-                - "smart": Intelligently detects continuation vs new sections
-
-        Returns:
-            tuple[str, float]: A tuple containing:
-                - str: Merged text from all pages with proper formatting
-                - float: Average confidence score across all pages
+        Use OCREngineManager instead with:
+        - Mistral OCR (primary)
+        - PaddleOCR Hetzner (fallback)
 
         Example:
-            >>> client = OVHClient()
-            >>> images = [page1_bytes, page2_bytes, page3_bytes]
-            >>> text, confidence = await client.process_multiple_images_ocr(
-            ...     images=images,
-            ...     merge_strategy="smart"
-            ... )
-            >>> print(f"Extracted {len(text)} chars from {len(images)} pages")
-            >>> print(f"Average confidence: {confidence:.0%}")
-
-        Note:
-            **Performance Optimizations**:
-            - Parallel processing with semaphore (max 2 concurrent API calls)
-            - Retry logic: Up to 3 attempts per image with exponential backoff
-            - Failed pages: Included with [ERROR] markers to maintain page order
-
-            **Merge Strategies**:
-            - Sequential: "--- Seite 1 ---\\nText\\n\\n--- Seite 2 ---"
-            - Smart: Detects sentence continuation (commas, conjunctions)
-
-            **Error Handling**:
-            - Individual page failures don't stop processing
-            - Failed pages tracked and reported in logs
-            - Returns partial results if some pages succeed
+            >>> from app.services.ocr_engine_manager import OCREngineManager
+            >>> manager = OCREngineManager(db_session)
+            >>> result = await manager.extract_text(file_content, file_type, filename)
         """
+        logger.warning("⚠️ DEPRECATED: process_multiple_images_ocr called - use OCREngineManager")
+        return "DEPRECATED: Vision OCR removed. Use OCREngineManager with Mistral OCR or PaddleOCR.", 0.0
+
+    async def _deprecated_process_multiple_images_ocr(
+        self, images: list[bytes | Image.Image], merge_strategy: str = "sequential"
+    ) -> tuple[str, float]:
+        """DEPRECATED: Original implementation kept for reference only."""
         if not images:
             return "No images provided", 0.0
 
