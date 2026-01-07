@@ -307,7 +307,17 @@ class EncryptedRepositoryMixin:
 
         if not encryptor.is_enabled():
             logger.warning(f"⚠️ Encryption is disabled for {self.model.__name__} - fields will be stored in plaintext!")
-            return data
+            # Even with encryption disabled, we still need to JSON serialize dict fields
+            # PostgreSQL can't adapt Python dicts directly - they need to be JSON strings
+            import json
+            processed_data = data.copy()
+            for field in self.encrypted_fields:
+                if field in processed_data and processed_data[field] is not None:
+                    if self._is_json_encrypted_field(field) and isinstance(processed_data[field], dict):
+                        # Serialize dict to JSON string for TEXT column storage
+                        processed_data[field] = json.dumps(processed_data[field])
+                        logger.debug(f"Serialized {field} dict to JSON string (encryption disabled)")
+            return processed_data
 
         logger.info(f"🔐 Encrypting fields for {self.model.__name__}: {self.encrypted_fields}")
         logger.info(f"   Encryption enabled: {encryptor.is_enabled()}")

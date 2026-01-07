@@ -26,6 +26,7 @@ python-magic==0.4.27
 
 # AI Integration
 openai==1.59.2
+mistralai>=1.0.0  # Mistral OCR API
 
 # NLP
 spacy==3.8.3
