@@ -8,6 +8,7 @@ export enum OCREngineEnum {
   PADDLEOCR = 'PADDLEOCR', // Fast CPU-based OCR
   VISION_LLM = 'VISION_LLM', // Slow but accurate (Qwen 2.5 VL)
   HYBRID = 'HYBRID', // Intelligent routing
+  MISTRAL_OCR = 'MISTRAL_OCR', // Mistral Document OCR API
   // TESSERACT removed - poor quality
 }
 
@@ -41,6 +42,7 @@ export interface OCRConfiguration {
   paddleocr_config: OCRConfig | null;
   vision_llm_config: OCRConfig | null;
   hybrid_config: OCRConfig | null;
+  mistral_ocr_config: OCRConfig | null;
   last_modified: string;
   pii_removal_enabled: boolean; // NEW: Global PII removal toggle
 }
@@ -50,6 +52,7 @@ export interface OCRConfigRequest {
   paddleocr_config?: OCRConfig | null;
   vision_llm_config?: OCRConfig | null;
   hybrid_config?: OCRConfig | null;
+  mistral_ocr_config?: OCRConfig | null;
   pii_removal_enabled?: boolean; // NEW: Global PII removal toggle
 }
 

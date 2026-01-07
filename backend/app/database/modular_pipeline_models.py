@@ -34,6 +34,7 @@ class OCREngineEnum(str, Enum):
     PADDLEOCR = "PADDLEOCR"  # Fast CPU-based OCR
     VISION_LLM = "VISION_LLM"  # Slow but accurate (Qwen 2.5 VL)
     HYBRID = "HYBRID"  # Intelligent routing based on document quality
+    MISTRAL_OCR = "MISTRAL_OCR"  # Mistral Document OCR API (fast, accurate)
     # TESSERACT removed - poor quality
 
 
@@ -75,7 +76,7 @@ class OCRConfigurationDB(Base):
 
     # OCR engine selection
     selected_engine = Column(
-        SQLEnum(OCREngineEnum), default=OCREngineEnum.PADDLEOCR, nullable=False
+        SQLEnum(OCREngineEnum), default=OCREngineEnum.MISTRAL_OCR, nullable=False
     )
 
     # Engine-specific settings (JSON for flexibility)
@@ -83,6 +84,7 @@ class OCRConfigurationDB(Base):
     paddleocr_config = Column(JSON, nullable=True)  # e.g., {"use_gpu": true, "lang": "german"}
     vision_llm_config = Column(JSON, nullable=True)  # e.g., {"model": "Qwen2.5-VL-72B-Instruct"}
     hybrid_config = Column(JSON, nullable=True)  # e.g., {"quality_threshold": 0.7}
+    mistral_ocr_config = Column(JSON, nullable=True)  # e.g., {"model": "mistral-ocr-latest"}
 
     # Quality gate settings
     min_ocr_confidence_threshold = Column(

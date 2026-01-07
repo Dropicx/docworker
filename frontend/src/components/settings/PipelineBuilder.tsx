@@ -25,6 +25,7 @@ import {
   Boxes,
   RefreshCw,
   Shield,
+  Sparkles,
 } from 'lucide-react';
 import { pipelineApi } from '../../services/pipelineApi';
 import {
@@ -427,6 +428,8 @@ const PipelineBuilder: React.FC = () => {
         return <ImageIcon className="w-5 h-5" />;
       case 'HYBRID':
         return <Boxes className="w-5 h-5" />;
+      case 'MISTRAL_OCR':
+        return <Sparkles className="w-5 h-5" />;
       default:
         return <Settings className="w-5 h-5" />;
     }

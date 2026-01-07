@@ -26,6 +26,7 @@ slowapi==0.1.9
 
 # AI/ML Integration
 openai==1.59.2
+mistralai>=1.0.0  # Mistral OCR API
 
 # Configuration
 python-dotenv==1.0.1

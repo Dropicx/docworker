@@ -82,6 +82,10 @@ if EXTERNAL_OCR_URL:
     logger.info(f"🔑 External OCR API key: {'configured' if EXTERNAL_API_KEY else 'not set'}")
     logger.info(f"🔧 Use external OCR: {USE_EXTERNAL_OCR}")
 
+# Mistral OCR configuration
+MISTRAL_API_KEY = os.getenv("MISTRAL_API_KEY", "")
+if MISTRAL_API_KEY:
+    logger.info("🔮 Mistral OCR API key configured")
 
 
 class OCREngineManager:
@@ -170,6 +174,7 @@ class OCREngineManager:
             OCREngineEnum.PADDLEOCR: config.paddleocr_config,
             OCREngineEnum.VISION_LLM: config.vision_llm_config,
             OCREngineEnum.HYBRID: config.hybrid_config,
+            OCREngineEnum.MISTRAL_OCR: config.mistral_ocr_config,
         }
 
         engine_config = config_map.get(engine)
@@ -246,6 +251,10 @@ class OCREngineManager:
             if selected_engine == OCREngineEnum.PADDLEOCR:
                 # PaddleOCR (future implementation)
                 return await self._extract_with_paddleocr(file_content, file_type, filename)
+
+            if selected_engine == OCREngineEnum.MISTRAL_OCR:
+                # Mistral OCR API
+                return await self._extract_with_mistral_ocr(file_content, file_type, filename)
 
             logger.warning(f"⚠️ Unknown engine {selected_engine}, falling back to HYBRID")
             return await self._extract_with_hybrid(file_content, file_type, filename)
@@ -421,6 +430,85 @@ class OCREngineManager:
             else:
                 logger.error(f"❌ External OCR service error: {response.status_code}")
                 raise Exception(f"External OCR service returned {response.status_code}")
+
+    async def _extract_with_mistral_ocr(
+        self, file_content: bytes, file_type: str, filename: str
+    ) -> OCRResult:
+        """
+        Extract text using Mistral OCR API.
+
+        Fast, accurate document OCR with markdown output.
+        Falls back to HYBRID on failure.
+        """
+        import time
+        from mistralai import Mistral
+
+        logger.info(f"🔮 Using MISTRAL_OCR extraction")
+        logger.info(f"📄 File: {filename}, Type: {file_type}, Size: {len(file_content)} bytes")
+
+        if not MISTRAL_API_KEY:
+            logger.warning("⚠️ MISTRAL_API_KEY not set, falling back to HYBRID")
+            return await self._extract_with_hybrid(file_content, file_type, filename)
+
+        start_time = time.time()
+
+        try:
+            client = Mistral(api_key=MISTRAL_API_KEY)
+
+            # Determine MIME type for base64 data URL
+            if file_type.lower() == "pdf":
+                mime_type = "application/pdf"
+            elif file_type.lower() in ("jpg", "jpeg"):
+                mime_type = "image/jpeg"
+            elif file_type.lower() == "png":
+                mime_type = "image/png"
+            else:
+                mime_type = f"image/{file_type.lower()}"
+
+            # Create base64 data URL
+            b64_content = base64.b64encode(file_content).decode("utf-8")
+            data_url = f"data:{mime_type};base64,{b64_content}"
+
+            logger.info(f"📤 Calling Mistral OCR API (model: mistral-ocr-latest)")
+
+            # Call Mistral OCR API
+            ocr_response = client.ocr.process(
+                model="mistral-ocr-latest",
+                document={
+                    "type": "image_url",
+                    "image_url": {"url": data_url}
+                },
+                include_image_base64=False
+            )
+
+            # Combine all pages markdown
+            all_markdown = []
+            for page in ocr_response.pages:
+                if page.markdown:
+                    all_markdown.append(page.markdown)
+
+            extracted_text = "\n\n---\n\n".join(all_markdown)
+            processing_time = time.time() - start_time
+
+            # Get page count from response
+            page_count = len(ocr_response.pages) if ocr_response.pages else 0
+
+            logger.info(f"✅ Mistral OCR completed in {processing_time:.2f}s")
+            logger.info(f"📊 Pages: {page_count}, Length: {len(extracted_text)} chars")
+
+            return OCRResult(
+                text=extracted_text,
+                confidence=0.95,  # Mistral OCR is highly accurate
+                markdown=extracted_text,
+                processing_time=processing_time,
+                engine="MISTRAL_OCR",
+                mode="mistral"
+            )
+
+        except Exception as e:
+            logger.error(f"❌ Mistral OCR failed: {e}")
+            logger.info("🔄 Falling back to HYBRID extraction")
+            return await self._extract_with_hybrid(file_content, file_type, filename)
 
     def _convert_pipe_tables_to_markdown(self, text: str) -> str:
         """
@@ -847,6 +935,16 @@ class OCREngineManager:
                 "available": True,
                 "cost": "Variable",
                 "configuration": self.get_engine_config(OCREngineEnum.HYBRID),
+            },
+            "MISTRAL_OCR": {
+                "engine": "MISTRAL_OCR",
+                "name": "Mistral OCR",
+                "description": "Fast, accurate document OCR with markdown output",
+                "speed": "Fast (~2-5s per page)",
+                "accuracy": "Excellent",
+                "available": bool(MISTRAL_API_KEY),
+                "cost": "Mistral API pricing",
+                "configuration": self.get_engine_config(OCREngineEnum.MISTRAL_OCR),
             },
         }
 
