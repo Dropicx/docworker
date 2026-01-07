@@ -1,6 +1,8 @@
 # =============================================================================
-# PP-StructureV3 OCR Server - Hetzner Terraform Configuration
+# PaddleOCR 3.x CPU Server - Hetzner Terraform Configuration
 # =============================================================================
+# Lightweight OCR fallback server using PaddleOCR 3.x (standard mode)
+#
 # Usage:
 #   1. Set HCLOUD_TOKEN environment variable or create terraform.tfvars
 #   2. terraform init
@@ -55,9 +57,9 @@ variable "server_name" {
 }
 
 variable "server_type" {
-  description = "Hetzner server type (CPX51 = 16 vCPU, 32GB RAM for PP-StructureV3)"
+  description = "Hetzner server type (cpx21 = 3 vCPU, 4GB RAM - sufficient for PaddleOCR 3.x)"
   type        = string
-  default     = "cpx51"
+  default     = "cpx21" # cpx21 = 3 vCPU, 4GB RAM, ~€8/mo - good for PaddleOCR 3.x CPU
 }
 
 variable "github_repo" {
@@ -141,7 +143,7 @@ write_files:
   - path: /etc/motd
     content: |
       =====================================
-      PP-StructureV3 OCR Server
+      PaddleOCR 3.x CPU Server (Fallback)
       Managed by Terraform
 
       Service: /opt/paddleocr
@@ -160,7 +162,6 @@ write_files:
     content: |
       API_SECRET_KEY=${random_password.api_key.result}
       USE_GPU=false
-      FORCE_PPSTRUCTUREV3=true
     permissions: '0600'
 
   - path: /opt/paddleocr/API_KEY.txt
@@ -193,29 +194,28 @@ write_files:
       version: '3.8'
 
       services:
-        ppstructure:
-          image: ppstructure:cpu
-          container_name: ppstructure
+        paddleocr:
+          image: paddleocr:cpu
+          container_name: paddleocr
           ports:
             - "9124:9124"
           env_file:
             - .env
           environment:
             - PYTHONUNBUFFERED=1
-            - PADDLEOCR_DEFAULT_MODE=structured
           volumes:
             - paddle_models:/home/appuser/.paddlex
           restart: unless-stopped
           deploy:
             resources:
               limits:
-                memory: 28G
+                memory: 3G
           healthcheck:
             test: ["CMD", "curl", "-f", "http://localhost:9124/health"]
             interval: 30s
             timeout: 10s
             retries: 5
-            start_period: 300s
+            start_period: 120s
 
       volumes:
         paddle_models:
@@ -231,18 +231,17 @@ runcmd:
   - ufw --force enable
   - chown -R root:root /opt/paddleocr
   - chmod 755 /opt/paddleocr/deploy.sh
-  - fallocate -l 8G /swapfile
+  - fallocate -l 2G /swapfile
   - chmod 600 /swapfile
   - mkswap /swapfile
   - swapon /swapfile
   - echo '/swapfile none swap sw 0 0' >> /etc/fstab
   - echo 'vm.swappiness=10' >> /etc/sysctl.conf
-  - echo 'vm.vfs_cache_pressure=50' >> /etc/sysctl.conf
   - sysctl -p
   - systemctl enable fail2ban
   - systemctl start fail2ban
 
-final_message: "PP-StructureV3 VM ready! SSH in and run: cd /opt/paddleocr && ./deploy.sh"
+final_message: "PaddleOCR VM ready! SSH in and run: cd /opt/paddleocr && ./deploy.sh"
 EOF
 }
 
@@ -285,7 +284,7 @@ resource "hcloud_firewall" "paddleocr" {
   }
 
   rule {
-    description = "Allow PP-StructureV3 API"
+    description = "Allow PaddleOCR API"
     direction   = "in"
     protocol    = "tcp"
     port        = "9124"

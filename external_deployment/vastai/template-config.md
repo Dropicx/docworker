@@ -30,16 +30,7 @@ Note: `API_SECRET_KEY` should be set at instance creation or via setup.sh
 
 ### On-Start Command
 ```bash
-# Option 1: Run setup.sh from repo (clone first)
-git clone https://github.com/Dropicx/doctranslator.git /workspace/repo && \
-cd /workspace/repo/external_deployment/vastai && \
-./setup.sh <your-dockerhub>/ppstructure:gpu
-
-# Option 2: Inline setup (no git needed)
-docker run -d --name ppstructure --gpus all -p 9124:9124 \
-  -e USE_GPU=true -e API_SECRET_KEY=$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 64) \
-  -v paddle_models:/home/appuser/.paddlex \
-  <your-dockerhub>/ppstructure:gpu
+cd /app && python -m uvicorn app.main:app --host 0.0.0.0 --port 9124
 ```
 
 ### Resource Requirements

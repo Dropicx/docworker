@@ -2,7 +2,7 @@
 set -e
 
 echo "=========================================="
-echo "PP-StructureV3 Deployment Script"
+echo "PaddleOCR 3.x Deployment Script"
 echo "=========================================="
 
 cd /opt/paddleocr
@@ -45,7 +45,7 @@ cp -r doctranslator/paddleocr_service/* /opt/paddleocr/
 # Build Docker image (CPU mode)
 echo "Building Docker image (CPU mode)..."
 echo "This will take 5-10 minutes on first build..."
-docker build --build-arg USE_GPU=false -t ppstructure:cpu .
+docker build --build-arg USE_GPU=false -t paddleocr:cpu .
 
 # Stop old container if running
 docker-compose down 2>/dev/null || true
@@ -55,18 +55,17 @@ echo "Starting service..."
 docker-compose up -d
 
 echo ""
-echo "Waiting for PP-StructureV3 to start..."
-echo "(First startup downloads ~2GB of models)"
+echo "Waiting for PaddleOCR to start..."
 
-for i in $(seq 1 30); do
+for i in $(seq 1 20); do
     if curl -sf http://localhost:9124/health > /dev/null 2>&1; then
         echo ""
         echo "Service is healthy!"
         curl -s http://localhost:9124/health | python3 -m json.tool 2>/dev/null || curl -s http://localhost:9124/health
         break
     fi
-    echo "Waiting... ($i/30)"
-    sleep 10
+    echo "Waiting... ($i/20)"
+    sleep 5
 done
 
 # Final check
@@ -83,9 +82,8 @@ echo "=========================================="
 echo ""
 echo "Add these to your backend environment:"
 echo ""
-SERVER_IP=$(curl -s ifconfig.me)
 API_KEY=$(cat /opt/paddleocr/API_KEY.txt | tr -d '[:space:]')
-echo "  EXTERNAL_OCR_URL=http://${SERVER_IP}:9124"
+echo "  EXTERNAL_OCR_URL=http://$(hostname -I | awk '{print $1}'):9124"
 echo "  EXTERNAL_API_KEY=${API_KEY}"
 echo "  USE_EXTERNAL_OCR=true"
 echo ""

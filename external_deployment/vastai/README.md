@@ -51,33 +51,15 @@ See [template-config.md](template-config.md) for detailed settings.
 3. Select your template
 4. Rent instance
 
-### 4. Set Up Service
+### 4. Template On-Start Command
 
-SSH into your instance and run setup:
-
-```bash
-# Clone repo
-git clone https://github.com/Dropicx/doctranslator.git
-cd doctranslator/external_deployment/vastai
-
-# Run setup (generates API key, starts container)
-./setup.sh your-username/ppstructure:gpu
-```
-
-Or run the container directly:
+In your vast.ai template, set the on-start command to:
 
 ```bash
-# Generate API key
-API_KEY=$(tr -dc A-Za-z0-9 < /dev/urandom | head -c 64)
-echo $API_KEY
-
-# Run container
-docker run -d --name ppstructure --gpus all -p 9124:9124 \
-  -e USE_GPU=true \
-  -e API_SECRET_KEY=$API_KEY \
-  -v paddle_models:/home/appuser/.paddlex \
-  your-username/ppstructure:gpu
+cd /app && python -m uvicorn app.main:app --host 0.0.0.0 --port 9124
 ```
+
+Environment variables (`USE_GPU`, `API_SECRET_KEY`, etc.) should be set in the template.
 
 ### 5. Configure Backend
 
@@ -153,7 +135,6 @@ PP-StructureV3 uses ~2-3GB VRAM, so budget GPUs work fine.
 
 ## Files
 
-- `setup.sh` - Instance setup script
 - `template-config.md` - Vast.ai template reference
 - `Makefile` - Build/push/management commands
 
