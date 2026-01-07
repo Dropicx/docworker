@@ -158,12 +158,29 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
     return '⚠️';
   };
 
+  // Strip markdown code fences if the model wrapped output in ```markdown ... ```
+  const stripMarkdownCodeFence = (text: string): string => {
+    if (!text) return text;
+
+    // Remove opening code fence with optional language specifier
+    // Matches: ```markdown, ```md, ``` at the start
+    let cleaned = text.replace(/^```(?:markdown|md)?\s*\n?/i, '');
+
+    // Remove closing code fence at the end
+    cleaned = cleaned.replace(/\n?```\s*$/i, '');
+
+    return cleaned.trim();
+  };
+
   // Bestimme die anzuzeigende Übersetzung basierend auf dem aktiven Tab
   const getDisplayedText = () => {
+    let text = '';
     if (activeTab === 'language' && result.language_translated_text) {
-      return result.language_translated_text;
+      text = result.language_translated_text;
+    } else {
+      text = result.translated_text;
     }
-    return result.translated_text;
+    return stripMarkdownCodeFence(text);
   };
 
   const _getDisplayedConfidence = () => {
