@@ -25,6 +25,10 @@ terraform {
       source  = "hetznercloud/hcloud"
       version = "~> 1.45"
     }
+    hetznerdns = {
+      source  = "timohirt/hetznerdns"
+      version = "~> 2.2"
+    }
     random = {
       source  = "hashicorp/random"
       version = "~> 3.6"
@@ -44,12 +48,22 @@ provider "hcloud" {
   token = var.hcloud_token
 }
 
+provider "hetznerdns" {
+  apitoken = var.hetzner_dns_token
+}
+
 # -----------------------------------------------------------------------------
 # Variables
 # -----------------------------------------------------------------------------
 
 variable "hcloud_token" {
   description = "Hetzner Cloud API Token"
+  type        = string
+  sensitive   = true
+}
+
+variable "hetzner_dns_token" {
+  description = "Hetzner DNS API Token (from dns.hetzner.com)"
   type        = string
   sensitive   = true
 }
@@ -72,9 +86,19 @@ variable "server_count" {
   default     = 2
 }
 
-variable "domain_name" {
-  description = "Domain name for SSL certificate (e.g., ocr.example.com)"
+variable "dns_zone" {
+  description = "DNS zone (e.g., fra-la.de)"
   type        = string
+}
+
+variable "dns_subdomain" {
+  description = "Subdomain for OCR service (e.g., ocr)"
+  type        = string
+  default     = "ocr"
+}
+
+locals {
+  domain_name = "${var.dns_subdomain}.${var.dns_zone}"
 }
 
 variable "github_repo" {
@@ -350,7 +374,7 @@ resource "hcloud_load_balancer_target" "paddleocr" {
 # Managed SSL Certificate
 resource "hcloud_managed_certificate" "paddleocr" {
   name         = "${var.server_name}-cert"
-  domain_names = [var.domain_name]
+  domain_names = [local.domain_name]
 
   labels = {
     service = "paddleocr"
@@ -405,6 +429,24 @@ resource "hcloud_load_balancer_service" "http_redirect" {
 }
 
 # -----------------------------------------------------------------------------
+# DNS Configuration
+# -----------------------------------------------------------------------------
+
+# Get existing DNS zone
+data "hetznerdns_zone" "main" {
+  name = var.dns_zone
+}
+
+# Create A record for subdomain pointing to load balancer
+resource "hetznerdns_record" "ocr" {
+  zone_id = data.hetznerdns_zone.main.id
+  name    = var.dns_subdomain
+  value   = hcloud_load_balancer.paddleocr.ipv4
+  type    = "A"
+  ttl     = 300
+}
+
+# -----------------------------------------------------------------------------
 # Outputs
 # -----------------------------------------------------------------------------
 
@@ -415,7 +457,7 @@ output "load_balancer_ip" {
 
 output "api_endpoint" {
   description = "API endpoint URL"
-  value       = "https://${var.domain_name}"
+  value       = "https://${local.domain_name}"
 }
 
 output "api_key" {
@@ -443,20 +485,20 @@ output "deploy_instructions" {
     PaddleOCR HA Cluster Deployment
     ============================================
 
-    1. Point DNS: ${var.domain_name} → ${hcloud_load_balancer.paddleocr.ipv4}
+    DNS automatically configured: ${local.domain_name} → ${hcloud_load_balancer.paddleocr.ipv4}
 
-    2. Deploy each server via Hetzner Console:
+    1. Deploy each server via Hetzner Console:
        - Go to: https://console.hetzner.cloud
        - Open each server's console
        - Login as root (get password: terraform output -json server_root_passwords)
        - Run: cd /opt/paddleocr && ./deploy.sh
 
-    3. Backend environment variables:
-       EXTERNAL_OCR_URL=https://${var.domain_name}
+    2. Backend environment variables:
+       EXTERNAL_OCR_URL=https://${local.domain_name}
        EXTERNAL_API_KEY=<run: terraform output -raw api_key>
        USE_EXTERNAL_OCR=true
 
-    4. Health check: https://${var.domain_name}/health
+    3. Health check: https://${local.domain_name}/health
 
     ============================================
   EOF
