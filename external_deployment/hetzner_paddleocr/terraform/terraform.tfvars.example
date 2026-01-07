@@ -1,46 +1,49 @@
 # =============================================================================
-# PP-StructureV3 Terraform Variables
+# PaddleOCR HA Cluster - Terraform Variables Example
 # =============================================================================
-# Copy this file to terraform.tfvars and fill in the values
-# Or set environment variables: export TF_VAR_hcloud_token="your-token"
+# Copy this file to terraform.tfvars and fill in the values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# High-availability setup with:
+# - 2x cpx32 servers in private network (no public IPs)
+# - Load balancer with managed SSL
+# - Integrated DNS management
+# - Console access via root passwords
 # =============================================================================
 
-# Required: Hetzner Cloud API Token
+# Required: Hetzner Cloud API Token (used for Cloud + DNS)
 # Get from: https://console.hetzner.cloud/ -> Project -> Security -> API Tokens
-hcloud_token = "your-hetzner-api-token"
+hcloud_token = "your-hetzner-cloud-api-token"
 
-# Required for private repos: GitHub Personal Access Token
+# Required: GitHub Personal Access Token (for private repos)
 # Get from: https://github.com/settings/tokens -> Generate new token (classic)
 # Scopes needed: repo (full control of private repositories)
-github_token = "ghp_your_github_token_here"
+github_token = "github_pat_xxxxxxxxxxxx"
 
-# Optional: GitHub repo (default: Dropicx/doctranslator)
-#github_repo = "Dropicx/doctranslator"
+# Required: DNS zone (your domain managed by Hetzner DNS)
+dns_zone = "example.com"
 
-# Optional: Git branch (default: dev)
-#github_branch = "dev"
+# Optional: Subdomain for OCR service (default: ocr)
+# Creates: ocr.example.com
+dns_subdomain = "ocr"
 
-# Optional: Server name (default: paddleocr)
-#server_name = "paddleocr"
+# Optional: Base name for servers (default: paddleocr)
+# Creates: paddleocr-1, paddleocr-2, paddleocr-lb
+server_name = "paddleocr"
 
-# Optional: Server type (default: cpx51 = 16 vCPU, 32GB RAM)
-# Options: cpx51 (~€67/mo), cpx41 (~€35/mo), cpx31 (~€18/mo)
-#server_type = "cpx51"
+# Optional: Server type (default: cpx32 = 4 vCPU, 8GB RAM)
+# Options: cpx32 (~€15/mo), cpx41 (~€35/mo), cpx51 (~€67/mo)
+server_type = "cpx32"
+
+# Optional: Number of servers (default: 2)
+server_count = 2
 
 # Optional: Datacenter location (default: fsn1)
 # Options: fsn1 (Falkenstein), nbg1 (Nuremberg), hel1 (Helsinki), ash (Ashburn)
-#location = "fsn1"
+location = "fsn1"
 
-# Optional: Path to SSH public key (default: ~/.ssh/id_rsa.pub)
-#ssh_public_key_path = "~/.ssh/id_rsa.pub"
+# Optional: GitHub repository (default: Dropicx/doctranslator)
+# github_repo = "Dropicx/doctranslator"
 
-# Optional: SSH public key content (overrides path if set)
-#ssh_public_key = "ssh-rsa AAAA..."
-
-# Optional: Path to SSH private key (default: ~/.ssh/id_rsa)
-# Used for auto-deploy to SSH into server and run deploy.sh
-#ssh_private_key_path = "~/.ssh/id_rsa"
-
-# Optional: Auto-deploy after VM creation (default: true)
-# Set to false to manually run deploy.sh via SSH
-#auto_deploy = true
+# Optional: Git branch (default: dev)
+# github_branch = "dev"
