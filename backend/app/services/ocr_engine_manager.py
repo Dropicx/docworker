@@ -438,6 +438,7 @@ class OCREngineManager:
         Extract text using Mistral OCR API.
 
         Fast, accurate document OCR with markdown output.
+        For PDFs, converts pages to images first (Mistral OCR only accepts images).
         Falls back to HYBRID on failure.
         """
         import time
@@ -454,47 +455,82 @@ class OCREngineManager:
 
         try:
             client = Mistral(api_key=MISTRAL_API_KEY)
-
-            # Determine MIME type for base64 data URL
-            if file_type.lower() == "pdf":
-                mime_type = "application/pdf"
-            elif file_type.lower() in ("jpg", "jpeg"):
-                mime_type = "image/jpeg"
-            elif file_type.lower() == "png":
-                mime_type = "image/png"
-            else:
-                mime_type = f"image/{file_type.lower()}"
-
-            # Create base64 data URL
-            b64_content = base64.b64encode(file_content).decode("utf-8")
-            data_url = f"data:{mime_type};base64,{b64_content}"
-
-            logger.info(f"📤 Calling Mistral OCR API (model: mistral-ocr-latest)")
-
-            # Call Mistral OCR API
-            ocr_response = client.ocr.process(
-                model="mistral-ocr-latest",
-                document={
-                    "type": "image_url",
-                    "image_url": {"url": data_url}
-                },
-                include_image_base64=False
-            )
-
-            # Combine all pages markdown
             all_markdown = []
-            for page in ocr_response.pages:
-                if page.markdown:
-                    all_markdown.append(page.markdown)
+
+            # For PDFs, convert each page to image first
+            # Mistral OCR only accepts images, not PDFs directly
+            if file_type.lower() == "pdf":
+                logger.info("📄 Converting PDF pages to images for Mistral OCR...")
+
+                # Convert PDF to images (one per page)
+                try:
+                    images = convert_from_bytes(file_content, dpi=200, fmt="png")
+                    logger.info(f"📄 Converted PDF to {len(images)} page images")
+                except Exception as e:
+                    logger.error(f"❌ PDF to image conversion failed: {e}")
+                    logger.info("🔄 Falling back to HYBRID extraction")
+                    return await self._extract_with_hybrid(file_content, file_type, filename)
+
+                # Process each page
+                for page_num, image in enumerate(images, 1):
+                    logger.info(f"📤 Processing page {page_num}/{len(images)} with Mistral OCR...")
+
+                    # Convert PIL image to base64 PNG
+                    img_buffer = BytesIO()
+                    image.save(img_buffer, format="PNG")
+                    img_bytes = img_buffer.getvalue()
+                    b64_content = base64.b64encode(img_bytes).decode("utf-8")
+                    data_url = f"data:image/png;base64,{b64_content}"
+
+                    # Call Mistral OCR API for this page
+                    ocr_response = client.ocr.process(
+                        model="mistral-ocr-latest",
+                        document={
+                            "type": "image_url",
+                            "image_url": {"url": data_url}
+                        },
+                        include_image_base64=False
+                    )
+
+                    # Extract markdown from response
+                    for page in ocr_response.pages:
+                        if page.markdown:
+                            all_markdown.append(page.markdown)
+
+            else:
+                # For images, send directly
+                if file_type.lower() in ("jpg", "jpeg"):
+                    mime_type = "image/jpeg"
+                elif file_type.lower() == "png":
+                    mime_type = "image/png"
+                else:
+                    mime_type = f"image/{file_type.lower()}"
+
+                b64_content = base64.b64encode(file_content).decode("utf-8")
+                data_url = f"data:{mime_type};base64,{b64_content}"
+
+                logger.info(f"📤 Calling Mistral OCR API (model: mistral-ocr-latest)")
+
+                # Call Mistral OCR API
+                ocr_response = client.ocr.process(
+                    model="mistral-ocr-latest",
+                    document={
+                        "type": "image_url",
+                        "image_url": {"url": data_url}
+                    },
+                    include_image_base64=False
+                )
+
+                # Extract markdown from response
+                for page in ocr_response.pages:
+                    if page.markdown:
+                        all_markdown.append(page.markdown)
 
             extracted_text = "\n\n---\n\n".join(all_markdown)
             processing_time = time.time() - start_time
 
-            # Get page count from response
-            page_count = len(ocr_response.pages) if ocr_response.pages else 0
-
             logger.info(f"✅ Mistral OCR completed in {processing_time:.2f}s")
-            logger.info(f"📊 Pages: {page_count}, Length: {len(extracted_text)} chars")
+            logger.info(f"📊 Pages: {len(all_markdown)}, Length: {len(extracted_text)} chars")
 
             return OCRResult(
                 text=extracted_text,
