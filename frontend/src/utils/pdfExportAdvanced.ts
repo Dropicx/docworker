@@ -32,7 +32,7 @@ export const exportToPDFAdvanced = async (
     tempDiv.style.width = '190mm'; // Optimierte Breite für weniger Seitenrand
     tempDiv.style.padding = '10mm 15mm'; // Reduzierte Abstände: oben/unten 10mm, links/rechts 15mm
     tempDiv.style.backgroundColor = 'white';
-    tempDiv.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+    tempDiv.style.fontFamily = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, -apple-system, sans-serif';
     tempDiv.style.fontSize = '12pt';
     tempDiv.style.lineHeight = '1.6';
     tempDiv.style.color = '#1f2937';
@@ -74,14 +74,17 @@ export const exportToPDFAdvanced = async (
       h2:first-child {
         margin-top: 0;
       }
-      h3 { 
-        font-size: 18px; 
-        font-weight: 600; 
-        margin-top: 20px; 
-        margin-bottom: 10px; 
-        color: #4b5563; 
+      h3 {
+        font-size: 18px;
+        font-weight: 600;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        color: #4b5563;
         page-break-after: avoid;
         page-break-inside: avoid;
+      }
+      h3:first-child {
+        margin-top: 0;
       }
       p { 
         font-size: 14px; 
@@ -105,38 +108,38 @@ export const exportToPDFAdvanced = async (
         margin-bottom: 12px; 
         page-break-inside: avoid;
       }
-      li { 
-        font-size: 14px; 
-        line-height: 1.8; 
-        margin-bottom: 4px; 
-        color: #4b5563; 
+      li {
+        font-size: 14px;
+        line-height: 1.8;
+        margin-bottom: 6px;
+        color: #4b5563;
         page-break-inside: avoid;
-        display: flex;
-        align-items: flex-start;
+        position: relative;
+        padding-left: 24px;
       }
       /* Hauptpunkte mit Bullet */
-      li:not(.sub-item) {
-        position: relative;
-        padding-left: 20px;
-      }
-      li:not(.sub-item)::before {
+      li::before {
         content: "•";
         position: absolute;
-        left: 0;
+        left: 8px;
         color: #3b82f6;
         font-weight: bold;
+        font-size: 16px;
       }
-      /* Unterpunkte mit Pfeil */
+      /* Unterpunkte ohne Bullet */
       li.sub-item {
-        margin-left: 30px;
-        padding-left: 15px;
+        margin-left: 20px;
+        padding-left: 16px;
         border-left: 2px solid #d1d5db;
         background-color: #f9fafb;
         font-size: 13px;
         color: #6b7280;
-        margin-bottom: 3px;
-        padding-top: 3px;
-        padding-bottom: 3px;
+        margin-bottom: 4px;
+        padding-top: 4px;
+        padding-bottom: 4px;
+      }
+      li.sub-item::before {
+        content: none;
       }
       strong { 
         font-weight: 600; 
@@ -156,45 +159,37 @@ export const exportToPDFAdvanced = async (
         color: #6b7280; 
         page-break-inside: avoid;
       }
-      table { 
-        width: 100%; 
-        border-collapse: collapse; 
-        margin: 16px 0; 
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 16px 0;
+        font-size: 12px;
         page-break-inside: avoid;
-        page-break-before: auto;
-        page-break-after: auto;
-        display: table;
-        table-layout: fixed;
       }
       thead {
         display: table-header-group;
-        page-break-inside: avoid;
-        page-break-after: avoid;
       }
       tbody {
         display: table-row-group;
       }
       tr {
         page-break-inside: avoid;
-        page-break-after: auto;
       }
-      th { 
-        background-color: #f3f4f6; 
-        padding: 10px; 
-        text-align: left; 
-        font-weight: 600; 
-        border: 1px solid #d1d5db; 
-        page-break-inside: avoid;
-        page-break-after: avoid;
-        font-size: 13px;
-      }
-      td { 
-        padding: 10px; 
+      th, td {
+        padding: 8px 12px;
         border: 1px solid #d1d5db;
-        page-break-inside: avoid;
-        font-size: 13px;
+        text-align: left;
+        vertical-align: top;
         word-wrap: break-word;
         overflow-wrap: break-word;
+      }
+      th {
+        background-color: #f3f4f6;
+        font-weight: 600;
+        color: #374151;
+      }
+      td {
+        color: #4b5563;
       }
       .page-break {
         page-break-before: always;
