@@ -216,7 +216,6 @@ class OCREngineManager:
                 - text: Extracted text with preserved formatting
                 - confidence: Score (0.0-1.0) based on OCR quality
                 - markdown: Markdown-formatted text (if available)
-                - structured_output: PP-StructureV3 JSON with tables/pages
                 - processing_time: Time taken for extraction
                 - engine: OCR engine used
 
@@ -276,7 +275,7 @@ class OCREngineManager:
     ) -> tuple[str, float]:
         """Legacy method returning only text and confidence for backward compatibility.
 
-        Use extract_text() for full OCRResult with structured_output.
+        Use extract_text() for full OCRResult.
         """
         result = await self.extract_text(file_content, file_type, filename, override_engine)
         return result.text, result.confidence
@@ -341,8 +340,7 @@ class OCREngineManager:
         2. Railway internal PaddleOCR (CPU)
         3. Hybrid extraction (final fallback)
 
-        Calls services via HTTP with structured mode for Markdown/JSON output.
-        Returns OCRResult with structured_output for semantic table processing.
+        Calls services via HTTP with structured mode for Markdown output.
         """
         # Try external Hetzner OCR if configured
         if USE_EXTERNAL_OCR and EXTERNAL_OCR_URL:
@@ -364,7 +362,6 @@ class OCREngineManager:
         Extract text using external PaddleOCR service (Hetzner/external deployment).
 
         Uses API key authentication via X-API-Key header.
-        Returns OCRResult with structured_output for semantic table processing.
         Raises exception on failure to allow fallback to internal service.
         """
         logger.info(f"🌐 Calling external PaddleOCR at {EXTERNAL_OCR_URL}")
@@ -402,23 +399,18 @@ class OCREngineManager:
                 engine = result.get("engine", "PaddleOCR")
                 mode = result.get("mode", "text")
 
-                # Capture structured_output for semantic table processing
-                structured_output = result.get("structured_output")
                 markdown = result.get("markdown")
 
                 logger.info(f"✅ External {engine} extraction completed in {processing_time:.2f}s (mode: {mode})")
                 logger.info(f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars")
 
                 if markdown:
-                    logger.info("📝 Using Markdown output (structured)")
-                if structured_output:
-                    logger.info(f"📊 Captured structured_output with {len(structured_output.get('pages', []))} pages")
+                    logger.info("📝 Using Markdown output")
 
                 return OCRResult(
                     text=extracted_text,
                     confidence=confidence,
                     markdown=markdown,
-                    structured_output=structured_output,
                     processing_time=processing_time,
                     engine=engine,
                     mode=mode
@@ -743,7 +735,6 @@ class OCREngineManager:
         """
         Extract text using internal PaddleOCR microservice (Railway deployment).
 
-        Returns OCRResult with structured_output for semantic table processing.
         Falls back to hybrid extraction on failure.
         """
         logger.info(f"🤖 Calling internal PaddleOCR at {PADDLEOCR_SERVICE_URL}")
@@ -777,27 +768,18 @@ class OCREngineManager:
                     engine = result.get("engine", "PaddleOCR")
                     mode = result.get("mode", "text")
 
-                    # Capture structured_output for semantic table processing
-                    structured_output = result.get("structured_output")
                     markdown = result.get("markdown")
 
                     logger.info(f"✅ {engine} extraction completed in {processing_time:.2f}s (mode: {mode})")
-                    logger.info(
-                        f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars"
-                    )
+                    logger.info(f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars")
 
-                    # Log if we got markdown or structured output
                     if markdown:
-                        logger.info("📝 Using Markdown output (structured)")
-                    if structured_output:
-                        pages = structured_output.get("pages", [])
-                        logger.info(f"📊 Captured structured_output with {len(pages)} pages")
+                        logger.info("📝 Using Markdown output")
 
                     return OCRResult(
                         text=extracted_text,
                         confidence=confidence,
                         markdown=markdown,
-                        structured_output=structured_output,
                         processing_time=processing_time,
                         engine=engine,
                         mode=mode

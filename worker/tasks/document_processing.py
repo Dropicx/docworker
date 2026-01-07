@@ -119,7 +119,6 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         # Step 1: OCR (if needed)
         extracted_text = ""
-        ocr_structured_output = None  # PP-StructureV3 JSON with tables/pages
         ocr_markdown = None  # Markdown-formatted text
         ocr_confidence = 0.0
         if job.file_type in ["pdf", "image", "jpg", "jpeg", "png"]:
@@ -136,7 +135,6 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
             # Call OCR engine (selected engine from database configuration)
             # Use file_content_for_processing (local copy) instead of job.file_content
-            # Returns OCRResult with structured_output for semantic table processing
             ocr_result = await_sync(
                 ocr_manager.extract_text(
                     file_content=file_content_for_processing,
@@ -148,18 +146,12 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             # Extract values from OCRResult
             extracted_text = ocr_result.text
             ocr_confidence = ocr_result.confidence
-            ocr_structured_output = ocr_result.structured_output
             ocr_markdown = ocr_result.markdown
 
             ocr_time = time.time() - start_time
             # Use repository update to avoid overwriting encrypted file_content
             job_repo.update(job_id_for_updates, ocr_time_seconds=ocr_time)
             logger.info(f"✅ OCR completed in {ocr_time:.2f}s: {len(extracted_text)} characters, confidence: {ocr_confidence:.2%}")
-
-            # Log structured output info if available (for table-aware translation)
-            if ocr_structured_output:
-                page_count = len(ocr_structured_output.get("pages", []))
-                logger.info(f"📊 Captured structured_output: {page_count} pages (has_tables: {ocr_result.has_tables})")
 
             # ⚡ Step 1.5: LOCAL PII Removal (BEFORE sending to AI pipeline)
             # Check if PII removal is enabled in OCR config
@@ -213,25 +205,13 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         pipeline_start = time.time()
 
-        # Prepare context with PII-cleaned OCR text and structured data preserved
+        # Prepare context with PII-cleaned OCR text
         # Note: extracted_text has already been through PII removal (if enabled)
         pipeline_context = options or {}
         pipeline_context['original_text'] = extracted_text  # PII-cleaned OCR text (safe for AI processing)
         pipeline_context['ocr_text'] = extracted_text  # Alias for clarity
-
-        # Add structured data for semantic table-aware translation
-        # This allows the pipeline to understand table structure (lab results, etc.)
-        pipeline_context['ocr_structured_output'] = ocr_structured_output
         pipeline_context['ocr_markdown'] = ocr_markdown
         pipeline_context['ocr_confidence'] = ocr_confidence
-        pipeline_context['has_tables'] = bool(ocr_structured_output) and any(
-            page.get("content", {}).get("tables") or
-            any("table" in str(k).lower() for k in page.get("content", {}).keys())
-            for page in (ocr_structured_output or {}).get("pages", [])
-        )
-
-        if pipeline_context['has_tables']:
-            logger.info("📊 Document contains tables - enabling table-aware translation")
 
         # Execute pipeline (async method, need to await)
         logger.info(f"⏱️  Pipeline execution timeout: 18 minutes (soft limit)")
@@ -346,11 +326,8 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             "language_translated_text": metadata.get('language_translation', None),  # RESTORED: (will be encrypted)
             "language_confidence_score": metadata.get('language_confidence', None),
 
-            # ==================== STRUCTURED OUTPUT (for semantic table translation) ====================
-            "ocr_structured_output": ocr_structured_output,  # PP-StructureV3 JSON (will be encrypted)
-            "ocr_markdown": ocr_markdown,  # Markdown-formatted text (will be encrypted)
-            "has_tables": pipeline_context.get('has_tables', False),
-            "structured_tables": metadata.get('structured_tables', []),  # Translated table structures
+            # ==================== OCR OUTPUT ====================
+            "ocr_markdown": ocr_markdown,  # Markdown-formatted text
 
             # ==================== TERMINATION INFO (if applicable) ====================
             "terminated": metadata.get('terminated', False),
