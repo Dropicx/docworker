@@ -37,11 +37,7 @@ RUN pip install --no-cache-dir \
 
 # Install paddleocr without its paddlepaddle dependency (already installed CPU version)
 RUN pip install --no-cache-dir --no-deps paddleocr>=3.0.0 \
-    && pip install --no-cache-dir --no-deps paddlex \
-    && pip install --no-cache-dir \
-        shapely pyclipper lmdb tqdm rapidfuzz requests filelock regex colorlog \
-        PyYAML==6.0.2 chardet huggingface-hub packaging pandas prettytable \
-        py-cpuinfo "ruamel.yaml" ujson aistudio-sdk "modelscope>=1.28.0"
+    && pip install --no-cache-dir "paddlex[ocr-core]"
 
 WORKDIR /app
 
