@@ -350,29 +350,20 @@ resource "hcloud_server" "paddleocr" {
 resource "hcloud_firewall" "paddleocr" {
   name = "${var.server_name}-firewall"
 
-  # Allow SSH for emergency access
+  # Only allow traffic from private network (LB health checks + internal)
+  # No public SSH, no public ICMP - access via Hetzner Console only
   rule {
-    description = "Allow SSH"
+    description = "Allow private network - all traffic"
     direction   = "in"
     protocol    = "tcp"
-    port        = "22"
-    source_ips  = ["0.0.0.0/0", "::/0"]
+    port        = "any"
+    source_ips  = ["10.0.0.0/16"]
   }
 
-  # Allow ICMP (ping)
   rule {
-    description = "Allow ICMP"
+    description = "Allow private network - ICMP"
     direction   = "in"
     protocol    = "icmp"
-    source_ips  = ["0.0.0.0/0", "::/0"]
-  }
-
-  # Allow traffic from private network (LB health checks)
-  rule {
-    description = "Allow private network"
-    direction   = "in"
-    protocol    = "tcp"
-    port        = "9124"
     source_ips  = ["10.0.0.0/16"]
   }
 }
