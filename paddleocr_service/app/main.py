@@ -108,7 +108,9 @@ async def lifespan(app: FastAPI):
             )
             logger.info(f"PaddleOCR initialized in {time.time() - start_init:.2f}s")
         except Exception as e:
+            import traceback
             logger.error(f"Failed to initialize PaddleOCR: {e}")
+            logger.error(f"Full traceback:\n{traceback.format_exc()}")
 
     if ocr_engine:
         logger.info(f"Service ready: PaddleOCR ({device})")
