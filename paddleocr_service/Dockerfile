@@ -37,7 +37,8 @@ RUN pip install --no-cache-dir \
 
 # Install paddleocr without its paddlepaddle dependency (already installed CPU version)
 RUN pip install --no-cache-dir --no-deps paddleocr>=3.0.0 \
-    && pip install --no-cache-dir shapely pyclipper lmdb tqdm rapidfuzz
+    && pip install --no-cache-dir --no-deps paddlex \
+    && pip install --no-cache-dir shapely pyclipper lmdb tqdm rapidfuzz pyyaml requests filelock regex
 
 WORKDIR /app
 
