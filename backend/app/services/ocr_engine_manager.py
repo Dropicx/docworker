@@ -5,7 +5,6 @@ Worker-ready service for managing OCR engine selection and configuration.
 Supports multiple OCR engines based on database configuration.
 """
 
-import asyncio
 import base64
 import json
 import logging
@@ -83,22 +82,6 @@ if EXTERNAL_OCR_URL:
     logger.info(f"🔑 External OCR API key: {'configured' if EXTERNAL_API_KEY else 'not set'}")
     logger.info(f"🔧 Use external OCR: {USE_EXTERNAL_OCR}")
 
-# Vast.ai PaddleOCR-VL configuration (GPU-accelerated)
-# Option 1: Serverless - uses 2-step routing: /route/ to get signed URL, then request to worker
-# Option 2: Direct URL - bypass routing, call worker directly (for regular instances)
-VASTAI_ENDPOINT_NAME = os.getenv("VASTAI_ENDPOINT_NAME", "")  # e.g., "rze2xxm9"
-VASTAI_API_KEY = os.getenv("VASTAI_API_KEY", "")
-USE_VASTAI_OCR = os.getenv("USE_VASTAI_OCR", "false").lower() == "true"
-VASTAI_ROUTE_URL = "https://run.vast.ai/route/"
-VASTAI_DIRECT_URL = os.getenv("VASTAI_DIRECT_URL", "")  # e.g., "http://ip:port" - bypasses routing
-
-if VASTAI_DIRECT_URL:
-    logger.info(f"🚀 Vast.ai OCR direct URL: {VASTAI_DIRECT_URL}")
-elif VASTAI_ENDPOINT_NAME:
-    logger.info(f"🚀 Vast.ai OCR endpoint: {VASTAI_ENDPOINT_NAME}")
-    logger.info(f"🔑 Vast.ai API key: {'configured' if VASTAI_API_KEY else 'not set'}")
-if USE_VASTAI_OCR:
-    logger.info(f"🔧 Vast.ai OCR enabled")
 
 
 class OCREngineManager:
@@ -342,31 +325,16 @@ class OCREngineManager:
         self, file_content: bytes, file_type: str, filename: str
     ) -> OCRResult:
         """
-        Extract text using PaddleOCR or PaddleOCR-VL services.
+        Extract text using PaddleOCR services.
 
         Priority (fallback chain):
-        1. Vast.ai PP-StructureV3 (GPU, fastest) - if USE_VASTAI_OCR=true
-        2. Hetzner external PaddleOCR (CPU) - if USE_EXTERNAL_OCR=true
-        3. Railway internal PaddleOCR (CPU)
-        4. Hybrid extraction (final fallback)
+        1. External PaddleOCR (Hetzner/GPU) - if USE_EXTERNAL_OCR=true
+        2. Railway internal PaddleOCR (CPU)
+        3. Hybrid extraction (final fallback)
 
         Calls services via HTTP with structured mode for Markdown/JSON output.
         Returns OCRResult with structured_output for semantic table processing.
         """
-        # Try Vast.ai PP-StructureV3 first (GPU-accelerated)
-        # Direct URL mode bypasses serverless routing (for regular instances)
-        vastai_available = USE_VASTAI_OCR and (
-            VASTAI_DIRECT_URL or (VASTAI_ENDPOINT_NAME and VASTAI_API_KEY)
-        )
-        if vastai_available:
-            try:
-                logger.info(f"🚀 Trying Vast.ai PP-StructureV3 (GPU)")
-                return await self._extract_with_vastai_vl(
-                    file_content, file_type, filename
-                )
-            except Exception as e:
-                logger.warning(f"⚠️ Vast.ai OCR failed: {e}, trying fallback")
-
         # Try external Hetzner OCR if configured
         if USE_EXTERNAL_OCR and EXTERNAL_OCR_URL:
             try:
@@ -453,155 +421,6 @@ class OCREngineManager:
             else:
                 logger.error(f"❌ External OCR service error: {response.status_code}")
                 raise Exception(f"External OCR service returned {response.status_code}")
-
-    async def _extract_with_vastai_vl(
-        self, file_content: bytes, file_type: str, filename: str
-    ) -> OCRResult:
-        """
-        Extract text using Vast.ai PP-StructureV3 GPU service via serverless API.
-
-        GPU-accelerated OCR using PP-StructureV3 on Vast.ai serverless.
-        Uses 2-step routing:
-        1. POST to /route endpoint to get worker URL
-        2. POST to worker's /extract endpoint with multipart form data
-
-        Returns OCRResult with structured_output for semantic table processing.
-        Raises exception on failure to allow fallback to other services.
-        """
-        logger.info(f"🚀 Calling Vast.ai PP-StructureV3 (GPU)")
-        logger.info(f"📄 File: {filename}, Type: {file_type}, Size: {len(file_content)} bytes")
-
-        # Extended timeout for GPU OCR (PP-StructureV3 can take 2-3 minutes)
-        async with httpx.AsyncClient(timeout=300.0, verify=False) as client:
-            worker_url = None
-
-            # Option 1: Direct URL mode - bypass serverless routing
-            if VASTAI_DIRECT_URL:
-                worker_url = VASTAI_DIRECT_URL.rstrip("/")
-                logger.info(f"🔗 Using direct URL (bypassing route): {worker_url}")
-
-            # Option 2: Serverless routing mode
-            else:
-                # Step 1: Get worker URL from Vast.ai route endpoint
-                # Per docs: https://docs.vast.ai/serverless/route
-                route_url = VASTAI_ROUTE_URL  # https://run.vast.ai/route/
-                logger.info(f"🔗 Calling route endpoint: {route_url}")
-                logger.info(f"📍 Endpoint name: {VASTAI_ENDPOINT_NAME}")
-
-                # Retry loop - workers may be loading (cold start takes ~60-90s)
-                max_retries = 12  # 12 retries * 5s = 60s max wait
-                retry_delay = 5.0
-
-                for attempt in range(max_retries):
-                    route_response = await client.post(
-                        route_url,
-                        headers={
-                            "Content-Type": "application/json",
-                            "Accept": "application/json"
-                        },
-                        json={
-                            "endpoint": VASTAI_ENDPOINT_NAME,
-                            "api_key": VASTAI_API_KEY,
-                            "cost": 242.0  # Estimated compute units for OCR request
-                        }
-                    )
-
-                    if route_response.status_code != 200:
-                        error_text = route_response.text
-                        logger.error(f"❌ Vast.ai route failed: {route_response.status_code} - {error_text}")
-                        raise Exception(f"Vast.ai route failed: {route_response.status_code}")
-
-                    route_data = route_response.json()
-                    logger.info(f"📍 Route response (attempt {attempt + 1}): {route_data}")
-
-                    # Get worker URL - per docs: response contains 'url' field
-                    worker_url = route_data.get("url") or route_data.get("endpoint_url")
-
-                    if worker_url:
-                        break  # Got a worker URL, proceed
-
-                    # No URL - check if workers are loading
-                    status = route_data.get("status", "")
-                    if "loading" in status.lower():
-                        logger.info(f"⏳ Workers loading, waiting {retry_delay}s... ({status})")
-                        await asyncio.sleep(retry_delay)
-                        continue
-                    elif "error" in status.lower():
-                        logger.error(f"❌ Vast.ai worker error: {status}")
-                        raise Exception(f"Vast.ai worker error: {status}")
-                    else:
-                        # Unknown status, wait and retry
-                        logger.warning(f"⚠️ Unexpected route response, retrying... ({status})")
-                        await asyncio.sleep(retry_delay)
-                        continue
-
-                if not worker_url:
-                    logger.error(f"❌ No Vast.ai worker available after {max_retries} attempts")
-                    raise Exception("No Vast.ai worker available - workers may still be loading")
-
-            # Remove trailing slash if present
-            worker_url = worker_url.rstrip("/")
-            logger.info(f"🔗 Using worker URL: {worker_url}")
-
-            # Step 2: Call PP-StructureV3 /extract endpoint with multipart form data
-            mime_type = "application/pdf" if file_type.lower() == "pdf" else f"image/{file_type}"
-            files = {"file": (filename, file_content, mime_type)}
-            params = {"mode": "structured"}  # Request structured output with markdown
-
-            extract_url = f"{worker_url}/extract"
-            logger.info(f"📤 Calling extract endpoint: {extract_url}")
-
-            ocr_response = await client.post(
-                extract_url,
-                files=files,
-                params=params,
-                timeout=300.0  # Extended timeout for large documents
-            )
-
-            if ocr_response.status_code == 200:
-                result = ocr_response.json()
-                logger.info(f"📥 Raw response keys: {list(result.keys())}")
-
-                # Extract text - prefer markdown for structured content (tables, etc.)
-                extracted_text = result.get("markdown") or result.get("text", "")
-                confidence = result.get("confidence", 0.90)
-                processing_time = result.get("processing_time", 0.0)
-                engine = result.get("engine", "PPStructureV3")
-                mode = result.get("mode", "structured")
-
-                # Capture structured_output for semantic table processing
-                structured_output = result.get("structured_output")
-                markdown = result.get("markdown")
-
-                logger.info(f"✅ PP-StructureV3 extraction completed in {processing_time:.2f}s (mode: {mode})")
-                logger.info(f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars")
-
-                if markdown:
-                    logger.info("📝 Using Markdown output (structured)")
-                if structured_output:
-                    pages = structured_output.get("pages", [])
-                    logger.info(f"📊 Captured structured_output with {len(pages)} pages")
-
-                # Post-process: Normalize line breaks (join paragraph lines, keep intentional breaks)
-                extracted_text = self._normalize_line_breaks(extracted_text)
-
-                return OCRResult(
-                    text=extracted_text,
-                    confidence=float(confidence),
-                    markdown=markdown,
-                    structured_output=structured_output,
-                    processing_time=processing_time,
-                    engine=engine,
-                    mode=mode
-                )
-
-            elif ocr_response.status_code in (401, 403):
-                logger.error(f"❌ Vast.ai authentication failed: {ocr_response.status_code}")
-                raise Exception(f"Vast.ai authentication failed: {ocr_response.status_code}")
-            else:
-                error_text = ocr_response.text[:500]
-                logger.error(f"❌ Vast.ai OCR error: {ocr_response.status_code} - {error_text}")
-                raise Exception(f"Vast.ai OCR returned {ocr_response.status_code}")
 
     def _convert_pipe_tables_to_markdown(self, text: str) -> str:
         """
