@@ -238,13 +238,31 @@ function App() {
     return names[name] || name;
   };
 
-  const renderHealthIndicator = () => {
+  const renderHealthIndicator = (isAdmin: boolean = false) => {
     if (!health) return null;
 
     const isHealthy = health.status === 'healthy';
     const hasWarnings = health.status === 'degraded';
 
-    // Key services to display prominently
+    // Simple badge for non-admin users (no dropdown)
+    if (!isAdmin) {
+      return (
+        <div
+          className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+            isHealthy
+              ? 'bg-success-50 text-success-700 ring-1 ring-success-200'
+              : hasWarnings
+                ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200'
+                : 'bg-error-50 text-error-700 ring-1 ring-error-200'
+          }`}
+        >
+          {isHealthy ? <Shield className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+          <span>{isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschränkt' : 'Systemfehler'}</span>
+        </div>
+      );
+    }
+
+    // Full dropdown for admin users
     const keyServices = ['mistral_ocr', 'paddleocr_hetzner', 'ovh_api', 'worker'];
     const displayServices = keyServices.filter(s => health.services[s]);
 
@@ -267,7 +285,7 @@ function App() {
           />
         </button>
 
-        {/* Health Details Dropdown */}
+        {/* Health Details Dropdown - Admin only */}
         {showHealthDetails && (
           <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-neutral-200 overflow-hidden z-50 animate-fade-in">
             <div className="px-4 py-3 bg-neutral-50 border-b border-neutral-200">
@@ -532,7 +550,7 @@ function App() {
               </button>
 
               <div className="flex items-center space-x-4">
-                {renderHealthIndicator()}
+                {renderHealthIndicator(isAuthenticated && user?.role === 'admin')}
 
                 {/* User Menu */}
                 {isAuthenticated ? (
