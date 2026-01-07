@@ -1,16 +1,20 @@
 # =============================================================================
-# PaddleOCR 3.x CPU Server - Hetzner Terraform Configuration
+# PaddleOCR 3.x HA Cluster - Hetzner Terraform Configuration
 # =============================================================================
-# Lightweight OCR fallback server using PaddleOCR 3.x (standard mode)
+# High-availability OCR service with:
+# - 2x cpx32 servers in private network
+# - Load balancer with managed SSL
+# - No public IPs on servers (console access only)
 #
 # Usage:
-#   1. Set HCLOUD_TOKEN environment variable or create terraform.tfvars
+#   1. Set variables in terraform.tfvars
 #   2. terraform init
-#   3. terraform plan
+#   3. terraform destroy (remove old single server)
 #   4. terraform apply
-#   5. SSH in and run: cd /opt/paddleocr && ./deploy.sh
+#   5. Access each server via Hetzner Console, run: cd /opt/paddleocr && ./deploy.sh
+#   6. Point your domain to the load balancer IP
 #
-# Get API key: terraform output -raw api_key
+# Get credentials: terraform output -json server_root_passwords
 # =============================================================================
 
 terraform {
@@ -51,15 +55,26 @@ variable "hcloud_token" {
 }
 
 variable "server_name" {
-  description = "Name of the server"
+  description = "Base name for servers"
   type        = string
   default     = "paddleocr"
 }
 
 variable "server_type" {
-  description = "Hetzner server type (cpx21 = 3 vCPU, 4GB RAM - sufficient for PaddleOCR 3.x)"
+  description = "Hetzner server type (cpx32 = 4 vCPU, 8GB RAM)"
   type        = string
-  default     = "cpx21" # cpx21 = 3 vCPU, 4GB RAM, ~€8/mo - good for PaddleOCR 3.x CPU
+  default     = "cpx32"
+}
+
+variable "server_count" {
+  description = "Number of PaddleOCR servers"
+  type        = number
+  default     = 2
+}
+
+variable "domain_name" {
+  description = "Domain name for SSL certificate (e.g., ocr.example.com)"
+  type        = string
 }
 
 variable "github_repo" {
@@ -87,29 +102,14 @@ variable "location" {
   default     = "fsn1"
 }
 
-variable "ssh_public_key_path" {
-  description = "Path to SSH public key file"
+variable "network_zone" {
+  description = "Network zone for private network"
   type        = string
-  default     = "~/.ssh/id_rsa.pub"
-}
-
-variable "ssh_public_key" {
-  description = "SSH public key content (overrides ssh_public_key_path if set)"
-  type        = string
-  default     = ""
+  default     = "eu-central"
 }
 
 # -----------------------------------------------------------------------------
-# SSH Key
-# -----------------------------------------------------------------------------
-
-resource "hcloud_ssh_key" "paddleocr" {
-  name       = "${var.server_name}-key"
-  public_key = var.ssh_public_key != "" ? var.ssh_public_key : file(pathexpand(var.ssh_public_key_path))
-}
-
-# -----------------------------------------------------------------------------
-# Generate API Key
+# Generate API Key (shared across all servers)
 # -----------------------------------------------------------------------------
 
 resource "random_password" "api_key" {
@@ -118,11 +118,37 @@ resource "random_password" "api_key" {
 }
 
 # -----------------------------------------------------------------------------
-# Cloud-Init Configuration
+# Generate Root Passwords (one per server for console access)
+# -----------------------------------------------------------------------------
+
+resource "random_password" "root_password" {
+  count   = var.server_count
+  length  = 32
+  special = true
+}
+
+# -----------------------------------------------------------------------------
+# Private Network
+# -----------------------------------------------------------------------------
+
+resource "hcloud_network" "paddleocr" {
+  name     = "${var.server_name}-network"
+  ip_range = "10.0.0.0/16"
+}
+
+resource "hcloud_network_subnet" "paddleocr" {
+  network_id   = hcloud_network.paddleocr.id
+  type         = "cloud"
+  network_zone = var.network_zone
+  ip_range     = "10.0.1.0/24"
+}
+
+# -----------------------------------------------------------------------------
+# Cloud-Init Configuration (template for each server)
 # -----------------------------------------------------------------------------
 
 locals {
-  cloud_init = <<-EOF
+  cloud_init_template = <<-EOF
 #cloud-config
 package_update: true
 package_upgrade: true
@@ -133,8 +159,12 @@ packages:
   - git
   - curl
   - htop
-  - ufw
   - fail2ban
+
+chpasswd:
+  list: |
+    root:ROOT_PASSWORD_PLACEHOLDER
+  expire: false
 
 bootcmd:
   - mkdir -p /opt/paddleocr
@@ -143,7 +173,8 @@ write_files:
   - path: /etc/motd
     content: |
       =====================================
-      PaddleOCR 3.x CPU Server (Fallback)
+      PaddleOCR 3.x CPU Server (HA Cluster)
+      Server: SERVER_NAME_PLACEHOLDER
       Managed by Terraform
 
       Service: /opt/paddleocr
@@ -209,7 +240,7 @@ write_files:
           deploy:
             resources:
               limits:
-                memory: 3G
+                memory: 6G
           healthcheck:
             test: ["CMD", "curl", "-f", "http://localhost:9124/health"]
             interval: 30s
@@ -224,14 +255,9 @@ write_files:
 runcmd:
   - systemctl enable docker
   - systemctl start docker
-  - ufw default deny incoming
-  - ufw default allow outgoing
-  - ufw allow 22/tcp
-  - ufw allow 9124/tcp
-  - ufw --force enable
   - chown -R root:root /opt/paddleocr
   - chmod 755 /opt/paddleocr/deploy.sh
-  - fallocate -l 2G /swapfile
+  - fallocate -l 4G /swapfile
   - chmod 600 /swapfile
   - mkswap /swapfile
   - swapon /swapfile
@@ -241,81 +267,155 @@ runcmd:
   - systemctl enable fail2ban
   - systemctl start fail2ban
 
-final_message: "PaddleOCR VM ready! SSH in and run: cd /opt/paddleocr && ./deploy.sh"
+final_message: "PaddleOCR VM ready! Run: cd /opt/paddleocr && ./deploy.sh"
 EOF
 }
 
 # -----------------------------------------------------------------------------
-# Server
+# Servers (Private Network Only)
 # -----------------------------------------------------------------------------
 
 resource "hcloud_server" "paddleocr" {
-  name        = var.server_name
+  count       = var.server_count
+  name        = "${var.server_name}-${count.index + 1}"
   image       = "ubuntu-24.04"
   server_type = var.server_type
   location    = var.location
-  ssh_keys    = [hcloud_ssh_key.paddleocr.id]
-  user_data   = local.cloud_init
+
+  user_data = replace(
+    replace(
+      local.cloud_init_template,
+      "ROOT_PASSWORD_PLACEHOLDER",
+      random_password.root_password[count.index].result
+    ),
+    "SERVER_NAME_PLACEHOLDER",
+    "${var.server_name}-${count.index + 1}"
+  )
+
+  labels = {
+    service = "paddleocr"
+    managed = "terraform"
+    index   = tostring(count.index + 1)
+  }
+
+  # No public IP - private network only
+  public_net {
+    ipv4_enabled = false
+    ipv6_enabled = false
+  }
+
+  network {
+    network_id = hcloud_network.paddleocr.id
+    ip         = "10.0.1.${count.index + 10}"
+  }
+
+  depends_on = [hcloud_network_subnet.paddleocr]
+}
+
+# -----------------------------------------------------------------------------
+# Load Balancer
+# -----------------------------------------------------------------------------
+
+resource "hcloud_load_balancer" "paddleocr" {
+  name               = "${var.server_name}-lb"
+  load_balancer_type = "lb11"
+  location           = var.location
 
   labels = {
     service = "paddleocr"
     managed = "terraform"
   }
+}
 
-  public_net {
-    ipv4_enabled = true
-    ipv6_enabled = true
+# Attach LB to private network
+resource "hcloud_load_balancer_network" "paddleocr" {
+  load_balancer_id = hcloud_load_balancer.paddleocr.id
+  network_id       = hcloud_network.paddleocr.id
+  ip               = "10.0.1.2"
+
+  depends_on = [hcloud_network_subnet.paddleocr]
+}
+
+# Add servers as targets
+resource "hcloud_load_balancer_target" "paddleocr" {
+  count            = var.server_count
+  type             = "server"
+  load_balancer_id = hcloud_load_balancer.paddleocr.id
+  server_id        = hcloud_server.paddleocr[count.index].id
+  use_private_ip   = true
+
+  depends_on = [hcloud_load_balancer_network.paddleocr]
+}
+
+# Managed SSL Certificate
+resource "hcloud_managed_certificate" "paddleocr" {
+  name         = "${var.server_name}-cert"
+  domain_names = [var.domain_name]
+
+  labels = {
+    service = "paddleocr"
+    managed = "terraform"
   }
 }
 
-# -----------------------------------------------------------------------------
-# Firewall
-# -----------------------------------------------------------------------------
+# HTTPS Service (terminates SSL, forwards to HTTP:9124)
+resource "hcloud_load_balancer_service" "https" {
+  load_balancer_id = hcloud_load_balancer.paddleocr.id
+  protocol         = "https"
+  listen_port      = 443
+  destination_port = 9124
 
-resource "hcloud_firewall" "paddleocr" {
-  name = "${var.server_name}-firewall"
-
-  rule {
-    description = "Allow SSH"
-    direction   = "in"
-    protocol    = "tcp"
-    port        = "22"
-    source_ips  = ["0.0.0.0/0", "::/0"]
+  http {
+    certificates = [hcloud_managed_certificate.paddleocr.id]
   }
 
-  rule {
-    description = "Allow PaddleOCR API"
-    direction   = "in"
-    protocol    = "tcp"
-    port        = "9124"
-    source_ips  = ["0.0.0.0/0", "::/0"]
-  }
+  health_check {
+    protocol = "http"
+    port     = 9124
+    interval = 15
+    timeout  = 10
+    retries  = 3
 
-  rule {
-    description = "Allow ICMP"
-    direction   = "in"
-    protocol    = "icmp"
-    source_ips  = ["0.0.0.0/0", "::/0"]
+    http {
+      path         = "/health"
+      status_codes = ["2??", "3??"]
+    }
   }
 }
 
-resource "hcloud_firewall_attachment" "paddleocr" {
-  firewall_id = hcloud_firewall.paddleocr.id
-  server_ids  = [hcloud_server.paddleocr.id]
+# HTTP to HTTPS redirect
+resource "hcloud_load_balancer_service" "http_redirect" {
+  load_balancer_id = hcloud_load_balancer.paddleocr.id
+  protocol         = "http"
+  listen_port      = 80
+  destination_port = 9124
+
+  health_check {
+    protocol = "http"
+    port     = 9124
+    interval = 15
+    timeout  = 10
+    retries  = 3
+
+    http {
+      path         = "/health"
+      status_codes = ["2??", "3??"]
+    }
+  }
 }
 
 # -----------------------------------------------------------------------------
 # Outputs
 # -----------------------------------------------------------------------------
 
-output "server_ip" {
-  description = "Public IPv4 address of the server"
-  value       = hcloud_server.paddleocr.ipv4_address
+output "load_balancer_ip" {
+  description = "Public IPv4 address of the load balancer (point your DNS here)"
+  value       = hcloud_load_balancer.paddleocr.ipv4
 }
 
-output "server_ipv6" {
-  description = "Public IPv6 address of the server"
-  value       = hcloud_server.paddleocr.ipv6_address
+output "api_endpoint" {
+  description = "API endpoint URL"
+  value       = "https://${var.domain_name}"
 }
 
 output "api_key" {
@@ -324,26 +424,40 @@ output "api_key" {
   sensitive   = true
 }
 
-output "ssh_command" {
-  description = "SSH command to connect to server"
-  value       = "ssh root@${hcloud_server.paddleocr.ipv4_address}"
+output "server_root_passwords" {
+  description = "Root passwords for console access (use Hetzner Console)"
+  value       = { for i, p in random_password.root_password : "${var.server_name}-${i + 1}" => p.result }
+  sensitive   = true
 }
 
-output "deploy_command" {
-  description = "Command to deploy after SSH"
-  value       = "cd /opt/paddleocr && ./deploy.sh"
+output "server_private_ips" {
+  description = "Private IPs of servers"
+  value       = { for i, s in hcloud_server.paddleocr : s.name => "10.0.1.${i + 10}" }
 }
 
-output "backend_env_vars" {
-  description = "Environment variables for your backend"
+output "deploy_instructions" {
+  description = "Deployment instructions"
   value       = <<-EOF
-    EXTERNAL_OCR_URL=http://${hcloud_server.paddleocr.ipv4_address}:9124
-    EXTERNAL_API_KEY=<run: terraform output -raw api_key>
-    USE_EXTERNAL_OCR=true
-  EOF
-}
 
-output "health_check_url" {
-  description = "Health check URL"
-  value       = "http://${hcloud_server.paddleocr.ipv4_address}:9124/health"
+    ============================================
+    PaddleOCR HA Cluster Deployment
+    ============================================
+
+    1. Point DNS: ${var.domain_name} → ${hcloud_load_balancer.paddleocr.ipv4}
+
+    2. Deploy each server via Hetzner Console:
+       - Go to: https://console.hetzner.cloud
+       - Open each server's console
+       - Login as root (get password: terraform output -json server_root_passwords)
+       - Run: cd /opt/paddleocr && ./deploy.sh
+
+    3. Backend environment variables:
+       EXTERNAL_OCR_URL=https://${var.domain_name}
+       EXTERNAL_API_KEY=<run: terraform output -raw api_key>
+       USE_EXTERNAL_OCR=true
+
+    4. Health check: https://${var.domain_name}/health
+
+    ============================================
+  EOF
 }
