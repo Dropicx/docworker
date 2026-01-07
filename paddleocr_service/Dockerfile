@@ -62,9 +62,8 @@ FROM base-${USE_GPU} AS final
 
 WORKDIR /app
 
-# Install minimal dependencies for PaddleOCR
+# Install dependencies (paddlepaddle already installed in base)
 RUN pip install --no-cache-dir \
-    paddleocr>=3.0.0 \
     fastapi==0.115.6 \
     "uvicorn[standard]==0.34.0" \
     Pillow \
@@ -72,7 +71,12 @@ RUN pip install --no-cache-dir \
     PyMuPDF \
     pydantic \
     python-multipart \
-    opencv-python-headless
+    opencv-python-headless \
+    psutil
+
+# Install paddleocr without pulling in paddlepaddle-gpu
+RUN pip install --no-cache-dir --no-deps paddleocr>=3.0.0 \
+    && pip install --no-cache-dir shapely pyclipper imgaug lmdb tqdm rapidfuzz
 
 # Copy application code
 COPY app/ app/
