@@ -209,9 +209,9 @@ async def upload_document(
         ocr_config = {
             "selected_engine": str(ocr_config_obj.selected_engine)
             if ocr_config_obj
-            else "PADDLEOCR",
+            else "MISTRAL_OCR",
+            "mistral_ocr_config": ocr_config_obj.mistral_ocr_config if ocr_config_obj else {},
             "paddleocr_config": ocr_config_obj.paddleocr_config if ocr_config_obj else {},
-            "vision_llm_config": ocr_config_obj.vision_llm_config if ocr_config_obj else {},
         }
 
         # Erstelle Pipeline-Job in der Datenbank (using repository for encryption)

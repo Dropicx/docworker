@@ -83,10 +83,8 @@ class OCRConfigurationRepository(BaseRepository[OCRConfigurationDB]):
             return None
 
         config_field_map = {
-            OCREngineEnum.PADDLEOCR: "paddleocr_config",
-            OCREngineEnum.VISION_LLM: "vision_llm_config",
-            OCREngineEnum.HYBRID: "hybrid_config",
             OCREngineEnum.MISTRAL_OCR: "mistral_ocr_config",
+            OCREngineEnum.PADDLEOCR: "paddleocr_config",
         }
 
         field_name = config_field_map.get(engine)
@@ -116,11 +114,11 @@ class OCRConfigurationRepository(BaseRepository[OCRConfigurationDB]):
         Get the currently selected OCR engine.
 
         Returns:
-            Selected engine, defaults to HYBRID if config not found
+            Selected engine, defaults to MISTRAL_OCR if config not found
         """
         config = self.get_config()
         if not config:
-            return OCREngineEnum.HYBRID
+            return OCREngineEnum.MISTRAL_OCR
 
         return config.selected_engine
 

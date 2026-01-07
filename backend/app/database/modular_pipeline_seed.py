@@ -33,44 +33,33 @@ def seed_modular_pipeline():
             # ==================== OCR CONFIGURATION ====================
             logger.info("🔍 Inserting default OCR configuration...")
 
-            # Default OCR configuration: Tesseract (current production setup)
+            # Default OCR configuration
+            # Primary: Mistral OCR (fast, accurate)
+            # Fallback: PaddleOCR via Hetzner (EXTERNAL_OCR_URL)
+
+            mistral_ocr_config = {
+                "model": "mistral-ocr-latest",
+            }
 
             paddleocr_config = {
-                "use_gpu": True,
-                "lang": "german",
-                "det_algorithm": "DB",
-                "rec_algorithm": "SVTR_LCNet",
-            }
-
-            vision_llm_config = {
-                "model": "Qwen2.5-VL-72B-Instruct",
-                "max_tokens": 4096,
-                "temperature": 0.1,
-            }
-
-            hybrid_config = {
-                "quality_threshold": 0.7,
-                "use_vision_for_complex": True,
-                "fallback_engine": "TESSERACT",
+                "url": "https://ocr.fra-la.de",
+                "timeout": 180,
             }
 
             conn.execute(
                 text("""
                 INSERT INTO ocr_configuration (
-                    selected_engine, paddleocr_config,
-                    vision_llm_config, hybrid_config, pii_removal_enabled,
-                    last_modified, modified_by
+                    selected_engine, mistral_ocr_config, paddleocr_config,
+                    pii_removal_enabled, last_modified, modified_by
                 ) VALUES (
-                    :selected_engine, :paddleocr_config,
-                    :vision_llm_config, :hybrid_config, :pii_removal_enabled,
-                    CURRENT_TIMESTAMP, :modified_by
+                    :selected_engine, :mistral_ocr_config, :paddleocr_config,
+                    :pii_removal_enabled, CURRENT_TIMESTAMP, :modified_by
                 )
             """),
                 {
-                    "selected_engine": "PADDLEOCR",
+                    "selected_engine": "MISTRAL_OCR",
+                    "mistral_ocr_config": json.dumps(mistral_ocr_config),
                     "paddleocr_config": json.dumps(paddleocr_config),
-                    "vision_llm_config": json.dumps(vision_llm_config),
-                    "hybrid_config": json.dumps(hybrid_config),
                     "pii_removal_enabled": True,
                     "modified_by": "system_seed",
                 },
@@ -80,6 +69,7 @@ def seed_modular_pipeline():
             logger.info("🤖 Inserting available AI models...")
 
             models = [
+                # OVH AI Endpoints models
                 {
                     "name": "Meta-Llama-3_3-70B-Instruct",
                     "display_name": "Llama 3.3 70B (Main Model)",
@@ -87,6 +77,8 @@ def seed_modular_pipeline():
                     "description": "High-performance language model for medical translation and analysis",
                     "max_tokens": 8192,
                     "supports_vision": False,
+                    "price_input_per_1m_tokens": 0.54,
+                    "price_output_per_1m_tokens": 0.81,
                     "model_config": json.dumps(
                         {
                             "temperature": 0.7,
@@ -99,11 +91,13 @@ def seed_modular_pipeline():
                 },
                 {
                     "name": "Mistral-Nemo-Instruct-2407",
-                    "display_name": "Mistral Nemo (Preprocessing)",
+                    "display_name": "Mistral Nemo OVH (Preprocessing)",
                     "provider": "OVH",
-                    "description": "Fast and efficient model for preprocessing and classification tasks",
+                    "description": "Fast and efficient model for preprocessing and classification tasks (OVH hosted)",
                     "max_tokens": 4096,
                     "supports_vision": False,
+                    "price_input_per_1m_tokens": 0.13,
+                    "price_output_per_1m_tokens": 0.13,
                     "model_config": json.dumps(
                         {
                             "temperature": 0.5,
@@ -121,9 +115,48 @@ def seed_modular_pipeline():
                     "description": "Vision language model for OCR and image analysis (slow but accurate)",
                     "max_tokens": 4096,
                     "supports_vision": True,
+                    "price_input_per_1m_tokens": None,
+                    "price_output_per_1m_tokens": None,
                     "model_config": json.dumps(
                         {"temperature": 0.1, "top_p": 0.9, "max_pixels": 1280 * 28 * 28}
                     ),
+                    "is_enabled": True,
+                },
+                # Mistral AI API models (direct)
+                {
+                    "name": "mistral-large-latest",
+                    "display_name": "Mistral Large 3",
+                    "provider": "MISTRAL",
+                    "description": "Mistral Large 3 - High-quality model for complex medical translations",
+                    "max_tokens": 131072,
+                    "supports_vision": False,
+                    "price_input_per_1m_tokens": 0.50,
+                    "price_output_per_1m_tokens": 1.50,
+                    "model_config": json.dumps({"temperature": 0.7}),
+                    "is_enabled": True,
+                },
+                {
+                    "name": "open-mistral-nemo",
+                    "display_name": "Mistral NeMo",
+                    "provider": "MISTRAL",
+                    "description": "Mistral NeMo - Fast and efficient model for preprocessing tasks",
+                    "max_tokens": 128000,
+                    "supports_vision": False,
+                    "price_input_per_1m_tokens": 0.13,
+                    "price_output_per_1m_tokens": 0.13,
+                    "model_config": json.dumps({"temperature": 0.5}),
+                    "is_enabled": True,
+                },
+                {
+                    "name": "ministral-8b-latest",
+                    "display_name": "Ministral 3 8B",
+                    "provider": "MISTRAL",
+                    "description": "Ministral 3 8B - Compact and fast model for simple tasks",
+                    "max_tokens": 128000,
+                    "supports_vision": False,
+                    "price_input_per_1m_tokens": 0.15,
+                    "price_output_per_1m_tokens": 0.15,
+                    "model_config": json.dumps({"temperature": 0.5}),
                     "is_enabled": True,
                 },
             ]
@@ -134,10 +167,12 @@ def seed_modular_pipeline():
                     INSERT INTO available_models (
                         name, display_name, provider, description, max_tokens,
                         supports_vision, model_config, is_enabled,
+                        price_input_per_1m_tokens, price_output_per_1m_tokens,
                         created_at, last_modified, modified_by
                     ) VALUES (
                         :name, :display_name, :provider, :description, :max_tokens,
                         :supports_vision, :model_config, :is_enabled,
+                        :price_input_per_1m_tokens, :price_output_per_1m_tokens,
                         CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
                     )
                 """),
@@ -157,6 +192,22 @@ def seed_modular_pipeline():
                 text("SELECT id FROM available_models WHERE name = 'Mistral-Nemo-Instruct-2407'")
             )
             mistral_id = mistral_result.scalar()
+
+            # Get document class IDs for document-specific steps
+            arztbrief_result = conn.execute(
+                text("SELECT id FROM document_classes WHERE class_key = 'ARZTBRIEF'")
+            )
+            arztbrief_id = arztbrief_result.scalar()
+
+            befundbericht_result = conn.execute(
+                text("SELECT id FROM document_classes WHERE class_key = 'BEFUNDBERICHT'")
+            )
+            befundbericht_id = befundbericht_result.scalar()
+
+            laborwerte_result = conn.execute(
+                text("SELECT id FROM document_classes WHERE class_key = 'LABORWERTE'")
+            )
+            laborwerte_id = laborwerte_result.scalar()
 
             pipeline_steps = [
                 {
@@ -200,10 +251,268 @@ def seed_modular_pipeline():
                 },
                 # NOTE: PII removal now happens LOCALLY via AdvancedPrivacyFilter
                 # BEFORE pipeline execution (GDPR-compliant, no PII sent to cloud)
-                # Previous LLM-based "PII Preprocessing" step has been removed
+                # ==================== DOCUMENT-SPECIFIC TRANSLATION STEPS ====================
+                # These run ONLY for their specific document class
+                {
+                    "name": "Vereinfachung Arztbrief",
+                    "description": "Patient-friendly translation for doctor's letters (ARZTBRIEF only)",
+                    "order": 10,
+                    "enabled": True,
+                    "prompt_template": """Du bist ein erfahrener Medizinjournalist, der komplexe medizinische Arztbriefe für Patienten verständlich aufbereitet.
+
+DEINE AUFGABE:
+Wandle den folgenden Arztbrief in eine patientenfreundliche Version um, die auch medizinische Laien verstehen können.
+
+RICHTLINIEN:
+
+1. STRUKTUR:
+   - Verwende klare Überschriften mit ## für Hauptabschnitte
+   - Gliedere in logische Abschnitte mit passenden Emojis:
+     • 📋 Zusammenfassung
+     • 🩺 Diagnosen
+     • 💊 Medikamente & Behandlung
+     • ⚠️ Wichtige Hinweise
+     • ✅ Nächste Schritte
+   - Nutze Aufzählungspunkte für bessere Lesbarkeit
+
+2. SPRACHE:
+   - Erkläre jeden medizinischen Fachbegriff in Klammern oder direkt im Text
+   - Verwende einfache, klare Sätze
+   - Vermeide Abkürzungen oder erkläre sie sofort
+   - Schreibe in einem beruhigenden, aber informativen Ton
+
+3. EMOJIS VERWENDEN:
+   - ✅ für positive Befunde oder erledigte Punkte
+   - ⚠️ für Warnungen oder wichtige Hinweise
+   - 💊 für Medikamente und Dosierungen
+   - 🩺 für Diagnosen und Untersuchungen
+   - 📅 für Termine und zeitliche Angaben
+   - 📞 für Kontaktinformationen
+   - ❗ für dringende Handlungsempfehlungen
+
+4. INHALT:
+   - Behalte ALLE medizinischen Informationen bei - nichts weglassen!
+   - Füge KEINE neuen medizinischen Informationen hinzu
+   - Erkläre, was Diagnosen für den Alltag bedeuten können
+   - Hebe wichtige Handlungsempfehlungen hervor (z.B. mit **fett**)
+
+5. FORMAT:
+   - Ausgabe direkt in Markdown (OHNE umschließende ```markdown Codeblöcke!)
+   - Beginne DIREKT mit der Überschrift (z.B. ## 📋 Zusammenfassung)
+   - Verwende nur EINE Raute-Ebene pro Überschrift (also ## nicht ## ##)
+   - Ende mit einem Abschnitt "✅ Nächste Schritte" falls relevant
+
+ARZTBRIEF:
+{input_text}
+
+Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare. Beginne direkt mit dem Inhalt.""",
+                    "selected_model_id": llama_id,
+                    "temperature": 0.7,
+                    "max_tokens": 8192,
+                    "retry_on_failure": True,
+                    "max_retries": 2,
+                    "input_from_previous_step": True,
+                    "output_format": "markdown",
+                    "document_class_id": arztbrief_id,  # ARZTBRIEF only
+                },
+                {
+                    "name": "Vereinfachung Befundbericht",
+                    "description": "Patient-friendly translation for medical reports (BEFUNDBERICHT only)",
+                    "order": 10,
+                    "enabled": True,
+                    "prompt_template": """Du bist ein erfahrener Radiologe und Medizinjournalist, der komplexe medizinische Befundberichte für Patienten verständlich erklärt.
+
+DEINE AUFGABE:
+Wandle den folgenden Befundbericht in eine patientenfreundliche Version um, die auch medizinische Laien verstehen können.
+
+RICHTLINIEN:
+
+1. STRUKTUR:
+   - Beginne mit einer kurzen Zusammenfassung des Hauptergebnisses (2-3 Sätze)
+   - Gliedere nach Abschnitten mit passenden Emojis:
+     • 📋 Zusammenfassung
+     • 🔬 Was wurde untersucht?
+     • 🔍 Was wurde gefunden?
+     • 💡 Was bedeutet das für Sie?
+     • ✅ Nächste Schritte
+   - Verwende ## für Überschriften und Aufzählungspunkte
+
+2. SPRACHE:
+   - Übersetze medizinische Fachbegriffe in Alltagssprache
+   - Beispiel: "Hepatomegalie" → "vergrößerte Leber (Hepatomegalie)"
+   - Erkläre anatomische Begriffe: "Im Bereich der rechten Niere (am unteren Rücken rechts)..."
+   - Nutze Vergleiche für Größenangaben: "etwa so groß wie eine Kirsche"
+
+3. EMOJIS UND SYMBOLE:
+   - ✅ Unauffällig / Normal / Gesund
+   - ⚠️ Leichte Auffälligkeit (meist harmlos)
+   - ❗ Wichtiger Befund (ärztliche Rücksprache empfohlen)
+   - 🔬 Für Untersuchungsdetails
+   - 📅 Für Kontrolltermine
+   - 💡 Für Erklärungen und Bedeutungen
+
+4. BEFUNDINTERPRETATION:
+   - Erkläre, was "unauffällig" oder "ohne pathologischen Befund" bedeutet (= normal, gesund)
+   - Ordne Auffälligkeiten ein: Ist es besorgniserregend oder eher harmlos?
+   - WICHTIG: Bleibe bei den Fakten des Berichts, spekuliere nicht!
+
+5. INHALT:
+   - Behalte ALLE medizinischen Informationen bei
+   - Füge KEINE neuen Diagnosen oder Interpretationen hinzu
+   - Hebe wichtige Befunde hervor (mit **fett**)
+   - Erwähne empfohlene Kontrolluntersuchungen
+
+6. FORMAT:
+   - Ausgabe direkt in Markdown (OHNE umschließende ```markdown Codeblöcke!)
+   - Beginne DIREKT mit der Überschrift (z.B. ## 📋 Zusammenfassung)
+   - Verwende nur EINE Raute-Ebene pro Überschrift (also ## nicht ## ##)
+   - Klare visuelle Trennung der Abschnitte
+   - Wichtige Befunde am Ende nochmals zusammenfassen
+
+BEFUNDBERICHT:
+{input_text}
+
+Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare. Beginne direkt mit dem Inhalt.""",
+                    "selected_model_id": llama_id,
+                    "temperature": 0.7,
+                    "max_tokens": 8192,
+                    "retry_on_failure": True,
+                    "max_retries": 2,
+                    "input_from_previous_step": True,
+                    "output_format": "markdown",
+                    "document_class_id": befundbericht_id,  # BEFUNDBERICHT only
+                },
+                {
+                    "name": "Vereinfachung Laborwerte",
+                    "description": "Patient-friendly translation for lab results (LABORWERTE only)",
+                    "order": 10,
+                    "enabled": True,
+                    "prompt_template": """Du bist ein erfahrener Labormediziner und Gesundheitskommunikator, der Laborergebnisse für Patienten verständlich erklärt.
+
+DEINE AUFGABE:
+Wandle die folgenden Laborwerte in eine patientenfreundliche Erklärung um.
+
+RICHTLINIEN:
+
+1. STRUKTUR:
+   - Beginne mit einer Gesamteinschätzung (1-2 Sätze): "Ihre Blutwerte zeigen insgesamt..."
+   - Gliedere nach Abschnitten mit Emojis:
+     • 📋 Gesamtübersicht
+     • 🩸 Blutbild (falls vorhanden)
+     • 🫀 Herz-Kreislauf-Werte (falls vorhanden)
+     • 🫁 Leber- und Nierenwerte (falls vorhanden)
+     • 🧪 Weitere Werte
+     • ✅ Zusammenfassung & nächste Schritte
+   - Verwende ## für Überschriften
+
+2. FÜR JEDEN LABORWERT ERKLÄRE:
+   - **Name des Wertes** und wofür er steht
+   - **Ihr Ergebnis** und der Referenzbereich
+   - **Bewertung** mit Symbol:
+     • ✅ Normal - im grünen Bereich
+     • ⚠️ Leicht erhöht/erniedrigt - meist unbedenklich
+     • ❗ Deutlich außerhalb - ärztliche Rücksprache empfohlen
+   - **Bedeutung**: Was misst dieser Wert? Warum ist er wichtig?
+   - Bei Abweichungen: Mögliche Ursachen (ohne Panikmache!)
+
+3. WICHTIGE BEGRIFFE MIT ERKLÄRUNG:
+   - 🩸 Hämoglobin = roter Blutfarbstoff (transportiert Sauerstoff)
+   - 🛡️ Leukozyten = weiße Blutkörperchen (Immunabwehr)
+   - 🩹 Thrombozyten = Blutplättchen (Blutgerinnung)
+   - 🫘 Kreatinin = Nierenwert (zeigt Nierenfunktion)
+   - 🫁 GOT/GPT/GGT = Leberenzyme (zeigen Lebergesundheit)
+   - 📊 HbA1c = Langzeit-Blutzucker (letzte 2-3 Monate)
+   - ❤️ Cholesterin/Triglyceride = Blutfette (Herz-Kreislauf-Risiko)
+
+4. INHALT:
+   - Behalte ALLE Laborwerte bei - nichts weglassen!
+   - Füge KEINE erfundenen Werte oder Diagnosen hinzu
+   - Hebe auffällige Werte mit ⚠️ oder ❗ hervor
+   - Gib KEINE medizinischen Ratschläge zur Behandlung
+
+5. FORMAT:
+   - Ausgabe direkt in Markdown (OHNE umschließende ```markdown Codeblöcke!)
+   - Beginne DIREKT mit der Überschrift (z.B. ## 📋 Ihre Laborwerte auf einen Blick)
+   - Verwende nur EINE Raute-Ebene pro Überschrift (also ## nicht ## ##)
+   - Nutze Tabellen für übersichtliche Darstellung wenn sinnvoll
+   - Fasse am Ende die wichtigsten Punkte zusammen
+
+LABORWERTE:
+{input_text}
+
+Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare. Beginne direkt mit dem Inhalt.""",
+                    "selected_model_id": llama_id,
+                    "temperature": 0.7,
+                    "max_tokens": 8192,
+                    "retry_on_failure": True,
+                    "max_retries": 2,
+                    "input_from_previous_step": True,
+                    "output_format": "markdown",
+                    "document_class_id": laborwerte_id,  # LABORWERTE only
+                },
+                {
+                    "name": "Finaler Check auf Richtigkeit",
+                    "description": "Final quality check for medical accuracy (ARZTBRIEF)",
+                    "order": 20,
+                    "enabled": True,
+                    "prompt_template": """Du bist ein medizinischer Qualitätsprüfer. Deine Aufgabe ist es, die vereinfachte Version eines medizinischen Dokuments auf Korrektheit zu prüfen.
+
+PRÜFKRITERIEN:
+
+1. MEDIZINISCHE KORREKTHEIT:
+   - Sind alle Diagnosen aus dem Original korrekt wiedergegeben?
+   - Sind alle Laborwerte/Messwerte identisch?
+   - Sind Medikamente und Dosierungen korrekt?
+   - Wurden keine falschen medizinischen Informationen hinzugefügt (Halluzinationen)?
+
+2. VOLLSTÄNDIGKEIT:
+   - Sind alle wichtigen Informationen aus dem Original enthalten?
+   - Wurden keine relevanten Befunde weggelassen?
+
+3. KEINE HINZUFÜGUNGEN:
+   - Enthält der Text KEINE erfundenen Diagnosen, Werte oder Behandlungen?
+   - Wurden keine spekulativen Aussagen als Fakten dargestellt?
+
+4. FORMAT-PRÜFUNG:
+   - Sind alle Emojis korrekt verwendet? (✅ ⚠️ ❗ 💊 🩺 etc.)
+   - Ist die Struktur klar und übersichtlich?
+   - Sind die Markdown-Überschriften korrekt (nur ## nicht ## ##)?
+
+VERGLEICHE:
+
+ORIGINALDOKUMENT:
+{original_text}
+
+VEREINFACHTE VERSION:
+{input_text}
+
+DEINE AUFGABE:
+- Wenn alles korrekt ist: Gib die vereinfachte Version unverändert zurück
+- Wenn Fehler gefunden werden: Korrigiere diese Fehler in der vereinfachten Version
+
+WICHTIG:
+- Behalte den patientenfreundlichen Stil bei
+- Behalte alle Emojis und die Markdown-Formatierung bei
+- Ändere nur faktische Fehler, keine stilistischen Aspekte
+- Füge keine neuen Informationen hinzu
+- Ausgabe direkt in Markdown (OHNE umschließende ```markdown Codeblöcke!)
+- Verwende nur EINE Raute-Ebene pro Überschrift (also ## nicht ## ##)
+
+Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erklärungen zu deiner Prüfung. Beginne direkt mit dem Inhalt.""",
+                    "selected_model_id": llama_id,
+                    "temperature": 0.5,
+                    "max_tokens": 8192,
+                    "retry_on_failure": True,
+                    "max_retries": 2,
+                    "input_from_previous_step": True,
+                    "output_format": "markdown",
+                    "document_class_id": arztbrief_id,  # ARZTBRIEF quality check
+                    "post_branching": True,  # Runs after document-specific translation
+                },
+                # ==================== GENERIC FALLBACK STEP (if no class-specific) ====================
                 {
                     "name": "Patient-Friendly Translation",
-                    "description": "Translates medical text into simple, patient-friendly language",
+                    "description": "Generic translation for unclassified documents",
                     "order": 3,
                     "enabled": True,
                     "prompt_template": "Übersetze diesen medizinischen Text in einfache, patientenfreundliche Sprache.\n\nVerwende kurze Sätze und vermeide medizinische Fachbegriffe. Strukturiere den Text mit klaren Abschnitten.\n\nText:\n{input_text}\n\nGib nur die vereinfachte Übersetzung zurück.",

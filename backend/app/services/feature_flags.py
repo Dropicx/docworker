@@ -5,7 +5,6 @@ Provides centralized feature flag management for gradual rollout and A/B testing
 Three-tier priority system: environment variables → database → config defaults.
 
 **Supported Features:**
-- vision_llm_fallback_enabled: Allow fallback to Vision LLM when local OCR fails
 - multi_file_processing_enabled: Enable multi-file document processing
 - advanced_privacy_filter_enabled: Use advanced privacy filtering
 - cost_tracking_enabled: Enable AI cost tracking and logging
@@ -21,9 +20,9 @@ Three-tier priority system: environment variables → database → config defaul
     >>> from app.core.config import settings
     >>>
     >>> flags = FeatureFlags(db_session, settings)
-    >>> if flags.is_enabled(Feature.VISION_LLM_FALLBACK):
-    ...     # Use Vision LLM fallback
-    ...     result = await ovh_client.extract_text_with_vision(image)
+    >>> if flags.is_enabled(Feature.MULTI_FILE_PROCESSING):
+    ...     # Enable multi-file processing
+    ...     result = await process_multiple_files(files)
 """
 
 from __future__ import annotations
@@ -57,8 +56,7 @@ class Feature(str, Enum):
     Environment variables take precedence over database settings.
     """
 
-    # OCR and Text Extraction
-    VISION_LLM_FALLBACK = "vision_llm_fallback_enabled"
+    # Document Processing
     MULTI_FILE_PROCESSING = "multi_file_processing_enabled"
 
     # Privacy and Security
@@ -74,10 +72,6 @@ class Feature(str, Enum):
     DYNAMIC_BRANCHING = "dynamic_branching_enabled"
     STOP_CONDITIONS = "stop_conditions_enabled"
     RETRY_ON_FAILURE = "retry_on_failure_enabled"
-
-    # Experimental Features
-    HYBRID_OCR_STRATEGY = "hybrid_ocr_strategy_enabled"
-    AUTO_QUALITY_DETECTION = "auto_quality_detection_enabled"
 
 
 class FeatureFlags:
@@ -104,22 +98,21 @@ class FeatureFlags:
         >>> flags = FeatureFlags(db_session, settings)
         >>>
         >>> # Check single feature
-        >>> if flags.is_enabled(Feature.VISION_LLM_FALLBACK):
-        ...     logger.info("Vision LLM fallback enabled")
+        >>> if flags.is_enabled(Feature.PII_REMOVAL_ENABLED):
+        ...     logger.info("PII removal enabled")
         >>>
         >>> # Get all enabled features
         >>> enabled = flags.get_enabled_features()
         >>> print(f"Enabled features: {enabled}")
         >>>
         >>> # Override feature via environment
-        >>> os.environ['FEATURE_FLAG_VISION_LLM_FALLBACK'] = 'false'
-        >>> assert not flags.is_enabled(Feature.VISION_LLM_FALLBACK)
+        >>> os.environ['FEATURE_FLAG_MULTI_FILE_PROCESSING_ENABLED'] = 'false'
+        >>> assert not flags.is_enabled(Feature.MULTI_FILE_PROCESSING)
     """
 
     # Hardcoded defaults (lowest priority fallback)
     DEFAULTS = {
-        # OCR - enabled by default
-        Feature.VISION_LLM_FALLBACK: True,
+        # Document Processing - enabled by default
         Feature.MULTI_FILE_PROCESSING: True,
         # Privacy - enabled by default for GDPR compliance
         Feature.ADVANCED_PRIVACY_FILTER: True,
@@ -132,9 +125,6 @@ class FeatureFlags:
         Feature.DYNAMIC_BRANCHING: True,
         Feature.STOP_CONDITIONS: True,
         Feature.RETRY_ON_FAILURE: True,
-        # Experimental - disabled by default
-        Feature.HYBRID_OCR_STRATEGY: False,
-        Feature.AUTO_QUALITY_DETECTION: False,
     }
 
     def __init__(
@@ -179,8 +169,8 @@ class FeatureFlags:
         Example:
             >>> from app.core.config import settings
             >>> flags = FeatureFlags(db_session, settings)
-            >>> if flags.is_enabled(Feature.VISION_LLM_FALLBACK):
-            ...     print("Vision LLM fallback is enabled")
+            >>> if flags.is_enabled(Feature.PII_REMOVAL_ENABLED):
+            ...     print("PII removal is enabled")
         """
         # 1. Check environment variable first (highest priority)
         env_var_name = f"FEATURE_FLAG_{feature.value.upper()}"
@@ -298,7 +288,7 @@ class FeatureFlags:
 
         Example:
             >>> flags = FeatureFlags(db_session)
-            >>> flags.require_feature(Feature.VISION_LLM_FALLBACK)
+            >>> flags.require_feature(Feature.PII_REMOVAL_ENABLED)
             >>> # Continues if enabled, raises RuntimeError if disabled
         """
         if not self.is_enabled(feature):
@@ -329,8 +319,8 @@ def is_feature_enabled(
     Example:
         >>> from app.services.feature_flags import is_feature_enabled, Feature
         >>> from app.core.config import settings
-        >>> if is_feature_enabled(Feature.VISION_LLM_FALLBACK, settings=settings):
-        ...     print("Vision LLM fallback enabled")
+        >>> if is_feature_enabled(Feature.PII_REMOVAL_ENABLED, settings=settings):
+        ...     print("PII removal enabled")
     """
     flags = FeatureFlags(session=session, settings=settings)
     return flags.is_enabled(feature)

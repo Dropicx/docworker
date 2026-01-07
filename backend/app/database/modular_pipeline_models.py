@@ -31,11 +31,8 @@ from app.database.unified_models import Base
 class OCREngineEnum(str, Enum):
     """Available OCR engines"""
 
-    PADDLEOCR = "PADDLEOCR"  # Fast CPU-based OCR
-    VISION_LLM = "VISION_LLM"  # Slow but accurate (Qwen 2.5 VL)
-    HYBRID = "HYBRID"  # Intelligent routing based on document quality
-    MISTRAL_OCR = "MISTRAL_OCR"  # Mistral Document OCR API (fast, accurate)
-    # TESSERACT removed - poor quality
+    MISTRAL_OCR = "MISTRAL_OCR"  # Primary: Mistral Document OCR API (fast, accurate)
+    PADDLEOCR = "PADDLEOCR"  # Fallback: PaddleOCR via Hetzner (EXTERNAL_OCR_URL)
 
 
 class StepExecutionStatus(str, Enum):
@@ -81,11 +78,8 @@ class OCRConfigurationDB(Base):
     )
 
     # Engine-specific settings (JSON for flexibility)
-    # tesseract_config removed - Tesseract OCR deprecated
-    paddleocr_config = Column(JSON, nullable=True)  # e.g., {"use_gpu": true, "lang": "german"}
-    vision_llm_config = Column(JSON, nullable=True)  # e.g., {"model": "Qwen2.5-VL-72B-Instruct"}
-    hybrid_config = Column(JSON, nullable=True)  # e.g., {"quality_threshold": 0.7}
     mistral_ocr_config = Column(JSON, nullable=True)  # e.g., {"model": "mistral-ocr-latest"}
+    paddleocr_config = Column(JSON, nullable=True)  # e.g., {"url": "https://ocr.fra-la.de"}
 
     # Quality gate settings
     min_ocr_confidence_threshold = Column(

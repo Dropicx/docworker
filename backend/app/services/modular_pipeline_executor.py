@@ -1365,9 +1365,8 @@ class ModularPipelineExecutor:
 
         return {
             "selected_engine": config.selected_engine,
+            "mistral_ocr_config": config.mistral_ocr_config,
             "paddleocr_config": config.paddleocr_config,
-            "vision_llm_config": config.vision_llm_config,
-            "hybrid_config": config.hybrid_config,
             "pii_removal_enabled": config.pii_removal_enabled,
         }
 

@@ -18,16 +18,17 @@ def check_ocr_capabilities() -> dict:
     """
     Check OCR architecture status
 
-    NOTE: OCR processing now happens in the WORKER service, not backend.
-    Backend no longer requires OCR dependencies (PaddleOCR runs in worker).
+    OCR engines:
+    1. Mistral OCR (primary) - Fast, accurate document OCR
+    2. PaddleOCR Hetzner (fallback) - External service via EXTERNAL_OCR_URL
     """
     return {
         "ocr_location": "worker_service",
         "backend_ocr": False,
-        "available_engines": ["PADDLEOCR", "VISION_LLM", "HYBRID"],
+        "available_engines": ["MISTRAL_OCR", "PADDLEOCR"],
         "architecture": "worker_based",
         "status": "delegated_to_worker",
-        "note": "OCR handled by Celery worker with PaddleOCR, Vision LLM, and Hybrid engines",
+        "note": "OCR handled by Celery worker with Mistral OCR (primary) and PaddleOCR Hetzner (fallback)",
     }
 
 
@@ -87,22 +88,26 @@ async def health_check(request: Request = None):
         ovh_connected, error_msg = await ovh_client.check_connection()
         services["ovh_api"] = "healthy" if ovh_connected else f"error: {error_msg[:100]}"
 
-        # PaddleOCR Service prüfen
+        # PaddleOCR External Service prüfen (Hetzner)
         try:
-            paddleocr_url = os.getenv("PADDLEOCR_SERVICE_URL")
-            if paddleocr_url:
+            external_ocr_url = os.getenv("EXTERNAL_OCR_URL")
+            if external_ocr_url:
                 import httpx
 
                 async with httpx.AsyncClient(timeout=2.0) as client:
-                    response = await client.get(f"{paddleocr_url}/health")
+                    response = await client.get(f"{external_ocr_url}/health")
                     if response.status_code == 200:
-                        services["paddleocr"] = "healthy"
+                        services["paddleocr_hetzner"] = "healthy"
                     else:
-                        services["paddleocr"] = f"error: HTTP {response.status_code}"
+                        services["paddleocr_hetzner"] = f"error: HTTP {response.status_code}"
             else:
-                services["paddleocr"] = "not_configured"
+                services["paddleocr_hetzner"] = "not_configured"
         except Exception as e:
-            services["paddleocr"] = f"error: {str(e)[:50]}"
+            services["paddleocr_hetzner"] = f"error: {str(e)[:50]}"
+
+        # Mistral OCR API prüfen
+        mistral_key = os.getenv("MISTRAL_API_KEY")
+        services["mistral_ocr"] = "configured" if mistral_key else "not_configured"
 
         # Temporäres Verzeichnis prüfen
         try:
@@ -131,7 +136,7 @@ async def health_check(request: Request = None):
 
         # Gesamtstatus bestimmen - Worker und OCR sind kritisch!
         error_services = [name for name, status in services.items() if "error" in status]
-        critical_services = ["redis", "worker", "ovh_api", "paddleocr"]
+        critical_services = ["redis", "worker", "ovh_api"]
         critical_errors = [name for name in error_services if name in critical_services]
 
         if critical_errors:

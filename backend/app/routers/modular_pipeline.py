@@ -43,12 +43,16 @@ def require_user_auth(current_user: UserDB = Depends(get_current_user_required))
 
 
 class OCRConfigRequest(BaseModel):
-    """Request model for OCR configuration update"""
+    """Request model for OCR configuration update
+
+    Available engines:
+    - MISTRAL_OCR: Primary engine, fast and accurate
+    - PADDLEOCR: Fallback via Hetzner (EXTERNAL_OCR_URL)
+    """
 
     selected_engine: OCREngineEnum
+    mistral_ocr_config: dict[str, Any] | None = None
     paddleocr_config: dict[str, Any] | None = None
-    vision_llm_config: dict[str, Any] | None = None
-    hybrid_config: dict[str, Any] | None = None
     pii_removal_enabled: bool | None = True
 
 
@@ -57,9 +61,8 @@ class OCRConfigResponse(BaseModel):
 
     id: int
     selected_engine: str
+    mistral_ocr_config: dict[str, Any] | None
     paddleocr_config: dict[str, Any] | None
-    vision_llm_config: dict[str, Any] | None
-    hybrid_config: dict[str, Any] | None
     pii_removal_enabled: bool
     last_modified: datetime
 

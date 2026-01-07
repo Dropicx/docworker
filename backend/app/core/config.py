@@ -84,13 +84,6 @@ class Settings(BaseSettings):
     ovh_translation_model: str = Field(
         default="Meta-Llama-3_3-70B-Instruct", description="Model for translation tasks"
     )
-    ovh_vision_model: str = Field(
-        default="Qwen2.5-VL-72B-Instruct", description="Vision model for OCR tasks"
-    )
-    ovh_vision_base_url: str = Field(
-        default="https://qwen-2-5-vl-72b-instruct.endpoints.kepler.ai.cloud.ovh.net",
-        description="OVH Vision model base URL",
-    )
     use_ovh_only: bool = Field(
         default=True, description="Use only OVH AI endpoints (disable fallbacks)"
     )
