@@ -287,7 +287,6 @@ RICHTLINIEN:
    - 💊 für Medikamente und Dosierungen
    - 🩺 für Diagnosen und Untersuchungen
    - 📅 für Termine und zeitliche Angaben
-   - 📞 für Kontaktinformationen
    - ❗ für dringende Handlungsempfehlungen
 
 4. INHALT:
@@ -295,6 +294,7 @@ RICHTLINIEN:
    - Füge KEINE neuen medizinischen Informationen hinzu
    - Erkläre, was Diagnosen für den Alltag bedeuten können
    - Hebe wichtige Handlungsempfehlungen hervor (z.B. mit **fett**)
+   - WICHTIG: Schreibe neutral und beschreibend - verwende NIEMALS "wir" oder suggeriere, dass du eine Arztpraxis bist. Entferne Kontaktdaten-Abschnitte komplett (wurden aus Datenschutzgründen entfernt).
 
 5. FORMAT:
    - Ausgabe direkt in Markdown (OHNE umschließende ```markdown Codeblöcke!)
@@ -361,6 +361,7 @@ RICHTLINIEN:
    - Füge KEINE neuen Diagnosen oder Interpretationen hinzu
    - Hebe wichtige Befunde hervor (mit **fett**)
    - Erwähne empfohlene Kontrolluntersuchungen
+   - WICHTIG: Schreibe neutral und beschreibend - verwende NIEMALS "wir" oder suggeriere, dass du eine Arztpraxis bist. Entferne Kontaktdaten-Abschnitte komplett (wurden aus Datenschutzgründen entfernt).
 
 6. FORMAT:
    - Ausgabe direkt in Markdown (OHNE umschließende ```markdown Codeblöcke!)
@@ -429,6 +430,7 @@ RICHTLINIEN:
    - Füge KEINE erfundenen Werte oder Diagnosen hinzu
    - Hebe auffällige Werte mit ⚠️ oder ❗ hervor
    - Gib KEINE medizinischen Ratschläge zur Behandlung
+   - WICHTIG: Schreibe neutral und beschreibend - verwende NIEMALS "wir" oder suggeriere, dass du eine Arztpraxis bist. Entferne Kontaktdaten-Abschnitte komplett (wurden aus Datenschutzgründen entfernt).
 
 5. FORMAT:
    - Ausgabe direkt in Markdown (OHNE umschließende ```markdown Codeblöcke!)
