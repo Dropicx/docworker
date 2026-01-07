@@ -278,34 +278,29 @@ RICHTLINIEN:
 2. SPRACHE:
    - Erkläre jeden medizinischen Fachbegriff in Klammern oder direkt im Text
    - Verwende einfache, klare Sätze
-   - Vermeide Abkürzungen oder erkläre sie sofort
+   - Bei Empfehlungen: Unterscheide klar zwischen einmaliger Diagnostik und dauerhafter Behandlung
    - Schreibe in einem beruhigenden, aber informativen Ton
 
-3. EMOJIS VERWENDEN:
-   - ✅ für positive Befunde oder erledigte Punkte
-   - ⚠️ für Warnungen oder wichtige Hinweise
-   - 💊 für Medikamente und Dosierungen
-   - 🩺 für Diagnosen und Untersuchungen
-   - 📅 für Termine und zeitliche Angaben
-   - ❗ für dringende Handlungsempfehlungen
+3. WERTE & BEFUNDE:
+   - Bei abweichenden Werten: Nenne den Normalbereich zum Vergleich (z.B. "Ihr Wert: 19 ng/ml – optimal wären über 30")
+   - Markiere kritische Werte mit **fett** und ⚠️ oder ❗
+   - Erkläre bei Auffälligkeiten ehrlich, ob Handlungsbedarf besteht oder nur Beobachtung nötig ist
 
 4. INHALT:
-   - Behalte ALLE medizinischen Informationen bei - nichts weglassen!
-   - Füge KEINE neuen medizinischen Informationen hinzu
+   - Behalte ALLE Informationen bei - nichts weglassen, nichts hinzufügen
+   - Übernimm konkrete Empfehlungen aus dem Original wörtlich (Ernährung, Lebensstil, Medikamente)
    - Erkläre, was Diagnosen für den Alltag bedeuten können
-   - Hebe wichtige Handlungsempfehlungen hervor (z.B. mit **fett**)
-   - WICHTIG: Schreibe neutral und beschreibend - verwende NIEMALS "wir" oder suggeriere, dass du eine Arztpraxis bist. Entferne Kontaktdaten-Abschnitte komplett (wurden aus Datenschutzgründen entfernt).
+   - Schreibe neutral - NIEMALS "wir", keine Kontaktdaten
 
 5. FORMAT:
-   - Ausgabe direkt in Markdown (OHNE umschließende ```markdown Codeblöcke!)
-   - Beginne DIREKT mit der Überschrift (z.B. ## 📋 Zusammenfassung)
-   - Verwende nur EINE Raute-Ebene pro Überschrift (also ## nicht ## ##)
-   - Ende mit einem Abschnitt "✅ Nächste Schritte" falls relevant
+   - Ausgabe direkt in Markdown (OHNE ```markdown Codeblöcke!)
+   - Beginne DIREKT mit ## 📋 Zusammenfassung
+   - Verwende nur EINE Raute-Ebene pro Überschrift
 
 ARZTBRIEF:
 {input_text}
 
-Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare. Beginne direkt mit dem Inhalt.""",
+Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare.""",
                     "selected_model_id": llama_id,
                     "temperature": 0.7,
                     "max_tokens": 8192,
@@ -335,45 +330,32 @@ RICHTLINIEN:
      • 🔍 Was wurde gefunden?
      • 💡 Was bedeutet das für Sie?
      • ✅ Nächste Schritte
-   - Verwende ## für Überschriften und Aufzählungspunkte
 
 2. SPRACHE:
-   - Übersetze medizinische Fachbegriffe in Alltagssprache
-   - Beispiel: "Hepatomegalie" → "vergrößerte Leber (Hepatomegalie)"
-   - Erkläre anatomische Begriffe: "Im Bereich der rechten Niere (am unteren Rücken rechts)..."
-   - Nutze Vergleiche für Größenangaben: "etwa so groß wie eine Kirsche"
+   - Übersetze Fachbegriffe in Alltagssprache (z.B. "Hepatomegalie" → "vergrößerte Leber")
+   - Nutze Vergleiche für Größen ("etwa so groß wie eine Kirsche")
+   - Unterscheide klar: Ist etwas nur zur Kontrolle oder braucht es Behandlung?
 
-3. EMOJIS UND SYMBOLE:
-   - ✅ Unauffällig / Normal / Gesund
-   - ⚠️ Leichte Auffälligkeit (meist harmlos)
-   - ❗ Wichtiger Befund (ärztliche Rücksprache empfohlen)
-   - 🔬 Für Untersuchungsdetails
-   - 📅 Für Kontrolltermine
-   - 💡 Für Erklärungen und Bedeutungen
+3. BEFUNDE EINORDNEN:
+   - Bei Auffälligkeiten: Ehrlich sagen ob besorgniserregend oder eher harmlos
+   - Bei "wahrscheinlich gutartig": Erkläre, dass Kontrolle Sicherheit gibt
+   - Markiere kritische Befunde mit **fett** und ⚠️ oder ❗
+   - "Unauffällig" = normal, gesund – das klar kommunizieren
 
-4. BEFUNDINTERPRETATION:
-   - Erkläre, was "unauffällig" oder "ohne pathologischen Befund" bedeutet (= normal, gesund)
-   - Ordne Auffälligkeiten ein: Ist es besorgniserregend oder eher harmlos?
-   - WICHTIG: Bleibe bei den Fakten des Berichts, spekuliere nicht!
+4. INHALT:
+   - Behalte ALLE Informationen bei - nichts weglassen, nichts hinzufügen
+   - Übernimm Empfehlungen aus dem Original wörtlich
+   - Schreibe neutral - NIEMALS "wir", keine Kontaktdaten
 
-5. INHALT:
-   - Behalte ALLE medizinischen Informationen bei
-   - Füge KEINE neuen Diagnosen oder Interpretationen hinzu
-   - Hebe wichtige Befunde hervor (mit **fett**)
-   - Erwähne empfohlene Kontrolluntersuchungen
-   - WICHTIG: Schreibe neutral und beschreibend - verwende NIEMALS "wir" oder suggeriere, dass du eine Arztpraxis bist. Entferne Kontaktdaten-Abschnitte komplett (wurden aus Datenschutzgründen entfernt).
-
-6. FORMAT:
-   - Ausgabe direkt in Markdown (OHNE umschließende ```markdown Codeblöcke!)
-   - Beginne DIREKT mit der Überschrift (z.B. ## 📋 Zusammenfassung)
-   - Verwende nur EINE Raute-Ebene pro Überschrift (also ## nicht ## ##)
-   - Klare visuelle Trennung der Abschnitte
-   - Wichtige Befunde am Ende nochmals zusammenfassen
+5. FORMAT:
+   - Ausgabe direkt in Markdown (OHNE ```markdown Codeblöcke!)
+   - Beginne DIREKT mit ## 📋 Zusammenfassung
+   - Verwende nur EINE Raute-Ebene pro Überschrift
 
 BEFUNDBERICHT:
 {input_text}
 
-Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare. Beginne direkt mit dem Inhalt.""",
+Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare.""",
                     "selected_model_id": llama_id,
                     "temperature": 0.7,
                     "max_tokens": 8192,
@@ -396,53 +378,39 @@ Wandle die folgenden Laborwerte in eine patientenfreundliche Erklärung um.
 RICHTLINIEN:
 
 1. STRUKTUR:
-   - Beginne mit einer Gesamteinschätzung (1-2 Sätze): "Ihre Blutwerte zeigen insgesamt..."
-   - Gliedere nach Abschnitten mit Emojis:
+   - Beginne mit Gesamteinschätzung (1-2 Sätze)
+   - Gliedere nach Kategorien mit Emojis:
      • 📋 Gesamtübersicht
-     • 🩸 Blutbild (falls vorhanden)
-     • 🫀 Herz-Kreislauf-Werte (falls vorhanden)
-     • 🫁 Leber- und Nierenwerte (falls vorhanden)
-     • 🧪 Weitere Werte
-     • ✅ Zusammenfassung & nächste Schritte
-   - Verwende ## für Überschriften
+     • 🩸 Blutbild
+     • 🫀 Herz-Kreislauf
+     • 🫁 Leber & Nieren
+     • ✅ Zusammenfassung
 
-2. FÜR JEDEN LABORWERT ERKLÄRE:
-   - **Name des Wertes** und wofür er steht
-   - **Ihr Ergebnis** und der Referenzbereich
-   - **Bewertung** mit Symbol:
-     • ✅ Normal - im grünen Bereich
-     • ⚠️ Leicht erhöht/erniedrigt - meist unbedenklich
-     • ❗ Deutlich außerhalb - ärztliche Rücksprache empfohlen
-   - **Bedeutung**: Was misst dieser Wert? Warum ist er wichtig?
-   - Bei Abweichungen: Mögliche Ursachen (ohne Panikmache!)
+2. JEDEN WERT ERKLÄREN:
+   - **Ihr Ergebnis** vs. **Normalbereich** (z.B. "Ihr Wert: 19 ng/ml – optimal wären über 30")
+   - Bei Grenzwerten: Klar sagen dass es an der Grenze liegt
+   - Bewertung mit Symbol: ✅ Normal | ⚠️ Leicht auffällig | ❗ Deutlich außerhalb
+   - Kurz erklären was der Wert misst und warum er wichtig ist
 
-3. WICHTIGE BEGRIFFE MIT ERKLÄRUNG:
-   - 🩸 Hämoglobin = roter Blutfarbstoff (transportiert Sauerstoff)
-   - 🛡️ Leukozyten = weiße Blutkörperchen (Immunabwehr)
-   - 🩹 Thrombozyten = Blutplättchen (Blutgerinnung)
-   - 🫘 Kreatinin = Nierenwert (zeigt Nierenfunktion)
-   - 🫁 GOT/GPT/GGT = Leberenzyme (zeigen Lebergesundheit)
-   - 📊 HbA1c = Langzeit-Blutzucker (letzte 2-3 Monate)
-   - ❤️ Cholesterin/Triglyceride = Blutfette (Herz-Kreislauf-Risiko)
+3. KRITISCHE WERTE HERVORHEBEN:
+   - Auffällige Werte mit **fett** und ⚠️/❗ markieren
+   - Bei Abweichungen: Mögliche Ursachen nennen (ohne Panikmache)
+   - Ehrlich einordnen: Handlungsbedarf oder nur Beobachtung?
 
 4. INHALT:
-   - Behalte ALLE Laborwerte bei - nichts weglassen!
-   - Füge KEINE erfundenen Werte oder Diagnosen hinzu
-   - Hebe auffällige Werte mit ⚠️ oder ❗ hervor
-   - Gib KEINE medizinischen Ratschläge zur Behandlung
-   - WICHTIG: Schreibe neutral und beschreibend - verwende NIEMALS "wir" oder suggeriere, dass du eine Arztpraxis bist. Entferne Kontaktdaten-Abschnitte komplett (wurden aus Datenschutzgründen entfernt).
+   - Behalte ALLE Werte bei - nichts weglassen, nichts hinzufügen
+   - Übernimm konkrete Empfehlungen wörtlich (Ernährung, Lebensstil)
+   - Schreibe neutral - NIEMALS "wir", keine Kontaktdaten
 
 5. FORMAT:
-   - Ausgabe direkt in Markdown (OHNE umschließende ```markdown Codeblöcke!)
-   - Beginne DIREKT mit der Überschrift (z.B. ## 📋 Ihre Laborwerte auf einen Blick)
-   - Verwende nur EINE Raute-Ebene pro Überschrift (also ## nicht ## ##)
-   - Nutze Tabellen für übersichtliche Darstellung wenn sinnvoll
-   - Fasse am Ende die wichtigsten Punkte zusammen
+   - Ausgabe direkt in Markdown (OHNE ```markdown Codeblöcke!)
+   - Beginne DIREKT mit ## 📋 Ihre Laborwerte
+   - Verwende nur EINE Raute-Ebene pro Überschrift
 
 LABORWERTE:
 {input_text}
 
-Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare. Beginne direkt mit dem Inhalt.""",
+Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare.""",
                     "selected_model_id": llama_id,
                     "temperature": 0.7,
                     "max_tokens": 8192,
