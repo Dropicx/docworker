@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route, useNavigate } from 'react-router-dom';
 import {
   Stethoscope,
@@ -177,24 +177,141 @@ function App() {
     setSelectedLanguage(null);
   };
 
+  const [showHealthDetails, setShowHealthDetails] = useState(false);
+  const healthDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close health dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        healthDropdownRef.current &&
+        !healthDropdownRef.current.contains(event.target as Node)
+      ) {
+        setShowHealthDetails(false);
+      }
+    };
+
+    if (showHealthDetails) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showHealthDetails]);
+
+  const getServiceStatus = (status: string) => {
+    if (status === 'healthy' || status === 'configured') return 'ok';
+    if (status === 'not_configured') return 'warning';
+    if (status.startsWith('error')) return 'error';
+    if (status.includes('active')) return 'ok';
+    return 'unknown';
+  };
+
+  const getServiceIcon = (status: string) => {
+    const s = getServiceStatus(status);
+    if (s === 'ok') return '✓';
+    if (s === 'warning') return '○';
+    if (s === 'error') return '✗';
+    return '?';
+  };
+
+  const getServiceColor = (status: string) => {
+    const s = getServiceStatus(status);
+    if (s === 'ok') return 'text-success-600';
+    if (s === 'warning') return 'text-warning-600';
+    if (s === 'error') return 'text-error-600';
+    return 'text-neutral-500';
+  };
+
+  const formatServiceName = (name: string) => {
+    const names: Record<string, string> = {
+      mistral_ocr: 'Mistral OCR',
+      paddleocr_hetzner: 'PaddleOCR',
+      ovh_api: 'OVH API',
+      worker: 'Worker',
+      redis: 'Redis',
+      filesystem: 'Dateisystem',
+      image_processing: 'Bildverarbeitung',
+      pdf_processing: 'PDF-Verarbeitung',
+    };
+    return names[name] || name;
+  };
+
   const renderHealthIndicator = () => {
     if (!health) return null;
 
     const isHealthy = health.status === 'healthy';
     const hasWarnings = health.status === 'degraded';
 
+    // Key services to display prominently
+    const keyServices = ['mistral_ocr', 'paddleocr_hetzner', 'ovh_api', 'worker'];
+    const displayServices = keyServices.filter(s => health.services[s]);
+
     return (
-      <div
-        className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium ${
-          isHealthy
-            ? 'bg-success-50 text-success-700 ring-1 ring-success-200'
-            : hasWarnings
-              ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200'
-              : 'bg-error-50 text-error-700 ring-1 ring-error-200'
-        }`}
-      >
-        {isHealthy ? <Shield className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
-        <span>{isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschränkt' : 'Systemfehler'}</span>
+      <div className="relative" ref={healthDropdownRef}>
+        <button
+          onClick={() => setShowHealthDetails(!showHealthDetails)}
+          className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all hover:shadow-md ${
+            isHealthy
+              ? 'bg-success-50 text-success-700 ring-1 ring-success-200 hover:bg-success-100'
+              : hasWarnings
+                ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200 hover:bg-warning-100'
+                : 'bg-error-50 text-error-700 ring-1 ring-error-200 hover:bg-error-100'
+          }`}
+        >
+          {isHealthy ? <Shield className="w-3 h-3" /> : <AlertTriangle className="w-3 h-3" />}
+          <span>{isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschränkt' : 'Systemfehler'}</span>
+          <ChevronDown
+            className={`w-3 h-3 transition-transform ${showHealthDetails ? 'rotate-180' : ''}`}
+          />
+        </button>
+
+        {/* Health Details Dropdown */}
+        {showHealthDetails && (
+          <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-neutral-200 overflow-hidden z-50 animate-fade-in">
+            <div className="px-4 py-3 bg-neutral-50 border-b border-neutral-200">
+              <h4 className="text-sm font-semibold text-neutral-800">System-Status</h4>
+              <p className="text-xs text-neutral-500">OCR & AI Services</p>
+            </div>
+            <div className="p-2">
+              {displayServices.map(serviceName => {
+                const status = health.services[serviceName];
+                return (
+                  <div
+                    key={serviceName}
+                    className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-neutral-50"
+                  >
+                    <span className="text-sm text-neutral-700">
+                      {formatServiceName(serviceName)}
+                    </span>
+                    <div className="flex items-center space-x-2">
+                      <span className={`text-sm font-medium ${getServiceColor(status)}`}>
+                        {getServiceIcon(status)}
+                      </span>
+                      <span className="text-xs text-neutral-500">
+                        {status === 'healthy' || status === 'configured'
+                          ? 'OK'
+                          : status === 'not_configured'
+                            ? 'Nicht konfiguriert'
+                            : status.startsWith('error')
+                              ? 'Fehler'
+                              : status.includes('active')
+                                ? status.match(/\d+/)?.[0] + ' aktiv'
+                                : status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="px-4 py-2 bg-neutral-50 border-t border-neutral-200">
+              <p className="text-xs text-neutral-500 text-center">
+                Klicken Sie außerhalb, um zu schließen
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     );
   };
