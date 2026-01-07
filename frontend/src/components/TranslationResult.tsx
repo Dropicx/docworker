@@ -158,16 +158,25 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
     return '⚠️';
   };
 
-  // Strip markdown code fences if the model wrapped output in ```markdown ... ```
-  const stripMarkdownCodeFence = (text: string): string => {
+  // Clean up markdown formatting issues from AI output
+  const cleanMarkdownOutput = (text: string): string => {
     if (!text) return text;
+
+    let cleaned = text;
 
     // Remove opening code fence with optional language specifier
     // Matches: ```markdown, ```md, ``` at the start
-    let cleaned = text.replace(/^```(?:markdown|md)?\s*\n?/i, '');
+    cleaned = cleaned.replace(/^```(?:markdown|md)?\s*\n?/i, '');
 
     // Remove closing code fence at the end
     cleaned = cleaned.replace(/\n?```\s*$/i, '');
+
+    // Fix doubled markdown headers: "## ## Header" -> "## Header"
+    // Matches patterns like "# # ", "## ## ", "### ### " etc.
+    cleaned = cleaned.replace(/^(#{1,6})\s+\1\s+/gm, '$1 ');
+
+    // Fix tripled headers just in case: "## ## ## Header" -> "## Header"
+    cleaned = cleaned.replace(/^(#{1,6})\s+\1\s+\1\s+/gm, '$1 ');
 
     return cleaned.trim();
   };
@@ -180,7 +189,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
     } else {
       text = result.translated_text;
     }
-    return stripMarkdownCodeFence(text);
+    return cleanMarkdownOutput(text);
   };
 
   const _getDisplayedConfidence = () => {
@@ -299,15 +308,34 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                   className="prose prose-sm max-w-none"
                   components={{
                     h1: ({ children }) => (
-                      <h1 className="text-xl font-bold text-gray-900 mb-3 mt-4">{children}</h1>
+                      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-4 mt-6 pb-2 border-b border-gray-200">
+                        {children}
+                      </h1>
                     ),
                     h2: ({ children }) => (
-                      <h2 className="text-lg font-bold text-gray-900 mb-2 mt-3">{children}</h2>
+                      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-3 mt-6 pb-1 border-b border-gray-100">
+                        {children}
+                      </h2>
                     ),
                     h3: ({ children }) => (
-                      <h3 className="text-base font-semibold text-gray-800 mb-2 mt-2">
+                      <h3 className="text-lg sm:text-xl font-semibold text-gray-800 mb-2 mt-4">
                         {children}
                       </h3>
+                    ),
+                    h4: ({ children }) => (
+                      <h4 className="text-base sm:text-lg font-semibold text-gray-700 mb-2 mt-3">
+                        {children}
+                      </h4>
+                    ),
+                    h5: ({ children }) => (
+                      <h5 className="text-sm sm:text-base font-medium text-gray-700 mb-1 mt-2">
+                        {children}
+                      </h5>
+                    ),
+                    h6: ({ children }) => (
+                      <h6 className="text-sm font-medium text-gray-600 mb-1 mt-2 uppercase tracking-wide">
+                        {children}
+                      </h6>
                     ),
                     p: ({ children }) => (
                       <p className="mb-2 text-gray-700 leading-relaxed">{children}</p>
