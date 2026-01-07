@@ -59,6 +59,7 @@ class ModelProvider(str, Enum):
     OPENAI = "OPENAI"  # Future: OpenAI API
     ANTHROPIC = "ANTHROPIC"  # Future: Claude API
     LOCAL = "LOCAL"  # Future: Local models
+    MISTRAL = "MISTRAL"  # Mistral AI API
 
 
 # ==================== DATABASE MODELS ====================

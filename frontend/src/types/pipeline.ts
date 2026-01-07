@@ -17,6 +17,7 @@ export enum ModelProvider {
   OPENAI = 'OPENAI',
   ANTHROPIC = 'ANTHROPIC',
   LOCAL = 'LOCAL',
+  MISTRAL = 'MISTRAL',
 }
 
 // ==================== OCR CONFIGURATION ====================

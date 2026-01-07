@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 from app.database.modular_pipeline_models import (
     AvailableModelDB,
     DynamicPipelineStepDB,
+    ModelProvider,
     OCRConfigurationDB,
     StepExecutionStatus,
 )
@@ -26,6 +27,7 @@ from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.services.ai_cost_tracker import AICostTracker
 from app.services.ai_logging_service import AILoggingService
 from app.services.document_class_manager import DocumentClassManager
+from app.services.mistral_client import MistralClient
 from app.services.ovh_client import OVHClient
 from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
 
@@ -593,15 +595,31 @@ class ModularPipelineExecutor:
                 )
                 logger.info(f"   Input length: {len(input_text)} characters")
 
-                # Call AI model
+                # Call AI model based on provider
                 start_time = time.time()
 
-                result_dict = await self.ovh_client.process_medical_text_with_prompt(
-                    full_prompt=prompt,
-                    temperature=step.temperature or 0.7,
-                    max_tokens=step.max_tokens or model.max_tokens or 4096,
-                    use_fast_model=(model.name == "Mistral-Nemo-Instruct-2407"),
-                )
+                if model.provider == ModelProvider.MISTRAL:
+                    # Use Mistral AI API
+                    mistral_client = MistralClient()
+                    mistral_result = await mistral_client.process_text(
+                        prompt=prompt,
+                        model=model.name,
+                        temperature=step.temperature or 0.7,
+                        max_tokens=step.max_tokens or model.max_tokens or 4096,
+                    )
+                    result_dict = {
+                        "text": mistral_result["content"],
+                        "input_tokens": mistral_result["input_tokens"],
+                        "output_tokens": mistral_result["output_tokens"],
+                    }
+                else:
+                    # Use OVH AI Endpoints (default)
+                    result_dict = await self.ovh_client.process_medical_text_with_prompt(
+                        full_prompt=prompt,
+                        temperature=step.temperature or 0.7,
+                        max_tokens=step.max_tokens or model.max_tokens or 4096,
+                        use_fast_model=(model.name == "Mistral-Nemo-Instruct-2407"),
+                    )
 
                 execution_time = time.time() - start_time
 
