@@ -45,7 +45,7 @@ cp -r doctranslator/paddleocr_service/* /opt/paddleocr/
 # Build Docker image (CPU mode)
 echo "Building Docker image (CPU mode)..."
 echo "This will take 5-10 minutes on first build..."
-docker build --build-arg USE_GPU=false -t paddleocr:cpu .
+docker build -t paddleocr:cpu .
 
 # Stop old container if running
 docker-compose down 2>/dev/null || true

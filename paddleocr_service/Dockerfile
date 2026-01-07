@@ -1,46 +1,11 @@
 # ==========================================
-# PaddleOCR Fast - Lightweight OCR Dockerfile
-# No PPStructureV3 - just fast text extraction
-# Build: docker build --build-arg USE_GPU=true/false .
+# PaddleOCR CPU-Only Dockerfile
+# Lightweight OCR for Hetzner/CPU deployment
 # ==========================================
 
-ARG USE_GPU=false
+FROM python:3.11-slim
 
-# ============ GPU BASE ============
-FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04 AS base-true
-
-ENV DEBIAN_FRONTEND=noninteractive
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    software-properties-common \
-    && add-apt-repository ppa:deadsnakes/ppa \
-    && apt-get update && apt-get install -y --no-install-recommends \
-    python3.11 \
-    python3.11-dev \
-    python3.11-venv \
-    python3-pip \
-    libgomp1 \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    libgl1 \
-    curl \
-    && rm -rf /var/lib/apt/lists/* \
-    && apt-get clean
-
-RUN update-alternatives --install /usr/bin/python python /usr/bin/python3.11 1 \
-    && update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1 \
-    && update-alternatives --install /usr/bin/pip pip /usr/bin/pip3 1
-
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel
-
-# Install PaddlePaddle GPU
-RUN pip install --no-cache-dir paddlepaddle-gpu -i https://www.paddlepaddle.org.cn/packages/stable/cu123/
-
-# ============ CPU BASE ============
-FROM python:3.11-slim AS base-false
-
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgomp1 \
     libglib2.0-0 \
@@ -52,17 +17,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean
 
+# Upgrade pip
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 
-# Install PaddlePaddle CPU
+# Install PaddlePaddle CPU from official index
 RUN pip install --no-cache-dir paddlepaddle -i https://www.paddlepaddle.org.cn/packages/stable/cpu/
 
-# ============ FINAL STAGE ============
-FROM base-${USE_GPU} AS final
-
-WORKDIR /app
-
-# Install dependencies (paddlepaddle already installed in base)
+# Install other dependencies
 RUN pip install --no-cache-dir \
     fastapi==0.115.6 \
     "uvicorn[standard]==0.34.0" \
@@ -74,9 +35,11 @@ RUN pip install --no-cache-dir \
     opencv-python-headless \
     psutil
 
-# Install paddleocr without pulling in paddlepaddle-gpu
+# Install paddleocr without its paddlepaddle dependency (already installed CPU version)
 RUN pip install --no-cache-dir --no-deps paddleocr>=3.0.0 \
-    && pip install --no-cache-dir shapely pyclipper imgaug lmdb tqdm rapidfuzz
+    && pip install --no-cache-dir shapely pyclipper lmdb tqdm rapidfuzz
+
+WORKDIR /app
 
 # Copy application code
 COPY app/ app/
@@ -85,10 +48,9 @@ COPY app/ app/
 RUN mkdir -p /home/appuser/.paddlex && chmod 777 /home/appuser/.paddlex
 
 # Environment variables
-ARG USE_GPU
 ENV PYTHONPATH=/app \
     PYTHONUNBUFFERED=1 \
-    USE_GPU=${USE_GPU} \
+    USE_GPU=false \
     PADDLEX_HOME=/home/appuser/.paddlex \
     DISABLE_MODEL_SOURCE_CHECK=True
 
