@@ -146,7 +146,7 @@ locals {
 resource "random_password" "root_password" {
   count   = var.server_count
   length  = 32
-  special = true
+  special = false  # No special chars - easier to paste in Hetzner Console
 }
 
 # -----------------------------------------------------------------------------
