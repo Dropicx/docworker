@@ -328,9 +328,10 @@ resource "hcloud_server" "paddleocr" {
     index   = tostring(count.index + 1)
   }
 
-  # No public IP - private network only
+  # Public IP for internet access (apt, docker pull, git clone)
+  # Firewall restricts incoming traffic
   public_net {
-    ipv4_enabled = false
+    ipv4_enabled = true
     ipv6_enabled = false
   }
 
@@ -340,6 +341,45 @@ resource "hcloud_server" "paddleocr" {
   }
 
   depends_on = [hcloud_network_subnet.paddleocr]
+}
+
+# -----------------------------------------------------------------------------
+# Firewall (protects servers - only SSH and private network traffic)
+# -----------------------------------------------------------------------------
+
+resource "hcloud_firewall" "paddleocr" {
+  name = "${var.server_name}-firewall"
+
+  # Allow SSH for emergency access
+  rule {
+    description = "Allow SSH"
+    direction   = "in"
+    protocol    = "tcp"
+    port        = "22"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Allow ICMP (ping)
+  rule {
+    description = "Allow ICMP"
+    direction   = "in"
+    protocol    = "icmp"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+  }
+
+  # Allow traffic from private network (LB health checks)
+  rule {
+    description = "Allow private network"
+    direction   = "in"
+    protocol    = "tcp"
+    port        = "9124"
+    source_ips  = ["10.0.0.0/16"]
+  }
+}
+
+resource "hcloud_firewall_attachment" "paddleocr" {
+  firewall_id = hcloud_firewall.paddleocr.id
+  server_ids  = [for s in hcloud_server.paddleocr : s.id]
 }
 
 # -----------------------------------------------------------------------------
@@ -479,6 +519,11 @@ output "server_root_passwords" {
 output "server_private_ips" {
   description = "Private IPs of servers"
   value       = { for i, s in hcloud_server.paddleocr : s.name => "10.0.1.${i + 10}" }
+}
+
+output "server_public_ips" {
+  description = "Public IPs of servers (for SSH access)"
+  value       = { for s in hcloud_server.paddleocr : s.name => s.ipv4_address }
 }
 
 output "deploy_instructions" {
