@@ -23,7 +23,7 @@ terraform {
   required_providers {
     hcloud = {
       source  = "hetznercloud/hcloud"
-      version = "~> 1.56"  # DNS support added in 1.56.0
+      version = "~> 1.56" # DNS support added in 1.56.0
     }
     random = {
       source  = "hashicorp/random"
