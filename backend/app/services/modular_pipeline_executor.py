@@ -29,7 +29,6 @@ from app.services.ai_logging_service import AILoggingService
 from app.services.document_class_manager import DocumentClassManager
 from app.services.mistral_client import MistralClient
 from app.services.ovh_client import OVHClient
-from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
 
 logger = logging.getLogger(__name__)
 
@@ -77,10 +76,8 @@ class ModularPipelineExecutor:
         self.doc_class_manager = DocumentClassManager(session)
         self.cost_tracker = AICostTracker(session)
         self.ai_logger = AILoggingService(session)
-        self.privacy_filter = AdvancedPrivacyFilter()
         logger.info("💰 Cost tracker initialized for pipeline executor")
         logger.info("📊 AI interaction logger initialized")
-        logger.info("🔒 Privacy filter initialized - GDPR-compliant local PII removal")
 
     # ==================== CONFIGURATION LOADING ====================
 
@@ -742,88 +739,8 @@ class ModularPipelineExecutor:
             f"🚀 Starting modular pipeline execution with branching support: {processing_id[:8]}"
         )
 
-        # ==================== PHASE 0: LOCAL PII REMOVAL (GDPR COMPLIANCE) ====================
-        # CRITICAL: Remove PII locally BEFORE any cloud AI processing
-        logger.info("🔒 Phase 0: Applying local PII removal (GDPR compliance)")
-        pii_removal_start_time = time.time()
-
-        original_length = len(input_text)
-        pii_removal_error = None
-
-        try:
-            # remove_pii now returns (cleaned_text, metadata) tuple (Issue #35 Phase 1.4)
-            cleaned_text, pii_metadata = self.privacy_filter.remove_pii(input_text)
-            pii_removal_time = time.time() - pii_removal_start_time
-            cleaned_length = len(cleaned_text)
-
-            logger.info(f"✅ PII removed locally in {pii_removal_time*1000:.2f}ms - no PII sent to cloud")
-            if pii_metadata.get("entities_detected", 0) > 0:
-                logger.info(
-                    f"   📊 Detected: {pii_metadata['entities_detected']} entities, "
-                    f"Preserved: {pii_metadata['eponyms_preserved']} eponyms"
-                )
-
-            # Log PII removal metrics (GDPR-safe: no text stored, only metadata)
-            try:
-                # Determine model name from the loaded spaCy model
-                model_name = "spaCy_de_core_news_md"  # Default to md (upgraded)
-                if self.privacy_filter.nlp:
-                    model_meta = self.privacy_filter.nlp.meta.get("name", "de_core_news_md")
-                    model_name = f"spaCy_{model_meta}"
-
-                self.ai_logger._log_ai_interaction(
-                    processing_id=processing_id,
-                    step_name="PII_REMOVAL",
-                    input_text=None,  # Don't log text (GDPR)
-                    output_text=None,  # Don't log text (GDPR)
-                    processing_time_ms=int(pii_removal_time * 1000),
-                    status="success",
-                    document_type=context.get("document_type"),
-                    model_name=model_name,
-                    input_metadata={
-                        "original_length": original_length,
-                        "cleaned_length": cleaned_length,
-                        "reduction_bytes": original_length - cleaned_length,
-                        "filter_type": "AdvancedPrivacyFilter",
-                        "spacy_available": self.privacy_filter.has_ner,
-                        "model_upgraded": "de_core_news_md" in model_name,  # Track upgrade
-                        # Enhanced metadata from Phase 1.4
-                        "entities_detected": pii_metadata.get("entities_detected", 0),
-                        "eponyms_preserved": pii_metadata.get("eponyms_preserved", 0),
-                        "low_confidence_count": pii_metadata.get("low_confidence_count", 0),
-                    },
-                )
-            except Exception as log_error:
-                logger.error(f"⚠️ Failed to log PII removal metrics: {log_error}")
-
-            input_text = cleaned_text
-
-        except Exception as e:
-            pii_removal_error = str(e)
-            logger.error(f"⚠️ PII removal failed: {e}")
-            # Continue pipeline without PII removal if filter fails (graceful degradation)
-            logger.warning("⚠️ Continuing without PII removal - review privacy implications!")
-
-            # Log PII removal failure
-            try:
-                model_name = "spaCy_de_core_news_md"  # Default
-                if self.privacy_filter.nlp:
-                    model_meta = self.privacy_filter.nlp.meta.get("name", "de_core_news_md")
-                    model_name = f"spaCy_{model_meta}"
-
-                self.ai_logger._log_ai_interaction(
-                    processing_id=processing_id,
-                    step_name="PII_REMOVAL",
-                    input_text=None,
-                    output_text=None,
-                    processing_time_ms=int((time.time() - pii_removal_start_time) * 1000),
-                    status="error",
-                    error_message=pii_removal_error,
-                    document_type=context.get("document_type"),
-                    model_name=model_name,
-                )
-            except Exception as log_error:
-                logger.error(f"⚠️ Failed to log PII removal error: {log_error}")
+        # NOTE: PII removal is now handled by external service in worker BEFORE pipeline execution
+        # See worker/tasks/document_processing.py - PIIServiceClient (Hetzner primary, Railway fallback)
 
         # Load job using repository (must exist - created by upload endpoint)
         job = self.job_repository.get_by_processing_id(processing_id)
