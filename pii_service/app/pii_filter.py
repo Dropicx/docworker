@@ -172,6 +172,13 @@ class PIIFilter:
                 re.IGNORECASE
             ),
 
+            # Fax numbers (German) - standalone pattern
+            "fax": re.compile(
+                r"(?:fax|telefax)\s*[:.]?\s*"
+                r"((?:\+49|0049|0)?\s*[\d\s/\-]{8,15})",
+                re.IGNORECASE
+            ),
+
             # Email
             "email": re.compile(
                 r"(?:e[- ]?mail|mail)\s*[:.]?\s*"
@@ -180,8 +187,9 @@ class PIIFilter:
             ),
 
             # Street address (German format)
+            # Handles both "straße" and "strasse" spellings
             "address": re.compile(
-                r"([A-ZÄÖÜ][a-zäöüß]+(?:straße|str\.|weg|platz|allee|gasse|ring|damm|ufer)"
+                r"([A-ZÄÖÜ][a-zäöüß]+(?:stra(?:ß|ss)e|str\.|weg|platz|allee|gasse|ring|damm|ufer|chaussee|promenade)"
                 r"\s*\d+[a-zA-Z]?)",
                 re.IGNORECASE
             ),
@@ -623,6 +631,7 @@ class PIIFilter:
 
             # Contact patterns
             "phone": "[PHONE]",
+            "fax": "[FAX]",
             "email": "[EMAIL]",
             "email_full": "[EMAIL]",
             "named_email_domain": "[EMAIL_DOMAIN]",
@@ -681,7 +690,7 @@ class PIIFilter:
     def _remove_names_with_ner(
         self, text: str, language: str, custom_terms: set | None = None
     ) -> tuple[str, dict]:
-        """Remove person names using SpaCy NER."""
+        """Remove PII entities using SpaCy NER (names, locations, orgs, dates, times)."""
         nlp = self.nlp_de if language == "de" else self.nlp_en
 
         if nlp is None:
@@ -689,12 +698,68 @@ class PIIFilter:
 
         doc = nlp(text)
         entities_removed = 0
+        locations_removed = 0
+        orgs_removed = 0
+        dates_removed = 0
+        times_removed = 0
         eponyms_preserved = 0
         custom_terms_preserved = 0
 
+        # Entity labels differ between German and English SpaCy models!
+        #
+        # German (de_core_news_lg) - WikiNER trained:
+        #   - PER: Person names
+        #   - LOC: ALL locations (cities, streets, countries)
+        #   - ORG: Organizations
+        #   - MISC: Miscellaneous
+        #   - NO FAC, DATE, TIME labels!
+        #
+        # English (en_core_web_lg) - OntoNotes 5 trained:
+        #   - PERSON: Person names
+        #   - GPE: Cities, countries, states
+        #   - LOC: Non-GPE locations (mountains, water bodies)
+        #   - ORG: Organizations
+        #   - FAC: Facilities (buildings, hospitals)
+        #   - DATE: Dates
+        #   - TIME: Times
+        #
+        if language == "de":
+            person_labels = {"PER"}
+            location_labels = {"LOC"}  # German LOC includes cities
+            org_labels = {"ORG"}
+            date_labels = set()  # German model doesn't have DATE
+            time_labels = set()  # German model doesn't have TIME
+        else:  # English
+            person_labels = {"PERSON"}
+            location_labels = {"LOC", "GPE"}  # English separates GPE (cities) from LOC
+            org_labels = {"ORG", "FAC"}  # English has FAC for facilities
+            date_labels = {"DATE"}
+            time_labels = {"TIME"}
+
+        # Generic organizations to preserve (insurance companies, medical orgs)
+        # These are commonly mentioned in medical documents but don't identify the patient
+        preserved_orgs = {
+            # German insurance companies (keep as they're standard references)
+            "aok", "tk", "techniker", "barmer", "dak", "bkk", "ikk", "kkh", "hek", "hkk",
+            "knappschaft", "viactiv", "sbk", "mhplus", "novitas", "pronova",
+            # International medical organizations
+            "who", "rki", "ema", "fda", "cdc", "ecdc", "pei",
+            # Medical associations
+            "ärzteblatt", "ärztekammer", "kassenärztliche",
+        }
+
+        # Generic locations to preserve (countries that don't identify patient)
+        preserved_locations = {
+            "deutschland", "germany", "österreich", "austria", "schweiz", "switzerland",
+            "europa", "europe", "usa", "amerika", "america",
+        }
+
         # Process entities in reverse order to maintain positions
         for ent in reversed(doc.ents):
-            if ent.label_ in ("PER", "PERSON"):
+            ent_lower = ent.text.lower()
+
+            # Handle PERSON entities
+            if ent.label_ in person_labels:
                 # Check if it's a medical eponym
                 context = text[max(0, ent.start_char - 50):min(len(text), ent.end_char + 50)]
                 if self._is_medical_eponym(ent.text, context):
@@ -703,7 +768,7 @@ class PIIFilter:
 
                 # Check if it's a medical term or custom protected term
                 if self._is_medical_term(ent.text, custom_terms):
-                    if custom_terms and ent.text.lower() in custom_terms:
+                    if custom_terms and ent_lower in custom_terms:
                         custom_terms_preserved += 1
                     continue
 
@@ -711,8 +776,56 @@ class PIIFilter:
                 text = text[:ent.start_char] + "[NAME]" + text[ent.end_char:]
                 entities_removed += 1
 
+            # Handle LOCATION entities (cities, regions, streets)
+            elif ent.label_ in location_labels:
+                # Skip preserved generic locations
+                if ent_lower in preserved_locations:
+                    continue
+
+                # Replace location with placeholder
+                text = text[:ent.start_char] + "[LOCATION]" + text[ent.end_char:]
+                locations_removed += 1
+
+            # Handle ORGANIZATION entities (hospitals, clinics, companies)
+            elif ent.label_ in org_labels:
+                # Skip preserved generic organizations
+                if ent_lower in preserved_orgs:
+                    continue
+
+                # Skip if it's a known medical term (e.g., department names)
+                if self._is_medical_term(ent.text, custom_terms):
+                    continue
+
+                # Replace organization with placeholder
+                text = text[:ent.start_char] + "[ORGANIZATION]" + text[ent.end_char:]
+                orgs_removed += 1
+
+            # Handle DATE entities
+            elif ent.label_ in date_labels:
+                # Skip if already replaced by regex (contains placeholder)
+                if "[" in ent.text:
+                    continue
+
+                # Replace date with placeholder
+                text = text[:ent.start_char] + "[DATE]" + text[ent.end_char:]
+                dates_removed += 1
+
+            # Handle TIME entities
+            elif ent.label_ in time_labels:
+                # Skip if already replaced by regex
+                if "[" in ent.text:
+                    continue
+
+                # Replace time with placeholder
+                text = text[:ent.start_char] + "[TIME]" + text[ent.end_char:]
+                times_removed += 1
+
         return text, {
             "ner_removals": entities_removed,
+            "ner_locations_removed": locations_removed,
+            "ner_orgs_removed": orgs_removed,
+            "ner_dates_removed": dates_removed,
+            "ner_times_removed": times_removed,
             "eponyms_preserved": eponyms_preserved,
             "custom_terms_preserved": custom_terms_preserved,
             "ner_available": True
@@ -760,10 +873,14 @@ class PIIFilter:
         text, ner_meta = self._remove_names_with_ner(text, language, custom_terms)
         metadata.update(ner_meta)
 
-        # Calculate totals
+        # Calculate totals (all PII entities removed)
         metadata["entities_detected"] = (
             metadata.get("pattern_removals", 0) +
-            metadata.get("ner_removals", 0)
+            metadata.get("ner_removals", 0) +
+            metadata.get("ner_locations_removed", 0) +
+            metadata.get("ner_orgs_removed", 0) +
+            metadata.get("ner_dates_removed", 0) +
+            metadata.get("ner_times_removed", 0)
         )
         metadata["cleaned_length"] = len(text)
 

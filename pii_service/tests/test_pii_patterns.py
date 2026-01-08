@@ -187,6 +187,49 @@ class TestGermanEmailDomains:
         assert expected_contains in result, f"Expected {expected_contains} in '{result}'"
 
 
+class TestGermanAddresses:
+    """Tests for German address patterns including strasse/straße variants."""
+
+    @pytest.mark.parametrize("input_text,expected_contains", [
+        # Standard straße spelling
+        ("Hauptstraße 15", "[ADDRESS]"),
+        ("Berliner Straße 42a", "[ADDRESS]"),
+        ("Goethestraße 7", "[ADDRESS]"),
+
+        # Double-s strasse spelling
+        ("Schirmerstrasse 80", "[ADDRESS]"),
+        ("Bahnhofstrasse 12", "[ADDRESS]"),
+        ("Friedrichstrasse 100", "[ADDRESS]"),
+
+        # Other street types
+        ("Lindenweg 5", "[ADDRESS]"),
+        ("Marktplatz 1", "[ADDRESS]"),
+        ("Rathausplatz 3", "[ADDRESS]"),
+        ("Parkring 22", "[ADDRESS]"),
+        ("Hafendamm 8", "[ADDRESS]"),
+    ])
+    def test_addresses_detected(self, pii_filter, input_text, expected_contains):
+        """Test that German addresses are properly detected."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert expected_contains in result, f"Expected {expected_contains} in '{result}'"
+
+
+class TestGermanFaxNumbers:
+    """Tests for German fax number patterns."""
+
+    @pytest.mark.parametrize("input_text,expected_contains", [
+        # Standard fax formats
+        ("Fax: 030/12345678", "[FAX]"),
+        ("Fax 0211 - 860 40 313", "[FAX]"),
+        ("Telefax: 089-123456", "[FAX]"),
+        ("Fax: +49 30 12345678", "[FAX]"),
+    ])
+    def test_fax_numbers_detected(self, pii_filter, input_text, expected_contains):
+        """Test that fax numbers are properly detected."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert expected_contains in result, f"Expected {expected_contains} in '{result}'"
+
+
 # =============================================================================
 # ENGLISH PATTERN TESTS
 # =============================================================================
