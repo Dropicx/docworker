@@ -109,10 +109,10 @@ class PIIServiceClient:
         all_terms: list[str] = []
 
         try:
-            from app.database.connection import get_db_session
+            from app.database.connection import get_session
             from app.database.models import SystemSettingsDB
 
-            with get_db_session() as db:
+            with next(get_session()) as db:
                 # Load all custom term settings
                 settings_keys = [
                     "privacy_filter.custom_medical_terms",

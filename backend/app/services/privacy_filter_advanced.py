@@ -1216,10 +1216,10 @@ class AdvancedPrivacyFilter:
         try:
             import json
 
-            from app.database.connection import get_db_session
+            from app.database.connection import get_session
             from app.database.models import SystemSettingsDB
 
-            with get_db_session() as db:
+            with next(get_session()) as db:
                 # Load custom medical terms
                 custom_terms_setting = db.query(SystemSettingsDB).filter(
                     SystemSettingsDB.key == "privacy_filter.custom_medical_terms"
