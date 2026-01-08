@@ -171,7 +171,20 @@ from starlette.requests import Request
 
 # Separate audit logger
 audit_logger = logging.getLogger("audit")
-audit_handler = logging.FileHandler("/var/log/pii-audit.log") if os.path.isdir("/var/log") else logging.StreamHandler(sys.stdout)
+
+# Try to write to file, fall back to stdout if permission denied
+def _get_audit_handler():
+    log_path = "/var/log/pii-audit.log"
+    try:
+        # Test if we can write to the log file
+        handler = logging.FileHandler(log_path)
+        logger.info(f"Audit logging to file: {log_path}")
+        return handler
+    except (PermissionError, OSError) as e:
+        logger.warning(f"Cannot write to {log_path}: {e}. Using stdout for audit logs.")
+        return logging.StreamHandler(sys.stdout)
+
+audit_handler = _get_audit_handler()
 audit_handler.setFormatter(logging.Formatter('%(asctime)s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
 audit_logger.addHandler(audit_handler)
 audit_logger.setLevel(logging.INFO)
