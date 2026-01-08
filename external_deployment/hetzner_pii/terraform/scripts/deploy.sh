@@ -38,9 +38,18 @@ else
     cd ..
 fi
 
-# Copy pii_service files to /opt/pii
+# Copy pii_service files to /opt/pii (preserve Terraform-generated docker-compose.yml)
 echo "Copying PII service files..."
+# Backup docker-compose.yml if it exists (Terraform creates the correct one)
+if [ -f /opt/pii/docker-compose.yml ]; then
+    cp /opt/pii/docker-compose.yml /opt/pii/docker-compose.yml.terraform
+fi
 cp -r doctranslator/pii_service/* /opt/pii/
+# Restore Terraform's docker-compose.yml (has correct Hetzner config)
+if [ -f /opt/pii/docker-compose.yml.terraform ]; then
+    mv /opt/pii/docker-compose.yml.terraform /opt/pii/docker-compose.yml
+    echo "Preserved Terraform-generated docker-compose.yml"
+fi
 
 # Build Docker image (CPU mode with SpaCy models)
 echo "Building Docker image with SpaCy models..."

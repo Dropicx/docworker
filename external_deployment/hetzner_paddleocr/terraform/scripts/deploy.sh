@@ -38,9 +38,18 @@ else
     cd ..
 fi
 
-# Copy paddleocr_service files to /opt/paddleocr
+# Copy paddleocr_service files to /opt/paddleocr (preserve Terraform-generated docker-compose.yml)
 echo "Copying service files..."
+# Backup docker-compose.yml if it exists (Terraform creates the correct one)
+if [ -f /opt/paddleocr/docker-compose.yml ]; then
+    cp /opt/paddleocr/docker-compose.yml /opt/paddleocr/docker-compose.yml.terraform
+fi
 cp -r doctranslator/paddleocr_service/* /opt/paddleocr/
+# Restore Terraform's docker-compose.yml (has correct Hetzner config)
+if [ -f /opt/paddleocr/docker-compose.yml.terraform ]; then
+    mv /opt/paddleocr/docker-compose.yml.terraform /opt/paddleocr/docker-compose.yml
+    echo "Preserved Terraform-generated docker-compose.yml"
+fi
 
 # Build Docker image (CPU mode)
 echo "Building Docker image (CPU mode)..."

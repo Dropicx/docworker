@@ -272,9 +272,10 @@ write_files:
     permissions: '0755'
 
   # Logrotate for audit logs (90-day retention)
+  # Note: Container writes to /var/log which maps to host /var/log/paddleocr
   - path: /etc/logrotate.d/paddleocr-audit
     content: |
-      /var/log/paddleocr-audit.log {
+      /var/log/paddleocr/*.log {
         daily
         rotate 90
         compress
@@ -317,7 +318,7 @@ write_files:
             - PYTHONUNBUFFERED=1
           volumes:
             - paddle_models:/home/appuser/.paddlex
-            - /var/log:/var/log
+            - /var/log/paddleocr:/var/log
           tmpfs:
             - /tmp:size=512M,mode=1777
           restart: unless-stopped
@@ -345,6 +346,9 @@ runcmd:
   # Docker setup
   - systemctl enable docker
   - systemctl start docker
+  # Create log directory for container bind mount
+  - mkdir -p /var/log/paddleocr
+  - chmod 755 /var/log/paddleocr
   # Secure file ownership
   - chown -R root:root /opt/paddleocr
   - chmod 755 /opt/paddleocr/deploy.sh
@@ -360,7 +364,7 @@ runcmd:
   # Watchdog cron - check health every 5 minutes
   - echo '*/5 * * * * /opt/paddleocr/watchdog.sh' | crontab -
   # Auto-cleanup cron - delete audit logs older than 90 days (belt + suspenders with logrotate)
-  - (crontab -l 2>/dev/null; echo "0 3 * * * find /var/log -name 'paddleocr-audit*.log*' -mtime +90 -delete") | crontab -
+  - (crontab -l 2>/dev/null; echo "0 3 * * * find /var/log/paddleocr -name '*.log*' -mtime +90 -delete") | crontab -
   # Wait for Docker, then deploy and start systemd service
   - |
     until docker info >/dev/null 2>&1; do
@@ -425,8 +429,14 @@ resource "hcloud_server" "paddleocr" {
 resource "hcloud_firewall" "paddleocr" {
   name = "${var.server_name}-firewall"
 
-  # Only allow traffic from private network (LB health checks + internal)
-  # No public SSH, no public ICMP - access via Hetzner Console only
+  rule {
+    description = "Allow SSH from internet"
+    direction   = "in"
+    protocol    = "tcp"
+    port        = "22"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+  }
+
   rule {
     description = "Allow private network - all traffic"
     direction   = "in"
