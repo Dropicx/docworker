@@ -30,9 +30,10 @@ ls -la "$MODELS_DIR" 2>/dev/null || echo "(empty or not accessible)"
 export PYTHONPATH="$MODELS_DIR:$PYTHONPATH"
 
 # Use models directory for pip temp files (avoids "no space" errors with tmpfs)
+# Note: mkdir may fail on Railway if volume is root-owned but models already exist - that's OK
 export TMPDIR="$MODELS_DIR"
 export PIP_CACHE_DIR="$MODELS_DIR/.pip_cache"
-mkdir -p "$PIP_CACHE_DIR"
+mkdir -p "$PIP_CACHE_DIR" 2>/dev/null || true
 
 # Function to check if model exists in volume
 model_exists_in_volume() {
