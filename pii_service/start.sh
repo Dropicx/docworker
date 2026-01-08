@@ -51,4 +51,5 @@ fi
 echo "=== All models ready, starting service ==="
 
 # Start the FastAPI application
-exec python -m uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-9125}" --workers 1
+# Use :: to listen on all interfaces (IPv4 + IPv6) for Railway internal networking
+exec python -m uvicorn app.main:app --host :: --port "${PORT:-9125}" --workers 1

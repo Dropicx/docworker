@@ -285,4 +285,5 @@ async def remove_pii_batch(request: PIIBatchRequest):
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", "9125"))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # Use :: to listen on all interfaces (IPv4 + IPv6) for Railway internal networking
+    uvicorn.run(app, host="::", port=port)
