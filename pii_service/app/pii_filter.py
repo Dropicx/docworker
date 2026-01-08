@@ -18,9 +18,18 @@ import spacy
 
 # Microsoft Presidio for enhanced PII detection
 try:
-    from presidio_analyzer import AnalyzerEngine
-    from presidio_analyzer.nlp_engine import NlpEngineProvider
-    from presidio_analyzer.predefined_recognizers import CreditCardRecognizer
+    from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
+    from presidio_analyzer.nlp_engine import NlpEngineProvider, NerModelConfiguration
+    from presidio_analyzer.predefined_recognizers import (
+        CreditCardRecognizer,
+        IbanRecognizer,
+        EmailRecognizer,
+        PhoneRecognizer,
+        IpRecognizer,
+        UrlRecognizer,
+        DateRecognizer,
+        SpacyRecognizer,
+    )
     PRESIDIO_AVAILABLE = True
 except ImportError:
     PRESIDIO_AVAILABLE = False
@@ -628,39 +637,86 @@ class PIIFilter:
             return
 
         try:
-            # Configure Presidio to use our SpaCy models
+            # Configure NER model with proper entity mappings to avoid warnings
+            # Map SpaCy NER labels to Presidio entity types
+            ner_model_configuration = NerModelConfiguration(
+                # Map SpaCy entity labels to Presidio entity types
+                model_to_presidio_entity_mapping={
+                    "PER": "PERSON",      # German SpaCy uses PER for persons
+                    "PERSON": "PERSON",   # English SpaCy uses PERSON
+                    "LOC": "LOCATION",    # German SpaCy uses LOC
+                    "GPE": "LOCATION",    # English SpaCy uses GPE for geopolitical entities
+                    "ORG": "ORGANIZATION",
+                    "DATE": "DATE_TIME",
+                    "TIME": "DATE_TIME",
+                },
+                # Ignore these SpaCy labels (not useful for PII detection)
+                labels_to_ignore=[
+                    "MISC",       # Miscellaneous - too broad, causes warnings
+                    "CARDINAL",   # Numbers
+                    "ORDINAL",    # Ordinal numbers
+                    "QUANTITY",   # Quantities
+                    "MONEY",      # Monetary values (we handle separately)
+                    "PERCENT",    # Percentages
+                    "PRODUCT",    # Products
+                    "EVENT",      # Events
+                    "WORK_OF_ART", # Works of art
+                    "LAW",        # Laws
+                    "LANGUAGE",   # Languages
+                    "NORP",       # Nationalities, religious, political groups
+                ],
+                # Entities that should have lower confidence scores
+                low_score_entity_names=["ORGANIZATION", "DATE_TIME"]
+            )
+
+            # Configure Presidio to use our SpaCy models with proper NER config
             configuration = {
                 "nlp_engine_name": "spacy",
                 "models": [
-                    {"lang_code": "de", "model_name": "de_core_news_lg"},
-                    {"lang_code": "en", "model_name": "en_core_web_lg"}
+                    {
+                        "lang_code": "de",
+                        "model_name": "de_core_news_lg",
+                        "ner_model_configuration": ner_model_configuration
+                    },
+                    {
+                        "lang_code": "en",
+                        "model_name": "en_core_web_lg",
+                        "ner_model_configuration": ner_model_configuration
+                    }
                 ]
             }
 
             provider = NlpEngineProvider(nlp_configuration=configuration)
             nlp_engine = provider.create_engine()
 
-            # Create analyzer with default recognizers
+            # Create custom registry with only the recognizers we need (de/en)
+            # This avoids loading unnecessary es, it, pl recognizers
+            registry = RecognizerRegistry()
+            registry.supported_languages = ["de", "en"]
+
+            # Add SpaCy-based recognizers for both languages
+            for lang in ["de", "en"]:
+                registry.add_recognizer(SpacyRecognizer(supported_language=lang, ner_strength=0.85))
+                registry.add_recognizer(EmailRecognizer(supported_language=lang))
+                registry.add_recognizer(PhoneRecognizer(supported_language=lang, context=["telefon", "phone", "tel", "fax", "handy", "mobil"]))
+                registry.add_recognizer(IbanRecognizer(supported_language=lang))
+                registry.add_recognizer(IpRecognizer(supported_language=lang))
+                registry.add_recognizer(UrlRecognizer(supported_language=lang))
+                registry.add_recognizer(DateRecognizer(supported_language=lang))
+                registry.add_recognizer(CreditCardRecognizer(
+                    supported_language=lang,
+                    context=["kreditkarte", "kartennummer", "credit card", "card number"]
+                ))
+
+            # Create analyzer with our custom registry
             self.presidio_analyzer = AnalyzerEngine(
                 nlp_engine=nlp_engine,
+                registry=registry,
                 supported_languages=["de", "en"]
             )
 
-            # Add CreditCardRecognizer for German and English
-            # (By default it only supports es, it, pl)
-            credit_card_recognizer_de = CreditCardRecognizer(
-                supported_language="de",
-                context=["kreditkarte", "kartennummer", "kreditkartennummer", "credit card"]
-            )
-            credit_card_recognizer_en = CreditCardRecognizer(
-                supported_language="en",
-                context=["credit card", "card number", "credit card number", "kreditkarte"]
-            )
-            self.presidio_analyzer.registry.add_recognizer(credit_card_recognizer_de)
-            self.presidio_analyzer.registry.add_recognizer(credit_card_recognizer_en)
-
             self.presidio_available = True
-            logger.info("Presidio analyzer initialized successfully (with CreditCard for de/en)")
+            logger.info("Presidio analyzer initialized with optimized de/en recognizers")
 
         except Exception as e:
             logger.warning(f"Presidio initialization failed (continuing with SpaCy only): {e}")
