@@ -14,6 +14,7 @@ Usage:
     >>> cleaned, metadata = await client.remove_pii("Patient: Max Mustermann", "de")
 """
 
+import asyncio
 import json
 import logging
 import os
@@ -152,6 +153,68 @@ class PIIServiceClient:
         """Check if fallback PII service is configured."""
         return bool(self.fallback_url)
 
+    async def _wake_up_fallback_service(
+        self,
+        max_attempts: int = 10,
+        initial_delay: float = 3.0,
+        max_delay: float = 15.0
+    ) -> bool:
+        """
+        Wake up the Railway fallback service from sleep mode.
+
+        Railway services go to sleep after inactivity. The first request triggers
+        wake-up, but the service needs time to start the container and load SpaCy models.
+
+        Args:
+            max_attempts: Maximum number of health check attempts
+            initial_delay: Initial delay between attempts in seconds
+            max_delay: Maximum delay between attempts (with backoff)
+
+        Returns:
+            True if service became healthy, False otherwise
+        """
+        if not self.fallback_url:
+            return False
+
+        logger.info(f"Waking up Railway PII service at {self.fallback_url}...")
+
+        delay = initial_delay
+        for attempt in range(1, max_attempts + 1):
+            try:
+                async with httpx.AsyncClient(timeout=10.0) as client:
+                    response = await client.get(f"{self.fallback_url}/health")
+
+                    if response.status_code == 200:
+                        health = response.json()
+                        status = health.get("status", "unknown")
+
+                        if status == "healthy":
+                            logger.info(f"Railway PII service is healthy after {attempt} attempt(s)")
+                            return True
+                        elif status == "degraded":
+                            # Service is up but not all models loaded yet
+                            logger.info(f"Railway PII service is degraded, waiting for models... (attempt {attempt}/{max_attempts})")
+                        else:
+                            logger.info(f"Railway PII service status: {status} (attempt {attempt}/{max_attempts})")
+                    else:
+                        logger.debug(f"Health check returned {response.status_code} (attempt {attempt}/{max_attempts})")
+
+            except httpx.ConnectError:
+                logger.debug(f"Railway PII service not yet reachable (attempt {attempt}/{max_attempts})")
+            except httpx.TimeoutException:
+                logger.debug(f"Railway PII service health check timeout (attempt {attempt}/{max_attempts})")
+            except Exception as e:
+                logger.debug(f"Health check error: {e} (attempt {attempt}/{max_attempts})")
+
+            if attempt < max_attempts:
+                logger.info(f"Waiting {delay:.1f}s before next wake-up attempt...")
+                await asyncio.sleep(delay)
+                # Increase delay with backoff, but cap at max_delay
+                delay = min(delay * 1.5, max_delay)
+
+        logger.warning(f"Railway PII service did not become healthy after {max_attempts} attempts")
+        return False
+
     async def remove_pii(
         self,
         text: str,
@@ -193,10 +256,15 @@ class PIIServiceClient:
                 primary_error = str(e)
                 logger.warning(f"Primary PII service failed: {e}")
 
-        # Try fallback service (Railway) - longer timeout for cold start
+        # Try fallback service (Railway) - wake up first, then call with longer timeout
         if self.has_fallback:
             try:
-                logger.info(f"Calling fallback PII service: {self.fallback_url} (timeout: {self.fallback_timeout}s for cold start)")
+                # Wake up the sleeping Railway service first
+                is_ready = await self._wake_up_fallback_service()
+                if not is_ready:
+                    logger.warning("Railway PII service wake-up failed, attempting request anyway...")
+
+                logger.info(f"Calling fallback PII service: {self.fallback_url}")
                 result = await self._call_service(
                     self.fallback_url, self.fallback_api_key, text, language, include_metadata,
                     timeout=self.fallback_timeout
@@ -336,9 +404,14 @@ class PIIServiceClient:
                 primary_error = str(e)
                 logger.warning(f"Primary batch PII failed: {e}")
 
-        # Try fallback service (Railway) - longer timeout for cold start
+        # Try fallback service (Railway) - wake up first, then call with longer timeout
         if self.has_fallback:
             try:
+                # Wake up the sleeping Railway service first
+                is_ready = await self._wake_up_fallback_service()
+                if not is_ready:
+                    logger.warning("Railway PII service wake-up failed, attempting batch request anyway...")
+
                 return await self._call_batch_service(
                     self.fallback_url, self.fallback_api_key, texts, language, batch_size,
                     timeout=self.fallback_timeout * 2
