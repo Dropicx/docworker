@@ -19,7 +19,7 @@ import spacy
 # Microsoft Presidio for enhanced PII detection
 try:
     from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
-    from presidio_analyzer.nlp_engine import NlpEngineProvider, NerModelConfiguration
+    from presidio_analyzer.nlp_engine import NlpEngineProvider
     from presidio_analyzer.predefined_recognizers import (
         CreditCardRecognizer,
         IbanRecognizer,
@@ -637,11 +637,10 @@ class PIIFilter:
             return
 
         try:
-            # Configure NER model with proper entity mappings to avoid warnings
-            # Map SpaCy NER labels to Presidio entity types
-            ner_model_configuration = NerModelConfiguration(
+            # NER model configuration as dict (required format for NlpEngineProvider)
+            ner_config_dict = {
                 # Map SpaCy entity labels to Presidio entity types
-                model_to_presidio_entity_mapping={
+                "model_to_presidio_entity_mapping": {
                     "PER": "PERSON",      # German SpaCy uses PER for persons
                     "PERSON": "PERSON",   # English SpaCy uses PERSON
                     "LOC": "LOCATION",    # German SpaCy uses LOC
@@ -651,7 +650,7 @@ class PIIFilter:
                     "TIME": "DATE_TIME",
                 },
                 # Ignore these SpaCy labels (not useful for PII detection)
-                labels_to_ignore=[
+                "labels_to_ignore": [
                     "MISC",       # Miscellaneous - too broad, causes warnings
                     "CARDINAL",   # Numbers
                     "ORDINAL",    # Ordinal numbers
@@ -666,8 +665,8 @@ class PIIFilter:
                     "NORP",       # Nationalities, religious, political groups
                 ],
                 # Entities that should have lower confidence scores
-                low_score_entity_names=["ORGANIZATION", "DATE_TIME"]
-            )
+                "low_score_entity_names": ["ORGANIZATION", "DATE_TIME"]
+            }
 
             # Configure Presidio to use our SpaCy models with proper NER config
             configuration = {
@@ -676,12 +675,12 @@ class PIIFilter:
                     {
                         "lang_code": "de",
                         "model_name": "de_core_news_lg",
-                        "ner_model_configuration": ner_model_configuration
+                        "ner_model_configuration": ner_config_dict
                     },
                     {
                         "lang_code": "en",
                         "model_name": "en_core_web_lg",
-                        "ner_model_configuration": ner_model_configuration
+                        "ner_model_configuration": ner_config_dict
                     }
                 ]
             }
@@ -1023,19 +1022,18 @@ class PIIFilter:
 
         presidio_removals = 0
 
-        # All Presidio entity types for maximum coverage
+        # Presidio entity types that match our registered recognizers
+        # Only request entities we have recognizers for (avoids warnings)
         entities_to_detect = [
-            "PERSON",           # Names
-            "LOCATION",         # Locations SpaCy may have missed
-            "IBAN_CODE",        # IBAN (not in our patterns)
-            "CREDIT_CARD",      # Credit cards (not in our patterns)
-            "PHONE_NUMBER",     # Additional phone formats
-            "EMAIL_ADDRESS",    # Additional email formats
-            "IP_ADDRESS",       # IP addresses
-            "URL",              # URLs
-            "DATE_TIME",        # Date/time formats
-            "NRP",              # Nationality/religious/political groups
-            "MEDICAL_LICENSE",  # Medical license numbers
+            "PERSON",           # Names (SpacyRecognizer)
+            "LOCATION",         # Locations (SpacyRecognizer)
+            "IBAN_CODE",        # IBAN (IbanRecognizer)
+            "CREDIT_CARD",      # Credit cards (CreditCardRecognizer)
+            "PHONE_NUMBER",     # Phone numbers (PhoneRecognizer)
+            "EMAIL_ADDRESS",    # Email addresses (EmailRecognizer)
+            "IP_ADDRESS",       # IP addresses (IpRecognizer)
+            "URL",              # URLs (UrlRecognizer)
+            "DATE_TIME",        # Date/time formats (DateRecognizer)
         ]
 
         try:
