@@ -790,6 +790,10 @@ class PIIFilter:
 
             # Handle PERSON entities
             if ent.label_ in person_labels:
+                # Skip if already replaced by pattern (contains placeholder bracket)
+                if "[" in ent.text:
+                    continue
+
                 # Check if it's a medical eponym
                 context = text[max(0, ent.start_char - 50):min(len(text), ent.end_char + 50)]
                 if self._is_medical_eponym(ent.text, context):
@@ -808,6 +812,10 @@ class PIIFilter:
 
             # Handle LOCATION entities (cities, regions, streets)
             elif ent.label_ in location_labels:
+                # Skip if already replaced by pattern (contains placeholder bracket)
+                if "[" in ent.text:
+                    continue
+
                 # Skip preserved generic locations
                 if ent_lower in preserved_locations:
                     continue
@@ -824,6 +832,10 @@ class PIIFilter:
 
             # Handle ORGANIZATION entities (hospitals, clinics, companies)
             elif ent.label_ in org_labels:
+                # Skip if already replaced by pattern (contains placeholder bracket)
+                if "[" in ent.text:
+                    continue
+
                 # Skip preserved generic organizations
                 if ent_lower in preserved_orgs:
                     continue
