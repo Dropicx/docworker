@@ -52,7 +52,8 @@ class PIIServiceClient:
         api_key: str | None = None,
         fallback_url: str | None = None,
         fallback_api_key: str | None = None,
-        timeout: float = 60.0
+        timeout: float = 60.0,
+        fallback_timeout: float = 180.0
     ):
         """
         Initialize PII service client.
@@ -63,6 +64,7 @@ class PIIServiceClient:
             fallback_url: Override FALLBACK_PII_URL from environment (Railway backup)
             fallback_api_key: Override FALLBACK_PII_API_KEY from environment
             timeout: Request timeout in seconds (default 60s for large documents)
+            fallback_timeout: Timeout for fallback service (default 180s - Railway may need to wake up and load models)
         """
         # Primary: Hetzner
         self.url = url or EXTERNAL_PII_URL
@@ -73,6 +75,7 @@ class PIIServiceClient:
         self.fallback_api_key = fallback_api_key or FALLBACK_PII_API_KEY
 
         self.timeout = timeout
+        self.fallback_timeout = fallback_timeout
         self._custom_terms_cache: list[str] | None = None
         self._custom_terms_cache_time: float = 0
 
@@ -181,7 +184,8 @@ class PIIServiceClient:
             try:
                 logger.debug(f"Calling primary PII service: {self.url}")
                 result = await self._call_service(
-                    self.url, self.api_key, text, language, include_metadata
+                    self.url, self.api_key, text, language, include_metadata,
+                    timeout=self.timeout
                 )
                 result[1]["service_used"] = "primary"
                 return result
@@ -189,12 +193,13 @@ class PIIServiceClient:
                 primary_error = str(e)
                 logger.warning(f"Primary PII service failed: {e}")
 
-        # Try fallback service (Railway)
+        # Try fallback service (Railway) - longer timeout for cold start
         if self.has_fallback:
             try:
-                logger.info(f"Calling fallback PII service: {self.fallback_url}")
+                logger.info(f"Calling fallback PII service: {self.fallback_url} (timeout: {self.fallback_timeout}s for cold start)")
                 result = await self._call_service(
-                    self.fallback_url, self.fallback_api_key, text, language, include_metadata
+                    self.fallback_url, self.fallback_api_key, text, language, include_metadata,
+                    timeout=self.fallback_timeout
                 )
                 result[1]["service_used"] = "fallback"
                 return result
@@ -213,7 +218,8 @@ class PIIServiceClient:
         api_key: str,
         text: str,
         language: str,
-        include_metadata: bool
+        include_metadata: bool,
+        timeout: float | None = None
     ) -> tuple[str, dict]:
         """Call a PII service API with custom protection terms."""
         headers = {"Content-Type": "application/json"}
@@ -230,7 +236,8 @@ class PIIServiceClient:
             "custom_protection_terms": custom_terms if custom_terms else None
         }
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
+        request_timeout = timeout or self.timeout
+        async with httpx.AsyncClient(timeout=request_timeout) as client:
             response = await client.post(
                 f"{url}/remove-pii",
                 json=payload,
@@ -322,17 +329,19 @@ class PIIServiceClient:
         if self.is_external_enabled:
             try:
                 return await self._call_batch_service(
-                    self.url, self.api_key, texts, language, batch_size
+                    self.url, self.api_key, texts, language, batch_size,
+                    timeout=self.timeout * 2
                 )
             except Exception as e:
                 primary_error = str(e)
                 logger.warning(f"Primary batch PII failed: {e}")
 
-        # Try fallback service (Railway)
+        # Try fallback service (Railway) - longer timeout for cold start
         if self.has_fallback:
             try:
                 return await self._call_batch_service(
-                    self.fallback_url, self.fallback_api_key, texts, language, batch_size
+                    self.fallback_url, self.fallback_api_key, texts, language, batch_size,
+                    timeout=self.fallback_timeout * 2
                 )
             except Exception as e:
                 fallback_error = str(e)
@@ -348,7 +357,8 @@ class PIIServiceClient:
         api_key: str,
         texts: list[str],
         language: str,
-        batch_size: int
+        batch_size: int,
+        timeout: float | None = None
     ) -> list[tuple[str, dict]]:
         """Call a batch PII service API with custom protection terms."""
         headers = {"Content-Type": "application/json"}
@@ -365,7 +375,8 @@ class PIIServiceClient:
             "custom_protection_terms": custom_terms if custom_terms else None
         }
 
-        async with httpx.AsyncClient(timeout=self.timeout * 2) as client:
+        request_timeout = timeout or (self.timeout * 2)
+        async with httpx.AsyncClient(timeout=request_timeout) as client:
             response = await client.post(
                 f"{url}/remove-pii/batch",
                 json=payload,
