@@ -154,7 +154,9 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             logger.info(f"✅ OCR completed in {ocr_time:.2f}s: {len(extracted_text)} characters, confidence: {ocr_confidence:.2%}")
 
             # ⚡ Step 1.5: PII Removal (BEFORE sending to AI pipeline)
-            # Uses external Hetzner SpaCy service if configured, falls back to local filter
+            # Two-stage PII removal:
+            #   1. External Hetzner SpaCy service (large models for better NER)
+            #   2. Local AdvancedPrivacyFilter (additional patterns: drugs, ICD codes, etc.)
             # Check if PII removal is enabled in OCR config
             ocr_config = db.query(OCRConfigurationDB).first()
             pii_enabled = ocr_config.pii_removal_enabled if ocr_config else True
@@ -169,34 +171,56 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                 )
 
                 from app.services.pii_service_client import PIIServiceClient
+                from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
 
-                pii_client = PIIServiceClient()
                 pii_start_time = time.time()
                 original_length = len(extracted_text)
 
                 # Get source language from options (default to German for medical documents)
                 source_language = options.get('source_language', 'de') if options else 'de'
+                logger.info(f"   Using language model: {source_language}")
 
-                # Call PII service (external Hetzner API or local fallback)
-                # PIIServiceClient.remove_pii() is async, returns (cleaned_text, metadata)
-                extracted_text, pii_metadata = await_sync(
-                    pii_client.remove_pii(extracted_text, language=source_language)
-                )
+                # Stage 1: External SpaCy service (large models for better name detection)
+                pii_client = PIIServiceClient()
+                total_entities = 0
+                external_entities = 0
+
+                if pii_client.is_external_enabled:
+                    logger.info("   Stage 1: External SpaCy service (large model NER)...")
+                    extracted_text, external_metadata = await_sync(
+                        pii_client.remove_pii(extracted_text, language=source_language)
+                    )
+                    external_entities = external_metadata.get("entities_detected", 0)
+                    total_entities += external_entities
+                    logger.info(f"   ✓ External: {external_entities} entities removed")
+
+                # Stage 2: Local AdvancedPrivacyFilter (drugs, ICD codes, additional patterns)
+                # Always run local filter for comprehensive coverage
+                logger.info("   Stage 2: Local AdvancedPrivacyFilter (drugs, ICD codes, patterns)...")
+                local_filter = AdvancedPrivacyFilter(load_custom_terms=True)
+                extracted_text, local_metadata = local_filter.remove_pii(extracted_text)
+                local_entities = local_metadata.get("entities_detected", 0)
+                total_entities += local_entities
+                logger.info(f"   ✓ Local: {local_entities} additional entities removed")
 
                 pii_time_ms = (time.time() - pii_start_time) * 1000
                 cleaned_length = len(extracted_text)
 
-                # Log which service was used
-                service_used = "external" if pii_client.is_external_enabled else "local"
-                logger.info(f"✅ PII removal completed in {pii_time_ms:.1f}ms ({service_used} service)")
-                logger.info(f"   Original: {original_length} chars → Cleaned: {cleaned_length} chars")
+                # Combined metadata
+                pii_metadata = {
+                    "entities_detected": total_entities,
+                    "external_entities": external_entities,
+                    "local_entities": local_entities,
+                    "eponyms_preserved": local_metadata.get("eponyms_preserved", 0),
+                    "quality_score": local_metadata.get("quality_summary", {}).get("quality_score", 100.0),
+                    "pii_types_detected": local_metadata.get("pii_types_detected", []),
+                }
 
-                # Log metadata
-                if pii_metadata.get("entities_detected", 0) > 0:
-                    logger.info(
-                        f"   📊 Detected: {pii_metadata['entities_detected']} entities, "
-                        f"Preserved: {pii_metadata.get('eponyms_preserved', 0)} eponyms"
-                    )
+                # Log results
+                service_mode = "external+local" if pii_client.is_external_enabled else "local-only"
+                logger.info(f"✅ PII removal completed in {pii_time_ms:.1f}ms ({service_mode})")
+                logger.info(f"   Original: {original_length} chars → Cleaned: {cleaned_length} chars")
+                logger.info(f"   📊 Total entities: {total_entities}, Quality score: {pii_metadata['quality_score']:.1f}")
             else:
                 logger.info("⏭️  PII removal disabled - skipping privacy filter")
 

@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -78,6 +78,10 @@ LANGUAGE_NAMES = {
 class ProcessingOptions(BaseModel):
     target_language: SupportedLanguage | None = Field(
         None, description="Zielsprache für Übersetzung (optional)"
+    )
+    source_language: Literal["de", "en"] = Field(
+        default="de",
+        description="Quellsprache des Dokuments für PII-Entfernung ('de' oder 'en')"
     )
 
 

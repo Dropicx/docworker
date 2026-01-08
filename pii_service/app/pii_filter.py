@@ -189,62 +189,216 @@ class PIIFilter:
     def _init_medical_terms(self):
         """Initialize protected medical terms (not to be removed)."""
         self.medical_terms = {
-            # Body parts and organs
+            # ==================== ANATOMY ====================
             "herz", "lunge", "leber", "niere", "magen", "darm", "kopf", "hals",
             "brust", "bauch", "rücken", "schulter", "knie", "hüfte", "hand", "fuß",
             "hirn", "gehirn", "muskel", "knochen", "gelenk", "nerv", "gefäß",
+            "thorax", "abdomen", "extremitäten", "wirbelsäule", "becken", "schädel",
+            "milz", "pankreas", "gallenblase", "schilddrüse", "nebenniere",
+            "prostata", "uterus", "ovarien", "hoden", "lymphknoten",
+            "rückenmark", "knochenmark", "arterie", "vene", "kapillare",
+            "aorta", "koronararterie",
+            # English
             "heart", "lung", "liver", "kidney", "stomach", "brain", "muscle", "bone",
+            "spleen", "pancreas", "gallbladder", "thyroid", "prostate", "uterus",
 
-            # Medical terms
+            # ==================== CLINICAL TERMS ====================
             "patient", "patientin", "diagnose", "befund", "therapie", "behandlung",
             "untersuchung", "operation", "medikament", "dosierung", "anamnese",
+            "prognose", "epikrise", "symptom", "syndrom", "erkrankung", "krankheit",
+            "störung", "insuffizienz", "entzündung", "infektion", "nekrose",
+            "ischämie", "ruptur", "läsion", "pathologie",
+            # English
             "diagnosis", "treatment", "examination", "surgery", "medication",
+            "disease", "disorder", "condition", "inflammation", "infection",
 
-            # Conditions
-            "symptom", "syndrom", "erkrankung", "krankheit", "störung", "insuffizienz",
+            # ==================== VITAL SIGNS ====================
+            "blutdruck", "puls", "temperatur", "sauerstoffsättigung", "atemfrequenz",
+            "herzfrequenz", "blutdruck", "körpertemperatur",
+
+            # ==================== CONDITIONS ====================
             "stenose", "thrombose", "embolie", "infarkt", "tumor", "karzinom",
-            "hypertonie", "diabetes", "disease", "disorder", "condition",
+            "metastase", "aneurysma", "fraktur", "luxation", "kontusion",
+            "hämatom", "ödem", "erguss", "hypertonie", "hypotonie",
+            "tachykardie", "bradykardie", "arrhythmie", "diabetes",
+            "hypothyreose", "hyperthyreose", "anämie", "leukämie",
+            "pneumonie", "bronchitis", "asthma", "copd", "emphysem", "fibrose",
+            "gastritis", "ulkus", "hepatitis", "zirrhose", "pankreatitis",
+            "cholezystitis", "nephritis", "pyelonephritis", "glomerulonephritis",
+            "niereninsuffizienz", "arthritis", "arthrose", "osteoporose",
+            "rheuma", "gicht", "fibromyalgie", "meningitis", "enzephalitis",
+            "epilepsie", "schlaganfall", "apoplex", "depression", "angststörung",
+            "schizophrenie", "demenz", "delir",
 
-            # Lab values
-            "hämoglobin", "erythrozyten", "leukozyten", "thrombozyten", "kreatinin",
-            "glucose", "glukose", "hba1c", "cholesterin", "triglyceride",
-            "hemoglobin", "creatinine", "cholesterol",
-
-            # Medications
-            "aspirin", "insulin", "metformin", "ibuprofen", "paracetamol",
-            "simvastatin", "ramipril", "bisoprolol", "omeprazol", "pantoprazol",
-
-            # Examinations
-            "mrt", "ct", "röntgen", "ultraschall", "ekg", "echo", "biopsie",
+            # ==================== DIAGNOSTICS ====================
+            "ultraschall", "sonographie", "röntgen", "ct", "mrt", "pet", "spect",
+            "ekg", "eeg", "emg", "echokardiographie", "endoskopie", "koloskopie",
+            "gastroskopie", "bronchoskopie", "laparoskopie", "arthroskopie", "biopsie",
+            # English
             "mri", "xray", "ultrasound", "ecg", "biopsy",
 
-            # Common abbreviations
-            "mg", "ml", "kg", "cm", "mm", "mmhg", "mmol", "µg", "ng",
-            "bid", "tid", "qid", "prn", "po", "iv", "im", "sc",
+            # ==================== PROCEDURES ====================
+            "operation", "resektion", "transplantation", "bypass", "stent", "katheter",
+            "infusion", "injektion", "transfusion", "dialyse", "chemotherapie",
+            "bestrahlung", "physiotherapie", "ergotherapie", "logopädie",
+            "rehabilitation", "palliativ",
+
+            # ==================== DEPARTMENTS ====================
+            "intensivstation", "notaufnahme", "ambulanz", "station",
+            "kardiologie", "pneumologie", "gastroenterologie", "nephrologie",
+            "neurologie", "onkologie", "hämatologie", "rheumatologie",
+            "endokrinologie", "dermatologie", "orthopädie", "urologie",
+            "gynäkologie", "pädiatrie", "geriatrie", "chirurgie", "anästhesie",
+            "radiologie", "pathologie", "labormedizin",
+
+            # ==================== LAB VALUES ====================
+            "hämoglobin", "hämatokrit", "erythrozyten", "leukozyten", "thrombozyten",
+            "kreatinin", "harnstoff", "harnsäure", "bilirubin", "transaminasen",
+            "got", "gpt", "ggt", "ap", "ldh", "ck", "troponin", "bnp", "crp",
+            "tsh", "t3", "t4", "hba1c", "glucose", "glukose", "cholesterin",
+            "triglyzeride", "inr", "ptt", "quick", "d-dimer", "fibrinogen",
+            "blutgruppe", "rhesusfaktor",
+            # English
+            "hemoglobin", "creatinine", "cholesterol", "triglycerides",
+
+            # ==================== UNITS & ABBREVIATIONS ====================
+            "mg", "ml", "kg", "cm", "mm", "mmhg", "mmol", "µg", "ng", "dl", "l",
+            "bid", "tid", "qid", "prn", "po", "iv", "im", "sc", "od", "os", "ou",
+        }
+
+        # ==================== DRUG DATABASE (226 medications) ====================
+        self.drug_database = {
+            # Diabetes
+            "metformin", "glibenclamid", "sitagliptin", "empagliflozin", "insulin",
+            "lantus", "novorapid", "levemir", "humalog", "actrapid",
+            # Beta blockers
+            "metoprolol", "bisoprolol", "carvedilol", "nebivolol", "atenolol", "propranolol",
+            # ACE inhibitors
+            "ramipril", "enalapril", "lisinopril", "perindopril", "captopril",
+            # ARBs
+            "candesartan", "valsartan", "losartan", "irbesartan", "telmisartan",
+            # Calcium channel blockers
+            "amlodipin", "nifedipin", "lercanidipin", "felodipin", "verapamil", "diltiazem",
+            # Diuretics
+            "hydrochlorothiazid", "furosemid", "torasemid", "spironolacton", "eplerenon",
+            # Statins
+            "simvastatin", "atorvastatin", "rosuvastatin", "pravastatin", "fluvastatin",
+            "ezetimib", "evolocumab", "alirocumab", "fenofibrat", "bezafibrat",
+            # Antiplatelets & Anticoagulants
+            "aspirin", "ass", "clopidogrel", "prasugrel", "ticagrelor",
+            "rivaroxaban", "apixaban", "edoxaban", "dabigatran", "warfarin",
+            "phenprocoumon", "marcumar", "heparin", "enoxaparin", "clexane",
+            "dalteparin", "fondaparinux",
+            # PPIs
+            "omeprazol", "pantoprazol", "esomeprazol", "lansoprazol", "rabeprazol",
+            "ranitidin", "famotidin", "sucralfat",
+            # Antibiotics
+            "amoxicillin", "ampicillin", "penicillin", "flucloxacillin", "piperacillin",
+            "cefuroxim", "ceftriaxon", "cefotaxim", "ceftazidim", "cefazolin",
+            "ciprofloxacin", "levofloxacin", "moxifloxacin", "ofloxacin",
+            "clarithromycin", "azithromycin", "erythromycin", "roxithromycin",
+            "doxycyclin", "tetracyclin", "minocyclin", "tigecyclin",
+            "metronidazol", "clindamycin", "vancomycin", "linezolid", "daptomycin",
+            "meropenem", "imipenem", "ertapenem", "gentamicin", "tobramycin", "amikacin",
+            "cotrimoxazol", "trimethoprim", "nitrofurantoin", "fosfomycin", "rifampicin",
+            # Antifungals
+            "fluconazol", "itraconazol", "voriconazol", "amphotericin", "caspofungin",
+            # Antivirals
+            "aciclovir", "valaciclovir", "oseltamivir", "remdesivir",
+            # NSAIDs
+            "ibuprofen", "diclofenac", "naproxen", "piroxicam", "meloxicam", "celecoxib",
+            # Analgesics
+            "paracetamol", "metamizol", "novalgin", "novaminsulfon",
+            "tramadol", "tilidin", "morphin", "oxycodon", "fentanyl", "hydromorphon",
+            # Anticonvulsants
+            "pregabalin", "gabapentin", "carbamazepin", "valproat", "lamotrigin", "levetiracetam",
+            # Antidepressants
+            "sertralin", "escitalopram", "citalopram", "fluoxetin", "paroxetin", "venlafaxin",
+            "mirtazapin", "amitriptylin", "duloxetin", "bupropion", "trazodon",
+            # Antipsychotics
+            "quetiapin", "olanzapin", "risperidon", "aripiprazol", "haloperidol", "clozapin",
+            # Anxiolytics/Hypnotics
+            "lorazepam", "diazepam", "oxazepam", "bromazepam", "zolpidem", "zopiclon",
+            # Parkinson
+            "levodopa", "carbidopa", "ropinirol", "pramipexol", "entacapon", "rasagilin",
+            # Dementia
+            "donepezil", "rivastigmin", "galantamin", "memantin",
+            # Corticosteroids
+            "prednisolon", "dexamethason", "hydrocortison", "methylprednisolon", "budesonid",
+            # Respiratory
+            "salbutamol", "formoterol", "salmeterol", "tiotropium", "ipratropium",
+            "montelukast", "theophyllin", "roflumilast", "fluticason", "beclomethason",
+            # Thyroid
+            "levothyroxin", "l-thyroxin", "euthyrox", "carbimazol", "thiamazol",
+            # Oncology
+            "tamoxifen", "letrozol", "anastrozol", "trastuzumab", "rituximab", "pembrolizumab",
+            # Immunosuppressants
+            "methotrexat", "azathioprin", "mycophenolat", "ciclosporin", "tacrolimus",
+            "adalimumab", "etanercept", "infliximab", "secukinumab", "ustekinumab",
+            # Urology
+            "sildenafil", "tadalafil", "tamsulosin", "alfuzosin", "finasterid", "dutasterid",
+            # Gout
+            "colchicin", "allopurinol", "febuxostat",
+            # Supplements
+            "eisen", "folsäure", "calcium", "kalium", "magnesium",
         }
 
     def _init_medical_eponyms(self):
         """Initialize medical eponyms (disease names from people - preserve these)."""
         self.medical_eponyms = {
-            # Neurological
+            # ==================== NEUROLOGICAL ====================
             "parkinson", "alzheimer", "huntington", "creutzfeldt", "jakob",
-            "guillain", "barré", "bell", "tourette", "charcot",
+            "guillain", "barré", "bell", "tourette", "charcot", "ménière",
+            "wernicke", "korsakoff", "lewy", "pick", "binswanger",
+            "erb", "duchenne", "becker", "friedreich",
+            "broca", "wernicke", "rasmussen", "west", "lennox", "gastaut",
+            "dravet", "landau", "kleffner",
 
-            # Cardiovascular
+            # ==================== CARDIOVASCULAR ====================
             "raynaud", "buerger", "kawasaki", "marfan", "ehlers", "danlos",
+            "takayasu", "fallot", "ebstein", "eisenmenger", "brugada",
+            "wolff", "osler", "weber", "rendu",
 
-            # Gastrointestinal
-            "crohn", "hirschsprung", "barrett", "whipple",
+            # ==================== GASTROINTESTINAL ====================
+            "crohn", "hirschsprung", "barrett", "whipple", "zollinger", "ellison",
+            "boerhaave", "mallory", "weiss", "zenker", "schatzki", "plummer", "vinson",
 
-            # Endocrine
-            "cushing", "addison", "hashimoto", "graves", "basedow",
+            # ==================== ENDOCRINE ====================
+            "cushing", "addison", "hashimoto", "graves", "basedow", "conn",
+            "sheehan", "simmonds", "nelson", "riedel", "de quervain", "pendred",
 
-            # Hematological
-            "hodgkin", "waldenström", "cooley",
+            # ==================== HEMATOLOGICAL ====================
+            "hodgkin", "waldenström", "cooley", "fanconi", "gaucher", "niemann",
+            "von willebrand", "glanzmann", "bernard", "soulier", "may", "hegglin",
 
-            # Other
-            "down", "turner", "klinefelter", "wilson", "menière",
-            "sjögren", "behçet", "wegener", "paget", "dupuytren",
+            # ==================== GENETIC/CHROMOSOMAL ====================
+            "down", "turner", "klinefelter", "edwards", "patau", "prader", "willi",
+            "angelman", "kallmann", "fabry", "pompe",
+
+            # ==================== RENAL ====================
+            "goodpasture", "berger", "alport", "bartter", "gitelman", "liddle",
+
+            # ==================== RHEUMATOLOGICAL ====================
+            "wilson", "sjögren", "behçet", "wegener", "churg", "strauss",
+            "henoch", "schönlein", "bechterew", "reiter", "felty", "still",
+            "heberden", "bouchard",
+
+            # ==================== ORTHOPEDIC ====================
+            "paget", "dupuytren", "volkmann", "trendelenburg", "galeazzi",
+            "ortolani", "barlow", "froment", "phalen", "tinel",
+
+            # ==================== ONCOLOGICAL ====================
+            "kaposi", "bowen", "merkel", "sézary", "peutz", "jeghers",
+            "gardner", "turcot", "lynch", "cowden", "li", "fraumeni",
+            "von hippel", "lindau", "sturge",
+
+            # ==================== DERMATOLOGICAL ====================
+            "stevens", "johnson", "lyell", "nikolsky", "auspitz", "köbner", "wickham",
+
+            # ==================== SIGNS & TESTS ====================
+            "horner", "holmes", "adie", "marcus", "gunn", "argyll", "robertson",
+            "pancoast", "trousseau", "virchow", "courvoisier", "murphy",
+            "mcburney", "rovsing", "blumberg",
         }
 
     def _is_medical_eponym(self, name: str, context: str = "") -> bool:
@@ -268,8 +422,9 @@ class PIIFilter:
         return False
 
     def _is_medical_term(self, word: str) -> bool:
-        """Check if word is a protected medical term."""
-        return word.lower() in self.medical_terms
+        """Check if word is a protected medical term or drug name."""
+        word_lower = word.lower()
+        return word_lower in self.medical_terms or word_lower in self.drug_database
 
     def _remove_pii_with_patterns(self, text: str, language: str) -> tuple[str, dict]:
         """Remove PII using regex patterns."""
