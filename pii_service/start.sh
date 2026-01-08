@@ -22,6 +22,10 @@ echo "Models directory: $MODELS_DIR"
 # Create models directory if it doesn't exist
 mkdir -p "$MODELS_DIR"
 
+# Debug: show what's already in the volume
+echo "Current contents of $MODELS_DIR:"
+ls -la "$MODELS_DIR" 2>/dev/null || echo "(empty or not accessible)"
+
 # Add models directory to Python path so spacy can find them
 export PYTHONPATH="$MODELS_DIR:$PYTHONPATH"
 
@@ -51,6 +55,10 @@ download_model_to_volume() {
         --no-deps \
         --upgrade
     echo "$model installed to volume successfully"
+
+    # Debug: show what was created
+    echo "Contents of $MODELS_DIR after install:"
+    ls -la "$MODELS_DIR" | head -20
 }
 
 # Check and download German model
