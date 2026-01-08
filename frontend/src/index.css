@@ -68,12 +68,12 @@
 
   /* Improved Markdown List Formatting - Clean structure */
   .markdown-content ul {
-    @apply space-y-3;
+    @apply space-y-1;
     list-style: none;
   }
 
   .markdown-content ol {
-    @apply space-y-3 list-decimal ml-6;
+    @apply space-y-1 list-decimal ml-6;
   }
 
   .markdown-content li > ul,
@@ -330,7 +330,7 @@
   }
 
   .medical-text-formatted li {
-    @apply mb-2 leading-relaxed;
+    @apply mb-1 leading-normal;
   }
 
   /* Utility Classes */

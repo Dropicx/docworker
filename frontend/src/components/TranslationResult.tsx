@@ -99,16 +99,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
             h3: ({ children }) => <h3>{children}</h3>,
             p: ({ children }) => <p>{children}</p>,
             ul: ({ children }) => <ul>{children}</ul>,
-            li: ({ children }) => {
-              const text = String(children);
-              const isSubItem = text.includes('→');
-
-              if (isSubItem) {
-                return <li className="sub-item">{children}</li>;
-              }
-
-              return <li>{children}</li>;
-            },
+            li: ({ children }) => <li>{children}</li>,
             strong: ({ children }) => <strong>{children}</strong>,
           }}
         >
@@ -164,19 +155,32 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
 
     let cleaned = text;
 
-    // Remove opening code fence with optional language specifier
-    // Matches: ```markdown, ```md, ``` at the start
-    cleaned = cleaned.replace(/^```(?:markdown|md)?\s*\n?/i, '');
+    // Remove ALL code fences (``` or ```language) anywhere in the text
+    // Handles: ```markdown, ```md, ```text, ``` etc.
+    cleaned = cleaned.replace(/```[\w]*\s*\n?/g, '');
 
-    // Remove closing code fence at the end
-    cleaned = cleaned.replace(/\n?```\s*$/i, '');
+    // Remove any remaining standalone ``` lines
+    cleaned = cleaned.replace(/^```\s*$/gm, '');
+
+    // CRITICAL: Remove 4+ leading spaces from ALL lines to prevent code block rendering
+    // Markdown interprets 4+ leading spaces as code blocks
+    // Preserve up to 3 spaces for nested lists, remove the rest
+    cleaned = cleaned.replace(/^(\s{4,})/gm, (match) => {
+      // Keep max 2 spaces for nesting, remove excessive indentation
+      return '  ';
+    });
+
+    // Also handle tab characters which can trigger code blocks
+    cleaned = cleaned.replace(/^\t+/gm, '');
 
     // Fix doubled markdown headers: "## ## Header" -> "## Header"
-    // Matches patterns like "# # ", "## ## ", "### ### " etc.
     cleaned = cleaned.replace(/^(#{1,6})\s+\1\s+/gm, '$1 ');
 
-    // Fix tripled headers just in case: "## ## ## Header" -> "## Header"
+    // Fix tripled headers just in case
     cleaned = cleaned.replace(/^(#{1,6})\s+\1\s+\1\s+/gm, '$1 ');
+
+    // Convert <br> and <br/> tags to actual newlines
+    cleaned = cleaned.replace(/<br\s*\/?>/gi, '\n');
 
     return cleaned.trim();
   };
@@ -341,24 +345,12 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                       <p className="mb-2 text-gray-700 leading-relaxed">{children}</p>
                     ),
                     ul: ({ children }) => (
-                      <ul className="list-none pl-0 mb-3 space-y-0.5">{children}</ul>
+                      <ul className="list-none pl-0 mb-2 space-y-0">{children}</ul>
                     ),
-                    li: ({ children, ..._props }) => {
-                      // Prüfe die Tiefe der Liste anhand der Klasse oder anderen Props
-                      const text = String(children);
-                      const isSubItem = text.includes('→');
-
-                      if (isSubItem) {
-                        return (
-                          <li className="ml-6 pl-3 py-1 border-l-2 border-gray-300 bg-gray-50 text-gray-600 text-sm">
-                            {children}
-                          </li>
-                        );
-                      }
-
+                    li: ({ children }) => {
                       return (
-                        <li className="flex items-start text-gray-800">
-                          <span className="text-blue-500 mr-2 mt-0.5">•</span>
+                        <li className="flex items-start text-gray-800 leading-snug py-0.5">
+                          <span className="text-blue-500 mr-2 mt-0.5 flex-shrink-0">•</span>
                           <span>{children}</span>
                         </li>
                       );
@@ -401,7 +393,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                       </th>
                     ),
                     td: ({ children }) => (
-                      <td className="px-4 py-2 text-sm text-primary-600">{children}</td>
+                      <td className="px-4 py-2 text-sm text-primary-600 whitespace-pre-line">{children}</td>
                     ),
                   }}
                 >
