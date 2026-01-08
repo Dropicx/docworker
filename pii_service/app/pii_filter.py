@@ -16,6 +16,14 @@ from typing import Literal
 
 import spacy
 
+# Microsoft Presidio for enhanced PII detection
+try:
+    from presidio_analyzer import AnalyzerEngine
+    from presidio_analyzer.nlp_engine import NlpEngineProvider
+    PRESIDIO_AVAILABLE = True
+except ImportError:
+    PRESIDIO_AVAILABLE = False
+
 logger = logging.getLogger(__name__)
 
 
@@ -56,7 +64,10 @@ class PIIFilter:
         self._init_medical_terms()
         self._init_medical_eponyms()
 
-        logger.info(f"PII Filter initialized - DE: {self.german_model_loaded}, EN: {self.english_model_loaded}")
+        # Initialize Presidio for enhanced PII detection
+        self._init_presidio()
+
+        logger.info(f"PII Filter initialized - DE: {self.german_model_loaded}, EN: {self.english_model_loaded}, Presidio: {self.presidio_available}")
 
     def _init_patterns(self):
         """Initialize regex patterns for PII detection."""
@@ -605,6 +616,41 @@ class PIIFilter:
             "mcburney", "rovsing", "blumberg",
         }
 
+    def _init_presidio(self):
+        """Initialize Microsoft Presidio analyzer for enhanced PII detection."""
+        self.presidio_available = False
+        self.presidio_analyzer = None
+
+        if not PRESIDIO_AVAILABLE:
+            logger.info("Presidio not installed - running with SpaCy only")
+            return
+
+        try:
+            # Configure Presidio to use our SpaCy models
+            configuration = {
+                "nlp_engine_name": "spacy",
+                "models": [
+                    {"lang_code": "de", "model_name": "de_core_news_lg"},
+                    {"lang_code": "en", "model_name": "en_core_web_lg"}
+                ]
+            }
+
+            provider = NlpEngineProvider(nlp_configuration=configuration)
+            nlp_engine = provider.create_engine()
+
+            # Create analyzer with default recognizers
+            self.presidio_analyzer = AnalyzerEngine(
+                nlp_engine=nlp_engine,
+                supported_languages=["de", "en"]
+            )
+            self.presidio_available = True
+            logger.info("Presidio analyzer initialized successfully")
+
+        except Exception as e:
+            logger.warning(f"Presidio initialization failed (continuing with SpaCy only): {e}")
+            self.presidio_analyzer = None
+            self.presidio_available = False
+
     def _is_medical_eponym(self, name: str, context: str = "") -> bool:
         """Check if a name is a medical eponym (should be preserved)."""
         name_lower = name.lower()
@@ -884,6 +930,101 @@ class PIIFilter:
             "ner_available": True
         }
 
+    def _remove_pii_with_presidio(
+        self,
+        text: str,
+        language: str,
+        custom_terms: set | None = None
+    ) -> tuple[str, dict]:
+        """
+        Secondary PII detection pass using Microsoft Presidio.
+
+        Catches entities that SpaCy may have missed, including:
+        - Names in complex sentence structures
+        - IBAN codes
+        - Credit card numbers
+        - Additional phone/email formats
+        """
+        if not self.presidio_available or not self.presidio_analyzer:
+            return text, {"presidio_available": False, "presidio_removals": 0}
+
+        presidio_removals = 0
+
+        # All Presidio entity types for maximum coverage
+        entities_to_detect = [
+            "PERSON",           # Names
+            "LOCATION",         # Locations SpaCy may have missed
+            "IBAN_CODE",        # IBAN (not in our patterns)
+            "CREDIT_CARD",      # Credit cards (not in our patterns)
+            "PHONE_NUMBER",     # Additional phone formats
+            "EMAIL_ADDRESS",    # Additional email formats
+            "IP_ADDRESS",       # IP addresses
+            "URL",              # URLs
+            "DATE_TIME",        # Date/time formats
+            "NRP",              # Nationality/religious/political groups
+            "MEDICAL_LICENSE",  # Medical license numbers
+        ]
+
+        try:
+            # Run Presidio analysis
+            results = self.presidio_analyzer.analyze(
+                text=text,
+                language=language,
+                entities=entities_to_detect,
+                score_threshold=0.7  # Only high-confidence matches
+            )
+
+            # Sort by position (reverse) to preserve indices during replacement
+            results = sorted(results, key=lambda x: x.start, reverse=True)
+
+            for result in results:
+                entity_text = text[result.start:result.end]
+
+                # Skip if already a placeholder (contains brackets)
+                if "[" in entity_text or "]" in entity_text:
+                    continue
+
+                # Skip if preceded by bracket (part of existing placeholder)
+                if result.start > 0 and text[result.start - 1] == "[":
+                    continue
+
+                # Skip if it's a protected medical term
+                if self._is_medical_term(entity_text, custom_terms):
+                    continue
+
+                # Skip if it's a medical eponym
+                context = text[max(0, result.start - 50):min(len(text), result.end + 50)]
+                if self._is_medical_eponym(entity_text, context):
+                    continue
+
+                # Map Presidio entity types to our placeholders
+                placeholder_map = {
+                    "PERSON": "[NAME]",
+                    "LOCATION": "[LOCATION]",
+                    "IBAN_CODE": "[IBAN]",
+                    "CREDIT_CARD": "[CREDIT_CARD]",
+                    "PHONE_NUMBER": "[PHONE]",
+                    "EMAIL_ADDRESS": "[EMAIL]",
+                    "IP_ADDRESS": "[IP_ADDRESS]",
+                    "URL": "[URL]",
+                    "DATE_TIME": "[DATE]",
+                    "NRP": "[NRP]",
+                    "MEDICAL_LICENSE": "[MEDICAL_LICENSE]",
+                }
+
+                placeholder = placeholder_map.get(result.entity_type, "[PII]")
+                text = text[:result.start] + placeholder + text[result.end:]
+                presidio_removals += 1
+
+        except Exception as e:
+            logger.warning(f"Presidio analysis failed: {e}")
+            return text, {"presidio_available": True, "presidio_error": str(e), "presidio_removals": 0}
+
+        return text, {
+            "presidio_available": True,
+            "presidio_removals": presidio_removals
+        }
+
     def remove_pii(
         self,
         text: str,
@@ -926,6 +1067,10 @@ class PIIFilter:
         text, ner_meta = self._remove_names_with_ner(text, language, custom_terms)
         metadata.update(ner_meta)
 
+        # Step 3: Secondary pass with Presidio (catches missed PII)
+        text, presidio_meta = self._remove_pii_with_presidio(text, language, custom_terms)
+        metadata.update(presidio_meta)
+
         # Calculate totals (all PII entities removed)
         metadata["entities_detected"] = (
             metadata.get("pattern_removals", 0) +
@@ -933,7 +1078,8 @@ class PIIFilter:
             metadata.get("ner_locations_removed", 0) +
             metadata.get("ner_orgs_removed", 0) +
             metadata.get("ner_dates_removed", 0) +
-            metadata.get("ner_times_removed", 0)
+            metadata.get("ner_times_removed", 0) +
+            metadata.get("presidio_removals", 0)
         )
         metadata["cleaned_length"] = len(text)
 

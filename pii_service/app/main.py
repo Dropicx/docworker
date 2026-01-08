@@ -90,6 +90,7 @@ class HealthResponse(BaseModel):
     spacy_available: bool
     german_model_loaded: bool
     english_model_loaded: bool
+    presidio_available: bool = False
     memory_usage_mb: float
 
 
@@ -228,6 +229,7 @@ async def health():
             spacy_available=False,
             german_model_loaded=False,
             english_model_loaded=False,
+            presidio_available=False,
             memory_usage_mb=memory_mb
         )
 
@@ -246,6 +248,7 @@ async def health():
         spacy_available=True,
         german_model_loaded=pii_filter.german_model_loaded,
         english_model_loaded=pii_filter.english_model_loaded,
+        presidio_available=pii_filter.presidio_available,
         memory_usage_mb=memory_mb
     )
 
