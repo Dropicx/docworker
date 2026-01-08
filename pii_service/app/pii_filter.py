@@ -224,10 +224,11 @@ class PIIFilter:
             ),
 
             # Insurance numbers after known insurance company names
+            # \b word boundary prevents matching "TK" inside "Kreditkarte"
             "insurance_company": re.compile(
-                r"(?:AOK|TK|Barmer|DAK|BKK|IKK|KKH|HEK|hkk|Techniker|"
+                r"\b(?:AOK|TK|Barmer|DAK|BKK|IKK|KKH|HEK|hkk|Techniker|"
                 r"KNAPPSCHAFT|Viactiv|Mobil\s*Oil|SBK|mhplus|Novitas|"
-                r"Pronova|Big\s*direkt|Audi\s*BKK|BMW\s*BKK|Bosch\s*BKK)"
+                r"Pronova|Big\s*direkt|Audi\s*BKK|BMW\s*BKK|Bosch\s*BKK)\b"
                 r"[^,\n]{0,40}?(?:Nr\.?|Nummer|Versicherten)?[:\s]*"
                 r"(\d{9,12})",
                 re.IGNORECASE
