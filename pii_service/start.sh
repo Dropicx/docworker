@@ -51,7 +51,9 @@ fi
 echo "=== All models ready, starting service ==="
 
 # Start the FastAPI application
-# HOST_BIND: Use "::" for IPv6 (Railway internal networking) or "0.0.0.0" for IPv4 (Hetzner load balancers)
-HOST_BIND="${HOST_BIND:-0.0.0.0}"
-echo "Starting uvicorn on host: $HOST_BIND port: ${PORT:-9125}"
-exec python -m uvicorn app.main:app --host "$HOST_BIND" --port "${PORT:-9125}" --workers 1
+# Use 0.0.0.0 for IPv4 - Railway's proxy handles external routing
+# For IPv6 internal networking, Railway maps IPv4 to IPv6 automatically
+PORT="${PORT:-9125}"
+
+echo "Starting uvicorn on 0.0.0.0:$PORT (IPv4, Railway handles IPv6 routing)"
+exec python -m uvicorn app.main:app --host "0.0.0.0" --port "$PORT" --workers 1
