@@ -63,6 +63,85 @@ class PIIFilter:
 
         # German patterns
         self.patterns_de = {
+            # =============================================================
+            # NAME PATTERNS (NEW - Critical for GDPR compliance)
+            # =============================================================
+
+            # German doctor/professional titles with names
+            # Matches: "Dr. med. Schmidt", "Prof. Dr. Weber", "OA Müller"
+            # Uses word boundary to avoid matching partial words like "[ADDRESS]"
+            "doctor_title_name": re.compile(
+                r"\b(?:Dr\.?\s*(?:med\.?|rer\.?\s*nat\.?|phil\.?|jur\.?|h\.?\s*c\.?)?[\s\.]*|"
+                r"Prof\.?\s*(?:Dr\.?\s*(?:med\.?|h\.?\s*c\.?)?[\s\.]*)?|"
+                r"Dipl\.?[\s\-]?(?:Med\.?|Ing\.?|Psych\.?)\s*|"
+                r"OA\s+|Oberarzt\s+|Oberärztin\s+|"
+                r"CA\s+|Chefarzt\s+|Chefärztin\s+|"
+                r"FA\s+|Facharzt\s+|Fachärztin\s+)"
+                r"([A-ZÄÖÜ][a-zäöüß]+(?:[\s\-][A-ZÄÖÜ][a-zäöüß]+)?)\b",
+                re.IGNORECASE
+            ),
+
+            # German honorifics with names (Herr Müller, Frau Schmidt)
+            # Captures only capitalized names after honorific
+            # NO IGNORECASE to preserve name capitalization requirement
+            "honorific_name": re.compile(
+                r"\b(?:[Hh]err|[Ff]rau|[Ff]räulein|[Hh]r\.?|[Ff]r\.?)\s+"
+                r"([A-ZÄÖÜ][a-zäöüß]+)"  # Surname must start with capital
+                r"(?:[\s\-]([A-ZÄÖÜ][a-zäöüß]+))?"  # Optional second name part
+            ),
+
+            # Patient name in "Nachname, Vorname" format
+            "name_comma_format": re.compile(
+                r"(?:Patient(?:in)?|Name|Versicherte[rn]?)[:\s]*"
+                r"([A-ZÄÖÜ][a-zäöüß]+)\s*,\s*([A-ZÄÖÜ][a-zäöüß]+)",
+                re.IGNORECASE
+            ),
+
+            # Standalone German names after labels
+            "labeled_name": re.compile(
+                r"(?:Patient(?:in)?|Versicherte[rn]?|"
+                r"Auftraggeber|Einsender|Ansprechpartner|"
+                r"Empfänger|Absender)[:\s]+"
+                r"([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)",
+                re.IGNORECASE
+            ),
+
+            # =============================================================
+            # DATE PATTERNS (NEW - German month names)
+            # =============================================================
+
+            # German dates with month names (15. März 2024)
+            "date_german_month": re.compile(
+                r"\b(\d{1,2})\.\s*"
+                r"(Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)"
+                r"\s+(\d{4})\b",
+                re.IGNORECASE
+            ),
+
+            # =============================================================
+            # REFERENCE PATTERNS (NEW - Case numbers, document references)
+            # =============================================================
+
+            # Case/file reference numbers (DS/2024/0815, Fall-Nr. 12345)
+            "case_reference": re.compile(
+                r"(?:DS|Dossier|Fall|Akte|Az\.?|Aktenzeichen|"
+                r"Vorgangs?(?:nummer|nr\.?)?|Geschäftszeichen)[\s/\-:]*"
+                r"(?:Nr\.?[\s/\-:]*)?"
+                r"([A-Z]{0,3}\d{2,4}[\s/\-]\d{3,6})",
+                re.IGNORECASE
+            ),
+
+            # Hospital-specific reference format (Unser Zeichen: XX/YYYY/NNNN)
+            "document_reference": re.compile(
+                r"(?:Unser\s+Zeichen|Ihr\s+Zeichen|Zeichen|Ref\.?)[:\s]*"
+                r"([A-Z]{1,3}[\s/\-]?\d{2,4}[\s/\-]?\d{2,6})",
+                re.IGNORECASE
+            ),
+
+            # =============================================================
+            # EXISTING PATTERNS (Enhanced)
+            # =============================================================
+
             # Dates (German format: DD.MM.YYYY)
             "birthdate": re.compile(
                 r"(?:geb(?:oren|\.)?|geboren am|geburtsdatum|geb\.-datum|"
@@ -113,11 +192,26 @@ class PIIFilter:
                 re.IGNORECASE
             ),
 
-            # Insurance numbers
+            # Insurance numbers - expanded patterns
+            # Handles: Versichertennummer, Versicherten-Nr., Vers.-Nr., VN, KK-Nr., etc.
             "insurance": re.compile(
-                r"(?:versichert(?:en)?(?:nummer|nr\.?)?|"
-                r"krankenkasse(?:nnummer)?|kk[- ]?nr\.?)\s*[:.]?\s*"
-                r"([A-Z]?\d{9,12})",
+                r"(?:Versichert(?:en)?[\-\s]?(?:nummer|nr\.?)?|"
+                r"Vers\.?[\s\-]?Nr\.?|VN|"
+                r"Krankenkasse(?:n)?[\-\s]?(?:nummer|nr\.?)?|"
+                r"KK[\s\-]?(?:Nr\.?)?|"
+                r"Mitglieds?[\-\s]?(?:nummer|nr\.?)?|"
+                r"Kassen[\-\s]?(?:nummer|nr\.?))[:\s\-]*"
+                r"([A-Z]?\d{8,12})",
+                re.IGNORECASE
+            ),
+
+            # Insurance numbers after known insurance company names
+            "insurance_company": re.compile(
+                r"(?:AOK|TK|Barmer|DAK|BKK|IKK|KKH|HEK|hkk|Techniker|"
+                r"KNAPPSCHAFT|Viactiv|Mobil\s*Oil|SBK|mhplus|Novitas|"
+                r"Pronova|Big\s*direkt|Audi\s*BKK|BMW\s*BKK|Bosch\s*BKK)"
+                r"[^,\n]{0,40}?(?:Nr\.?|Nummer|Versicherten)?[:\s]*"
+                r"(\d{9,12})",
                 re.IGNORECASE
             ),
 
@@ -133,10 +227,76 @@ class PIIFilter:
             "date_standalone": re.compile(
                 r"\b(\d{1,2}\.\d{1,2}\.\d{4})\b"
             ),
+
+            # =============================================================
+            # EMAIL/DOMAIN PATTERNS (NEW)
+            # =============================================================
+
+            # Email domains containing names (dr-schmidt.de, mueller-praxis.de)
+            "named_email_domain": re.compile(
+                r"(?:www\.)?(?:dr[\.\-]|prof[\.\-])?"
+                r"[a-zäöüß]+(?:[\.\-][a-zäöüß]+)*"
+                r"(?:[\.\-](?:praxis|klinik|med|arzt|medizin|zahnarzt|ortho))?"
+                r"\.(?:de|at|ch)\b",
+                re.IGNORECASE
+            ),
+
+            # Full email addresses (enhanced)
+            "email_full": re.compile(
+                r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b",
+                re.IGNORECASE
+            ),
         }
 
         # English patterns
         self.patterns_en = {
+            # =============================================================
+            # NAME PATTERNS (NEW - Critical for GDPR compliance)
+            # =============================================================
+
+            # English doctor/professional titles with names
+            # Matches: "Dr. Smith", "Prof. Johnson", "Dr. Mary Williams"
+            "doctor_title_name": re.compile(
+                r"(?:Dr\.?|Prof\.?|Professor|"
+                r"MD|M\.D\.|"
+                r"PhD|Ph\.D\.|"
+                r"RN|NP|PA|"
+                r"Attending|Resident)\s+"
+                r"([A-Z][a-z]+(?:[\s\-][A-Z][a-z]+)*)",
+                re.IGNORECASE
+            ),
+
+            # English honorifics with names (Mr. Smith, Mrs. Johnson)
+            "honorific_name": re.compile(
+                r"(?:Mr\.?|Mrs\.?|Ms\.?|Miss|Sir|Madam|Dame)\s+"
+                r"([A-Z][a-z]+(?:[\s\-][A-Z][a-z]+)*)",
+                re.IGNORECASE
+            ),
+
+            # English patient name labels
+            "labeled_name": re.compile(
+                r"(?:Patient|Name|First\s*Name|Last\s*Name|Surname|"
+                r"Insured|Policyholder|Client|Customer)[:\s]+"
+                r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)",
+                re.IGNORECASE
+            ),
+
+            # =============================================================
+            # DATE PATTERNS (NEW - English month names)
+            # =============================================================
+
+            # English dates with month names (March 15, 2024 or 15 March 2024)
+            "date_english_month": re.compile(
+                r"\b(?:(\d{1,2})\s+)?"
+                r"(January|February|March|April|May|June|July|August|September|October|November|December)"
+                r"(?:\s+(\d{1,2}))?,?\s+(\d{4})\b",
+                re.IGNORECASE
+            ),
+
+            # =============================================================
+            # EXISTING PATTERNS (Enhanced)
+            # =============================================================
+
             # Dates (various formats)
             "birthdate": re.compile(
                 r"(?:born|dob|date of birth|birth(?:date)?)\s*[:.]?\s*"
@@ -162,6 +322,12 @@ class PIIFilter:
             "email": re.compile(
                 r"(?:e[- ]?mail|mail)\s*[:.]?\s*"
                 r"([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})",
+                re.IGNORECASE
+            ),
+
+            # Full email addresses (standalone)
+            "email_full": re.compile(
+                r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b",
                 re.IGNORECASE
             ),
 
@@ -430,19 +596,84 @@ class PIIFilter:
             return True
         return False
 
+    def _get_placeholder(self, pii_type: str) -> str:
+        """Get the appropriate placeholder for each PII type."""
+        # Mapping of pattern names to context-aware placeholders
+        placeholder_map = {
+            # Name patterns
+            "doctor_title_name": "[DOCTOR_NAME]",
+            "honorific_name": "[NAME]",
+            "name_comma_format": "[PATIENT_NAME]",
+            "labeled_name": "[PATIENT_NAME]",
+
+            # Date patterns
+            "birthdate": "[BIRTHDATE]",
+            "date_standalone": "[DATE]",
+            "date_german_month": "[DATE]",
+            "date_english_month": "[DATE]",
+
+            # Reference patterns
+            "case_reference": "[REFERENCE_ID]",
+            "document_reference": "[REFERENCE_ID]",
+            "patient_id": "[PATIENT_ID]",
+
+            # Insurance patterns
+            "insurance": "[INSURANCE_ID]",
+            "insurance_company": "[INSURANCE_ID]",
+
+            # Contact patterns
+            "phone": "[PHONE]",
+            "email": "[EMAIL]",
+            "email_full": "[EMAIL]",
+            "named_email_domain": "[EMAIL_DOMAIN]",
+
+            # Address patterns
+            "address": "[ADDRESS]",
+            "plz_city": "[PLZ_CITY]",
+            "zipcode": "[ZIPCODE]",
+
+            # ID patterns
+            "tax_id": "[TAX_ID]",
+            "social_security": "[SOCIAL_SECURITY]",
+            "ssn": "[SSN]",
+        }
+        return placeholder_map.get(pii_type, f"[{pii_type.upper()}]")
+
     def _remove_pii_with_patterns(self, text: str, language: str) -> tuple[str, dict]:
         """Remove PII using regex patterns."""
         patterns = self.patterns_de if language == "de" else self.patterns_en
         removed_count = 0
         pii_types = []
 
+        # Process patterns in a specific order: names first, then others
+        # This ensures titles like "Dr. med." are processed before generic patterns
+        priority_order = [
+            "doctor_title_name",  # Must be first to catch "Dr. med. Schmidt"
+            "honorific_name",     # Then "Herr Müller", "Frau Schmidt"
+            "name_comma_format",  # Then "Müller, Anna"
+            "labeled_name",       # Then "Patient: Schmidt"
+        ]
+
+        # Process priority patterns first
+        for pii_type in priority_order:
+            if pii_type in patterns:
+                pattern = patterns[pii_type]
+                matches = pattern.findall(text)
+                if matches:
+                    removed_count += len(matches)
+                    pii_types.append(pii_type)
+                    placeholder = self._get_placeholder(pii_type)
+                    text = pattern.sub(placeholder, text)
+
+        # Process remaining patterns
         for pii_type, pattern in patterns.items():
+            if pii_type in priority_order:
+                continue  # Already processed
             matches = pattern.findall(text)
             if matches:
                 removed_count += len(matches)
                 pii_types.append(pii_type)
-                # Replace with placeholder
-                placeholder = f"[{pii_type.upper()}]"
+                placeholder = self._get_placeholder(pii_type)
                 text = pattern.sub(placeholder, text)
 
         return text, {"pattern_removals": removed_count, "pii_types": pii_types}
