@@ -51,5 +51,7 @@ fi
 echo "=== All models ready, starting service ==="
 
 # Start the FastAPI application
-# Use :: to listen on all interfaces (IPv4 + IPv6) for Railway internal networking
-exec python -m uvicorn app.main:app --host :: --port "${PORT:-9125}" --workers 1
+# HOST_BIND: Use "::" for IPv6 (Railway internal networking) or "0.0.0.0" for IPv4 (Hetzner load balancers)
+HOST_BIND="${HOST_BIND:-0.0.0.0}"
+echo "Starting uvicorn on host: $HOST_BIND port: ${PORT:-9125}"
+exec python -m uvicorn app.main:app --host "$HOST_BIND" --port "${PORT:-9125}" --workers 1
