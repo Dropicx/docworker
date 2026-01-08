@@ -106,6 +106,24 @@ async def lifespan(app: FastAPI):
     logger.info("=" * 60)
     logger.info("SpaCy PII Service Starting...")
     logger.info("=" * 60)
+
+    # Log environment for debugging model loading issues
+    import sys
+    spacy_data_dir = os.environ.get("SPACY_DATA_DIR", "/data/models")
+    logger.info(f"SPACY_DATA_DIR: {spacy_data_dir}")
+    logger.info(f"PYTHONPATH: {os.environ.get('PYTHONPATH', '(not set)')}")
+    logger.info(f"sys.path includes SPACY_DATA_DIR: {spacy_data_dir in sys.path}")
+
+    # Check volume mount
+    if os.path.isdir(spacy_data_dir):
+        try:
+            contents = os.listdir(spacy_data_dir)
+            logger.info(f"Volume mount exists. Contents ({len(contents)} items): {contents}")
+        except Exception as e:
+            logger.warning(f"Could not list volume contents: {e}")
+    else:
+        logger.warning(f"Volume mount NOT found at {spacy_data_dir}")
+
     logger.info("Loading language models (this may take 60-90 seconds)...")
 
     try:

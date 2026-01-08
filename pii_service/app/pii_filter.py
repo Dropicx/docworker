@@ -53,13 +53,42 @@ class PIIFilter:
         """Load SpaCy model from volume path or site-packages."""
         # Try volume path first (models installed with pip --target)
         volume_path = os.path.join(self.MODELS_DIR, model_name.replace("-", "_"))
+        logger.info(f"Checking for model at volume path: {volume_path}")
+
         if os.path.isdir(volume_path):
-            try:
-                return spacy.load(volume_path)
-            except Exception as e:
-                logger.debug(f"Failed to load from volume {volume_path}: {e}")
+            # Check if config.cfg exists (required for valid SpaCy model)
+            config_path = os.path.join(volume_path, "config.cfg")
+            if os.path.isfile(config_path):
+                try:
+                    logger.info(f"Loading {model_name} from volume path: {volume_path}")
+                    return spacy.load(volume_path)
+                except Exception as e:
+                    logger.warning(f"Failed to load from volume {volume_path}: {e}")
+            else:
+                logger.warning(f"Volume path exists but no config.cfg found: {volume_path}")
+                # List contents for debugging
+                try:
+                    contents = os.listdir(volume_path)
+                    logger.info(f"Contents of {volume_path}: {contents[:10]}...")  # First 10 items
+                except Exception as e:
+                    logger.warning(f"Could not list {volume_path}: {e}")
+        else:
+            logger.info(f"Volume path does not exist: {volume_path}")
+
+        # Try importing as a Python package (works if PYTHONPATH includes MODELS_DIR)
+        try:
+            import importlib
+            model_module = importlib.import_module(model_name)
+            model_path = os.path.dirname(model_module.__file__)
+            logger.info(f"Found {model_name} via Python import at: {model_path}")
+            return spacy.load(model_path)
+        except ImportError:
+            logger.info(f"{model_name} not importable as Python module")
+        except Exception as e:
+            logger.warning(f"Failed to load {model_name} via Python import: {e}")
 
         # Fallback to standard spacy.load (site-packages)
+        logger.info(f"Falling back to spacy.load('{model_name}')")
         return spacy.load(model_name)
 
     def __init__(self):
