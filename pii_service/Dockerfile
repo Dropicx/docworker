@@ -41,6 +41,13 @@ RUN chmod +x start.sh
 # Create data directory for volume mount
 RUN mkdir -p /data/models
 
+# Create non-root user for security (fixed UID 1000 for volume permissions)
+RUN groupadd -g 1000 piiuser && useradd -u 1000 -g piiuser piiuser \
+    && chown -R piiuser:piiuser /app /data
+
+# Switch to non-root user
+USER piiuser
+
 # Expose port
 EXPOSE 9125
 

@@ -269,9 +269,10 @@ write_files:
     permissions: '0755'
 
   # Logrotate for audit logs (90-day retention)
+  # Note: Container writes to /var/log/pii-audit.log which maps to host /var/log/pii/pii-audit.log
   - path: /etc/logrotate.d/pii-audit
     content: |
-      /var/log/pii-audit.log {
+      /var/log/pii/pii-audit.log {
         daily
         rotate 90
         compress
@@ -312,9 +313,11 @@ write_files:
             - .env
           environment:
             - PYTHONUNBUFFERED=1
+            - SPACY_DATA_DIR=/data/models
+            - HOST_BIND=0.0.0.0
           volumes:
-            - spacy_models:/app/models
-            - /var/log:/var/log
+            - spacy_models:/data/models
+            - /var/log/pii:/var/log
           tmpfs:
             - /tmp:size=512M,mode=1777
           restart: unless-stopped
@@ -342,6 +345,10 @@ runcmd:
   # Docker setup
   - systemctl enable docker
   - systemctl start docker
+  # Create log directory for container bind mount (UID 1000 matches container piiuser)
+  - mkdir -p /var/log/pii
+  - chown 1000:1000 /var/log/pii
+  - chmod 755 /var/log/pii
   # Secure file ownership
   - chown -R root:root /opt/pii
   - chmod 755 /opt/pii/deploy.sh
@@ -357,7 +364,7 @@ runcmd:
   # Watchdog cron - check health every 5 minutes
   - echo '*/5 * * * * /opt/pii/watchdog.sh' | crontab -
   # Auto-cleanup cron - delete audit logs older than 90 days (belt + suspenders with logrotate)
-  - (crontab -l 2>/dev/null; echo "0 3 * * * find /var/log -name 'pii-audit*.log*' -mtime +90 -delete") | crontab -
+  - (crontab -l 2>/dev/null; echo "0 3 * * * find /var/log/pii -name 'pii-audit*.log*' -mtime +90 -delete") | crontab -
   # Wait for Docker, then deploy and start systemd service
   - |
     until docker info >/dev/null 2>&1; do
