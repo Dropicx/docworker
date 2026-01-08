@@ -10,6 +10,7 @@ GDPR-compliant PII removal with:
 """
 
 import logging
+import os
 import re
 from datetime import datetime
 from typing import Literal
@@ -45,6 +46,22 @@ class PIIFilter:
     Removes names, addresses, birthdates, IDs while preserving medical content.
     """
 
+    # Volume path for persisted models (Railway volume mount)
+    MODELS_DIR = os.environ.get("SPACY_DATA_DIR", "/data/models")
+
+    def _load_spacy_model(self, model_name: str):
+        """Load SpaCy model from volume path or site-packages."""
+        # Try volume path first (models installed with pip --target)
+        volume_path = os.path.join(self.MODELS_DIR, model_name.replace("-", "_"))
+        if os.path.isdir(volume_path):
+            try:
+                return spacy.load(volume_path)
+            except Exception as e:
+                logger.debug(f"Failed to load from volume {volume_path}: {e}")
+
+        # Fallback to standard spacy.load (site-packages)
+        return spacy.load(model_name)
+
     def __init__(self):
         """Initialize filter with German and English SpaCy models."""
         logger.info("Initializing PII Filter with large SpaCy models...")
@@ -53,7 +70,7 @@ class PIIFilter:
         self.german_model_loaded = False
         self.nlp_de = None
         try:
-            self.nlp_de = spacy.load("de_core_news_lg")
+            self.nlp_de = self._load_spacy_model("de_core_news_lg")
             self.german_model_loaded = True
             logger.info("German model (de_core_news_lg) loaded successfully")
         except OSError as e:
@@ -63,7 +80,7 @@ class PIIFilter:
         self.english_model_loaded = False
         self.nlp_en = None
         try:
-            self.nlp_en = spacy.load("en_core_web_lg")
+            self.nlp_en = self._load_spacy_model("en_core_web_lg")
             self.english_model_loaded = True
             logger.info("English model (en_core_web_lg) loaded successfully")
         except OSError as e:
