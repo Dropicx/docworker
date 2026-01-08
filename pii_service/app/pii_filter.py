@@ -438,6 +438,37 @@ class PIIFilter:
             # ==================== UNITS & ABBREVIATIONS ====================
             "mg", "ml", "kg", "cm", "mm", "mmhg", "mmol", "µg", "ng", "dl", "l",
             "bid", "tid", "qid", "prn", "po", "iv", "im", "sc", "od", "os", "ou",
+
+            # ==================== MEDICAL ABBREVIATIONS (commonly misclassified) ====================
+            # These are frequently misclassified by SpaCy as ORG/LOC/PER
+            "bmi", "egfr", "gfr", "lvef", "ef", "la", "lv", "rv", "ra",  # Cardiac
+            "nyha", "asa", "ccs", "kps", "ecog",  # Classification scores
+            "hf", "af", "vhf", "sr", "avb", "lbbb", "rbbb",  # Rhythm/ECG
+            "copd", "ards", "osa", "osas",  # Pulmonary
+            "aki", "ckd", "esrd", "gn",  # Renal
+            "dm", "hba1c", "ogtt", "nüchtern",  # Diabetes
+            "khe", "khk", "pavk", "tia", "cva",  # Vascular
+            "op", "re", "li", "bds", "ca", "chemo", "rtx",  # General abbreviations
+            "z.n.", "v.a.", "dd", "st.p.", "ed", "j.",  # German medical abbreviations
+            "sinusrhythmus", "normofrequent", "rhythmisch",  # ECG findings
+            "unauffällig", "regelrecht", "altersentsprechend",  # Normal findings
+            "reduziert", "erhöht", "erniedrigt", "pathologisch",  # Finding descriptors
+            "druckdolent", "druckschmerzhaft", "palpabel", "tastbar",  # Examination terms
+            "auskultation", "perkussion", "inspektion", "palpation",  # Exam methods
+            "systolisch", "diastolisch", "endsystolisch", "enddiastolisch",  # Cardiac timing
+            "linksventrikulär", "rechtsventrikulär", "biventrikulär",  # Cardiac chambers
+            "anterolateral", "posterolateral", "inferolateral",  # Anatomical directions
+            "simpson", "biplan", "monoplan",  # Echo methods
+
+            # ==================== GERMAN CLINICAL DESCRIPTORS ====================
+            "beschwerdefrei", "symptomfrei", "fieberfrei", "schmerzfrei",
+            "dyspnoe", "orthopnoe", "belastungsdyspnoe", "ruhedyspnoe",
+            "retrosternal", "präkordial", "epigastrisch", "periumbilikal",
+            "druckgefühl", "druckgefühle", "engegefühl", "beklemmung",
+            "ausstrahlung", "ausstrahlen", "ausstrahlend",
+            "sistieren", "sistierend", "intermittierend", "persistierend",
+            "progredient", "regredient", "stabil", "stationär",
+            "akut", "subakut", "chronisch", "rezidivierend",
         }
 
         # ==================== DRUG DATABASE (226 medications) ====================
@@ -782,6 +813,12 @@ class PIIFilter:
                 if ent_lower in preserved_locations:
                     continue
 
+                # Skip if it's a medical term (SpaCy often misclassifies medical abbreviations as LOC)
+                if self._is_medical_term(ent.text, custom_terms):
+                    if custom_terms and ent_lower in custom_terms:
+                        custom_terms_preserved += 1
+                    continue
+
                 # Replace location with placeholder
                 text = text[:ent.start_char] + "[LOCATION]" + text[ent.end_char:]
                 locations_removed += 1
@@ -792,8 +829,10 @@ class PIIFilter:
                 if ent_lower in preserved_orgs:
                     continue
 
-                # Skip if it's a known medical term (e.g., department names)
+                # Skip if it's a known medical term (SpaCy often misclassifies abbreviations as ORG)
                 if self._is_medical_term(ent.text, custom_terms):
+                    if custom_terms and ent_lower in custom_terms:
+                        custom_terms_preserved += 1
                     continue
 
                 # Replace organization with placeholder
