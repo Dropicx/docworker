@@ -69,11 +69,12 @@ class PIIFilter:
 
             # German doctor/professional titles with names
             # Matches: "Dr. med. Schmidt", "Prof. Dr. Weber", "OA Müller"
-            # Uses word boundary to avoid matching partial words like "[ADDRESS]"
+            # IMPORTANT: Requires period or space after abbreviations to avoid matching
+            # words like "Druckgefühle" (starts with "Dr") or "Professor" as separate
             "doctor_title_name": re.compile(
-                r"\b(?:Dr\.?\s*(?:med\.?|rer\.?\s*nat\.?|phil\.?|jur\.?|h\.?\s*c\.?)?[\s\.]*|"
-                r"Prof\.?\s*(?:Dr\.?\s*(?:med\.?|h\.?\s*c\.?)?[\s\.]*)?|"
-                r"Dipl\.?[\s\-]?(?:Med\.?|Ing\.?|Psych\.?)\s*|"
+                r"\b(?:Dr\.[\s]*(?:med\.?|rer\.?\s*nat\.?|phil\.?|jur\.?|h\.?\s*c\.?)?[\s\.]*|"
+                r"Prof\.[\s]*(?:Dr\.[\s]*(?:med\.?|h\.?\s*c\.?)?[\s\.]*)?|"
+                r"Dipl\.[\s\-]?(?:Med\.?|Ing\.?|Psych\.?)\s*|"
                 r"OA\s+|Oberarzt\s+|Oberärztin\s+|"
                 r"CA\s+|Chefarzt\s+|Chefärztin\s+|"
                 r"FA\s+|Facharzt\s+|Fachärztin\s+)"
@@ -98,10 +99,11 @@ class PIIFilter:
             ),
 
             # Standalone German names after labels
+            # IMPORTANT: Requires colon separator to avoid matching "Patient hat" etc.
             "labeled_name": re.compile(
                 r"(?:Patient(?:in)?|Versicherte[rn]?|"
                 r"Auftraggeber|Einsender|Ansprechpartner|"
-                r"Empfänger|Absender)[:\s]+"
+                r"Empfänger|Absender):\s*"
                 r"([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)",
                 re.IGNORECASE
             ),
@@ -282,9 +284,10 @@ class PIIFilter:
             ),
 
             # English patient name labels
+            # IMPORTANT: Requires colon separator to avoid false matches
             "labeled_name": re.compile(
                 r"(?:Patient|Name|First\s*Name|Last\s*Name|Surname|"
-                r"Insured|Policyholder|Client|Customer)[:\s]+"
+                r"Insured|Policyholder|Client|Customer):\s*"
                 r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)",
                 re.IGNORECASE
             ),

@@ -1,5 +1,6 @@
 # =============================================================================
 # SpaCy PII Service Dockerfile (Volume-based Model Storage)
+# Build: 2025-01-08-v2 - Medical term protection for LOCATION entities
 # =============================================================================
 # Models are downloaded on first run and stored in a persistent volume.
 # This allows fast cold starts when the service wakes from sleep mode.
