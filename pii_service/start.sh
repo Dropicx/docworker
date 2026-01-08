@@ -28,12 +28,15 @@ export PYTHONPATH="$MODELS_DIR:$PYTHONPATH"
 # Function to check if model exists in volume
 model_exists_in_volume() {
     local model=$1
-    # Check if the model directory exists in our volume
-    if [ -d "$MODELS_DIR/${model//-/_}" ]; then
-        # Verify it's loadable
-        python -c "import sys; sys.path.insert(0, '$MODELS_DIR'); import spacy; spacy.load('$MODELS_DIR/${model//-/_}')" 2>/dev/null
-        return $?
+    local model_dir="$MODELS_DIR/$model"
+
+    # Check if the model directory exists and has content
+    if [ -d "$model_dir" ] && [ -f "$model_dir/config.cfg" ]; then
+        echo "Found $model in volume at $model_dir"
+        return 0
     fi
+
+    echo "Model $model not found in volume (checked $model_dir)"
     return 1
 }
 
