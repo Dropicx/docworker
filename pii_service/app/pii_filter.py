@@ -20,6 +20,7 @@ import spacy
 try:
     from presidio_analyzer import AnalyzerEngine
     from presidio_analyzer.nlp_engine import NlpEngineProvider
+    from presidio_analyzer.predefined_recognizers import CreditCardRecognizer
     PRESIDIO_AVAILABLE = True
 except ImportError:
     PRESIDIO_AVAILABLE = False
@@ -644,8 +645,22 @@ class PIIFilter:
                 nlp_engine=nlp_engine,
                 supported_languages=["de", "en"]
             )
+
+            # Add CreditCardRecognizer for German and English
+            # (By default it only supports es, it, pl)
+            credit_card_recognizer_de = CreditCardRecognizer(
+                supported_language="de",
+                context=["kreditkarte", "kartennummer", "kreditkartennummer", "credit card"]
+            )
+            credit_card_recognizer_en = CreditCardRecognizer(
+                supported_language="en",
+                context=["credit card", "card number", "credit card number", "kreditkarte"]
+            )
+            self.presidio_analyzer.registry.add_recognizer(credit_card_recognizer_de)
+            self.presidio_analyzer.registry.add_recognizer(credit_card_recognizer_en)
+
             self.presidio_available = True
-            logger.info("Presidio analyzer initialized successfully")
+            logger.info("Presidio analyzer initialized successfully (with CreditCard for de/en)")
 
         except Exception as e:
             logger.warning(f"Presidio initialization failed (continuing with SpaCy only): {e}")
