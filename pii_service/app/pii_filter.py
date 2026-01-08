@@ -20,7 +20,7 @@ import spacy
 # Microsoft Presidio for enhanced PII detection
 try:
     from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
-    from presidio_analyzer.nlp_engine import NlpEngineProvider
+    from presidio_analyzer.nlp_engine import NlpEngineProvider, NerModelConfiguration
     from presidio_analyzer.predefined_recognizers import (
         CreditCardRecognizer,
         IbanRecognizer,
@@ -677,20 +677,22 @@ class PIIFilter:
             return
 
         try:
-            # NER model configuration as dict (required format for NlpEngineProvider)
-            ner_config_dict = {
+            # Create NER model configuration to map SpaCy entities to Presidio types
+            # and ignore irrelevant entity types (like MISC)
+            ner_config = NerModelConfiguration(
                 # Map SpaCy entity labels to Presidio entity types
-                "model_to_presidio_entity_mapping": {
+                model_to_presidio_entity_mapping={
                     "PER": "PERSON",      # German SpaCy uses PER for persons
                     "PERSON": "PERSON",   # English SpaCy uses PERSON
                     "LOC": "LOCATION",    # German SpaCy uses LOC
                     "GPE": "LOCATION",    # English SpaCy uses GPE for geopolitical entities
                     "ORG": "ORGANIZATION",
+                    "FAC": "LOCATION",    # Facilities (English)
                     "DATE": "DATE_TIME",
                     "TIME": "DATE_TIME",
                 },
                 # Ignore these SpaCy labels (not useful for PII detection)
-                "labels_to_ignore": [
+                labels_to_ignore=[
                     "MISC",       # Miscellaneous - too broad, causes warnings
                     "CARDINAL",   # Numbers
                     "ORDINAL",    # Ordinal numbers
@@ -705,23 +707,15 @@ class PIIFilter:
                     "NORP",       # Nationalities, religious, political groups
                 ],
                 # Entities that should have lower confidence scores
-                "low_score_entity_names": ["ORGANIZATION", "DATE_TIME"]
-            }
+                low_score_entity_names=["ORGANIZATION", "DATE_TIME"],
+            )
 
-            # Configure Presidio to use our SpaCy models with proper NER config
+            # Configure Presidio to use our SpaCy models
             configuration = {
                 "nlp_engine_name": "spacy",
                 "models": [
-                    {
-                        "lang_code": "de",
-                        "model_name": "de_core_news_lg",
-                        "ner_model_configuration": ner_config_dict
-                    },
-                    {
-                        "lang_code": "en",
-                        "model_name": "en_core_web_lg",
-                        "ner_model_configuration": ner_config_dict
-                    }
+                    {"lang_code": "de", "model_name": "de_core_news_lg"},
+                    {"lang_code": "en", "model_name": "en_core_web_lg"},
                 ]
             }
 
@@ -733,9 +727,13 @@ class PIIFilter:
             registry = RecognizerRegistry()
             registry.supported_languages = ["de", "en"]
 
-            # Add SpaCy-based recognizers for both languages
+            # Add SpaCy-based recognizers for both languages WITH the NER config
             for lang in ["de", "en"]:
-                registry.add_recognizer(SpacyRecognizer(supported_language=lang, ner_strength=0.85))
+                registry.add_recognizer(SpacyRecognizer(
+                    supported_language=lang,
+                    ner_strength=0.85,
+                    ner_model_configuration=ner_config,
+                ))
                 registry.add_recognizer(EmailRecognizer(supported_language=lang))
                 registry.add_recognizer(PhoneRecognizer(supported_language=lang, context=["telefon", "phone", "tel", "fax", "handy", "mobil"]))
                 registry.add_recognizer(IbanRecognizer(supported_language=lang))
