@@ -1,0 +1,33 @@
+# =============================================================================
+# Railway Configuration for SpaCy PII Fallback Service
+# =============================================================================
+# This service is a BACKUP for the Hetzner PII service.
+# Deploy to Railway but keep in SLEEP MODE (0 replicas) until needed.
+#
+# To activate: Railway Dashboard → Service → Settings → Replicas → 1
+# To deactivate: Railway Dashboard → Service → Settings → Replicas → 0
+# =============================================================================
+
+[build]
+# Use the Dockerfile in this directory
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# Start command (same as Dockerfile CMD)
+startCommand = "python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT --workers 1"
+
+# Health check
+healthcheckPath = "/health"
+healthcheckTimeout = 180
+
+# Resource settings (SpaCy models need significant memory)
+# Railway Pro plan recommended for this service
+numReplicas = 0  # START IN SLEEP MODE - set to 1 to activate
+
+# Restart policy
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[env]
+# Port is automatically set by Railway
+PORT = "9125"

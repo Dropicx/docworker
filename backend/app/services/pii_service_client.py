@@ -24,9 +24,14 @@ import httpx
 logger = logging.getLogger(__name__)
 
 # Configuration from environment
+# Primary: Hetzner PII service (production)
 EXTERNAL_PII_URL = os.getenv("EXTERNAL_PII_URL", "")
 EXTERNAL_PII_API_KEY = os.getenv("EXTERNAL_PII_API_KEY", "")
 USE_EXTERNAL_PII = os.getenv("USE_EXTERNAL_PII", "false").lower() == "true"
+
+# Fallback: Railway PII service (backup, usually in sleep mode)
+FALLBACK_PII_URL = os.getenv("FALLBACK_PII_URL", "")
+FALLBACK_PII_API_KEY = os.getenv("FALLBACK_PII_API_KEY", "")
 
 
 class PIIServiceClient:
@@ -35,7 +40,7 @@ class PIIServiceClient:
 
     Features:
     - HTTPS communication with API key authentication
-    - Automatic fallback to local filter if service unavailable
+    - Automatic fallback to Railway service if Hetzner unavailable
     - Configurable timeout for large documents
     - Health check support
     - Syncs custom protection terms from database with each request
@@ -45,27 +50,38 @@ class PIIServiceClient:
         self,
         url: str | None = None,
         api_key: str | None = None,
+        fallback_url: str | None = None,
+        fallback_api_key: str | None = None,
         timeout: float = 60.0
     ):
         """
         Initialize PII service client.
 
         Args:
-            url: Override EXTERNAL_PII_URL from environment
+            url: Override EXTERNAL_PII_URL from environment (Hetzner primary)
             api_key: Override EXTERNAL_PII_API_KEY from environment
+            fallback_url: Override FALLBACK_PII_URL from environment (Railway backup)
+            fallback_api_key: Override FALLBACK_PII_API_KEY from environment
             timeout: Request timeout in seconds (default 60s for large documents)
         """
+        # Primary: Hetzner
         self.url = url or EXTERNAL_PII_URL
         self.api_key = api_key or EXTERNAL_PII_API_KEY
+
+        # Fallback: Railway
+        self.fallback_url = fallback_url or FALLBACK_PII_URL
+        self.fallback_api_key = fallback_api_key or FALLBACK_PII_API_KEY
+
         self.timeout = timeout
-        self._local_filter = None
         self._custom_terms_cache: list[str] | None = None
         self._custom_terms_cache_time: float = 0
 
         if self.url:
-            logger.info(f"PII Service Client initialized - URL: {self.url}")
-        else:
-            logger.info("PII Service Client initialized - No external URL configured")
+            logger.info(f"PII Service Client initialized - Primary: {self.url}")
+        if self.fallback_url:
+            logger.info(f"PII Service Client fallback configured - Fallback: {self.fallback_url}")
+        if not self.url and not self.fallback_url:
+            logger.warning("PII Service Client: No PII service URL configured!")
 
     def _load_custom_terms_from_db(self) -> list[str]:
         """
@@ -128,12 +144,10 @@ class PIIServiceClient:
         """Check if external PII service is configured."""
         return bool(self.url) and USE_EXTERNAL_PII
 
-    def _get_local_filter(self):
-        """Lazy-load local privacy filter as fallback."""
-        if self._local_filter is None:
-            from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
-            self._local_filter = AdvancedPrivacyFilter(load_custom_terms=False)
-        return self._local_filter
+    @property
+    def has_fallback(self) -> bool:
+        """Check if fallback PII service is configured."""
+        return bool(self.fallback_url)
 
     async def remove_pii(
         self,
@@ -142,7 +156,11 @@ class PIIServiceClient:
         include_metadata: bool = True
     ) -> tuple[str, dict]:
         """
-        Remove PII from text using external service or local fallback.
+        Remove PII from text using external service with Railway fallback.
+
+        Priority:
+        1. Hetzner PII service (primary, EXTERNAL_PII_URL)
+        2. Railway PII service (fallback, FALLBACK_PII_URL)
 
         Args:
             text: Text to process
@@ -153,31 +171,54 @@ class PIIServiceClient:
             Tuple of (cleaned_text, metadata_dict)
 
         Raises:
-            Exception: If both external service and local fallback fail
+            Exception: If both primary and fallback services fail
         """
-        # Use external service if configured
+        primary_error = None
+        fallback_error = None
+
+        # Try primary service (Hetzner)
         if self.is_external_enabled:
             try:
-                return await self._call_external_service(text, language, include_metadata)
+                logger.debug(f"Calling primary PII service: {self.url}")
+                result = await self._call_service(
+                    self.url, self.api_key, text, language, include_metadata
+                )
+                result[1]["service_used"] = "primary"
+                return result
             except Exception as e:
-                logger.warning(f"External PII service failed, falling back to local: {e}")
+                primary_error = str(e)
+                logger.warning(f"Primary PII service failed: {e}")
 
-        # Fallback to local filter
-        logger.debug("Using local privacy filter")
-        local_filter = self._get_local_filter()
-        return local_filter.remove_pii(text)
+        # Try fallback service (Railway)
+        if self.has_fallback:
+            try:
+                logger.info(f"Calling fallback PII service: {self.fallback_url}")
+                result = await self._call_service(
+                    self.fallback_url, self.fallback_api_key, text, language, include_metadata
+                )
+                result[1]["service_used"] = "fallback"
+                return result
+            except Exception as e:
+                fallback_error = str(e)
+                logger.error(f"Fallback PII service also failed: {e}")
 
-    async def _call_external_service(
+        # Both failed - raise error
+        error_msg = f"All PII services failed. Primary: {primary_error}, Fallback: {fallback_error}"
+        logger.error(error_msg)
+        raise Exception(error_msg)
+
+    async def _call_service(
         self,
+        url: str,
+        api_key: str,
         text: str,
         language: str,
         include_metadata: bool
     ) -> tuple[str, dict]:
-        """Call external PII service API with custom protection terms."""
-        headers = {}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-        headers["Content-Type"] = "application/json"
+        """Call a PII service API with custom protection terms."""
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["X-API-Key"] = api_key
 
         # Load custom terms from database to sync with external service
         custom_terms = self._load_custom_terms_from_db()
@@ -191,7 +232,7 @@ class PIIServiceClient:
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
             response = await client.post(
-                f"{self.url}/remove-pii",
+                f"{url}/remove-pii",
                 json=payload,
                 headers=headers
             )
@@ -203,15 +244,12 @@ class PIIServiceClient:
                 return result["cleaned_text"], metadata
 
             elif response.status_code in (401, 403):
-                logger.error(f"PII service authentication failed: {response.status_code}")
                 raise Exception(f"PII service authentication failed: {response.status_code}")
 
             elif response.status_code == 503:
-                logger.error("PII service unavailable")
-                raise Exception("PII service unavailable")
+                raise Exception("PII service unavailable (503)")
 
             else:
-                logger.error(f"PII service error: {response.status_code} - {response.text}")
                 raise Exception(f"PII service error: {response.status_code}")
 
     async def check_health(self) -> dict:
@@ -267,7 +305,7 @@ class PIIServiceClient:
         batch_size: int = 32
     ) -> list[tuple[str, dict]]:
         """
-        Remove PII from multiple texts.
+        Remove PII from multiple texts with fallback support.
 
         Args:
             texts: List of texts to process
@@ -277,27 +315,45 @@ class PIIServiceClient:
         Returns:
             List of (cleaned_text, metadata) tuples
         """
+        primary_error = None
+        fallback_error = None
+
+        # Try primary service (Hetzner)
         if self.is_external_enabled:
             try:
-                return await self._call_external_batch(texts, language, batch_size)
+                return await self._call_batch_service(
+                    self.url, self.api_key, texts, language, batch_size
+                )
             except Exception as e:
-                logger.warning(f"External batch PII failed, falling back to local: {e}")
+                primary_error = str(e)
+                logger.warning(f"Primary batch PII failed: {e}")
 
-        # Fallback to local filter
-        local_filter = self._get_local_filter()
-        return [local_filter.remove_pii(text) for text in texts]
+        # Try fallback service (Railway)
+        if self.has_fallback:
+            try:
+                return await self._call_batch_service(
+                    self.fallback_url, self.fallback_api_key, texts, language, batch_size
+                )
+            except Exception as e:
+                fallback_error = str(e)
+                logger.error(f"Fallback batch PII also failed: {e}")
 
-    async def _call_external_batch(
+        # Both failed
+        error_msg = f"All batch PII services failed. Primary: {primary_error}, Fallback: {fallback_error}"
+        raise Exception(error_msg)
+
+    async def _call_batch_service(
         self,
+        url: str,
+        api_key: str,
         texts: list[str],
         language: str,
         batch_size: int
     ) -> list[tuple[str, dict]]:
-        """Call external batch PII service API with custom protection terms."""
-        headers = {}
-        if self.api_key:
-            headers["X-API-Key"] = self.api_key
-        headers["Content-Type"] = "application/json"
+        """Call a batch PII service API with custom protection terms."""
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["X-API-Key"] = api_key
 
         # Load custom terms from database to sync with external service
         custom_terms = self._load_custom_terms_from_db()
@@ -311,7 +367,7 @@ class PIIServiceClient:
 
         async with httpx.AsyncClient(timeout=self.timeout * 2) as client:
             response = await client.post(
-                f"{self.url}/remove-pii/batch",
+                f"{url}/remove-pii/batch",
                 json=payload,
                 headers=headers
             )
