@@ -2,36 +2,37 @@
 # PP-StructureV3 OCR Server - Terraform Makefile
 # =============================================================================
 
-.PHONY: help init plan apply destroy output ssh deploy redeploy logs health api-key clean
+.PHONY: help init plan apply destroy destroy-keep-cert output ssh deploy redeploy logs health api-key clean
 
 # SSH options for ephemeral servers (skip host key verification)
 SSH_OPTS := -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null
 
 help:
-	@echo "PP-StructureV3 Terraform Commands"
-	@echo "=================================="
+	@echo "PaddleOCR Terraform Commands"
+	@echo "============================"
 	@echo ""
-	@echo "  make init      - Initialize Terraform"
-	@echo "  make plan      - Preview changes"
-	@echo "  make apply     - Create/update infrastructure (auto-deploys by default)"
-	@echo "  make destroy   - Destroy infrastructure"
-	@echo "  make output    - Show outputs (IP, env vars, commands)"
-	@echo "  make ssh       - SSH into server"
-	@echo "  make redeploy  - Re-run deploy.sh (git pull + rebuild)"
-	@echo "  make logs      - Tail docker-compose logs"
-	@echo "  make health    - Check service health"
-	@echo "  make api-key   - Show API key"
-	@echo "  make clean     - Remove Terraform files"
+	@echo "  make init              - Initialize Terraform"
+	@echo "  make plan              - Preview changes"
+	@echo "  make apply             - Create/update infrastructure (auto-deploys)"
+	@echo "  make destroy-keep-cert - Destroy infra but KEEP SSL cert (recommended)"
+	@echo "  make destroy           - Destroy ALL (will fail due to cert protection)"
+	@echo "  make output            - Show outputs (IP, env vars, commands)"
+	@echo "  make ssh N=1           - SSH into server N (1 or 2)"
+	@echo "  make redeploy          - Re-run deploy.sh (git pull + rebuild)"
+	@echo "  make logs N=1          - Tail docker-compose logs on server N"
+	@echo "  make health            - Check service health"
+	@echo "  make api-key           - Show API key"
+	@echo "  make clean             - Remove Terraform files"
 	@echo ""
 	@echo "Quick start:"
 	@echo "  1. cp terraform.tfvars.example terraform.tfvars"
-	@echo "  2. Edit terraform.tfvars with your Hetzner token"
+	@echo "  2. Edit terraform.tfvars with your Hetzner token + GitHub token"
 	@echo "  3. make init && make apply"
-	@echo "  4. (deployment runs automatically with auto_deploy=true)"
+	@echo "  4. Wait ~10 minutes for auto-deployment"
+	@echo "  5. Test: make health"
 	@echo ""
-	@echo "Manual deployment (if auto_deploy=false):"
-	@echo "  make ssh"
-	@echo "  cd /opt/paddleocr && ./deploy.sh"
+	@echo "NOTE: Use 'make destroy-keep-cert' to avoid Let's Encrypt rate limits!"
+	@echo ""
 
 init:
 	terraform init
@@ -44,6 +45,26 @@ apply:
 
 destroy:
 	terraform destroy
+
+# Destroy everything EXCEPT the SSL certificate (avoids Let's Encrypt rate limits)
+destroy-keep-cert:
+	@echo "Destroying infrastructure but KEEPING SSL certificate..."
+	@echo "(This avoids Let's Encrypt rate limit of 5 certs/domain/week)"
+	@echo ""
+	terraform destroy \
+		-target=hcloud_server.paddleocr \
+		-target=hcloud_firewall_attachment.paddleocr \
+		-target=hcloud_firewall.paddleocr \
+		-target=hcloud_load_balancer_target.paddleocr \
+		-target=hcloud_load_balancer_service.https \
+		-target=hcloud_load_balancer_service.http_redirect \
+		-target=hcloud_load_balancer_network.paddleocr \
+		-target=hcloud_load_balancer.paddleocr \
+		-target=hcloud_zone_rrset.ocr \
+		-target=hcloud_network_subnet.paddleocr \
+		-target=hcloud_network.paddleocr \
+		-target=random_password.root_password \
+		-target=random_password.api_key
 
 output:
 	@echo ""

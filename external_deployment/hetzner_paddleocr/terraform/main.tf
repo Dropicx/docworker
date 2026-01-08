@@ -484,6 +484,7 @@ resource "hcloud_load_balancer_target" "paddleocr" {
 }
 
 # Managed SSL Certificate
+# IMPORTANT: prevent_destroy avoids Let's Encrypt rate limits (5 certs/domain/week)
 resource "hcloud_managed_certificate" "paddleocr" {
   name         = "${var.server_name}-cert"
   domain_names = [local.domain_name]
@@ -491,6 +492,10 @@ resource "hcloud_managed_certificate" "paddleocr" {
   labels = {
     service = "paddleocr"
     managed = "terraform"
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 

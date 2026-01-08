@@ -475,6 +475,7 @@ resource "hcloud_load_balancer_target" "pii" {
 }
 
 # Managed SSL Certificate
+# IMPORTANT: prevent_destroy avoids Let's Encrypt rate limits (5 certs/domain/week)
 resource "hcloud_managed_certificate" "pii" {
   name         = "${var.server_name}-cert"
   domain_names = [local.domain_name]
@@ -482,6 +483,10 @@ resource "hcloud_managed_certificate" "pii" {
   labels = {
     service = "pii"
     managed = "terraform"
+  }
+
+  lifecycle {
+    prevent_destroy = true
   }
 }
 
