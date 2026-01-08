@@ -972,7 +972,7 @@ class PIIFilter:
                 text=text,
                 language=language,
                 entities=entities_to_detect,
-                score_threshold=0.7  # Only high-confidence matches
+                score_threshold=0.4  # Lower threshold to catch credit cards, IBANs etc.
             )
 
             # Sort by position (reverse) to preserve indices during replacement
