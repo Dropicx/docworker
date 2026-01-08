@@ -29,6 +29,11 @@ ls -la "$MODELS_DIR" 2>/dev/null || echo "(empty or not accessible)"
 # Add models directory to Python path so spacy can find them
 export PYTHONPATH="$MODELS_DIR:$PYTHONPATH"
 
+# Use models directory for pip temp files (avoids "no space" errors with tmpfs)
+export TMPDIR="$MODELS_DIR"
+export PIP_CACHE_DIR="$MODELS_DIR/.pip_cache"
+mkdir -p "$PIP_CACHE_DIR"
+
 # Function to check if model exists in volume
 model_exists_in_volume() {
     local model=$1
