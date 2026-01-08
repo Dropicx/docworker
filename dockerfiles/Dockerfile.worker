@@ -18,45 +18,37 @@ COPY worker/requirements.txt /app/worker/requirements.txt
 # Install Python dependencies
 RUN pip install --no-cache-dir -r /app/worker/requirements.txt
 
-# ⚡ OPTIMIZED: spaCy models now loaded from Railway volume (not downloaded at build time)
-# This speeds up deployment and allows model persistence across restarts
+# ⚡ NOTE: spaCy REMOVED from worker - PII filtering now done by external pii_service
+# Worker calls PIIServiceClient which uses Hetzner PII service (primary) or Railway pii_service (fallback)
 
-# Create directories for Railway volume mount and uploads
-RUN mkdir -p /data/spacy_models && \
-    mkdir -p /app/backend/uploads
+# Create directories for uploads
+RUN mkdir -p /app/backend/uploads
 
 # Create non-root user for security
 RUN useradd -m -u 1000 celeryuser && \
-    chown -R celeryuser:celeryuser /app && \
-    chown -R celeryuser:celeryuser /data
+    chown -R celeryuser:celeryuser /app
 
 # Copy worker code
 COPY --chown=celeryuser:celeryuser worker/ /app/worker/
 COPY --chown=celeryuser:celeryuser backend/ /app/backend/
 COPY --chown=celeryuser:celeryuser shared/ /app/shared/
 
-# Copy startup scripts
-COPY --chown=celeryuser:celeryuser worker/scripts/init_spacy.sh /app/init_spacy.sh
+# Copy startup scripts (spaCy init removed - PII now handled by external service)
 COPY --chown=celeryuser:celeryuser worker/scripts/cleanup_orphaned_jobs.py /app/cleanup_orphaned_jobs.py
-RUN chmod +x /app/init_spacy.sh && chmod +x /app/cleanup_orphaned_jobs.py
+RUN chmod +x /app/cleanup_orphaned_jobs.py
 
 # Set Python path to include all modules
 ENV PYTHONPATH=/app:/app/worker:/app/backend:/app/shared
-
-# Set environment variable for spaCy model path (Railway volume)
-ENV SPACY_MODEL_PATH=/data/spacy_models/de_core_news_sm
 
 # Health check via Redis connection
 HEALTHCHECK --interval=30s --timeout=3s --start-period=15s --retries=3 \
     CMD python -c "from shared.redis_client import get_redis; get_redis().ping()" || exit 1
 
-# ⚡ OPTIMIZED STARTUP: Run as root to fix volume permissions, then switch to celeryuser
-# Railway mounts volumes as root, so we need root to create directories
 # Startup sequence:
-#   1. Fix volume permissions
-#   2. Initialize spaCy model (load from volume)
-#   3. Clean up orphaned jobs from previous restart
-#   4. Start Celery worker with priority queues
+#   1. Clean up orphaned jobs from previous restart
+#   2. Start Celery worker with priority queues
+# Note: spaCy removed - PII filtering now done by external pii_service (Hetzner/Railway)
 # Note: Beat scheduler runs in separate beat-service (prevents duplicate schedules with replicas)
 # Priority queues: high_priority (user uploads), default, low_priority, maintenance (cleanup tasks)
-CMD ["/bin/bash", "-c", "chown -R celeryuser:celeryuser /data && su celeryuser -c '/app/init_spacy.sh && python3 /app/cleanup_orphaned_jobs.py && celery -A worker.worker.celery_app worker --loglevel=info --queues=high_priority,default,low_priority,maintenance --concurrency=2 --max-tasks-per-child=50'"]
+USER celeryuser
+CMD ["/bin/bash", "-c", "python3 /app/cleanup_orphaned_jobs.py && celery -A worker.worker.celery_app worker --loglevel=info --queues=high_priority,default,low_priority,maintenance --concurrency=2 --max-tasks-per-child=50"]

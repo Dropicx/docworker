@@ -28,5 +28,5 @@ python-magic==0.4.27
 openai==1.59.2
 mistralai>=1.0.0  # Mistral OCR API
 
-# NLP
-spacy==3.8.3
+# NLP - REMOVED: spaCy moved to external pii_service (Hetzner/Railway)
+# Worker now calls PIIServiceClient which uses external PII service
