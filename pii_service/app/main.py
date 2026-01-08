@@ -141,6 +141,62 @@ app = FastAPI(
 
 
 # =============================================================================
+# Audit Logging Middleware
+# =============================================================================
+# Logs request metadata only (no text content) for security auditing
+# Retention: 90 days (configured via logrotate on server)
+
+import sys
+from starlette.middleware.base import BaseHTTPMiddleware
+from starlette.requests import Request
+
+# Separate audit logger
+audit_logger = logging.getLogger("audit")
+audit_handler = logging.FileHandler("/var/log/pii-audit.log") if os.path.isdir("/var/log") else logging.StreamHandler(sys.stdout)
+audit_handler.setFormatter(logging.Formatter('%(asctime)s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+audit_logger.addHandler(audit_handler)
+audit_logger.setLevel(logging.INFO)
+audit_logger.propagate = False  # Don't duplicate to main logger
+
+
+class AuditLoggingMiddleware(BaseHTTPMiddleware):
+    """
+    Middleware for audit logging.
+
+    Logs request metadata only - NEVER logs request/response bodies
+    to ensure PII text content is never persisted.
+    """
+
+    async def dispatch(self, request: Request, call_next):
+        start = time.perf_counter()
+
+        # Get client IP (handle proxies)
+        client_ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip()
+        if not client_ip:
+            client_ip = request.client.host if request.client else "unknown"
+
+        # Process request
+        response = await call_next(request)
+
+        # Calculate duration
+        duration = time.perf_counter() - start
+
+        # Log metadata only (never body content)
+        audit_logger.info(
+            f"method={request.method} "
+            f"path={request.url.path} "
+            f"status={response.status_code} "
+            f"duration={duration:.3f}s "
+            f"client={client_ip}"
+        )
+
+        return response
+
+
+app.add_middleware(AuditLoggingMiddleware)
+
+
+# =============================================================================
 # Endpoints
 # =============================================================================
 

@@ -201,28 +201,25 @@ write_files:
       Port: 9125
 
       Commands:
-        cd /opt/pii
-        ./deploy.sh          # First-time setup
-        docker-compose up -d
-        docker-compose logs -f
-        docker-compose down
+        systemctl status pii
+        journalctl -u pii -f
+        cd /opt/pii && docker-compose logs -f
       =====================================
     permissions: '0644'
 
+  # Secrets: API key in .env only (no redundant files)
   - path: /opt/pii/.env
     content: |
       API_SECRET_KEY=${local.api_key}
     permissions: '0600'
+    owner: root:root
 
-  - path: /opt/pii/API_KEY.txt
-    content: |
-      ${local.api_key}
-    permissions: '0600'
-
+  # GitHub token for auto-deploy (strict permissions)
   - path: /opt/pii/.github_token
     content: |
       ${var.github_token}
     permissions: '0600'
+    owner: root:root
 
   - path: /opt/pii/.repo
     content: |
@@ -238,6 +235,68 @@ write_files:
     encoding: b64
     content: ${filebase64("${path.module}/scripts/deploy.sh")}
     permissions: '0755'
+
+  # Systemd service for auto-restart on reboot
+  - path: /etc/systemd/system/pii.service
+    content: |
+      [Unit]
+      Description=SpaCy PII Service
+      Requires=docker.service
+      After=docker.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      WorkingDirectory=/opt/pii
+      ExecStart=/usr/bin/docker compose up -d
+      ExecStop=/usr/bin/docker compose down
+      Restart=on-failure
+      RestartSec=10
+
+      [Install]
+      WantedBy=multi-user.target
+    permissions: '0644'
+
+  # Watchdog script for self-healing
+  - path: /opt/pii/watchdog.sh
+    content: |
+      #!/bin/bash
+      # Watchdog: restart service if health check fails
+      if ! curl -sf http://localhost:9125/health > /dev/null 2>&1; then
+        echo "$(date) Health check failed, restarting..." >> /var/log/pii-watchdog.log
+        cd /opt/pii && docker compose restart
+      fi
+    permissions: '0755'
+
+  # Logrotate for audit logs (90-day retention)
+  - path: /etc/logrotate.d/pii-audit
+    content: |
+      /var/log/pii-audit.log {
+        daily
+        rotate 90
+        compress
+        delaycompress
+        missingok
+        notifempty
+        create 640 root root
+        dateext
+        dateformat -%Y%m%d
+      }
+    permissions: '0644'
+
+  # Logrotate for deployment logs
+  - path: /etc/logrotate.d/pii-deploy
+    content: |
+      /var/log/pii-deploy.log /var/log/pii-watchdog.log {
+        daily
+        rotate 7
+        compress
+        delaycompress
+        missingok
+        notifempty
+        create 640 root root
+      }
+    permissions: '0644'
 
   - path: /opt/pii/docker-compose.yml
     content: |
@@ -255,6 +314,9 @@ write_files:
             - PYTHONUNBUFFERED=1
           volumes:
             - spacy_models:/app/models
+            - /var/log:/var/log
+          tmpfs:
+            - /tmp:size=512M,mode=1777
           restart: unless-stopped
           deploy:
             resources:
@@ -266,36 +328,48 @@ write_files:
             timeout: 10s
             retries: 5
             start_period: 180s
+          logging:
+            driver: "json-file"
+            options:
+              max-size: "50m"
+              max-file: "5"
 
       volumes:
         spacy_models:
     permissions: '0644'
 
 runcmd:
+  # Docker setup
   - systemctl enable docker
   - systemctl start docker
+  # Secure file ownership
   - chown -R root:root /opt/pii
   - chmod 755 /opt/pii/deploy.sh
-  # Create 4GB swap (important for large SpaCy models)
-  - fallocate -l 4G /swapfile
-  - chmod 600 /swapfile
-  - mkswap /swapfile
-  - swapon /swapfile
-  - echo '/swapfile none swap sw 0 0' >> /etc/fstab
-  - echo 'vm.swappiness=10' >> /etc/sysctl.conf
-  - sysctl -p
+  - chmod 600 /opt/pii/.env
+  - chmod 600 /opt/pii/.github_token
+  # NO SWAP - 8GB RAM is sufficient, prevents sensitive text data on disk
+  # Fail2ban for security
   - systemctl enable fail2ban
   - systemctl start fail2ban
-  # Wait for Docker to be fully ready, then auto-deploy
+  # Enable systemd service for auto-restart on reboot
+  - systemctl daemon-reload
+  - systemctl enable pii.service
+  # Watchdog cron - check health every 5 minutes
+  - echo '*/5 * * * * /opt/pii/watchdog.sh' | crontab -
+  # Auto-cleanup cron - delete audit logs older than 90 days (belt + suspenders with logrotate)
+  - (crontab -l 2>/dev/null; echo "0 3 * * * find /var/log -name 'pii-audit*.log*' -mtime +90 -delete") | crontab -
+  # Wait for Docker, then deploy and start systemd service
   - |
     until docker info >/dev/null 2>&1; do
       echo "Waiting for Docker..."
       sleep 5
     done
     echo "Docker ready, starting PII service deployment..."
-    cd /opt/pii && ./deploy.sh >> /var/log/pii-deploy.log 2>&1 &
+    cd /opt/pii && ./deploy.sh >> /var/log/pii-deploy.log 2>&1
+    # Start via systemd after initial deploy
+    systemctl start pii.service
 
-final_message: "PII service deployment started! Check /var/log/pii-deploy.log for progress."
+final_message: "PII service deployment complete! Service managed by systemd."
 EOF
 }
 
