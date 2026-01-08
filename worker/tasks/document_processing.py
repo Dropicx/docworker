@@ -153,13 +153,14 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             job_repo.update(job_id_for_updates, ocr_time_seconds=ocr_time)
             logger.info(f"✅ OCR completed in {ocr_time:.2f}s: {len(extracted_text)} characters, confidence: {ocr_confidence:.2%}")
 
-            # ⚡ Step 1.5: LOCAL PII Removal (BEFORE sending to AI pipeline)
+            # ⚡ Step 1.5: PII Removal (BEFORE sending to AI pipeline)
+            # Uses external Hetzner SpaCy service if configured, falls back to local filter
             # Check if PII removal is enabled in OCR config
             ocr_config = db.query(OCRConfigurationDB).first()
             pii_enabled = ocr_config.pii_removal_enabled if ocr_config else True
 
             if pii_enabled:
-                logger.info("🔒 Starting local PII removal...")
+                logger.info("🔒 Starting PII removal...")
                 # Use repository update to avoid overwriting encrypted file_content
                 job_repo.update(job_id_for_updates, progress_percent=15)
                 self.update_state(
@@ -167,27 +168,34 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                     meta={'progress': 15, 'status': 'pii_removal', 'current_step': 'Entfernung persönlicher Daten'}
                 )
 
-                from app.services.privacy_filter_advanced import AdvancedPrivacyFilter
+                from app.services.pii_service_client import PIIServiceClient
 
-                pii_filter = AdvancedPrivacyFilter()
+                pii_client = PIIServiceClient()
                 pii_start_time = time.time()
                 original_length = len(extracted_text)
 
-                # Phase 1.4: remove_pii() now returns (cleaned_text, metadata) tuple
-                extracted_text, pii_metadata = pii_filter.remove_pii(extracted_text)
+                # Get source language from options (default to German for medical documents)
+                source_language = options.get('source_language', 'de') if options else 'de'
+
+                # Call PII service (external Hetzner API or local fallback)
+                # PIIServiceClient.remove_pii() is async, returns (cleaned_text, metadata)
+                extracted_text, pii_metadata = await_sync(
+                    pii_client.remove_pii(extracted_text, language=source_language)
+                )
 
                 pii_time_ms = (time.time() - pii_start_time) * 1000
                 cleaned_length = len(extracted_text)
 
-                logger.info(f"✅ PII removal completed in {pii_time_ms:.1f}ms")
+                # Log which service was used
+                service_used = "external" if pii_client.is_external_enabled else "local"
+                logger.info(f"✅ PII removal completed in {pii_time_ms:.1f}ms ({service_used} service)")
                 logger.info(f"   Original: {original_length} chars → Cleaned: {cleaned_length} chars")
 
-                # Log enhanced metadata from Phase 1.4
+                # Log metadata
                 if pii_metadata.get("entities_detected", 0) > 0:
                     logger.info(
                         f"   📊 Detected: {pii_metadata['entities_detected']} entities, "
-                        f"Preserved: {pii_metadata['eponyms_preserved']} eponyms, "
-                        f"Low confidence: {pii_metadata['low_confidence_count']}"
+                        f"Preserved: {pii_metadata.get('eponyms_preserved', 0)} eponyms"
                     )
             else:
                 logger.info("⏭️  PII removal disabled - skipping privacy filter")

@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  pii:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: spacy-pii:cpu
+    container_name: pii-service
+    ports:
+      - "9125:9125"
+    environment:
+      - API_SECRET_KEY=${API_SECRET_KEY:-}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - spacy_models:/app/models
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+        reservations:
+          memory: 4G
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9125/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+
+volumes:
+  spacy_models:

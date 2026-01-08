@@ -1,0 +1,55 @@
+# =============================================================================
+# SpaCy PII Service HA Cluster - Terraform Variables Example
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in the values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# High-availability setup with:
+# - 2x cpx32 servers in private network
+# - Load balancer with managed SSL
+# - Integrated DNS management (Hetzner DNS)
+# - Large SpaCy models (de_core_news_lg + en_core_web_lg)
+# =============================================================================
+
+# Required: Hetzner Cloud API Token (used for Cloud + DNS)
+# Get from: https://console.hetzner.cloud/ -> Project -> Security -> API Tokens
+hcloud_token = "your-hetzner-cloud-api-token"
+
+# Required: GitHub Personal Access Token (for private repos)
+# Get from: https://github.com/settings/tokens -> Generate new token (classic)
+# Scopes needed: repo (full control of private repositories)
+github_token = "github_pat_xxxxxxxxxxxx"
+
+# Required: DNS zone (your domain managed by Hetzner DNS)
+dns_zone = "example.com"
+
+# Optional: Subdomain for PII service (default: pii)
+# Creates: pii.example.com
+dns_subdomain = "pii"
+
+# Optional: Base name for servers (default: pii)
+# Creates: pii-1, pii-2, pii-lb
+server_name = "pii"
+
+# Optional: Server type (default: cpx32 = 4 vCPU, 8GB RAM)
+# IMPORTANT: cpx32 is minimum recommended for large SpaCy models (~1.1GB)
+# Options: cpx32 (~€15/mo), cpx41 (~€35/mo), cpx51 (~€67/mo)
+server_type = "cpx32"
+
+# Optional: Number of servers (default: 2)
+server_count = 2
+
+# Optional: Datacenter location (default: fsn1)
+# Options: fsn1 (Falkenstein), nbg1 (Nuremberg), hel1 (Helsinki), ash (Ashburn)
+location = "fsn1"
+
+# Optional: GitHub repository (default: Dropicx/doctranslator)
+# github_repo = "Dropicx/doctranslator"
+
+# Optional: Git branch (default: dev)
+# github_branch = "dev"
+
+# Optional: API key for PII service
+# If not set, a random 64-char key will be generated
+# Same key is shared across all servers (required for load balancer)
+# api_key = "your-custom-api-key-here"
