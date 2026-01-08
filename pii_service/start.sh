@@ -32,12 +32,26 @@ export PYTHONPATH="$MODELS_DIR:$PYTHONPATH"
 # Function to check if model exists in volume
 model_exists_in_volume() {
     local model=$1
+    local version=$2
     local model_dir="$MODELS_DIR/$model"
 
-    # Check if the model directory exists and has content
-    if [ -d "$model_dir" ] && [ -f "$model_dir/config.cfg" ]; then
-        echo "Found $model in volume at $model_dir"
-        return 0
+    # SpaCy models installed with pip --target create this structure:
+    # /data/models/de_core_news_lg/
+    #   ├── __init__.py
+    #   ├── de_core_news_lg-3.8.0/   ← config.cfg is in versioned subdir
+    #   └── meta.json
+    #
+    # Check for __init__.py (package marker) AND versioned subdir with config.cfg
+    local versioned_dir="$model_dir/${model}-${version}"
+
+    if [ -d "$model_dir" ] && [ -f "$model_dir/__init__.py" ]; then
+        if [ -f "$versioned_dir/config.cfg" ]; then
+            echo "Found $model in volume at $model_dir (config in $versioned_dir)"
+            return 0
+        else
+            echo "WARNING: Package exists but missing config.cfg in $versioned_dir"
+            ls -la "$model_dir" 2>/dev/null || true
+        fi
     fi
 
     echo "Model $model not found in volume (checked $model_dir)"
@@ -62,7 +76,7 @@ download_model_to_volume() {
 }
 
 # Check and download German model
-if model_exists_in_volume "$DE_MODEL"; then
+if model_exists_in_volume "$DE_MODEL" "$DE_MODEL_VERSION"; then
     echo "German model ($DE_MODEL) found in volume - skipping download"
 else
     echo "German model not found in volume, downloading..."
@@ -70,7 +84,7 @@ else
 fi
 
 # Check and download English model
-if model_exists_in_volume "$EN_MODEL"; then
+if model_exists_in_volume "$EN_MODEL" "$EN_MODEL_VERSION"; then
     echo "English model ($EN_MODEL) found in volume - skipping download"
 else
     echo "English model not found in volume, downloading..."

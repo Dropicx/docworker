@@ -49,45 +49,39 @@ class PIIFilter:
     # Volume path for persisted models (Railway volume mount)
     MODELS_DIR = os.environ.get("SPACY_DATA_DIR", "/data/models")
 
+    # Model versions for finding versioned subdirectories
+    MODEL_VERSIONS = {
+        "de_core_news_lg": "3.8.0",
+        "en_core_web_lg": "3.8.0",
+    }
+
     def _load_spacy_model(self, model_name: str):
         """Load SpaCy model from volume path or site-packages."""
-        # Try volume path first (models installed with pip --target)
-        volume_path = os.path.join(self.MODELS_DIR, model_name.replace("-", "_"))
-        logger.info(f"Checking for model at volume path: {volume_path}")
+        # pip --target installs create this structure:
+        # /data/models/de_core_news_lg/
+        #   ├── __init__.py
+        #   ├── de_core_news_lg-3.8.0/   ← config.cfg is HERE
+        #   └── meta.json
+        volume_path = os.path.join(self.MODELS_DIR, model_name)
+        version = self.MODEL_VERSIONS.get(model_name, "3.8.0")
+        versioned_path = os.path.join(volume_path, f"{model_name}-{version}")
 
-        if os.path.isdir(volume_path):
-            # Check if config.cfg exists (required for valid SpaCy model)
-            config_path = os.path.join(volume_path, "config.cfg")
+        logger.info(f"Checking for model at volume path: {versioned_path}")
+
+        if os.path.isdir(versioned_path):
+            config_path = os.path.join(versioned_path, "config.cfg")
             if os.path.isfile(config_path):
                 try:
-                    logger.info(f"Loading {model_name} from volume path: {volume_path}")
-                    return spacy.load(volume_path)
+                    logger.info(f"Loading {model_name} from versioned path: {versioned_path}")
+                    return spacy.load(versioned_path)
                 except Exception as e:
-                    logger.warning(f"Failed to load from volume {volume_path}: {e}")
+                    logger.warning(f"Failed to load from {versioned_path}: {e}")
             else:
-                logger.warning(f"Volume path exists but no config.cfg found: {volume_path}")
-                # List contents for debugging
-                try:
-                    contents = os.listdir(volume_path)
-                    logger.info(f"Contents of {volume_path}: {contents[:10]}...")  # First 10 items
-                except Exception as e:
-                    logger.warning(f"Could not list {volume_path}: {e}")
+                logger.warning(f"Versioned path exists but no config.cfg: {versioned_path}")
         else:
-            logger.info(f"Volume path does not exist: {volume_path}")
+            logger.info(f"Versioned path does not exist: {versioned_path}")
 
-        # Try importing as a Python package (works if PYTHONPATH includes MODELS_DIR)
-        try:
-            import importlib
-            model_module = importlib.import_module(model_name)
-            model_path = os.path.dirname(model_module.__file__)
-            logger.info(f"Found {model_name} via Python import at: {model_path}")
-            return spacy.load(model_path)
-        except ImportError:
-            logger.info(f"{model_name} not importable as Python module")
-        except Exception as e:
-            logger.warning(f"Failed to load {model_name} via Python import: {e}")
-
-        # Fallback to standard spacy.load (site-packages)
+        # Fallback: try spacy.load with model name (works if PYTHONPATH set)
         logger.info(f"Falling back to spacy.load('{model_name}')")
         return spacy.load(model_name)
 
