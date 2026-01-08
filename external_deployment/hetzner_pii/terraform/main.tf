@@ -110,6 +110,7 @@ variable "location" {
   default     = "fsn1"
 }
 
+
 variable "network_zone" {
   description = "Network zone for private network"
   type        = string
@@ -426,6 +427,14 @@ resource "hcloud_server" "pii" {
 
 resource "hcloud_firewall" "pii" {
   name = "${var.server_name}-firewall"
+
+  rule {
+    description = "Allow SSH from internet"
+    direction   = "in"
+    protocol    = "tcp"
+    port        = "22"
+    source_ips  = ["0.0.0.0/0", "::/0"]
+  }
 
   rule {
     description = "Allow private network - all traffic"
