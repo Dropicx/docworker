@@ -429,14 +429,6 @@ resource "hcloud_firewall" "pii" {
   name = "${var.server_name}-firewall"
 
   rule {
-    description = "Allow SSH from internet"
-    direction   = "in"
-    protocol    = "tcp"
-    port        = "22"
-    source_ips  = ["0.0.0.0/0", "::/0"]
-  }
-
-  rule {
     description = "Allow private network - all traffic"
     direction   = "in"
     protocol    = "tcp"

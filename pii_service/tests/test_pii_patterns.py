@@ -422,6 +422,99 @@ class TestFullDocumentProcessing:
 
 
 # =============================================================================
+# MEDICAL VALUE PROTECTION (FALSE POSITIVE PREVENTION)
+# =============================================================================
+
+class TestMedicalValuesNotReplacedAsPhone:
+    """Tests that medical values with units are NOT replaced as phone numbers."""
+
+    @pytest.mark.parametrize("input_text,must_contain", [
+        # Audiometry frequencies (common false positive!)
+        ("Audiometrie: Einschränkung 4000 Hz", "4000 Hz"),
+        ("Hörminderung bei 2000-8000 Hz", "2000"),
+        ("Frequenzbereich: 500 Hz bis 4000 Hz", "4000 Hz"),
+        ("Hochtonverlust ab 3000 Hz", "3000 Hz"),
+
+        # Blood pressure
+        ("Blutdruck: 120/80 mmHg", "120"),
+        ("RR: 150/90 mmHg", "150"),
+
+        # Medication dosages
+        ("Metoprolol 100 mg täglich", "100 mg"),
+        ("Ramipril 5 mg 1-0-1", "5 mg"),
+        ("Insulin 40 IE morgens", "40 IE"),
+
+        # Lab values
+        ("Kreatinin: 1,2 mg/dl", "mg/dl"),
+        ("BNP: 145 pg/ml", "145 pg"),
+        ("Glucose: 110 mg/dl", "110 mg"),
+        ("TSH: 2,5 mU/l", "mU/l"),
+
+        # Physical measurements
+        ("Größe: 175 cm", "175 cm"),
+        ("Gewicht: 80 kg", "80 kg"),
+        ("BMI: 26 kg/m²", "26 kg"),
+
+        # Cardiac values
+        ("Herzfrequenz: 72 bpm", "72 bpm"),
+        ("Herzfrequenz 78/min", "78/min"),
+        ("EF: 55 %", "55 %"),
+        ("LVEF 58%", "58%"),
+
+        # ECG values
+        ("QT-Zeit: 420 ms", "420 ms"),
+        ("PQ-Zeit 160 ms", "160 ms"),
+        ("Amplitude: 2 mV", "2 mV"),
+
+        # Fluid volumes
+        ("Trinkmenge: 1500 ml", "1500 ml"),
+        ("Infusion: 500 ml NaCl", "500 ml"),
+
+        # Age
+        ("Patient, 58 Jahre alt", "58 Jahre"),
+        ("im Alter von 62 Jahren", "62 Jahren"),
+    ])
+    def test_medical_values_preserved(self, pii_filter, input_text, must_contain):
+        """Test that medical values with units are NOT replaced as phone numbers."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert must_contain in result, f"Medical value '{must_contain}' was incorrectly removed from '{result}'"
+
+    @pytest.mark.parametrize("input_text,must_contain", [
+        # Short numbers should NOT be detected as phone
+        ("Code 1234", "1234"),
+        ("Zimmer 312", "312"),
+        ("Stufe 3", "3"),
+        ("NYHA III", "III"),
+        ("Grad 2", "2"),
+    ])
+    def test_short_numbers_not_phone(self, pii_filter, input_text, must_contain):
+        """Test that short numbers are NOT detected as phone numbers."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert must_contain in result, f"Short number '{must_contain}' was incorrectly replaced in '{result}'"
+        assert "[PHONE]" not in result, f"Short number incorrectly detected as phone in '{result}'"
+
+
+class TestRealPhoneNumbersStillDetected:
+    """Tests that actual phone numbers are still properly detected."""
+
+    @pytest.mark.parametrize("input_text,expected_placeholder", [
+        # German phone numbers (with prefix keyword)
+        ("Tel: 030/12345678", "[PHONE]"),
+        ("Telefon: 089-123456789", "[PHONE]"),
+        ("Phone: +49 30 12345678", "[PHONE]"),
+        ("Ruf: 0211 8604031", "[PHONE]"),
+
+        # Fax numbers
+        ("Fax: 030/12345679", "[FAX]"),
+        ("Telefax: 089-987654321", "[FAX]"),
+    ])
+    def test_real_phone_numbers_detected(self, pii_filter, input_text, expected_placeholder):
+        """Test that real phone/fax numbers are still detected."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert expected_placeholder in result, f"Phone number not detected in '{result}'"
+
+
+# =============================================================================
 # EDGE CASES
 # =============================================================================
 

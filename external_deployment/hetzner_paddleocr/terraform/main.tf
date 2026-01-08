@@ -423,19 +423,11 @@ resource "hcloud_server" "paddleocr" {
 }
 
 # -----------------------------------------------------------------------------
-# Firewall (protects servers - only SSH and private network traffic)
+# Firewall (protects servers - only private network traffic allowed)
 # -----------------------------------------------------------------------------
 
 resource "hcloud_firewall" "paddleocr" {
   name = "${var.server_name}-firewall"
-
-  rule {
-    description = "Allow SSH from internet"
-    direction   = "in"
-    protocol    = "tcp"
-    port        = "22"
-    source_ips  = ["0.0.0.0/0", "::/0"]
-  }
 
   rule {
     description = "Allow private network - all traffic"
