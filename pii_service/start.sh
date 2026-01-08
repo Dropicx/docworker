@@ -69,8 +69,8 @@ fi
 echo "=== All models ready, starting service ==="
 
 # Start the FastAPI application
-# Use 0.0.0.0 for IPv4 - Railway's proxy handles external routing
+# Use :: for IPv6 (dual-stack: listens on both IPv6 and IPv4)
 PORT="${PORT:-9125}"
 
-echo "Starting uvicorn on 0.0.0.0:$PORT"
-exec python -m uvicorn app.main:app --host "0.0.0.0" --port "$PORT" --workers 1
+echo "Starting uvicorn on [::]:$PORT (IPv6 dual-stack)"
+exec python -m uvicorn app.main:app --host "::" --port "$PORT" --workers 1
