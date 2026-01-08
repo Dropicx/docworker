@@ -49,6 +49,10 @@ class PIIRemovalRequest(BaseModel):
         default=True,
         description="Include detection metadata in response"
     )
+    custom_protection_terms: list[str] | None = Field(
+        default=None,
+        description="Additional terms to protect from removal (synced from database)"
+    )
 
 
 class PIIRemovalResponse(BaseModel):
@@ -64,6 +68,10 @@ class PIIBatchRequest(BaseModel):
     texts: list[str] = Field(..., description="List of texts to process", min_length=1)
     language: Literal["de", "en"] = Field(default="de")
     batch_size: int = Field(default=32, ge=1, le=100)
+    custom_protection_terms: list[str] | None = Field(
+        default=None,
+        description="Additional terms to protect from removal (synced from database)"
+    )
 
 
 class PIIBatchResponse(BaseModel):
@@ -217,7 +225,8 @@ async def remove_pii(request: PIIRemovalRequest):
     try:
         cleaned_text, metadata = pii_filter.remove_pii(
             text=request.text,
-            language=request.language
+            language=request.language,
+            custom_protection_terms=request.custom_protection_terms
         )
     except Exception as e:
         logger.error(f"PII removal failed: {e}")
@@ -252,7 +261,8 @@ async def remove_pii_batch(request: PIIBatchRequest):
         results = pii_filter.remove_pii_batch(
             texts=request.texts,
             language=request.language,
-            batch_size=request.batch_size
+            batch_size=request.batch_size,
+            custom_protection_terms=request.custom_protection_terms
         )
     except Exception as e:
         logger.error(f"Batch PII removal failed: {e}")

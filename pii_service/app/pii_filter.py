@@ -421,10 +421,14 @@ class PIIFilter:
 
         return False
 
-    def _is_medical_term(self, word: str) -> bool:
+    def _is_medical_term(self, word: str, custom_terms: set | None = None) -> bool:
         """Check if word is a protected medical term or drug name."""
         word_lower = word.lower()
-        return word_lower in self.medical_terms or word_lower in self.drug_database
+        if word_lower in self.medical_terms or word_lower in self.drug_database:
+            return True
+        if custom_terms and word_lower in custom_terms:
+            return True
+        return False
 
     def _remove_pii_with_patterns(self, text: str, language: str) -> tuple[str, dict]:
         """Remove PII using regex patterns."""
@@ -443,7 +447,9 @@ class PIIFilter:
 
         return text, {"pattern_removals": removed_count, "pii_types": pii_types}
 
-    def _remove_names_with_ner(self, text: str, language: str) -> tuple[str, dict]:
+    def _remove_names_with_ner(
+        self, text: str, language: str, custom_terms: set | None = None
+    ) -> tuple[str, dict]:
         """Remove person names using SpaCy NER."""
         nlp = self.nlp_de if language == "de" else self.nlp_en
 
@@ -453,6 +459,7 @@ class PIIFilter:
         doc = nlp(text)
         entities_removed = 0
         eponyms_preserved = 0
+        custom_terms_preserved = 0
 
         # Process entities in reverse order to maintain positions
         for ent in reversed(doc.ents):
@@ -463,8 +470,10 @@ class PIIFilter:
                     eponyms_preserved += 1
                     continue
 
-                # Check if it's a medical term
-                if self._is_medical_term(ent.text):
+                # Check if it's a medical term or custom protected term
+                if self._is_medical_term(ent.text, custom_terms):
+                    if custom_terms and ent.text.lower() in custom_terms:
+                        custom_terms_preserved += 1
                     continue
 
                 # Remove the name
@@ -474,13 +483,15 @@ class PIIFilter:
         return text, {
             "ner_removals": entities_removed,
             "eponyms_preserved": eponyms_preserved,
+            "custom_terms_preserved": custom_terms_preserved,
             "ner_available": True
         }
 
     def remove_pii(
         self,
         text: str,
-        language: Literal["de", "en"] = "de"
+        language: Literal["de", "en"] = "de",
+        custom_protection_terms: list[str] | None = None
     ) -> tuple[str, dict]:
         """
         Remove PII from text.
@@ -488,6 +499,7 @@ class PIIFilter:
         Args:
             text: Input text to process
             language: Language code ('de' for German, 'en' for English)
+            custom_protection_terms: Additional terms to protect (from database)
 
         Returns:
             Tuple of (cleaned_text, metadata_dict)
@@ -495,20 +507,26 @@ class PIIFilter:
         if not text or not text.strip():
             return text, {"entities_detected": 0, "error": "Empty text"}
 
+        # Build custom terms set for efficient lookup
+        custom_terms: set | None = None
+        if custom_protection_terms:
+            custom_terms = {term.lower() for term in custom_protection_terms}
+
         original_length = len(text)
         metadata = {
             "language": language,
             "original_length": original_length,
             "processing_timestamp": datetime.now().isoformat(),
-            "gdpr_compliant": True
+            "gdpr_compliant": True,
+            "custom_terms_count": len(custom_terms) if custom_terms else 0
         }
 
         # Step 1: Remove patterns (addresses, IDs, etc.)
         text, pattern_meta = self._remove_pii_with_patterns(text, language)
         metadata.update(pattern_meta)
 
-        # Step 2: Remove names with NER
-        text, ner_meta = self._remove_names_with_ner(text, language)
+        # Step 2: Remove names with NER (with custom terms protection)
+        text, ner_meta = self._remove_names_with_ner(text, language, custom_terms)
         metadata.update(ner_meta)
 
         # Calculate totals
@@ -524,7 +542,8 @@ class PIIFilter:
         self,
         texts: list[str],
         language: Literal["de", "en"] = "de",
-        batch_size: int = 32
+        batch_size: int = 32,
+        custom_protection_terms: list[str] | None = None
     ) -> list[tuple[str, dict]]:
         """
         Remove PII from multiple texts.
@@ -533,12 +552,13 @@ class PIIFilter:
             texts: List of texts to process
             language: Language code
             batch_size: Batch size for processing (not used currently, for future optimization)
+            custom_protection_terms: Additional terms to protect (from database)
 
         Returns:
             List of (cleaned_text, metadata) tuples
         """
         results = []
         for text in texts:
-            cleaned, meta = self.remove_pii(text, language)
+            cleaned, meta = self.remove_pii(text, language, custom_protection_terms)
             results.append((cleaned, meta))
         return results

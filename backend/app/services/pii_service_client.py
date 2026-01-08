@@ -14,6 +14,7 @@ Usage:
     >>> cleaned, metadata = await client.remove_pii("Patient: Max Mustermann", "de")
 """
 
+import json
 import logging
 import os
 from typing import Literal
@@ -37,6 +38,7 @@ class PIIServiceClient:
     - Automatic fallback to local filter if service unavailable
     - Configurable timeout for large documents
     - Health check support
+    - Syncs custom protection terms from database with each request
     """
 
     def __init__(
@@ -57,11 +59,69 @@ class PIIServiceClient:
         self.api_key = api_key or EXTERNAL_PII_API_KEY
         self.timeout = timeout
         self._local_filter = None
+        self._custom_terms_cache: list[str] | None = None
+        self._custom_terms_cache_time: float = 0
 
         if self.url:
             logger.info(f"PII Service Client initialized - URL: {self.url}")
         else:
             logger.info("PII Service Client initialized - No external URL configured")
+
+    def _load_custom_terms_from_db(self) -> list[str]:
+        """
+        Load custom protection terms from database.
+
+        Loads terms from system_settings table:
+        - privacy_filter.custom_medical_terms
+        - privacy_filter.custom_drug_names
+        - privacy_filter.custom_eponyms
+
+        Returns:
+            Combined list of all custom protection terms
+        """
+        import time
+
+        # Cache for 60 seconds to avoid DB hits on every request
+        if self._custom_terms_cache is not None:
+            if time.time() - self._custom_terms_cache_time < 60:
+                return self._custom_terms_cache
+
+        all_terms: list[str] = []
+
+        try:
+            from app.database.connection import get_db_session
+            from app.database.models import SystemSettingsDB
+
+            with get_db_session() as db:
+                # Load all custom term settings
+                settings_keys = [
+                    "privacy_filter.custom_medical_terms",
+                    "privacy_filter.custom_drug_names",
+                    "privacy_filter.custom_eponyms",
+                ]
+
+                for key in settings_keys:
+                    setting = db.query(SystemSettingsDB).filter(
+                        SystemSettingsDB.key == key
+                    ).first()
+
+                    if setting and setting.value:
+                        try:
+                            terms = json.loads(setting.value)
+                            if isinstance(terms, list):
+                                all_terms.extend(terms)
+                        except json.JSONDecodeError:
+                            logger.warning(f"Invalid JSON in {key}")
+
+            # Update cache
+            self._custom_terms_cache = all_terms
+            self._custom_terms_cache_time = time.time()
+            logger.debug(f"Loaded {len(all_terms)} custom protection terms from database")
+
+        except Exception as e:
+            logger.warning(f"Could not load custom terms from database: {e}")
+
+        return all_terms
 
     @property
     def is_external_enabled(self) -> bool:
@@ -113,16 +173,20 @@ class PIIServiceClient:
         language: str,
         include_metadata: bool
     ) -> tuple[str, dict]:
-        """Call external PII service API."""
+        """Call external PII service API with custom protection terms."""
         headers = {}
         if self.api_key:
             headers["X-API-Key"] = self.api_key
         headers["Content-Type"] = "application/json"
 
+        # Load custom terms from database to sync with external service
+        custom_terms = self._load_custom_terms_from_db()
+
         payload = {
             "text": text,
             "language": language,
-            "include_metadata": include_metadata
+            "include_metadata": include_metadata,
+            "custom_protection_terms": custom_terms if custom_terms else None
         }
 
         async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -134,7 +198,9 @@ class PIIServiceClient:
 
             if response.status_code == 200:
                 result = response.json()
-                return result["cleaned_text"], result.get("metadata", {})
+                metadata = result.get("metadata", {})
+                metadata["custom_terms_synced"] = len(custom_terms) if custom_terms else 0
+                return result["cleaned_text"], metadata
 
             elif response.status_code in (401, 403):
                 logger.error(f"PII service authentication failed: {response.status_code}")
@@ -227,16 +293,20 @@ class PIIServiceClient:
         language: str,
         batch_size: int
     ) -> list[tuple[str, dict]]:
-        """Call external batch PII service API."""
+        """Call external batch PII service API with custom protection terms."""
         headers = {}
         if self.api_key:
             headers["X-API-Key"] = self.api_key
         headers["Content-Type"] = "application/json"
 
+        # Load custom terms from database to sync with external service
+        custom_terms = self._load_custom_terms_from_db()
+
         payload = {
             "texts": texts,
             "language": language,
-            "batch_size": batch_size
+            "batch_size": batch_size,
+            "custom_protection_terms": custom_terms if custom_terms else None
         }
 
         async with httpx.AsyncClient(timeout=self.timeout * 2) as client:
