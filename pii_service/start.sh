@@ -69,8 +69,9 @@ fi
 echo "=== All models ready, starting service ==="
 
 # Start the FastAPI application
-# Use :: for IPv6 (dual-stack: listens on both IPv6 and IPv4)
+# HOST_BIND: default 0.0.0.0 (IPv4 for Hetzner), set to :: for IPv6 dual-stack (Railway)
 PORT="${PORT:-9125}"
+HOST="${HOST_BIND:-0.0.0.0}"
 
-echo "Starting uvicorn on [::]:$PORT (IPv6 dual-stack)"
-exec python -m uvicorn app.main:app --host "::" --port "$PORT" --workers 1
+echo "Starting uvicorn on $HOST:$PORT"
+exec python -m uvicorn app.main:app --host "$HOST" --port "$PORT" --workers 1
