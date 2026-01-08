@@ -659,10 +659,11 @@ class PIIFilter:
         if name_lower in self.medical_eponyms:
             return True
 
-        # Check for disease context
+        # Check for disease context (terms that indicate a medical eponym, not patient names)
+        # NOTE: "patient" was removed - it incorrectly preserved patient names like "Patient Max Mustermann"
         medical_context_words = [
             "morbus", "disease", "syndrome", "syndrom", "erkrankung",
-            "krankheit", "disorder", "condition", "patient", "diagnose"
+            "krankheit", "disorder", "condition", "diagnose"
         ]
         context_lower = context.lower()
         for word in medical_context_words:
