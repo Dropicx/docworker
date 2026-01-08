@@ -44,11 +44,19 @@ model_exists_in_volume() {
 
 # Function to set up pip environment for downloads (only called when needed)
 setup_pip_for_download() {
-    # Use models directory for pip temp files (avoids "no space" errors with tmpfs on Hetzner)
-    export TMPDIR="$MODELS_DIR"
-    export PIP_CACHE_DIR="$MODELS_DIR/.pip_cache"
-    mkdir -p "$PIP_CACHE_DIR"
-    echo "Pip configured: TMPDIR=$TMPDIR, PIP_CACHE_DIR=$PIP_CACHE_DIR"
+    # Try to use models directory for pip temp files (avoids "no space" errors with tmpfs on Hetzner)
+    # Fall back to /tmp if volume is not writable (Railway with root-owned volume)
+    if mkdir -p "$MODELS_DIR/.pip_cache" 2>/dev/null; then
+        export TMPDIR="$MODELS_DIR"
+        export PIP_CACHE_DIR="$MODELS_DIR/.pip_cache"
+        echo "Pip configured: using volume for temp files"
+    else
+        # Railway: volume is root-owned, use /tmp instead (has enough space for pip)
+        export TMPDIR="/tmp"
+        export PIP_CACHE_DIR="/tmp/.pip_cache"
+        mkdir -p "$PIP_CACHE_DIR"
+        echo "Pip configured: using /tmp for temp files (volume not writable)"
+    fi
 }
 
 # Function to download model to volume
@@ -83,6 +91,16 @@ fi
 
 # Only set up pip environment if we need to download
 if [ "$NEED_DE" = true ] || [ "$NEED_EN" = true ]; then
+    # Check if we can write to the models directory
+    if ! touch "$MODELS_DIR/.write_test" 2>/dev/null; then
+        echo "ERROR: Cannot write to $MODELS_DIR"
+        echo "Models need to be downloaded but volume is not writable."
+        echo "This usually happens on Railway with a fresh volume."
+        echo "Solution: Ensure the volume is writable or pre-populate with models."
+        exit 1
+    fi
+    rm -f "$MODELS_DIR/.write_test"
+
     setup_pip_for_download
 
     if [ "$NEED_DE" = true ]; then
