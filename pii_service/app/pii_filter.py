@@ -69,17 +69,15 @@ class PIIFilter:
 
             # German doctor/professional titles with names
             # Matches: "Dr. med. Schmidt", "Prof. Dr. Weber", "OA Müller"
-            # IMPORTANT: Requires period or space after abbreviations to avoid matching
-            # words like "Druckgefühle" (starts with "Dr") or "Professor" as separate
+            # NO IGNORECASE - names must start with uppercase, titles handled explicitly
             "doctor_title_name": re.compile(
-                r"\b(?:Dr\.[\s]*(?:med\.?|rer\.?\s*nat\.?|phil\.?|jur\.?|h\.?\s*c\.?)?[\s\.]*|"
-                r"Prof\.[\s]*(?:Dr\.[\s]*(?:med\.?|h\.?\s*c\.?)?[\s\.]*)?|"
-                r"Dipl\.[\s\-]?(?:Med\.?|Ing\.?|Psych\.?)\s*|"
-                r"OA\s+|Oberarzt\s+|Oberärztin\s+|"
-                r"CA\s+|Chefarzt\s+|Chefärztin\s+|"
-                r"FA\s+|Facharzt\s+|Fachärztin\s+)"
-                r"([A-ZÄÖÜ][a-zäöüß]+(?:[\s\-][A-ZÄÖÜ][a-zäöüß]+)?)\b",
-                re.IGNORECASE
+                r"\b(?:[Dd]r\.[\s]*(?:[Mm]ed\.?|[Rr]er\.?\s*[Nn]at\.?|[Pp]hil\.?|[Jj]ur\.?|[Hh]\.?\s*[Cc]\.?)?[\s\.]*|"
+                r"[Pp]rof\.[\s]*(?:[Dd]r\.[\s]*(?:[Mm]ed\.?|[Hh]\.?\s*[Cc]\.?)?[\s\.]*)?|"
+                r"[Dd]ipl\.[\s\-]?(?:[Mm]ed\.?|[Ii]ng\.?|[Pp]sych\.?)\s*|"
+                r"OA\s+|[Oo]berarzt\s+|[Oo]berärztin\s+|"
+                r"CA\s+|[Cc]hefarzt\s+|[Cc]hefärztin\s+|"
+                r"FA\s+|[Ff]acharzt\s+|[Ff]achärztin\s+)"
+                r"([A-ZÄÖÜ][a-zäöüß]+(?:[\s\-][A-ZÄÖÜ][a-zäöüß]+)?)\b"
             ),
 
             # German honorifics with names (Herr Müller, Frau Schmidt)
@@ -99,13 +97,12 @@ class PIIFilter:
             ),
 
             # Standalone German names after labels
-            # IMPORTANT: Requires colon separator to avoid matching "Patient hat" etc.
+            # IMPORTANT: Requires colon separator, NO IGNORECASE for name capture
             "labeled_name": re.compile(
-                r"(?:Patient(?:in)?|Versicherte[rn]?|"
-                r"Auftraggeber|Einsender|Ansprechpartner|"
-                r"Empfänger|Absender):\s*"
-                r"([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)",
-                re.IGNORECASE
+                r"(?:[Pp]atient(?:in)?|[Vv]ersicherte[rn]?|"
+                r"[Aa]uftraggeber|[Ee]insender|[Aa]nsprechpartner|"
+                r"[Ee]mpfänger|[Aa]bsender):\s*"
+                r"([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)"
             ),
 
             # =============================================================
@@ -266,14 +263,14 @@ class PIIFilter:
 
             # English doctor/professional titles with names
             # Matches: "Dr. Smith", "Prof. Johnson", "Dr. Mary Williams"
+            # NO IGNORECASE - names must start with uppercase
             "doctor_title_name": re.compile(
-                r"(?:Dr\.?|Prof\.?|Professor|"
+                r"(?:[Dd]r\.?|[Pp]rof\.?|[Pp]rofessor|"
                 r"MD|M\.D\.|"
                 r"PhD|Ph\.D\.|"
                 r"RN|NP|PA|"
-                r"Attending|Resident)\s+"
-                r"([A-Z][a-z]+(?:[\s\-][A-Z][a-z]+)*)",
-                re.IGNORECASE
+                r"[Aa]ttending|[Rr]esident)\s+"
+                r"([A-Z][a-z]+(?:[\s\-][A-Z][a-z]+)*)"
             ),
 
             # English honorifics with names (Mr. Smith, Mrs. Johnson)
@@ -284,12 +281,11 @@ class PIIFilter:
             ),
 
             # English patient name labels
-            # IMPORTANT: Requires colon separator to avoid false matches
+            # IMPORTANT: Requires colon separator, NO IGNORECASE for name capture
             "labeled_name": re.compile(
-                r"(?:Patient|Name|First\s*Name|Last\s*Name|Surname|"
-                r"Insured|Policyholder|Client|Customer):\s*"
-                r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)",
-                re.IGNORECASE
+                r"(?:[Pp]atient|[Nn]ame|[Ff]irst\s*[Nn]ame|[Ll]ast\s*[Nn]ame|[Ss]urname|"
+                r"[Ii]nsured|[Pp]olicyholder|[Cc]lient|[Cc]ustomer):\s*"
+                r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)"
             ),
 
             # =============================================================
