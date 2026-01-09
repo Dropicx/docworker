@@ -407,17 +407,24 @@ class PipelineJobFeedbackRepository:
             consent_given: Whether user consented to data usage
 
         Returns:
-            Updated job or None if not found (with decrypted file_content)
+            Updated job or None if not found
         """
         job = self.job_repo.get_by_processing_id(processing_id)
 
         if not job:
             return None
 
+        job_id = job.id  # Save ID before update (job may be expunged)
+
         # Update using repository to ensure encryption is handled
-        return self.job_repo.update(
-            job.id, has_feedback=True, data_consent_given=consent_given
+        # Note: EncryptedRepositoryMixin.update() returns None by design to prevent
+        # session tracking issues, but the update still happens successfully
+        self.job_repo.update(
+            job_id, has_feedback=True, data_consent_given=consent_given
         )
+
+        # Return the original job object (update was successful if we got here)
+        return job
 
 
     def clear_content_for_step_executions(self, job_id: str) -> int:
@@ -463,7 +470,7 @@ class PipelineJobFeedbackRepository:
             processing_id: Job processing ID
 
         Returns:
-            Updated job or None if not found (with decrypted file_content)
+            Updated job or None if not found
         """
         # Get job using repository (ensures decryption if needed)
         job = self.job_repo.get_by_processing_id(processing_id)
@@ -483,6 +490,7 @@ class PipelineJobFeedbackRepository:
             if "language_translated_text" in result_data:
                 result_data["language_translated_text"] = "[Content cleared - GDPR]"
             # Update using repository
+            # Note: EncryptedRepositoryMixin.update() returns None by design
             self.job_repo.update(job.id, result_data=result_data)
 
         # Clear content from all step executions for this job
@@ -490,9 +498,11 @@ class PipelineJobFeedbackRepository:
         self.clear_content_for_step_executions(job.job_id)
 
         # Update content_cleared_at timestamp
-        return self.job_repo.update(
-            job.id, content_cleared_at=datetime.now()
-        )
+        # Note: EncryptedRepositoryMixin.update() returns None by design
+        self.job_repo.update(job.id, content_cleared_at=datetime.now())
+
+        # Return the original job object (updates were successful if we got here)
+        return job
 
 
     def get_jobs_without_feedback(
