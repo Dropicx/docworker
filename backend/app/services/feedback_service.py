@@ -3,6 +3,7 @@ Feedback Service
 
 Business logic for user feedback system (Issue #47).
 Handles feedback submission, retrieval, and GDPR content management.
+Includes AI-powered quality analysis for self-improving feedback.
 """
 
 from datetime import datetime
@@ -10,7 +11,10 @@ import logging
 
 from sqlalchemy.orm import Session
 
+from app.database.modular_pipeline_models import FeedbackAnalysisStatus
 from app.repositories.feedback_repository import FeedbackRepository, PipelineJobFeedbackRepository
+from app.services.celery_client import enqueue_feedback_analysis
+from app.services.feature_flags import Feature, FeatureFlags
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +34,7 @@ class FeedbackService:
         Args:
             db: Database session
         """
+        self.db = db
         self.feedback_repo = FeedbackRepository(db)
         self.job_feedback_repo = PipelineJobFeedbackRepository(db)
 
@@ -104,6 +109,9 @@ class FeedbackService:
                     f"Clearing content for {processing_id} - consent not given"
                 )
                 self.job_feedback_repo.clear_content_for_job(processing_id)
+            else:
+                # Consent given - trigger AI analysis if feature enabled
+                self._trigger_ai_analysis(feedback.id)
 
         logger.info(
             f"Feedback submitted for {processing_id}: rating={overall_rating}, consent={data_consent_given}"
@@ -130,6 +138,56 @@ class FeedbackService:
             True if feedback exists
         """
         return self.feedback_repo.exists_for_processing_id(processing_id)
+
+    def _trigger_ai_analysis(self, feedback_id: int) -> bool:
+        """
+        Trigger AI quality analysis for a feedback entry.
+
+        Checks if the FEEDBACK_AI_ANALYSIS feature is enabled before
+        enqueueing the analysis task. Sets initial status to PENDING.
+
+        Args:
+            feedback_id: Feedback entry ID
+
+        Returns:
+            True if analysis was enqueued, False if skipped/failed
+        """
+        try:
+            # Check if feature is enabled
+            flags = FeatureFlags(session=self.db)
+            if not flags.is_enabled(Feature.FEEDBACK_AI_ANALYSIS):
+                logger.info(
+                    f"AI analysis disabled by feature flag, skipping for feedback {feedback_id}"
+                )
+                return False
+
+            # Set initial status to PENDING
+            self.feedback_repo.update_analysis_status(
+                feedback_id=feedback_id,
+                status=FeedbackAnalysisStatus.PENDING,
+            )
+
+            # Enqueue analysis task
+            task_id = enqueue_feedback_analysis(feedback_id)
+            if task_id:
+                logger.info(
+                    f"AI analysis enqueued for feedback {feedback_id}: task_id={task_id}"
+                )
+                return True
+            else:
+                logger.warning(
+                    f"Failed to enqueue AI analysis for feedback {feedback_id}"
+                )
+                self.feedback_repo.update_analysis_result(
+                    feedback_id=feedback_id,
+                    status=FeedbackAnalysisStatus.FAILED,
+                    error_message="Failed to enqueue analysis task",
+                )
+                return False
+
+        except Exception as e:
+            logger.error(f"Error triggering AI analysis for feedback {feedback_id}: {e}")
+            return False
 
     def cleanup_content(self, processing_id: str) -> dict:
         """
@@ -214,7 +272,7 @@ class FeedbackService:
         if not feedback:
             return None
 
-        result = self._feedback_to_dict(feedback)
+        result = self._feedback_to_detail_dict(feedback)
 
         # Add job data if available and consented
         if job:
@@ -278,7 +336,7 @@ class FeedbackService:
 
     def _feedback_to_dict(self, feedback) -> dict:
         """Convert feedback model to dict."""
-        return {
+        result = {
             "id": feedback.id,
             "processing_id": feedback.processing_id,
             "overall_rating": feedback.overall_rating,
@@ -286,4 +344,30 @@ class FeedbackService:
             "comment": feedback.comment,
             "data_consent_given": feedback.data_consent_given,
             "submitted_at": feedback.submitted_at.isoformat(),
+            # AI analysis fields
+            "ai_analysis_status": (
+                feedback.ai_analysis_status.value
+                if feedback.ai_analysis_status
+                else None
+            ),
+            "ai_analysis_quality_score": (
+                feedback.ai_analysis_summary.get("overall_quality_score")
+                if feedback.ai_analysis_summary
+                else None
+            ),
         }
+        return result
+
+    def _feedback_to_detail_dict(self, feedback) -> dict:
+        """Convert feedback model to detailed dict with all AI analysis fields."""
+        result = self._feedback_to_dict(feedback)
+        # Add full AI analysis fields for detail view
+        result["ai_analysis_text"] = feedback.ai_analysis_text
+        result["ai_analysis_summary"] = feedback.ai_analysis_summary
+        result["ai_analysis_completed_at"] = (
+            feedback.ai_analysis_completed_at.isoformat()
+            if feedback.ai_analysis_completed_at
+            else None
+        )
+        result["ai_analysis_error"] = feedback.ai_analysis_error
+        return result

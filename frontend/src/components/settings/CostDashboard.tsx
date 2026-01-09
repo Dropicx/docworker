@@ -11,6 +11,7 @@ import {
   Search,
   ArrowUpDown,
   Hash,
+  Brain,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { costApi } from '../../services/costApi';
@@ -22,6 +23,7 @@ import type {
   DateRangePreset,
   SortBy,
   SortOrder,
+  FeedbackAnalysisCost,
 } from '../../types/cost';
 
 // Date range preset options
@@ -102,6 +104,7 @@ const CostDashboard: React.FC = () => {
   // Data states
   const [overview, setOverview] = useState<CostOverview | null>(null);
   const [breakdown, setBreakdown] = useState<CostBreakdown | null>(null);
+  const [feedbackCosts, setFeedbackCosts] = useState<FeedbackAnalysisCost | null>(null);
   const [jobs, setJobs] = useState<ProcessingJobCost[]>([]);
   const [jobsTotal, setJobsTotal] = useState(0);
 
@@ -128,15 +131,17 @@ const CostDashboard: React.FC = () => {
     }
   }, [tokens]);
 
-  // Fetch overview and breakdown data
+  // Fetch overview, breakdown, and feedback costs data
   const fetchOverviewData = useCallback(async () => {
     const { start, end } = getDateRange(datePreset);
-    const [overviewData, breakdownData] = await Promise.all([
+    const [overviewData, breakdownData, feedbackData] = await Promise.all([
       costApi.getOverview(start, end),
       costApi.getBreakdown(start, end),
+      costApi.getFeedbackAnalysisCosts(start, end),
     ]);
     setOverview(overviewData);
     setBreakdown(breakdownData);
+    setFeedbackCosts(feedbackData);
   }, [datePreset]);
 
   // Fetch jobs data
@@ -344,16 +349,56 @@ const CostDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Average Cost */}
+        {/* Average Cost per Document */}
         <div className="bg-white border border-primary-200 rounded-lg p-6">
           <div className="flex items-center space-x-2 mb-4">
-            <TrendingUp className="w-5 h-5 text-primary-600" />
-            <h4 className="font-semibold text-primary-900">Ø pro Aufruf</h4>
+            <FileText className="w-5 h-5 text-brand-600" />
+            <h4 className="font-semibold text-primary-900">Ø pro Dokument</h4>
           </div>
           <div className="flex items-baseline space-x-2">
             <span className="text-3xl font-bold text-primary-900">
-              {formatCurrency(overview?.average_cost_per_call || 0)}
+              {formatCurrency(overview?.average_cost_per_document || 0)}
             </span>
+          </div>
+          <div className="text-xs text-primary-500 mt-2">
+            {overview?.document_count || 0} Dokumente verarbeitet
+          </div>
+        </div>
+      </div>
+
+      {/* Feedback Analysis Costs */}
+      <div className="bg-gradient-to-br from-brand-50 to-brand-100 border border-brand-200 rounded-lg p-6">
+        <div className="flex items-center space-x-2 mb-4">
+          <Brain className="w-5 h-5 text-brand-600" />
+          <h4 className="font-semibold text-brand-900">Feedback-Analyse (KI)</h4>
+          <span className="text-xs bg-brand-200 text-brand-700 px-2 py-0.5 rounded-full">
+            Self-Improving
+          </span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div>
+            <div className="text-xs text-brand-600 uppercase font-medium">Kosten</div>
+            <div className="text-2xl font-bold text-brand-900">
+              {formatCurrency(feedbackCosts?.total_cost_usd || 0)}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-brand-600 uppercase font-medium">Analysen</div>
+            <div className="text-2xl font-bold text-brand-900">
+              {feedbackCosts?.total_calls || 0}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-brand-600 uppercase font-medium">Tokens</div>
+            <div className="text-lg font-semibold text-brand-700">
+              {formatNumber(feedbackCosts?.total_tokens || 0)}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-brand-600 uppercase font-medium">Ø pro Analyse</div>
+            <div className="text-lg font-semibold text-brand-700">
+              {formatCurrency(feedbackCosts?.average_cost_per_analysis || 0)}
+            </div>
           </div>
         </div>
       </div>

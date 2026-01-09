@@ -70,6 +70,27 @@ export interface CleanupResponse {
   reason?: string;
 }
 
+// ==================== AI ANALYSIS ====================
+
+/**
+ * Status of AI-powered feedback quality analysis
+ */
+export type AIAnalysisStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED' | 'SKIPPED';
+
+/**
+ * Structured summary from AI analysis
+ */
+export interface AIAnalysisSummary {
+  /** PII leak issues found in the translation */
+  pii_issues: string[];
+  /** Translation quality issues identified */
+  translation_issues: string[];
+  /** Improvement recommendations */
+  recommendations: string[];
+  /** Overall quality score (0-10) */
+  overall_quality_score: number;
+}
+
 // ==================== ADMIN LIST ====================
 
 /**
@@ -83,6 +104,10 @@ export interface FeedbackEntry {
   comment: string | null;
   data_consent_given: boolean;
   submitted_at: string;
+  /** AI analysis status (for list view) */
+  ai_analysis_status: AIAnalysisStatus | null;
+  /** Quality score from AI analysis (0-10) */
+  ai_analysis_quality_score: number | null;
 }
 
 /**
@@ -152,8 +177,16 @@ export interface JobData {
 }
 
 /**
- * Detailed feedback with associated job data
+ * Detailed feedback with associated job data and AI analysis
  */
 export interface FeedbackDetail extends FeedbackEntry {
   job_data: JobData | null;
+  /** Full AI analysis text (detailed analysis) */
+  ai_analysis_text: string | null;
+  /** Structured analysis summary */
+  ai_analysis_summary: AIAnalysisSummary | null;
+  /** When analysis was completed */
+  ai_analysis_completed_at: string | null;
+  /** Error message if analysis failed */
+  ai_analysis_error: string | null;
 }

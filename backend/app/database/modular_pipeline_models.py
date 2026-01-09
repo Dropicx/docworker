@@ -59,6 +59,16 @@ class ModelProvider(str, Enum):
     MISTRAL = "MISTRAL"  # Mistral AI API
 
 
+class FeedbackAnalysisStatus(str, Enum):
+    """Status of AI-powered feedback quality analysis"""
+
+    PENDING = "PENDING"  # Waiting for analysis to start
+    PROCESSING = "PROCESSING"  # Analysis in progress
+    COMPLETED = "COMPLETED"  # Analysis completed successfully
+    FAILED = "FAILED"  # Analysis failed (API error, timeout, etc.)
+    SKIPPED = "SKIPPED"  # Skipped (no consent, content cleared, or feature disabled)
+
+
 # ==================== DATABASE MODELS ====================
 
 
@@ -417,5 +427,18 @@ class UserFeedbackDB(Base):
     submitted_at = Column(DateTime, default=func.now(), nullable=False)
     client_ip = Column(String(100), nullable=True)
 
+    # AI-powered quality analysis (triggered when consent is given)
+    # Compares OCR text → PII-anonymized text → final translation
+    ai_analysis_status = Column(
+        SQLEnum(FeedbackAnalysisStatus),
+        nullable=True,
+        default=None,
+    )
+    ai_analysis_text = Column(Text, nullable=True)  # Full analysis text (encrypted)
+    ai_analysis_summary = Column(JSON, nullable=True)  # Structured: {pii_issues, translation_issues, recommendations, quality_score}
+    ai_analysis_started_at = Column(DateTime, nullable=True)
+    ai_analysis_completed_at = Column(DateTime, nullable=True)
+    ai_analysis_error = Column(Text, nullable=True)  # Error message if analysis failed
+
     def __repr__(self):
-        return f"<UserFeedbackDB(processing_id='{self.processing_id}', rating={self.overall_rating}, consent={self.data_consent_given})>"
+        return f"<UserFeedbackDB(processing_id='{self.processing_id}', rating={self.overall_rating}, consent={self.data_consent_given}, analysis={self.ai_analysis_status})>"

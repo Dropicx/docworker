@@ -12,6 +12,21 @@ export interface CostOverview {
   total_calls: number;
   average_cost_per_call: number;
   average_tokens_per_call: number;
+  // Document-level statistics
+  document_count: number;
+  average_cost_per_document: number;
+  min_cost_per_document: number;
+  max_cost_per_document: number;
+}
+
+/**
+ * Cost statistics specifically for feedback AI analysis
+ */
+export interface FeedbackAnalysisCost {
+  total_cost_usd: number;
+  total_tokens: number;
+  total_calls: number;
+  average_cost_per_analysis: number;
 }
 
 /**

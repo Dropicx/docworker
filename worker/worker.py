@@ -30,7 +30,7 @@ celery_app = Celery(
     'doctranslator_worker',
     broker=config.REDIS_URL,
     backend=config.REDIS_URL,
-    include=['worker.tasks.document_processing', 'worker.tasks.scheduled_tasks']
+    include=['worker.tasks.document_processing', 'worker.tasks.scheduled_tasks', 'worker.tasks.feedback_analysis']
 )
 
 # Apply enhanced configuration from config.py

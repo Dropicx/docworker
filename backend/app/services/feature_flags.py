@@ -73,6 +73,9 @@ class Feature(str, Enum):
     STOP_CONDITIONS = "stop_conditions_enabled"
     RETRY_ON_FAILURE = "retry_on_failure_enabled"
 
+    # Feedback Analysis
+    FEEDBACK_AI_ANALYSIS = "feedback_ai_analysis_enabled"
+
 
 class FeatureFlags:
     """
@@ -125,6 +128,8 @@ class FeatureFlags:
         Feature.DYNAMIC_BRANCHING: True,
         Feature.STOP_CONDITIONS: True,
         Feature.RETRY_ON_FAILURE: True,
+        # Feedback analysis - enabled by default
+        Feature.FEEDBACK_AI_ANALYSIS: True,
     }
 
     def __init__(

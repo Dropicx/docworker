@@ -20,6 +20,11 @@ import {
   FileText,
   Eye,
   EyeOff,
+  Brain,
+  AlertTriangle,
+  Lightbulb,
+  Clock,
+  Loader2,
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { feedbackApi } from '../../services/feedbackApi';
@@ -28,6 +33,7 @@ import type {
   FeedbackStats,
   FeedbackDetail,
   FeedbackListQuery,
+  AIAnalysisStatus,
 } from '../../types/feedback';
 
 // Date range preset options
@@ -107,6 +113,76 @@ const StarDisplay: React.FC<{ rating: number; size?: 'sm' | 'md' }> = ({
   );
 };
 
+// AI Analysis Status Badge Component
+const AIAnalysisStatusBadge: React.FC<{ status: AIAnalysisStatus | null }> = ({ status }) => {
+  if (!status) return null;
+
+  const config: Record<AIAnalysisStatus, { label: string; className: string; icon: React.ReactNode }> = {
+    PENDING: {
+      label: 'Ausstehend',
+      className: 'bg-primary-100 text-primary-700 border-primary-300',
+      icon: <Clock className="w-3 h-3" />,
+    },
+    PROCESSING: {
+      label: 'Analysiere...',
+      className: 'bg-brand-100 text-brand-700 border-brand-300',
+      icon: <Loader2 className="w-3 h-3 animate-spin" />,
+    },
+    COMPLETED: {
+      label: 'Abgeschlossen',
+      className: 'bg-success-100 text-success-700 border-success-300',
+      icon: <CheckCircle className="w-3 h-3" />,
+    },
+    FAILED: {
+      label: 'Fehlgeschlagen',
+      className: 'bg-error-100 text-error-700 border-error-300',
+      icon: <XCircle className="w-3 h-3" />,
+    },
+    SKIPPED: {
+      label: 'Übersprungen',
+      className: 'bg-neutral-100 text-neutral-600 border-neutral-300',
+      icon: <XCircle className="w-3 h-3" />,
+    },
+  };
+
+  const { label, className, icon } = config[status];
+
+  return (
+    <span className={`inline-flex items-center space-x-1 px-2 py-0.5 text-xs font-medium rounded-full border ${className}`}>
+      {icon}
+      <span>{label}</span>
+    </span>
+  );
+};
+
+// Quality Score Display Component
+const QualityScoreDisplay: React.FC<{ score: number }> = ({ score }) => {
+  const getColor = (s: number) => {
+    if (s >= 8) return 'text-success-600';
+    if (s >= 5) return 'text-warning-600';
+    return 'text-error-600';
+  };
+
+  const getBgColor = (s: number) => {
+    if (s >= 8) return 'bg-success-100';
+    if (s >= 5) return 'bg-warning-100';
+    return 'bg-error-100';
+  };
+
+  return (
+    <div className="flex items-center space-x-2">
+      <span className={`text-2xl font-bold ${getColor(score)}`}>{score}</span>
+      <span className="text-sm text-primary-500">/ 10</span>
+      <div className="flex-1 h-2 bg-primary-100 rounded-full overflow-hidden ml-2">
+        <div
+          className={`h-full rounded-full ${getBgColor(score)}`}
+          style={{ width: `${score * 10}%` }}
+        />
+      </div>
+    </div>
+  );
+};
+
 const FeedbackDashboard: React.FC = () => {
   const { tokens } = useAuth();
 
@@ -132,6 +208,7 @@ const FeedbackDashboard: React.FC = () => {
   const [feedbackDetail, setFeedbackDetail] = useState<FeedbackDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
   const [showContent, setShowContent] = useState(false);
+  const [showAnalysisText, setShowAnalysisText] = useState(false);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -192,12 +269,14 @@ const FeedbackDashboard: React.FC = () => {
       setExpandedId(null);
       setFeedbackDetail(null);
       setShowContent(false);
+      setShowAnalysisText(false);
       return;
     }
 
     setExpandedId(feedbackId);
     setLoadingDetail(true);
     setShowContent(false);
+    setShowAnalysisText(false);
     try {
       const detail = await feedbackApi.getFeedbackDetail(feedbackId);
       setFeedbackDetail(detail);
@@ -504,6 +583,9 @@ const FeedbackDashboard: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-semibold text-primary-700 uppercase">
                   Zustimmung
                 </th>
+                <th className="px-4 py-3 text-left text-xs font-semibold text-primary-700 uppercase">
+                  KI-Analyse
+                </th>
                 <th
                   className="px-4 py-3 text-left text-xs font-semibold text-primary-700 uppercase cursor-pointer hover:bg-primary-100"
                   onClick={() => handleSort('submitted_at')}
@@ -561,6 +643,20 @@ const FeedbackDashboard: React.FC = () => {
                           </span>
                         )}
                       </td>
+                      <td className="px-4 py-3">
+                        {entry.ai_analysis_status ? (
+                          <div className="flex items-center space-x-1">
+                            <AIAnalysisStatusBadge status={entry.ai_analysis_status} />
+                            {entry.ai_analysis_quality_score !== null && entry.ai_analysis_status === 'COMPLETED' && (
+                              <span className="text-xs font-medium text-primary-600 ml-1">
+                                ({entry.ai_analysis_quality_score}/10)
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-primary-400 text-sm">-</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 text-sm text-primary-600">
                         {formatDate(entry.submitted_at)}
                       </td>
@@ -569,7 +665,7 @@ const FeedbackDashboard: React.FC = () => {
                     {/* Expanded Detail */}
                     {expandedId === entry.id && (
                       <tr>
-                        <td colSpan={6} className="px-4 py-4 bg-primary-50">
+                        <td colSpan={7} className="px-4 py-4 bg-primary-50">
                           {loadingDetail ? (
                             <div className="flex items-center justify-center py-4">
                               <RefreshCw className="w-5 h-5 text-brand-600 animate-spin" />
@@ -764,6 +860,160 @@ const FeedbackDashboard: React.FC = () => {
                                 </div>
                               )}
 
+                              {/* AI Quality Analysis Section */}
+                              {feedbackDetail.data_consent_given && feedbackDetail.ai_analysis_status && (
+                                <div className="bg-white p-4 rounded border border-primary-200">
+                                  <div className="flex items-center justify-between mb-3">
+                                    <h5 className="font-semibold text-primary-900 flex items-center space-x-2">
+                                      <Brain className="w-4 h-4 text-brand-600" />
+                                      <span>KI-Qualitätsanalyse</span>
+                                    </h5>
+                                    <AIAnalysisStatusBadge status={feedbackDetail.ai_analysis_status} />
+                                  </div>
+
+                                  {/* Analysis Content based on status */}
+                                  {feedbackDetail.ai_analysis_status === 'PROCESSING' && (
+                                    <div className="flex items-center space-x-2 text-brand-600">
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                      <span className="text-sm">Analyse wird durchgeführt...</span>
+                                    </div>
+                                  )}
+
+                                  {feedbackDetail.ai_analysis_status === 'PENDING' && (
+                                    <div className="flex items-center space-x-2 text-primary-500">
+                                      <Clock className="w-4 h-4" />
+                                      <span className="text-sm">Analyse wartet auf Ausführung</span>
+                                    </div>
+                                  )}
+
+                                  {feedbackDetail.ai_analysis_status === 'FAILED' && feedbackDetail.ai_analysis_error && (
+                                    <div className="bg-error-50 border border-error-200 rounded p-3">
+                                      <div className="flex items-start space-x-2">
+                                        <AlertCircle className="w-4 h-4 text-error-600 flex-shrink-0 mt-0.5" />
+                                        <div>
+                                          <p className="text-sm font-medium text-error-700">Analyse fehlgeschlagen</p>
+                                          <p className="text-xs text-error-600 mt-1">{feedbackDetail.ai_analysis_error}</p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {feedbackDetail.ai_analysis_status === 'SKIPPED' && (
+                                    <p className="text-sm text-primary-500">Analyse wurde übersprungen (Feature deaktiviert)</p>
+                                  )}
+
+                                  {feedbackDetail.ai_analysis_status === 'COMPLETED' && feedbackDetail.ai_analysis_summary && (
+                                    <div className="space-y-4">
+                                      {/* Quality Score */}
+                                      <div>
+                                        <div className="text-xs font-semibold text-primary-600 mb-2">Qualitätsbewertung</div>
+                                        <QualityScoreDisplay score={feedbackDetail.ai_analysis_summary.overall_quality_score} />
+                                      </div>
+
+                                      {/* PII Issues */}
+                                      {feedbackDetail.ai_analysis_summary.pii_issues.length > 0 && (
+                                        <div>
+                                          <div className="text-xs font-semibold text-error-600 mb-2 flex items-center space-x-1">
+                                            <AlertTriangle className="w-3 h-3" />
+                                            <span>PII-Probleme ({feedbackDetail.ai_analysis_summary.pii_issues.length})</span>
+                                          </div>
+                                          <ul className="space-y-1">
+                                            {feedbackDetail.ai_analysis_summary.pii_issues.map((issue, idx) => (
+                                              <li key={idx} className="text-xs text-error-700 bg-error-50 p-2 rounded flex items-start space-x-2">
+                                                <AlertTriangle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                                <span>{issue}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+
+                                      {/* Translation Issues */}
+                                      {feedbackDetail.ai_analysis_summary.translation_issues.length > 0 && (
+                                        <div>
+                                          <div className="text-xs font-semibold text-warning-600 mb-2 flex items-center space-x-1">
+                                            <AlertCircle className="w-3 h-3" />
+                                            <span>Übersetzungsprobleme ({feedbackDetail.ai_analysis_summary.translation_issues.length})</span>
+                                          </div>
+                                          <ul className="space-y-1">
+                                            {feedbackDetail.ai_analysis_summary.translation_issues.map((issue, idx) => (
+                                              <li key={idx} className="text-xs text-warning-700 bg-warning-50 p-2 rounded flex items-start space-x-2">
+                                                <AlertCircle className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                                <span>{issue}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+
+                                      {/* Recommendations */}
+                                      {feedbackDetail.ai_analysis_summary.recommendations.length > 0 && (
+                                        <div>
+                                          <div className="text-xs font-semibold text-brand-600 mb-2 flex items-center space-x-1">
+                                            <Lightbulb className="w-3 h-3" />
+                                            <span>Empfehlungen ({feedbackDetail.ai_analysis_summary.recommendations.length})</span>
+                                          </div>
+                                          <ul className="space-y-1">
+                                            {feedbackDetail.ai_analysis_summary.recommendations.map((rec, idx) => (
+                                              <li key={idx} className="text-xs text-brand-700 bg-brand-50 p-2 rounded flex items-start space-x-2">
+                                                <Lightbulb className="w-3 h-3 flex-shrink-0 mt-0.5" />
+                                                <span>{rec}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+
+                                      {/* No issues found */}
+                                      {feedbackDetail.ai_analysis_summary.pii_issues.length === 0 &&
+                                       feedbackDetail.ai_analysis_summary.translation_issues.length === 0 && (
+                                        <div className="text-sm text-success-600 flex items-center space-x-2">
+                                          <CheckCircle className="w-4 h-4" />
+                                          <span>Keine Probleme gefunden</span>
+                                        </div>
+                                      )}
+
+                                      {/* Full Analysis Text (collapsible) */}
+                                      {feedbackDetail.ai_analysis_text && (
+                                        <div className="border-t border-primary-200 pt-3 mt-3">
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              setShowAnalysisText(!showAnalysisText);
+                                            }}
+                                            className="flex items-center space-x-1 text-xs text-brand-600 hover:text-brand-700"
+                                          >
+                                            {showAnalysisText ? (
+                                              <>
+                                                <ChevronUp className="w-3 h-3" />
+                                                <span>Vollständige Analyse ausblenden</span>
+                                              </>
+                                            ) : (
+                                              <>
+                                                <ChevronDown className="w-3 h-3" />
+                                                <span>Vollständige Analyse anzeigen</span>
+                                              </>
+                                            )}
+                                          </button>
+                                          {showAnalysisText && (
+                                            <div className="mt-2 text-xs text-primary-700 bg-primary-50 p-3 rounded max-h-60 overflow-y-auto whitespace-pre-wrap">
+                                              {feedbackDetail.ai_analysis_text}
+                                            </div>
+                                          )}
+                                        </div>
+                                      )}
+
+                                      {/* Analysis timestamp */}
+                                      {feedbackDetail.ai_analysis_completed_at && (
+                                        <div className="text-xs text-primary-400 mt-2">
+                                          Analysiert am: {formatDate(feedbackDetail.ai_analysis_completed_at)}
+                                        </div>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
+
                               {!feedbackDetail.data_consent_given && (
                                 <div className="bg-warning-50 border border-warning-200 rounded p-3 text-sm text-warning-700">
                                   Keine Zustimmung zur Datenverwendung - Dokumentinhalt nicht
@@ -789,7 +1039,7 @@ const FeedbackDashboard: React.FC = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-primary-500">
+                  <td colSpan={7} className="px-4 py-8 text-center text-primary-500">
                     <MessageSquare className="w-8 h-8 mx-auto mb-2 text-primary-300" />
                     <p>Keine Feedback-Einträge gefunden</p>
                   </td>

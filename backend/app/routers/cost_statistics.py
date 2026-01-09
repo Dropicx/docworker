@@ -56,6 +56,11 @@ class CostOverviewResponse(BaseModel):
     total_calls: int = Field(..., description="Total API calls")
     average_cost_per_call: float = Field(..., description="Average cost per API call")
     average_tokens_per_call: float = Field(..., description="Average tokens per call")
+    # Document-level statistics
+    document_count: int = Field(0, description="Number of unique documents processed")
+    average_cost_per_document: float = Field(0, description="Average total cost per document")
+    min_cost_per_document: float = Field(0, description="Lowest document cost")
+    max_cost_per_document: float = Field(0, description="Highest document cost")
 
 
 class ModelCostBreakdown(BaseModel):
@@ -127,6 +132,15 @@ class ProcessingJobDetailResponse(BaseModel):
     summary: CostOverviewResponse = Field(..., description="Cost summary")
 
 
+class FeedbackAnalysisCostResponse(BaseModel):
+    """Cost statistics specifically for feedback AI analysis"""
+
+    total_cost_usd: float = Field(..., description="Total cost for feedback analysis")
+    total_tokens: int = Field(..., description="Total tokens used")
+    total_calls: int = Field(..., description="Number of feedback analyses")
+    average_cost_per_analysis: float = Field(..., description="Average cost per analysis")
+
+
 # ==================== ENDPOINTS ====================
 
 
@@ -136,14 +150,20 @@ async def get_cost_overview(
     end_date: datetime | None = Query(None, description="End date filter"),
     current_user: UserDB = Depends(require_admin()),
     tracker: AICostTracker = Depends(get_ai_cost_tracker),
+    repository: AILogInteractionRepository = Depends(get_ai_log_interaction_repository),
 ):
     """
     Get cost overview statistics (admin only).
 
-    Returns total cost, tokens, calls, and averages for the specified period.
+    Returns total cost, tokens, calls, averages, and per-document statistics.
     """
     try:
         result = tracker.get_total_cost(start_date=start_date, end_date=end_date)
+
+        # Get document-level statistics
+        doc_stats = repository.get_average_cost_per_document(
+            start_date=start_date, end_date=end_date
+        )
 
         return CostOverviewResponse(
             total_cost_usd=result.get("total_cost_usd", 0),
@@ -151,6 +171,11 @@ async def get_cost_overview(
             total_calls=result.get("total_calls", 0),
             average_cost_per_call=result.get("average_cost_per_call", 0),
             average_tokens_per_call=result.get("average_tokens_per_call", 0),
+            # Document-level statistics
+            document_count=doc_stats.get("document_count", 0),
+            average_cost_per_document=doc_stats.get("average_cost_per_document", 0),
+            min_cost_per_document=doc_stats.get("min_cost_per_document", 0),
+            max_cost_per_document=doc_stats.get("max_cost_per_document", 0),
         )
 
     except Exception as e:
@@ -355,6 +380,41 @@ async def get_processing_job_detail(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get processing job detail",
+        ) from e
+
+
+# ==================== FEEDBACK ANALYSIS COSTS ====================
+
+
+@router.get("/feedback-analysis", response_model=FeedbackAnalysisCostResponse)
+async def get_feedback_analysis_costs(
+    start_date: datetime | None = Query(None, description="Start date filter"),
+    end_date: datetime | None = Query(None, description="End date filter"),
+    current_user: UserDB = Depends(require_admin()),
+    repository: AILogInteractionRepository = Depends(get_ai_log_interaction_repository),
+):
+    """
+    Get cost statistics specifically for feedback AI analysis (admin only).
+
+    Returns costs for the self-improving feedback feature using Mistral Large.
+    """
+    try:
+        stats = repository.get_feedback_analysis_stats(
+            start_date=start_date, end_date=end_date
+        )
+
+        return FeedbackAnalysisCostResponse(
+            total_cost_usd=stats["total_cost_usd"],
+            total_tokens=stats["total_tokens"],
+            total_calls=stats["total_calls"],
+            average_cost_per_analysis=stats["average_cost_per_analysis"],
+        )
+
+    except Exception as e:
+        logger.error(f"Error getting feedback analysis costs: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to get feedback analysis costs",
         ) from e
 
 

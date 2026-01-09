@@ -2,28 +2,39 @@
 Feedback Repository
 
 Handles database operations for user feedback on translations (Issue #47).
+Includes AI-powered quality analysis for self-improving feedback.
 """
 
+import logging
 from datetime import datetime, timedelta
 
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import (
+    FeedbackAnalysisStatus,
     PipelineJobDB,
     PipelineStepExecutionDB,
     UserFeedbackDB,
 )
-from app.repositories.base_repository import BaseRepository
+from app.repositories.base_repository import BaseRepository, EncryptedRepositoryMixin
 from app.repositories.pipeline_job_repository import PipelineJobRepository
 from app.repositories.pipeline_step_execution_repository import PipelineStepExecutionRepository
 
+logger = logging.getLogger(__name__)
 
-class FeedbackRepository(BaseRepository[UserFeedbackDB]):
+
+class FeedbackRepository(EncryptedRepositoryMixin, BaseRepository[UserFeedbackDB]):
     """
     Repository for User Feedback operations.
 
     Provides specialized queries for managing feedback beyond basic CRUD.
+    Includes encryption for AI analysis text (may contain medical excerpts).
+
+    Encrypted fields: ai_analysis_text
     """
+
+    # Define fields to encrypt (ai_analysis_text may contain medical document excerpts)
+    encrypted_fields = ["ai_analysis_text"]
 
     def __init__(self, db: Session):
         """
@@ -210,6 +221,167 @@ class FeedbackRepository(BaseRepository[UserFeedbackDB]):
             query = query.limit(limit)
 
         return query.all()
+
+    # ==================== AI ANALYSIS METHODS ====================
+
+    def update_analysis_status(
+        self,
+        feedback_id: int,
+        status: FeedbackAnalysisStatus,
+        started_at: datetime | None = None,
+    ) -> UserFeedbackDB | None:
+        """
+        Update the AI analysis status for a feedback entry.
+
+        Args:
+            feedback_id: Feedback entry ID
+            status: New analysis status
+            started_at: When analysis started (optional)
+
+        Returns:
+            Updated feedback or None if not found
+        """
+        feedback = self.get_by_id(feedback_id)
+        if not feedback:
+            logger.warning(f"Feedback not found for ID: {feedback_id}")
+            return None
+
+        feedback.ai_analysis_status = status
+        if started_at:
+            feedback.ai_analysis_started_at = started_at
+
+        self.db.commit()
+        self.db.refresh(feedback)
+        return feedback
+
+    def update_analysis_result(
+        self,
+        feedback_id: int,
+        status: FeedbackAnalysisStatus,
+        analysis_text: str | None = None,
+        analysis_summary: dict | None = None,
+        error_message: str | None = None,
+    ) -> UserFeedbackDB | None:
+        """
+        Update the AI analysis result for a feedback entry.
+
+        Args:
+            feedback_id: Feedback entry ID
+            status: Final analysis status (COMPLETED, FAILED, SKIPPED)
+            analysis_text: Full analysis text from AI (will be encrypted)
+            analysis_summary: Structured summary {pii_issues, translation_issues, recommendations, quality_score}
+            error_message: Error message if analysis failed
+
+        Returns:
+            Updated feedback or None if not found
+        """
+        feedback = self.get_by_id(feedback_id)
+        if not feedback:
+            logger.warning(f"Feedback not found for ID: {feedback_id}")
+            return None
+
+        # Use update method to ensure encryption is applied
+        update_data = {
+            "ai_analysis_status": status,
+            "ai_analysis_completed_at": datetime.now(),
+        }
+
+        if analysis_text is not None:
+            update_data["ai_analysis_text"] = analysis_text
+
+        if analysis_summary is not None:
+            update_data["ai_analysis_summary"] = analysis_summary
+
+        if error_message is not None:
+            update_data["ai_analysis_error"] = error_message
+
+        return self.update(feedback_id, **update_data)
+
+    def get_pending_analysis(self, limit: int = 100) -> list[UserFeedbackDB]:
+        """
+        Get feedback entries with pending AI analysis.
+
+        Args:
+            limit: Maximum number of entries to return
+
+        Returns:
+            List of feedback entries awaiting analysis
+        """
+        return (
+            self.db.query(self.model)
+            .filter(self.model.ai_analysis_status == FeedbackAnalysisStatus.PENDING)
+            .limit(limit)
+            .all()
+        )
+
+    def get_analysis_statistics(self, since: datetime | None = None) -> dict:
+        """
+        Get statistics about AI analysis completion.
+
+        Args:
+            since: Only include feedback submitted after this time
+
+        Returns:
+            Dictionary with analysis statistics
+        """
+        query = self.db.query(self.model).filter(
+            self.model.data_consent_given == True  # noqa: E712
+        )
+
+        if since:
+            query = query.filter(self.model.submitted_at >= since)
+
+        feedbacks = query.all()
+
+        if not feedbacks:
+            return {
+                "total_with_consent": 0,
+                "analysis_completed": 0,
+                "analysis_pending": 0,
+                "analysis_failed": 0,
+                "analysis_skipped": 0,
+                "average_quality_score": 0,
+            }
+
+        total = len(feedbacks)
+        completed = sum(
+            1 for f in feedbacks
+            if f.ai_analysis_status == FeedbackAnalysisStatus.COMPLETED
+        )
+        pending = sum(
+            1 for f in feedbacks
+            if f.ai_analysis_status == FeedbackAnalysisStatus.PENDING
+        )
+        failed = sum(
+            1 for f in feedbacks
+            if f.ai_analysis_status == FeedbackAnalysisStatus.FAILED
+        )
+        skipped = sum(
+            1 for f in feedbacks
+            if f.ai_analysis_status == FeedbackAnalysisStatus.SKIPPED
+        )
+
+        # Calculate average quality score from completed analyses
+        quality_scores = [
+            f.ai_analysis_summary.get("overall_quality_score", 0)
+            for f in feedbacks
+            if f.ai_analysis_status == FeedbackAnalysisStatus.COMPLETED
+            and f.ai_analysis_summary
+        ]
+        avg_quality = (
+            round(sum(quality_scores) / len(quality_scores), 1)
+            if quality_scores
+            else 0
+        )
+
+        return {
+            "total_with_consent": total,
+            "analysis_completed": completed,
+            "analysis_pending": pending,
+            "analysis_failed": failed,
+            "analysis_skipped": skipped,
+            "average_quality_score": avg_quality,
+        }
 
 
 class PipelineJobFeedbackRepository:

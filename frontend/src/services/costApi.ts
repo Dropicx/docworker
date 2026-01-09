@@ -9,6 +9,7 @@ import type {
   ProcessingJobsResponse,
   ProcessingJobDetail,
   ProcessingJobsQuery,
+  FeedbackAnalysisCost,
 } from '../types/cost';
 
 const API_BASE = '/api/costs';
@@ -121,6 +122,22 @@ class CostApiService {
       headers: this.getHeaders(),
     });
     return this.handleResponse<ProcessingJobDetail>(response);
+  }
+
+  /**
+   * Get cost statistics for feedback AI analysis
+   * @param startDate - Optional start date (ISO string)
+   * @param endDate - Optional end date (ISO string)
+   */
+  async getFeedbackAnalysisCosts(
+    startDate?: string,
+    endDate?: string
+  ): Promise<FeedbackAnalysisCost> {
+    const url = this.buildDateUrl('/feedback-analysis', startDate, endDate);
+    const response = await fetch(url, {
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse<FeedbackAnalysisCost>(response);
   }
 }
 

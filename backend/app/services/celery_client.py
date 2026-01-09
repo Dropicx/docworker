@@ -107,6 +107,8 @@ celery_client.conf.update(
     # Task routing - ensures tasks go to correct priority queues
     task_routes={
         "process_medical_document": {"queue": "high_priority"},
+        "analyze_feedback_quality": {"queue": "low_priority"},
+        "retry_failed_analyses": {"queue": "maintenance"},
         "cleanup_orphaned_jobs": {"queue": "maintenance"},
         "cleanup_celery_results": {"queue": "maintenance"},
         "cleanup_old_files": {"queue": "maintenance"},
@@ -466,3 +468,39 @@ def cancel_task(task_id: str, terminate: bool = False) -> bool:
     except Exception as e:
         logger.error(f"❌ Failed to cancel task {task_id}: {str(e)}")
         return False
+
+
+def enqueue_feedback_analysis(feedback_id: int) -> str | None:
+    """Enqueue AI feedback analysis task to worker via Redis.
+
+    Sends feedback quality analysis request to Celery worker. Non-blocking
+    operation - returns immediately with task ID. Worker analyzes feedback
+    content using Mistral Large AI.
+
+    Args:
+        feedback_id: Database ID of the feedback entry to analyze
+
+    Returns:
+        str: Celery task ID (UUID) for tracking, or None if enqueueing fails
+
+    Note:
+        - Task routed to 'low_priority' queue (non-blocking background work)
+        - Analysis compares OCR → PII-removed → final translation
+        - Results stored in feedback record (ai_analysis_* fields)
+        - Feature flag FEEDBACK_AI_ANALYSIS must be enabled
+    """
+    try:
+        logger.info(f"📤 Enqueueing feedback analysis: feedback_id={feedback_id}")
+
+        result = celery_client.send_task(
+            "analyze_feedback_quality",
+            args=(feedback_id,),
+            queue="low_priority"
+        )
+
+        logger.info(f"✅ Feedback analysis task enqueued: feedback_id={feedback_id} (task_id: {result.id})")
+        return result.id
+
+    except Exception as e:
+        logger.error(f"❌ Failed to enqueue feedback analysis for {feedback_id}: {str(e)}")
+        return None

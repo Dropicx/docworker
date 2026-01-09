@@ -110,6 +110,14 @@ class FeedbackEntry(BaseModel):
     data_consent_given: bool = Field(..., description="Consent status")
     submitted_at: str = Field(..., description="Submission timestamp")
 
+    # AI analysis status (for list view)
+    ai_analysis_status: str | None = Field(
+        None, description="Analysis status (PENDING, PROCESSING, COMPLETED, FAILED, SKIPPED)"
+    )
+    ai_analysis_quality_score: int | None = Field(
+        None, description="Quality score from AI analysis (0-10)"
+    )
+
 
 class FeedbackListResponse(BaseModel):
     """Response model for feedback list"""
@@ -144,6 +152,19 @@ class FeedbackStatsResponse(BaseModel):
     )
 
 
+class AIAnalysisSummary(BaseModel):
+    """AI analysis summary for feedback quality"""
+
+    pii_issues: list[str] = Field(default_factory=list, description="PII leak issues found")
+    translation_issues: list[str] = Field(
+        default_factory=list, description="Translation quality issues"
+    )
+    recommendations: list[str] = Field(
+        default_factory=list, description="Improvement recommendations"
+    )
+    overall_quality_score: int = Field(0, ge=0, le=10, description="Quality score (0-10)")
+
+
 class JobData(BaseModel):
     """Job data in feedback detail response"""
 
@@ -172,6 +193,19 @@ class FeedbackDetailResponse(BaseModel):
     data_consent_given: bool = Field(..., description="Consent status")
     submitted_at: str = Field(..., description="Submission timestamp")
     job_data: JobData | None = Field(None, description="Associated job data")
+
+    # AI-powered quality analysis fields
+    ai_analysis_status: str | None = Field(
+        None, description="Analysis status (PENDING, PROCESSING, COMPLETED, FAILED, SKIPPED)"
+    )
+    ai_analysis_text: str | None = Field(None, description="Full AI analysis text")
+    ai_analysis_summary: AIAnalysisSummary | None = Field(
+        None, description="Structured analysis summary"
+    )
+    ai_analysis_completed_at: str | None = Field(
+        None, description="When analysis was completed"
+    )
+    ai_analysis_error: str | None = Field(None, description="Error message if analysis failed")
 
 
 # ==================== PUBLIC ENDPOINTS ====================
@@ -394,6 +428,11 @@ async def get_feedback_detail(
         if result.get("job_data"):
             job_data = JobData(**result["job_data"])
 
+        # Convert AI analysis summary if present
+        ai_analysis_summary = None
+        if result.get("ai_analysis_summary"):
+            ai_analysis_summary = AIAnalysisSummary(**result["ai_analysis_summary"])
+
         return FeedbackDetailResponse(
             id=result["id"],
             processing_id=result["processing_id"],
@@ -403,6 +442,12 @@ async def get_feedback_detail(
             data_consent_given=result["data_consent_given"],
             submitted_at=result["submitted_at"],
             job_data=job_data,
+            # AI analysis fields
+            ai_analysis_status=result.get("ai_analysis_status"),
+            ai_analysis_text=result.get("ai_analysis_text"),
+            ai_analysis_summary=ai_analysis_summary,
+            ai_analysis_completed_at=result.get("ai_analysis_completed_at"),
+            ai_analysis_error=result.get("ai_analysis_error"),
         )
 
     except HTTPException:
