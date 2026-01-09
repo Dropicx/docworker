@@ -460,6 +460,42 @@ async def get_feedback_detail(
         ) from e
 
 
+# ==================== ADMIN ANALYSIS TRIGGER ====================
+
+
+@router.post("/admin/{feedback_id}/analyze")
+async def trigger_feedback_analysis(
+    feedback_id: int,
+    current_user: UserDB = Depends(require_admin()),
+    db: Session = Depends(get_session),
+):
+    """
+    Manually trigger AI analysis for a feedback entry (admin only).
+
+    Runs the analysis synchronously - useful when Celery workers are not available.
+    """
+    from app.services.feedback_analysis_service import FeedbackAnalysisService
+
+    try:
+        service = FeedbackAnalysisService(db)
+        result = await service.analyze_feedback(feedback_id)
+
+        return {
+            "feedback_id": feedback_id,
+            "status": result.get("status"),
+            "message": result.get("message"),
+            "summary": result.get("summary"),
+            "tokens_used": result.get("tokens_used"),
+        }
+
+    except Exception as e:
+        logger.error(f"Error triggering feedback analysis: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to run analysis: {str(e)}",
+        ) from e
+
+
 # ==================== HEALTH CHECK ====================
 
 
