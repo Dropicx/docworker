@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings, settings
-from app.core.permissions import get_current_user_required, require_role
+from app.core.permissions import get_current_user_required, has_role, Role
 from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.repositories.feature_flags_repository import FeatureFlagsRepository
@@ -90,9 +90,14 @@ class ReloadResponse(BaseModel):
 
 
 # All endpoints in this router require ADMIN role
-def require_admin_auth(current_user: UserDB = Depends(get_current_user_required)):
+def require_admin_auth(current_user: UserDB = Depends(get_current_user_required)) -> UserDB:
     """Require admin authentication for all endpoints"""
-    return require_role("admin")(current_user)
+    if not has_role(current_user, Role.ADMIN):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Admin role required",
+        )
+    return current_user
 
 
 # ==================

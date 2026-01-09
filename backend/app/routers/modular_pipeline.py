@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_pipeline_step_repository
-from app.core.permissions import get_current_user_required, require_admin, require_role
+from app.core.permissions import get_current_user_required, has_any_role, require_admin, Role
 from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import OCREngineEnum
@@ -34,9 +34,14 @@ router = APIRouter(prefix="/api/pipeline", tags=["pipeline"])
 # ==================== AUTHENTICATION ====================
 
 
-def require_user_auth(current_user: UserDB = Depends(get_current_user_required)):
+def require_user_auth(current_user: UserDB = Depends(get_current_user_required)) -> UserDB:
     """Require user authentication (USER or ADMIN role)"""
-    return require_role("user")(current_user)
+    if not has_any_role(current_user, [Role.USER, Role.ADMIN]):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User or Admin role required",
+        )
+    return current_user
 
 
 # ==================== PYDANTIC MODELS ====================
