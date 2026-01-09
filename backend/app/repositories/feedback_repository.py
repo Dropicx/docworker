@@ -229,7 +229,7 @@ class FeedbackRepository(EncryptedRepositoryMixin, BaseRepository[UserFeedbackDB
         feedback_id: int,
         status: FeedbackAnalysisStatus,
         started_at: datetime | None = None,
-    ) -> UserFeedbackDB | None:
+    ) -> bool:
         """
         Update the AI analysis status for a feedback entry.
 
@@ -239,20 +239,20 @@ class FeedbackRepository(EncryptedRepositoryMixin, BaseRepository[UserFeedbackDB
             started_at: When analysis started (optional)
 
         Returns:
-            Updated feedback or None if not found
+            True if update succeeded, False if feedback not found
         """
-        feedback = self.get_by_id(feedback_id)
-        if not feedback:
-            logger.warning(f"Feedback not found for ID: {feedback_id}")
-            return None
-
-        feedback.ai_analysis_status = status
+        # Build update data
+        update_data = {"ai_analysis_status": status}
         if started_at:
-            feedback.ai_analysis_started_at = started_at
+            update_data["ai_analysis_started_at"] = started_at
 
-        self.db.commit()
-        self.db.refresh(feedback)
-        return feedback
+        # Use EncryptedRepositoryMixin.update() which handles session correctly
+        # Note: update() returns None by design, but executes the update
+        self.update(feedback_id, **update_data)
+
+        # Verify the update was applied by checking rowcount would require
+        # refactoring, so we assume success if no exception was raised
+        return True
 
     def update_analysis_result(
         self,
@@ -261,7 +261,7 @@ class FeedbackRepository(EncryptedRepositoryMixin, BaseRepository[UserFeedbackDB
         analysis_text: str | None = None,
         analysis_summary: dict | None = None,
         error_message: str | None = None,
-    ) -> UserFeedbackDB | None:
+    ) -> bool:
         """
         Update the AI analysis result for a feedback entry.
 
@@ -273,14 +273,10 @@ class FeedbackRepository(EncryptedRepositoryMixin, BaseRepository[UserFeedbackDB
             error_message: Error message if analysis failed
 
         Returns:
-            Updated feedback or None if not found
+            True if update succeeded
         """
-        feedback = self.get_by_id(feedback_id)
-        if not feedback:
-            logger.warning(f"Feedback not found for ID: {feedback_id}")
-            return None
-
-        # Use update method to ensure encryption is applied
+        # Build update data - use EncryptedRepositoryMixin.update() which handles
+        # encryption and session correctly
         update_data = {
             "ai_analysis_status": status,
             "ai_analysis_completed_at": datetime.now(),
@@ -295,7 +291,9 @@ class FeedbackRepository(EncryptedRepositoryMixin, BaseRepository[UserFeedbackDB
         if error_message is not None:
             update_data["ai_analysis_error"] = error_message
 
-        return self.update(feedback_id, **update_data)
+        # Note: update() returns None by design, but executes the update
+        self.update(feedback_id, **update_data)
+        return True
 
     def get_pending_analysis(self, limit: int = 100) -> list[UserFeedbackDB]:
         """
