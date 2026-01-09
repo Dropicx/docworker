@@ -38,7 +38,11 @@ CELERY_TASK_ROUTES = {
     # High priority - interactive user uploads
     'process_medical_document': {'queue': 'high_priority'},
 
-    # Low priority - scheduled maintenance tasks
+    # Low priority - background analysis tasks
+    'analyze_feedback_quality': {'queue': 'low_priority'},
+    'retry_failed_analyses': {'queue': 'low_priority'},
+
+    # Maintenance - scheduled cleanup tasks
     'cleanup_orphaned_jobs': {'queue': 'maintenance'},
     'cleanup_celery_results': {'queue': 'maintenance'},
     'cleanup_old_files': {'queue': 'maintenance'},
