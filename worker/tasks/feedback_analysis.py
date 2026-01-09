@@ -54,7 +54,7 @@ def analyze_feedback_quality(self, feedback_id: int) -> dict:
 
     try:
         # Import here to avoid circular imports and ensure fresh DB session
-        from app.database.session import get_db_session
+        from app.database.connection import get_db_session
         from app.services.feedback_analysis_service import FeedbackAnalysisService
         from app.services.feature_flags import FeatureFlags, Feature
 
@@ -80,7 +80,7 @@ def analyze_feedback_quality(self, feedback_id: int) -> dict:
 
         # Try to mark as failed in database
         try:
-            from app.database.session import get_db_session
+            from app.database.connection import get_db_session
             from app.database.modular_pipeline_models import FeedbackAnalysisStatus
             from app.repositories.feedback_repository import FeedbackRepository
 
@@ -121,7 +121,7 @@ def retry_failed_analyses(max_age_hours: int = 24, limit: int = 50) -> dict:
 
     try:
         from datetime import datetime, timedelta
-        from app.database.session import get_db_session
+        from app.database.connection import get_db_session
         from app.database.modular_pipeline_models import FeedbackAnalysisStatus, UserFeedbackDB
         from app.services.feature_flags import FeatureFlags, Feature
 

@@ -85,8 +85,8 @@ class BaseDocumentTask(Task):
                 'exception': str(exc),
                 'exception_type': type(exc).__name__,
                 'traceback': traceback.format_exc(),
-                'args': args,
-                'kwargs': kwargs
+                'task_args': args,  # Can't use 'args' - reserved by logging
+                'task_kwargs': kwargs
             }
         )
 

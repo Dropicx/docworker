@@ -3,6 +3,7 @@ Database connection and session management using centralized configuration.
 """
 
 from collections.abc import Generator
+from contextlib import contextmanager
 import logging
 
 from sqlalchemy import create_engine
@@ -48,12 +49,25 @@ def get_session() -> Generator[Session, None, None]:
         session.close()
 
 
-def get_db_session() -> Generator[Session, None, None]:
+@contextmanager
+def get_db_session():
     """
-    Get database session (alias for get_session for compatibility).
-    Returns a generator that yields a SQLAlchemy Session.
+    Get database session as a context manager for use in non-FastAPI contexts.
+
+    Usage:
+        with get_db_session() as db:
+            repo = SomeRepository(db)
+            ...
+
+    This is different from get_session() which is a generator for FastAPI Depends().
     """
-    return get_session()
+    engine = get_engine()
+    session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    session = session_local()
+    try:
+        yield session
+    finally:
+        session.close()
 
 
 # Global engine instance
