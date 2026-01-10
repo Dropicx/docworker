@@ -49,17 +49,34 @@ def get_session() -> Generator[Session, None, None]:
         session.close()
 
 
+def get_db_session() -> Generator[Session, None, None]:
+    """
+    Get database session as a generator.
+
+    Usage (with next):
+        db = next(get_db_session())
+        try:
+            repo = SomeRepository(db)
+            ...
+        finally:
+            db.close()
+
+    This is an alias for get_session() for backward compatibility.
+    """
+    return get_session()
+
+
 @contextmanager
-def get_db_session():
+def get_db_session_context():
     """
     Get database session as a context manager for use in non-FastAPI contexts.
 
     Usage:
-        with get_db_session() as db:
+        with get_db_session_context() as db:
             repo = SomeRepository(db)
             ...
 
-    This is different from get_session() which is a generator for FastAPI Depends().
+    This is the preferred way to get a session in Celery tasks and scripts.
     """
     engine = get_engine()
     session_local = sessionmaker(autocommit=False, autoflush=False, bind=engine)

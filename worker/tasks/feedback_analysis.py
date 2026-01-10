@@ -54,12 +54,12 @@ def analyze_feedback_quality(self, feedback_id: int) -> dict:
 
     try:
         # Import here to avoid circular imports and ensure fresh DB session
-        from app.database.connection import get_db_session
+        from app.database.connection import get_db_session_context
         from app.services.feedback_analysis_service import FeedbackAnalysisService
         from app.services.feature_flags import FeatureFlags, Feature
 
         # Get database session
-        with get_db_session() as db:
+        with get_db_session_context() as db:
             # Check if feature is enabled
             flags = FeatureFlags(session=db)
             if not flags.is_enabled(Feature.FEEDBACK_AI_ANALYSIS):
@@ -80,11 +80,11 @@ def analyze_feedback_quality(self, feedback_id: int) -> dict:
 
         # Try to mark as failed in database
         try:
-            from app.database.connection import get_db_session
+            from app.database.connection import get_db_session_context
             from app.database.modular_pipeline_models import FeedbackAnalysisStatus
             from app.repositories.feedback_repository import FeedbackRepository
 
-            with get_db_session() as db:
+            with get_db_session_context() as db:
                 repo = FeedbackRepository(db)
                 repo.update_analysis_result(
                     feedback_id=feedback_id,
@@ -121,11 +121,11 @@ def retry_failed_analyses(max_age_hours: int = 24, limit: int = 50) -> dict:
 
     try:
         from datetime import datetime, timedelta
-        from app.database.connection import get_db_session
+        from app.database.connection import get_db_session_context
         from app.database.modular_pipeline_models import FeedbackAnalysisStatus, UserFeedbackDB
         from app.services.feature_flags import FeatureFlags, Feature
 
-        with get_db_session() as db:
+        with get_db_session_context() as db:
             # Check if feature is enabled
             flags = FeatureFlags(session=db)
             if not flags.is_enabled(Feature.FEEDBACK_AI_ANALYSIS):
