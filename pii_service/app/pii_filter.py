@@ -587,6 +587,69 @@ class PIIFilter:
             "sistieren", "sistierend", "intermittierend", "persistierend",
             "progredient", "regredient", "stabil", "stationär",
             "akut", "subakut", "chronisch", "rezidivierend",
+
+            # ==================== MEDICAL ADJECTIVES (with German declensions) ====================
+            # Temporal/frequency adjectives
+            "nächtlich", "nächtliche", "nächtlicher", "nächtlichen", "nächtliches",
+            "paroxysmale", "paroxysmal", "paroxysmaler", "paroxysmalen",
+            "intermittierend", "intermittierende", "intermittierender", "intermittierenden",
+            "persistierend", "persistierende", "persistierender", "persistierenden",
+
+            # Severity adjectives
+            "akute", "akuter", "akuten", "akutes",
+            "chronische", "chronischer", "chronischen", "chronisches",
+            "subakute", "subakuter", "subakuten",
+            "leicht", "leichte", "leichter", "leichten", "leichtes",
+            "schwer", "schwere", "schwerer", "schweren", "schweres",
+            "mittelgradig", "mittelgradige", "mittelgradiger", "mittelgradigen",
+            "hochgradig", "hochgradige", "hochgradiger", "hochgradigen",
+            "geringfügig", "geringfügige", "geringfügiger", "geringfügigen",
+            "geringgradig", "geringgradige", "geringgradiger", "geringgradigen",
+
+            # Organ-specific adjectives
+            "kardial", "kardiale", "kardialer", "kardialen", "kardiales",
+            "pulmonal", "pulmonale", "pulmonaler", "pulmonalen", "pulmonales",
+            "renal", "renale", "renaler", "renalen", "renales",
+            "hepatisch", "hepatische", "hepatischer", "hepatischen", "hepatisches",
+            "zerebral", "zerebrale", "zerebraler", "zerebralen", "zerebrales",
+            "gastrointestinal", "gastrointestinale", "gastrointestinaler", "gastrointestinalen",
+            "vaskulär", "vaskuläre", "vaskulärer", "vaskulären",
+            "muskulär", "muskuläre", "muskulärer", "muskulären",
+            "neurologisch", "neurologische", "neurologischer", "neurologischen",
+
+            # Anatomical position adjectives
+            "peripher", "periphere", "peripherer", "peripheren", "peripheres",
+            "proximal", "proximale", "proximaler", "proximalen", "proximales",
+            "distal", "distale", "distaler", "distalen", "distales",
+            "anterior", "anteriore", "anteriorer", "anterioren",
+            "posterior", "posteriore", "posteriorer", "posterioren",
+            "lateral", "laterale", "lateraler", "lateralen", "laterales",
+            "medial", "mediale", "medialer", "medialen", "mediales",
+            "bilateral", "bilaterale", "bilateraler", "bilateralen", "bilaterales",
+            "unilateral", "unilaterale", "unilateraler", "unilateralen",
+            "ipsilateral", "ipsilaterale", "ipsilateraler", "ipsilateralen",
+            "kontralateral", "kontralaterale", "kontralateraler", "kontralateralen",
+
+            # Cardiac rhythm adjectives
+            "systolisch", "systolische", "systolischer", "systolischen",
+            "diastolisch", "diastolische", "diastolischer", "diastolischen",
+            "normofrequent", "normofrequente", "normofrequenter", "normofrequenten",
+            "tachykard", "tachykarde", "tachykarder", "tachykarden",
+            "bradykard", "bradykarde", "bradykarder", "bradykarden",
+            "rhythmisch", "rhythmische", "rhythmischer", "rhythmischen",
+            "arrhythmisch", "arrhythmische", "arrhythmischer", "arrhythmischen",
+
+            # Clinical finding adjectives
+            "unauffällig", "unauffällige", "unauffälliger", "unauffälligen", "unauffälliges",
+            "auffällig", "auffällige", "auffälliger", "auffälligen", "auffälliges",
+            "pathologisch", "pathologische", "pathologischer", "pathologischen",
+            "physiologisch", "physiologische", "physiologischer", "physiologischen",
+            "normwertig", "normwertige", "normwertiger", "normwertigen",
+            "grenzwertig", "grenzwertige", "grenzwertiger", "grenzwertigen",
+            "erhöht", "erhöhte", "erhöhter", "erhöhten", "erhöhtes",
+            "erniedrigt", "erniedrigte", "erniedrigter", "erniedrigten",
+            "vermindert", "verminderte", "verminderter", "verminderten",
+            "vermehrt", "vermehrte", "vermehrter", "vermehrten",
         }
 
         # ==================== DRUG DATABASE (226 medications) ====================
@@ -840,12 +903,36 @@ class PIIFilter:
         return False
 
     def _is_medical_term(self, word: str, custom_terms: set | None = None) -> bool:
-        """Check if word is a protected medical term or drug name."""
+        """Check if word is a protected medical term or drug name.
+
+        Includes German stem matching to catch declined forms like:
+        - "Nächtliche" -> "nächtlich"
+        - "Herzens" -> "herz"
+        - "Kardialen" -> "kardial"
+        """
         word_lower = word.lower()
+
+        # Exact match check
         if word_lower in self.medical_terms or word_lower in self.drug_database:
             return True
         if custom_terms and word_lower in custom_terms:
             return True
+
+        # German stem matching - remove common declension suffixes
+        # Order matters: try longer suffixes first
+        german_suffixes = ['ischen', 'ische', 'ischer', 'ungen', 'liche', 'lichen',
+                          'licher', 'liches', 'alen', 'aler', 'ales', 'enen', 'ener',
+                          'enes', 'igen', 'iger', 'iges', 'ung', 'en', 'er', 'es',
+                          'em', 'e', 'n', 's']
+
+        for suffix in german_suffixes:
+            if len(word_lower) > len(suffix) + 3 and word_lower.endswith(suffix):
+                stem = word_lower[:-len(suffix)]
+                if stem in self.medical_terms or stem in self.drug_database:
+                    return True
+                if custom_terms and stem in custom_terms:
+                    return True
+
         return False
 
     def _get_placeholder(self, pii_type: str) -> str:
@@ -1138,7 +1225,7 @@ class PIIFilter:
                 text=text,
                 language=language,
                 entities=entities_to_detect,
-                score_threshold=0.4  # Lower threshold to catch credit cards, IBANs etc.
+                score_threshold=0.6  # Balanced threshold - catches real PII but avoids medical term false positives
             )
 
             # Sort by position (reverse) to preserve indices during replacement
