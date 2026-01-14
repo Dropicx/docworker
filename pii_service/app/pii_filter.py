@@ -507,6 +507,12 @@ class PIIFilter:
             # ==================== VITAL SIGNS ====================
             "blutdruck", "puls", "temperatur", "sauerstoffsättigung", "atemfrequenz",
             "herzfrequenz", "blutdruck", "körpertemperatur",
+            # Compound words and descriptors
+            "blutdruckverhalten", "blutdruckmessung", "blutdruckwerte", "blutdruckeinstellung",
+            "normotensiv", "normotensive", "normotensiver", "normotensiven",
+            "hypertensiv", "hypertensive", "hypertensiver", "hypertensiven",
+            "hypotensiv", "hypotensive", "hypotensiver", "hypotensiven",
+            "herzfrequenzverhalten", "pulsverhalten",
 
             # ==================== CONDITIONS ====================
             "stenose", "thrombose", "embolie", "infarkt", "tumor", "karzinom",
@@ -521,6 +527,14 @@ class PIIFilter:
             "rheuma", "gicht", "fibromyalgie", "meningitis", "enzephalitis",
             "epilepsie", "schlaganfall", "apoplex", "depression", "angststörung",
             "schizophrenie", "demenz", "delir",
+            # Cardiac valve conditions (common compound words)
+            "mitralinsuffizienz", "mitralstenose", "mitralklappenprolaps",
+            "aorteninsuffizienz", "aortenstenose", "aortenklappe",
+            "trikuspidalklappe", "trikuspidalinsuffizienz", "trikuspidalstenose",
+            "pulmonalklappe", "pulmonalinsuffizienz", "pulmonalstenose",
+            "herzinsuffizienz", "linksherzinsuffizienz", "rechtsherzinsuffizienz",
+            "herzklappenfehler", "klappeninsuffizienz", "klappenstenose",
+            "mitralklappe", "mitral", "aortal", "trikuspidal", "pulmonal",
 
             # ==================== DIAGNOSTICS ====================
             "ultraschall", "sonographie", "röntgen", "ct", "mrt", "pet", "spect",
@@ -909,17 +923,19 @@ class PIIFilter:
         - "Nächtliche" -> "nächtlich"
         - "Herzens" -> "herz"
         - "Kardialen" -> "kardial"
+
+        Also handles multi-word entities like "Mitralinsuffizienz Grad I" by
+        checking if ANY word in the phrase is a medical term.
         """
         word_lower = word.lower()
 
-        # Exact match check
+        # Exact match check for whole phrase
         if word_lower in self.medical_terms or word_lower in self.drug_database:
             return True
         if custom_terms and word_lower in custom_terms:
             return True
 
-        # German stem matching - remove common declension suffixes
-        # Order matters: try longer suffixes first
+        # German stem matching for whole phrase
         german_suffixes = ['ischen', 'ische', 'ischer', 'ungen', 'liche', 'lichen',
                           'licher', 'liches', 'alen', 'aler', 'ales', 'enen', 'ener',
                           'enes', 'igen', 'iger', 'iges', 'ung', 'en', 'er', 'es',
@@ -932,6 +948,28 @@ class PIIFilter:
                     return True
                 if custom_terms and stem in custom_terms:
                     return True
+
+        # Multi-word check: if ANY word in the phrase is a medical term, preserve the whole entity
+        # This handles cases like "Mitralinsuffizienz Grad I" where SpaCy detects it as one entity
+        if ' ' in word:
+            words = word.split()
+            for single_word in words:
+                single_lower = single_word.lower()
+
+                # Check exact match for single word
+                if single_lower in self.medical_terms or single_lower in self.drug_database:
+                    return True
+                if custom_terms and single_lower in custom_terms:
+                    return True
+
+                # Check stem match for single word
+                for suffix in german_suffixes:
+                    if len(single_lower) > len(suffix) + 3 and single_lower.endswith(suffix):
+                        stem = single_lower[:-len(suffix)]
+                        if stem in self.medical_terms or stem in self.drug_database:
+                            return True
+                        if custom_terms and stem in custom_terms:
+                            return True
 
         return False
 
