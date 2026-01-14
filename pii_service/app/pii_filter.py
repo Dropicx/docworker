@@ -548,6 +548,21 @@ class PIIFilter:
             "infusion", "injektion", "transfusion", "dialyse", "chemotherapie",
             "bestrahlung", "physiotherapie", "ergotherapie", "logopädie",
             "rehabilitation", "palliativ",
+            # Surgical procedures (-ektomie, -tomie, -plastik)
+            "appendektomie", "cholezystektomie", "gastrektomie", "kolektomie",
+            "nephrektomie", "splenektomie", "thyreoidektomie", "mastektomie",
+            "hysterektomie", "prostatektomie", "lobektomie", "pneumonektomie",
+            "laparotomie", "thorakotomie", "kraniotomie", "tracheotomie",
+            "angioplastik", "valvuloplastik", "arthroplastik",
+            # Compound valve terms
+            "mitralklappeninsuffizienz", "mitralklappenersatz", "mitralklappenstenose",
+            "aortenklappeninsuffizienz", "aortenklappenersatz", "aortenklappenstenose",
+            "trikuspidalklappeninsuffizienz", "pulmonalklappeninsuffizienz",
+            # Risk factors and lifestyle
+            "nikotinabusus", "alkoholabusus", "drogenabusus", "substanzabusus",
+            "adipositas", "übergewicht", "untergewicht", "kachexie",
+            # Common abbreviations
+            "z.n.", "v.a.", "b.b.", "o.b.", "o.p.b.", "ed", "dd",
 
             # ==================== DEPARTMENTS ====================
             "intensivstation", "notaufnahme", "ambulanz", "station",
