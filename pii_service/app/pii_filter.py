@@ -597,6 +597,7 @@ class PIIFilter:
             "khe", "khk", "pavk", "tia", "cva",  # Vascular
             "op", "re", "li", "bds", "ca", "chemo", "rtx",  # General abbreviations
             "z.n.", "v.a.", "dd", "st.p.", "ed", "j.",  # German medical abbreviations
+            "z.n", "v.a", "zn", "va",  # Without trailing periods (tokenization variants)
             "sinusrhythmus", "normofrequent", "rhythmisch",  # ECG findings
             "unauffällig", "regelrecht", "altersentsprechend",  # Normal findings
             "reduziert", "erhöht", "erniedrigt", "pathologisch",  # Finding descriptors
@@ -679,6 +680,17 @@ class PIIFilter:
             "erniedrigt", "erniedrigte", "erniedrigter", "erniedrigten",
             "vermindert", "verminderte", "verminderter", "verminderten",
             "vermehrt", "vermehrte", "vermehrter", "vermehrten",
+
+            # Lung examination terms (commonly misclassified)
+            "vesikulär", "vesikuläres", "vesikuläre", "vesikulären", "vesikulärer",
+            "bronchial", "bronchiale", "bronchialer", "bronchialen", "bronchiales",
+            "atemgeräusch", "atemgeräusche", "atemgeräuschen",
+            "rasselgeräusch", "rasselgeräusche", "rasselgeräuschen",
+            "nebengeräusch", "nebengeräusche", "nebengeräuschen",
+            "giemen", "brummen", "stridor", "knistern",
+            "seitengleich", "seitengleiche", "seitengleicher", "seitengleichen",
+            "abgeschwächt", "abgeschwächte", "abgeschwächter", "abgeschwächten",
+            "aufgehobenes", "aufgehobene", "aufgehobener", "aufgehobenen",
         }
 
         # ==================== DRUG DATABASE (226 medications) ====================
