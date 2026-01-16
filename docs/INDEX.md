@@ -1,307 +1,312 @@
-# DocTranslator Documentation Index
+# DocTranslator Documentation
 
-Complete documentation for the DocTranslator medical document translation platform.
-
----
-
-## 📘 User Guides
-
-### [Pipeline User Guide](PIPELINE_USER_GUIDE.md) ⭐ **NEW**
-**Complete guide for creating and managing processing pipelines in the settings UI**
-- Creating and editing pipeline steps
-- Using variables ({input_text}, {original_text}, {target_language})
-- Conditional execution and pipeline termination
-- Document classification and branching
-- Best practices and troubleshooting
+**GDPR-compliant medical document translation service** that transforms complex German medical documents into patient-friendly language in multiple languages.
 
 ---
 
-## 🏗️ System Architecture
+## System Overview
 
-### [Architecture Overview](ARCHITECTURE.md)
-System design, components, and data flow
-- Modular pipeline architecture
-- Document processing workflow
-- Database schema overview
-- Security and privacy considerations
+DocTranslator is a production-grade medical document translation platform that:
 
-### [Database Documentation](DATABASE.md)
-Database schema and data models
-- Table structures
-- Relationships
-- Query patterns
-- Migrations
+1. **Accepts** medical documents (PDF, images, DOCX) in German
+2. **Extracts** text using OCR (PaddleOCR/Tesseract)
+3. **Removes** personally identifiable information (GDPR compliance)
+4. **Translates** medical jargon into patient-friendly language
+5. **Validates** medical accuracy through AI fact-checking
+6. **Converts** to target language (EN, FR, ES, IT, PT, NL, PL)
+7. **Delivers** clean, formatted Markdown output
 
----
+### Infrastructure Overview
 
-## 🔧 Technical References
-
-### [Pipeline Variables Reference](PIPELINE_VARIABLES.md)
-Complete reference for pipeline context variables
-- Core variables: `{input_text}`, `{original_text}`, `{target_language}`, `{document_type}`
-- Variable availability and lifecycle
-- Usage examples and patterns
-- Security considerations (PII handling)
-
-### [API Reference](API.md)
-REST API endpoints and usage
-- Upload endpoints
-- Processing endpoints
-- Settings management
-- Pipeline configuration
-- Authentication endpoints
-
-### [Configuration Reference](CONFIGURATION.md)
-System configuration and settings
-- Environment variables
-- Feature flags
-- Pipeline configuration
-- Database settings
-
-### [Optimized PII Filter](OPTIMIZED_PII_FILTER.md)
-Advanced PII removal implementation
-- Performance optimizations
-- Pattern matching
-- Entity recognition improvements
-- spaCy NER integration
-
----
-
-## 🚀 Deployment & Operations
-
-### [Deployment Guide](DEPLOYMENT.md)
-Production deployment procedures
-- Railway deployment
-- Environment configuration
-- Database setup
-- Troubleshooting
-
-### [Railway Deployment Guide](RAILWAY_DEPLOYMENT_GUIDE.md)
-Detailed Railway-specific deployment
-- Service configuration
-- Environment variables
-- PostgreSQL setup
-- Monitoring and logs
-
-### [Development Setup](DEVELOPMENT.md)
-Local development environment
-- Prerequisites
-- Installation steps
-- Running locally
-- Testing
-- CI/CD with GitHub Actions
-- Self-hosted ARC runners on Kubernetes
-
-### [Testing Guide](TESTING.md)
-Testing strategies and best practices
-- Unit testing
-- Integration testing
-- E2E testing
-- Test coverage
-
-### [Monitoring & Troubleshooting](MONITORING_TROUBLESHOOTING.md)
-System monitoring and debugging
-- Performance monitoring
-- Error tracking
-- Log analysis
-- Common issues and solutions
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          RAILWAY (Frankfurt, EU)                         │
+│                                                                          │
+│   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐            │
+│   │ Frontend │   │ Backend  │   │  Worker  │   │   Beat   │            │
+│   │ (React)  │   │ (FastAPI)│   │ (Celery) │   │(Scheduler)│           │
+│   │ Port 80  │   │ Port 9122│   │          │   │          │            │
+│   └────┬─────┘   └────┬─────┘   └────┬─────┘   └────┬─────┘            │
+│        │              │              │              │                   │
+│        └──────────────┴──────────────┴──────────────┘                   │
+│                              │                                          │
+│                    ┌─────────┴─────────┐                               │
+│                    │                   │                               │
+│              ┌─────┴─────┐      ┌──────┴──────┐                        │
+│              │PostgreSQL │      │    Redis    │                        │
+│              │ (Database)│      │(Task Queue) │                        │
+│              └───────────┘      └─────────────┘                        │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+     ┌─────────────────────────────┼─────────────────────────────┐
+     │                    │                    │                 │
+     ▼                    ▼                    ▼                 ▼
+┌────────────────┐ ┌────────────────┐ ┌────────────────┐ ┌────────────────┐
+│ MISTRAL AI     │ │ HETZNER PII    │ │ HETZNER OCR    │ │ OVH AI         │
+│ (France, EU)   │ │ (Germany, EU)  │ │ (Germany, EU)  │ │ (EU)           │
+│                │ │                │ │                │ │                │
+│ mistral-ocr    │ │ spaCy NER +    │ │ PaddleOCR      │ │ Llama 3.3 70B  │
+│ (Primary OCR)  │ │ Presidio +     │ │ (OCR Fallback) │ │ (Translation)  │
+│                │ │ Custom Regex   │ │                │ │                │
+│ mistral-large  │ │                │ │                │ │ Mistral Nemo   │
+│ (Feedback AI)  │ │ 2x CPX32 HA    │ │ 2x CPX41 HA    │ │ (Preprocessing)│
+│                │ │                │ │                │ │                │
+│ Direct API     │ │                │ │                │ │ Qwen 2.5 VL 72B│
+└────────────────┘ └────────────────┘ └────────────────┘ └────────────────┘
+```
 
 ---
 
-## ⚙️ Infrastructure & Performance
+## Quick Navigation
 
-### [Worker Scaling](WORKER_SCALING.md)
-Worker configuration and scaling strategies
-- Concurrency settings
-- Resource allocation
-- Performance tuning
+### Core Documentation
 
-### [Concurrency vs Replicas](CONCURRENCY_VS_REPLICAS.md)
-Understanding worker concurrency and service replicas
-- Concurrency configuration
-- Replica scaling
-- Trade-offs and recommendations
+| Document | Description |
+|----------|-------------|
+| [ARCHITECTURE.md](ARCHITECTURE.md) | Complete system architecture, components, data flow |
+| [API.md](API.md) | REST API endpoint reference |
+| [DATABASE.md](DATABASE.md) | Database schema and models |
+| [DEPLOYMENT.md](DEPLOYMENT.md) | Production deployment (Railway + Hetzner) |
+| [DEVELOPMENT.md](DEVELOPMENT.md) | Local development setup |
 
-### [RAM Optimization](RAM_OPTIMIZATION.md)
-Memory usage optimization
-- Memory profiling
-- Optimization strategies
-- Resource limits
+### Privacy & Security
 
-### [Queue vs Active Tasks](QUEUE_VS_ACTIVE_TASKS.md)
-Understanding task queuing and active task limits
-- Queue management
-- Active task configuration
-- Performance implications
+| Document | Description |
+|----------|-------------|
+| [PRIVACY_FILTER.md](PRIVACY_FILTER.md) | PII removal system (GDPR compliance) |
+| [DATA_RETENTION.md](DATA_RETENTION.md) | Data retention and privacy policy |
+| [AUTHENTICATION_IMPLEMENTATION_SUMMARY.md](AUTHENTICATION_IMPLEMENTATION_SUMMARY.md) | Authentication system |
 
-### [Feature Flags](FEATURE_FLAGS.md)
-Feature flag system and usage
-- Available feature flags
-- Configuration
-- Runtime behavior
+### Operations & Configuration
 
----
+| Document | Description |
+|----------|-------------|
+| [CONFIGURATION.md](CONFIGURATION.md) | Environment variables reference |
+| [WORKER_SCALING.md](WORKER_SCALING.md) | Celery worker scaling guide |
+| [FEATURE_FLAGS.md](FEATURE_FLAGS.md) | Runtime feature toggles |
+| [MONITORING_TROUBLESHOOTING.md](MONITORING_TROUBLESHOOTING.md) | Debugging and monitoring |
 
-## 🔐 Security & Privacy
+### User Guides
 
-### [Authentication Implementation](AUTHENTICATION_IMPLEMENTATION_SUMMARY.md)
-Complete authentication system overview
-- JWT-based authentication
-- Role-based access control (RBAC)
-- API key management
-- Audit logging
-
-### [Admin User Setup](ADMIN_USER_SETUP.md)
-Creating and managing admin users
-- Initial admin creation
-- User management
-- Password policies
-
-### [Migration Guide](MIGRATION_GUIDE.md)
-Database migration for authentication system
-- Migration steps
-- Verification procedures
-- Troubleshooting
-
-### [Deployment with Authentication](DEPLOYMENT_AUTH.md)
-Deploying the authentication system
-- Environment variables
-- Production deployment
-- Security considerations
-
-### [PII Removal Toggle](PII_REMOVAL_TOGGLE.md)
-Global PII removal configuration
-- Enabling/disabling PII filtering
-- Configuration management
-- Testing procedures
-
-### [Data Retention Policy](DATA_RETENTION.md)
-Document and data retention rules
-- Default retention periods (24 hours)
-- Automatic cleanup jobs
-- GDPR compliance
-- Custom retention configuration
+| Document | Description |
+|----------|-------------|
+| [PIPELINE_USER_GUIDE.md](PIPELINE_USER_GUIDE.md) | Creating and managing pipelines |
+| [PIPELINE_VARIABLES.md](PIPELINE_VARIABLES.md) | Pipeline variable reference |
+| [TESTING.md](TESTING.md) | Testing guide |
 
 ---
 
-## 🔍 Features
+## Technology Stack
 
-### Token Tracking
-**File:** [TOKEN_TRACKING.md](TOKEN_TRACKING.md)
-
-Comprehensive token usage tracking and cost analysis
-- Per-step token tracking
-- Cost calculation
-- Usage analytics
-- Optimization recommendations
-
----
-
-## 📦 Archive
-
-Historical, planning, and implementation-specific documentation:
-
-**Planning & Analysis:**
-- [Phase 2 Summary](archive/PHASE_2_SUMMARY.md) - Phase 2 implementation summary
-- [Phase 3 Plan](archive/PHASE3_PLAN.md) - Security & compliance planning
-- [Architecture Assessment](archive/ARCHITECTURE_ASSESSMENT.md) - Architectural analysis
-- [Refactoring Notes](archive/REFACTORING_NOTES.md) - Code refactoring documentation
-
-**Implementation Guides:**
-- [Implementation Checklists](archive/IMPLEMENTATION_CHECKLIST.md) - Feature implementation checklists
-- [Frontend Integration Plans](archive/FRONTEND_INTEGRATION_ULTRAPLAN.md) - Frontend integration planning
-- [Pipeline Termination Implementation](archive/PIPELINE_TERMINATION.md) - Pipeline termination feature
-- [Frontend Termination Guide](archive/FRONTEND_TERMINATION_GUIDE.md) - Frontend termination UI
-
-**Technical Investigations:**
-- [Redis Cleanup Analysis](archive/REDIS_CLEANUP_ANALYSIS.md) - Redis cleanup investigation
-- [Redis Diagnostic Results](archive/REDIS_DIAGNOSTIC_RESULTS.md) - Redis diagnostics
-- [Phase Aware Ordering](archive/PHASE_AWARE_ORDERING.md) - Pipeline phase ordering
-- [Type Checking](archive/TYPE_CHECKING.md) - Type checking implementation
-
-**Legacy Documentation:**
-- [Legacy Cleanup Summary](archive/LEGACY_CLEANUP_COMPLETE.md) - Previous cleanup documentation
-- [Privacy Filter (Basic)](archive/PRIVACY_FILTER.md) - Basic privacy filter (superseded by OPTIMIZED_PII_FILTER.md)
+| Component | Technology | Version | Purpose |
+|-----------|------------|---------|---------|
+| **Backend** | FastAPI | 0.120+ | Async REST API |
+| **Frontend** | React + TypeScript | 18.3 / 5.9 | User interface |
+| **Database** | PostgreSQL | 16 | Persistent storage |
+| **ORM** | SQLAlchemy | 2.0 | Database abstraction |
+| **Task Queue** | Celery + Redis | 5.4 / 7 | Background processing |
+| **AI Provider (Translation)** | OVH AI Endpoints | - | LLM translation |
+| **AI Provider (OCR/Feedback)** | Mistral AI (France) | - | OCR + analytics |
+| **Main LLM** | Llama 3.3 70B | - | High-quality translation |
+| **Fast LLM** | Mistral Nemo (OVH) | - | Quick preprocessing |
+| **Vision LLM** | Qwen 2.5 VL 72B | - | OCR/image understanding |
+| **Primary OCR** | Mistral OCR | - | `mistral-ocr-latest` |
+| **Feedback Analysis** | Mistral Large | - | `mistral-large-latest` |
+| **PII Detection** | spaCy + Presidio | 3.8 / 2.2 | GDPR compliance |
+| **OCR Fallback** | PaddleOCR / Tesseract | - | Text extraction |
+| **Deployment** | Railway + Hetzner | - | Multi-cloud hosting |
 
 ---
 
-## 🎯 Quick Start
+## Processing Pipeline
+
+DocTranslator uses a 10-step modular pipeline:
+
+| Step | Name | Description |
+|------|------|-------------|
+| 1 | `TEXT_EXTRACTION` | OCR/PDF text extraction |
+| 2 | `MEDICAL_VALIDATION` | Verify document is medical |
+| 3 | `CLASSIFICATION` | Detect document type |
+| 4 | `PII_PREPROCESSING` | Remove personal information |
+| 5 | `TRANSLATION` | Translate to patient-friendly German |
+| 6 | `FACT_CHECK` | Verify medical accuracy |
+| 7 | `GRAMMAR_CHECK` | Language correction |
+| 8 | `LANGUAGE_TRANSLATION` | Convert to target language |
+| 9 | `FINAL_CHECK` | Quality assurance |
+| 10 | `FORMATTING` | Markdown output |
+
+### Document Types
+
+- **ARZTBRIEF** - Doctor's letters, discharge summaries
+- **BEFUNDBERICHT** - Medical reports, diagnostic findings
+- **LABORWERTE** - Laboratory results, blood tests
+
+### Supported Languages
+
+- **Input**: German (DE)
+- **Output**: English (EN), French (FR), Spanish (ES), Italian (IT), Portuguese (PT), Dutch (NL), Polish (PL)
+
+---
+
+## GDPR Compliance
+
+DocTranslator is designed with privacy-first principles:
+
+| Feature | Implementation |
+|---------|----------------|
+| **PII Removal** | spaCy NER + Presidio + custom patterns |
+| **Data Retention** | 24 hours (configurable to 0) |
+| **EU Processing** | All infrastructure in EU |
+| **Encryption** | At-rest (Fernet) + in-transit (TLS) |
+| **Audit Trail** | Complete logging for compliance |
+| **Cookie-Free** | No tracking cookies |
+
+### PII Types Detected
+
+- Names (German/English NER)
+- Addresses (street, postal code, city)
+- Phone numbers, fax, email
+- Birthdates
+- German Tax ID, Social Security
+- Insurance numbers, Patient IDs
+- Case/file reference numbers
+
+### Medical Terms Protected
+
+- 300+ anatomical/clinical terms
+- 200+ medications
+- 50+ medical eponyms (Parkinson, Alzheimer, etc.)
+- Lab values, units, abbreviations
+
+See [PRIVACY_FILTER.md](PRIVACY_FILTER.md) for complete details.
+
+---
+
+## External AI Services
+
+### Mistral AI (France)
+
+**Purpose**: Primary OCR engine and feedback analysis
+
+**Services Used**:
+- **Mistral OCR** (`mistral-ocr-latest`) - High-accuracy document text extraction
+- **Mistral Large** (`mistral-large-latest`) - Feedback quality analysis
+
+**Integration**:
+- Direct API via `mistralai` Python SDK
+- EU data processing (France)
+- Requires `MISTRAL_API_KEY` from [console.mistral.ai](https://console.mistral.ai)
+
+**Location**: `backend/app/services/mistral_client.py`, `backend/app/services/ocr_engine_manager.py`
+
+---
+
+## External Services (Hetzner)
+
+### PII Service
+
+**Purpose**: GDPR-compliant PII removal using spaCy + Presidio
+
+**Infrastructure**:
+- 2x CPX32 servers (4 vCPU, 8GB RAM)
+- Load balancer with managed SSL
+- Private network (10.1.0.0/16)
+
+**Technologies**:
+- spaCy `de_core_news_lg` + `en_core_web_lg`
+- Microsoft Presidio analyzers
+- Custom regex patterns for German identifiers
+
+**Location**: `pii_service/` directory
+
+### OCR Service
+
+**Purpose**: PaddleOCR fallback when Mistral OCR is unavailable or for complex documents
+
+**Infrastructure**:
+- 2x CPX41 servers (8 vCPU, 16GB RAM)
+- Load balancer with managed SSL
+- Private network (10.0.0.0/16)
+
+**Location**: `external_deployment/hetzner_paddleocr/`
+
+---
+
+## Cost Tracking
+
+DocTranslator tracks AI token usage automatically:
+
+- Per-call logging (input/output tokens)
+- Dynamic pricing from database
+- Cost breakdown by model and pipeline step
+- No text content stored (lean database)
+
+**Typical cost**: ~$0.005 per document (~half a cent)
+
+---
+
+## Getting Started
 
 ### For Users
-1. **[Pipeline User Guide](PIPELINE_USER_GUIDE.md)** - Learn to create and manage pipelines
-2. **[Architecture Overview](ARCHITECTURE.md)** - Understand how the system works
-3. **[Data Retention Policy](DATA_RETENTION.md)** - Know how long your data is stored
+
+1. Upload a medical document (PDF, JPG, PNG, DOCX)
+2. Select target language
+3. Wait for processing (typically 30-60 seconds)
+4. Download translated document
 
 ### For Developers
-1. **[Development Setup](DEVELOPMENT.md)** - Set up local environment
-2. **[API Reference](API.md)** - Understand the API endpoints
-3. **[Database Documentation](DATABASE.md)** - Learn the data model
-4. **[Pipeline Variables Reference](PIPELINE_VARIABLES.md)** - Master the pipeline system
-5. **[Authentication Implementation](AUTHENTICATION_IMPLEMENTATION_SUMMARY.md)** - Authentication system
 
-### For DevOps
-1. **[Deployment Guide](DEPLOYMENT.md)** - Deploy to production
-2. **[Railway Deployment Guide](RAILWAY_DEPLOYMENT_GUIDE.md)** - Railway-specific setup
-3. **[Migration Guide](MIGRATION_GUIDE.md)** - Database migrations
-4. **[Worker Scaling](WORKER_SCALING.md)** - Configure worker scaling
-5. **[Data Retention Policy](DATA_RETENTION.md)** - Configure retention policies
+```bash
+# Clone repository
+git clone https://github.com/Dropicx/doctranslator.git
+cd doctranslator
 
----
+# Start with Docker
+docker-compose up -d
 
-## 📝 Document Types
+# Or manual setup
+cd backend && pip install -r requirements.txt
+cd frontend && npm install
+```
 
-| Icon | Type | Purpose |
-|------|------|---------|
-| 📘 | User Guide | End-user documentation |
-| 🏗️ | Architecture | System design and structure |
-| 🔧 | Technical Reference | Developer documentation |
-| 🚀 | Operations | Deployment and maintenance |
-| 🔐 | Security | Privacy and compliance |
-| 🔍 | Features | Feature-specific docs |
-| 📦 | Archive | Historical/deprecated docs |
+See [DEVELOPMENT.md](DEVELOPMENT.md) for detailed setup.
+
+### For Operators
+
+- **Railway**: Main application (dev + production environments)
+- **Hetzner**: External services (PII, OCR) via Terraform
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for production deployment.
 
 ---
 
-## 🔄 Recently Updated
+## Archive
 
-- **2025-10-28**: Major documentation cleanup - organized 43 docs into 26 active + 17 archived
-- **2025-10-28**: Added authentication system documentation (AUTHENTICATION_IMPLEMENTATION_SUMMARY.md, ADMIN_USER_SETUP.md, MIGRATION_GUIDE.md)
-- **2025-10-28**: Added Infrastructure & Performance section with scaling and optimization guides
-- **2025-10-28**: Archived legacy planning and analysis documents (Phase 2/3, Redis diagnostics, refactoring notes)
-- **2025-10-27**: Added database migration guide for authentication system
-- **2025-10-24**: Added authentication deployment documentation
-- **2025-10-14**: Added CI/CD and ARC runner documentation to DEVELOPMENT.md and DEPLOYMENT.md
-- **2025-01-09**: Created comprehensive Pipeline User Guide and reorganized documentation structure
+Historical and implementation-specific documentation is in `docs/archive/`:
+
+- Phase planning documents
+- Implementation checklists
+- Redis diagnostics
+- Legacy privacy filter docs
 
 ---
 
-## 🤝 Contributing
+## Version History
 
-To add or update documentation:
-
-1. Follow the appropriate template for your document type
-2. Place in the correct category folder
-3. Update this index
-4. Submit pull request with clear description
-
-### Documentation Standards
-
-- **Use Markdown** for all documentation
-- **Include code examples** where appropriate
-- **Add diagrams** for complex concepts (use Mermaid or ASCII)
-- **Keep language clear** and avoid jargon
-- **Update INDEX.md** when adding new docs
-- **Version documentation** with dates
+| Version | Date | Changes |
+|---------|------|---------|
+| 2.0 | Jan 2026 | Hetzner PII service, enhanced privacy filter, Presidio integration |
+| 1.5 | Oct 2025 | Authentication system, cost tracking, feature flags |
+| 1.0 | Aug 2025 | Initial release |
 
 ---
 
-## 📧 Support
+## Support
 
-- **GitHub Issues**: Bug reports and feature requests
-- **Development Team**: Technical support and questions
-- **Documentation Issues**: Report errors or suggest improvements
+- **GitHub Issues**: [github.com/Dropicx/doctranslator/issues](https://github.com/Dropicx/doctranslator/issues)
+- **Health Check**: `GET /health` endpoint
+- **Documentation**: This `/docs` folder
 
 ---
 
-**Last Updated:** October 2025
-**Maintained by:** DocTranslator Team
+*Last Updated: January 2026*

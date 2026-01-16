@@ -5,12 +5,14 @@
 **DocTranslator** - GDPR-compliant medical document translation service with OCR support, powered by OVH AI Endpoints (Llama 3.3 70B).
 
 ### Tech Stack
-- **Backend**: FastAPI 0.115.6 + Python 3.11 (async)
+- **Backend**: FastAPI 0.120+ + Python 3.11 (async)
 - **Frontend**: React 18.3.1 + TypeScript 5.7.3 + Vite 6.0.6
 - **Database**: PostgreSQL (production) / SQLite (local dev)
-- **AI**: OVH AI Endpoints - Llama 3.3 70B, Mistral Nemo
-- **OCR**: Tesseract with pytesseract
-- **Deployment**: Railway with Docker
+- **AI (Translation)**: OVH AI Endpoints - Llama 3.3 70B, Mistral Nemo, Qwen 2.5 VL
+- **AI (OCR/Feedback)**: Mistral AI (France) - mistral-ocr-latest, mistral-large-latest
+- **OCR**: Mistral OCR (primary), PaddleOCR (Hetzner fallback), Tesseract
+- **PII**: Hetzner service (spaCy + Presidio)
+- **Deployment**: Railway + Hetzner + OVH + Mistral AI
 
 ### Project Structure
 ```
@@ -89,15 +91,15 @@ docker-compose down
 
 ## Key Features
 
-### 9-Step Processing Pipeline
-1. TEXT_EXTRACTION - OCR preprocessing
-2. MEDICAL_VALIDATION - Medical classification
+### 10-Step Processing Pipeline
+1. TEXT_EXTRACTION - OCR via Mistral OCR (primary) or PaddleOCR
+2. MEDICAL_VALIDATION - Medical content classification
 3. CLASSIFICATION - Document type detection
-4. PII_PREPROCESSING - Privacy filtering
-5. TRANSLATION - Patient-friendly translation
-6. FACT_CHECK - Medical accuracy
+4. PII_PREPROCESSING - Privacy filtering via Hetzner PII service
+5. TRANSLATION - Patient-friendly translation (Llama 3.3 70B)
+6. FACT_CHECK - Medical accuracy verification
 7. GRAMMAR_CHECK - Language correction
-8. LANGUAGE_TRANSLATION - Multi-language
+8. LANGUAGE_TRANSLATION - Multi-language output
 9. FINAL_CHECK - Quality assurance
 10. FORMATTING - Markdown output
 
@@ -115,6 +117,7 @@ docker-compose down
 ### Required
 ```bash
 OVH_AI_ENDPOINTS_ACCESS_TOKEN=your-token-here
+MISTRAL_API_KEY=your-mistral-api-key
 USE_OVH_ONLY=true
 ```
 
@@ -123,8 +126,11 @@ USE_OVH_ONLY=true
 OVH_AI_BASE_URL=https://oai.endpoints.kepler.ai.cloud.ovh.net/v1
 OVH_MAIN_MODEL=Meta-Llama-3_3-70B-Instruct
 OVH_PREPROCESSING_MODEL=Mistral-Nemo-Instruct-2407
+OVH_VISION_MODEL=Qwen2.5-VL-72B-Instruct
 LOG_LEVEL=INFO
 DATABASE_URL=postgresql://...  # Auto-configured on Railway
+EXTERNAL_PII_URL=https://pii.your-domain.de
+PADDLEOCR_SERVICE_URL=https://ocr.your-domain.de
 ```
 
 ## Code Style & Best Practices
@@ -139,26 +145,45 @@ DATABASE_URL=postgresql://...  # Auto-configured on Railway
 
 ## Database Architecture
 
-### Tables
-- `universal_prompts` - Prompts for all document types
-- `document_specific_prompts` - Per-document-type prompts
-- `universal_pipeline_steps` - Pipeline configuration
-- `ai_interaction_logs` - AI request/response logging
+### Core Tables
+- `pipeline_jobs` - Document processing jobs (encrypted file content)
+- `dynamic_pipeline_steps` - User-configurable pipeline steps
+- `pipeline_step_executions` - Individual step execution records
+- `ai_interaction_logs` - Token usage and cost tracking
 - `system_settings` - Key-value configuration
+- `users` - User accounts with roles
+- `api_keys` - API authentication tokens
+- `audit_logs` - Security and compliance audit trail
+- `feature_flags` - Runtime feature toggles
+- `ocr_configuration` - OCR engine selection and settings
+- `available_models` - AI model registry with pricing
+- `document_classes` - Custom document type definitions
+- `user_feedback` - Feedback with GDPR compliance
 
-All prompts and configurations are database-driven (no file fallbacks).
+All configurations are database-driven (no file fallbacks).
 
 ## API Endpoints
 
+### Core
 - `GET /health` - Health check
+- `GET /health/detailed` - Detailed health with dependencies
 - `POST /api/upload` - Upload document
-- `POST /api/process/translate` - Process document
-- `GET /api/settings/universal-prompts` - Get universal prompts
-- `PUT /api/settings/universal-prompts` - Update universal prompts
-- `GET /api/settings/document-prompts/{type}` - Get document prompts
-- `PUT /api/settings/document-prompts/{type}` - Update document prompts
+- `GET /api/process/{id}` - Check processing status
+- `GET /api/process/{id}/result` - Get final translation
+
+### Configuration
 - `GET /api/settings/pipeline-steps` - Get pipeline config
 - `PUT /api/settings/pipeline-steps` - Update pipeline config
+- `GET /api/settings/ocr-configuration` - Get OCR settings
+- `PUT /api/settings/ocr-configuration` - Update OCR settings
+
+### Analytics
+- `GET /api/cost/summary` - Token usage and costs
+- `GET /api/feedback/stats` - Feedback statistics
+
+### Authentication
+- `POST /api/auth/login` - User authentication
+- `POST /api/auth/refresh` - Refresh token
 
 See [docs/API.md](docs/API.md) for complete reference.
 
