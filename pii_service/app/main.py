@@ -91,6 +91,9 @@ class HealthResponse(BaseModel):
     german_model_loaded: bool
     english_model_loaded: bool
     presidio_available: bool = False
+    medialpy_available: bool = False
+    medialpy_version: str | None = None
+    medical_verifier_active: bool = False
     memory_usage_mb: float
 
 
@@ -252,6 +255,15 @@ async def health():
     """Health check endpoint with model status."""
     memory_mb = psutil.Process().memory_info().rss / 1024 / 1024
 
+    # Check MEDIALpy availability
+    try:
+        from app.medical_term_verifier import MEDIALPY_AVAILABLE, MEDIALPY_VERSION
+        medialpy_available = MEDIALPY_AVAILABLE
+        medialpy_version = MEDIALPY_VERSION
+    except ImportError:
+        medialpy_available = False
+        medialpy_version = None
+
     if pii_filter is None:
         return HealthResponse(
             status="unhealthy",
@@ -261,6 +273,9 @@ async def health():
             german_model_loaded=False,
             english_model_loaded=False,
             presidio_available=False,
+            medialpy_available=medialpy_available,
+            medialpy_version=medialpy_version,
+            medical_verifier_active=False,
             memory_usage_mb=memory_mb
         )
 
@@ -280,6 +295,9 @@ async def health():
         german_model_loaded=pii_filter.german_model_loaded,
         english_model_loaded=pii_filter.english_model_loaded,
         presidio_available=pii_filter.presidio_available,
+        medialpy_available=medialpy_available,
+        medialpy_version=medialpy_version,
+        medical_verifier_active=hasattr(pii_filter, 'medical_verifier'),
         memory_usage_mb=memory_mb
     )
 

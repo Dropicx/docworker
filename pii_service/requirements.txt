@@ -13,6 +13,9 @@ spacy>=3.7.0
 # Microsoft Presidio for enhanced PII detection
 presidio-analyzer>=2.2.0
 
+# Medical abbreviation library (English)
+medialpy>=0.0.4
+
 # System monitoring
 psutil>=5.9.0
 

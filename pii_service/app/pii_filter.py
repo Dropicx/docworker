@@ -17,6 +17,8 @@ from typing import Literal
 
 import spacy
 
+from app.medical_term_verifier import MedicalTermVerifier
+
 # Microsoft Presidio for enhanced PII detection
 try:
     from presidio_analyzer import AnalyzerEngine, RecognizerRegistry
@@ -119,6 +121,9 @@ class PIIFilter:
 
         # Initialize Presidio for enhanced PII detection
         self._init_presidio()
+
+        # Initialize medical term verifier (MEDIALpy + German patterns)
+        self.medical_verifier = MedicalTermVerifier()
 
         logger.info(f"PII Filter initialized - DE: {self.german_model_loaded}, EN: {self.english_model_loaded}, Presidio: {self.presidio_available}")
 
@@ -639,6 +644,11 @@ class PIIFilter:
             # Organ-specific adjectives
             "kardial", "kardiale", "kardialer", "kardialen", "kardiales",
             "pulmonal", "pulmonale", "pulmonaler", "pulmonalen", "pulmonales",
+            # Compound organ adjectives (commonly misclassified as PER/NAME)
+            "kardiopulmonal", "kardiopulmonale", "kardiopulmonaler", "kardiopulmonalen", "kardiopulmonales",
+            "kardiorenal", "kardiorenale", "kardiorenaler", "kardiorenalen",
+            "hepatorenal", "hepatorenale", "hepatorenaler", "hepatorenalen",
+            "pulmonalarteriell", "pulmonalarterielle", "pulmonalarterieller", "pulmonalarteriellen",
             "renal", "renale", "renaler", "renalen", "renales",
             "hepatisch", "hepatische", "hepatischer", "hepatischen", "hepatisches",
             "zerebral", "zerebrale", "zerebraler", "zerebralen", "zerebrales",
@@ -668,6 +678,21 @@ class PIIFilter:
             "bradykard", "bradykarde", "bradykarder", "bradykarden",
             "rhythmisch", "rhythmische", "rhythmischer", "rhythmischen",
             "arrhythmisch", "arrhythmische", "arrhythmischer", "arrhythmischen",
+
+            # ECG/EKG terms (commonly misclassified as ORG)
+            "st-strecke", "st-strecken", "st-strecken-veränderungen", "st-strecken-senkung",
+            "st-strecken-hebung", "st-hebung", "st-senkung", "st-veränderungen",
+            "t-welle", "t-wellen", "t-negativierung", "t-wellen-veränderungen",
+            "p-welle", "p-wellen", "pq-zeit", "pq-intervall", "pq-strecke",
+            "qrs-komplex", "qrs-zeit", "qrs-dauer", "qrs-breite",
+            "qt-zeit", "qt-intervall", "qtc-zeit", "qt-verlängerung",
+            "r-zacke", "r-progression", "r-verlust", "r-reduktion",
+            "q-zacke", "q-zacken", "pathologische-q-zacke",
+            "vorhofflimmern", "vorhofflattern", "vorhof", "ventrikel",
+            "repolarisationsstörung", "repolarisationsstörungen", "erregungsrückbildung",
+            "erregungsrückbildungsstörung", "erregungsrückbildungsstörungen",
+            "sinusrhythmus", "sinusarrhythmie", "sinusbradykardie", "sinustachykardie",
+            "extrasystole", "extrasystolen", "supraventrikulär", "ventrikulär",
 
             # Clinical finding adjectives
             "unauffällig", "unauffällige", "unauffälliger", "unauffälligen", "unauffälliges",
@@ -1173,6 +1198,10 @@ class PIIFilter:
                         custom_terms_preserved += 1
                     continue
 
+                # Verify with medical term library before removing (MEDIALpy + German patterns)
+                if self.medical_verifier.verify_before_removal(ent.text, "PERSON"):
+                    continue  # Preserve - it's a medical term!
+
                 # Remove the name
                 text = text[:ent.start_char] + "[NAME]" + text[ent.end_char:]
                 entities_removed += 1
@@ -1194,6 +1223,10 @@ class PIIFilter:
                         custom_terms_preserved += 1
                     continue
 
+                # Verify with medical term library before removing (MEDIALpy + German patterns)
+                if self.medical_verifier.verify_before_removal(ent.text, "LOCATION"):
+                    continue  # Preserve - it's a medical term!
+
                 # Replace location with placeholder
                 text = text[:ent.start_char] + "[LOCATION]" + text[ent.end_char:]
                 locations_removed += 1
@@ -1214,6 +1247,10 @@ class PIIFilter:
                     if custom_terms and ent_lower in custom_terms:
                         custom_terms_preserved += 1
                     continue
+
+                # Verify with medical term library before removing (MEDIALpy + German patterns)
+                if self.medical_verifier.verify_before_removal(ent.text, "ORGANIZATION"):
+                    continue  # Preserve - it's a medical term!
 
                 # Replace organization with placeholder
                 text = text[:ent.start_char] + "[ORGANIZATION]" + text[ent.end_char:]
