@@ -5,9 +5,9 @@ Verifies if a term flagged as PII is actually a medical term.
 Uses MEDIALpy for English abbreviations + German pattern matching.
 
 This module prevents false positives where medical terminology like:
-- "Nachtliche" -> [LOCATION] (should be preserved - means "nocturnal")
+- "Nächtliche" -> [LOCATION] (should be preserved - means "nocturnal")
 - "Kardiopulmonal" -> [NAME] (should be preserved - means "cardiopulmonary")
-- "ST-Strecken-Veranderungen" -> [ORGANIZATION] (should be preserved - ECG term)
+- "ST-Strecken-Veränderungen" -> [ORGANIZATION] (should be preserved - ECG term)
 """
 import logging
 import re
@@ -83,7 +83,7 @@ class MedicalTermVerifier:
 
         # German temporal/frequency medical adjectives (commonly misclassified as LOC)
         self.german_temporal_terms = {
-            'nachtlich', 'nachtliche', 'nachtlicher', 'nachtlichen', 'nachtliches',
+            'nächtlich', 'nächtliche', 'nächtlicher', 'nächtlichen', 'nächtliches',
             'paroxysmal', 'paroxysmale', 'paroxysmaler', 'paroxysmalen',
             'intermittierend', 'intermittierende', 'intermittierender',
             'persistierend', 'persistierende', 'persistierender',
@@ -101,8 +101,8 @@ class MedicalTermVerifier:
             r'^qrs[-\s]?komplex',      # QRS-Komplex
             r'^qt[-\s]?zeit',          # QT-Zeit
             r'^pq[-\s]?intervall',     # PQ-Intervall
-            r'veranderung(en)?$',      # ...veranderungen
-            r'storung(en)?$',          # ...storungen
+            r'veränderung(en)?$',      # ...veränderungen
+            r'störung(en)?$',          # ...störungen
             r'insuffizienz$',          # ...insuffizienz
             r'stenose$',               # ...stenose
         ]
