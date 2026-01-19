@@ -19,9 +19,10 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1 \
     SPACY_DATA_DIR=/data/models
 
-# Install system dependencies
+# Install system dependencies (including gosu for privilege de-escalation)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
@@ -42,11 +43,9 @@ RUN chmod +x start.sh
 RUN mkdir -p /data/models
 
 # Create non-root user for security (fixed UID 1000 for volume permissions)
+# Note: We run as root initially to fix volume permissions, then switch via gosu in start.sh
 RUN groupadd -g 1000 piiuser && useradd -u 1000 -g piiuser piiuser \
-    && chown -R piiuser:piiuser /app /data
-
-# Switch to non-root user
-USER piiuser
+    && chown -R piiuser:piiuser /app
 
 # Expose port
 EXPOSE 9125

@@ -15,9 +15,33 @@ DE_MODEL_VERSION="3.8.0"
 EN_MODEL_VERSION="3.8.0"
 
 echo "=== SpaCy PII Service Startup ==="
+echo "Running as: $(whoami) (UID: $(id -u))"
 echo "Models directory: $MODELS_DIR"
 
-# Create models directory if it doesn't exist
+# =============================================================================
+# Fix Railway volume permissions (fresh volumes are owned by root)
+# =============================================================================
+if [ "$(id -u)" = "0" ]; then
+    echo "Running as root - fixing volume permissions for piiuser..."
+
+    # Create models directory and set ownership
+    mkdir -p "$MODELS_DIR"
+    chown -R piiuser:piiuser /data
+
+    echo "Volume permissions fixed. Contents of /data:"
+    ls -la /data
+
+    # Re-exec this script as piiuser
+    echo "Switching to piiuser..."
+    exec gosu piiuser "$0" "$@"
+fi
+
+# =============================================================================
+# From here, we're running as piiuser
+# =============================================================================
+echo "Continuing as piiuser..."
+
+# Create models directory if it doesn't exist (should already exist from above)
 mkdir -p "$MODELS_DIR" 2>/dev/null || true
 
 # Debug: show what's already in the volume
