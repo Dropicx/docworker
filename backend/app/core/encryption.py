@@ -169,11 +169,12 @@ class FieldEncryptor:
             plaintext_bytes = plaintext_str.encode("utf-8")
 
             # Encrypt with current cipher
+            # Fernet.encrypt() returns base64url-encoded bytes, decode directly
             cipher = self._get_current_cipher()
             encrypted_bytes = cipher.encrypt(plaintext_bytes)
 
-            # Return as base64-encoded string for database storage
-            return base64.b64encode(encrypted_bytes).decode("ascii")
+            # Return as string (already base64url-encoded by Fernet)
+            return encrypted_bytes.decode("utf-8")
 
         except Exception as e:
             logger.error(f"Encryption failed: {e}")
