@@ -205,15 +205,15 @@ class FieldEncryptor:
             return None
 
         try:
-            # Decode from base64
+            # Fernet tokens are already base64url-encoded - pass directly to decrypt()
+            # No need to decode first; Fernet.decrypt() handles the base64 internally
             logger.debug(f"Decrypting field: input {len(ciphertext)} chars")
-            encrypted_bytes = base64.b64decode(ciphertext.encode("ascii"))
-            logger.debug(f"Base64 decoded: {len(encrypted_bytes)} bytes")
+            token_bytes = ciphertext.encode("utf-8")
 
             # Try current key first
             cipher = self._get_current_cipher()
             try:
-                decrypted_bytes = cipher.decrypt(encrypted_bytes)
+                decrypted_bytes = cipher.decrypt(token_bytes)
                 result = decrypted_bytes.decode("utf-8")
                 logger.debug(f"Decryption successful: {len(result)} chars")
                 return result
@@ -222,7 +222,7 @@ class FieldEncryptor:
                 previous_cipher = self._get_previous_cipher()
                 if previous_cipher:
                     logger.debug("Current key failed, trying previous key for decryption")
-                    decrypted_bytes = previous_cipher.decrypt(encrypted_bytes)
+                    decrypted_bytes = previous_cipher.decrypt(token_bytes)
                     return decrypted_bytes.decode("utf-8")
                 raise  # No previous key available, re-raise exception
 
