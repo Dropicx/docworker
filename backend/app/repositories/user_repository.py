@@ -164,7 +164,8 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             True if updated successfully
         """
         try:
-            user = self.get_by_id(user_id)
+            # Query directly to get session-attached entity (no decryption needed)
+            user = self.db.query(UserDB).filter(UserDB.id == user_id).first()
             if not user:
                 return False
 
@@ -189,7 +190,8 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             True if activated successfully
         """
         try:
-            user = self.get_by_id(user_id)
+            # Query directly to get session-attached entity (no decryption needed)
+            user = self.db.query(UserDB).filter(UserDB.id == user_id).first()
             if not user:
                 return False
 
@@ -197,7 +199,7 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             user.status = UserStatus.ACTIVE
             self.db.commit()
 
-            logger.info("Activated user {user_id}")
+            logger.info(f"Activated user {user_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -215,7 +217,8 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             True if deactivated successfully
         """
         try:
-            user = self.get_by_id(user_id)
+            # Query directly to get session-attached entity (no decryption needed)
+            user = self.db.query(UserDB).filter(UserDB.id == user_id).first()
             if not user:
                 return False
 
@@ -223,7 +226,7 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             user.status = UserStatus.INACTIVE
             self.db.commit()
 
-            logger.info("Deactivated user {user_id}")
+            logger.info(f"Deactivated user {user_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -242,14 +245,15 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             True if changed successfully
         """
         try:
-            user = self.get_by_id(user_id)
+            # Query directly to get session-attached entity (no decryption needed)
+            user = self.db.query(UserDB).filter(UserDB.id == user_id).first()
             if not user:
                 return False
 
             user.password_hash = new_password_hash
             self.db.commit()
 
-            logger.info("Changed password for user {user_id}")
+            logger.info(f"Changed password for user {user_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -268,14 +272,15 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             True if updated successfully
         """
         try:
-            user = self.get_by_id(user_id)
+            # Query directly to get session-attached entity (no decryption needed)
+            user = self.db.query(UserDB).filter(UserDB.id == user_id).first()
             if not user:
                 return False
 
             user.role = new_role
             self.db.commit()
 
-            logger.info("Updated role for user {user_id} to {new_role}")
+            logger.info(f"Updated role for user {user_id} to {new_role}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -299,7 +304,7 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             status_filter: Filter by user status
 
         Returns:
-            List of user instances
+            List of user instances with decrypted fields
         """
         try:
             query = self.db.query(UserDB)
@@ -310,7 +315,9 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             if status_filter:
                 query = query.filter(UserDB.status == status_filter)
 
-            return query.offset(skip).limit(limit).all()
+            users = query.offset(skip).limit(limit).all()
+            # Decrypt encrypted fields before returning
+            return self._decrypt_entities(users)
         except Exception as e:
             logger.error(f"Error listing users: {e}")
             raise
@@ -320,14 +327,16 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
         Get all active users.
 
         Returns:
-            List of active user instances
+            List of active user instances with decrypted fields
         """
         try:
-            return (
+            users = (
                 self.db.query(UserDB)
                 .filter(and_(UserDB.is_active, UserDB.status == UserStatus.ACTIVE))
                 .all()
             )
+            # Decrypt encrypted fields before returning
+            return self._decrypt_entities(users)
         except Exception as e:
             logger.error(f"Error getting active users: {e}")
             raise
@@ -337,10 +346,10 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
         Get all admin users.
 
         Returns:
-            List of admin user instances
+            List of admin user instances with decrypted fields
         """
         try:
-            return (
+            users = (
                 self.db.query(UserDB)
                 .filter(
                     and_(
@@ -351,6 +360,8 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
                 )
                 .all()
             )
+            # Decrypt encrypted fields before returning
+            return self._decrypt_entities(users)
         except Exception as e:
             logger.error(f"Error getting admin users: {e}")
             raise
@@ -382,23 +393,31 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
         """
         Search users by email or full name.
 
+        Note: With encrypted fields, LIKE search doesn't work on encrypted data.
+        This method returns all users and filters in-memory after decryption.
+        For large user bases, consider implementing hash-based search.
+
         Args:
             search_term: Search term
             limit: Maximum number of results
 
         Returns:
-            List of matching user instances
+            List of matching user instances with decrypted fields
         """
         try:
-            search_pattern = f"%{search_term}%"
-            return (
-                self.db.query(UserDB)
-                .filter(
-                    or_(UserDB.email.ilike(search_pattern), UserDB.full_name.ilike(search_pattern))
-                )
-                .limit(limit)
-                .all()
-            )
+            # Get all users (with decryption)
+            all_users = self.db.query(UserDB).all()
+            decrypted_users = self._decrypt_entities(all_users)
+
+            # Filter in-memory after decryption
+            search_lower = search_term.lower()
+            matching_users = [
+                user for user in decrypted_users
+                if (user.email and search_lower in user.email.lower()) or
+                   (user.full_name and search_lower in user.full_name.lower())
+            ]
+
+            return matching_users[:limit]
         except Exception as e:
             logger.error(f"Error searching users with term '{search_term}': {e}")
             raise
@@ -411,10 +430,12 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             admin_id: Admin's UUID
 
         Returns:
-            List of users created by the admin
+            List of users created by the admin with decrypted fields
         """
         try:
-            return self.db.query(UserDB).filter(UserDB.created_by_admin_id == admin_id).all()
+            users = self.db.query(UserDB).filter(UserDB.created_by_admin_id == admin_id).all()
+            # Decrypt encrypted fields before returning
+            return self._decrypt_entities(users)
         except Exception as e:
             logger.error(f"Error getting users created by admin {admin_id}: {e}")
             raise
@@ -430,7 +451,8 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             True if deactivated successfully
         """
         try:
-            user = self.get_by_id(user_id)
+            # Query directly to get session-attached entity (no decryption needed)
+            user = self.db.query(UserDB).filter(UserDB.id == user_id).first()
             if not user:
                 return False
 
@@ -439,7 +461,7 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             user.status = UserStatus.INACTIVE
             self.db.commit()
 
-            logger.info("Soft deleted user {user_id}")
+            logger.info(f"Soft deleted user {user_id}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -450,6 +472,8 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
         """
         Check if email is already taken by another user.
 
+        Uses searchable hash for encrypted email lookup.
+
         Args:
             email: Email to check
             exclude_user_id: User ID to exclude from check (for updates)
@@ -457,7 +481,23 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
         Returns:
             True if email is taken by another user
         """
+        from app.core.encryption import encryptor
+
         try:
+            # Generate hash from plaintext email for lookup
+            email_hash = encryptor.generate_searchable_hash(email)
+
+            # Query using searchable hash
+            query = self.db.query(UserDB).filter(UserDB.email_searchable == email_hash)
+
+            if exclude_user_id:
+                query = query.filter(UserDB.id != exclude_user_id)
+
+            result = query.first()
+            if result:
+                return True
+
+            # FALLBACK: Check plaintext email for legacy users without searchable hash
             query = self.db.query(UserDB).filter(UserDB.email == email)
 
             if exclude_user_id:
@@ -481,14 +521,15 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             New failed attempts count
         """
         try:
-            user = self.get_by_id(user_id)
+            # Query directly to get session-attached entity (no decryption needed)
+            user = self.db.query(UserDB).filter(UserDB.id == user_id).first()
             if not user:
                 return 0
 
             user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
             self.db.commit()
 
-            logger.warning("Failed login attempt #{user.failed_login_attempts} for user {user_id}")
+            logger.warning(f"Failed login attempt #{user.failed_login_attempts} for user {user_id}")
             return user.failed_login_attempts
         except Exception as e:
             self.db.rollback()
@@ -506,7 +547,8 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             True if reset successfully
         """
         try:
-            user = self.get_by_id(user_id)
+            # Query directly to get session-attached entity (no decryption needed)
+            user = self.db.query(UserDB).filter(UserDB.id == user_id).first()
             if not user:
                 return False
 
@@ -535,7 +577,8 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
         try:
             from datetime import timedelta
 
-            user = self.get_by_id(user_id)
+            # Query directly to get session-attached entity (no decryption needed)
+            user = self.db.query(UserDB).filter(UserDB.id == user_id).first()
             if not user:
                 return False
 
@@ -543,7 +586,7 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             user.locked_until = lockout_time
             self.db.commit()
 
-            logger.warning("Locked account {user_id} until {lockout_time}")
+            logger.warning(f"Locked account {user_id} until {lockout_time}")
             return True
         except Exception as e:
             self.db.rollback()
@@ -561,7 +604,8 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             True if account is locked
         """
         try:
-            user = self.get_by_id(user_id)
+            # Query directly to get session-attached entity (no decryption needed)
+            user = self.db.query(UserDB).filter(UserDB.id == user_id).first()
             if not user or not user.locked_until:
                 return False
 
@@ -571,7 +615,7 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
                 user.locked_until = None
                 user.failed_login_attempts = 0
                 self.db.commit()
-                logger.info("Lockout expired for user {user_id}")
+                logger.info(f"Lockout expired for user {user_id}")
                 return False
 
             return True
