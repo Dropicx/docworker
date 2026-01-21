@@ -2832,6 +2832,12 @@ class PIIFilter:
                 if result.start > 0 and text[result.start - 1] == "[":
                     continue
 
+                # FINAL9: Skip if it's a markdown section header (### Anamnese, etc.)
+                chars_before = text[max(0, result.start - 10):result.start]
+                if re.search(r'#{1,6}\s*$', chars_before):
+                    logger.debug(f"Presidio: Preserved '{entity_text}' (markdown section header)")
+                    continue
+
                 # Skip if it's a protected medical term
                 if self._is_medical_term(entity_text, custom_terms):
                     continue
