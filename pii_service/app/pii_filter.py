@@ -577,8 +577,19 @@ class PIIFilter:
             "pankreaskopf", "pankreaskopfes", "pankreasschwanz", "pankreasschwanzes",
             # Phase 7: Anatomical position terms
             "orthotop", "orthotope", "orthotoper", "orthotopen",
+            # Phase 11: Anatomical structures and regions (commonly misclassified)
+            "axillarlinie", "axillarlinien", "vordere axillarlinie", "hintere axillarlinie",
+            "leberparenchym", "nierenparenchym", "milzparenchym", "parenchymsaum",
+            "parenchym", "parenchyms", "parenchymstruktur",
+            "gallenwege", "gallenweg", "gallenwegs", "gallengänge", "gallengang",
+            "einzelniere", "einzelnieren", "wandniere",
+            "morison-pouch", "morison pouch", "douglas-raum", "douglasraum",
             # Anatomical regions (commonly misclassified as LOC)
+            "oberbauch", "unterbauch", "mittelbauch", "epigastrium",
             "oberbauchorgane", "unterbauchorgane", "bauchorgane",
+            # Phase 11: Limb and body regions (commonly misclassified as LOCATION)
+            "extremitäten", "extremität", "obere extremität", "untere extremität",
+            "oberarm", "unterarm", "oberschenkel", "unterschenkel",
             "hinterhorn", "vorderhorn", "seitenhorn",  # Meniscus anatomy
             "pulsübertragung", "nierenperfusion",
             "extrakardial", "extrakardiale", "extrakardialer", "extrakardialen",
@@ -593,6 +604,10 @@ class PIIFilter:
             "prognose", "epikrise", "symptom", "syndrom", "erkrankung", "krankheit",
             "störung", "insuffizienz", "entzündung", "infektion", "nekrose",
             "ischämie", "ruptur", "läsion", "pathologie",
+            # Phase 11: Compound pathological terms (commonly misclassified as LOCATION)
+            "nekrosezone", "nekrosezonen", "infarzierungszone", "ischämiezone",
+            "harnstau", "harnstauung", "harntransportstörung",
+            "pleuraerguss", "pleuraergüsse", "perikarderguss", "aszites",
             # Phase 6: Medical devices
             "perfusor", "infusomat",
             # Phase 9: Stent brand names and medical devices
@@ -601,6 +616,14 @@ class PIIFilter:
             "palmaz", "express", "cypher", "taxus", "xience", "resolute",
             "endeavor", "promus", "synergy", "orsiro", "ultimaster",
             "viabahn", "wallstent", "zilver", "innova", "visi-pro",  # Phase 10: More stent brands
+            # Phase 11: Bacteria and pathogens (commonly misclassified as NAME)
+            "h pylori", "h. pylori", "h.pylori", "helicobacter", "helicobacter pylori",
+            "hp-negativ", "hp-positiv", "hp negativ", "hp positiv",
+            # Phase 11: Anatomical/pathological conditions (commonly misclassified)
+            "agenesie", "aplasie", "hypoplasie", "dysplasie", "atrophie",
+            "wandbetont", "wandbetonte", "wandbetonter", "wandbetonten",
+            # Phase 11: Bilateral/positional descriptors
+            "beidseits", "beidseitig", "beidseitige", "beidseitiger", "beidseitigen",
             # Phase 7: Clinical examination terms
             "sklerenikterus", "ikterus",  # Jaundice/yellowing of sclera
             "allgemeinzustand", "allgemeinzustands", "allgemeinzustandes",  # General condition
@@ -662,6 +685,9 @@ class PIIFilter:
             "kontrollröntgen", "verlaufsröntgen", "röntgenuntersuchung",
             "abdomensonografie", "abdomensonographie", "sonografisch", "sonographisch",
             "minderperfusion", "hypoperfusion", "hyperperfusion",
+            # Phase 11: CT/MR imaging terms (commonly misclassified as LOCATION)
+            "computertomografisch", "computertomographisch", "computertomografie",
+            "magnetresonanztomografie", "magnetresonanztomografisch",
             # Phase 10: Position and imaging terms
             "liegendposition", "liegend", "sitzend", "stehend",
             "beurteilbarkeit", "beurteilbar", "eingeschränkte beurteilbarkeit",
@@ -702,6 +728,9 @@ class PIIFilter:
 
             # ==================== DEPARTMENTS ====================
             "intensivstation", "notaufnahme", "ambulanz", "station",
+            # Phase 11: Consultation terms (commonly misclassified as NAME)
+            "konsil", "konsils", "konsiliarius", "konsilarisch", "konsiliar",
+            "konsiliarisch", "konsiliarische", "konsiliarischer",
             "kardiologie", "pneumologie", "gastroenterologie", "nephrologie",
             "neurologie", "onkologie", "hämatologie", "rheumatologie",
             "endokrinologie", "dermatologie", "orthopädie", "urologie",
@@ -722,6 +751,10 @@ class PIIFilter:
             "infektwerte", "infektparameter", "infektzeichen", "entzündungsparameter",
             "retentionsparameter", "nierenretentionsparameter", "leberwerte",
             "stuhlprobe", "stuhlproben", "stuhlgang", "stuhluntersuchung",
+            # Phase 11: Additional lab abbreviations (commonly misclassified as LOCATION)
+            "hkt", "hk", "hct",  # Hämatokrit abbreviations
+            "prealbumin", "präalbumin", "albumin",
+            "eryzahl", "erythrozytenzahl", "leukozytenzahl", "thrombozytenzahl",
             "tsh", "t3", "t4", "hba1c", "glucose", "glukose", "cholesterin",
             "triglyzeride", "inr", "ptt", "quick", "d-dimer", "fibrinogen",
             "blutgruppe", "rhesusfaktor",
@@ -753,8 +786,16 @@ class PIIFilter:
             "z.n.", "v.a.", "dd", "st.p.", "ed", "j.",  # German medical abbreviations
             "z.n", "v.a", "zn", "va",  # Without trailing periods (tokenization variants)
             "sinusrhythmus", "normofrequent", "rhythmisch",  # ECG findings
+            # Phase 11: ECG wave components (commonly misclassified as LOCATION)
+            "s-zacke", "s-zacken", "r-zacke", "r-zacken", "t-welle", "t-wellen",
+            "p-welle", "p-wellen", "st-hebung", "st-hebungen", "st-senkung",
             "unauffällig", "regelrecht", "altersentsprechend",  # Normal findings
             "reduziert", "erhöht", "erniedrigt", "pathologisch",  # Finding descriptors
+            # Phase 11: Additional clinical descriptors (commonly misclassified)
+            "normwertig", "normwertige", "normwertiger", "normwertigen",
+            "diskret", "diskrete", "diskreter", "diskreten",  # Subtle/mild
+            "sonorer", "sonore", "sonoren",  # Sonorous (percussion sound)
+            "klopfschall", "klopfschalles",  # Percussion sound
             "druckdolent", "druckschmerzhaft", "palpabel", "tastbar",  # Examination terms
             "auskultation", "perkussion", "inspektion", "palpation",  # Exam methods
             "systolisch", "diastolisch", "endsystolisch", "enddiastolisch",  # Cardiac timing
@@ -802,6 +843,8 @@ class PIIFilter:
             "schwer", "schwere", "schwerer", "schweren", "schweres",
             "mittelgradig", "mittelgradige", "mittelgradiger", "mittelgradigen",
             "hochgradig", "hochgradige", "hochgradiger", "hochgradigen",
+            # Phase 11: Missing severity adjectives (commonly misclassified as NAME)
+            "leichtgradig", "leichtgradige", "leichtgradiger", "leichtgradigen",
             "geringfügig", "geringfügige", "geringfügiger", "geringfügigen",
             "geringgradig", "geringgradige", "geringgradiger", "geringgradigen",
 
