@@ -571,6 +571,8 @@ class PIIFilter:
             "prostata", "uterus", "ovarien", "hoden", "lymphknoten",
             "rückenmark", "knochenmark", "arterie", "vene", "kapillare",
             "aorta", "koronararterie", "aortenwand",
+            # Phase 6: German vascular anatomy (commonly misclassified as NAME)
+            "pfortader", "lebervene", "lebervenen", "milzvene",
             # Anatomical regions (commonly misclassified as LOC)
             "oberbauchorgane", "unterbauchorgane", "bauchorgane",
             "hinterhorn", "vorderhorn", "seitenhorn",  # Meniscus anatomy
@@ -587,6 +589,8 @@ class PIIFilter:
             "prognose", "epikrise", "symptom", "syndrom", "erkrankung", "krankheit",
             "störung", "insuffizienz", "entzündung", "infektion", "nekrose",
             "ischämie", "ruptur", "läsion", "pathologie",
+            # Phase 6: Medical devices
+            "perfusor", "infusomat",
             # English
             "diagnosis", "treatment", "examination", "surgery", "medication",
             "disease", "disorder", "condition", "inflammation", "infection",
@@ -654,6 +658,8 @@ class PIIFilter:
             "mitralklappeninsuffizienz", "mitralklappenersatz", "mitralklappenstenose",
             "aortenklappeninsuffizienz", "aortenklappenersatz", "aortenklappenstenose",
             "trikuspidalklappeninsuffizienz", "pulmonalklappeninsuffizienz",
+            # Phase 6: Hepatology procedures (commonly misclassified as NAME/ORG)
+            "tips", "tipss", "ögd", "aszitesdrainage", "parazentese",
             # Risk factors and lifestyle
             "nikotinabusus", "alkoholabusus", "drogenabusus", "substanzabusus",
             "adipositas", "übergewicht", "untergewicht", "kachexie",
@@ -903,6 +909,8 @@ class PIIFilter:
             "z.b.", "d.h.", "u.a.", "bzw.", "ggf.", "evtl.", "etc.",
             "inkl.", "exkl.", "max.", "min.", "vs.",
             "li.", "re.", "bds.",
+            # Phase 6: Medical status abbreviation (Zustand nach = status post)
+            "z.n.", "z. n.",
             # Medical report abbreviations
             "ber.", "mittl.", "berechn.", "berechn", "geschätzt",
             "neg.", "pos.", "path.", "phys.", "norm.",
@@ -955,6 +963,13 @@ class PIIFilter:
             "vitamin b6", "vitamin b12", "vitamin c", "vitamin d", "vitamin d2",
             "vitamin d3", "vitamin e", "vitamin k", "vitamin k1", "vitamin k2",
             "vitamine", "vitaminmangel", "vitaminspiegel", "vitaminsubstitution",
+            # Phase 6: Abbreviated vitamin forms
+            "vit. b12", "vit b12", "vit. d", "vit d", "vit. k", "vit k",
+
+            # ==================== LIVER SCORING SYSTEMS (Phase 6) ====================
+            # Child-Pugh classification for liver cirrhosis (commonly misclassified as NAME)
+            "child a", "child b", "child c", "child-pugh", "child pugh",
+            "meld", "meld-score", "meld score", "meld-na",
         }
 
         # ==================== DRUG DATABASE (226 medications) ====================
@@ -1795,7 +1810,7 @@ class PIIFilter:
             # Rate
             "bpm", "/min",
             # Concentrations
-            "pg/ml", "ng/ml", "µg/ml", "mg/dl", "mmol/l", "g/dl",
+            "pg/ml", "ng/ml", "µg/ml", "mg/dl", "mmol/l", "g/dl", "u/l", "iu/l",
             # Other
             "%", "‰", "jahre", "years", "j",
         ]
