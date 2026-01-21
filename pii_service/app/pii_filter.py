@@ -230,8 +230,9 @@ class PIIFilter:
 
             # Doctor names with initials: "J. Chahem", "K. Fariq-Spiegel", "N. Dewies"
             # Matches initial + period + space + surname (with optional hyphenated part)
+            # Negative lookbehind excludes German abbreviations: z.B., d.h., u.a., o.ä., i.V., etc.
             "doctor_initial_name": re.compile(
-                r"\b([A-Z]\.)\s*([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)\b"
+                r"(?<![zZdDuUoOiIeEäÄöÖüÜ])\b([A-Z]\.)\s*([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)\b"
             ),
 
             # =============================================================
@@ -868,6 +869,30 @@ class PIIFilter:
             "ery", "erys", "leuko", "leukos", "thrombo", "thrombos",
             "lympho", "lymphos", "mono", "monos", "granu", "granus",
             "neutro", "neutros", "eosino", "basophil",
+
+            # ==================== GERMAN COMPOUND MEDICAL TERMS ====================
+            # Vascular/anatomical compounds (commonly misclassified as LOC)
+            "bifurkation", "trifurkation", "anastomose", "gefäßanastomose",
+            "stenose", "restenose", "thrombosierung",
+
+            # Metabolism terms (commonly misclassified as ORG)
+            "grundumsatz", "stoffwechselumsatz", "kalorienumsatz", "energieumsatz",
+            "ruheumsatz", "leistungsumsatz",
+
+            # Measurement terms (compound)
+            "knöchel-arm-index", "ankle-brachial-index",
+            "körperfettanteil", "körperwasseranteil",
+
+            # Lab cell terms (full German names - commonly misclassified as LOC)
+            "leukozyten", "erythrozyten", "thrombozyten",
+            "hämatokrit", "hämoglobin",
+
+            # ==================== VITAMINS ====================
+            # Must protect "Vitamin X" constructs from name detection
+            "vitamin", "vitamin a", "vitamin b", "vitamin b1", "vitamin b2",
+            "vitamin b6", "vitamin b12", "vitamin c", "vitamin d", "vitamin d2",
+            "vitamin d3", "vitamin e", "vitamin k", "vitamin k1", "vitamin k2",
+            "vitamine", "vitaminmangel", "vitaminspiegel", "vitaminsubstitution",
         }
 
         # ==================== DRUG DATABASE (226 medications) ====================
@@ -1368,7 +1393,31 @@ class PIIFilter:
 
         # Process entities in reverse order to maintain positions
         for ent in reversed(doc.ents):
-            ent_lower = ent.text.lower()
+            ent_lower = ent.text.lower().strip()
+
+            # ===============================================================
+            # PRIORITY CHECKS - Check protected sets BEFORE any entity logic
+            # This prevents NER from replacing medical terms with placeholders
+            # ===============================================================
+
+            # PRIORITY CHECK 1: Direct match in protected medical terms
+            if ent_lower in self.medical_terms:
+                logger.debug(f"NER: Preserved '{ent.text}' (medical_terms match)")
+                continue
+
+            # PRIORITY CHECK 2: Direct match in drug database
+            if ent_lower in self.drug_database:
+                logger.debug(f"NER: Preserved '{ent.text}' (drug match)")
+                continue
+
+            # PRIORITY CHECK 3: Direct match in verifier anatomical terms
+            if hasattr(self, 'medical_verifier') and ent_lower in self.medical_verifier.anatomical_terms:
+                logger.debug(f"NER: Preserved '{ent.text}' (anatomical match)")
+                continue
+
+            # ===============================================================
+            # Entity type-specific handling (if not caught by priority checks)
+            # ===============================================================
 
             # Handle PERSON entities
             if ent.label_ in person_labels:

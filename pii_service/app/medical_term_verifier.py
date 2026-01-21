@@ -58,7 +58,11 @@ class MedicalTermVerifier:
             'urie', 'algie', 'asthenie', 'plegie', 'parese', 'spasmus',
             # Procedure suffixes
             'ektomie', 'tomie', 'plastik', 'skopie', 'graphie', 'gramm',
-            'zentese', 'stase', 'lyse',
+            'zentese', 'stase', 'lyse', 'ostomie',
+            # Additional compound word suffixes
+            'furkation', 'bifurkation', 'trifurkation',  # Vessel branching
+            'umsatz',  # Metabolism: Grundumsatz
+            'stomose', 'anastomose',  # Surgical connections
             # Organ/anatomy suffixes
             'pulmonal', 'pulmonale', 'pulmonaler', 'pulmonalen',
             'kardial', 'kardiale', 'kardialer', 'kardialen',
@@ -321,6 +325,18 @@ class MedicalTermVerifier:
 
             # UV/Skin terms
             'solarien', 'solarium', 'uv-faktor', 'uv-index', 'lsf', 'spf',
+
+            # Vitamins (prevent single-letter detection as names)
+            'vitamin', 'vitamin a', 'vitamin b', 'vitamin b1', 'vitamin b2',
+            'vitamin b6', 'vitamin b12', 'vitamin c', 'vitamin d', 'vitamin d3',
+            'vitamin e', 'vitamin k',
+
+            # German compound medical terms (commonly misclassified)
+            'bifurkation', 'trifurkation', 'anastomose',
+            'grundumsatz', 'stoffwechselumsatz', 'ruheumsatz',
+            'knöchel-arm-index', 'ankle-brachial-index',
+            'leukozyten', 'erythrozyten', 'thrombozyten',
+            'hämatokrit', 'hämoglobin',
         }
 
     @lru_cache(maxsize=10000)
@@ -394,7 +410,9 @@ class MedicalTermVerifier:
 
         # 12. Check for German compound medical words (contains medical root)
         medical_roots = ['kardio', 'pulmono', 'hepato', 'nephro', 'neuro',
-                        'gastro', 'dermato', 'onko', 'hamat', 'endo']
+                        'gastro', 'dermato', 'onko', 'hamat', 'endo',
+                        'bifurk', 'anastom', 'stenos', 'thromb',  # Vascular
+                        'metabol', 'umsatz', 'vitamin']  # Metabolism/nutrition
         for root in medical_roots:
             if root in term_lower:
                 return True, f"german_root:{root}"
