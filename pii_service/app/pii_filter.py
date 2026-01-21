@@ -228,6 +228,12 @@ class PIIFilter:
                 r"([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)"
             ),
 
+            # Doctor names with initials: "J. Chahem", "K. Fariq-Spiegel", "N. Dewies"
+            # Matches initial + period + space + surname (with optional hyphenated part)
+            "doctor_initial_name": re.compile(
+                r"\b([A-Z]\.)\s*([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)\b"
+            ),
+
             # =============================================================
             # DATE PATTERNS (NEW - German month names)
             # =============================================================
@@ -299,6 +305,12 @@ class PIIFilter:
                 r"(?:fax|telefax)\s*[:.]?\s*"
                 r"((?:\+49|0049|0)?\s*[\d\s/\-]{8,15})",
                 re.IGNORECASE
+            ),
+
+            # Phone numbers with spaces: "02131 888 - 2765", "0211 123 456 78"
+            # Matches area code + spaced number blocks
+            "phone_spaced": re.compile(
+                r"\b(\d{4,5})\s+(\d{3})\s*[-–]\s*(\d{4})\b"
             ),
 
             # Email
@@ -375,6 +387,66 @@ class PIIFilter:
             # Full email addresses (enhanced)
             "email_full": re.compile(
                 r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b",
+                re.IGNORECASE
+            ),
+
+            # =============================================================
+            # COMPANY/ORGANIZATION PATTERNS (NEW)
+            # =============================================================
+
+            # Company registration numbers (HRB 4643, HRA 12345)
+            "company_registration": re.compile(
+                r"\b(HRB|HRA|GnR|PR|VR)\s*\d{3,8}\b",
+                re.IGNORECASE
+            ),
+
+            # Bank names with city/location
+            "bank_location": re.compile(
+                r"\b(Sparkasse|Volksbank|Raiffeisenbank|Commerzbank|"
+                r"Deutsche\s+Bank|Postbank|Hypovereinsbank|Targobank|"
+                r"Santander|ING|DKB|N26|Sparda[-\s]?Bank)\s+"
+                r"[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?\b",
+                re.IGNORECASE
+            ),
+
+            # IBAN numbers (German format: DE + 2 check digits + 18 characters)
+            "iban": re.compile(
+                r"\b[A-Z]{2}\d{2}\s*\d{4}\s*\d{4}\s*\d{4}\s*\d{4}\s*\d{2}\b",
+                re.IGNORECASE
+            ),
+
+            # BIC/SWIFT codes
+            "bic": re.compile(
+                r"\b[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\b"
+            ),
+
+            # =============================================================
+            # HOSPITAL LETTERHEAD PATTERNS (NEW)
+            # =============================================================
+
+            # Hospital/clinic letterhead block - company info at document start
+            # Matches common German hospital organizational info
+            "hospital_letterhead": re.compile(
+                r"(?:Unternehmensgruppe|Rheinland\s+Klinikum|Lukaskrankenhaus|"
+                r"Universitätsklinikum|Städtisches\s+Klinikum|Kreiskrankenhaus|"
+                r"Marienhospital|St\.\s*[\w\-]+\s*(?:Hospital|Krankenhaus)|"
+                r"Klinikum\s+\w+|Krankenhaus\s+\w+)\b"
+                r"[^.]*?(?:GmbH|gGmbH|AG|e\.V\.)?",
+                re.IGNORECASE
+            ),
+
+            # Hospital management/director titles
+            "hospital_management": re.compile(
+                r"(?:Geschäftsführung|Ärztlicher\s+Direktor|Pflegedirektor|"
+                r"Verwaltungsdirektor|Vorstand|Aufsichtsrat)[:\s]*"
+                r"[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)*",
+                re.IGNORECASE
+            ),
+
+            # Hospital department headers
+            "hospital_department": re.compile(
+                r"(?:Klinik\s+für|Abteilung\s+für|Institut\s+für|Zentrum\s+für)\s+"
+                r"[A-ZÄÖÜ][a-zäöüß]+(?:\s+(?:und|u\.)\s+[A-ZÄÖÜ][a-zäöüß]+)*",
                 re.IGNORECASE
             ),
         }
@@ -1034,6 +1106,7 @@ class PIIFilter:
             "honorific_name": "[NAME]",
             "name_comma_format": "[PATIENT_NAME]",
             "labeled_name": "[PATIENT_NAME]",
+            "doctor_initial_name": "[DOCTOR_NAME]",
 
             # Date patterns
             "birthdate": "[BIRTHDATE]",
@@ -1052,6 +1125,7 @@ class PIIFilter:
 
             # Contact patterns
             "phone": "[PHONE]",
+            "phone_spaced": "[PHONE]",
             "fax": "[FAX]",
             "email": "[EMAIL]",
             "email_full": "[EMAIL]",
@@ -1066,14 +1140,22 @@ class PIIFilter:
             "tax_id": "[TAX_ID]",
             "social_security": "[SOCIAL_SECURITY]",
             "ssn": "[SSN]",
+
+            # Company/organization patterns
+            "company_registration": "[COMPANY_ID]",
+            "bank_location": "[BANK_INFO]",
+
+            # Letterhead patterns
+            "hospital_letterhead": "[HOSPITAL_INFO]",
         }
         return placeholder_map.get(pii_type, f"[{pii_type.upper()}]")
 
     def _remove_pii_with_patterns(self, text: str, language: str) -> tuple[str, dict]:
-        """Remove PII using regex patterns."""
+        """Remove PII using regex patterns with context-aware date handling."""
         patterns = self.patterns_de if language == "de" else self.patterns_en
         removed_count = 0
         pii_types = []
+        dates_preserved = 0
 
         # Process patterns in a specific order: names first, then others
         # This ensures titles like "Dr. med." are processed before generic patterns
@@ -1083,6 +1165,9 @@ class PIIFilter:
             "name_comma_format",  # Then "Müller, Anna"
             "labeled_name",       # Then "Patient: Schmidt"
         ]
+
+        # Patterns that need context-aware processing (not simple substitution)
+        context_aware_patterns = ["date_standalone", "date_german_month", "date_english_month"]
 
         # Process priority patterns first
         for pii_type in priority_order:
@@ -1099,14 +1184,40 @@ class PIIFilter:
         for pii_type, pattern in patterns.items():
             if pii_type in priority_order:
                 continue  # Already processed
-            matches = pattern.findall(text)
-            if matches:
-                removed_count += len(matches)
-                pii_types.append(pii_type)
-                placeholder = self._get_placeholder(pii_type)
-                text = pattern.sub(placeholder, text)
 
-        return text, {"pattern_removals": removed_count, "pii_types": pii_types}
+            # Handle date patterns with context awareness
+            if pii_type in context_aware_patterns:
+                # Process dates individually with context checking
+                matches = list(pattern.finditer(text))
+                if matches:
+                    # Process in reverse order to maintain positions
+                    for match in reversed(matches):
+                        # Check if date is in medical context (should be preserved)
+                        if self._is_medical_context_date(text, match.start(), match.end()):
+                            dates_preserved += 1
+                            logger.debug(f"Preserved medical context date: {match.group()}")
+                            continue  # Don't remove this date
+
+                        # Remove non-medical dates
+                        placeholder = self._get_placeholder(pii_type)
+                        text = text[:match.start()] + placeholder + text[match.end():]
+                        removed_count += 1
+                        if pii_type not in pii_types:
+                            pii_types.append(pii_type)
+            else:
+                # Standard pattern substitution
+                matches = pattern.findall(text)
+                if matches:
+                    removed_count += len(matches)
+                    pii_types.append(pii_type)
+                    placeholder = self._get_placeholder(pii_type)
+                    text = pattern.sub(placeholder, text)
+
+        return text, {
+            "pattern_removals": removed_count,
+            "pii_types": pii_types,
+            "dates_preserved": dates_preserved
+        }
 
     def _remove_names_with_ner(
         self, text: str, language: str, custom_terms: set | None = None
@@ -1489,6 +1600,237 @@ class PIIFilter:
 
         return False
 
+    def _is_medical_context_date(self, text: str, start: int, end: int) -> bool:
+        """
+        Check if a date is in medical context (should be preserved).
+
+        Medical procedure dates, treatment timelines, and diagnostic dates
+        are clinically important and should NOT be removed. Only truly
+        identifying dates (birthdates, document dates) should be removed.
+
+        Args:
+            text: The full text
+            start: Start position of the date match
+            end: End position of the date match
+
+        Returns:
+            True if the date is in medical context (PRESERVE), False if PII (REMOVE)
+        """
+        # Get surrounding context (80 chars before, 30 after)
+        context_start = max(0, start - 80)
+        context_end = min(len(text), end + 30)
+        context_before = text[context_start:start].lower()
+        context_after = text[end:context_end].lower()
+
+        # PII context indicators - these dates should be REMOVED
+        pii_date_indicators = [
+            r'geb(?:oren|\.|\s)',
+            r'geburtsdatum',
+            r'geboren\s+am',
+            r'\*\s*$',  # Asterisk before date often means birthdate
+        ]
+
+        for pattern in pii_date_indicators:
+            if re.search(pattern, context_before):
+                return False  # PII date - should be removed
+
+        # Medical context indicators - these dates should be KEPT
+        medical_date_indicators = [
+            # Temporal prepositions indicating medical timeline
+            r'(?:vom|am|bis|seit|ab|nach|vor|zwischen)\s*$',
+            r'(?:vom|am|bis|seit|ab)\s+\d',  # "vom DD.MM" pattern
+            # Procedure/exam names before dates
+            r'(?:ct|mrt|pet|röntgen|sonographie|ultraschall|echo|ekg|'
+            r'op|operation|punktion|untersuchung|kontrolle|wiedervorstellung|'
+            r'therapie|behandlung|aufnahme|entlassung|revision|dilatation|'
+            r'drainage|transfusion|infusion|gastroskopie|koloskopie|'
+            r'bronchoskopie|ögd|ercp|tipss|biopsie|szintigraphie)\s*'
+            r'(?:vom|am)?\s*$',
+            # Treatment timing
+            r'stationär\s*(?:vom|bis|am)',
+            r'ambulant\s*(?:vom|bis|am)',
+            # Date range patterns
+            r'\d{1,2}\.\d{1,2}\.\s*[-–]\s*$',  # "15.05. - " (date range start)
+            # Medical milestone language
+            r'(?:abstinent|clean|nüchtern|symptomfrei)\s+seit',
+            r'ed\s+',  # "ED 2024" = Erstdiagnose
+            r'erstdiagnose',
+        ]
+
+        for pattern in medical_date_indicators:
+            if re.search(pattern, context_before):
+                return True  # Medical context - preserve the date
+
+        # Check if in header area (first ~500 chars) AND looks like document date
+        if start < 500:
+            # Document date patterns (after city name, typically in letterhead)
+            header_date_patterns = [
+                r'[a-zäöü]+,\s*$',  # "Neuss, " before date
+                r'stand:?\s*$',     # "Stand:" before date
+                r'datum:?\s*$',     # "Datum:" before date
+            ]
+            for pattern in header_date_patterns:
+                if re.search(pattern, context_before):
+                    return False  # Header date - should be removed
+
+        # Default: preserve dates in medical documents (they're usually clinical)
+        # This is a conservative approach - medical dates are important for context
+        return True
+
+    def _should_remove_date(self, text: str, match, is_header_area: bool = False) -> bool:
+        """
+        Determine if a date should be removed.
+
+        This is the inverse of _is_medical_context_date for convenience.
+
+        Args:
+            text: The full text
+            match: The regex match object for the date
+            is_header_area: Whether the date is in the document header
+
+        Returns:
+            True if the date should be REMOVED, False if it should be PRESERVED
+        """
+        return not self._is_medical_context_date(text, match.start(), match.end())
+
+    def _remove_hospital_letterhead(self, text: str) -> tuple[str, dict]:
+        """
+        Remove hospital letterhead information from the document header.
+
+        Hospital letterheads typically contain:
+        - Hospital name and organizational structure
+        - Department/clinic names
+        - Address, phone, fax, email
+        - Management names and titles
+        - Registration numbers (HRB, etc.)
+        - Bank account details
+
+        This method focuses on the first ~800 characters where letterhead typically appears.
+
+        Args:
+            text: The document text
+
+        Returns:
+            Tuple of (cleaned_text, metadata)
+        """
+        letterhead_removed = 0
+
+        # Only process the header area (first ~800 chars for letterhead detection)
+        if len(text) < 100:
+            return text, {"letterhead_removed": 0}
+
+        # Hospital names to detect (case-insensitive)
+        hospital_indicators = [
+            r'rheinland\s*klinikum',
+            r'lukaskrankenhaus',
+            r'universitätsklinikum',
+            r'städtisches\s*klinikum',
+            r'kreiskrankenhaus',
+            r'marienhospital',
+            r'st\.\s*\w+[-\s]*(?:hospital|krankenhaus)',
+            r'klinikum\s+\w+',
+            r'krankenhaus\s+\w+',
+            r'unternehmensgruppe',
+            r'medizinisches\s+zentrum',
+            r'kliniken\s+\w+',
+        ]
+
+        # Check if text starts with hospital letterhead
+        header_text = text[:800].lower()
+        has_letterhead = any(re.search(pattern, header_text) for pattern in hospital_indicators)
+
+        if not has_letterhead:
+            return text, {"letterhead_removed": 0}
+
+        # Find the end of letterhead section
+        # Letterhead typically ends at a separator line (---) or double newline before main content
+        letterhead_end_patterns = [
+            r'\n\s*[-─═]{3,}\s*\n',  # Separator lines
+            r'\n\s*\n\s*(?:Sehr geehrte|Betr(?:eff|\.)|Patient|Diagnose)',  # Content start
+            r'\n\s*\n\s*\n',  # Triple newline
+        ]
+
+        letterhead_end = 0
+        for pattern in letterhead_end_patterns:
+            match = re.search(pattern, text[:1000], re.IGNORECASE)
+            if match:
+                letterhead_end = max(letterhead_end, match.start())
+                break
+
+        if letterhead_end == 0:
+            # No clear end found, use conservative approach
+            # Just remove identified patterns rather than whole blocks
+            return text, {"letterhead_removed": 0}
+
+        # Replace the letterhead section with a minimal placeholder
+        header_section = text[:letterhead_end]
+        remaining_text = text[letterhead_end:]
+
+        # Count items being removed
+        letterhead_items = []
+        for pattern in hospital_indicators:
+            if re.search(pattern, header_section, re.IGNORECASE):
+                letterhead_items.append(pattern)
+                letterhead_removed += 1
+
+        # Replace letterhead with placeholder
+        if letterhead_removed > 0:
+            text = "[HOSPITAL_LETTERHEAD]\n" + remaining_text.lstrip()
+
+        return text, {"letterhead_removed": letterhead_removed, "letterhead_items": letterhead_items}
+
+    def _cleanup_placeholders(self, text: str) -> tuple[str, int]:
+        """
+        Fix merged/duplicate placeholders that can occur during multi-pass PII removal.
+
+        Examples of issues fixed:
+        - [NAME][PATIENT_NAME] → [PATIENT_NAME]
+        - [PATIENT_ID][PLZ_CITY] → [PATIENT_ID] [PLZ_CITY]
+        - 017470[PLZ_CITY] → [PHONE]
+        - [NAME] [NAME] → [NAME]
+
+        Args:
+            text: Text with placeholders to clean up
+
+        Returns:
+            Tuple of (cleaned_text, number_of_fixes)
+        """
+        fixes = 0
+        original_text = text
+
+        # Fix duplicate adjacent placeholders of same type
+        # [NAME] [NAME] → [NAME]
+        text = re.sub(r'\[NAME\]\s*\[NAME\]', '[NAME]', text)
+        text = re.sub(r'\[DOCTOR_NAME\]\s*\[DOCTOR_NAME\]', '[DOCTOR_NAME]', text)
+        text = re.sub(r'\[PATIENT_NAME\]\s*\[PATIENT_NAME\]', '[PATIENT_NAME]', text)
+
+        # Fix merged name placeholders
+        # [NAME][PATIENT_NAME] → [PATIENT_NAME]
+        text = re.sub(r'\[NAME\]\[PATIENT_NAME\]', '[PATIENT_NAME]', text)
+        text = re.sub(r'\[NAME\]\[DOCTOR_NAME\]', '[DOCTOR_NAME]', text)
+        text = re.sub(r'\[DOCTOR_NAME\]\[NAME\]', '[DOCTOR_NAME]', text)
+
+        # Fix merged ID/location placeholders (add space between)
+        text = re.sub(r'\[PATIENT_ID\]\[PLZ_CITY\]', '[PATIENT_ID] [PLZ_CITY]', text)
+        text = re.sub(r'\[REFERENCE_ID\]\[PLZ_CITY\]', '[REFERENCE_ID] [PLZ_CITY]', text)
+
+        # Fix partial phone number merges (digits followed by placeholder)
+        # "017470[PLZ_CITY]" → "[PHONE]"
+        text = re.sub(r'\b\d{5,}\[PLZ_CITY\]', '[PHONE]', text)
+        text = re.sub(r'\b\d{5,}\[LOCATION\]', '[PHONE]', text)
+
+        # Fix empty placeholder sequences
+        text = re.sub(r'\[\]\s*', '', text)
+
+        # Count fixes made
+        if text != original_text:
+            # Rough count of changes
+            fixes = len(re.findall(r'\[', original_text)) - len(re.findall(r'\[', text))
+            if fixes < 0:
+                fixes = 1  # At least one fix was made
+
+        return text, max(0, fixes)
+
     def remove_pii(
         self,
         text: str,
@@ -1523,6 +1865,10 @@ class PIIFilter:
             "custom_terms_count": len(custom_terms) if custom_terms else 0
         }
 
+        # Step 0: Remove hospital letterhead (header block removal)
+        text, letterhead_meta = self._remove_hospital_letterhead(text)
+        metadata.update(letterhead_meta)
+
         # Step 1: Remove patterns (addresses, IDs, etc.)
         text, pattern_meta = self._remove_pii_with_patterns(text, language)
         metadata.update(pattern_meta)
@@ -1534,6 +1880,10 @@ class PIIFilter:
         # Step 3: Secondary pass with Presidio (catches missed PII)
         text, presidio_meta = self._remove_pii_with_presidio(text, language, custom_terms)
         metadata.update(presidio_meta)
+
+        # Step 4: Post-processing cleanup (fix merged placeholders)
+        text, placeholder_fixes = self._cleanup_placeholders(text)
+        metadata["placeholder_fixes"] = placeholder_fixes
 
         # Calculate totals (all PII entities removed)
         metadata["entities_detected"] = (

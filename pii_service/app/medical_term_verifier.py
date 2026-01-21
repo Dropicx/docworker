@@ -38,6 +38,11 @@ class MedicalTermVerifier:
 
     def __init__(self):
         self._init_german_patterns()
+        self._init_german_scoring_systems()
+        self._init_german_medical_abbreviations()
+        self._init_bacterial_species_pattern()
+        self._init_autoantibody_pattern()
+        self._init_anatomical_terms()
         logger.info(
             f"MedicalTermVerifier initialized - MEDIALpy: {MEDIALPY_AVAILABLE}"
             f"{f' (v{MEDIALPY_VERSION})' if MEDIALPY_VERSION else ''}"
@@ -111,6 +116,156 @@ class MedicalTermVerifier:
             re.IGNORECASE
         )
 
+    def _init_german_scoring_systems(self):
+        """Initialize German/international medical scoring systems.
+
+        These are commonly misclassified as names (e.g., "Child" in "Child-Pugh score").
+        """
+        self.german_scoring_systems = {
+            # Liver scoring
+            'child', 'child-pugh', 'meld', 'meld-na',
+            # General ICU scores
+            'sofa', 'apache', 'saps', 'tiss',
+            # Cardiac
+            'nyha', 'killip', 'timi', 'grace', 'chads2', 'cha2ds2-vasc', 'has-bled',
+            # Anesthesia
+            'asa', 'mallampati',
+            # GI bleeding
+            'forrest', 'rockall', 'blatchford', 'glasgow-blatchford',
+            # Pancreatitis
+            'ranson', 'bisap', 'ctsi', 'marshall',
+            # Pneumonia
+            'curb-65', 'curb', 'psi', 'fine',
+            # Portal hypertension
+            'baveno', 'paquet',
+            # GERD
+            'los angeles', 'savary-miller', 'savary', 'miller',
+            # Esophageal cancer
+            'siewert',
+            # Varices
+            'dagradi',
+            # Neurological
+            'glasgow', 'gcs', 'nihss', 'hunt-hess', 'fisher',
+            # Cancer staging
+            'tnm', 'figo', 'dukes', 'clark', 'breslow', 'gleason',
+            # Other
+            'apgar', 'bishop', 'karnofsky', 'ecog', 'rankin', 'barthel',
+        }
+
+    def _init_german_medical_abbreviations(self):
+        """Initialize German medical procedure/test abbreviations.
+
+        These are commonly misclassified as organizations.
+        """
+        self.german_medical_abbreviations = {
+            # Endoscopy procedures
+            'ögd', 'oegd', 'ösophagogastroduodenoskopie', 'ercp', 'mrcp', 'ptcd',
+            'erc', 'koloskopie', 'gastroskopie', 'bronchoskopie', 'zystoskopie',
+            'laparoskopie', 'thorakoskopie', 'arthroskopie', 'rektoskopie',
+            # Imaging
+            'ct', 'mrt', 'pet', 'pet-ct', 'spect', 'szintigraphie', 'fibroscan',
+            'elastographie', 'sono', 'sonographie', 'doppler',
+            # Lab tests
+            'pcr', 'elisa', 'western-blot', 'western blot', 'immunblot',
+            'ena', 'ana', 'anca', 'p-anca', 'c-anca', 'asma', 'ama', 'lkm', 'sma',
+            # Procedures
+            'tipss', 'tips', 'tace', 'rfa', 'mwa', 'prt', 'sirt',
+            'erythrozytenkonzentrat', 'ek', 'ffp', 'tk', 'sbp',
+            # Classifications (may look like locations)
+            'los angeles', 'la klassifikation',
+            # Genetic terms
+            'hfe', 'h63d', 'c282y', 's65c',
+            # Liver-specific
+            'hep', 'hcv', 'hbv', 'hav', 'hev', 'hdv', 'hiv',
+            # Function tests
+            'ogtt', 'ltt', 'tsh',
+            # Blood products
+            'erythrozytenkonzentrat', 'thrombozytenkonzentrat',
+        }
+
+    def _init_bacterial_species_pattern(self):
+        """Initialize bacterial species patterns.
+
+        Bacterial species names are commonly misclassified as locations
+        (e.g., "Staph. epidermidis" -> "Staph. [LOCATION]").
+        """
+        # Bacterial genera (genus names)
+        self.bacterial_genera = {
+            'staphylococcus', 'staph', 'streptococcus', 'strep',
+            'pseudomonas', 'klebsiella', 'enterococcus', 'enterobacter',
+            'escherichia', 'e. coli', 'e.coli', 'salmonella', 'shigella',
+            'campylobacter', 'helicobacter', 'h. pylori', 'h.pylori',
+            'clostridium', 'clostridioides', 'c. diff', 'c.diff',
+            'haemophilus', 'neisseria', 'listeria', 'legionella',
+            'bordetella', 'corynebacterium', 'mycobacterium', 'mycoplasma',
+            'chlamydia', 'treponema', 'borrelia', 'rickettsia',
+            'candida', 'aspergillus', 'cryptococcus',  # Fungi but often grouped
+        }
+
+        # Bacterial species epithets (species names)
+        self.bacterial_species = {
+            'aureus', 'epidermidis', 'haemolyticus', 'saprophyticus', 'hominis',
+            'pneumoniae', 'pyogenes', 'agalactiae', 'viridans', 'mutans',
+            'aeruginosa', 'coli', 'difficile', 'perfringens', 'botulinum',
+            'tetani', 'faecalis', 'faecium', 'pylori', 'jejuni',
+            'influenzae', 'meningitidis', 'gonorrhoeae', 'monocytogenes',
+            'pneumophila', 'pertussis', 'tuberculosis', 'leprae',
+            'albicans', 'glabrata', 'tropicalis', 'krusei', 'auris',
+            'fumigatus', 'niger', 'flavus', 'neoformans',
+        }
+
+        # Pattern to match "Genus species" or "Genus. species" combinations
+        genera_pattern = '|'.join(re.escape(g) for g in self.bacterial_genera)
+        species_pattern = '|'.join(re.escape(s) for s in self.bacterial_species)
+        self.bacterial_species_pattern = re.compile(
+            rf'\b(?:{genera_pattern})\.?\s*(?:{species_pattern})?\b',
+            re.IGNORECASE
+        )
+
+    def _init_autoantibody_pattern(self):
+        """Initialize autoantibody patterns.
+
+        Autoantibodies (anti-XXX format) are commonly misclassified as organizations.
+        """
+        self.autoantibody_pattern = re.compile(
+            r'\banti[-\s]?(?:'
+            r'jo[-\s]?1|nxp[-\s]?2|sma|lkm|slc|mi[-\s]?2|'
+            r'dsdna|ds[-\s]?dna|centromere|scl[-\s]?70|'
+            r'ssa|ssb|rnp|smith|sm|'
+            r'cardiolipin|phospholipid|'
+            r'gad|tpo|tg|tsh[-\s]?rezeptor|'
+            r'ccp|mda[-\s]?5|sae|tif1[-\s]?gamma|pm[-\s]?scl|ku|'
+            r'synthetase|srp|hmgcr|signal[-\s]?recognition|'
+            r'hcv|hiv|hbv|hbs|hbc|hbe'
+            r')\b',
+            re.IGNORECASE
+        )
+
+    def _init_anatomical_terms(self):
+        """Initialize anatomical terms that are commonly misclassified.
+
+        These include lung lobes, imaging techniques, and medical descriptors.
+        """
+        self.anatomical_terms = {
+            # Lung lobes (commonly misclassified as locations)
+            'unterlappen', 'oberlappen', 'mittellappen', 'lingula',
+            'unterlappenatelektase', 'oberlappenatelektase',
+            # Imaging techniques (commonly misclassified as locations)
+            'liegetechnik', 'stehendtechnik', 'stehend', 'liegend',
+            'seitaufnahme', 'p.a.', 'ap', 'a.p.',
+            # Medical descriptors
+            'exokrin', 'exokriner', 'exokrine', 'exokrinen',
+            'endokrin', 'endokriner', 'endokrine', 'endokrinen',
+            # Genetic terms
+            'heterozygoter', 'heterozygote', 'heterozygoten',
+            'homozygoter', 'homozygote', 'homozygoten',
+            # Clinical conditions
+            'stauungsdermatitis', 'anasarka', 'aszites',
+            'kardiorenal', 'hepatorenal', 'kardiopulmonal',
+            # Medical devices/procedures
+            'fibroscan', 'elastographie', 'sono', 'doppler',
+        }
+
     @lru_cache(maxsize=10000)
     def is_medical_term(self, term: str) -> tuple[bool, str]:
         """
@@ -140,23 +295,47 @@ class MedicalTermVerifier:
         if term_lower in self.german_temporal_terms:
             return True, "german_temporal_medical"
 
-        # 3. Check German medical suffixes
+        # 3. Check German scoring systems (e.g., Child-Pugh, MELD, Paquet)
+        if term_lower in self.german_scoring_systems:
+            return True, f"scoring_system:{term_lower}"
+
+        # 4. Check German medical abbreviations (e.g., ÖGD, TIPSS, PCR)
+        if term_lower in self.german_medical_abbreviations:
+            return True, f"medical_abbrev:{term_lower}"
+
+        # 5. Check anatomical/technical terms (e.g., Unterlappen, Liegetechnik)
+        if term_lower in self.anatomical_terms:
+            return True, f"anatomical:{term_lower}"
+
+        # 6. Check bacterial genera and species
+        if term_lower in self.bacterial_genera or term_lower in self.bacterial_species:
+            return True, f"bacterial:{term_lower}"
+
+        # 7. Check for bacterial species patterns (e.g., "Staph. epidermidis")
+        if self.bacterial_species_pattern.search(term):
+            return True, "bacterial_species"
+
+        # 8. Check for autoantibody patterns (e.g., anti-Jo-1, anti-SMA)
+        if self.autoantibody_pattern.search(term):
+            return True, "autoantibody"
+
+        # 9. Check German medical suffixes
         for suffix in self.german_suffixes:
             if term_lower.endswith(suffix) and len(term_lower) > len(suffix) + 2:
                 return True, f"german_suffix:{suffix}"
 
-        # 4. Check German medical prefixes + minimum length
+        # 10. Check German medical prefixes + minimum length
         for prefix in self.german_prefixes:
             if term_lower.startswith(prefix) and len(term_lower) > len(prefix) + 3:
                 # Additional check: must end with common medical pattern
                 if any(term_lower.endswith(s) for s in ['ie', 'isch', 'al', 'ar', 'ose', 'itis']):
                     return True, f"german_prefix:{prefix}"
 
-        # 5. Check compound patterns (ECG terms, etc.)
+        # 11. Check compound patterns (ECG terms, etc.)
         if self.compound_regex.search(term_lower):
             return True, "compound_medical_term"
 
-        # 6. Check for German compound medical words (contains medical root)
+        # 12. Check for German compound medical words (contains medical root)
         medical_roots = ['kardio', 'pulmono', 'hepato', 'nephro', 'neuro',
                         'gastro', 'dermato', 'onko', 'hamat', 'endo']
         for root in medical_roots:

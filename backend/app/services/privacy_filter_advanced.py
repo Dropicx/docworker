@@ -682,6 +682,38 @@ class AdvancedPrivacyFilter:
             "elektrolytstatus",
             "blutgasanalyse",
             "urinstatus",
+            # ==================== PII OPTIMIZATION: NEW TERMS ====================
+            # Medical scoring systems (commonly misclassified as names)
+            "child", "child-pugh", "meld", "meld-na", "sofa", "apache",
+            "nyha", "killip", "timi", "grace", "forrest", "rockall",
+            "ranson", "bisap", "curb-65", "curb", "psi", "fine",
+            "baveno", "paquet", "los angeles", "savary-miller", "siewert",
+            "glasgow", "gcs", "nihss", "apgar", "karnofsky", "ecog",
+            # German medical abbreviations (commonly misclassified as organizations)
+            "ögd", "oegd", "ösophagogastroduodenoskopie", "ercp", "mrcp", "ptcd",
+            "tipss", "tips", "tace", "rfa", "mwa", "sbp",
+            "pcr", "elisa", "western-blot", "immunblot",
+            "ena", "ana", "anca", "p-anca", "c-anca", "asma", "ama", "lkm",
+            "fibroscan", "elastographie",
+            # Bacterial species (commonly misclassified as locations)
+            "aureus", "epidermidis", "haemolyticus", "saprophyticus",
+            "pneumoniae", "pyogenes", "aeruginosa", "coli", "difficile",
+            "pylori", "perfringens", "faecalis", "faecium",
+            "helicobacter", "h. pylori", "staphylococcus", "streptococcus",
+            "pseudomonas", "klebsiella", "enterococcus", "escherichia",
+            "clostridium", "clostridioides", "candida", "aspergillus",
+            # Autoantibody terms (commonly misclassified as organizations)
+            "anti-jo-1", "anti-nxp2", "anti-sma", "anti-lkm", "anti-dsdna",
+            "anti-ccp", "anti-tpo", "anti-gad", "anti-centromere",
+            # Anatomical terms (commonly misclassified as locations)
+            "unterlappen", "oberlappen", "mittellappen", "lingula",
+            "liegetechnik", "stehendtechnik",
+            # Genetic terms (commonly misclassified as names)
+            "heterozygoter", "heterozygote", "homozygoter", "homozygote",
+            "h63d", "c282y", "hfe",
+            # Clinical conditions
+            "stauungsdermatitis", "anasarka", "aszites",
+            "exokrin", "exokriner", "endokrin", "endokriner",
         }
 
         # Titel und Anreden, die auf Namen hinweisen

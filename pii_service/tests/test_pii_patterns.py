@@ -552,5 +552,210 @@ class TestEdgeCases:
         assert "Spezialmedikament" in result
 
 
+# =============================================================================
+# NEW PII OPTIMIZATION TESTS (Issue: PII Filter Optimization)
+# =============================================================================
+
+class TestMedicalScoringSystemsPreserved:
+    """Tests that medical scoring systems are NOT replaced as names."""
+
+    @pytest.mark.parametrize("input_text,must_contain", [
+        # Child-Pugh score (commonly misclassified as NAME)
+        ("Child (9 Punkte)", "Child"),
+        ("Child-Pugh Score C", "Child-Pugh"),
+        ("Child-Pugh-Klassifikation", "Child-Pugh"),
+        # MELD score
+        ("MELD-Score 15", "MELD"),
+        ("MELD-Na 18", "MELD-Na"),
+        # Paquet classification (commonly misclassified as NAME)
+        ("Varizen Paquet II", "Paquet"),
+        ("Ösophagusvarizen Paquet Grad III", "Paquet"),
+        # Los Angeles classification (commonly misclassified as LOCATION)
+        ("Los Angeles Klassifikation B", "Los Angeles"),
+        ("Refluxösophagitis Los Angeles B", "Los Angeles"),
+        # Other scores
+        ("NYHA III", "NYHA"),
+        ("Forrest IIb", "Forrest"),
+        ("Rockall-Score 5", "Rockall"),
+    ])
+    def test_scoring_systems_preserved(self, pii_filter, input_text, must_contain):
+        """Test that medical scoring systems are preserved."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert must_contain in result, f"Scoring system '{must_contain}' was incorrectly removed from '{result}'"
+
+
+class TestMedicalAbbreviationsPreserved:
+    """Tests that German medical abbreviations are NOT replaced as organizations."""
+
+    @pytest.mark.parametrize("input_text,must_contain", [
+        # Endoscopy (commonly misclassified as ORG)
+        ("ÖGD vom 15.05.", "ÖGD"),
+        ("Gastroskopie (ÖGD) durchgeführt", "ÖGD"),
+        ("ERCP mit Papillotomie", "ERCP"),
+        # TIPSS/TIPS
+        ("TIPSS-Anlage", "TIPSS"),
+        ("TIPS Revision", "TIPS"),
+        # Lab tests (commonly misclassified as ORG)
+        ("ENA negativ", "ENA"),
+        ("PCR positiv", "PCR"),
+        ("ELISA Test", "ELISA"),
+        # Imaging
+        ("FibroScan Fibrose F2", "FibroScan"),
+        ("Elastographie", "Elastographie"),
+        # Conditions
+        ("SBP (spontanbakterielle Peritonitis)", "SBP"),
+    ])
+    def test_medical_abbreviations_preserved(self, pii_filter, input_text, must_contain):
+        """Test that medical abbreviations are preserved."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert must_contain in result, f"Medical abbreviation '{must_contain}' was incorrectly removed from '{result}'"
+
+
+class TestBacterialSpeciesPreserved:
+    """Tests that bacterial species are NOT replaced as locations."""
+
+    @pytest.mark.parametrize("input_text,must_contain", [
+        # Staphylococcus species (commonly misclassified as LOC)
+        ("Staph. epidermidis", "epidermidis"),
+        ("Staphylococcus aureus", "aureus"),
+        # Helicobacter (commonly misclassified as NAME)
+        ("Helicobacter negativ", "Helicobacter"),
+        ("H. pylori positiv", "H. pylori"),
+        # Other species
+        ("E. coli nachgewiesen", "E. coli"),
+        ("Pseudomonas aeruginosa", "aeruginosa"),
+        ("Clostridium difficile", "difficile"),
+        ("Candida albicans", "albicans"),
+    ])
+    def test_bacterial_species_preserved(self, pii_filter, input_text, must_contain):
+        """Test that bacterial species are preserved."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert must_contain in result, f"Bacterial species '{must_contain}' was incorrectly removed from '{result}'"
+
+
+class TestAutoantibodiesPreserved:
+    """Tests that autoantibody names are NOT replaced as organizations."""
+
+    @pytest.mark.parametrize("input_text,must_contain", [
+        # Autoantibodies (commonly misclassified as ORG)
+        ("anti-Jo-1 negativ", "anti-Jo-1"),
+        ("Anti-SMA positiv", "Anti-SMA"),
+        ("anti-dsDNA erhöht", "anti-dsDNA"),
+        ("anti-CCP positiv", "anti-CCP"),
+        ("anti-TPO negativ", "anti-TPO"),
+    ])
+    def test_autoantibodies_preserved(self, pii_filter, input_text, must_contain):
+        """Test that autoantibody names are preserved."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert must_contain in result, f"Autoantibody '{must_contain}' was incorrectly removed from '{result}'"
+
+
+class TestAnatomicalTermsPreserved:
+    """Tests that anatomical terms are NOT replaced as locations."""
+
+    @pytest.mark.parametrize("input_text,must_contain", [
+        # Lung lobes (commonly misclassified as LOC)
+        ("Unterlappen atelektasiert", "Unterlappen"),
+        ("Infiltrat im Oberlappen", "Oberlappen"),
+        ("Mittellappen", "Mittellappen"),
+        # Imaging techniques
+        ("Röntgen Thorax Liegetechnik", "Liegetechnik"),
+        # Medical descriptors
+        ("exokriner Pankreasinsuffizienz", "exokriner"),
+        # Genetic terms
+        ("heterozygoter H63D-Träger", "heterozygoter"),
+    ])
+    def test_anatomical_terms_preserved(self, pii_filter, input_text, must_contain):
+        """Test that anatomical terms are preserved."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert must_contain in result, f"Anatomical term '{must_contain}' was incorrectly removed from '{result}'"
+
+
+class TestContextAwareDateHandling:
+    """Tests for context-aware date handling (medical dates preserved, birthdates removed)."""
+
+    @pytest.mark.parametrize("input_text,should_preserve_date", [
+        # Medical procedure dates - should be PRESERVED
+        ("CT vom 15.05.2025", True),
+        ("MRT am 20.03.2024", True),
+        ("ÖGD vom 10.04.2025", True),
+        ("Therapie vom 01.05. bis 15.05.2025", True),
+        ("stationär vom 12.05.2025 bis 18.05.2025", True),
+        ("Abstinent seit 2009", True),
+        # Birthdates - should be REMOVED
+        ("geb. 15.03.1980", False),
+        ("geboren am 01.01.1965", False),
+        ("Geburtsdatum: 20.05.1990", False),
+    ])
+    def test_context_aware_dates(self, pii_filter, input_text, should_preserve_date):
+        """Test that medical dates are preserved but birthdates are removed."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+
+        # Find any 4-digit year in the result
+        import re
+        has_date = bool(re.search(r'\d{1,2}\.\d{1,2}\.\d{4}', result)) or bool(re.search(r'\b20\d{2}\b', result))
+
+        if should_preserve_date:
+            # Medical date should still be present
+            assert has_date or "[DATE]" not in result, f"Medical date was incorrectly removed from '{result}'"
+        else:
+            # Birthdate should be removed
+            assert "[BIRTHDATE]" in result or "[DATE]" in result or not has_date, f"Birthdate was not removed from '{result}'"
+
+
+class TestDoctorInitialNames:
+    """Tests for doctor names with initials (J. Chahem, K. Fariq-Spiegel)."""
+
+    @pytest.mark.parametrize("input_text,expected_contains", [
+        # Doctor initials with surname
+        ("J. Chahem untersuchte", "[DOCTOR_NAME]"),
+        ("N. Dewies berichtet", "[DOCTOR_NAME]"),
+        ("K. Fariq-Spiegel empfiehlt", "[DOCTOR_NAME]"),
+        ("M. König behandelt", "[DOCTOR_NAME]"),
+    ])
+    def test_doctor_initial_names_detected(self, pii_filter, input_text, expected_contains):
+        """Test that doctor names with initials are properly detected."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert expected_contains in result, f"Expected {expected_contains} in '{result}'"
+
+
+class TestSpacedPhoneNumbers:
+    """Tests for phone numbers with spaces (02131 888 - 2765)."""
+
+    @pytest.mark.parametrize("input_text,expected_contains", [
+        ("02131 888 - 2765", "[PHONE]"),
+        ("0211 123 - 4567", "[PHONE]"),
+    ])
+    def test_spaced_phone_numbers_detected(self, pii_filter, input_text, expected_contains):
+        """Test that phone numbers with spaces are properly detected."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert expected_contains in result, f"Expected {expected_contains} in '{result}'"
+
+
+class TestCompanyRegistrationDetected:
+    """Tests for company registration numbers."""
+
+    @pytest.mark.parametrize("input_text,expected_contains", [
+        ("HRB 4643 Neuss", "[COMPANY_ID]"),
+        ("HRA 12345", "[COMPANY_ID]"),
+    ])
+    def test_company_registration_detected(self, pii_filter, input_text, expected_contains):
+        """Test that company registration numbers are properly detected."""
+        result, _ = pii_filter.remove_pii(input_text, language="de")
+        assert expected_contains in result, f"Expected {expected_contains} in '{result}'"
+
+
+class TestPlaceholderCleanup:
+    """Tests for placeholder cleanup (merged placeholders fixed)."""
+
+    def test_placeholder_cleanup_called(self, pii_filter):
+        """Test that placeholder cleanup is called and metadata is returned."""
+        input_text = "Dr. Schmidt, Patient: Müller, 12345 Berlin"
+        result, metadata = pii_filter.remove_pii(input_text, language="de")
+
+        # Check that placeholder_fixes key exists in metadata
+        assert "placeholder_fixes" in metadata
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
