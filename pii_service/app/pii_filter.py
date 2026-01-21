@@ -231,8 +231,9 @@ class PIIFilter:
             # Doctor names with initials: "J. Chahem", "K. Fariq-Spiegel", "N. Dewies"
             # Matches initial + period + space + surname (with optional hyphenated part)
             # Negative lookbehind excludes German abbreviations: z.B., d.h., u.a., o.ä., i.V., etc.
+            # Pattern: if preceded by lowercase+period (like "z."), don't match
             "doctor_initial_name": re.compile(
-                r"(?<![zZdDuUoOiIeEäÄöÖüÜ])\b([A-Z]\.)\s*([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)\b"
+                r"(?<![a-zäöü]\.)\b([A-Z]\.)\s*([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)\b"
             ),
 
             # =============================================================
