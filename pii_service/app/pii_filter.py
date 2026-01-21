@@ -820,7 +820,14 @@ class PIIFilter:
             "myositis-panel", "myositis panel", "autoantikörper-panel",
             "mi-2", "mi-2 alpha", "mi-2 beta", "jo-1", "ku", "pm-scl",
             "ana", "anca", "ds-dna-ak", "ds-dann-ak",  # Autoantibodies
+            "ena", "ena-screening",  # Extractable nuclear antigens
             "molekularbiologischer direktnachweis", "pcr-nachweis",
+            # FINAL2: ICD codes (commonly misclassified as ORGANIZATION)
+            "r16.0", "r16.1", "k76.0", "k83.1", "q60.0",
+            # FINAL2: Allergens
+            "duftstoffmix", "perubalsam", "thiomersal", "nickelsulfat",
+            # FINAL2: Anatomical terms
+            "abdomineller lymphknotenstatus", "lymphknotenstatus",
             "tsh", "t3", "t4", "hba1c", "glucose", "glukose", "cholesterin",
             "triglyzeride", "inr", "ptt", "quick", "d-dimer", "fibrinogen",
             "blutgruppe", "rhesusfaktor",
@@ -866,12 +873,22 @@ class PIIFilter:
             "tpo", "tpo-ak",  # Thyreoperoxidase
             "eia", "ift",  # Lab test methods
             "kulturbefund", "keimnachweis", "erregernachweis",
+            # FINAL2: More abbreviations and clinical terms
+            "e. i. r.", "i. r.", "i.r.", "a. e.", "a.e.",  # im Rahmen, am ehesten
+            "begannen", "begann",  # Verbs that start sentences
+            "gruppe f", "serotyp",  # Virus serotypes
+            "bakt", "bakt.",  # Bacteria (urinalysis)
+            "norm", "norm.",  # Reference range
+            "iu/l", "u/l", "iu/ml",  # Lab units
             "z.n.", "v.a.", "dd", "st.p.", "ed", "j.",  # German medical abbreviations
             "z.n", "v.a", "zn", "va",  # Without trailing periods (tokenization variants)
             "sinusrhythmus", "normofrequent", "rhythmisch",  # ECG findings
             # Phase 11: ECG wave components (commonly misclassified as LOCATION)
             "s-zacke", "s-zacken", "r-zacke", "r-zacken", "t-welle", "t-wellen",
             "p-welle", "p-wellen", "st-hebung", "st-hebungen", "st-senkung",
+            # FINAL2: ECG leads (single letters often misclassified)
+            "v1", "v2", "v3", "v4", "v5", "v6",  # Precordial leads
+            "avl", "avr", "avf",  # Augmented limb leads
             "unauffällig", "regelrecht", "altersentsprechend",  # Normal findings
             "reduziert", "erhöht", "erniedrigt", "pathologisch",  # Finding descriptors
             # Phase 11: Additional clinical descriptors (commonly misclassified)
