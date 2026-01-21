@@ -609,7 +609,7 @@ class PIIFilter:
             "stenose", "thrombose", "embolie", "infarkt", "tumor", "karzinom",
             "metastase", "aneurysma", "fraktur", "luxation", "kontusion",
             # Cancer diagnosis abbreviations (commonly misclassified as NAME)
-            "prostata-ca", "prostataca", "mamma-ca", "mammaca",
+            "prostata-ca", "prostataca", "mamma-ca", "mammaca", "mammakarzinom",
             "bronchial-ca", "bronchialca", "kolon-ca", "kolonca",
             "lungen-ca", "lungenca", "magen-ca", "magenka",
             "hcc", "ccc", "nsclc", "sclc",  # Liver, bile duct, lung cancers
@@ -1034,8 +1034,9 @@ class PIIFilter:
             # Respiratory
             "salbutamol", "formoterol", "salmeterol", "tiotropium", "ipratropium",
             "montelukast", "theophyllin", "roflumilast", "fluticason", "beclomethason",
-            # Thyroid
+            # Thyroid & Parathyroid
             "levothyroxin", "l-thyroxin", "euthyrox", "carbimazol", "thiamazol",
+            "parathormon", "pth",  # Phase 6.2: Parathyroid hormone
             # Oncology
             "tamoxifen", "letrozol", "anastrozol", "trastuzumab", "rituximab", "pembrolizumab",
             # Immunosuppressants
