@@ -2613,6 +2613,13 @@ class PIIFilter:
             # This prevents NER from replacing medical terms with placeholders
             # ===============================================================
 
+            # FINAL9: Protect markdown section headers (### Anamnese, ## Diagnosen, etc.)
+            # Check if entity is preceded by markdown header markers
+            chars_before = text[max(0, ent.start_char - 10):ent.start_char]
+            if re.search(r'#{1,6}\s*$', chars_before):
+                logger.debug(f"NER: Preserved '{ent.text}' (markdown section header)")
+                continue
+
             # PRIORITY CHECK 1: Direct match in protected medical terms
             if ent_lower in self.medical_terms:
                 logger.debug(f"NER: Preserved '{ent.text}' (medical_terms match)")
