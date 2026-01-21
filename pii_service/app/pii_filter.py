@@ -573,6 +573,10 @@ class PIIFilter:
             "aorta", "koronararterie", "aortenwand",
             # Phase 6: German vascular anatomy (commonly misclassified as NAME)
             "pfortader", "lebervene", "lebervenen", "milzvene",
+            # Phase 7: Pancreas anatomy
+            "pankreaskopf", "pankreaskopfes", "pankreasschwanz", "pankreasschwanzes",
+            # Phase 7: Anatomical position terms
+            "orthotop", "orthotope", "orthotoper", "orthotopen",
             # Anatomical regions (commonly misclassified as LOC)
             "oberbauchorgane", "unterbauchorgane", "bauchorgane",
             "hinterhorn", "vorderhorn", "seitenhorn",  # Meniscus anatomy
@@ -591,6 +595,10 @@ class PIIFilter:
             "ischämie", "ruptur", "läsion", "pathologie",
             # Phase 6: Medical devices
             "perfusor", "infusomat",
+            # Phase 7: Clinical examination terms
+            "sklerenikterus", "ikterus",  # Jaundice/yellowing of sclera
+            "allgemeinzustand", "allgemeinzustands", "allgemeinzustandes",  # General condition
+            "umgebungsreaktion", "umgebungsreaktionen",  # Surrounding tissue reaction
             # English
             "diagnosis", "treatment", "examination", "surgery", "medication",
             "disease", "disorder", "condition", "inflammation", "infection",
@@ -608,6 +616,9 @@ class PIIFilter:
             # ==================== CONDITIONS ====================
             "stenose", "thrombose", "embolie", "infarkt", "tumor", "karzinom",
             "metastase", "aneurysma", "fraktur", "luxation", "kontusion",
+            # Phase 7: GI conditions/syndromes
+            "mallory-weiss", "mallory weiss",  # Esophageal tear syndrome
+            "gi-blutung", "gi blutung", "gastrointestinalblutung",  # GI bleeding
             # Cancer diagnosis abbreviations (commonly misclassified as NAME)
             "prostata-ca", "prostataca", "mamma-ca", "mammaca", "mammakarzinom",
             "bronchial-ca", "bronchialca", "kolon-ca", "kolonca",
@@ -636,6 +647,10 @@ class PIIFilter:
             "ultraschall", "sonographie", "röntgen", "ct", "mrt", "pet", "spect",
             "ekg", "eeg", "emg", "echokardiographie", "endoskopie", "koloskopie",
             "gastroskopie", "bronchoskopie", "laparoskopie", "arthroskopie", "biopsie",
+            # Phase 7: Imaging findings
+            "herzschatten", "herzschattens",  # Cardiac silhouette on X-ray
+            "echogenität", "echoreich", "echoarm",  # Ultrasound echogenicity
+            "cta", "mrcp",  # CT/MR angiography/cholangiopancreatography
             # EKG types (commonly misclassified as ORG)
             "belastungs-ekg", "belastungsekg", "belastungs",
             "ruhe-ekg", "ruheekg", "langzeit-ekg", "langzeitekg",
@@ -678,6 +693,9 @@ class PIIFilter:
             "hämoglobin", "hämatokrit", "erythrozyten", "leukozyten", "thrombozyten",
             "kreatinin", "harnstoff", "harnsäure", "bilirubin", "transaminasen",
             "got", "gpt", "ggt", "ap", "ldh", "ck", "troponin", "bnp", "crp",
+            # Phase 7: Additional lab values
+            "ck-mb", "ckmb",  # Cardiac enzyme marker
+            "eiw", "eiw.", "eiw. ges.", "eiw ges",  # Eiweiß (protein) abbreviations
             "tsh", "t3", "t4", "hba1c", "glucose", "glukose", "cholesterin",
             "triglyzeride", "inr", "ptt", "quick", "d-dimer", "fibrinogen",
             "blutgruppe", "rhesusfaktor",
@@ -691,6 +709,14 @@ class PIIFilter:
             # ==================== MEDICAL ABBREVIATIONS (commonly misclassified) ====================
             # These are frequently misclassified by SpaCy as ORG/LOC/PER
             "bmi", "egfr", "gfr", "lvef", "ef", "la", "lv", "rv", "ra",  # Cardiac
+            # Phase 7: Clinical/examination abbreviations
+            "vag", "vag.",  # Vesicular breath sounds (Vesikuläres Atemgeräusch)
+            "pulmo", "pulmo:",  # Lungs examination section
+            "cor", "cor:",  # Heart examination section
+            "anc",  # Acute Necrotic Collection (pancreatitis)
+            "apfc",  # Acute Peripancreatic Fluid Collection
+            "pvk",  # Peripheral venous catheter (Periphere Venenkatheter)
+            "dnr", "dni", "dnr/dni",  # Do Not Resuscitate/Intubate
             "nyha", "asa", "ccs", "kps", "ecog",  # Classification scores
             "hf", "af", "vhf", "sr", "avb", "lbbb", "rbbb",  # Rhythm/ECG
             "copd", "ards", "osa", "osas",  # Pulmonary
@@ -713,6 +739,8 @@ class PIIFilter:
             # ==================== GERMAN CLINICAL DESCRIPTORS ====================
             "beschwerdefrei", "symptomfrei", "fieberfrei", "schmerzfrei",
             "dyspnoe", "orthopnoe", "belastungsdyspnoe", "ruhedyspnoe",
+            # Phase 7: Physical examination descriptors
+            "ausladend", "ausladende", "ausladender", "ausladenden",  # Protruding/distended
             "retrosternal", "präkordial", "epigastrisch", "periumbilikal",
             "druckgefühl", "druckgefühle", "engegefühl", "beklemmung",
             "ausstrahlung", "ausstrahlen", "ausstrahlend",
@@ -970,6 +998,459 @@ class PIIFilter:
             # Child-Pugh classification for liver cirrhosis (commonly misclassified as NAME)
             "child a", "child b", "child c", "child-pugh", "child pugh",
             "meld", "meld-score", "meld score", "meld-na",
+
+            # ==================== PHASE 8: COMPREHENSIVE MEDICAL TERMS EXPANSION ====================
+
+            # ==================== EXTENDED ANATOMY ====================
+            # Head and neck
+            "stirn", "schläfe", "wange", "kinn", "ohr", "ohren", "nase", "auge", "augen",
+            "augenlid", "augenlider", "pupille", "pupillen", "iris", "netzhaut", "hornhaut",
+            "zunge", "gaumen", "rachen", "kehlkopf", "larynx", "pharynx", "trachea",
+            "speiseröhre", "ösophagus", "mandeln", "tonsillen", "thymus",
+            "hypophyse", "hypothalamus", "epiphyse", "zirbeldrüse",
+            # Thorax/chest
+            "brustkorb", "rippen", "sternum", "brustbein", "zwerchfell", "diaphragma",
+            "pleura", "brustfell", "mediastinum", "perikard", "herzbeutel",
+            "bronchus", "bronchien", "bronchiolen", "alveolen", "lungenlappen",
+            "oberlappen", "mittellappen", "unterlappen", "lingula",
+            # Heart detailed
+            "vorhof", "vorhöfe", "kammer", "kammern", "septum", "herzscheidewand",
+            "herzspitze", "herzbasis", "herzmuskel", "myokard", "endokard", "epikard",
+            "sinusknoten", "av-knoten", "his-bündel", "purkinje-fasern",
+            "koronargefäße", "koronararterien", "herzkranzgefäße",
+            "riva", "rcx", "rca", "lca", "lad", "cx", "rpd", "rpls",
+            # Abdomen detailed
+            "peritoneum", "bauchfell", "mesenterium", "omentum", "netz",
+            "leberlappen", "lebersegment", "lebersegmente", "leberkapsel",
+            "gallengang", "gallengänge", "ductus choledochus", "dhc",
+            "pankreasgang", "wirsung-gang", "papille", "papilla vateri",
+            "magenausgang", "mageneingang", "magenfundus", "magencorpus", "magenantrum",
+            "pylorus", "duodenum", "jejunum", "ileum", "zökum", "caecum",
+            "appendix", "blinddarm", "kolon", "dickdarm", "sigma", "sigmoid",
+            "rektum", "mastdarm", "analkanal", "anus",
+            # Urogenital
+            "nierenbecken", "nierenkelch", "nierenkelche", "nierenrinde", "nierenmark",
+            "harnleiter", "ureter", "harnblase", "blasenhals", "harnröhre", "urethra",
+            "nebenhoden", "epididymis", "samenleiter", "vas deferens",
+            "samenbläschen", "prostatakapsel",
+            "eileiter", "tube", "tuben", "gebärmutter", "endometrium", "myometrium",
+            "zervix", "portio", "vagina", "scheide", "vulva", "labien",
+            "eierstock", "eierstöcke", "follikel", "gelbkörper", "corpus luteum",
+            # Musculoskeletal detailed
+            "femur", "oberschenkelknochen", "tibia", "schienbein", "fibula", "wadenbein",
+            "humerus", "oberarmknochen", "radius", "speiche", "ulna", "elle",
+            "clavicula", "schlüsselbein", "scapula", "schulterblatt",
+            "patella", "kniescheibe", "meniskus", "menisken", "kreuzband", "kreuzbänder",
+            "vorderes kreuzband", "hinteres kreuzband", "seitenband", "seitenbänder",
+            "bandscheibe", "bandscheiben", "wirbelkörper", "wirbelbogen",
+            "hws", "bws", "lws", "sakrum", "steißbein", "coccyx",
+            "ileum", "os ilium", "sitzbein", "schambein", "symphyse",
+            "acetabulum", "hüftpfanne", "hüftkopf", "trochanter",
+            "metacarpus", "mittelhandknochen", "phalanx", "phalangen", "fingergelenk",
+            "metatarsus", "mittelfußknochen", "sprunggelenk", "fußwurzel", "tarsus",
+            # Nervous system detailed
+            "großhirn", "cerebrum", "kleinhirn", "cerebellum", "hirnstamm",
+            "mittelhirn", "brücke", "pons", "medulla oblongata", "verlängertes mark",
+            "frontallappen", "temporallappen", "parietallappen", "okzipitallappen",
+            "insula", "basalganglien", "thalamus", "striatum",
+            "hippocampus", "amygdala", "corpus callosum", "balken",
+            "liquor", "ventrikelsystem", "seitenventrikel", "dritter ventrikel", "vierter ventrikel",
+            "plexus", "plexus brachialis", "plexus lumbalis", "plexus sacralis",
+            "nervus", "n.", "nervenwurzel", "spinalnerv", "hirnnerv",
+            "vagus", "trigeminus", "fazialis", "optikus", "okulomotorius",
+            # Lymphatic system
+            "lymphknoten", "lymphgefäß", "lymphgefäße", "lymphbahn", "lymphbahnen",
+            "milzarterie", "milzvene", "milzkapsel", "milzparenchym",
+            "thymusdrüse", "waldeyer-rachenring",
+            # Blood vessels detailed
+            "truncus brachiocephalicus", "arteria carotis", "karotis", "carotis",
+            "a. carotis interna", "a. carotis externa", "aci", "ace",
+            "arteria vertebralis", "arteria basilaris", "circulus willisii",
+            "arteria subclavia", "arteria axillaris", "arteria brachialis",
+            "arteria radialis", "arteria ulnaris", "arteria femoralis",
+            "arteria poplitea", "arteria tibialis", "arteria dorsalis pedis",
+            "vena cava", "v. cava superior", "v. cava inferior", "vcs", "vci",
+            "vena jugularis", "vena subclavia", "vena femoralis", "vena saphena",
+            "vena portae", "portalvene", "lebervenen", "venae hepaticae",
+            "vena renalis", "nierenvene", "vena lienalis",
+
+            # ==================== EXTENDED CONDITIONS/DISEASES ====================
+            # Cardiovascular
+            "angina", "angina pectoris", "ap", "stabile angina", "instabile angina",
+            "acs", "akutes koronarsyndrom", "nstemi", "stemi", "herzinfarkt", "myokardinfarkt",
+            "herzrhythmusstörung", "herzrhythmusstörungen", "vorhofflimmern", "vhf",
+            "vorhofflattern", "kammerflattern", "kammerflimmern", "asystolie",
+            "herzstillstand", "reanimation", "reanimationspflichtig",
+            "kardiomyopathie", "dcm", "hcm", "rcm", "arvc",
+            "myokarditis", "endokarditis", "perikarditis", "perikarderguss",
+            "herztamponade", "konstriktion", "konstriktive perikarditis",
+            "aortendissektion", "aortenaneurysma", "bauchaortenaneurysma", "baa",
+            "thorakales aortenaneurysma", "taa",
+            "tiefe venenthrombose", "tvt", "beinvenenthrombose", "beckenvenenthrombose",
+            "lungenembolie", "lungenarterienembolie", "lae", "le",
+            "pulmonale hypertonie", "pah", "cteph",
+            "herzschrittmacher", "icd", "crt", "crt-d", "crt-p",
+            # Pulmonary
+            "pneumothorax", "spannungspneumothorax", "hämatothorax", "pleuraerguss",
+            "pleuritis", "empyem", "lungenabszess", "lungenödem",
+            "atelektase", "dystelektase", "belüftungsstörung", "infiltrat",
+            "pneumonisches infiltrat", "interstitielle pneumonie", "lobärpneumonie",
+            "aspirationspneumonie", "nosokomiale pneumonie", "cap", "hap", "vap",
+            "lungentuberkulose", "tbc", "tuberkulose",
+            "lungenfibrose", "ipf", "sarkoidose", "asbestose", "silikose",
+            "bronchiektasen", "bronchiektasie", "mukoviszidose", "cf", "cystische fibrose",
+            "lungenemphysem", "bullöses emphysem", "alpha-1-antitrypsin-mangel",
+            "schlafapnoe", "obstruktive schlafapnoe", "zentrale schlafapnoe",
+            # Gastrointestinal
+            "reflux", "refluxösophagitis", "gerd", "ösophagusvarizen", "varizenblutung",
+            "ösophaguskarzinom", "magenkarzinom", "magenulkus", "duodenalulkus",
+            "peptisches ulkus", "ulcus ventriculi", "ulcus duodeni",
+            "helicobacter", "h. pylori", "hp-infektion",
+            "gastroenteritis", "enteritis", "kolitis", "morbus crohn", "colitis ulcerosa",
+            "reizdarmsyndrom", "rds", "ibs", "obstipation", "verstopfung",
+            "diarrhoe", "durchfall", "ileus", "darmverschluss", "subileus",
+            "dünndarmstenose", "dickdarmstenose", "sigmadivertikel", "divertikulitis",
+            "divertikulose", "polyp", "polypen", "adenom", "adenome",
+            "kolonkarzinom", "rektumkarzinom", "kolorektales karzinom", "crc",
+            "appendizitis", "blinddarmentzündung", "peritonitis", "bauchfellentzündung",
+            "aszites", "bauchwassersucht", "hepatomegalie", "splenomegalie",
+            "leberzirrhose", "leberfibrose", "fettleber", "steatohepatitis",
+            "leberkoma", "hepatische enzephalopathie", "he",
+            "leberversagen", "akutes leberversagen", "alf",
+            "hepatozelluläres karzinom", "leberzellkarzinom", "cholangiokarzinom",
+            "cholangitis", "psc", "pbc", "autoimmunhepatitis", "aih",
+            "cholelithiasis", "gallensteine", "choledocholithiasis", "cholezystolithiasis",
+            "ikterus", "gelbsucht", "verschlussikterus", "hämolytischer ikterus",
+            "akute pankreatitis", "chronische pankreatitis", "nekrotisierende pankreatitis",
+            "pankreaspseudozyste", "pankreaskarzinom", "pankreasinsuffizienz",
+            "exokrine pankreasinsuffizienz", "endokrine pankreasinsuffizienz",
+            # Renal/Urological
+            "akutes nierenversagen", "anv", "chronisches nierenversagen", "cnv",
+            "akute nierenschädigung", "chronische nierenerkrankung", "cni",
+            "urämie", "dialysepflichtig", "hämodialyse", "peritonealdialyse", "capd",
+            "nierentransplantation", "transplantatniere",
+            "nephrolithiasis", "nierensteine", "urolithiasis", "harnsteine",
+            "nierenbeckenentzündung", "harnwegsinfekt", "hwi", "zystitis", "blasenentzündung",
+            "prostatitis", "prostatahyperplasie", "bph", "prostatakarzinom",
+            "harnverhalt", "harninkontinenz", "stressinkontinenz", "dranginkontinenz",
+            "hydronephrose", "harnstau", "harnleiterobstruktion",
+            "glomerulonephritis", "iga-nephropathie", "membranöse nephropathie",
+            "nephrotisches syndrom", "nephritisches syndrom",
+            "nierenzyste", "zystenniere", "polyzystische nierenerkrankung", "adpkd",
+            "nierenzellkarzinom", "ncc", "wilms-tumor",
+            # Neurological
+            "schlaganfall", "hirninfarkt", "ischämischer schlaganfall", "hämorrhagischer schlaganfall",
+            "hirnblutung", "subarachnoidalblutung", "sab", "intrakranielle blutung", "icb",
+            "subduralhämatom", "epiduralhämatom", "kontusionsblutung",
+            "transitorisch ischämische attacke", "tia",
+            "multiple sklerose", "ms", "enzephalomyelitis disseminata",
+            "morbus parkinson", "parkinson-syndrom", "tremor", "rigor", "akinese",
+            "demenz", "morbus alzheimer", "vaskuläre demenz", "lewy-körperchen-demenz",
+            "epilepsie", "epileptischer anfall", "krampfanfall", "status epilepticus",
+            "fokaler anfall", "generalisierter anfall", "grand mal", "petit mal",
+            "kopfschmerz", "migräne", "spannungskopfschmerz", "clusterkopfschmerz",
+            "trigeminusneuralgie", "fazialisparese", "bellsche parese",
+            "polyneuropathie", "pnp", "radikulopathie", "mononeuropathie",
+            "karpaltunnelsyndrom", "cts", "sulcus-ulnaris-syndrom",
+            "bandscheibenvorfall", "diskusprolaps", "bsv", "spinalstenose",
+            "myelopathie", "querschnittlähmung", "paraparese", "tetraparese",
+            "hirnödem", "hydrozephalus", "liquorzirkulationsstörung",
+            "hirntumor", "gliom", "glioblastom", "meningeom", "hirnmetastase",
+            # Hematological/Oncological
+            "leukämie", "akute leukämie", "chronische leukämie", "all", "aml", "cll", "cml",
+            "lymphom", "hodgkin-lymphom", "non-hodgkin-lymphom", "nhl",
+            "multiples myelom", "plasmozytom", "mds", "myelodysplastisches syndrom",
+            "myelofibrose", "polycythaemia vera", "essentielle thrombozythämie",
+            "hämophilie", "von-willebrand-syndrom", "dic",
+            "eisenmangelanämie", "perniziöse anämie", "hämolytische anämie",
+            "sichelzellanämie", "thalassämie", "aplastische anämie",
+            "thrombozytopenie", "leukopenie", "neutropenie", "panzytopenie",
+            "thrombozytose", "leukozytose", "lymphozytose", "monozytose",
+            "metastasierung", "fernmetastase", "lymphknotenmetastase",
+            "tumormarker", "cea", "ca 19-9", "ca 125", "psa", "afp",
+            # Endocrine
+            "diabetes mellitus", "dm1", "dm2", "typ-1-diabetes", "typ-2-diabetes",
+            "diabetische nephropathie", "diabetische retinopathie", "diabetische neuropathie",
+            "diabetisches fußsyndrom", "hypoglykämie", "hyperglykämie",
+            "ketoazidose", "diabetische ketoazidose", "dka", "hyperosmolares koma",
+            "struma", "knotenstruma", "schilddrüsenknoten", "schilddrüsenkarzinom",
+            "thyreoiditis", "hashimoto", "basedow", "morbus basedow",
+            "cushing-syndrom", "morbus cushing", "addison", "morbus addison",
+            "nebenniereninsuffizienz", "phäochromozytom", "conn-syndrom",
+            "hyperparathyreoidismus", "hypoparathyreoidismus",
+            "osteoporose", "osteopenie", "osteomalazie", "rachitis",
+            "hypophysenadenom", "prolaktinom", "akromegalie", "hypopituitarismus",
+            # Rheumatological/Immunological
+            "rheumatoide arthritis", "ra", "seropositive ra", "seronegative ra",
+            "systemischer lupus erythematodes", "sle", "lupus",
+            "sklerodermie", "systemische sklerose", "dermatomyositis", "polymyositis",
+            "sjögren-syndrom", "vaskulitis", "granulomatose mit polyangiitis", "gpa",
+            "riesenzellarteriitis", "polymyalgia rheumatica", "pmr",
+            "spondylitis ankylosans", "morbus bechterew", "psoriasis-arthritis",
+            "reaktive arthritis", "arthritis urica", "gichtanfall",
+            "fibromyalgie", "chronisches schmerzsyndrom",
+            # Infectious
+            "sepsis", "septischer schock", "sirs", "multiorganversagen", "mof",
+            "bakteriämie", "virämie", "fungämie", "candidämie",
+            "abszess", "phlegmone", "erysipel", "zellulitis", "nekrotisierende fasziitis",
+            "osteomyelitis", "spondylodiszitis", "endokarditis", "ie",
+            "meningitis", "enzephalitis", "meningoenzephalitis",
+            "pneumonie", "lobärpneumonie", "bronchopneumonie", "interstitielle pneumonie",
+            "tuberkulose", "tb", "latente tb", "aktive tb",
+            "hiv", "aids", "hiv-infektion", "antiretrovirale therapie", "art",
+            "hepatitis a", "hepatitis b", "hepatitis c", "hepatitis d", "hepatitis e",
+            "hbsag", "anti-hbs", "anti-hbc", "hcv-rna", "hbv-dna",
+            "herpes", "herpes simplex", "hsv", "herpes zoster", "vzv", "gürtelrose",
+            "influenza", "grippaler infekt", "covid-19", "sars-cov-2",
+            "malaria", "dengue", "typhus", "borreliose", "fsme",
+            "clostridium difficile", "cdiff", "c. diff", "clostridioides difficile",
+            "mrsa", "mrgn", "esbl", "vre", "multiresistente erreger",
+
+            # ==================== EXTENDED PROCEDURES ====================
+            # Cardiac procedures
+            "herzkatheter", "koronarangiographie", "koronarangiografie", "ptca", "pci",
+            "stentimplantation", "drug-eluting stent", "des", "bare-metal stent", "bms",
+            "aortenklappenersatz", "tavi", "savr", "mitraclip", "mvr",
+            "koronarer bypass", "cabg", "acvb", "herzchirurgie",
+            "schrittmacherimplantation", "icd-implantation", "crt-implantation",
+            "ablation", "katheterablation", "pulmonalvenenisolation", "pvi",
+            "kardioversion", "elektrische kardioversion", "defibrillation",
+            "perikardpunktion", "perikardiozenthese", "perikarddrainage",
+            # Vascular procedures
+            "angiographie", "angiografie", "dsa", "katheterangiographie",
+            "angioplastie", "pta", "stentgraft", "evar", "tevar",
+            "thrombektomie", "embolektomie", "lyse", "thrombolyse",
+            "karotis-tee", "carotis-stenting", "cea",
+            "varizensklerosierung", "varizenstripping", "crossektomie",
+            "dialyseshunt", "av-fistel", "shuntanlage",
+            # GI procedures
+            "ösophagogastroduodenoskopie", "ögd", "gastroskopie",
+            "koloskopie", "sigmoidoskopie", "rektoskopie", "proktoskopie",
+            "ercp", "eus", "endosonographie", "kapselendoskopie",
+            "polypektomie", "mukosektomie", "emr", "esd",
+            "varizenligatur", "gummibandligatur", "sklerotherapie",
+            "peg", "peg-anlage", "pej", "jejunalsonde",
+            "cholezystektomie", "laparoskopische cholezystektomie",
+            "whipple-operation", "pankreatikoduodenektomie",
+            "leberteilresektion", "hemihepatektomie", "lebertransplantation", "ltx",
+            "aszitespunktion", "aszitesdrainage", "parazentese",
+            "leberpunktion", "leberbiopsie",
+            # Pulmonary procedures
+            "bronchoskopie", "bal", "bronchoalveoläre lavage",
+            "pleurapunktion", "thorakozentese", "pleurabiopsie",
+            "thoraxdrainage", "bülau-drainage", "pleurodese",
+            "mediastinoskopie", "vats", "thorakoskopie",
+            "lungenteilresektion", "lobektomie", "pneumonektomie", "segmentresektion",
+            "tracheotomie", "tracheostomie", "koniotomie",
+            "intubation", "extubation", "beatmung", "invasive beatmung", "niv",
+            # Neurological procedures
+            "lumbalpunktion", "liquorpunktion", "spinalpunktion",
+            "kraniotomie", "kraniektomie", "ventrikulostomie",
+            "shuntanlage", "vp-shunt", "ventrikuloperitonealer shunt",
+            "aneurysma-clipping", "coiling", "endovaskuläre behandlung",
+            "thrombektomie", "mechanische thrombektomie", "evt",
+            "tiefe hirnstimulation", "dbs",
+            # Urological procedures
+            "zystoskopie", "ureteroskopie", "pyeloskopie",
+            "turb", "tur-blase", "turp", "tur-prostata",
+            "nephrektomie", "nierenteilresektion", "nierentransplantation", "ntx",
+            "ureteroskopische steinentfernung", "pcnl", "eswl",
+            "harnleiterschiene", "dj-katheter", "nephrostomie",
+            "prostatektomie", "radikale prostatektomie", "rarp",
+            # Orthopedic procedures
+            "arthroskopie", "kniearthroskopie", "schulterarthroskopie",
+            "kreuzbandplastik", "meniskusresektion", "meniskusnaht",
+            "osteosynthese", "plattenosteosynthese", "marknagelung",
+            "hüft-tep", "knie-tep", "endoprothese", "prothesenwechsel",
+            "wirbelsäulenversteifung", "spondylodese", "nukleotomie", "laminektomie",
+            "kyphoplastie", "vertebroplastie",
+            # Oncological procedures
+            "tumorresektion", "r0-resektion", "r1-resektion", "r2-resektion",
+            "lymphadenektomie", "sentinellymphknotenbiopsie", "slnb",
+            "chemotherapie", "radiochemotherapie", "immuntherapie",
+            "bestrahlung", "strahlentherapie", "brachytherapie",
+            "palliative versorgung", "palliativmedizin",
+
+            # ==================== EXTENDED LAB VALUES ====================
+            # Complete blood count
+            "differentialblutbild", "blutbild", "kleines blutbild", "großes blutbild",
+            "retikulozyten", "retikulozytenzahl", "retikulozytenindex",
+            "segmentkernige", "stabkernige", "lymphozyten", "monozyten",
+            "eosinophile", "basophile", "neutrophile",
+            # Coagulation
+            "gerinnungsstatus", "gerinnungsparameter", "blutgerinnung",
+            "antithrombin", "at-iii", "protein c", "protein s",
+            "lupus-antikoagulans", "anticardiolipin", "faktor v leiden",
+            "thrombophilie", "gerinnungsfaktor", "faktor viii", "faktor ix",
+            # Liver function
+            "leberwerte", "leberfunktion", "lebersynthese",
+            "albumin", "gesamteiweiß", "gesamtprotein",
+            "cholinesterase", "che", "ammoniak", "nh3",
+            "direktes bilirubin", "indirektes bilirubin", "konjugiertes bilirubin",
+            # Pancreas
+            "amylase", "lipase", "pankreasenzyme", "pankreaselastase",
+            # Kidney function
+            "nierenwerte", "nierenfunktion", "nierenretentionsparameter",
+            "cystatin c", "cystatin-c", "gfr", "egfr", "kreatinin-clearance",
+            "harnstoff-n", "bun", "harnsäure", "uric acid",
+            # Electrolytes extended
+            "natrium", "kalium", "chlorid", "calcium", "magnesium", "phosphat",
+            "bikarbonat", "laktat", "lactat",
+            # Cardiac markers
+            "troponin i", "troponin t", "tnt", "tni", "hs-troponin",
+            "ck-mb masse", "myoglobin", "bnp", "nt-probnp",
+            # Inflammation
+            "procalcitonin", "pct", "interleukin", "il-6", "il-1", "tnf-alpha",
+            "blutsenkung", "bsg", "blutkörperchensenkung",
+            # Thyroid
+            "schilddrüsenwerte", "ft3", "ft4", "freies t3", "freies t4",
+            "trak", "tpo-ak", "tg-ak", "thyreoglobulin",
+            # Lipids
+            "lipidprofil", "lipidstatus", "gesamtcholesterin",
+            "ldl", "hdl", "vldl", "ldl-cholesterin", "hdl-cholesterin",
+            "lipoprotein a", "lp(a)", "apolipoprotein",
+            # Diabetes
+            "nüchternglukose", "nüchternblutzucker", "nbz",
+            "postprandiale glukose", "ogtt", "oraler glukosetoleranztest",
+            "c-peptid", "insulin", "insulinspiegel",
+            # Iron studies
+            "eisenstatus", "ferritin", "transferrin", "transferrinsättigung",
+            "retikulozytenhämoglobin", "ret-he", "löslicher transferrinrezeptor",
+            # Urine
+            "urinstatus", "urinuntersuchung", "mittelstrahlurin",
+            "proteinurie", "albuminurie", "mikroalbuminurie",
+            "hämaturie", "leukozyturie", "bakteriurie", "pyurie",
+            "urinkultur", "keimzahl", "kbe",
+            "kreatinin im urin", "protein-kreatinin-quotient",
+            # Blood gas
+            "blutgasanalyse", "bga", "astrup",
+            "ph", "pco2", "po2", "sao2", "spo2",
+            "basenexzess", "be", "standardbikarbonat",
+            "anionenlücke", "oxygenierungsindex",
+            # Autoantibodies
+            "autoantikörper", "ana", "anca", "p-anca", "c-anca",
+            "anti-ds-dna", "rf", "rheumafaktor", "anti-ccp",
+            "anti-jo-1", "anti-scl-70", "anti-sm", "anti-rnp",
+            # Tumor markers
+            "tumormarker", "cea", "ca 19-9", "ca 125", "ca 15-3",
+            "psa", "fpsa", "afp", "hcg", "beta-hcg",
+            "ldh", "s100", "nse", "chromogranin",
+            # Drug levels
+            "medikamentenspiegel", "talspiegel", "spitzenspiegel",
+            "digoxin", "digitoxin", "theophyllin", "phenytoin",
+            "vancomycin", "gentamicin", "ciclosporin", "tacrolimus",
+
+            # ==================== RADIOLOGY/IMAGING TERMS ====================
+            "kontrastmittel", "km", "kontrastmittelgabe", "kontrastierung",
+            "nativ", "nativuntersuchung", "ohne km", "mit km",
+            "röntgendichte", "dichte", "hyperdense", "hypodense", "isodense",
+            "signalintensität", "hyperintens", "hypointens", "isointens",
+            "t1-gewichtet", "t2-gewichtet", "t1w", "t2w", "flair", "dwi", "adc",
+            "kontrastmittelaufnahme", "enhancement", "anreicherung",
+            "raumforderung", "rf", "läsion", "herd", "herdbefund",
+            "zyste", "zystisch", "solide", "zystisch-solide",
+            "verkalkung", "kalzifikation", "sklerose", "osteosklerose",
+            "osteolyse", "osteolytisch", "destruktion",
+            "infiltration", "infiltrativ", "raumfordernd",
+            "kompression", "impression", "verlagerung", "deviation",
+            "obstruktion", "stenose", "okklusion", "verschluss",
+            "dilatation", "erweiterung", "ektasie",
+            "wandverdickung", "wandunregelmäßigkeit",
+            "flüssigkeitskollektion", "flüssigkeitsansammlung",
+            "abszess", "abszedierung", "einschmelzung",
+            "freie flüssigkeit", "freie luft", "pneumoperitoneum",
+            "pleuraerguss", "perikarderguss", "aszites",
+            "lymphadenopathie", "lap", "lymphknotenvergrößerung",
+            "splenomegalie", "hepatomegalie", "nephromegalie",
+            "parenchymveränderung", "strukturveränderung",
+            "glatt begrenzt", "scharf begrenzt", "unscharf begrenzt",
+            "lobuliert", "polyzyklisch", "infiltrativ",
+            "homogen", "inhomogen", "heterogen",
+            "zentral", "peripher", "randständig", "exzentrisch",
+            # Specific imaging findings
+            "lungenrundherd", "pulmonaler rundherd", "solitärer lungenrundherd",
+            "milchglastrübung", "ground-glass", "ggo",
+            "konsolidierung", "verdichtung", "verschattung",
+            "interstitielles muster", "retikuläres muster", "noduläres muster",
+            "bronchopneumogramm", "aerobronchogramm",
+            "kerley-linien", "kerley-b-linien",
+            "hilusverbreiterung", "mediastinalverbreiterung",
+            "kardiomegalie", "herzverbreiterung",
+            "aortensklerose", "aortenverkalkung", "aortenelongation",
+
+            # ==================== PATHOLOGY TERMS ====================
+            "histologie", "histologisch", "histopathologie",
+            "zytologie", "zytologisch", "zytopathologie",
+            "biopsie", "stanzbiopsie", "feinnadelbiopsie", "fnab",
+            "präparat", "resektat", "gewebeprobe",
+            "schnellschnitt", "paraffinschnitt",
+            "immunhistochemie", "ihc", "immunhistochemisch",
+            "in-situ-hybridisierung", "fish", "pcr",
+            "grading", "differenzierung", "entdifferenziert",
+            "gut differenziert", "mäßig differenziert", "schlecht differenziert",
+            "g1", "g2", "g3", "g4", "low-grade", "high-grade",
+            "staging", "tnm", "t-stadium", "n-stadium", "m-stadium",
+            "tumorgröße", "tumorausdehnung", "tumorinfiltration",
+            "lymphangiosis", "lymphangiosis carcinomatosa", "l1", "l0",
+            "hämangiosis", "hämangiosis carcinomatosa", "v1", "v0",
+            "perineuralscheideninfiltration", "pn1", "pn0",
+            "resektionsrand", "schnittrand", "r-status",
+            "dysplasie", "metaplasie", "hyperplasie", "atrophie",
+            "nekrose", "nekrotisch", "apoptose",
+            "entzündungsinfiltrat", "lymphozytär", "granulomatös",
+            "fibrose", "fibrosierung", "vernarbung",
+
+            # ==================== GERMAN COMPOUND EXAMINATION TERMS ====================
+            # Physical examination
+            "körperliche untersuchung", "klinische untersuchung",
+            "inspektion", "palpation", "perkussion", "auskultation",
+            "vitalzeichen", "vitalparameter",
+            "bewusstseinslage", "orientierung", "orientiertheit",
+            "wach", "somnolent", "soporös", "komatös",
+            "zeitlich orientiert", "örtlich orientiert", "situativ orientiert", "zur person orientiert",
+            "kooperativ", "nicht kooperativ", "agitiert", "ruhig",
+            "dyspnoisch", "tachypnoisch", "eupnoisch",
+            "zyanotisch", "blass", "rosig", "ikterisch",
+            "exsikkiert", "dehydriert", "ödematös",
+            "adipös", "kachektisch", "normalgewichtig",
+            "fieberhaft", "afebril", "febril", "subfebril",
+            "kreislaufstabil", "kreislaufinstabil", "katecholaminpflichtig",
+            "beatmungspflichtig", "spontan atmend",
+            "mobilisiert", "immobil", "bettlägerig",
+            # Abdominal examination
+            "bauchdecke", "weich", "gespannt", "gebläht",
+            "druckschmerz", "klopfschmerz", "loslaßschmerz",
+            "abwehrspannung", "défense", "peritonismus",
+            "darmgeräusche", "lebhafte darmgeräusche", "spärliche darmgeräusche",
+            "hochgestellte darmgeräusche", "metallisch klingende darmgeräusche",
+            "resistenz", "tastbare resistenz",
+            # Neurological examination
+            "pupillenreaktion", "lichtreaktion", "isokorie", "anisokorie",
+            "mydriasis", "miosis", "lichtstarr",
+            "meningismus", "nackensteifigkeit", "kernig", "brudzinski",
+            "kraftgrad", "muskeleigenreflexe", "mer", "psr", "asr", "bsr", "tsr", "rpr",
+            "babinski", "pathologische reflexe",
+            "sensibilität", "hypästhesie", "hyperästhesie", "parästhesie",
+            "koordination", "finger-nase-versuch", "knie-hacke-versuch",
+            "romberg", "unterberger", "gangbild",
+
+            # ==================== SCORING SYSTEMS ====================
+            "glasgow coma scale", "gcs", "glasgow-coma-skala",
+            "apache", "apache ii", "apache-score",
+            "sofa", "sofa-score", "quick-sofa", "qsofa",
+            "saps", "saps ii", "saps-score",
+            "ranson", "ranson-kriterien", "balthazar",
+            "curb-65", "curb65", "crb-65",
+            "wells", "wells-score", "genfer-score",
+            "hasbled", "has-bled", "chads-vasc", "cha2ds2-vasc",
+            "nihss", "nih stroke scale", "mrs", "modified rankin scale",
+            "barthel", "barthel-index", "katz-index",
+            "mmse", "mini-mental-status", "moca", "demtect",
+            "hamilton", "hamilton-depressionsskala",
+            "vas", "visuelle analogskala", "nrs", "numerische rating-skala",
+            "karnofsky", "karnofsky-index", "ecog", "ecog-status",
+            "asa", "asa-klassifikation", "asa-score",
+            "euro-score", "euroscore", "sts-score",
         }
 
         # ==================== DRUG DATABASE (226 medications) ====================
@@ -1048,6 +1529,241 @@ class PIIFilter:
             "colchicin", "allopurinol", "febuxostat",
             # Supplements
             "eisen", "folsäure", "calcium", "kalium", "magnesium",
+            # Phase 7: Hepatology/GI medications
+            "terlipressin", "octreotid", "lactulose", "rifaximin", "albumin",
+
+            # ==================== PHASE 8: COMPREHENSIVE DRUG EXPANSION ====================
+            # Additional diabetes medications
+            "dapagliflozin", "canagliflozin", "ertugliflozin", "sotagliflozin",
+            "liraglutid", "semaglutid", "dulaglutid", "exenatid", "lixisenatid",
+            "saxagliptin", "linagliptin", "alogliptin", "vildagliptin",
+            "glimepirid", "glipizid", "gliclazid", "repaglinid", "nateglinid",
+            "pioglitazon", "rosiglitazon", "acarbose", "miglitol",
+            "insulin glargin", "insulin detemir", "insulin degludec",
+            "insulin aspart", "insulin lispro", "insulin glulisin",
+            "toujeo", "tresiba", "fiasp", "lyumjev",
+            # Additional cardiac medications
+            "sacubitril", "entresto", "vericiguat", "ivabradine", "ranolazin",
+            "milrinon", "dobutamin", "dopamin", "noradrenalin", "adrenalin",
+            "levosimendan", "digitalis", "digoxin", "digitoxin",
+            "flecainid", "propafenon", "sotalol", "amiodaron", "dronedaron",
+            "adenosin", "ajmalin", "lidocain", "mexiletin",
+            "hydralazin", "minoxidil", "dihydralazin",
+            "clonidin", "moxonidin", "rilmenidin",
+            "doxazosin", "prazosin", "terazosin", "urapidil",
+            "nitrat", "nitroglycerin", "isosorbiddinitrat", "isdn", "isosorbidmononitrat", "ismn",
+            "molsidomin", "nitroprussid",
+            "trimetazidin", "perhexilin",
+            # Additional anticoagulants/antiplatelets
+            "argatroban", "bivalirudin", "lepirudin", "desirudin",
+            "certoparin", "nadroparin", "tinzaparin", "bemiparin", "reviparin",
+            "cangrelor", "vorapaxar", "cilostazol", "dipyridamol",
+            "abciximab", "eptifibatid", "tirofiban",
+            "protamin", "vitamin k", "phytomenadion",
+            "idarucizumab", "andexanet alfa", "praxbind",
+            # Lipid-lowering
+            "pitavastatin", "lovastatin",
+            "colesevelam", "colestyramin", "colestipol",
+            "niacin", "nikotinsäure", "omega-3-fettsäuren", "icosapent",
+            "lomitapid", "mipomersen", "inclisiran", "bempedoinsäure",
+            # Additional antibiotics
+            "tazobactam", "sulbactam", "clavulansäure",
+            "cefepim", "cefpodoxim", "cefixim", "cefalexin", "cefaclor",
+            "ceftarolin", "ceftobiprol", "ceftazidim-avibactam", "ceftolozan-tazobactam",
+            "aztreonam", "colistin", "polymyxin",
+            "teicoplanin", "tedizolid", "oritavancin", "dalbavancin",
+            "fidaxomicin", "bezlotoxumab",
+            "norfloxacin", "enoxacin", "prulifloxacin",
+            "telithromycin", "fidaxomicin",
+            "rifabutin", "isoniazid", "pyrazinamid", "ethambutol", "streptomycin",
+            "bedaquilin", "delamanid", "pretomanid",
+            "dapson", "clofazimin",
+            "atovaquon", "pentamidin", "primaquin", "chloroquin", "hydroxychloroquin",
+            "mefloquin", "artemether", "lumefantrin", "artesunate",
+            "methenamin", "pivmecillinam",
+            # Additional antifungals
+            "posaconazol", "isavuconazol", "anidulafungin", "micafungin",
+            "nystatin", "terbinafin", "griseofulvin", "flucytosin",
+            # Additional antivirals
+            "ganciclovir", "valganciclovir", "cidofovir", "foscarnet",
+            "sofosbuvir", "ledipasvir", "velpatasvir", "glecaprevir", "pibrentasvir",
+            "daclatasvir", "elbasvir", "grazoprevir", "ombitasvir", "paritaprevir",
+            "ribavirin", "peginterferon", "interferon alpha",
+            "entecavir", "tenofovir", "lamivudin", "adefovir", "telbivudin",
+            "abacavir", "emtricitabin", "zidovudin", "stavudin", "didanosin",
+            "efavirenz", "nevirapin", "rilpivirin", "etravirin", "delavirdin",
+            "lopinavir", "ritonavir", "atazanavir", "darunavir", "saquinavir",
+            "raltegravir", "dolutegravir", "elvitegravir", "bictegravir", "cabotegravir",
+            "maraviroc", "enfuvirtid",
+            "zanamivir", "baloxavir", "peramivir",
+            "paxlovid", "nirmatrelvir", "molnupiravir",
+            # Additional analgesics/opioids
+            "piritramid", "buprenorphin", "sufentanil", "alfentanil", "remifentanil",
+            "tapentadol", "naloxon", "naltrexon", "nalbuphin",
+            "codein", "dihydrocodein", "pethidin", "levomethadon", "methadon",
+            "ketamin", "esketamin",
+            "flupirtin", "ziconotid",
+            # Additional anticonvulsants
+            "oxcarbazepin", "eslicarbazepin", "lacosamid", "brivaracetam",
+            "perampanel", "zonisamid", "topiramat", "felbamat",
+            "phenobarbital", "primidon", "ethosuximid", "vigabatrin",
+            "stiripentol", "rufinamid", "clobazam", "clonazepam",
+            "cannabidiol", "epidiolex",
+            # Additional antidepressants/psychiatry
+            "nortriptylin", "clomipramin", "doxepin", "trimipramin", "imipramin",
+            "maprotilin", "mianserin", "reboxetin", "tianeptin",
+            "agomelatin", "vortioxetin", "viloxazin",
+            "moclobemid", "tranylcypromin", "phenelzin", "selegilin",
+            "lithium", "lithiumcarbonat",
+            "valproinsäure", "divalproex",
+            "lamotrigin", "carbamazepin", # (also mood stabilizers)
+            "paliperidon", "ziprasidon", "sertindol", "amisulprid", "sulpirid",
+            "lurasidon", "cariprazin", "brexpiprazol",
+            "chlorpromazin", "fluphenazin", "perphenazin", "thioridazin",
+            "flupentixol", "zuclopenthixol", "pimozid",
+            "clomethiazol", "promethazin", "hydroxyzin",
+            "buspiron", "tofisopam", "meprobamat",
+            "melatonin", "agomelatin", "tasimelteon",
+            "modafinil", "armodafinil", "pitolisant", "solriamfetol",
+            "methylphenidat", "lisdexamfetamin", "atomoxetin", "guanfacin",
+            "nalmefen", "acamprosat", "disulfiram",
+            "vareniclin", "bupropion", "cytisin",
+            # Additional GI medications
+            "loperamid", "racecadotril", "eluxadolin",
+            "mesalazin", "sulfasalazin", "olsalazin", "balsalazid",
+            "budesonid", "beclomethason", # (GI formulations)
+            "azathioprin", "mercaptopurin", "6-mp",
+            "vedolizumab", "ustekinumab", "risankizumab",
+            "tofacitinib", "upadacitinib", "filgotinib",
+            "metoclopramid", "domperidon", "ondansetron", "granisetron", "palonosetron",
+            "tropisetron", "aprepitant", "fosaprepitant", "netupitant",
+            "dronabinol", "nabilon",
+            "ursodeoxycholsäure", "udca", "obeticholic acid", "ocaliva",
+            "cholestyramin", "colesevelam", "colestipol",
+            "somatostatin", "octreotid", "lanreotid", "pasireotid",
+            "propranolol", # (for varices)
+            "vasopressin", "ornipressin",
+            "pankreatin", "kreon", "panzytrat",
+            "orlistat", "liraglutid", "semaglutid", # (weight loss)
+            "lubiproston", "linaclotid", "plecanatid", "prucaloprid",
+            "bisacodyl", "natriumpicosulfat", "sennoside", "macrogol", "polyethylenglycol",
+            "movicol", "laxoberal", "dulcolax",
+            # Additional respiratory medications
+            "indacaterol", "vilanterol", "olodaterol",
+            "umeclidinium", "glycopyrronium", "aclidinium",
+            "ciclesonid", "mometason",
+            "omalizumab", "mepolizumab", "benralizumab", "dupilumab", "tezepelumab",
+            "reslizumab", "lebrikizumab",
+            "pirfenidon", "nintedanib",
+            "dornase alfa", "pulmozyme", "ivacaftor", "lumacaftor", "tezacaftor", "elexacaftor",
+            "alpha-1-antitrypsin", "prolastin",
+            "surfactant", "curosurf", "survanta",
+            # Rheumatology/Immunology
+            "hydroxychloroquin", "chloroquin",
+            "sulfasalazin", "leflunomid", "teriflunomid",
+            "methotrexat", "mtx",
+            "abatacept", "tocilizumab", "sarilumab", "anakinra",
+            "certolizumab", "golimumab",
+            "ixekizumab", "brodalumab", "guselkumab", "tildrakizumab",
+            "apremilast", "deucravacitinib",
+            "belimumab", "anifrolumab",
+            "rituximab", "ocrelizumab", "ofatumumab", "obinutuzumab",
+            "eculizumab", "ravulizumab",
+            "cyclophosphamid", "ifosfamid",
+            "chlorambucil", "melphalan", "busulfan",
+            "colchicin", "allopurinol", "febuxostat",
+            "probenecid", "benzbromaron", "lesinurad",
+            "pegloticase", "rasburicase",
+            # Oncology extended
+            "cisplatin", "carboplatin", "oxaliplatin",
+            "paclitaxel", "docetaxel", "cabazitaxel", "nab-paclitaxel",
+            "vincristin", "vinblastin", "vinorelbin", "eribulin",
+            "etoposid", "irinotecan", "topotecan",
+            "doxorubicin", "epirubicin", "daunorubicin", "idarubicin", "mitoxantron",
+            "bleomycin", "mitomycin", "actinomycin",
+            "gemcitabin", "capecitabin", "fluorouracil", "5-fu",
+            "cytarabin", "azacitidin", "decitabin", "clofarabin", "fludarabin",
+            "pemetrexed", "methotrexat",
+            "imatinib", "dasatinib", "nilotinib", "bosutinib", "ponatinib",
+            "erlotinib", "gefitinib", "afatinib", "osimertinib", "dacomitinib",
+            "crizotinib", "ceritinib", "alectinib", "brigatinib", "lorlatinib",
+            "vemurafenib", "dabrafenib", "encorafenib",
+            "trametinib", "cobimetinib", "binimetinib",
+            "sorafenib", "sunitinib", "pazopanib", "axitinib", "cabozantinib",
+            "regorafenib", "lenvatinib", "vandetanib",
+            "bevacizumab", "ramucirumab", "aflibercept",
+            "lapatinib", "neratinib", "tucatinib",
+            "pertuzumab", "trastuzumab emtansin", "trastuzumab deruxtecan",
+            "cetuximab", "panitumumab", "necitumumab",
+            "nivolumab", "pembrolizumab", "atezolizumab", "durvalumab", "avelumab",
+            "ipilimumab", "tremelimumab",
+            "blinatumomab", "inotuzumab", "gemtuzumab", "polatuzumab",
+            "brentuximab", "daratumumab", "isatuximab", "elotuzumab",
+            "alemtuzumab", "mogamulizumab",
+            "ibrutinib", "acalabrutinib", "zanubrutinib",
+            "venetoclax", "navitoclax",
+            "idelalisib", "copanlisib", "duvelisib",
+            "bortezomib", "carfilzomib", "ixazomib",
+            "lenalidomid", "pomalidomid", "thalidomid",
+            "panobinostat", "vorinostat", "romidepsin", "belinostat",
+            "ruxolitinib", "fedratinib", "pacritinib",
+            "palbociclib", "ribociclib", "abemaciclib",
+            "olaparib", "niraparib", "rucaparib", "talazoparib",
+            "temozolomid", "lomustin", "carmustin", "procarbazin",
+            "tretinoin", "atra", "arsentrioxid",
+            "tamoxifen", "toremifen", "fulvestrant",
+            "anastrozol", "letrozol", "exemestan",
+            "leuprorelin", "goserelin", "triptorelin", "degarelix",
+            "abirateron", "enzalutamid", "apalutamid", "darolutamid",
+            "flutamid", "bicalutamid", "nilutamid",
+            "mitotane", "metyrapon", "ketoconazol", "osilodrostat",
+            "octreotid", "lanreotid", "pasireotid", "telotristat",
+            "somatulin", "sandostatin",
+            # Blood products and supportive care
+            "erythrozytenkonzentrat", "ek", "thrombozytenkonzentrat", "tk",
+            "ffp", "fresh frozen plasma", "gefrorenes frischplasma",
+            "humanalbumin", "immunglobulin", "ivig", "scig",
+            "gerinnungsfaktoren", "faktor viii konzentrat", "faktor ix konzentrat",
+            "tranexamsäure", "aminocapronsäure",
+            "desmopressin", "ddavp", "minirin",
+            "filgrastim", "pegfilgrastim", "lipegfilgrastim", "lenograstim",
+            "g-csf", "gm-csf",
+            "epoetin", "darbepoetin", "epo",
+            "romiplostim", "eltrombopag", "avatrombopag", "lusutrombopag",
+            "eisen", "eisencarboxymaltose", "eisensaccharat", "eisengluconat",
+            "ferinject", "venofer", "monofer",
+            "folsäure", "folinat", "leucovorin",
+            "vitamin b12", "cyanocobalamin", "hydroxocobalamin",
+            # Electrolyte replacements
+            "natriumchlorid", "nacl", "kaliumchlorid", "kcl",
+            "calciumgluconat", "calciumchlorid",
+            "magnesiumsulfat", "magnesiumaspartat",
+            "natriumbicarbonat", "natriumbikarbonat",
+            "kaliumphosphat", "natriumphosphat",
+            # Miscellaneous
+            "aprotinin", "epsilon-aminocapronsäure",
+            "aktivkohle", "carbo medicinalis",
+            "flumazenil", "naloxon", "atropin", "physostigmin",
+            "dimercaprol", "deferoxamin", "deferasirox", "deferipron",
+            "chelatbildner", "edta", "penicillamin",
+            "methylenblau", "methylthioniniumchlorid",
+            "hydroxocobalamin", # (cyanide antidote)
+            "fomepizol", "ethanol", # (methanol/ethylene glycol antidote)
+            "silibinin", # (amanita antidote)
+            "glucagon", "dextrose", "glukose",
+            "hypertone kochsalzlösung", "mannitol",
+            "hydrocortison", "fludrocortison",
+            "thyroxin", "liothyronin", "t3", "t4",
+            "calcitriol", "alfacalcidol", "colecalciferol", "ergocalciferol",
+            "teriparatid", "romosozumab", "denosumab",
+            "bisphosphonat", "alendronat", "risedronat", "ibandronat", "zoledronat",
+            "raloxifen", "bazedoxifen",
+            "cinacalcet", "etelcalcetid",
+            "sevelamer", "lanthancarbonat", "calciumacetat",
+            "dapagliflozin", "empagliflozin", # (also for CKD/HF)
+            "patiromer", "natriumzirkoniumcyclosilikat",
+            "botox", "botulinumtoxin", "dysport", "xeomin",
+            "hyaluronsäure", "kortison-injektion",
         }
 
     def _init_medical_eponyms(self):
@@ -1106,6 +1822,212 @@ class PIIFilter:
             "horner", "holmes", "adie", "marcus", "gunn", "argyll", "robertson",
             "pancoast", "trousseau", "virchow", "courvoisier", "murphy",
             "mcburney", "rovsing", "blumberg",
+
+            # ==================== PHASE 8: COMPREHENSIVE EPONYM EXPANSION ====================
+
+            # Additional neurological
+            "wilson", "batten", "canavan", "tay", "sachs", "leigh", "krabbe",
+            "adrenoleukodystrophy", "pelizaeus", "merzbacher", "alexander",
+            "rett", "sanfilippo", "hurler", "hunter", "morquio", "sly",
+            "spielmeyer", "vogt", "batten", "kufs",
+            "dandy", "walker", "arnold", "chiari",
+            "brown", "séquard", "wallenberg", "weber", "millard", "gubler",
+            "benedikt", "claude", "foville", "raymond", "cestan",
+            "gerstmann", "straussler", "scheinker",
+            "binswanger", "cadasil",
+            "todd", "jacksonian", "lennox", "gastaut", "jeavons",
+            "moyamoya", "susac",
+
+            # Additional cardiovascular
+            "leriche", "blalock", "taussig", "fontan", "norwood", "ross",
+            "bentall", "tirone", "david", "yacoub",
+            "bland", "white", "garland",
+            "lown", "ganong", "levine",
+            "mobitz", "wenckebach",
+            "dressler", "löffler",
+            "wegener", "takayasu", "horton", "mönckeberg",
+            "libman", "sacks",
+            "lutembacher", "holt", "oram",
+
+            # Additional gastrointestinal
+            "ogilvie", "volvulus",
+            "meckel", "peyer", "brunner", "kerckring",
+            "treitz", "sphinkter", "oddi",
+            "budd", "chiari", # (hepatic vein thrombosis)
+            "alagille", "caroli", "kasai",
+            "chagas", "achalasia",
+            "billroth", "roux", "en-y",
+            "kocher", "pringle", "child",
+            "ransohoff", "mirizzi",
+            "saint", "triad",
+            "trousseau", # (sign)
+            "sister mary joseph", # (nodule)
+
+            # Additional pulmonary
+            "hamman", "rich",
+            "caplan", "silo", "silicosis",
+            "kartagener", "young",
+            "mounier", "kuhn",
+            "goodpasture", "wegener",
+            "churg", "strauss",
+            "langerhans", # (cell histiocytosis)
+            "pancoast", "horner",
+            "kussmaul", "cheyne", "stokes", "biot",
+
+            # Additional endocrine/metabolic
+            "sipple", "wermer", "zollinger",
+            "schmidt", "polyglandulär",
+            "whipple", # (hypoglycemia triad)
+            "kearns", "sayre",
+            "mccune", "albright", "sternberg",
+            "forbes", "albright",
+            "mauriac",
+            "wolfram", "didmoad",
+            "donohue", "leprechaunism",
+            "rabson", "mendenhall",
+
+            # Additional hematological
+            "evans", "wiskott", "aldrich",
+            "chediak", "higashi",
+            "kostmann", "shwachman", "diamond",
+            "blackfan", "diamond",
+            "kasabach", "merritt",
+            "klippel", "trénaunay",
+            "parkes", "weber",
+            "osler", "rendu", "weber",
+            "hemophilia", "christmas",
+            "rosenthal", # (factor XI)
+
+            # Additional genetic/connective tissue
+            "loeys", "dietz",
+            "noonan", "costello", "cardiofaciocutaneous",
+            "williams", "beuren",
+            "smith", "lemli", "opitz",
+            "rubinstein", "taybi",
+            "cornelia", "de lange",
+            "kabuki",
+            "charge",
+            "vater", "vacterl",
+            "osteogenesis", "imperfecta",
+            "stickler", "kniest",
+
+            # Additional renal
+            "denys", "drash",
+            "frasier",
+            "nail", "patella",
+            "lowe", "oculocerebrorenal",
+            "cystinosis", "lignac", "fanconi",
+            "dent",
+            "senior", "loken",
+            "meckel", "gruber",
+            "autosomal", "dominant", "polycystic",
+
+            # Additional rheumatological
+            "baker", # (cyst)
+            "jaccoud",
+            "caplan",
+            "crest",
+            "sappho",
+            "sneddon",
+            "antiphospholipid", "hughes",
+
+            # Additional dermatological
+            "darier", "hailey",
+            "degos",
+            "ehlers", "danlos",
+            "epidermolysis", "bullosa",
+            "gottron", # (papules)
+            "grover",
+            "hidradenitis", "verneuil",
+            "ichthyosis",
+            "jessner", "kanof",
+            "kyrle",
+            "lichen", "planus",
+            "lupus", "vulgaris",
+            "majocchi",
+            "mucha", "habermann",
+            "netherton",
+            "ofuji",
+            "pityriasis", "rosea", "gibert",
+            "sweet",
+            "urticaria", "pigmentosa",
+            "xeroderma", "pigmentosum",
+            "zoon",
+
+            # Additional infectious disease eponyms
+            "hansen", # (leprosy)
+            "chagas", "romana",
+            "bang", # (brucellosis)
+            "weil", # (leptospirosis)
+            "jarisch", "herxheimer",
+            "koplik", # (spots)
+            "janeway", # (lesions)
+            "splinter", # (hemorrhages)
+            "roth", # (spots)
+
+            # Additional orthopedic/trauma
+            "colles", "smith", "barton", "chauffeur",
+            "monteggia", "galeazzi",
+            "bennett", "rolando", "boxer",
+            "jones", "maisonneuve",
+            "lisfranc", "chopart",
+            "segond", # (fracture)
+            "hill", "sachs", # (lesion)
+            "bankart",
+            "slap", # (lesion)
+            "osgood", "schlatter",
+            "sinding", "larsen", "johansson",
+            "freiberg", "köhler", "kienböck",
+            "perthes", "legg", "calvé",
+            "scheuermann",
+            "sprengel",
+            "madelung",
+            "blount",
+            "panner",
+
+            # Additional ophthalmological
+            "sjögren", # (syndrome - dry eyes)
+            "graves", # (ophthalmopathy)
+            "coats",
+            "stargardt", "best",
+            "leber",
+            "usher",
+            "von hippel", "lindau",
+            "sturge", "weber",
+            "vogt", "koyanagi", "harada",
+            "eales",
+            "fuchs",
+            "posner", "schlossman",
+
+            # Additional surgical/procedural
+            "billroth", "roux",
+            "bassini", "shouldice", "lichtenstein",
+            "mcvay", "nissen", "toupet", "dor",
+            "heller", "ivor", "lewis",
+            "pringle", "kocher",
+            "whipple", "traverso", "longmire",
+            "kasai",
+            "glenn", "fontan", "norwood",
+            "maze", "cox",
+            "cabrol", "bentall",
+
+            # Signs and tests expanded
+            "lasègue", "bragard", "kernig", "brudzinski",
+            "spurling", "lhermitte", "hoffman",
+            "babinski", "gordon", "oppenheim", "chaddock",
+            "romberg", "unterberger", "fukuda",
+            "dix", "hallpike", "epley",
+            "allen", "adson", "roos",
+            "thompson", "simmond",
+            "mcmurray", "apley", "lachman", "pivot",
+            "drawer", "anterior", "posterior",
+            "finkelstein", "phalen", "tinel",
+            "hawkins", "kennedy", "neer", "jobe",
+            "patrick", "fabere", "faber",
+            "thomas", "ober",
+            "trendelenburg",
+            "ortolani", "barlow",
+            "galeazzi", "klisic", "hart",
         }
 
     def _init_presidio(self):
