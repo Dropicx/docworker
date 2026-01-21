@@ -788,6 +788,86 @@ class PIIFilter:
             "seitengleich", "seitengleiche", "seitengleicher", "seitengleichen",
             "abgeschwächt", "abgeschwächte", "abgeschwächter", "abgeschwächten",
             "aufgehobenes", "aufgehobene", "aufgehobener", "aufgehobenen",
+
+            # ==================== BLOOD CELL INDICES (Blutbild-Indices) ====================
+            # These are frequently misclassified as ORG
+            "mcv", "mch", "mchc", "rdw", "mpv", "pdw", "pct",
+            "plt", "wbc", "rbc", "hct", "hgb",
+
+            # ==================== LUNG FUNCTION (Lungenfunktion) ====================
+            # These are frequently misclassified as ORG
+            "fev1", "fvc", "fef", "fef25", "fef50", "fef75", "fef25-75",
+            "pef", "mef", "pif", "tlc", "rv", "frc", "vc", "ivc", "evc",
+            "dlco", "kco", "raw", "sraw", "gaw", "sgaw",
+            "vitalkapazität", "residualvolumen", "atemwegswiderstand",
+
+            # ==================== CARDIAC MEASUREMENTS (Kardiale Messungen) ====================
+            # Echocardiography and vascular measurements - often misclassified as ORG
+            "tapse", "mapse", "tdi", "gls",
+            "abi", "tbi", "pwv", "aix", "cfpwv",
+            "lvedv", "lvesv", "lvedp",
+            "lv-funktion", "rv-funktion", "la-funktion",
+
+            # ==================== BODY COMPOSITION (Körperzusammensetzung) ====================
+            # These are frequently misclassified as LOC/ORG
+            "bia", "bsa", "ffm", "fm", "tbw", "ecw", "icw",
+            "körperwasseranteil", "körperfettanteil", "muskelmasse",
+            "knochenmasse", "grundumsatz", "eingeweidefett",
+            "viszeralfett", "subkutanfett",
+
+            # ==================== ADDITIONAL CHEMISTRY/ELECTROLYTES ====================
+            "alb", "tp", "ast", "alt", "asat", "alat",
+            "bun", "crcl",
+            "na", "k", "cl", "mg", "po4", "fe", "zn", "cu",
+            "elektrolyte", "serumelektrolyte",
+
+            # ==================== LATIN ANATOMICAL TERMS ====================
+            # Commonly used in German radiology, frequently misclassified as LOC
+            # Pancreas parts
+            "caput", "corpus", "cauda",
+            # Vessels
+            "truncus", "coeliacus", "mesenterica", "renalis",
+            "vena", "arteria", "ductus",
+            # General anatomy
+            "lobus", "segmentum", "regio",
+            "apex", "basis", "fundus",
+            "collum", "isthmus", "hilus", "hilum",
+            "cortex", "medulla", "parenchym",
+            # GI tract
+            "antrum", "pylorus", "cardia",
+            "bulbus", "duodenum", "jejunum", "ileum", "colon", "rectum", "sigmoid",
+            # Urogenital
+            "vesica", "ureter", "urethra", "pelvis",
+            "cervix", "ovarium", "tuba",
+
+            # ==================== INFECTIOUS DISEASES ====================
+            # Could be confused with locations
+            "corona", "covid", "covid-19", "sars", "sars-cov-2", "mers",
+            "influenza", "grippe",
+
+            # ==================== LIVER CONDITIONS WITH GRADING ====================
+            "steatosis", "hepatis", "grad", "fibrosis",
+            "nash", "nafld", "afld",
+            # Medical grading terms
+            "stadium", "stage", "schweregrad", "ausprägung",
+
+            # ==================== GERMAN ABBREVIATIONS (must not be split/mangled) ====================
+            "z.b.", "d.h.", "u.a.", "bzw.", "ggf.", "evtl.", "etc.",
+            "inkl.", "exkl.", "max.", "min.", "vs.",
+            "li.", "re.", "bds.",
+            # Medical report abbreviations
+            "ber.", "mittl.", "berechn.", "geschätzt",
+            "neg.", "pos.", "path.", "phys.", "norm.",
+
+            # ==================== UV/SKIN TERMS ====================
+            "solarien", "solarium",
+            "uv-faktor", "uv-index", "lichtschutzfaktor", "lsf", "spf",
+
+            # ==================== CELL TYPE ABBREVIATIONS ====================
+            # Commonly in lab reports, frequently misclassified as NAME
+            "ery", "erys", "leuko", "leukos", "thrombo", "thrombos",
+            "lympho", "lymphos", "mono", "monos", "granu", "granus",
+            "neutro", "neutros", "eosino", "basophil",
         }
 
         # ==================== DRUG DATABASE (226 medications) ====================

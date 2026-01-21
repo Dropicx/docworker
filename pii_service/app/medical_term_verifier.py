@@ -181,6 +181,25 @@ class MedicalTermVerifier:
             'ogtt', 'ltt', 'tsh',
             # Blood products
             'erythrozytenkonzentrat', 'thrombozytenkonzentrat',
+
+            # Blood indices (2-4 letter abbreviations commonly misidentified as ORG)
+            'mcv', 'mch', 'mchc', 'rdw', 'mpv', 'pdw', 'pct',
+            'plt', 'wbc', 'rbc', 'hct', 'hgb',
+
+            # Lung function abbreviations (commonly misidentified as ORG)
+            'pef', 'mef', 'pif', 'tlc', 'frc', 'vc', 'ivc', 'evc',
+            'fev1', 'fvc', 'dlco', 'kco', 'raw', 'sraw', 'gaw', 'sgaw',
+
+            # Cardiac abbreviations (commonly misidentified as ORG)
+            'lvef', 'rvef', 'lvedv', 'lvesv', 'lvedp',
+            'tapse', 'mapse', 'gls', 'tdi',
+            'abi', 'tbi', 'pwv', 'aix', 'cfpwv',
+
+            # Body composition abbreviations
+            'bia', 'bsa', 'ffm', 'tbw', 'ecw', 'icw',
+
+            # Electrolyte abbreviations (short forms)
+            'na', 'k', 'cl', 'mg', 'fe', 'zn', 'cu', 'po4',
         }
 
     def _init_bacterial_species_pattern(self):
@@ -264,6 +283,44 @@ class MedicalTermVerifier:
             'kardiorenal', 'hepatorenal', 'kardiopulmonal',
             # Medical devices/procedures
             'fibroscan', 'elastographie', 'sono', 'doppler',
+
+            # Latin anatomical terms commonly used in German medical reports
+            # Pancreas parts
+            'caput', 'corpus', 'cauda',
+            # Vessels
+            'truncus', 'coeliacus', 'mesenterica', 'renalis',
+            'vena', 'arteria', 'ductus', 'nervus',
+            # General anatomy
+            'lobus', 'segmentum', 'regio',
+            'apex', 'basis', 'fundus', 'antrum',
+            'cortex', 'medulla', 'parenchym', 'hilus', 'hilum',
+            'collum', 'isthmus',
+            # GI tract
+            'pylorus', 'cardia', 'bulbus',
+            'duodenum', 'jejunum', 'ileum', 'colon', 'rectum', 'sigmoid',
+            # Urogenital
+            'vesica', 'ureter', 'urethra', 'pelvis',
+            'cervix', 'ovarium', 'tuba',
+
+            # Disease names (could be confused with locations)
+            'corona', 'covid', 'covid-19', 'sars', 'sars-cov-2', 'mers',
+            'steatosis', 'hepatis', 'nash', 'nafld', 'afld',
+
+            # Cell type abbreviations (commonly misclassified as NAME)
+            'ery', 'erys', 'leuko', 'leukos', 'thrombo', 'thrombos',
+            'lympho', 'lymphos', 'mono', 'monos', 'granu', 'granus',
+            'neutro', 'neutros', 'eosino', 'basophil',
+
+            # German abbreviations (must not be mangled)
+            'z.b.', 'd.h.', 'u.a.', 'bzw.', 'ggf.', 'evtl.', 'etc.',
+            'li.', 're.', 'bds.', 'neg.', 'pos.',
+
+            # Body composition terms
+            'körperwasseranteil', 'körperfettanteil', 'muskelmasse',
+            'viszeralfett', 'subkutanfett',
+
+            # UV/Skin terms
+            'solarien', 'solarium', 'uv-faktor', 'uv-index', 'lsf', 'spf',
         }
 
     @lru_cache(maxsize=10000)
