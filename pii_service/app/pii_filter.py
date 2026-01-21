@@ -597,8 +597,10 @@ class PIIFilter:
             "perfusor", "infusomat",
             # Phase 9: Stent brand names and medical devices
             "protegé", "protege", "protégé-stent", "protege-stent",
+            "protegé-stents", "protege-stents",  # Phase 10: Plural forms
             "palmaz", "express", "cypher", "taxus", "xience", "resolute",
             "endeavor", "promus", "synergy", "orsiro", "ultimaster",
+            "viabahn", "wallstent", "zilver", "innova", "visi-pro",  # Phase 10: More stent brands
             # Phase 7: Clinical examination terms
             "sklerenikterus", "ikterus",  # Jaundice/yellowing of sclera
             "allgemeinzustand", "allgemeinzustands", "allgemeinzustandes",  # General condition
@@ -660,6 +662,14 @@ class PIIFilter:
             "kontrollröntgen", "verlaufsröntgen", "röntgenuntersuchung",
             "abdomensonografie", "abdomensonographie", "sonografisch", "sonographisch",
             "minderperfusion", "hypoperfusion", "hyperperfusion",
+            # Phase 10: Position and imaging terms
+            "liegendposition", "liegend", "sitzend", "stehend",
+            "beurteilbarkeit", "beurteilbar", "eingeschränkte beurteilbarkeit",
+            "röntgen-thoraxaufnahme", "thoraxaufnahme",
+            # Phase 10: Pleural/pulmonary findings
+            "randwinkelerguss", "randwinkelergüsse",
+            "perihilär", "perihiläre", "perihilärer", "perihilären",
+            "hilar", "hilär", "infrahilär", "infrahilar",
             # EKG types (commonly misclassified as ORG)
             "belastungs-ekg", "belastungsekg", "belastungs",
             "ruhe-ekg", "ruheekg", "langzeit-ekg", "langzeitekg",
@@ -708,6 +718,10 @@ class PIIFilter:
             # Phase 9: More lab abbreviations
             "bili", "bili.", "bili ges.", "bili. ges.",  # Bilirubin abbreviations
             "ges.", "ges",  # "gesamt" (total) - common lab abbreviation
+            # Phase 10: Lab/clinical compound terms
+            "infektwerte", "infektparameter", "infektzeichen", "entzündungsparameter",
+            "retentionsparameter", "nierenretentionsparameter", "leberwerte",
+            "stuhlprobe", "stuhlproben", "stuhlgang", "stuhluntersuchung",
             "tsh", "t3", "t4", "hba1c", "glucose", "glukose", "cholesterin",
             "triglyzeride", "inr", "ptt", "quick", "d-dimer", "fibrinogen",
             "blutgruppe", "rhesusfaktor",
@@ -1499,6 +1513,7 @@ class PIIFilter:
             "cefuroxim", "ceftriaxon", "cefotaxim", "ceftazidim", "cefazolin",
             "ciprofloxacin", "levofloxacin", "moxifloxacin", "ofloxacin",
             "clarithromycin", "azithromycin", "erythromycin", "roxithromycin",
+            "klacid", "zithromax", "biaxin",  # Phase 10: Macrolide brand names
             "doxycyclin", "tetracyclin", "minocyclin", "tigecyclin",
             "metronidazol", "clindamycin", "vancomycin", "linezolid", "daptomycin",
             "meropenem", "imipenem", "ertapenem", "gentamicin", "tobramycin", "amikacin",
