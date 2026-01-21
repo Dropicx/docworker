@@ -632,6 +632,10 @@ class PIIFilter:
             "ultraschall", "sonographie", "röntgen", "ct", "mrt", "pet", "spect",
             "ekg", "eeg", "emg", "echokardiographie", "endoskopie", "koloskopie",
             "gastroskopie", "bronchoskopie", "laparoskopie", "arthroskopie", "biopsie",
+            # EKG types (commonly misclassified as ORG)
+            "belastungs-ekg", "belastungsekg", "belastungs",
+            "ruhe-ekg", "ruheekg", "langzeit-ekg", "langzeitekg",
+            "stress-ekg", "stressekg",
             # English
             "mri", "xray", "ultrasound", "ecg", "biopsy",
 
@@ -821,6 +825,9 @@ class PIIFilter:
             # These are frequently misclassified as ORG
             "mcv", "mch", "mchc", "rdw", "mpv", "pdw", "pct",
             "plt", "wbc", "rbc", "hct", "hgb",
+            # Blood cell compound terms (commonly misclassified as LOC)
+            "leukozytenzahl", "erythrozytenzahl", "thrombozytenzahl",
+            "lymphozytenzahl", "monozytenzahl", "granulozytenzahl",
 
             # ==================== LUNG FUNCTION (Lungenfunktion) ====================
             # These are frequently misclassified as ORG
@@ -835,9 +842,12 @@ class PIIFilter:
             # ==================== CARDIAC MEASUREMENTS (Kardiale Messungen) ====================
             # Echocardiography and vascular measurements - often misclassified as ORG
             "tapse", "mapse", "tdi", "gls",
-            "abi", "tbi", "pwv", "aix", "cfpwv",
+            "abi", "tbi", "pwv", "aix", "cfpwv", "cfpwv_calc",
             "lvedv", "lvesv", "lvedp",
             "lv-funktion", "rv-funktion", "la-funktion",
+            # Cardiac chambers (commonly misclassified as ORG)
+            "linke kammer", "rechte kammer", "linker vorhof", "rechter vorhof",
+            "linkskammer", "rechtskammer", "linksvorhof", "rechtsvorhof",
 
             # ==================== BODY COMPOSITION (Körperzusammensetzung) ====================
             # These are frequently misclassified as LOC/ORG
@@ -894,8 +904,9 @@ class PIIFilter:
             "inkl.", "exkl.", "max.", "min.", "vs.",
             "li.", "re.", "bds.",
             # Medical report abbreviations
-            "ber.", "mittl.", "berechn.", "geschätzt",
+            "ber.", "mittl.", "berechn.", "berechn", "geschätzt",
             "neg.", "pos.", "path.", "phys.", "norm.",
+            "kalkuliert", "kalkulierte", "kalkulierter", "kalkulierten",
 
             # ==================== UV/SKIN TERMS ====================
             "solarien", "solarium",
@@ -931,6 +942,8 @@ class PIIFilter:
             "herzfrequenzverhalten", "pulsverhalten",
             # Diet/nutrition abbreviations (commonly misclassified)
             "fdh", "bmr",  # "Friss die Hälfte", Basal Metabolic Rate
+            # German verbs that conflict with city names (essen = to eat vs Essen city)
+            "essen", "trinken", "fasten",
 
             # Lab cell terms (full German names - commonly misclassified as LOC)
             "leukozyten", "erythrozyten", "thrombozyten",
