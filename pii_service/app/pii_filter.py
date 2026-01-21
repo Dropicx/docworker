@@ -595,6 +595,10 @@ class PIIFilter:
             "ischämie", "ruptur", "läsion", "pathologie",
             # Phase 6: Medical devices
             "perfusor", "infusomat",
+            # Phase 9: Stent brand names and medical devices
+            "protegé", "protege", "protégé-stent", "protege-stent",
+            "palmaz", "express", "cypher", "taxus", "xience", "resolute",
+            "endeavor", "promus", "synergy", "orsiro", "ultimaster",
             # Phase 7: Clinical examination terms
             "sklerenikterus", "ikterus",  # Jaundice/yellowing of sclera
             "allgemeinzustand", "allgemeinzustands", "allgemeinzustandes",  # General condition
@@ -651,6 +655,11 @@ class PIIFilter:
             "herzschatten", "herzschattens",  # Cardiac silhouette on X-ray
             "echogenität", "echoreich", "echoarm",  # Ultrasound echogenicity
             "cta", "mrcp",  # CT/MR angiography/cholangiopancreatography
+            # Phase 9: Additional imaging/diagnostic terms
+            "röntgen-thorax", "röntgenthorax", "thorax-röntgen",
+            "kontrollröntgen", "verlaufsröntgen", "röntgenuntersuchung",
+            "abdomensonografie", "abdomensonographie", "sonografisch", "sonographisch",
+            "minderperfusion", "hypoperfusion", "hyperperfusion",
             # EKG types (commonly misclassified as ORG)
             "belastungs-ekg", "belastungsekg", "belastungs",
             "ruhe-ekg", "ruheekg", "langzeit-ekg", "langzeitekg",
@@ -696,6 +705,9 @@ class PIIFilter:
             # Phase 7: Additional lab values
             "ck-mb", "ckmb",  # Cardiac enzyme marker
             "eiw", "eiw.", "eiw. ges.", "eiw ges",  # Eiweiß (protein) abbreviations
+            # Phase 9: More lab abbreviations
+            "bili", "bili.", "bili ges.", "bili. ges.",  # Bilirubin abbreviations
+            "ges.", "ges",  # "gesamt" (total) - common lab abbreviation
             "tsh", "t3", "t4", "hba1c", "glucose", "glukose", "cholesterin",
             "triglyzeride", "inr", "ptt", "quick", "d-dimer", "fibrinogen",
             "blutgruppe", "rhesusfaktor",
@@ -794,6 +806,9 @@ class PIIFilter:
             "vaskulär", "vaskuläre", "vaskulärer", "vaskulären",
             "muskulär", "muskuläre", "muskulärer", "muskulären",
             "neurologisch", "neurologische", "neurologischer", "neurologischen",
+            # Phase 9: Rheumatological adjectives (commonly misclassified as LOC)
+            "rheumatoide", "rheumatoider", "rheumatoiden", "rheumatoid",
+            "rheumatisch", "rheumatische", "rheumatischer", "rheumatischen",
 
             # Anatomical position adjectives
             "peripher", "periphere", "peripherer", "peripheren", "peripheres",
