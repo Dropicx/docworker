@@ -621,9 +621,31 @@ class PIIFilter:
             "hp-negativ", "hp-positiv", "hp negativ", "hp positiv",
             # Phase 11: Anatomical/pathological conditions (commonly misclassified)
             "agenesie", "aplasie", "hypoplasie", "dysplasie", "atrophie",
+            # Phase 12: Genetic terms (commonly misclassified as NAME)
+            "homozygot", "homozygote", "homozygoter", "homozygoten",
+            "heterozygot", "heterozygote", "heterozygoter", "heterozygoten",
+            "hfe", "hfe-mutation", "h63d", "c282y",  # Hemochromatosis mutations
             "wandbetont", "wandbetonte", "wandbetonter", "wandbetonten",
             # Phase 11: Bilateral/positional descriptors
             "beidseits", "beidseitig", "beidseitige", "beidseitiger", "beidseitigen",
+            # Phase 12: Lab/clinical section headers (commonly misclassified as NAME)
+            "laborchemisch", "laborchemische", "laborchemischer", "laborchemischen",
+            "abdomensonografisch", "abdomensonographisch",
+            "kumulativ", "kumulative", "kumulativer", "kumulativen",
+            # Phase 12: Clinical requirement terms
+            "interventionsbedarf", "therapiebedarf", "handlungsbedarf",
+            "aufnahmegrund", "aufnahmegrundes", "entlassungsgrund",
+            # Phase 12: Cardiac examination findings
+            "pulsdefizit", "jugularvenenstau", "halsvenenstauung",
+            # Phase 12: Severity/examination descriptors
+            "grob", "grobe", "grober", "groben",  # e.g., "grob neurologisch"
+            "az-reduziert", "az-reduzierte", "az-reduzierter", "az-reduzierten",
+            # Phase 12: Cortisone therapy terms
+            "cortisonstoß", "kortisonstoß", "prednisolonstoß",
+            # Phase 12: Legal/regulatory terms
+            "paragraf", "paragraph", "paragrafen",
+            # Phase 12: Planning/procedure terms
+            "prozedere", "prozederes", "vorgehen", "vorgehens",
             # Phase 7: Clinical examination terms
             "sklerenikterus", "ikterus",  # Jaundice/yellowing of sclera
             "allgemeinzustand", "allgemeinzustands", "allgemeinzustandes",  # General condition
@@ -696,6 +718,9 @@ class PIIFilter:
             "randwinkelerguss", "randwinkelergüsse",
             "perihilär", "perihiläre", "perihilärer", "perihilären",
             "hilar", "hilär", "infrahilär", "infrahilar",
+            # Phase 12: Lung/mediastinal anatomy (commonly misclassified as NAME)
+            "hili", "hilus", "hilum", "lungenhili", "lungenhilus",
+            "retroperitoneum", "retroperitoneal", "retroperitoneale",
             # EKG types (commonly misclassified as ORG)
             "belastungs-ekg", "belastungsekg", "belastungs",
             "ruhe-ekg", "ruheekg", "langzeit-ekg", "langzeitekg",
@@ -720,6 +745,11 @@ class PIIFilter:
             "trikuspidalklappeninsuffizienz", "pulmonalklappeninsuffizienz",
             # Phase 6: Hepatology procedures (commonly misclassified as NAME/ORG)
             "tips", "tipss", "ögd", "aszitesdrainage", "parazentese",
+            # Phase 12: TIPS procedure compounds (commonly misclassified as ORGANIZATION)
+            "tipss-anlage", "tips-anlage", "tipss-revision", "tips-revision",
+            "tipss-trakt", "tips-trakt", "tipss-leistung", "tips-leistung",
+            # Phase 12: Surgical resection terms (commonly misclassified as NAME)
+            "teilresektion", "resektion", "tumorresektion", "segmentresektion",
             # Risk factors and lifestyle
             "nikotinabusus", "alkoholabusus", "drogenabusus", "substanzabusus",
             "adipositas", "übergewicht", "untergewicht", "kachexie",
@@ -783,6 +813,11 @@ class PIIFilter:
             "dm", "hba1c", "ogtt", "nüchtern",  # Diabetes
             "khe", "khk", "pavk", "tia", "cva",  # Vascular
             "op", "re", "li", "bds", "ca", "chemo", "rtx",  # General abbreviations
+            # Phase 12: Common German medical abbreviations (misclassified as NAME/ORG)
+            "pat.", "pat", "patienten",  # Patient abbreviation
+            "sd", "sd.",  # Schilddrüse (thyroid)
+            "az", "az.",  # Allgemeinzustand (general condition)
+            "gdh-ag", "gdh", "ag",  # Lab test abbreviations
             "z.n.", "v.a.", "dd", "st.p.", "ed", "j.",  # German medical abbreviations
             "z.n", "v.a", "zn", "va",  # Without trailing periods (tokenization variants)
             "sinusrhythmus", "normofrequent", "rhythmisch",  # ECG findings
