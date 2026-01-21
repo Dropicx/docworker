@@ -606,8 +606,19 @@ class PIIFilter:
             "ischämie", "ruptur", "läsion", "pathologie",
             # Phase 11: Compound pathological terms (commonly misclassified as LOCATION)
             "nekrosezone", "nekrosezonen", "infarzierungszone", "ischämiezone",
-            "harnstau", "harnstauung", "harntransportstörung",
+            "harnstau", "harnstauung", "harntransportstörung", "harnaufstau",
             "pleuraerguss", "pleuraergüsse", "perikarderguss", "aszites",
+            # FINAL: Liver/organ findings (commonly misclassified as LOCATION)
+            "leberzyste", "leberzysten", "leberzystenkonglomerat",
+            "nierenzyste", "nierenzysten", "milzzyste",
+            "lebersprechstunde", "leberambulanz",  # Clinic names but medical context
+            # FINAL: Breathing descriptors
+            "eupnoe", "eupnoisch", "dyspnoe", "orthopnoe", "tachypnoe",
+            # FINAL: Catheter terms
+            "dk-auslassversuch", "dk auslassversuch", "auslassversuch",
+            "dauerkatheter", "blasenkatheter", "harnkatheter",
+            # FINAL: Plural disease forms
+            "pankreatitiden", "hepatitiden", "meningitiden", "enzephalitiden",
             # Phase 6: Medical devices
             "perfusor", "infusomat",
             # Phase 9: Stent brand names and medical devices
@@ -632,6 +643,11 @@ class PIIFilter:
             "laborchemisch", "laborchemische", "laborchemischer", "laborchemischen",
             "abdomensonografisch", "abdomensonographisch",
             "kumulativ", "kumulative", "kumulativer", "kumulativen",
+            # FINAL: Clinical documentation terms (commonly misclassified)
+            "nebenbefundlich", "nebenbefundliche", "nebenbefundlicher",
+            "hauptbefundlich", "begleitbefundlich",
+            "untere", "obere", "mittlere",  # Position descriptors in medical context
+            "normgroß", "normgroße", "normgroßer", "normgroßen",
             # Phase 12: Clinical requirement terms
             "interventionsbedarf", "therapiebedarf", "handlungsbedarf",
             "aufnahmegrund", "aufnahmegrundes", "entlassungsgrund",
@@ -710,6 +726,11 @@ class PIIFilter:
             # Phase 11: CT/MR imaging terms (commonly misclassified as LOCATION)
             "computertomografisch", "computertomographisch", "computertomografie",
             "magnetresonanztomografie", "magnetresonanztomografisch",
+            # FINAL: CT compound terms (commonly misclassified as ORGANIZATION)
+            "ct-aufnahme", "ct-diagnostik", "ct-untersuchung", "ct-befund",
+            "ct-abdomen-aufnahme", "ct-thorax-aufnahme", "ct-thoraxaufnahme",
+            "ct-voruntersuchung", "ct-kontrolle", "ct-verlaufskontrolle",
+            "mrt-aufnahme", "mrt-untersuchung", "mrt-befund",
             # Phase 10: Position and imaging terms
             "liegendposition", "liegend", "sitzend", "stehend",
             "beurteilbarkeit", "beurteilbar", "eingeschränkte beurteilbarkeit",
@@ -721,6 +742,12 @@ class PIIFilter:
             # Phase 12: Lung/mediastinal anatomy (commonly misclassified as NAME)
             "hili", "hilus", "hilum", "lungenhili", "lungenhilus",
             "retroperitoneum", "retroperitoneal", "retroperitoneale",
+            # FINAL: More anatomical terms (commonly misclassified)
+            "confluensbereich", "konfluenzbereich", "confluens",
+            "laterokonale faszie", "lateroconale faszie", "lateroconal",
+            "bauchhöhle", "peritonealhöhle", "pleurahöhle",
+            "pancreasschwanz", "pankreasschwanzbereich",
+            "abdominalorgane", "thoraxorgane",
             # EKG types (commonly misclassified as ORG)
             "belastungs-ekg", "belastungsekg", "belastungs",
             "ruhe-ekg", "ruheekg", "langzeit-ekg", "langzeitekg",
@@ -781,10 +808,19 @@ class PIIFilter:
             "infektwerte", "infektparameter", "infektzeichen", "entzündungsparameter",
             "retentionsparameter", "nierenretentionsparameter", "leberwerte",
             "stuhlprobe", "stuhlproben", "stuhlgang", "stuhluntersuchung",
+            # FINAL: Lab value changes/elevations (commonly misclassified as ORGANIZATION)
+            "crp-erhöhung", "ck-erhöhung", "lipase-erhöhung", "troponin-erhöhung",
+            "transaminasenerhöhung", "bilirubinerhöhung", "kreatininerhöhung",
             # Phase 11: Additional lab abbreviations (commonly misclassified as LOCATION)
             "hkt", "hk", "hct",  # Hämatokrit abbreviations
             "prealbumin", "präalbumin", "albumin",
             "eryzahl", "erythrozytenzahl", "leukozytenzahl", "thrombozytenzahl",
+            "hämatoxrit",  # Typo variant
+            # FINAL: Autoantibodies and lab panels (commonly misclassified)
+            "myositis-panel", "myositis panel", "autoantikörper-panel",
+            "mi-2", "mi-2 alpha", "mi-2 beta", "jo-1", "ku", "pm-scl",
+            "ana", "anca", "ds-dna-ak", "ds-dann-ak",  # Autoantibodies
+            "molekularbiologischer direktnachweis", "pcr-nachweis",
             "tsh", "t3", "t4", "hba1c", "glucose", "glukose", "cholesterin",
             "triglyzeride", "inr", "ptt", "quick", "d-dimer", "fibrinogen",
             "blutgruppe", "rhesusfaktor",
@@ -818,6 +854,18 @@ class PIIFilter:
             "sd", "sd.",  # Schilddrüse (thyroid)
             "az", "az.",  # Allgemeinzustand (general condition)
             "gdh-ag", "gdh", "ag",  # Lab test abbreviations
+            # FINAL: More medical abbreviations (commonly misclassified)
+            "avd", "avd.",  # Arzt vom Dienst (duty doctor)
+            "bk", "bk.",  # Blutkulturen (blood cultures)
+            "dk", "dk.",  # Dauerkatheter (indwelling catheter)
+            "mcl", "mcl.",  # Medioclavicularlinie
+            "wv", "wv.",  # Wiedervorstellung (follow-up)
+            "ppi", "ppi.",  # Protonenpumpeninhibitor
+            "hocm",  # Hypertrophe obstruktive Kardiomyopathie
+            "qtc", "qtc-zeit",  # QTc interval
+            "tpo", "tpo-ak",  # Thyreoperoxidase
+            "eia", "ift",  # Lab test methods
+            "kulturbefund", "keimnachweis", "erregernachweis",
             "z.n.", "v.a.", "dd", "st.p.", "ed", "j.",  # German medical abbreviations
             "z.n", "v.a", "zn", "va",  # Without trailing periods (tokenization variants)
             "sinusrhythmus", "normofrequent", "rhythmisch",  # ECG findings
@@ -1846,6 +1894,8 @@ class PIIFilter:
             "natriumchlorid", "nacl", "kaliumchlorid", "kcl",
             "calciumgluconat", "calciumchlorid",
             "magnesiumsulfat", "magnesiumaspartat",
+            # FINAL: Potassium supplements
+            "kalinor", "kalinor-brausetabletten", "kalitrans", "rekawan",
             "natriumbicarbonat", "natriumbikarbonat",
             "kaliumphosphat", "natriumphosphat",
             # Miscellaneous
