@@ -601,6 +601,10 @@ class PIIFilter:
             # ==================== CLINICAL TERMS ====================
             "patient", "patientin", "diagnose", "befund", "therapie", "behandlung",
             "untersuchung", "operation", "medikament", "dosierung", "anamnese",
+            # FINAL7: Patient abbreviations and medical section headers
+            "pat", "pat.",  # Abbreviation for Patient
+            "akt", "akt.",  # Abbreviation for aktuell (current)
+            "stat", "stat.",  # Abbreviation for stationär (inpatient)
             "prognose", "epikrise", "symptom", "syndrom", "erkrankung", "krankheit",
             "störung", "insuffizienz", "entzündung", "infektion", "nekrose",
             "ischämie", "ruptur", "läsion", "pathologie",
@@ -841,6 +845,11 @@ class PIIFilter:
             # ==================== MEDICAL ABBREVIATIONS (commonly misclassified) ====================
             # These are frequently misclassified by SpaCy as ORG/LOC/PER
             "bmi", "egfr", "gfr", "lvef", "ef", "la", "lv", "rv", "ra",  # Cardiac
+            # FINAL7: Antibody/autoantibody abbreviations
+            "ldt",  # Lab Diagnostic Table
+            "srp", "ej", "oj", "nxp2", "sae1", "mda5", "tif1",  # Myositis antibodies
+            "mi-2", "pm-scl100", "pm-scl75", "jo-1", "pl-7", "pl-12", "ro-52",  # More antibodies
+            "ku", "anti-ku",  # Ku antibody
             # Phase 7: Clinical/examination abbreviations
             "vag", "vag.",  # Vesicular breath sounds (Vesikuläres Atemgeräusch)
             "pulmo", "pulmo:",  # Lungs examination section
@@ -894,6 +903,8 @@ class PIIFilter:
             "v1", "v2", "v3", "v4", "v5", "v6",  # Precordial leads
             "avl", "avr", "avf",  # Augmented limb leads
             "tiefen s", "tiefes s",  # ECG S wave in context
+            # FINAL7: Single-letter ECG waves (standalone entities)
+            "s", "t", "p", "q", "r",  # ECG waves when detected as entities
             # FINAL4: Pharmaceutical terms
             "retard", "retardkapsel", "retardtablette",  # Sustained-release
             "retard kapsel", "retard tablette",  # With space
@@ -903,6 +914,9 @@ class PIIFilter:
             # FINAL5: Histology grades (commonly misclassified as ORGANIZATION)
             "i.+ii.", "i.", "ii.", "iii.", "iv.", "i.+ii.+iii.",
             "grad i", "grad ii", "grad iii", "grad iv",
+            # FINAL7: Additional histology grade variations
+            "i", "ii", "iii", "iv",  # Without dots
+            "i+ii", "i + ii", "i. + ii.",  # Different spacing variations
             # FINAL5: Common hospital name patterns (often misclassified as NAME)
             "maria hilf", "maria-hilf", "st. maria", "st. josef", "st. antonius",
             "unauffällig", "regelrecht", "altersentsprechend",  # Normal findings
