@@ -70,15 +70,16 @@ function getDateRange(preset: DateRangePreset): { start?: string; end?: string }
   }
 }
 
-// Format date for display
+// Format date for display in Berlin timezone
 function formatDate(isoString: string): string {
   try {
-    return new Date(isoString).toLocaleDateString('de-DE', {
+    return new Date(isoString).toLocaleString('de-DE', {
       day: '2-digit',
       month: '2-digit',
       year: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
+      timeZone: 'Europe/Berlin',
     });
   } catch {
     return '-';
