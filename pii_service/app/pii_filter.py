@@ -896,6 +896,15 @@ class PIIFilter:
             "tiefen s", "tiefes s",  # ECG S wave in context
             # FINAL4: Pharmaceutical terms
             "retard", "retardkapsel", "retardtablette",  # Sustained-release
+            "retard kapsel", "retard tablette",  # With space
+            # FINAL5: Lab test terms (commonly misclassified as ORGANIZATION)
+            "extrahierbare nukleaere", "extrahierbare", "nukleaere",  # ENA test
+            "extrahierbare nukleäre antigene", "ena",
+            # FINAL5: Histology grades (commonly misclassified as ORGANIZATION)
+            "i.+ii.", "i.", "ii.", "iii.", "iv.", "i.+ii.+iii.",
+            "grad i", "grad ii", "grad iii", "grad iv",
+            # FINAL5: Common hospital name patterns (often misclassified as NAME)
+            "maria hilf", "maria-hilf", "st. maria", "st. josef", "st. antonius",
             "unauffällig", "regelrecht", "altersentsprechend",  # Normal findings
             "reduziert", "erhöht", "erniedrigt", "pathologisch",  # Finding descriptors
             # Phase 11: Additional clinical descriptors (commonly misclassified)
