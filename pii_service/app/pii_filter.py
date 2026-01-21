@@ -893,6 +893,9 @@ class PIIFilter:
             # FINAL2: ECG leads (single letters often misclassified)
             "v1", "v2", "v3", "v4", "v5", "v6",  # Precordial leads
             "avl", "avr", "avf",  # Augmented limb leads
+            "tiefen s", "tiefes s",  # ECG S wave in context
+            # FINAL4: Pharmaceutical terms
+            "retard", "retardkapsel", "retardtablette",  # Sustained-release
             "unauffällig", "regelrecht", "altersentsprechend",  # Normal findings
             "reduziert", "erhöht", "erniedrigt", "pathologisch",  # Finding descriptors
             # Phase 11: Additional clinical descriptors (commonly misclassified)
