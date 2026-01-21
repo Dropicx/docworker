@@ -2606,6 +2606,34 @@ class PIIFilter:
                 logger.debug(f"NER: Preserved '{ent.text}' (anatomical match)")
                 continue
 
+            # PRIORITY CHECK 4: Context-aware protection for single letters and special patterns
+            # FINAL6: Protect ECG waves (S, T, P, Q, R), histology grades (I, II, III, IV), and dates
+            context_before = text[max(0, ent.start_char - 30):ent.start_char].lower()
+            context_after = text[ent.end_char:min(len(text), ent.end_char + 30)].lower()
+
+            # ECG single-letter waves in context (tiefen S, S-Zacke, etc.)
+            ecg_context_words = ["tiefen", "tiefes", "zacke", "welle", "segment", "strecke",
+                                 "ekg", "ecg", "sinusrhythmus", "rhythmus", "hebung", "senkung",
+                                 "v1", "v2", "v3", "v4", "v5", "v6", "avl", "avr", "avf"]
+            if ent_lower in ["s", "t", "p", "q", "r", "st", "pq", "qrs", "qt", "qtc"]:
+                if any(ecg in context_before or ecg in context_after for ecg in ecg_context_words):
+                    logger.debug(f"NER: Preserved '{ent.text}' (ECG context)")
+                    continue
+
+            # Histology grades in context (Histologie: I., I.+II., etc.)
+            histology_context_words = ["histologie", "histologisch", "grad", "stadium", "typ",
+                                       "klassifikation", "gastritis", "metaplasie", "dysplasie"]
+            if ent_lower in ["i", "ii", "iii", "iv", "i.", "ii.", "iii.", "iv.", "i.+ii.", "i.+ii.+iii."]:
+                if any(histo in context_before or histo in context_after for histo in histology_context_words):
+                    logger.debug(f"NER: Preserved '{ent.text}' (histology context)")
+                    continue
+
+            # Date patterns that look like dates (e.g., "26.2.2025" misclassified)
+            import re as re_inner
+            if re_inner.match(r'^\d{1,2}\.\d{1,2}\.?\d{0,4}$', ent.text.strip()):
+                logger.debug(f"NER: Preserved '{ent.text}' (date pattern)")
+                continue
+
             # ===============================================================
             # Entity type-specific handling (if not caught by priority checks)
             # ===============================================================
