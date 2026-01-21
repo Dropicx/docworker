@@ -963,8 +963,8 @@ class PIIFilter:
             "vitamin b6", "vitamin b12", "vitamin c", "vitamin d", "vitamin d2",
             "vitamin d3", "vitamin e", "vitamin k", "vitamin k1", "vitamin k2",
             "vitamine", "vitaminmangel", "vitaminspiegel", "vitaminsubstitution",
-            # Phase 6: Abbreviated vitamin forms
-            "vit. b12", "vit b12", "vit. d", "vit d", "vit. k", "vit k",
+            # Phase 6: Abbreviated vitamin forms (include standalone "vit" to prevent NER misclassification)
+            "vit", "vit.", "vit. b12", "vit b12", "vit. d", "vit d", "vit. k", "vit k",
 
             # ==================== LIVER SCORING SYSTEMS (Phase 6) ====================
             # Child-Pugh classification for liver cirrhosis (commonly misclassified as NAME)
