@@ -1464,6 +1464,25 @@ class PIIFilter:
                 if self._is_medical_eponym(entity_text, context):
                     continue
 
+                # Check MedicalTermVerifier (same as NER pass)
+                # Map Presidio entity types to verification categories
+                entity_type_map = {
+                    "PERSON": "PERSON",
+                    "LOCATION": "LOCATION",
+                    "ORG": "ORGANIZATION",
+                    "NRP": "PERSON",  # Nationality/Religious/Political group
+                }
+                verification_type = entity_type_map.get(result.entity_type)
+                if verification_type and self.medical_verifier.verify_before_removal(entity_text, verification_type):
+                    logger.debug(f"Presidio: Preserved medical term '{entity_text}' (verifier)")
+                    continue
+
+                # For DATE_TIME entities, check if in medical context
+                if result.entity_type == "DATE_TIME":
+                    if self._is_medical_context_date(text, result.start, result.end):
+                        logger.debug(f"Presidio: Preserved medical context date '{entity_text}'")
+                        continue
+
                 # Skip phone numbers that are actually medical values (e.g., "4000 Hz")
                 # This prevents false positives for frequencies, dosages, etc.
                 if result.entity_type == "PHONE_NUMBER":

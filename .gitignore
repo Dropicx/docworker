@@ -347,6 +347,8 @@ gcp-key.json
 *.tfstate
 *.tfstate.*
 .terraform/
+*.tfvars
+!*.tfvars.example
 
 # ===========================
 # Keep these files
