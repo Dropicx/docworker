@@ -230,10 +230,12 @@ class PIIFilter:
 
             # Doctor names with initials: "J. Chahem", "K. Fariq-Spiegel", "N. Dewies"
             # Matches initial + period + space + surname (with optional hyphenated part)
-            # Negative lookbehind excludes German abbreviations: z.B., d.h., u.a., o.ä., i.V., etc.
-            # Pattern: if preceded by lowercase+period (like "z."), don't match
+            # Exclusions:
+            # - Negative lookbehind for lowercase+period (German abbrevs: z.B., d.h.)
+            # - Negative lookbehind for "Vitamin " (prevents "Vitamin D." matching)
+            # - Negative lookbehind for "Typ " (prevents "Typ A." matching)
             "doctor_initial_name": re.compile(
-                r"(?<![a-zäöü]\.)\b([A-Z]\.)\s*([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)\b"
+                r"(?<!Vitamin )(?<!Typ )(?<![a-zäöü]\.)\b([A-Z]\.)\s*([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)\b"
             ),
 
             # =============================================================
@@ -568,7 +570,13 @@ class PIIFilter:
             "milz", "pankreas", "gallenblase", "schilddrüse", "nebenniere",
             "prostata", "uterus", "ovarien", "hoden", "lymphknoten",
             "rückenmark", "knochenmark", "arterie", "vene", "kapillare",
-            "aorta", "koronararterie",
+            "aorta", "koronararterie", "aortenwand",
+            # Anatomical regions (commonly misclassified as LOC)
+            "oberbauchorgane", "unterbauchorgane", "bauchorgane",
+            "hinterhorn", "vorderhorn", "seitenhorn",  # Meniscus anatomy
+            "pulsübertragung", "nierenperfusion",
+            "extrakardial", "extrakardiale", "extrakardialer", "extrakardialen",
+            "intrakardial", "intrakardiale", "intrakardialer", "intrakardialen",
             # English
             "heart", "lung", "liver", "kidney", "stomach", "brain", "muscle", "bone",
             "spleen", "pancreas", "gallbladder", "thyroid", "prostate", "uterus",
@@ -596,6 +604,11 @@ class PIIFilter:
             # ==================== CONDITIONS ====================
             "stenose", "thrombose", "embolie", "infarkt", "tumor", "karzinom",
             "metastase", "aneurysma", "fraktur", "luxation", "kontusion",
+            # Cancer diagnosis abbreviations (commonly misclassified as NAME)
+            "prostata-ca", "prostataca", "mamma-ca", "mammaca",
+            "bronchial-ca", "bronchialca", "kolon-ca", "kolonca",
+            "lungen-ca", "lungenca", "magen-ca", "magenka",
+            "hcc", "ccc", "nsclc", "sclc",  # Liver, bile duct, lung cancers
             "hämatom", "ödem", "erguss", "hypertonie", "hypotonie",
             "tachykardie", "bradykardie", "arrhythmie", "diabetes",
             "hypothyreose", "hyperthyreose", "anämie", "leukämie",
@@ -696,6 +709,19 @@ class PIIFilter:
             "sistieren", "sistierend", "intermittierend", "persistierend",
             "progredient", "regredient", "stabil", "stationär",
             "akut", "subakut", "chronisch", "rezidivierend",
+            # Shape/extent descriptors (commonly misclassified)
+            "umschrieben", "umschriebene", "umschriebener", "umschriebenen", "umschriebenes",
+            "diffus", "diffuse", "diffuser", "diffusen", "diffuses",
+            "fokal", "fokale", "fokaler", "fokalen", "fokales",
+            "multifokal", "multifokale", "multifokaler", "multifokalen",
+            "konfluierend", "konfluierende", "konfluierender", "konfluierenden",
+            # Inspiratory/expiratory (lung function context)
+            "inspiratorisch", "inspiratorische", "inspiratorischer", "inspiratorischen",
+            "exspiratorisch", "exspiratorische", "exspiratorischer", "exspiratorischen",
+            # Age-adjusted terms
+            "altersentsprechend", "altersentsprechende", "altersentsprechender", "altersentsprechenden",
+            "altersadaptiert", "altersadaptierte", "altersadaptierter", "altersadaptierten",
+            "altersnormal", "altersnormale", "altersnormaler", "altersnormalen",
 
             # ==================== MEDICAL ADJECTIVES (with German declensions) ====================
             # Temporal/frequency adjectives
@@ -802,6 +828,9 @@ class PIIFilter:
             "pef", "mef", "pif", "tlc", "rv", "frc", "vc", "ivc", "evc",
             "dlco", "kco", "raw", "sraw", "gaw", "sgaw",
             "vitalkapazität", "residualvolumen", "atemwegswiderstand",
+            # Lung function tests/indices (commonly misclassified as LOC/ORG)
+            "tiffeneau", "tiffeneau-index", "tiffeneau-test",
+            "peak", "peak-flow", "peakflow",
 
             # ==================== CARDIAC MEASUREMENTS (Kardiale Messungen) ====================
             # Echocardiography and vascular measurements - often misclassified as ORG
@@ -822,6 +851,11 @@ class PIIFilter:
             "bun", "crcl",
             "na", "k", "cl", "mg", "po4", "fe", "zn", "cu",
             "elektrolyte", "serumelektrolyte",
+            # Lab standards/methods (commonly misclassified as LOC/ORG)
+            "ifcc", "dcct", "ngsp",  # HbA1c standardization methods
+            "glucosewert", "glucosewerte", "glukosewert", "glukosewerte",
+            # Alternate spellings (ae vs ä)
+            "haematokrit", "haemoglobin",
 
             # ==================== LATIN ANATOMICAL TERMS ====================
             # Commonly used in German radiology, frequently misclassified as LOC
@@ -846,6 +880,8 @@ class PIIFilter:
             # Could be confused with locations
             "corona", "covid", "covid-19", "sars", "sars-cov-2", "mers",
             "influenza", "grippe",
+            "corona-infektion", "coronainfektion", "coronavirus-infektion",
+            "covid-infektion", "covidinfektion",
 
             # ==================== LIVER CONDITIONS WITH GRADING ====================
             "steatosis", "hepatis", "grad", "fibrosis",
@@ -864,6 +900,12 @@ class PIIFilter:
             # ==================== UV/SKIN TERMS ====================
             "solarien", "solarium",
             "uv-faktor", "uv-index", "lichtschutzfaktor", "lsf", "spf",
+            # Time of day / sun exposure context (commonly misclassified as LOC)
+            "mittagszeit", "mittagssonne", "sommermittagssonne",
+            "sonnenexposition", "sonnenlicht", "sonneneinstrahlung",
+            "morgens", "mittags", "abends", "nachts", "nüchtern",
+            # Cell/tissue terms (commonly misclassified as LOC)
+            "leberzelle", "leberzellen", "hepatozyt", "hepatozyten",
 
             # ==================== CELL TYPE ABBREVIATIONS ====================
             # Commonly in lab reports, frequently misclassified as NAME
@@ -883,6 +925,12 @@ class PIIFilter:
             # Measurement terms (compound)
             "knöchel-arm-index", "ankle-brachial-index",
             "körperfettanteil", "körperwasseranteil",
+            "gesamt-körperwasseranteil", "gesamtkörperwasseranteil",
+            # Blood pressure and heart rate behavior terms
+            "rr-verhalten", "rrverhalten", "blutdruckverhalten",
+            "herzfrequenzverhalten", "pulsverhalten",
+            # Diet/nutrition abbreviations (commonly misclassified)
+            "fdh", "bmr",  # "Friss die Hälfte", Basal Metabolic Rate
 
             # Lab cell terms (full German names - commonly misclassified as LOC)
             "leukozyten", "erythrozyten", "thrombozyten",
