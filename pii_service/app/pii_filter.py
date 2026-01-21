@@ -605,6 +605,10 @@ class PIIFilter:
             "pat", "pat.",  # Abbreviation for Patient
             "akt", "akt.",  # Abbreviation for aktuell (current)
             "stat", "stat.",  # Abbreviation for stationär (inpatient)
+            # FINAL8: Section headers that look like names
+            "aufnahmegrund", "aufnahmegrund/anamnese",  # Admission reason/history
+            "eigenanamnese", "familienanamnese", "sozialanamnese",  # History types
+            "fremdanamnese", "berufsanamnese", "medikamentenanamnese",
             "prognose", "epikrise", "symptom", "syndrom", "erkrankung", "krankheit",
             "störung", "insuffizienz", "entzündung", "infektion", "nekrose",
             "ischämie", "ruptur", "läsion", "pathologie",
@@ -917,6 +921,10 @@ class PIIFilter:
             # FINAL7: Additional histology grade variations
             "i", "ii", "iii", "iv",  # Without dots
             "i+ii", "i + ii", "i. + ii.",  # Different spacing variations
+            # FINAL8: More histology/classification patterns
+            "i.+ii", "ii.+iii", "iii.+iv",  # Without trailing dot
+            "typ i", "typ ii", "typ iii", "typ iv",  # Type classifications
+            "type i", "type ii", "type iii", "type iv",
             # FINAL5: Common hospital name patterns (often misclassified as NAME)
             "maria hilf", "maria-hilf", "st. maria", "st. josef", "st. antonius",
             "unauffällig", "regelrecht", "altersentsprechend",  # Normal findings
