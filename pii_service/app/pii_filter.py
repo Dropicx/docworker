@@ -880,6 +880,10 @@ class PIIFilter:
             "bakt", "bakt.",  # Bacteria (urinalysis)
             "norm", "norm.",  # Reference range
             "iu/l", "u/l", "iu/ml",  # Lab units
+            # FINAL3: Last remaining abbreviations
+            "nekr.", "nekr", "nekrotisierend", "nekrotisierende",
+            "procederes", "procedere",  # Procedure/approach
+            "haptoglobin",  # Lab value
             "z.n.", "v.a.", "dd", "st.p.", "ed", "j.",  # German medical abbreviations
             "z.n", "v.a", "zn", "va",  # Without trailing periods (tokenization variants)
             "sinusrhythmus", "normofrequent", "rhythmisch",  # ECG findings
