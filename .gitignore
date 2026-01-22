@@ -265,6 +265,25 @@ test-files/
 test_*.pdf
 test_*.docx
 
+# PII test files (contain sensitive medical data)
+raw_ocr_*.txt
+pii_*.txt
+*_ocr_output.txt
+*_filtered.txt
+*_cleaned.txt
+
+# PII analysis scripts (may contain sensitive test data or API keys)
+backend/scripts/analyze_false_positives.py
+backend/scripts/comprehensive_pii_analysis.py
+backend/scripts/detailed_comparison.py
+backend/scripts/extract_ocr_phase6.py
+backend/scripts/extract_pdfs_and_ocr.py
+backend/scripts/find_raw_ocr.py
+backend/scripts/run_mistral_ocr.py
+backend/scripts/test_phase6_fixes.py
+backend/scripts/test_pii_filter.py
+backend/scripts/verify_phase6_terms.py
+
 # OCR and processing temp files
 tesseract_temp/
 ocr_output/
