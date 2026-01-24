@@ -65,6 +65,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
   const targetProgressRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
   const lastUpdateTimeRef = useRef(Date.now());
+  const lastProgressValueRef = useRef(0);
 
   // Elapsed time counter
   useEffect(() => {
@@ -124,13 +125,14 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     };
   }, [animateProgress]);
 
-  // Update target when status changes
+  // Update target only when progress value actually changes
   useEffect(() => {
     if (status) {
-      targetProgressRef.current = status.progress_percent;
-      lastUpdateTimeRef.current = Date.now();
-      if (status.status === 'completed') {
-        targetProgressRef.current = 100;
+      const newProgress = status.status === 'completed' ? 100 : status.progress_percent;
+      if (newProgress !== lastProgressValueRef.current) {
+        lastProgressValueRef.current = newProgress;
+        targetProgressRef.current = newProgress;
+        lastUpdateTimeRef.current = Date.now();
       }
     }
   }, [status]);
