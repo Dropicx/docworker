@@ -7,6 +7,7 @@ Uses a Redis hash per job with TTL-based auto-cleanup.
 All methods are no-ops if Redis is unavailable — pipeline execution is never blocked.
 """
 
+import asyncio
 import json
 import logging
 
@@ -41,19 +42,28 @@ class PipelineProgressTracker:
     """
 
     _pool: ConnectionPool | None = None
+    _pool_loop_id: int | None = None
 
     async def _get_client(self) -> aioredis.Redis | None:
-        """Get async Redis client, reusing connection pool."""
+        """Get async Redis client. Recreates pool if event loop changed (Celery workers)."""
         if not settings.redis_url:
             return None
 
         try:
-            if PipelineProgressTracker._pool is None:
+            current_loop_id = id(asyncio.get_running_loop())
+
+            if (
+                PipelineProgressTracker._pool is None
+                or PipelineProgressTracker._pool_loop_id != current_loop_id
+            ):
+                # Pool doesn't exist or was created on a different event loop
                 PipelineProgressTracker._pool = ConnectionPool.from_url(
                     settings.redis_url,
                     max_connections=settings.redis_max_connections,
                     decode_responses=True,
                 )
+                PipelineProgressTracker._pool_loop_id = current_loop_id
+
             return aioredis.Redis(connection_pool=PipelineProgressTracker._pool)
         except RedisError as e:
             logger.warning(f"Pipeline progress tracker: Redis unavailable: {e}")
