@@ -242,57 +242,40 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     }
   };
 
-  const STATUS_ORDER: Status[] = ['extracting_text', 'translating', 'language_translating', 'completed'];
+  // Determine active step index from backend's current_step description text.
+  // The backend generates descriptions based on progress ranges in _get_step_description().
+  // By matching against that text, the step cards stay synchronized with the
+  // description shown below the progress bar regardless of how many pipeline steps exist.
+  const getActiveStepIndex = (): number => {
+    if (!status) return -1;
+    if (status.status === 'completed') return STEPS.length; // all done
 
-  const getStatusIndex = (s: Status): number => {
-    const idx = STATUS_ORDER.indexOf(s);
-    return idx >= 0 ? idx : 0;
-  };
+    const stepText = (status.current_step || '').toLowerCase();
 
-  // Real backend progress thresholds that split each phase into two sub-steps
-  const SUB_STEP_SPLITS: Record<string, number> = {
-    extracting_text: 10,      // step 0 active if progress < 10, step 1 if >= 10
-    translating: 45,          // step 2 active if progress < 45, step 3 if >= 45
-    language_translating: 85, // step 4 active if progress < 85, step 5 if >= 85
+    // Match against backend description keywords (from _get_step_description)
+    if (stepText.includes('extrahiert') || stepText.includes('ocr')) return 0;
+    if (stepText.includes('validiert') || stepText.includes('medizinisch')) return 1;
+    if (stepText.includes('datenschutz') || stepText.includes('dokumenttyp')) return 2;
+    if (stepText.includes('vereinfacht') || stepText.includes('fakten') || stepText.includes('grammatik')) return 3;
+    if (stepText.includes('sprachübersetzung') || stepText.includes('qualitätsprüfung')) return 4;
+    if (stepText.includes('formatierung') || stepText.includes('abgeschlossen')) return 5;
+
+    // Fallback: use progress_percent ranges matching backend description thresholds
+    const p = status.progress_percent;
+    if (p < 10) return 0;
+    if (p < 20) return 1;
+    if (p < 40) return 2;
+    if (p < 75) return 3;
+    if (p < 95) return 4;
+    return 5;
   };
 
   const isStepCompleted = (index: number): boolean => {
-    if (!status) return false;
-    const step = STEPS[index];
-    const currentStatusIdx = getStatusIndex(status.status);
-    const stepStatusIdx = getStatusIndex(step.status);
-
-    // Step's phase is entirely past
-    if (currentStatusIdx > stepStatusIdx) return true;
-
-    // Same phase — check if this is the first sub-step and we're past the split
-    if (currentStatusIdx === stepStatusIdx) {
-      const split = SUB_STEP_SPLITS[step.status];
-      const isFirstSubStep = index === 0 || STEPS[index - 1].status !== step.status;
-      if (isFirstSubStep && status.progress_percent >= split) return true;
-    }
-
-    return false;
+    return index < getActiveStepIndex();
   };
 
   const isStepActive = (index: number): boolean => {
-    if (!status) return false;
-    const step = STEPS[index];
-    const currentStatusIdx = getStatusIndex(status.status);
-    const stepStatusIdx = getStatusIndex(step.status);
-
-    // Not in this phase
-    if (currentStatusIdx !== stepStatusIdx) return false;
-
-    // Determine which sub-step within the phase is active
-    const split = SUB_STEP_SPLITS[step.status];
-    const isFirstSubStep = index === 0 || STEPS[index - 1].status !== step.status;
-
-    if (isFirstSubStep) {
-      return status.progress_percent < split;
-    } else {
-      return status.progress_percent >= split;
-    }
+    return index === getActiveStepIndex();
   };
 
   if (!status) {
