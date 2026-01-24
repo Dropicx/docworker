@@ -103,6 +103,9 @@ class PipelineStepRequest(BaseModel):
     # Stop conditions (early termination)
     stop_conditions: dict[str, Any] | None = None
 
+    # UI stage mapping
+    ui_stage: str = Field("translation", pattern="^(ocr|validation|classification|translation|quality|formatting)$")
+
     @field_validator("prompt_template")
     @classmethod
     def validate_prompt(cls, v):
@@ -178,6 +181,9 @@ class PipelineStepResponse(BaseModel):
 
     # Stop conditions (early termination)
     stop_conditions: dict[str, Any] | None
+
+    # UI stage mapping
+    ui_stage: str
 
     # Pydantic V2 configuration
     model_config = ConfigDict(from_attributes=True)
@@ -362,6 +368,25 @@ async def get_engine_status(
     except Exception as e:
         logger.error(f"❌ Failed to get engine status: {e}")
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+
+
+# ==================== UI STAGES ====================
+
+
+@router.get("/ui-stages")
+async def get_ui_stages():
+    """
+    Get the fixed set of UI stages for frontend progress cards.
+    These represent conceptual processing stages and don't change.
+    """
+    return [
+        {"value": "ocr", "label": "Text extrahieren (OCR)", "card_index": 0},
+        {"value": "validation", "label": "Medizinische Validierung", "card_index": 1},
+        {"value": "classification", "label": "Datenschutz-Filter", "card_index": 2},
+        {"value": "translation", "label": "KI-Vereinfachung", "card_index": 3},
+        {"value": "quality", "label": "Qualitätsprüfung", "card_index": 4},
+        {"value": "formatting", "label": "Finalisierung", "card_index": 5},
+    ]
 
 
 # ==================== PIPELINE STEPS ENDPOINTS ====================

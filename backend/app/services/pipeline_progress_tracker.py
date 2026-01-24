@@ -79,6 +79,7 @@ class PipelineProgressTracker:
         completed_count: int,
         total_steps: int,
         phase: str,
+        ui_stage: str = "translation",
     ) -> None:
         """Record that a step has started executing."""
         client = await self._get_client()
@@ -101,6 +102,7 @@ class PipelineProgressTracker:
                 key,
                 mapping={
                     "current_step_name": step_name,
+                    "ui_stage": ui_stage,
                     "completed_count": str(completed_count),
                     "total_steps": str(total_steps),
                     "phase": phase,
@@ -168,6 +170,7 @@ class PipelineProgressTracker:
 
             return {
                 "current_step_name": data.get("current_step_name"),
+                "ui_stage": data.get("ui_stage"),
                 "steps_completed": steps_completed,
                 "total_steps": total_steps,
                 "completed_count": len(steps_completed),

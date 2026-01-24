@@ -803,6 +803,7 @@ class ModularPipelineExecutor:
             await self.progress_tracker.step_started(
                 processing_id=processing_id,
                 step_name=step.name,
+                ui_stage=step.ui_stage or "translation",
                 completed_count=idx,
                 total_steps=len(universal_steps),
                 phase="universal",
@@ -1011,6 +1012,7 @@ class ModularPipelineExecutor:
                 await self.progress_tracker.step_started(
                     processing_id=processing_id,
                     step_name=step.name,
+                    ui_stage=step.ui_stage or "translation",
                     completed_count=phase1_completed + idx,
                     total_steps=phase2_total,
                     phase="class_specific",
@@ -1151,6 +1153,7 @@ class ModularPipelineExecutor:
                 await self.progress_tracker.step_started(
                     processing_id=processing_id,
                     step_name=step.name,
+                    ui_stage=step.ui_stage or "translation",
                     completed_count=pre_phase3_completed + idx,
                     total_steps=full_total,
                     phase="post_branching",

@@ -68,6 +68,9 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   const [branchingField, setBranchingField] = useState<string>('document_type');
   const [postBranching, setPostBranching] = useState(false); // NEW: Post-branching flag
 
+  // UI stage mapping
+  const [uiStage, setUiStage] = useState<string>('translation');
+
   // NEW: Conditional execution
   const [requiredContextVariables, setRequiredContextVariables] = useState<string[]>([]);
   const [newVariable, setNewVariable] = useState('');
@@ -104,6 +107,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setIsBranchingStep(step.is_branching_step);
       setBranchingField(step.branching_field || 'document_type');
       setPostBranching(step.post_branching || false);
+      // UI stage
+      setUiStage(step.ui_stage || 'translation');
       // NEW: Conditional execution
       setRequiredContextVariables(step.required_context_variables || []);
       // NEW: Stop conditions
@@ -137,6 +142,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setIsBranchingStep(false);
       setBranchingField('document_type');
       setPostBranching(defaultPostBranching); // NEW: Pre-fill from active tab
+      // UI stage default
+      setUiStage('translation');
       // NEW: Conditional execution defaults
       setRequiredContextVariables([]);
       // NEW: Stop conditions defaults
@@ -220,6 +227,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                 termination_message: terminationMessage || 'Die Verarbeitung wurde gestoppt.',
               }
             : null,
+        // UI stage mapping
+        ui_stage: uiStage,
       };
 
       if (step) {
@@ -327,6 +336,28 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
               className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
               placeholder="Kurze Beschreibung des Schritts"
             />
+          </div>
+
+          {/* UI Stage Selection */}
+          <div>
+            <label className="block text-sm font-medium text-primary-700 mb-2">
+              UI-Verarbeitungsstufe
+            </label>
+            <select
+              value={uiStage}
+              onChange={e => setUiStage(e.target.value)}
+              className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+            >
+              <option value="ocr">Text extrahieren (OCR)</option>
+              <option value="validation">Medizinische Validierung</option>
+              <option value="classification">Datenschutz-Filter</option>
+              <option value="translation">KI-Vereinfachung</option>
+              <option value="quality">Qualitätsprüfung</option>
+              <option value="formatting">Finalisierung</option>
+            </select>
+            <p className="text-xs text-primary-500 mt-1">
+              Bestimmt, welche Fortschrittsanzeige im Frontend aktiv ist, wenn dieser Schritt ausgeführt wird.
+            </p>
           </div>
 
           {/* Prompt Template */}

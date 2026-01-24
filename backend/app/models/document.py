@@ -100,6 +100,7 @@ class ProcessingProgress(BaseModel):
     progress_percent: int = Field(ge=0, le=100)
     current_step: str
     current_step_name: str | None = None  # Actual pipeline step name from Redis
+    ui_stage: str | None = None  # Database-driven UI stage ("ocr", "validation", etc.)
     message: str | None = None
     error: str | None = None
     timestamp: datetime = Field(default_factory=datetime.now)

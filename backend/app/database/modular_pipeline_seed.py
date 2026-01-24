@@ -226,6 +226,7 @@ def seed_modular_pipeline():
                     "is_branching_step": True,
                     "branching_field": "medical_validation",
                     "document_class_id": None,  # Universal step
+                    "ui_stage": "validation",
                     "stop_conditions": {
                         "stop_on_values": ["NICHT_MEDIZINISCH"],
                         "termination_reason": "Non-medical content detected",
@@ -248,6 +249,7 @@ def seed_modular_pipeline():
                     "is_branching_step": True,
                     "branching_field": "document_type",
                     "document_class_id": None,  # Universal step
+                    "ui_stage": "classification",
                 },
                 # NOTE: PII removal now happens LOCALLY via AdvancedPrivacyFilter
                 # BEFORE pipeline execution (GDPR-compliant, no PII sent to cloud)
@@ -309,6 +311,7 @@ Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare.""",
                     "input_from_previous_step": True,
                     "output_format": "markdown",
                     "document_class_id": arztbrief_id,  # ARZTBRIEF only
+                    "ui_stage": "translation",
                 },
                 {
                     "name": "Vereinfachung Befundbericht",
@@ -364,6 +367,7 @@ Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare.""",
                     "input_from_previous_step": True,
                     "output_format": "markdown",
                     "document_class_id": befundbericht_id,  # BEFUNDBERICHT only
+                    "ui_stage": "translation",
                 },
                 {
                     "name": "Vereinfachung Laborwerte",
@@ -419,6 +423,7 @@ Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare.""",
                     "input_from_previous_step": True,
                     "output_format": "markdown",
                     "document_class_id": laborwerte_id,  # LABORWERTE only
+                    "ui_stage": "translation",
                 },
                 {
                     "name": "Finaler Check auf Richtigkeit",
@@ -478,6 +483,7 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                     "output_format": "markdown",
                     "document_class_id": arztbrief_id,  # ARZTBRIEF quality check
                     "post_branching": True,  # Runs after document-specific translation
+                    "ui_stage": "quality",
                 },
                 # ==================== GENERIC FALLBACK STEP (if no class-specific) ====================
                 {
@@ -493,6 +499,7 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                     "max_retries": 2,
                     "input_from_previous_step": True,
                     "output_format": "text",
+                    "ui_stage": "translation",
                 },
                 {
                     "name": "Medical Fact Check",
@@ -507,6 +514,7 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                     "max_retries": 2,
                     "input_from_previous_step": True,
                     "output_format": "text",
+                    "ui_stage": "quality",
                 },
                 {
                     "name": "Grammar and Spelling Check",
@@ -521,6 +529,7 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                     "max_retries": 2,
                     "input_from_previous_step": True,
                     "output_format": "text",
+                    "ui_stage": "quality",
                 },
                 {
                     "name": "Language Translation",
@@ -535,6 +544,7 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                     "max_retries": 2,
                     "input_from_previous_step": True,
                     "output_format": "text",
+                    "ui_stage": "quality",
                 },
                 {
                     "name": "Final Quality Check",
@@ -549,6 +559,7 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                     "max_retries": 2,
                     "input_from_previous_step": True,
                     "output_format": "text",
+                    "ui_stage": "quality",
                 },
                 {
                     "name": "Text Formatting",
@@ -563,6 +574,7 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                     "max_retries": 2,
                     "input_from_previous_step": True,
                     "output_format": "markdown",
+                    "ui_stage": "formatting",
                 },
             ]
 
@@ -575,14 +587,14 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                         retry_on_failure, max_retries, input_from_previous_step,
                         output_format, is_branching_step, branching_field, document_class_id,
                         post_branching, stop_conditions, required_context_variables,
-                        created_at, last_modified, modified_by
+                        ui_stage, created_at, last_modified, modified_by
                     ) VALUES (
                         :name, :description, :order, :enabled, :prompt_template,
                         :selected_model_id, :temperature, :max_tokens,
                         :retry_on_failure, :max_retries, :input_from_previous_step,
                         :output_format, :is_branching_step, :branching_field, :document_class_id,
                         :post_branching, :stop_conditions, :required_context_variables,
-                        CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
+                        :ui_stage, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
                     )
                 """),
                     {
@@ -599,6 +611,7 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                         )
                         if step.get("required_context_variables")
                         else None,
+                        "ui_stage": step.get("ui_stage", "translation"),
                         "modified_by": "system_seed",
                     },
                 )

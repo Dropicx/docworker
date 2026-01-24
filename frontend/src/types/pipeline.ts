@@ -92,6 +92,9 @@ export interface PipelineStep {
     termination_reason: string;
     termination_message: string;
   } | null;
+
+  // UI stage mapping
+  ui_stage: string;
 }
 
 export interface PipelineStepRequest {
@@ -123,6 +126,9 @@ export interface PipelineStepRequest {
     termination_reason: string;
     termination_message: string;
   } | null;
+
+  // UI stage mapping
+  ui_stage?: string;
 }
 
 // ==================== AI MODELS ====================

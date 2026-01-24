@@ -108,6 +108,7 @@ async def get_processing_status(
 
         if redis_progress and redis_progress.get("current_step_name"):
             status_dict["current_step_name"] = redis_progress["current_step_name"]
+            status_dict["ui_stage"] = redis_progress.get("ui_stage")
             status_dict["progress_percent"] = redis_progress["progress_percent"]
             status_dict["current_step"] = STEP_DESCRIPTIONS.get(
                 redis_progress["current_step_name"],

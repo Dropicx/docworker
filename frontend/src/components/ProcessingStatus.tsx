@@ -242,35 +242,27 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     }
   };
 
-  // Map actual pipeline step names (from database) to UI card indices
-  const STEP_NAME_TO_CARD: Record<string, number> = {
-    // Universal steps
-    'Medical Content Validation': 1,
-    'Document Classification': 2,
-    'Patient-Friendly Translation': 3,
-    'Medical Fact Check': 3,
-    'Grammar and Spelling Check': 3,
-    'Language Translation': 4,
-    'Final Quality Check': 4,
-    'Text Formatting': 5,
-    // Document-class-specific steps
-    'Vereinfachung Arztbrief': 3,
-    'Vereinfachung Befundbericht': 3,
-    'Vereinfachung Laborwerte': 3,
-    'Finaler Check auf Richtigkeit': 4,
+  // Map database-driven ui_stage values to card indices
+  const STAGE_TO_CARD: Record<string, number> = {
+    ocr: 0,
+    validation: 1,
+    classification: 2,
+    translation: 3,
+    quality: 4,
+    formatting: 5,
   };
 
   const getActiveStepIndex = (): number => {
     if (!status) return -1;
     if (status.status === 'completed') return STEPS.length; // all done
 
-    // Primary: use real step name from Redis-backed response
-    if (status.current_step_name) {
-      const idx = STEP_NAME_TO_CARD[status.current_step_name];
+    // Primary: use ui_stage from database-driven response
+    if (status.ui_stage) {
+      const idx = STAGE_TO_CARD[status.ui_stage];
       if (idx !== undefined) return idx;
     }
 
-    // Fallback: keyword matching (backward compat when Redis unavailable)
+    // Fallback: keyword matching (when Redis unavailable)
     const stepText = (status.current_step || '').toLowerCase();
     if (stepText.includes('extrahiert') || stepText.includes('ocr')) return 0;
     if (stepText.includes('vereinfacht') || stepText.includes('fakten') || stepText.includes('grammatik')) return 3;

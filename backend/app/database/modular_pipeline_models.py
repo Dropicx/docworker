@@ -59,6 +59,17 @@ class ModelProvider(str, Enum):
     MISTRAL = "MISTRAL"  # Mistral AI API
 
 
+class UIStage(str, Enum):
+    """Fixed UI stages representing frontend progress cards"""
+
+    OCR = "ocr"
+    VALIDATION = "validation"
+    CLASSIFICATION = "classification"
+    TRANSLATION = "translation"
+    QUALITY = "quality"
+    FORMATTING = "formatting"
+
+
 class FeedbackAnalysisStatus(str, Enum):
     """Status of AI-powered feedback quality analysis"""
 
@@ -255,6 +266,9 @@ class DynamicPipelineStepDB(Base):
     required_context_variables = Column(
         JSON, nullable=True
     )  # e.g., ["target_language"] - step will be skipped if these variables are not in context
+
+    # UI stage mapping (determines which frontend progress card is active)
+    ui_stage = Column(String(30), nullable=False, default="translation")
 
     # Metadata
     created_at = Column(DateTime, default=func.now(), nullable=False)
