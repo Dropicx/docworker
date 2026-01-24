@@ -252,13 +252,15 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
 
     const stepText = (status.current_step || '').toLowerCase();
 
-    // Match against backend description keywords (from _get_step_description)
+    // Match against backend description keywords (from _get_step_description).
+    // Order matters: check more specific keywords first to avoid substring collisions
+    // (e.g. "medizinischen" in step 3 descriptions would falsely match "medizinisch" for step 1).
     if (stepText.includes('extrahiert') || stepText.includes('ocr')) return 0;
-    if (stepText.includes('validiert') || stepText.includes('medizinisch')) return 1;
-    if (stepText.includes('datenschutz') || stepText.includes('dokumenttyp')) return 2;
     if (stepText.includes('vereinfacht') || stepText.includes('fakten') || stepText.includes('grammatik')) return 3;
     if (stepText.includes('sprachübersetzung') || stepText.includes('qualitätsprüfung')) return 4;
     if (stepText.includes('formatierung') || stepText.includes('abgeschlossen')) return 5;
+    if (stepText.includes('datenschutz') || stepText.includes('dokumenttyp')) return 2;
+    if (stepText.includes('validiert')) return 1;
 
     // Fallback: use progress_percent ranges matching backend description thresholds
     const p = status.progress_percent;
