@@ -242,18 +242,22 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     }
   };
 
-  // Map pipeline step names to UI card indices
+  // Map actual pipeline step names (from database) to UI card indices
   const STEP_NAME_TO_CARD: Record<string, number> = {
-    TEXT_EXTRACTION: 0,
-    MEDICAL_VALIDATION: 1,
-    CLASSIFICATION: 2,
-    PII_PREPROCESSING: 2,
-    TRANSLATION: 3,
-    FACT_CHECK: 3,
-    GRAMMAR_CHECK: 3,
-    LANGUAGE_TRANSLATION: 4,
-    FINAL_CHECK: 4,
-    FORMATTING: 5,
+    // Universal steps
+    'Medical Content Validation': 1,
+    'Document Classification': 2,
+    'Patient-Friendly Translation': 3,
+    'Medical Fact Check': 3,
+    'Grammar and Spelling Check': 3,
+    'Language Translation': 4,
+    'Final Quality Check': 4,
+    'Text Formatting': 5,
+    // Document-class-specific steps
+    'Vereinfachung Arztbrief': 3,
+    'Vereinfachung Befundbericht': 3,
+    'Vereinfachung Laborwerte': 3,
+    'Finaler Check auf Richtigkeit': 4,
   };
 
   const getActiveStepIndex = (): number => {

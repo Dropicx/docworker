@@ -1295,6 +1295,8 @@ class ModularPipelineExecutor:
                 f"📄 Document class: {execution_metadata['document_class']['display_name']}"
             )
 
+        await self.progress_tracker.cleanup(processing_id)
+
         return True, current_output, execution_metadata
 
     # ==================== HELPER METHODS ====================

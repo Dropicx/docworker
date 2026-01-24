@@ -17,17 +17,22 @@ from app.repositories.pipeline_job_repository import PipelineJobRepository
 logger = logging.getLogger(__name__)
 
 # Step name → human-readable description mapping (used by router to enrich response)
+# Keys must match actual step names from the dynamic_pipeline_steps database table
 STEP_DESCRIPTIONS: dict[str, str] = {
-    "TEXT_EXTRACTION": "Text wird aus dem Dokument extrahiert (OCR)...",
-    "MEDICAL_VALIDATION": "Medizinischer Inhalt wird validiert...",
-    "CLASSIFICATION": "Dokumenttyp wird erkannt...",
-    "PII_PREPROCESSING": "Datenschutz-Filter wird angewendet...",
-    "TRANSLATION": "KI vereinfacht den medizinischen Text...",
-    "FACT_CHECK": "Medizinische Fakten werden geprüft...",
-    "GRAMMAR_CHECK": "Grammatik und Ausdruck werden optimiert...",
-    "LANGUAGE_TRANSLATION": "Sprachübersetzung wird durchgeführt...",
-    "FINAL_CHECK": "Qualitätsprüfung läuft...",
-    "FORMATTING": "Formatierung wird abgeschlossen...",
+    # Universal steps
+    "Medical Content Validation": "Medizinischer Inhalt wird validiert...",
+    "Document Classification": "Dokumenttyp wird erkannt...",
+    "Patient-Friendly Translation": "KI vereinfacht den medizinischen Text...",
+    "Medical Fact Check": "Medizinische Fakten werden geprüft...",
+    "Grammar and Spelling Check": "Grammatik und Ausdruck werden optimiert...",
+    "Language Translation": "Sprachübersetzung wird durchgeführt...",
+    "Final Quality Check": "Qualitätsprüfung läuft...",
+    "Text Formatting": "Formatierung wird abgeschlossen...",
+    # Document-class-specific steps
+    "Vereinfachung Arztbrief": "KI vereinfacht den Arztbrief...",
+    "Vereinfachung Befundbericht": "KI vereinfacht den Befundbericht...",
+    "Vereinfachung Laborwerte": "KI vereinfacht die Laborwerte...",
+    "Finaler Check auf Richtigkeit": "Abschließende Qualitätsprüfung...",
 }
 
 

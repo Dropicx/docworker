@@ -32,16 +32,18 @@ class PipelineProgressTracker:
     TTL: 3600s (auto-cleanup)
 
     Fields:
-        current_step_name   - e.g. "TRANSLATION"
-        steps_completed     - JSON array of completed step names
+        current_step_name   - e.g. "Patient-Friendly Translation"
+        completed_count     - number of steps completed before current step
         total_steps         - total step count as string
         phase               - "universal" | "class_specific" | "post_branching"
+        steps_completed     - JSON array of completed step names
+        max_progress        - highest progress_percent ever reported (monotonic)
     """
 
     _pool: ConnectionPool | None = None
 
     async def _get_client(self) -> aioredis.Redis | None:
-        """Get async Redis client, reusing CacheService's connection pool pattern."""
+        """Get async Redis client, reusing connection pool."""
         if not settings.redis_url:
             return None
 
@@ -75,6 +77,15 @@ class PipelineProgressTracker:
 
         try:
             key = self._key(processing_id)
+
+            # Compute progress and enforce monotonic increase
+            new_progress = int(completed_count / max(total_steps, 1) * 100)
+            new_progress = min(new_progress, 99)
+
+            raw_max = await client.hget(key, "max_progress")
+            current_max = int(raw_max) if raw_max else 0
+            effective_progress = max(new_progress, current_max)
+
             await client.hset(
                 key,
                 mapping={
@@ -82,15 +93,16 @@ class PipelineProgressTracker:
                     "completed_count": str(completed_count),
                     "total_steps": str(total_steps),
                     "phase": phase,
+                    "max_progress": str(effective_progress),
                 },
             )
-            # Set TTL on first write (won't reset if already set)
-            await client.expire(key, _TTL_SECONDS, nx=True)
+            # Reset TTL on each write (safe for any Redis version)
+            await client.expire(key, _TTL_SECONDS)
         except RedisError as e:
             logger.warning(f"Pipeline progress tracker: failed to write step_started: {e}")
 
     async def step_completed(self, processing_id: str, step_name: str) -> None:
-        """Append a completed step name to the steps_completed list."""
+        """Append a completed step name and bump progress."""
         client = await self._get_client()
         if not client:
             return
@@ -100,7 +112,24 @@ class PipelineProgressTracker:
             raw = await client.hget(key, "steps_completed")
             completed = json.loads(raw) if raw else []
             completed.append(step_name)
-            await client.hset(key, "steps_completed", json.dumps(completed))
+
+            # Recompute progress after completion
+            total_steps = int((await client.hget(key, "total_steps")) or "1")
+            new_progress = int(len(completed) / max(total_steps, 1) * 100)
+            new_progress = min(new_progress, 99)
+
+            raw_max = await client.hget(key, "max_progress")
+            current_max = int(raw_max) if raw_max else 0
+            effective_progress = max(new_progress, current_max)
+
+            await client.hset(
+                key,
+                mapping={
+                    "steps_completed": json.dumps(completed),
+                    "completed_count": str(len(completed)),
+                    "max_progress": str(effective_progress),
+                },
+            )
         except RedisError as e:
             logger.warning(f"Pipeline progress tracker: failed to write step_completed: {e}")
 
@@ -119,7 +148,7 @@ class PipelineProgressTracker:
         """
         Read current progress from Redis.
 
-        Returns a structured dict with computed progress_percent,
+        Returns a structured dict with monotonic progress_percent,
         or None if key doesn't exist or Redis is unavailable.
         """
         client = await self._get_client()
@@ -134,17 +163,14 @@ class PipelineProgressTracker:
 
             steps_completed = json.loads(data.get("steps_completed", "[]"))
             total_steps = int(data.get("total_steps", "1"))
-            completed_count = len(steps_completed)
-
-            progress_percent = int(completed_count / max(total_steps, 1) * 100)
-            progress_percent = min(progress_percent, 99)  # Never show 100% until truly done
+            max_progress = int(data.get("max_progress", "0"))
 
             return {
                 "current_step_name": data.get("current_step_name"),
                 "steps_completed": steps_completed,
                 "total_steps": total_steps,
-                "completed_count": completed_count,
-                "progress_percent": progress_percent,
+                "completed_count": len(steps_completed),
+                "progress_percent": max_progress,
                 "phase": data.get("phase", "universal"),
             }
         except RedisError as e:
@@ -152,7 +178,7 @@ class PipelineProgressTracker:
             return None
 
     async def cleanup(self, processing_id: str) -> None:
-        """Delete the progress key (or just let TTL expire)."""
+        """Delete the progress key."""
         client = await self._get_client()
         if not client:
             return
