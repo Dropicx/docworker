@@ -88,10 +88,11 @@ class PipelineProgressTracker:
         try:
             key = self._key(processing_id)
 
-            # Compute progress and enforce monotonic increase
-            new_progress = int(completed_count / max(total_steps, 1) * 100)
-            new_progress = min(new_progress, 99)
+            # Progress occupies 10-95% range (OCR is 0-10%, completion is 100%)
+            new_progress = 10 + int(completed_count / max(total_steps, 1) * 85)
+            new_progress = min(new_progress, 95)
 
+            # Enforce monotonic increase (prevents backward jumps at phase transitions)
             raw_max = await client.hget(key, "max_progress")
             current_max = int(raw_max) if raw_max else 0
             effective_progress = max(new_progress, current_max)
@@ -112,7 +113,7 @@ class PipelineProgressTracker:
             logger.warning(f"Pipeline progress tracker: failed to write step_started: {e}")
 
     async def step_completed(self, processing_id: str, step_name: str) -> None:
-        """Append a completed step name and bump progress."""
+        """Append a completed step name. Progress only advances on step_started."""
         client = await self._get_client()
         if not client:
             return
@@ -123,21 +124,11 @@ class PipelineProgressTracker:
             completed = json.loads(raw) if raw else []
             completed.append(step_name)
 
-            # Recompute progress after completion
-            total_steps = int((await client.hget(key, "total_steps")) or "1")
-            new_progress = int(len(completed) / max(total_steps, 1) * 100)
-            new_progress = min(new_progress, 99)
-
-            raw_max = await client.hget(key, "max_progress")
-            current_max = int(raw_max) if raw_max else 0
-            effective_progress = max(new_progress, current_max)
-
             await client.hset(
                 key,
                 mapping={
                     "steps_completed": json.dumps(completed),
                     "completed_count": str(len(completed)),
-                    "max_progress": str(effective_progress),
                 },
             )
         except RedisError as e:
