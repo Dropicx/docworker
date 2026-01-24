@@ -22,11 +22,11 @@ interface ProcessingStatusProps {
 }
 
 const STEPS = [
-  { label: 'Text extrahieren (OCR)', threshold: 10, status: 'extracting_text' as Status },
-  { label: 'Medizinische Validierung', threshold: 25, status: 'extracting_text' as Status },
-  { label: 'Datenschutz-Filter', threshold: 40, status: 'translating' as Status },
-  { label: 'KI-Vereinfachung', threshold: 60, status: 'translating' as Status },
-  { label: 'Qualitätsprüfung', threshold: 80, status: 'language_translating' as Status },
+  { label: 'Text extrahieren (OCR)', threshold: 15, status: 'extracting_text' as Status },
+  { label: 'Medizinische Validierung', threshold: 30, status: 'extracting_text' as Status },
+  { label: 'Datenschutz-Filter', threshold: 48, status: 'translating' as Status },
+  { label: 'KI-Vereinfachung', threshold: 65, status: 'translating' as Status },
+  { label: 'Qualitätsprüfung', threshold: 82, status: 'language_translating' as Status },
   { label: 'Finalisierung', threshold: 95, status: 'language_translating' as Status },
 ];
 
@@ -82,26 +82,34 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     return () => clearInterval(timer);
   }, []);
 
-  // Smooth progress animation
+  // Smooth progress animation with aggressive creep for long-running steps
   const animateProgress = useCallback(() => {
     setDisplayedProgress((current) => {
       const target = targetProgressRef.current;
+
+      // Phase 1: Animate toward target when backend reports new progress
       if (current < target) {
-        // Animate toward target at ~0.5% per frame (at 60fps this is ~30%/sec)
         const step = Math.max(0.3, (target - current) * 0.08);
         return Math.min(current + step, target);
       }
-      // Creep forward slowly between updates (0.02%/frame ≈ 1.2%/sec)
-      // Never exceed next step threshold or target
+
+      // Phase 2: Creep forward during long gaps between backend updates
+      // The backend only updates at step boundaries, so steps like OCR/Translation
+      // can run 30-90s with no progress change. We creep to keep the UI alive.
       const now = Date.now();
       const timeSinceUpdate = now - lastUpdateTimeRef.current;
-      if (timeSinceUpdate > 3000 && current < 99 && current >= target) {
-        // Only creep if no update for 3s, cap at target + 3%
-        const maxCreep = Math.min(target + 3, 99);
+
+      if (timeSinceUpdate > 2000 && current < 95 && current >= target) {
+        // Allow creeping up to target + 28%, capped at 95%
+        const maxCreep = Math.min(target + 28, 95);
         if (current < maxCreep) {
-          return current + 0.02;
+          // Deceleration: creep fast initially, slow down near the cap
+          const distanceToMax = maxCreep - current;
+          const rate = Math.max(0.005, distanceToMax * 0.0015);
+          return current + rate;
         }
       }
+
       return current;
     });
     animationFrameRef.current = requestAnimationFrame(animateProgress);
