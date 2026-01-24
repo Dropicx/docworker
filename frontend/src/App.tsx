@@ -7,9 +7,7 @@ import {
   Sparkles,
   FileText,
   Zap,
-  Globe,
   ChevronDown,
-  Search,
   Settings,
   LogOut,
   User,
@@ -46,11 +44,8 @@ function App() {
   const [error, setError] = useState<string | null>(null);
   const [errorMetadata, setErrorMetadata] = useState<Record<string, unknown> | null>(null);
   const [health, setHealth] = useState<HealthCheck | null>(null);
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [availableLanguages, setAvailableLanguages] = useState<SupportedLanguage[]>([]);
   const [languagesLoaded, setLanguagesLoaded] = useState(false);
-  const [showAllLanguages, setShowAllLanguages] = useState(false);
-  const [languageSearchTerm, setLanguageSearchTerm] = useState('');
 
   // Health check beim Start
   useEffect(() => {
@@ -98,7 +93,7 @@ function App() {
     };
   }, []);
 
-  const handleUploadSuccess = async (response: UploadResponse) => {
+  const handleUploadSuccess = async (response: UploadResponse, selectedLanguage: string | null) => {
     setUploadResponse(response);
     setError(null);
     // Show initializing screen immediately
@@ -174,7 +169,6 @@ function App() {
     setTranslationResult(null);
     setError(null);
     setErrorMetadata(null);
-    setSelectedLanguage(null);
   };
 
   const [showHealthDetails, setShowHealthDetails] = useState(false);
@@ -330,182 +324,6 @@ function App() {
             </div>
           </div>
         )}
-      </div>
-    );
-  };
-
-  const renderLanguageSelector = () => {
-    if (!languagesLoaded) {
-      return (
-        <div className="space-y-3 sm:space-y-4">
-          <label className="block text-xs sm:text-sm font-medium text-neutral-700 text-center">
-            Übersetzung (optional)
-          </label>
-          {/* Skeleton that matches the final button layout */}
-          <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center min-h-[40px]">
-            {/* Skeleton buttons to prevent layout shift */}
-            {[1, 2, 3, 4, 5].map(i => (
-              <div
-                key={i}
-                className="px-2 sm:px-3 py-1.5 sm:py-2 bg-neutral-100 rounded-md sm:rounded-lg animate-pulse"
-                style={{ width: i === 1 ? '100px' : '60px', height: '32px' }}
-              />
-            ))}
-          </div>
-          <p className="text-xs text-neutral-500 px-2 sm:px-0 text-center opacity-0">
-            {/* Invisible placeholder to maintain height */}
-            Optional: Wählen Sie eine Sprache
-          </p>
-        </div>
-      );
-    }
-
-    const popularLanguages = availableLanguages.filter(lang => lang.popular);
-    const allLanguages = availableLanguages.filter(
-      lang =>
-        lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
-        lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
-    );
-    const selectedLanguageInfo = availableLanguages.find(lang => lang.code === selectedLanguage);
-
-    return (
-      <div className="space-y-3 sm:space-y-4">
-        <label className="block text-xs sm:text-sm font-medium text-neutral-700 text-center">
-          Übersetzung (optional)
-        </label>
-
-        {/* Popular language quick buttons - Mobile Optimized */}
-        <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
-          <button
-            onClick={() => setSelectedLanguage(null)}
-            className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium rounded-md sm:rounded-lg transition-all duration-200 ${
-              !selectedLanguage
-                ? 'bg-neutral-100 text-neutral-700 ring-2 ring-neutral-300'
-                : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
-            }`}
-          >
-            Nur vereinfachen
-          </button>
-
-          {popularLanguages.slice(0, 4).map(language => (
-            <button
-              key={language.code}
-              onClick={() =>
-                setSelectedLanguage(language.code === selectedLanguage ? null : language.code)
-              }
-              className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium rounded-md sm:rounded-lg transition-all duration-200 ${
-                selectedLanguage === language.code
-                  ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-300'
-                  : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
-              }`}
-            >
-              {language.name}
-            </button>
-          ))}
-
-          {/* "Mehr Sprachen" Button - Mobile Optimized */}
-          <button
-            onClick={() => setShowAllLanguages(!showAllLanguages)}
-            className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium rounded-md sm:rounded-lg transition-all duration-200 flex items-center space-x-1 ${
-              showAllLanguages
-                ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-200'
-                : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100 border border-neutral-200'
-            }`}
-          >
-            <span className="hidden sm:inline">Mehr Sprachen</span>
-            <span className="sm:hidden">Mehr</span>
-            <ChevronDown
-              className={`w-3 h-3 transition-transform duration-200 ${
-                showAllLanguages ? 'rotate-180' : ''
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* All Languages Dropdown */}
-        {showAllLanguages && (
-          <div className="animate-slide-down">
-            <div className="border border-neutral-200 rounded-xl bg-white shadow-lg">
-              {/* Search */}
-              <div className="p-3 border-b border-neutral-100">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
-                  <input
-                    type="text"
-                    placeholder="Sprache suchen..."
-                    value={languageSearchTerm}
-                    onChange={e => setLanguageSearchTerm(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 text-sm border border-neutral-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              {/* Language Grid */}
-              <div className="p-3 max-h-64 overflow-y-auto">
-                <div className="grid grid-cols-2 gap-2">
-                  {allLanguages.map(language => (
-                    <button
-                      key={language.code}
-                      onClick={() => {
-                        setSelectedLanguage(
-                          language.code === selectedLanguage ? null : language.code
-                        );
-                        setShowAllLanguages(false);
-                        setLanguageSearchTerm('');
-                      }}
-                      className={`text-left px-3 py-2 text-sm rounded-lg transition-colors duration-150 ${
-                        selectedLanguage === language.code
-                          ? 'bg-brand-100 text-brand-700 font-medium'
-                          : 'text-neutral-700 hover:bg-neutral-50'
-                      }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <span className="truncate">{language.name}</span>
-                        <span className="text-xs text-neutral-500 font-mono ml-2">
-                          {language.code}
-                        </span>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {allLanguages.length === 0 && languageSearchTerm && (
-                  <div className="text-center py-4 text-sm text-neutral-500">
-                    Keine Sprachen gefunden für &quot;{languageSearchTerm}&quot;
-                  </div>
-                )}
-              </div>
-
-              {/* Footer Info */}
-              <div className="px-3 py-2 border-t border-neutral-100 bg-neutral-50 text-xs text-neutral-500 text-center rounded-b-xl">
-                {availableLanguages.length} Sprachen verfügbar
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Selected language info */}
-        {selectedLanguage && selectedLanguageInfo && (
-          <div className="flex items-center space-x-3 px-4 py-3 bg-brand-50 rounded-xl border border-brand-200">
-            <Globe className="w-4 h-4 text-brand-600" />
-            <span className="text-sm text-brand-700">
-              <strong>Ausgewählt:</strong> {selectedLanguageInfo.name}
-            </span>
-            <button
-              onClick={() => setSelectedLanguage(null)}
-              className="ml-auto text-brand-600 hover:text-brand-700 text-sm font-medium"
-            >
-              ✕
-            </button>
-          </div>
-        )}
-
-        {/* Info text - Mobile Optimized */}
-        <p className="text-xs text-neutral-500 px-2 sm:px-0 text-center">
-          {selectedLanguage
-            ? 'Das Dokument wird zuerst vereinfacht und dann in die gewählte Sprache übersetzt.'
-            : 'Optional: Wählen Sie eine Sprache, um das vereinfachte Ergebnis zusätzlich zu übersetzen.'}
-        </p>
       </div>
     );
   };
@@ -677,7 +495,8 @@ function App() {
                   <FileUpload
                     onUploadSuccess={handleUploadSuccess}
                     onUploadError={handleUploadError}
-                    languageSelector={renderLanguageSelector()}
+                    availableLanguages={availableLanguages}
+                    languagesLoaded={languagesLoaded}
                   />
                 </div>
 
