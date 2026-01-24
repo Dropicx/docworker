@@ -123,49 +123,60 @@ class ProcessingService:
         """
         Get processing result for a completed job.
 
-        Returns result_data which contains medical content (original_text, translated_text).
-        The content is automatically decrypted by the repository layer (transparent encryption).
+        Builds result dict from individual columns. Medical content columns
+        (original_text, translated_text, etc.) are automatically decrypted
+        by the repository layer (transparent encryption).
 
         Args:
             processing_id: Unique processing identifier
 
         Returns:
-            Processing result data with all fields decrypted
+            Processing result data dict with all fields
 
         Raises:
             ValueError: If job not found or not completed
         """
-        # Get job from repository (result_data is automatically decrypted)
         job = self.job_repository.get_by_processing_id(processing_id)
         if not job:
             raise ValueError(f"Processing job {processing_id} not found")
 
-        # Check if job is completed
         if job.status != StepExecutionStatus.COMPLETED:
             raise ValueError(f"Processing not completed yet. Status: {job.status}")
 
-        # Get result data (already decrypted by repository)
-        result_data = job.result_data
-        if not result_data:
+        if not job.translated_text:
             raise ValueError("Processing result not available")
 
-        # Handle case where decryption failed and result_data is still a string
-        if isinstance(result_data, str):
-            logger.warning(f"result_data is string (decryption may have failed), attempting JSON parse")
-            import json
-            try:
-                result_data = json.loads(result_data)
-            except json.JSONDecodeError as e:
-                logger.error(f"Failed to parse result_data as JSON: {e}")
-                raise ValueError(f"Processing result data is corrupted or could not be decrypted: {e}")
-
-        if not isinstance(result_data, dict):
-            raise ValueError(f"Processing result data is not a valid dict: {type(result_data)}")
+        # Build result dict from individual columns (Issue #55)
+        result_data = {
+            "processing_id": job.processing_id,
+            "original_text": job.original_text or "",
+            "translated_text": job.translated_text or "",
+            "language_translated_text": job.language_translated_text,
+            "ocr_markdown": job.ocr_markdown,
+            "document_type_detected": job.document_type_detected,
+            "confidence_score": job.confidence_score or 0.0,
+            "ocr_confidence": job.ocr_confidence,
+            "language_confidence_score": job.language_confidence_score,
+            "processing_time_seconds": job.total_execution_time_seconds or 0.0,
+            "ocr_time_seconds": job.ocr_time_seconds,
+            "ai_processing_time_seconds": job.ai_processing_time_seconds,
+            "pipeline_execution_time": job.pipeline_execution_time,
+            "total_steps": job.total_steps,
+            "target_language": job.target_language,
+            "branching_path": job.branching_path,
+            "document_class": job.document_class,
+            "pipeline_config": job.pipeline_config,
+            "terminated": job.terminated or False,
+            "termination_reason": job.termination_reason,
+            "termination_message": job.termination_message,
+            "termination_step": job.termination_step,
+            "matched_value": job.matched_value,
+        }
 
         logger.info(
             f"✅ Processing result retrieved for {processing_id}: "
-            f"original_text={len(result_data.get('original_text', '')) if result_data.get('original_text') else 0} chars, "
-            f"translated_text={len(result_data.get('translated_text', '')) if result_data.get('translated_text') else 0} chars"
+            f"original_text={len(result_data['original_text'])} chars, "
+            f"translated_text={len(result_data['translated_text'])} chars"
         )
 
         return result_data

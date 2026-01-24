@@ -24,14 +24,23 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
 
     Encrypted fields:
     - file_content: Binary PDF/image files
-    - result_data: JSON containing medical content (original_text, translated_text)
+    - original_text: OCR output (medical content)
+    - translated_text: Final translation (medical content)
+    - language_translated_text: Multi-language output (medical content)
+    - ocr_markdown: Markdown-formatted OCR (medical content)
 
     IMPORTANT: EncryptedRepositoryMixin must come FIRST in inheritance order
     so that its create()/update()/get*() methods override BaseRepository methods.
     """
 
-    # Define fields to encrypt
-    encrypted_fields = ["file_content", "result_data"]
+    # Define fields to encrypt (Issue #55: separate columns instead of result_data JSON)
+    encrypted_fields = [
+        "file_content",              # Binary PDF/image files
+        "original_text",             # Medical content
+        "translated_text",           # Medical content
+        "language_translated_text",  # Medical content
+        "ocr_markdown",              # Medical content
+    ]
 
     def __init__(self, db: Session):
         super().__init__(db, PipelineJobDB)

@@ -479,17 +479,16 @@ class PipelineJobFeedbackRepository:
         # Clear binary file content using repository (handles encryption)
         self.job_repo.clear_file_content(job.job_id)
 
-        # Clear text content from result_data while preserving metadata
-        if job.result_data:
-            result_data = job.result_data.copy()
-            # Clear text fields
-            result_data["original_text"] = "[Content cleared - GDPR]"
-            result_data["translated_text"] = "[Content cleared - GDPR]"
-            if "language_translated_text" in result_data:
-                result_data["language_translated_text"] = "[Content cleared - GDPR]"
-            # Update using repository
-            # Note: EncryptedRepositoryMixin.update() returns None by design
-            self.job_repo.update(job.id, result_data=result_data)
+        # Clear encrypted medical content columns while preserving metadata
+        gdpr_update = {
+            "original_text": "[Content cleared - GDPR]",
+            "translated_text": "[Content cleared - GDPR]",
+            "ocr_markdown": "[Content cleared - GDPR]" if job.ocr_markdown else None,
+        }
+        if job.language_translated_text:
+            gdpr_update["language_translated_text"] = "[Content cleared - GDPR]"
+        # Note: EncryptedRepositoryMixin.update() returns None by design
+        self.job_repo.update(job.id, **gdpr_update)
 
         # Clear content from all step executions for this job
         # Use job_id (UUID string) to find related step executions

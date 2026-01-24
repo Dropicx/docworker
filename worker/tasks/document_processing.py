@@ -293,7 +293,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                 }
 
         # ==================== WORKER IS THE ORCHESTRATOR ====================
-        # Worker owns the job lifecycle and builds final result_data
+        # Worker owns the job lifecycle and writes results to individual columns
         # Executor is a pure service that returns metadata
 
         # Calculate total processing time (includes OCR + PII + Pipeline + Queue time)
@@ -303,69 +303,52 @@ def process_medical_document(self, processing_id: str, options: dict = None):
         document_class_info = metadata.get('document_class', {})
         document_class_key = document_class_info.get('class_key', 'UNKNOWN') if isinstance(document_class_info, dict) else 'UNKNOWN'
 
-        # Build comprehensive result_data from all processing stages
-        # NOTE: Medical content IS stored here and will be ENCRYPTED by repository
-        result_data = {
-            # ==================== PIPELINE EXECUTION METADATA ====================
-            "branching_path": metadata.get('branching_path', []),  # Complete decision tree
-            "document_class": document_class_info,  # Document classification details
-            "total_steps": metadata.get('total_steps', 0),
-            "pipeline_execution_time": metadata.get('pipeline_execution_time', 0.0),
-            "pipeline_config": job.pipeline_config,  # Metadata needed for step identification
-
-            # ==================== PROCESSING METADATA ====================
-            "processing_id": processing_id,
-            "original_text": extracted_text,  # RESTORED: OCR output (will be encrypted)
-            "translated_text": final_output,  # RESTORED: Final pipeline output (will be encrypted)
-            "document_type_detected": document_class_key,
-
-            # ==================== TIMING BREAKDOWN ====================
-            "ocr_time_seconds": job.ocr_time_seconds,
-            "ai_processing_time_seconds": metadata.get('pipeline_execution_time', 0.0),
-            "processing_time_seconds": total_time,  # Required by TranslationResult model
-
-            # ==================== QUALITY METRICS ====================
-            "confidence_score": metadata.get('confidence_score', 0.0),
-            "ocr_confidence": ocr_confidence,
-            "language_translated_text": metadata.get('language_translation', None),  # RESTORED: (will be encrypted)
-            "language_confidence_score": metadata.get('language_confidence', None),
-
-            # ==================== OCR OUTPUT ====================
-            "ocr_markdown": ocr_markdown,  # Markdown-formatted text
-
-            # ==================== TERMINATION INFO (if applicable) ====================
-            "terminated": metadata.get('terminated', False),
-            "termination_reason": metadata.get('termination_reason', None),
-            "termination_message": metadata.get('termination_message', None),
-            "termination_step": metadata.get('termination_step', None),
-            "matched_value": metadata.get('matched_value', None),
-
-            # ==================== REQUEST CONTEXT ====================
-            "target_language": options.get('target_language', None) if options else None
-        }
-
         # ==================== FINALIZE JOB (SINGLE SOURCE OF TRUTH) ====================
-        # Update job using repository (ensures proper handling of encrypted fields)
+        # Update job columns directly (Issue #55: separate encrypted DB columns)
+        # Medical content columns will be encrypted by repository automatically
         job_repo.update(
             job_id_for_updates,
             status=StepExecutionStatus.COMPLETED,
             completed_at=datetime.now(),
             progress_percent=100,
-            result_data=result_data,
             total_execution_time_seconds=total_time,
+
+            # Encrypted medical content
+            original_text=extracted_text,
+            translated_text=final_output,
+            language_translated_text=metadata.get('language_translation'),
+            ocr_markdown=ocr_markdown,
+
+            # Metadata (unencrypted, queryable)
+            document_type_detected=document_class_key,
+            confidence_score=metadata.get('confidence_score', 0.0),
+            ocr_confidence=ocr_confidence,
+            language_confidence_score=metadata.get('language_confidence'),
+            pipeline_execution_time=metadata.get('pipeline_execution_time', 0.0),
+            total_steps=metadata.get('total_steps', 0),
+            target_language=options.get('target_language') if options else None,
+
+            # Complex metadata (JSON)
+            branching_path=metadata.get('branching_path', []),
+            document_class=document_class_info,
+
+            # Termination info
+            terminated=metadata.get('terminated', False),
+            termination_reason=metadata.get('termination_reason'),
+            termination_message=metadata.get('termination_message'),
+            termination_step=metadata.get('termination_step'),
+            matched_value=metadata.get('matched_value'),
         )
-        # Note: job.ocr_time_seconds and job.ai_processing_time_seconds already committed earlier
 
         logger.info(f"✅ Document processed successfully: {processing_id}")
 
         return {
             'status': 'completed',
             'processing_id': processing_id,
-            'result': result_data,
             'metrics': {
                 'ocr_time': job.ocr_time_seconds,
                 'pipeline_time': job.ai_processing_time_seconds,
-                'total_time': job.total_execution_time_seconds
+                'total_time': total_time
             }
         }
 

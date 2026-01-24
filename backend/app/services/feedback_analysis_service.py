@@ -116,15 +116,13 @@ class FeedbackAnalysisService:
             return None
 
         # Check if content is available
-        if not job.result_data:
-            logger.warning(f"No result_data for processing_id: {processing_id}")
+        if not job.translated_text:
+            logger.warning(f"No translated_text for processing_id: {processing_id}")
             return None
 
-        result_data = job.result_data
-
-        # Get original and translated text from result_data
-        original_text = result_data.get("original_text", "")
-        translated_text = result_data.get("translated_text", "")
+        # Get original and translated text from columns (auto-decrypted by repository)
+        original_text = job.original_text or ""
+        translated_text = job.translated_text or ""
 
         if not original_text or not translated_text:
             logger.warning(f"Missing text content for processing_id: {processing_id}")

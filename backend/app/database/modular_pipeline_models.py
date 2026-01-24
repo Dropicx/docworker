@@ -312,8 +312,33 @@ class PipelineJobDB(Base):
     completed_at = Column(DateTime, nullable=True)
     failed_at = Column(DateTime, nullable=True)
 
-    # Results and errors
-    result_data = Column(Text, nullable=True)  # Final output (encrypted JSON string)
+    # Results: Encrypted medical content (Issue #55)
+    original_text = Column(Text, nullable=True)  # OCR output (encrypted)
+    translated_text = Column(Text, nullable=True)  # Final translation (encrypted)
+    language_translated_text = Column(Text, nullable=True)  # Multi-language output (encrypted)
+    ocr_markdown = Column(Text, nullable=True)  # Markdown OCR (encrypted)
+
+    # Results: Metadata (unencrypted, queryable)
+    document_type_detected = Column(String(100), nullable=True, index=True)
+    confidence_score = Column(Float, nullable=True)
+    ocr_confidence = Column(Float, nullable=True)
+    language_confidence_score = Column(Float, nullable=True)
+    pipeline_execution_time = Column(Float, nullable=True)
+    total_steps = Column(Integer, nullable=True)
+    target_language = Column(String(10), nullable=True)
+
+    # Results: Complex metadata (JSON, unencrypted)
+    branching_path = Column(JSON, nullable=True)  # Decision tree array
+    document_class = Column(JSON, nullable=True)  # Classification details
+
+    # Results: Termination info (unencrypted)
+    terminated = Column(Boolean, default=False, nullable=True)
+    termination_reason = Column(String(100), nullable=True)
+    termination_message = Column(Text, nullable=True)
+    termination_step = Column(String(100), nullable=True)
+    matched_value = Column(String(255), nullable=True)
+
+    # Errors
     error_message = Column(Text, nullable=True)
     error_step_id = Column(Integer, nullable=True)  # Step that caused failure
 

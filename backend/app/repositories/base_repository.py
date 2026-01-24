@@ -273,21 +273,6 @@ class EncryptedRepositoryMixin:
         column = getattr(self.model, field_name).property.columns[0]
         return isinstance(column.type, JSON)
 
-    def _is_json_encrypted_field(self, field_name: str) -> bool:
-        """
-        Check if a field contains encrypted JSON (dict → JSON string → encrypted string).
-
-        These fields are stored as Text columns but contain encrypted JSON data that should
-        be decrypted to a dict.
-
-        Args:
-            field_name: Name of the field to check
-
-        Returns:
-            True if field is a JSON-encrypted field (like result_data)
-        """
-        # Hardcode for now - result_data is the only field that stores encrypted JSON as Text
-        return field_name == "result_data"
 
     def _encrypt_fields(self, data: dict[str, Any]) -> dict[str, Any]:
         """
@@ -307,17 +292,7 @@ class EncryptedRepositoryMixin:
 
         if not encryptor.is_enabled():
             logger.warning(f"⚠️ Encryption is disabled for {self.model.__name__} - fields will be stored in plaintext!")
-            # Even with encryption disabled, we still need to JSON serialize dict fields
-            # PostgreSQL can't adapt Python dicts directly - they need to be JSON strings
-            import json
-            processed_data = data.copy()
-            for field in self.encrypted_fields:
-                if field in processed_data and processed_data[field] is not None:
-                    if self._is_json_encrypted_field(field) and isinstance(processed_data[field], dict):
-                        # Serialize dict to JSON string for TEXT column storage
-                        processed_data[field] = json.dumps(processed_data[field])
-                        logger.debug(f"Serialized {field} dict to JSON string (encryption disabled)")
-            return processed_data
+            return data
 
         logger.info(f"🔐 Encrypting fields for {self.model.__name__}: {self.encrypted_fields}")
         logger.info(f"   Encryption enabled: {encryptor.is_enabled()}")
@@ -405,25 +380,6 @@ class EncryptedRepositoryMixin:
                             encrypted_data[field] = encryptor.encrypt_field(
                                 str(encrypted_data[field])
                             )
-                    elif self._is_json_encrypted_field(field):
-                        # JSON-encrypted field (result_data): dict → JSON string → encrypted string → store in Text column
-                        logger.debug(f"   Field {field} is JSON-encrypted (Text column with encrypted JSON)")
-                        if isinstance(encrypted_data[field], dict):
-                            original_json = encrypted_data[field]
-                            logger.info(f"   📋 Encrypting {field}: JSON dict with {len(original_json)} keys")
-
-                            # Encrypt dict → returns encrypted string
-                            encrypted_str = encryptor.encrypt_json_field(original_json)
-
-                            if encrypted_str:
-                                encrypted_data[field] = encrypted_str
-                                logger.info(f"✅ Encrypted JSON field: {field} ({len(str(original_json))} chars → {len(encrypted_str)} chars)")
-                            else:
-                                logger.error(f"❌ Encryption returned None for JSON field {field}!")
-                                raise ValueError(f"Encryption failed for {field} - returned None")
-                        else:
-                            logger.warning(f"⚠️ JSON field {field} is not a dict, skipping encryption")
-                            # Keep as-is if not a dict
                     else:
                         # Text field: use text encryption
                         original_length = len(str(encrypted_data[field])) if encrypted_data[field] else 0
@@ -443,7 +399,6 @@ class EncryptedRepositoryMixin:
         Decrypt encrypted fields in an entity.
 
         Handles both text fields (str) and binary fields (bytes) automatically.
-        Also parses JSON-encrypted fields (stored as TEXT) even when encryption is disabled.
 
         Args:
             entity: Database entity instance
@@ -454,7 +409,6 @@ class EncryptedRepositoryMixin:
         if not entity or not self.encrypted_fields:
             return entity
 
-        # Even if encryption is disabled, we still need to parse JSON fields stored as TEXT
         encryption_enabled = encryptor.is_enabled()
 
         for field in self.encrypted_fields:
@@ -462,39 +416,7 @@ class EncryptedRepositoryMixin:
                 encrypted_value = getattr(entity, field)
                 if encrypted_value is not None:
                     try:
-                        # ALWAYS handle JSON-encrypted fields (like result_data) regardless of encryption status
-                        # These are TEXT columns that store JSON strings and need parsing
-                        if isinstance(encrypted_value, str) and self._is_json_encrypted_field(field):
-                            # JSON-encrypted field (result_data): encrypted string that decrypts to JSON
-                            # These are stored in Text columns, not JSON columns
-                            logger.debug(f"   Field {field} is JSON-encrypted (Text column with encrypted JSON)")
-
-                            # Heuristic check: Fernet tokens start with 'g' or 'Z0FBQUFB' (base64 'gAAAAA')
-                            looks_encrypted = (
-                                encrypted_value.startswith('gAAAAA') or  # Direct Fernet token
-                                encrypted_value.startswith('Z0FBQUFB') or  # Base64-encoded Fernet token
-                                (encryption_enabled and encryptor.is_encrypted(encrypted_value))  # Full validation only if encryption enabled
-                            )
-
-                            if looks_encrypted and encryption_enabled:
-                                logger.info(f"🔓 Decrypting JSON-encrypted field: {field} ({len(encrypted_value)} chars)")
-                                try:
-                                    decrypted_dict = encryptor.decrypt_json_field(encrypted_value)
-                                    setattr(entity, field, decrypted_dict)
-                                    logger.info(f"✅ Decrypted JSON field: {field} (dict with {len(decrypted_dict) if decrypted_dict else 0} keys)")
-                                except Exception as e:
-                                    logger.error(f"Failed to decrypt JSON field {field}: {e}")
-                                    # Keep as-is if decryption fails
-                            else:
-                                # Not encrypted - parse JSON directly
-                                logger.debug(f"JSON field {field} is not encrypted, parsing as plaintext JSON")
-                                import json
-                                try:
-                                    decrypted_dict = json.loads(encrypted_value)
-                                    setattr(entity, field, decrypted_dict)
-                                except json.JSONDecodeError:
-                                    logger.warning(f"Failed to parse plaintext JSON for {field}, keeping as-is")
-                        elif self._is_binary_field(field):
+                        if self._is_binary_field(field):
                             # Binary field: use binary decryption
                             # First check if it's encrypted or plaintext binary
                             if isinstance(encrypted_value, bytes):

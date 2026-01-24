@@ -239,14 +239,11 @@ def test_complete_image_upload_and_processing_flow(client, test_db, seed_full_pi
         # Simulate processing completion
         job.status = StepExecutionStatus.COMPLETED
         job.progress_percent = 100
-        job.result_data = {
-            "processing_id": processing_id,
-            "original_text": "Patient: [NAME]...",
-            "translated_text": "Simplified medical text...",
-            "document_type_detected": "ARZTBRIEF",
-            "confidence_score": 0.95,
-            "processing_time_seconds": 2.5,
-        }
+        job.original_text = "Patient: [NAME]..."
+        job.translated_text = "Simplified medical text..."
+        job.document_type_detected = "ARZTBRIEF"
+        job.confidence_score = 0.95
+        job.total_execution_time_seconds = 2.5
         test_db.commit()
 
         # 4. Check final job status

@@ -393,7 +393,6 @@ def create_pipeline_job(db_session):
         pipeline_config: dict = None,
         ocr_config: dict = None,
         processing_options: dict = None,
-        result_data: dict = None,
         error_message: str = None,
         **kwargs,
     ) -> PipelineJobDB:
@@ -417,7 +416,6 @@ def create_pipeline_job(db_session):
             pipeline_config=pipeline_config,
             ocr_config=ocr_config,
             processing_options=processing_options,
-            result_data=result_data,
             error_message=error_message,
             **kwargs,
         )
