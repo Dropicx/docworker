@@ -105,7 +105,7 @@ class ProcessingService:
             raise ValueError(f"Processing job {processing_id} not found")
 
         # Map database status to API status
-        api_status = self._map_status_to_api(job.status)
+        api_status = self._map_status_to_api(job.status, job.progress_percent)
 
         # Get step description
         current_step = self._get_step_description(job)
@@ -214,19 +214,29 @@ class ProcessingService:
             "timestamp": datetime.now(),
         }
 
-    def _map_status_to_api(self, db_status: StepExecutionStatus) -> ProcessingStatus:
+    def _map_status_to_api(self, db_status: StepExecutionStatus, progress: int = 0) -> ProcessingStatus:
         """
         Map database status to API status enum.
 
+        For RUNNING jobs, returns a more specific sub-status based on progress.
+
         Args:
             db_status: Database status
+            progress: Current progress percentage (used for RUNNING sub-statuses)
 
         Returns:
             API status enum value
         """
+        if db_status == StepExecutionStatus.RUNNING:
+            if progress < 20:
+                return ProcessingStatus.EXTRACTING_TEXT
+            elif progress < 70:
+                return ProcessingStatus.TRANSLATING
+            else:
+                return ProcessingStatus.LANGUAGE_TRANSLATING
+
         status_mapping = {
             StepExecutionStatus.PENDING: ProcessingStatus.PENDING,
-            StepExecutionStatus.RUNNING: ProcessingStatus.PROCESSING,
             StepExecutionStatus.COMPLETED: ProcessingStatus.COMPLETED,
             StepExecutionStatus.FAILED: ProcessingStatus.ERROR,
             StepExecutionStatus.SKIPPED: ProcessingStatus.ERROR,
@@ -244,7 +254,27 @@ class ProcessingService:
             Step description string
         """
         if job.status == StepExecutionStatus.RUNNING:
-            return f"Verarbeite Schritt {job.progress_percent}%"
+            p = job.progress_percent
+            if p < 10:
+                return "Text wird aus dem Dokument extrahiert (OCR)..."
+            elif p < 20:
+                return "Medizinischer Inhalt wird validiert..."
+            elif p < 30:
+                return "Dokumenttyp wird erkannt..."
+            elif p < 40:
+                return "Datenschutz-Filter wird angewendet..."
+            elif p < 55:
+                return "KI vereinfacht den medizinischen Text..."
+            elif p < 65:
+                return "Medizinische Fakten werden geprüft..."
+            elif p < 75:
+                return "Grammatik und Ausdruck werden optimiert..."
+            elif p < 85:
+                return "Sprachübersetzung wird durchgeführt..."
+            elif p < 95:
+                return "Qualitätsprüfung läuft..."
+            else:
+                return "Formatierung wird abgeschlossen..."
         if job.status == StepExecutionStatus.COMPLETED:
             return "Verarbeitung abgeschlossen"
         if job.status == StepExecutionStatus.FAILED:

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Clock,
   CheckCircle,
@@ -21,6 +21,33 @@ interface ProcessingStatusProps {
   onCancel?: () => void;
 }
 
+const STEPS = [
+  { label: 'Text extrahieren (OCR)', threshold: 10, status: 'extracting_text' as Status },
+  { label: 'Medizinische Validierung', threshold: 25, status: 'extracting_text' as Status },
+  { label: 'Datenschutz-Filter', threshold: 40, status: 'translating' as Status },
+  { label: 'KI-Vereinfachung', threshold: 60, status: 'translating' as Status },
+  { label: 'Qualitätsprüfung', threshold: 80, status: 'language_translating' as Status },
+  { label: 'Finalisierung', threshold: 95, status: 'language_translating' as Status },
+];
+
+const STEP_MESSAGES: Record<string, string[]> = {
+  extracting_text: [
+    'Dokument wird gescannt...',
+    'Zeichen werden erkannt...',
+    'Textstruktur wird analysiert...',
+  ],
+  translating: [
+    'Medizinische Fachbegriffe werden erkannt...',
+    'Text wird in einfache Sprache übersetzt...',
+    'Zusammenhänge werden geprüft...',
+  ],
+  language_translating: [
+    'Übersetzung wird optimiert...',
+    'Grammatik wird geprüft...',
+    'Formatierung wird angepasst...',
+  ],
+};
+
 const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
   processingId,
   onComplete,
@@ -30,6 +57,75 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
   const [status, setStatus] = useState<ProcessingProgress | null>(null);
   const [isPolling, setIsPolling] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [displayedProgress, setDisplayedProgress] = useState(0);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [rotatingMessageIndex, setRotatingMessageIndex] = useState(0);
+
+  const startTimeRef = useRef(Date.now());
+  const targetProgressRef = useRef(0);
+  const animationFrameRef = useRef<number | null>(null);
+  const lastUpdateTimeRef = useRef(Date.now());
+
+  // Elapsed time counter
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setElapsedSeconds(Math.floor((Date.now() - startTimeRef.current) / 1000));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Rotating messages every 4 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setRotatingMessageIndex((prev) => prev + 1);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Smooth progress animation
+  const animateProgress = useCallback(() => {
+    setDisplayedProgress((current) => {
+      const target = targetProgressRef.current;
+      if (current < target) {
+        // Animate toward target at ~0.5% per frame (at 60fps this is ~30%/sec)
+        const step = Math.max(0.3, (target - current) * 0.08);
+        return Math.min(current + step, target);
+      }
+      // Creep forward slowly between updates (0.02%/frame ≈ 1.2%/sec)
+      // Never exceed next step threshold or target
+      const now = Date.now();
+      const timeSinceUpdate = now - lastUpdateTimeRef.current;
+      if (timeSinceUpdate > 3000 && current < 99 && current >= target) {
+        // Only creep if no update for 3s, cap at target + 3%
+        const maxCreep = Math.min(target + 3, 99);
+        if (current < maxCreep) {
+          return current + 0.02;
+        }
+      }
+      return current;
+    });
+    animationFrameRef.current = requestAnimationFrame(animateProgress);
+  }, []);
+
+  useEffect(() => {
+    animationFrameRef.current = requestAnimationFrame(animateProgress);
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [animateProgress]);
+
+  // Update target when status changes
+  useEffect(() => {
+    if (status) {
+      targetProgressRef.current = status.progress_percent;
+      lastUpdateTimeRef.current = Date.now();
+      if (status.status === 'completed') {
+        targetProgressRef.current = 100;
+      }
+    }
+  }, [status]);
 
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
@@ -41,19 +137,15 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
 
         if (statusResponse.status === 'completed') {
           setIsPolling(false);
-          setTimeout(onComplete, 1500); // Etwas längere Verzögerung für bessere UX
+          setTimeout(onComplete, 1500);
         } else if (statusResponse.status === 'error') {
           setIsPolling(false);
           setError(statusResponse.error || 'Unbekannter Fehler');
           onError(statusResponse.error || 'Verarbeitung fehlgeschlagen');
         } else if (isTerminated(statusResponse)) {
-          // Termination detected - graceful stop, not an error
           setIsPolling(false);
-
           const metadata = getTerminationMetadata(statusResponse);
           setError(metadata.message);
-
-          // Pass structured metadata to parent for specialized UI
           onError(metadata.message, metadata as unknown as Record<string, unknown>);
         }
       } catch (err) {
@@ -65,8 +157,8 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     };
 
     if (isPolling) {
-      pollStatus(); // Sofort ausführen
-      intervalId = setInterval(pollStatus, 2000); // Alle 2 Sekunden
+      pollStatus();
+      intervalId = setInterval(pollStatus, 2000);
     }
 
     return () => {
@@ -87,13 +179,35 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     }
   };
 
-  const getStatusIcon = (status: Status) => {
-    switch (status) {
+  const formatElapsedTime = (seconds: number): string => {
+    if (seconds < 60) return `${seconds} Sek.`;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins} Min. ${secs} Sek.`;
+  };
+
+  const getActiveStatus = (): Status => {
+    return status?.status || 'pending';
+  };
+
+  const getCurrentMessages = (): string[] => {
+    const currentStatus = getActiveStatus();
+    return STEP_MESSAGES[currentStatus] || STEP_MESSAGES['extracting_text'];
+  };
+
+  const getRotatingMessage = (): string => {
+    const messages = getCurrentMessages();
+    return messages[rotatingMessageIndex % messages.length];
+  };
+
+  const getStatusIcon = (s: Status) => {
+    switch (s) {
       case 'pending':
         return <Clock className="w-5 h-5 text-warning-600" />;
       case 'processing':
       case 'extracting_text':
       case 'translating':
+      case 'language_translating':
         return <Loader className="w-5 h-5 text-brand-600 animate-spin" />;
       case 'completed':
         return <CheckCircle className="w-5 h-5 text-success-600" />;
@@ -107,8 +221,8 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     }
   };
 
-  const getProgressColor = (status: Status) => {
-    switch (status) {
+  const getProgressColor = (s: Status) => {
+    switch (s) {
       case 'completed':
         return 'from-success-500 via-success-600 to-success-700';
       case 'error':
@@ -116,6 +230,16 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
       default:
         return 'from-brand-500 via-brand-600 to-accent-600';
     }
+  };
+
+  const isStepCompleted = (threshold: number): boolean => {
+    return displayedProgress >= threshold;
+  };
+
+  const isStepActive = (index: number): boolean => {
+    const threshold = STEPS[index].threshold;
+    const prevThreshold = index > 0 ? STEPS[index - 1].threshold : 0;
+    return displayedProgress >= prevThreshold && displayedProgress < threshold;
   };
 
   if (!status) {
@@ -144,7 +268,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
   return (
     <div className="card-elevated animate-scale-in">
       <div className="card-body">
-        {/* Header - Mobile Optimized */}
+        {/* Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 sm:mb-8 space-y-3 sm:space-y-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-brand-500 to-brand-600 rounded-xl sm:rounded-2xl flex items-center justify-center flex-shrink-0">
@@ -159,14 +283,14 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               <p className="text-xs sm:text-sm text-primary-600">
                 Ihr Dokument wird analysiert und übersetzt
               </p>
-              <p className="text-xs text-primary-500 mt-1">Dies kann bis zu 3 Minuten dauern</p>
             </div>
           </div>
 
           {(status.status === 'pending' ||
             status.status === 'processing' ||
             status.status === 'extracting_text' ||
-            status.status === 'translating') &&
+            status.status === 'translating' ||
+            status.status === 'language_translating') &&
             onCancel && (
               <button
                 onClick={handleCancel}
@@ -178,7 +302,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
             )}
         </div>
 
-        {/* Status Display - Mobile Optimized */}
+        {/* Status Display */}
         <div className="space-y-4 sm:space-y-6">
           {/* Current Status */}
           <div className="glass-effect p-4 sm:p-6 rounded-xl sm:rounded-2xl">
@@ -187,6 +311,13 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
               <span className={`status-badge ${ApiService.getStatusColor(status.status)}`}>
                 {ApiService.getStatusText(status.status)}
               </span>
+              {/* Activity pulse indicator */}
+              {status.status !== 'completed' && status.status !== 'error' && (
+                <div className="flex items-center text-xs text-brand-600">
+                  <div className="w-2 h-2 bg-brand-500 rounded-full mr-2 animate-pulse"></div>
+                  Aktiv
+                </div>
+              )}
               {status.status === 'completed' && (
                 <div className="flex items-center text-xs text-success-600">
                   <div className="w-2 h-2 bg-success-500 rounded-full mr-2 animate-pulse-soft"></div>
@@ -205,21 +336,37 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="font-medium text-primary-700">Fortschritt</span>
-                <span className="font-bold text-primary-900">{status.progress_percent}%</span>
+                <div className="flex items-center space-x-2">
+                  {/* Pulsing dot next to percentage */}
+                  {status.status !== 'completed' && status.status !== 'error' && (
+                    <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-pulse"></div>
+                  )}
+                  <span className="font-bold text-primary-900">
+                    {Math.round(displayedProgress)}%
+                  </span>
+                </div>
               </div>
 
               <div className="progress-bar h-3">
                 <div
-                  className={`progress-fill bg-gradient-to-r ${getProgressColor(status.status)} transition-all duration-700 ease-out`}
-                  style={{ width: `${status.progress_percent}%` }}
+                  className={`progress-fill bg-gradient-to-r ${getProgressColor(status.status)} transition-none`}
+                  style={{ width: `${displayedProgress}%` }}
                 />
               </div>
 
+              {/* Step description from backend */}
               <p className="text-sm text-primary-600 leading-relaxed">{status.current_step}</p>
+
+              {/* Elapsed time */}
+              {status.status !== 'completed' && status.status !== 'error' && (
+                <p className="text-xs text-primary-500">
+                  Verarbeitung läuft seit {formatElapsedTime(elapsedSeconds)}
+                </p>
+              )}
             </div>
           </div>
 
-          {/* Processing Steps - Mobile Optimized */}
+          {/* Processing Steps */}
           <div className="space-y-3 sm:space-y-4">
             <h4 className="text-base sm:text-lg font-semibold text-primary-900 flex items-center">
               <FileCheck className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-600" />
@@ -227,77 +374,57 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
             </h4>
 
             <div className="space-y-2 sm:space-y-3">
-              {[
-                {
-                  step: 'upload',
-                  label: 'Dokument hochgeladen',
-                  icon: CheckCircle,
-                  completed: status.progress_percent >= 10,
-                  active: status.progress_percent >= 0 && status.progress_percent < 30,
-                },
-                {
-                  step: 'extract',
-                  label: 'Text wird extrahiert',
-                  icon: Loader,
-                  completed: status.progress_percent >= 30,
-                  active: status.progress_percent >= 10 && status.progress_percent < 70,
-                },
-                {
-                  step: 'translate',
-                  label: 'KI übersetzt das Dokument',
-                  icon: Zap,
-                  completed: status.progress_percent >= 70,
-                  active: status.progress_percent >= 30 && status.progress_percent < 100,
-                },
-                {
-                  step: 'finalize',
-                  label: 'Übersetzung wird finalisiert',
-                  icon: Sparkles,
-                  completed: status.progress_percent >= 100,
-                  active: status.progress_percent >= 70 && status.progress_percent < 100,
-                },
-              ].map((item, index) => {
-                const IconComponent = item.icon;
+              {STEPS.map((item, index) => {
+                const completed = isStepCompleted(item.threshold);
+                const active = isStepActive(index);
                 return (
                   <div
                     key={index}
                     className={`flex items-center space-x-3 sm:space-x-4 p-3 sm:p-4 rounded-lg sm:rounded-xl transition-all duration-300 ${
-                      item.completed
+                      completed
                         ? 'bg-gradient-to-r from-success-50 to-success-50/50 border border-success-200'
-                        : item.active
+                        : active
                           ? 'bg-gradient-to-r from-brand-50 to-accent-50/50 border border-brand-200'
                           : 'bg-neutral-50 border border-neutral-200'
                     }`}
                   >
                     <div
                       className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl flex items-center justify-center transition-all duration-300 flex-shrink-0 ${
-                        item.completed
+                        completed
                           ? 'bg-gradient-to-br from-success-500 to-success-600'
-                          : item.active
+                          : active
                             ? 'bg-gradient-to-br from-brand-500 to-brand-600'
                             : 'bg-neutral-200'
                       }`}
                     >
-                      <IconComponent
-                        className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                          item.completed || item.active ? 'text-white' : 'text-neutral-500'
-                        } ${item.active && !item.completed ? 'animate-pulse-soft' : ''}`}
-                      />
+                      {completed ? (
+                        <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
+                      ) : active ? (
+                        <Loader className="w-4 h-4 sm:w-5 sm:h-5 text-white animate-spin" />
+                      ) : (
+                        <div className="w-2 h-2 bg-neutral-400 rounded-full"></div>
+                      )}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div
                         className={`text-sm sm:text-base font-medium truncate ${
-                          item.completed
+                          completed
                             ? 'text-success-900'
-                            : item.active
+                            : active
                               ? 'text-brand-900'
                               : 'text-neutral-600'
                         }`}
                       >
                         {item.label}
                       </div>
+                      {/* Rotating sub-message for active step */}
+                      {active && (
+                        <p className="text-xs text-brand-600 mt-0.5 animate-pulse-soft truncate">
+                          {getRotatingMessage()}
+                        </p>
+                      )}
                     </div>
-                    {item.completed && (
+                    {completed && (
                       <div className="w-6 h-6 bg-success-100 rounded-full flex items-center justify-center">
                         <CheckCircle className="w-4 h-4 text-success-600" />
                       </div>
