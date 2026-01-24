@@ -242,14 +242,57 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     }
   };
 
-  const isStepCompleted = (threshold: number): boolean => {
-    return displayedProgress >= threshold;
+  const STATUS_ORDER: Status[] = ['extracting_text', 'translating', 'language_translating', 'completed'];
+
+  const getStatusIndex = (s: Status): number => {
+    const idx = STATUS_ORDER.indexOf(s);
+    return idx >= 0 ? idx : 0;
+  };
+
+  // Real backend progress thresholds that split each phase into two sub-steps
+  const SUB_STEP_SPLITS: Record<string, number> = {
+    extracting_text: 10,      // step 0 active if progress < 10, step 1 if >= 10
+    translating: 45,          // step 2 active if progress < 45, step 3 if >= 45
+    language_translating: 85, // step 4 active if progress < 85, step 5 if >= 85
+  };
+
+  const isStepCompleted = (index: number): boolean => {
+    if (!status) return false;
+    const step = STEPS[index];
+    const currentStatusIdx = getStatusIndex(status.status);
+    const stepStatusIdx = getStatusIndex(step.status);
+
+    // Step's phase is entirely past
+    if (currentStatusIdx > stepStatusIdx) return true;
+
+    // Same phase — check if this is the first sub-step and we're past the split
+    if (currentStatusIdx === stepStatusIdx) {
+      const split = SUB_STEP_SPLITS[step.status];
+      const isFirstSubStep = index === 0 || STEPS[index - 1].status !== step.status;
+      if (isFirstSubStep && status.progress_percent >= split) return true;
+    }
+
+    return false;
   };
 
   const isStepActive = (index: number): boolean => {
-    const threshold = STEPS[index].threshold;
-    const prevThreshold = index > 0 ? STEPS[index - 1].threshold : 0;
-    return displayedProgress >= prevThreshold && displayedProgress < threshold;
+    if (!status) return false;
+    const step = STEPS[index];
+    const currentStatusIdx = getStatusIndex(status.status);
+    const stepStatusIdx = getStatusIndex(step.status);
+
+    // Not in this phase
+    if (currentStatusIdx !== stepStatusIdx) return false;
+
+    // Determine which sub-step within the phase is active
+    const split = SUB_STEP_SPLITS[step.status];
+    const isFirstSubStep = index === 0 || STEPS[index - 1].status !== step.status;
+
+    if (isFirstSubStep) {
+      return status.progress_percent < split;
+    } else {
+      return status.progress_percent >= split;
+    }
   };
 
   if (!status) {
@@ -385,7 +428,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
 
             <div className="space-y-2 sm:space-y-3">
               {STEPS.map((item, index) => {
-                const completed = isStepCompleted(item.threshold);
+                const completed = isStepCompleted(index);
                 const active = isStepActive(index);
                 return (
                   <div
