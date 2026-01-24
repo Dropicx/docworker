@@ -16,6 +16,20 @@ from app.repositories.pipeline_job_repository import PipelineJobRepository
 
 logger = logging.getLogger(__name__)
 
+# Step name → human-readable description mapping (used by router to enrich response)
+STEP_DESCRIPTIONS: dict[str, str] = {
+    "TEXT_EXTRACTION": "Text wird aus dem Dokument extrahiert (OCR)...",
+    "MEDICAL_VALIDATION": "Medizinischer Inhalt wird validiert...",
+    "CLASSIFICATION": "Dokumenttyp wird erkannt...",
+    "PII_PREPROCESSING": "Datenschutz-Filter wird angewendet...",
+    "TRANSLATION": "KI vereinfacht den medizinischen Text...",
+    "FACT_CHECK": "Medizinische Fakten werden geprüft...",
+    "GRAMMAR_CHECK": "Grammatik und Ausdruck werden optimiert...",
+    "LANGUAGE_TRANSLATION": "Sprachübersetzung wird durchgeführt...",
+    "FINAL_CHECK": "Qualitätsprüfung läuft...",
+    "FORMATTING": "Formatierung wird abgeschlossen...",
+}
+
 
 class ProcessingService:
     """

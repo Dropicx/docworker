@@ -17,7 +17,8 @@ from app.models.document import (
     SupportedLanguage,
     TranslationResult,
 )
-from app.services.processing_service import ProcessingService
+from app.services.pipeline_progress_tracker import PipelineProgressTracker
+from app.services.processing_service import ProcessingService, STEP_DESCRIPTIONS
 from app.services.statistics_service import StatisticsService
 
 # Setup logging
@@ -100,6 +101,19 @@ async def get_processing_status(
     """
     try:
         status_dict = service.get_processing_status(processing_id)
+
+        # Enrich with real-time step info from Redis
+        tracker = PipelineProgressTracker()
+        redis_progress = await tracker.get_progress(processing_id)
+
+        if redis_progress and redis_progress.get("current_step_name"):
+            status_dict["current_step_name"] = redis_progress["current_step_name"]
+            status_dict["progress_percent"] = redis_progress["progress_percent"]
+            status_dict["current_step"] = STEP_DESCRIPTIONS.get(
+                redis_progress["current_step_name"],
+                status_dict["current_step"],
+            )
+
         return ProcessingProgress(**status_dict)
 
     except ValueError as e:

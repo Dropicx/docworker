@@ -29,6 +29,7 @@ from app.services.ai_logging_service import AILoggingService
 from app.services.document_class_manager import DocumentClassManager
 from app.services.mistral_client import MistralClient
 from app.services.ovh_client import OVHClient
+from app.services.pipeline_progress_tracker import PipelineProgressTracker
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +77,7 @@ class ModularPipelineExecutor:
         self.doc_class_manager = DocumentClassManager(session)
         self.cost_tracker = AICostTracker(session)
         self.ai_logger = AILoggingService(session)
+        self.progress_tracker = PipelineProgressTracker()
         logger.info("💰 Cost tracker initialized for pipeline executor")
         logger.info("📊 AI interaction logger initialized")
 
@@ -798,6 +800,14 @@ class ModularPipelineExecutor:
             job.current_step_id = step.id
             self.session.commit()
 
+            await self.progress_tracker.step_started(
+                processing_id=processing_id,
+                step_name=step.name,
+                completed_count=idx,
+                total_steps=len(universal_steps),
+                phase="universal",
+            )
+
             logger.info(f"▶️  Step {idx + 1}/{len(universal_steps)}: {step.name}")
 
             # Check if step has required context variables
@@ -967,6 +977,8 @@ class ModularPipelineExecutor:
                 execution_metadata["total_time"] = time.time() - pipeline_start_time
                 return False, current_output, execution_metadata
 
+            await self.progress_tracker.step_completed(processing_id, step.name)
+
             # Update current output for next step
             # For branching steps, keep the input flowing (don't replace with branch decision)
             if step.input_from_previous_step and not step.is_branching_step:
@@ -978,6 +990,10 @@ class ModularPipelineExecutor:
 
         # ==================== PHASE 2: CLASS-SPECIFIC STEPS ====================
         if document_class_specific_steps:
+            phase1_completed = len(all_steps)
+            phase2_total = phase1_completed + len(document_class_specific_steps)
+            await self.progress_tracker.update_total_steps(processing_id, phase2_total)
+
             logger.info(
                 f"📋 Phase 2: Executing {len(document_class_specific_steps)} class-specific steps"
             )
@@ -991,6 +1007,14 @@ class ModularPipelineExecutor:
                 job.progress_percent = progress_percent
                 job.current_step_id = step.id
                 self.session.commit()
+
+                await self.progress_tracker.step_started(
+                    processing_id=processing_id,
+                    step_name=step.name,
+                    completed_count=phase1_completed + idx,
+                    total_steps=phase2_total,
+                    phase="class_specific",
+                )
 
                 logger.info(
                     f"▶️  Step {idx + 1}/{len(document_class_specific_steps)}: {step.name} [{execution_metadata['document_class']['class_key']}]"
@@ -1092,6 +1116,8 @@ class ModularPipelineExecutor:
                     execution_metadata["total_time"] = time.time() - pipeline_start_time
                     return False, current_output, execution_metadata
 
+                await self.progress_tracker.step_completed(processing_id, step.name)
+
                 # Update current output for next step
                 if step.input_from_previous_step:
                     current_output = output
@@ -1100,6 +1126,10 @@ class ModularPipelineExecutor:
         post_branching_steps = self.load_post_branching_steps()
 
         if post_branching_steps:
+            pre_phase3_completed = len(all_steps)
+            full_total = pre_phase3_completed + len(post_branching_steps)
+            await self.progress_tracker.update_total_steps(processing_id, full_total)
+
             logger.info(
                 f"📋 Phase 3: Executing {len(post_branching_steps)} post-branching universal steps"
             )
@@ -1117,6 +1147,14 @@ class ModularPipelineExecutor:
                 job.progress_percent = progress_percent
                 job.current_step_id = step.id
                 self.session.commit()
+
+                await self.progress_tracker.step_started(
+                    processing_id=processing_id,
+                    step_name=step.name,
+                    completed_count=pre_phase3_completed + idx,
+                    total_steps=full_total,
+                    phase="post_branching",
+                )
 
                 logger.info(
                     f"▶️  Step {idx + 1}/{len(post_branching_steps)}: {step.name} [POST-BRANCHING]"
@@ -1228,6 +1266,8 @@ class ModularPipelineExecutor:
                     execution_metadata["error_type"] = "step_execution_failed"
                     execution_metadata["total_time"] = time.time() - pipeline_start_time
                     return False, current_output, execution_metadata
+
+                await self.progress_tracker.step_completed(processing_id, step.name)
 
                 # Update current output for next step
                 if step.input_from_previous_step:

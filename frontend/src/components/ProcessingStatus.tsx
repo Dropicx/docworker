@@ -242,19 +242,32 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     }
   };
 
-  // Determine active step index from backend's current_step description text.
-  // The backend generates descriptions based on progress ranges in _get_step_description().
-  // By matching against that text, the step cards stay synchronized with the
-  // description shown below the progress bar regardless of how many pipeline steps exist.
+  // Map pipeline step names to UI card indices
+  const STEP_NAME_TO_CARD: Record<string, number> = {
+    TEXT_EXTRACTION: 0,
+    MEDICAL_VALIDATION: 1,
+    CLASSIFICATION: 2,
+    PII_PREPROCESSING: 2,
+    TRANSLATION: 3,
+    FACT_CHECK: 3,
+    GRAMMAR_CHECK: 3,
+    LANGUAGE_TRANSLATION: 4,
+    FINAL_CHECK: 4,
+    FORMATTING: 5,
+  };
+
   const getActiveStepIndex = (): number => {
     if (!status) return -1;
     if (status.status === 'completed') return STEPS.length; // all done
 
-    const stepText = (status.current_step || '').toLowerCase();
+    // Primary: use real step name from Redis-backed response
+    if (status.current_step_name) {
+      const idx = STEP_NAME_TO_CARD[status.current_step_name];
+      if (idx !== undefined) return idx;
+    }
 
-    // Match against backend description keywords (from _get_step_description).
-    // Order matters: check more specific keywords first to avoid substring collisions
-    // (e.g. "medizinischen" in step 3 descriptions would falsely match "medizinisch" for step 1).
+    // Fallback: keyword matching (backward compat when Redis unavailable)
+    const stepText = (status.current_step || '').toLowerCase();
     if (stepText.includes('extrahiert') || stepText.includes('ocr')) return 0;
     if (stepText.includes('vereinfacht') || stepText.includes('fakten') || stepText.includes('grammatik')) return 3;
     if (stepText.includes('sprachübersetzung') || stepText.includes('qualitätsprüfung')) return 4;
@@ -262,7 +275,7 @@ const ProcessingStatus: React.FC<ProcessingStatusProps> = ({
     if (stepText.includes('datenschutz') || stepText.includes('dokumenttyp')) return 2;
     if (stepText.includes('validiert')) return 1;
 
-    // Fallback: use progress_percent ranges matching backend description thresholds
+    // Final fallback: progress ranges
     const p = status.progress_percent;
     if (p < 10) return 0;
     if (p < 20) return 1;

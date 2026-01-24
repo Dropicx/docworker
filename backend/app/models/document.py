@@ -99,6 +99,7 @@ class ProcessingProgress(BaseModel):
     status: ProcessingStatus
     progress_percent: int = Field(ge=0, le=100)
     current_step: str
+    current_step_name: str | None = None  # Actual pipeline step name from Redis
     message: str | None = None
     error: str | None = None
     timestamp: datetime = Field(default_factory=datetime.now)
