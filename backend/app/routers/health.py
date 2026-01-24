@@ -109,6 +109,19 @@ async def health_check(request: Request = None):
         mistral_key = os.getenv("MISTRAL_API_KEY")
         services["mistral_ocr"] = "configured" if mistral_key else "not_configured"
 
+        # Dify RAG Service prüfen
+        try:
+            from app.services.dify_rag_client import DifyRAGClient
+
+            rag_client = DifyRAGClient()
+            if rag_client.is_enabled:
+                rag_health = await rag_client.check_health()
+                services["dify_rag"] = rag_health.get("status", "unknown")
+            else:
+                services["dify_rag"] = "not_configured"
+        except Exception as e:
+            services["dify_rag"] = f"error: {str(e)[:50]}"
+
         # Temporäres Verzeichnis prüfen
         try:
             temp_dir = Path(tempfile.gettempdir())

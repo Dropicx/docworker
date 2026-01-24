@@ -1,5 +1,10 @@
 DS_Store
 Arztbrief1.pdf
+rag/
+RAG_IMPLEMENTATION_PLAN.md
+
+# Dify upload state (resume file)
+scripts/.dify_upload_state.json
 
 
 # ===========================

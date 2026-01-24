@@ -159,6 +159,19 @@ def seed_modular_pipeline():
                     "model_config": json.dumps({"temperature": 0.5}),
                     "is_enabled": True,
                 },
+                # Dify RAG (external service)
+                {
+                    "name": "dify-rag-awmf",
+                    "display_name": "Dify RAG (AWMF Leitlinien)",
+                    "provider": "DIFY_RAG",
+                    "description": "AWMF medical guideline recommendations via Dify RAG service on Hetzner",
+                    "max_tokens": 4096,
+                    "supports_vision": False,
+                    "price_input_per_1m_tokens": 0.0,
+                    "price_output_per_1m_tokens": 0.0,
+                    "model_config": json.dumps({"temperature": 0.3}),
+                    "is_enabled": True,
+                },
             ]
 
             for model in models:
@@ -192,6 +205,11 @@ def seed_modular_pipeline():
                 text("SELECT id FROM available_models WHERE name = 'Mistral-Nemo-Instruct-2407'")
             )
             mistral_id = mistral_result.scalar()
+
+            dify_rag_result = conn.execute(
+                text("SELECT id FROM available_models WHERE name = 'dify-rag-awmf'")
+            )
+            dify_rag_id = dify_rag_result.scalar()
 
             # Get document class IDs for document-specific steps
             arztbrief_result = conn.execute(
@@ -424,6 +442,73 @@ Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare.""",
                     "output_format": "markdown",
                     "document_class_id": laborwerte_id,  # LABORWERTE only
                     "ui_stage": "translation",
+                },
+                # ==================== AWMF GUIDELINE RAG STEPS (per document class) ====================
+                {
+                    "name": "AWMF Leitlinien Empfehlungen (Arztbrief)",
+                    "description": "Queries AWMF medical guidelines for relevant recommendations (ARZTBRIEF)",
+                    "order": 15,
+                    "enabled": True,
+                    "prompt_template": (
+                        "Basierend auf dem folgenden medizinischen Dokument "
+                        "(Typ: {document_type}), welche AWMF-Leitlinien sind relevant? "
+                        "Bitte nenne die wichtigsten Empfehlungen mit Registernummer, "
+                        "S-Klassifikation und Empfehlungsgrad.\n\n"
+                        "Dokumentinhalt:\n{input_text}"
+                    ),
+                    "selected_model_id": dify_rag_id,
+                    "temperature": 0.3,
+                    "max_tokens": 4096,
+                    "retry_on_failure": False,
+                    "max_retries": 1,
+                    "input_from_previous_step": True,
+                    "output_format": "append",
+                    "document_class_id": arztbrief_id,
+                    "ui_stage": "quality",
+                },
+                {
+                    "name": "AWMF Leitlinien Empfehlungen (Befundbericht)",
+                    "description": "Queries AWMF medical guidelines for relevant recommendations (BEFUNDBERICHT)",
+                    "order": 15,
+                    "enabled": True,
+                    "prompt_template": (
+                        "Basierend auf dem folgenden medizinischen Dokument "
+                        "(Typ: {document_type}), welche AWMF-Leitlinien sind relevant? "
+                        "Bitte nenne die wichtigsten Empfehlungen mit Registernummer, "
+                        "S-Klassifikation und Empfehlungsgrad.\n\n"
+                        "Dokumentinhalt:\n{input_text}"
+                    ),
+                    "selected_model_id": dify_rag_id,
+                    "temperature": 0.3,
+                    "max_tokens": 4096,
+                    "retry_on_failure": False,
+                    "max_retries": 1,
+                    "input_from_previous_step": True,
+                    "output_format": "append",
+                    "document_class_id": befundbericht_id,
+                    "ui_stage": "quality",
+                },
+                {
+                    "name": "AWMF Leitlinien Empfehlungen (Laborwerte)",
+                    "description": "Queries AWMF medical guidelines for relevant recommendations (LABORWERTE)",
+                    "order": 15,
+                    "enabled": True,
+                    "prompt_template": (
+                        "Basierend auf dem folgenden medizinischen Dokument "
+                        "(Typ: {document_type}), welche AWMF-Leitlinien sind relevant? "
+                        "Bitte nenne die wichtigsten Empfehlungen mit Registernummer, "
+                        "S-Klassifikation und Empfehlungsgrad.\n\n"
+                        "Dokumentinhalt:\n{input_text}"
+                    ),
+                    "selected_model_id": dify_rag_id,
+                    "temperature": 0.3,
+                    "max_tokens": 4096,
+                    "retry_on_failure": False,
+                    "max_retries": 1,
+                    "input_from_previous_step": True,
+                    "output_format": "append",
+                    "document_class_id": laborwerte_id,
+                    "ui_stage": "quality",
                 },
                 {
                     "name": "Finaler Check auf Richtigkeit",

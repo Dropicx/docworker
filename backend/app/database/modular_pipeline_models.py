@@ -57,6 +57,7 @@ class ModelProvider(str, Enum):
     ANTHROPIC = "ANTHROPIC"  # Future: Claude API
     LOCAL = "LOCAL"  # Future: Local models
     MISTRAL = "MISTRAL"  # Mistral AI API
+    DIFY_RAG = "DIFY_RAG"  # External RAG service (Dify on Hetzner)
 
 
 class UIStage(str, Enum):

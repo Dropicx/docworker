@@ -1,0 +1,52 @@
+# =============================================================================
+# Dify RAG Service (AWMF Guidelines) - Terraform Variables Example
+# =============================================================================
+# Copy this file to terraform.tfvars and fill in the values:
+#   cp terraform.tfvars.example terraform.tfvars
+#
+# Single-server setup with:
+# - 1x cx43 server (8 vCPU, 16GB RAM)
+# - Persistent volume for runtime data (30GB)
+# - Load balancer with managed SSL
+# - Integrated DNS management (Hetzner DNS)
+# - PDFs stored in Hetzner Object Storage (S3-compatible)
+# =============================================================================
+
+# Required: Hetzner Cloud API Token (used for Cloud + DNS)
+# Get from: https://console.hetzner.cloud/ -> Project -> Security -> API Tokens
+hcloud_token = "your-hetzner-cloud-api-token"
+
+# Required: DNS zone (your domain managed by Hetzner DNS)
+dns_zone = "fra-la.de"
+
+# Optional: Subdomain for RAG service (default: rag)
+# Creates: rag.fra-la.de
+dns_subdomain = "rag"
+
+# Optional: Base name for servers (default: dify-rag)
+server_name = "dify-rag"
+
+# Optional: Server type (default: cx43 = 8 vCPU, 16GB RAM)
+# cx43 is recommended for Dify + Weaviate + PostgreSQL
+server_type = "cx43"
+
+# Optional: Datacenter location (default: fsn1 = Falkenstein)
+location = "fsn1"
+
+# Required: Mistral API key (for Dify LLM + embedding)
+# Get from: https://console.mistral.ai/api-keys
+mistral_api_key = "your-mistral-api-key"
+
+# Required: Dify secret key (random string for session encryption)
+# Generate with: openssl rand -hex 32
+dify_secret_key = "your-dify-secret-key"
+
+# Optional: Dify initial admin password (default: changeme123)
+dify_init_password = "your-secure-init-password"
+
+# Required: Hetzner Object Storage credentials
+# Get from: https://console.hetzner.cloud/ -> Object Storage -> Access Keys
+s3_access_key = "your-s3-access-key"
+s3_secret_key = "your-s3-secret-key"
+s3_endpoint   = "https://fsn1.your-objectstorage.com"
+s3_bucket     = "awmf-guidelines"

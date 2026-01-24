@@ -611,6 +611,31 @@ class ModularPipelineExecutor:
                         "input_tokens": mistral_result["input_tokens"],
                         "output_tokens": mistral_result["output_tokens"],
                     }
+
+                elif model.provider == ModelProvider.DIFY_RAG:
+                    # External RAG service (Dify on Hetzner)
+                    from app.services.dify_rag_client import DifyRAGClient
+
+                    rag_client = DifyRAGClient()
+                    if not rag_client.is_enabled:
+                        logger.info(f"Dify RAG not configured, skipping '{step.name}'")
+                        result_dict = {"text": "", "input_tokens": 0, "output_tokens": 0}
+                    else:
+                        target_language = context.get("target_language", "en")
+                        answer, rag_metadata = await rag_client.query_guidelines(
+                            medical_text=input_text,
+                            document_type=context.get("document_type", "UNKNOWN"),
+                            target_language=target_language,
+                            user_id=processing_id or "pipeline",
+                        )
+                        if rag_metadata.get("skipped"):
+                            logger.info(
+                                f"Dify RAG skipped for '{step.name}': {rag_metadata.get('reason', rag_metadata.get('error', 'unknown'))}"
+                            )
+                            result_dict = {"text": "", "input_tokens": 0, "output_tokens": 0}
+                        else:
+                            result_dict = {"text": answer, "input_tokens": 0, "output_tokens": 0}
+
                 else:
                     # Use OVH AI Endpoints (default)
                     result_dict = await self.ovh_client.process_medical_text_with_prompt(
@@ -983,7 +1008,10 @@ class ModularPipelineExecutor:
             # Update current output for next step
             # For branching steps, keep the input flowing (don't replace with branch decision)
             if step.input_from_previous_step and not step.is_branching_step:
-                current_output = output
+                if step.output_format == "append" and output:
+                    current_output = current_output + output
+                else:
+                    current_output = output
 
             # If document class branching occurred, break to load class-specific steps
             if step.is_branching_step and document_class_specific_steps:
@@ -1122,7 +1150,10 @@ class ModularPipelineExecutor:
 
                 # Update current output for next step
                 if step.input_from_previous_step:
-                    current_output = output
+                    if step.output_format == "append" and output:
+                        current_output = current_output + output
+                    else:
+                        current_output = output
 
         # ==================== PHASE 3: POST-BRANCHING UNIVERSAL STEPS ====================
         post_branching_steps = self.load_post_branching_steps()
@@ -1274,7 +1305,10 @@ class ModularPipelineExecutor:
 
                 # Update current output for next step
                 if step.input_from_previous_step:
-                    current_output = output
+                    if step.output_format == "append" and output:
+                        current_output = current_output + output
+                    else:
+                        current_output = output
 
         # Pipeline completed successfully
         total_time = time.time() - pipeline_start_time
