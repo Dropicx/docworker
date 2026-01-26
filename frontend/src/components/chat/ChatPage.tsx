@@ -188,14 +188,14 @@ export const ChatPage: React.FC = () => {
   );
 
   /**
-   * Handle app selection.
+   * Handle app selection - switches app and deselects current conversation.
    */
   const handleAppSelect = useCallback((appId: string) => {
     setSelectedAppId(appId);
     setAppSelectorOpen(false);
-    // If there's an active conversation with a different app, deselect it
-    // so the next message creates a new conversation with the new app
-  }, []);
+    // Deselect current conversation so user starts fresh with new app
+    setActiveConversation(null);
+  }, [setActiveConversation]);
 
   // Get messages for active conversation
   const messages = activeConversation?.messages || [];
@@ -233,8 +233,7 @@ export const ChatPage: React.FC = () => {
                 <button
                   onClick={() => setAppSelectorOpen(!appSelectorOpen)}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 transition-colors"
-                  disabled={!!activeConversation}
-                  title={activeConversation ? 'App kann nicht gewechselt werden wahrend einer aktiven Unterhaltung' : 'App wechseln'}
+                  title="App wechseln"
                 >
                   {selectedApp && (
                     <>
@@ -245,47 +244,66 @@ export const ChatPage: React.FC = () => {
                       <span className="text-sm font-medium text-neutral-700">
                         {selectedApp.name}
                       </span>
-                      {!activeConversation && (
-                        <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform ${appSelectorOpen ? 'rotate-180' : ''}`} />
-                      )}
+                      <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform ${appSelectorOpen ? 'rotate-180' : ''}`} />
                     </>
                   )}
                 </button>
 
                 {/* App Dropdown */}
-                {appSelectorOpen && !activeConversation && (
-                  <div className="absolute left-0 top-full mt-1 w-64 bg-white rounded-lg shadow-lg border border-neutral-200 z-50 overflow-hidden">
-                    {apps.filter(a => a.available).map(app => {
+                {appSelectorOpen && (
+                  <div className="absolute left-0 top-full mt-1 w-72 bg-white rounded-lg shadow-lg border border-neutral-200 z-50 overflow-hidden">
+                    <div className="px-3 py-2 bg-neutral-50 border-b border-neutral-200">
+                      <span className="text-xs font-medium text-neutral-500">Assistent wählen</span>
+                    </div>
+                    {apps.map(app => {
                       const IconComponent = APP_ICONS[app.icon] || BookOpen;
+                      const isSelected = app.id === selectedAppId && !activeConversation;
+                      const isCurrentConv = activeConversation?.appId === app.id;
                       return (
                         <button
                           key={app.id}
-                          onClick={() => handleAppSelect(app.id)}
-                          className={`w-full flex items-start gap-3 px-4 py-3 hover:bg-neutral-50 transition-colors ${
-                            app.id === selectedAppId ? 'bg-brand-50' : ''
+                          onClick={() => app.available && handleAppSelect(app.id)}
+                          disabled={!app.available}
+                          className={`w-full flex items-start gap-3 px-4 py-3 transition-colors ${
+                            !app.available
+                              ? 'opacity-50 cursor-not-allowed bg-neutral-50'
+                              : isSelected || isCurrentConv
+                                ? 'bg-brand-50 hover:bg-brand-100'
+                                : 'hover:bg-neutral-50'
                           }`}
                         >
-                          <IconComponent className={`w-5 h-5 mt-0.5 ${app.id === selectedAppId ? 'text-brand-600' : 'text-neutral-500'}`} />
-                          <div className="text-left">
-                            <div className={`text-sm font-medium ${app.id === selectedAppId ? 'text-brand-700' : 'text-neutral-700'}`}>
+                          <IconComponent className={`w-5 h-5 mt-0.5 ${isSelected || isCurrentConv ? 'text-brand-600' : 'text-neutral-500'}`} />
+                          <div className="flex-1 text-left">
+                            <div className={`text-sm font-medium ${isSelected || isCurrentConv ? 'text-brand-700' : 'text-neutral-700'}`}>
                               {app.name}
                             </div>
                             <div className="text-xs text-neutral-500">
                               {app.description}
                             </div>
                           </div>
+                          {isCurrentConv && (
+                            <span className="text-xs text-brand-600 bg-brand-100 px-2 py-0.5 rounded-full">
+                              Aktiv
+                            </span>
+                          )}
+                          {!app.available && (
+                            <span className="text-xs text-neutral-400 bg-neutral-200 px-2 py-0.5 rounded-full">
+                              Nicht konfiguriert
+                            </span>
+                          )}
                         </button>
                       );
                     })}
+                    {activeConversation && (
+                      <div className="px-3 py-2 bg-neutral-50 border-t border-neutral-200">
+                        <span className="text-xs text-neutral-400">
+                          Wechsel startet neue Unterhaltung
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
-
-              {activeConversation && (
-                <span className="ml-3 text-xs text-neutral-400">
-                  (Neue Unterhaltung starten um App zu wechseln)
-                </span>
-              )}
             </div>
           )}
 
