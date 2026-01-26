@@ -274,7 +274,7 @@ app.include_router(
 app.include_router(
     feedback_router, tags=["feedback"]
 )  # User feedback system with GDPR data protection (Issue #47)
-app.include_router(chat.router, tags=["chat"])  # GuidelineChat RAG streaming proxy
+app.include_router(chat.router, prefix="/api", tags=["chat"])  # GuidelineChat RAG streaming proxy
 
 
 @app.get("/")
