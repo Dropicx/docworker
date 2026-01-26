@@ -187,39 +187,47 @@ class DifyRAGClient:
                 )
 
     def _build_query(self, medical_text: str, document_type: str) -> str:
-        """Build German query with medical context (max 2000 chars for query)."""
+        """Build German query with medical context for patient-friendly output (max 2000 chars)."""
         # Truncate medical text to fit within Dify query limits
-        max_text_length = 1500
+        max_text_length = 1200  # Reduced to make room for longer prompt
         truncated_text = medical_text[:max_text_length]
         if len(medical_text) > max_text_length:
             truncated_text += "..."
 
         query = (
-            f"Basierend auf dem folgenden medizinischen Dokument "
-            f"(Typ: {document_type}), welche AWMF-Leitlinien sind relevant? "
-            f"Bitte nenne die wichtigsten Empfehlungen mit Registernummer, "
-            f"S-Klassifikation und Empfehlungsgrad.\n\n"
+            f"Du bist ein medizinischer Berater, der einem Patienten hilft, seine Gesundheit zu verstehen.\n\n"
+            f"Basierend auf dem folgenden medizinischen Dokument (Typ: {document_type}), "
+            f"gib dem Patienten 3-5 KURZE, VERSTÄNDLICHE Empfehlungen aus den AWMF-Leitlinien.\n\n"
+            f"WICHTIGE REGELN:\n"
+            f"1. Schreibe in EINFACHER SPRACHE - keine Fachbegriffe oder erkläre sie\n"
+            f"2. Fokussiere auf PRAKTISCHE TIPPS - was kann der Patient TUN?\n"
+            f"3. Halte jede Empfehlung KURZ (2-3 Sätze)\n"
+            f"4. JEDE Empfehlung MUSS eine Quellenangabe haben im Format:\n"
+            f"   📚 Quelle: AWMF Leitlinie \"[Name]\" (Reg.-Nr. [Nummer]), [S-Klassifikation]\n"
+            f"5. Maximal 5 Empfehlungen - nur die WICHTIGSTEN\n\n"
             f"Dokumentinhalt:\n{truncated_text}"
         )
 
         return query[:2000]
 
     def _format_german_only(self, german_answer: str) -> str:
-        """Format German-only RAG output."""
+        """Format German-only RAG output with patient-friendly header."""
         return (
             "\n\n---\n\n"
-            "## AWMF-Leitlinien Empfehlungen\n\n"
+            "## 📋 Empfehlungen aus medizinischen Leitlinien\n\n"
+            "*Diese Empfehlungen basieren auf offiziellen deutschen Behandlungsrichtlinien (AWMF). "
+            "Sie ersetzen nicht das Gespräch mit Ihrem Arzt.*\n\n"
             f"{german_answer}"
         )
 
     def _format_bilingual(self, german_answer: str, translated: str, target_language: str) -> str:
-        """Format bilingual RAG output (German + target language)."""
+        """Format bilingual RAG output with patient-friendly header (German + target language)."""
         lang_labels = {
             "en": "English",
-            "fr": "Francais",
-            "es": "Espanol",
+            "fr": "Français",
+            "es": "Español",
             "it": "Italiano",
-            "pt": "Portugues",
+            "pt": "Português",
             "nl": "Nederlands",
             "pl": "Polski",
         }
@@ -227,7 +235,9 @@ class DifyRAGClient:
 
         return (
             "\n\n---\n\n"
-            "## AWMF-Leitlinien Empfehlungen / AWMF Guideline Recommendations\n\n"
+            "## 📋 Empfehlungen aus medizinischen Leitlinien / Medical Guideline Recommendations\n\n"
+            "*Diese Empfehlungen basieren auf offiziellen deutschen Behandlungsrichtlinien (AWMF). "
+            "Sie ersetzen nicht das Gespräch mit Ihrem Arzt.*\n\n"
             "### Deutsch (Original)\n\n"
             f"{german_answer}\n\n"
             f"### {target_label} (Translation)\n\n"

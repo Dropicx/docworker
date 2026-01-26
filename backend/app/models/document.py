@@ -144,6 +144,22 @@ class TranslationResult(BaseModel):
     model_config = ConfigDict(extra="allow")  # Allow extra fields (forward compatibility)
 
 
+class GuidelinesResponse(BaseModel):
+    """Response model for AWMF guideline recommendations."""
+
+    processing_id: str
+    status: Literal["loading", "success", "error", "not_available", "not_configured"]
+    guidelines_text: str | None = None  # Combined bilingual markdown
+    guidelines_german: str | None = None  # German original
+    guidelines_translated: str | None = None  # Target language translation
+    target_language: str | None = None
+    document_type: str | None = None
+    metadata: dict | None = None  # conversation_id, retriever_resources
+    error_message: str | None = None
+    processing_time_seconds: float | None = None
+    timestamp: datetime = Field(default_factory=datetime.now)
+
+
 class ErrorResponse(BaseModel):
     error: str
     message: str

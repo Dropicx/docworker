@@ -1,8 +1,9 @@
 from datetime import datetime
 import logging
 import os
+import time
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -12,6 +13,7 @@ from app.core.permissions import get_current_user_optional
 from app.database.auth_models import UserDB
 from app.models.document import (
     LANGUAGE_NAMES,
+    GuidelinesResponse,
     ProcessingOptions,
     ProcessingProgress,
     SupportedLanguage,
@@ -160,6 +162,94 @@ async def get_processing_result(
         raise HTTPException(
             status_code=500, detail=f"Fehler beim Abrufen des Ergebnisses: {str(e)}"
         ) from e
+
+
+@router.get("/process/{processing_id}/guidelines", response_model=GuidelinesResponse)
+async def get_guidelines(
+    processing_id: str,
+    target_language: str = Query(default="en", description="Target language for translation"),
+    service: ProcessingService = Depends(get_processing_service),
+):
+    """
+    Fetch AWMF guideline recommendations for a completed translation.
+
+    This is a potentially slow operation (up to 90s) as it queries the Dify RAG service.
+    Should be called asynchronously after the main result is displayed.
+    """
+    from app.services.dify_rag_client import DifyRAGClient
+
+    start_time = time.time()
+
+    # Check if Dify RAG is configured
+    rag_client = DifyRAGClient()
+    if not rag_client.is_enabled:
+        return GuidelinesResponse(
+            processing_id=processing_id,
+            status="not_configured",
+            error_message="AWMF Leitlinien service is not configured",
+            timestamp=datetime.now(),
+        )
+
+    try:
+        # Get the job to access the translated text
+        result_data = service.get_processing_result(processing_id)
+
+        # Use translated text as context for guidelines
+        medical_text = result_data.get("translated_text") or result_data.get("original_text", "")
+        document_type = result_data.get("document_type_detected") or "UNKNOWN"
+
+        # Query Dify RAG for guidelines
+        guidelines_text, metadata = await rag_client.query_guidelines(
+            medical_text=medical_text,
+            document_type=document_type,
+            target_language=target_language,
+            user_id=processing_id,
+        )
+
+        processing_time = time.time() - start_time
+
+        if not guidelines_text:
+            return GuidelinesResponse(
+                processing_id=processing_id,
+                status="not_available",
+                document_type=document_type,
+                target_language=target_language,
+                metadata=metadata,
+                error_message=metadata.get("reason", "No guidelines found"),
+                processing_time_seconds=processing_time,
+                timestamp=datetime.now(),
+            )
+
+        # Return successful response with formatted bilingual text
+        return GuidelinesResponse(
+            processing_id=processing_id,
+            status="success",
+            guidelines_text=guidelines_text,
+            target_language=target_language,
+            document_type=document_type,
+            metadata=metadata,
+            processing_time_seconds=processing_time,
+            timestamp=datetime.now(),
+        )
+
+    except ValueError as e:
+        # Job not found or not completed
+        return GuidelinesResponse(
+            processing_id=processing_id,
+            status="error",
+            error_message=str(e),
+            processing_time_seconds=time.time() - start_time,
+            timestamp=datetime.now(),
+        )
+    except Exception as e:
+        logger.error(f"Guidelines fetch failed for {processing_id}: {e}")
+        return GuidelinesResponse(
+            processing_id=processing_id,
+            status="error",
+            error_message=f"Failed to fetch guidelines: {str(e)[:100]}",
+            processing_time_seconds=time.time() - start_time,
+            timestamp=datetime.now(),
+        )
 
 
 @router.get("/process/active")

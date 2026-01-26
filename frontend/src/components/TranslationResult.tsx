@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Copy,
   Download,
@@ -15,11 +15,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ReactDOM from 'react-dom/client';
 import ApiService from '../services/api';
-import { TranslationResult as TranslationData } from '../types/api';
+import { TranslationResult as TranslationData, GuidelinesResponse } from '../types/api';
 import { exportToPDF } from '../utils/pdfExportAdvanced';
 import { useAuth } from '../contexts/AuthContext';
 import FeedbackWidget from './FeedbackWidget';
 import { feedbackApi } from '../services/feedbackApi';
+import GuidelinesIndicator from './GuidelinesIndicator';
+import GuidelinesSection from './GuidelinesSection';
 
 interface TranslationResultProps {
   result: TranslationData;
@@ -38,6 +40,11 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
   );
   // Track if feedback was submitted (Issue #47)
   const [feedbackSubmitted, setFeedbackSubmitted] = useState(false);
+
+  // Guidelines state
+  const [guidelinesData, setGuidelinesData] = useState<GuidelinesResponse | null>(null);
+  const [guidelinesLoading, setGuidelinesLoading] = useState(false);
+  const guidelinesSectionRef = useRef<HTMLDivElement>(null);
 
   // Handle cleanup when "Neue Übersetzung" is clicked without feedback (Issue #47)
   const handleNewTranslation = useCallback(() => {
@@ -58,6 +65,64 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
       }
     };
   }, [feedbackSubmitted, result.processing_id]);
+
+  // Fetch AWMF guidelines asynchronously after results are shown
+  useEffect(() => {
+    const fetchGuidelines = async () => {
+      setGuidelinesLoading(true);
+      try {
+        const response = await ApiService.getGuidelines(
+          result.processing_id,
+          result.target_language || 'de'
+        );
+        setGuidelinesData(response);
+      } catch (error) {
+        console.error('Failed to fetch guidelines:', error);
+        setGuidelinesData({
+          processing_id: result.processing_id,
+          status: 'error',
+          error_message: error instanceof Error ? error.message : 'Unknown error',
+          timestamp: new Date().toISOString(),
+        });
+      } finally {
+        setGuidelinesLoading(false);
+      }
+    };
+
+    // Start fetch after component mounts (results visible)
+    fetchGuidelines();
+  }, [result.processing_id, result.target_language]);
+
+  // Scroll to guidelines section
+  const scrollToGuidelines = useCallback(() => {
+    guidelinesSectionRef.current?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  }, []);
+
+  // Retry fetching guidelines
+  const retryGuidelines = useCallback(async () => {
+    setGuidelinesLoading(true);
+    setGuidelinesData(null);
+    try {
+      const response = await ApiService.getGuidelines(
+        result.processing_id,
+        result.target_language || 'de'
+      );
+      setGuidelinesData(response);
+    } catch (error) {
+      console.error('Failed to fetch guidelines:', error);
+      setGuidelinesData({
+        processing_id: result.processing_id,
+        status: 'error',
+        error_message: error instanceof Error ? error.message : 'Unknown error',
+        timestamp: new Date().toISOString(),
+      });
+    } finally {
+      setGuidelinesLoading(false);
+    }
+  }, [result.processing_id, result.target_language]);
 
   const handleCopy = async (text: string, type: 'original' | 'translated' | 'language') => {
     try {
@@ -205,6 +270,15 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
+      {/* Guidelines Loading Indicator - Sticky top-right */}
+      {guidelinesData?.status !== 'not_configured' && (
+        <GuidelinesIndicator
+          status={guidelinesLoading ? 'loading' : guidelinesData?.status || 'idle'}
+          onScrollToGuidelines={scrollToGuidelines}
+          errorMessage={guidelinesData?.error_message}
+        />
+      )}
+
       {/* Hero Section - Mobile Optimized */}
       <div className="text-center space-y-4 sm:space-y-6">
         <div className="relative">
@@ -562,6 +636,16 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
             )}
           </div>
         </div>
+      )}
+
+      {/* AWMF Guidelines Recommendations Section */}
+      {guidelinesData?.status !== 'not_configured' && (
+        <GuidelinesSection
+          guidelines={guidelinesData}
+          isLoading={guidelinesLoading}
+          sectionRef={guidelinesSectionRef}
+          onRetry={retryGuidelines}
+        />
       )}
 
       {/* Feedback Widget (Issue #47) */}

@@ -44,6 +44,32 @@ export interface TranslationResult {
   matched_value?: string;
 }
 
+export interface GuidelinesResponse {
+  processing_id: string;
+  status: 'loading' | 'success' | 'error' | 'not_available' | 'not_configured';
+  guidelines_text?: string;
+  guidelines_german?: string;
+  guidelines_translated?: string;
+  target_language?: string;
+  document_type?: string;
+  metadata?: {
+    conversation_id?: string;
+    message_id?: string;
+    retriever_resources?: Array<{
+      document_name?: string;
+      segment_id?: string;
+      score?: number;
+    }>;
+    skipped?: boolean;
+    reason?: string;
+    translated?: boolean;
+    translation_error?: string;
+  };
+  error_message?: string;
+  processing_time_seconds?: number;
+  timestamp: string;
+}
+
 export interface ProcessingOptions {
   target_language?: string;
 }

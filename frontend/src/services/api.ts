@@ -3,6 +3,7 @@ import {
   UploadResponse,
   ProcessingProgress,
   TranslationResult,
+  GuidelinesResponse,
   HealthCheck,
   UploadLimits,
   AvailableModels,
@@ -160,6 +161,21 @@ export class ApiService {
   static async getProcessingResult(processingId: string): Promise<TranslationResult> {
     const response: AxiosResponse<TranslationResult> = await api.get(
       `/process/${processingId}/result`
+    );
+    return response.data;
+  }
+
+  // Get AWMF guideline recommendations
+  static async getGuidelines(
+    processingId: string,
+    targetLanguage: string = 'en'
+  ): Promise<GuidelinesResponse> {
+    const response: AxiosResponse<GuidelinesResponse> = await api.get(
+      `/process/${processingId}/guidelines`,
+      {
+        params: { target_language: targetLanguage },
+        timeout: 120000, // 2 minutes (Dify RAG can take up to 90s)
+      }
     );
     return response.data;
   }
