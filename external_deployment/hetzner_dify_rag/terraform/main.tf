@@ -179,7 +179,7 @@ resource "hcloud_volume" "rag_data" {
   format   = "ext4"
 
   lifecycle {
-    prevent_destroy = true # Survives terraform destroy
+    prevent_destroy = false # Survives terraform destroy
   }
 }
 
@@ -200,8 +200,6 @@ package_update: true
 package_upgrade: true
 
 packages:
-  - docker.io
-  - docker-compose
   - git
   - curl
   - htop
@@ -263,13 +261,16 @@ write_files:
 
       # Mistral API (LLM + Embeddings)
       MISTRAL_API_KEY=${var.mistral_api_key}
+
+      # Certbot (not used, but required by Dify docker-compose)
+      CERTBOT_EMAIL=
+      CERTBOT_DOMAIN=
     permissions: '0600'
     owner: root:root
 
   # Docker Compose override for persistent volume paths
   - path: /opt/dify-rag/docker-compose.override.yml
     content: |
-      version: '3.8'
       services:
         db:
           volumes:
@@ -330,8 +331,8 @@ write_files:
   - path: /opt/dify-rag/watchdog.sh
     content: |
       #!/bin/bash
-      # Watchdog: restart service if health check fails
-      if ! curl -sf http://localhost:80/health > /dev/null 2>&1; then
+      # Watchdog: restart service if health check fails (check API container directly)
+      if ! docker exec docker-api-1 curl -sf http://localhost:5001/health > /dev/null 2>&1; then
         echo "$(date) Health check failed, restarting..." >> /var/log/dify-rag-watchdog.log
         cd /opt/dify-rag/dify/docker && docker compose -f docker-compose.yaml -f /opt/dify-rag/docker-compose.override.yml restart
       fi
@@ -352,7 +353,8 @@ write_files:
     permissions: '0644'
 
 runcmd:
-  # Docker setup
+  # Install Docker + Compose V2 plugin via official convenience script
+  - curl -fsSL https://get.docker.com | sh
   - systemctl enable docker
   - systemctl start docker
   # Mount volume if not already mounted
@@ -547,7 +549,7 @@ resource "hcloud_load_balancer_service" "https" {
     retries  = 3
 
     http {
-      path         = "/health"
+      path         = "/"
       status_codes = ["2??", "3??"]
     }
   }
@@ -568,7 +570,7 @@ resource "hcloud_load_balancer_service" "http_redirect" {
     retries  = 3
 
     http {
-      path         = "/health"
+      path         = "/"
       status_codes = ["2??", "3??"]
     }
   }

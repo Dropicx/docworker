@@ -51,10 +51,11 @@ echo ""
 echo "Waiting for Dify to start (this may take 2-3 minutes)..."
 
 for i in $(seq 1 60); do
-    if curl -sf http://localhost:80/health > /dev/null 2>&1; then
+    # Check API health via docker exec
+    if docker exec docker-api-1 curl -sf http://localhost:5001/health > /dev/null 2>&1; then
         echo ""
         echo "Dify is healthy!"
-        curl -s http://localhost:80/health | python3 -m json.tool 2>/dev/null || curl -s http://localhost:80/health
+        docker exec docker-api-1 curl -s http://localhost:5001/health | python3 -m json.tool 2>/dev/null || docker exec docker-api-1 curl -s http://localhost:5001/health
         break
     fi
     echo "Waiting... ($i/60)"
@@ -62,7 +63,7 @@ for i in $(seq 1 60); do
 done
 
 # Final check
-if ! curl -sf http://localhost:80/health > /dev/null 2>&1; then
+if ! docker exec docker-api-1 curl -sf http://localhost:5001/health > /dev/null 2>&1; then
     echo "Dify not responding yet. Check logs:"
     echo "  cd /opt/dify-rag/dify/docker && docker compose logs -f"
     exit 1
