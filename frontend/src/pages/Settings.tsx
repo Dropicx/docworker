@@ -1,20 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Stethoscope,
   Settings as SettingsIcon,
   FileText,
   Workflow,
   Activity,
   ArrowLeft,
-  User,
-  LogOut,
   Loader2,
   Users,
   DollarSign,
   MessageSquare,
   Brain,
 } from 'lucide-react';
+import Header from '../components/Header';
 import { useAuth } from '../contexts/AuthContext';
 import PipelineBuilder from '../components/settings/PipelineBuilder';
 import DocumentClassManager from '../components/settings/DocumentClassManager';
@@ -28,7 +26,7 @@ import { pipelineApi } from '../services/pipelineApi';
 
 const Settings: React.FC = () => {
   const navigate = useNavigate();
-  const { user, tokens, logout, isLoading } = useAuth();
+  const { tokens, isLoading } = useAuth();
   const [activeTab, setActiveTab] = useState<'pipeline' | 'classes' | 'costs' | 'feedback' | 'users' | 'monitoring' | 'models'>('pipeline');
   const [tokenReady, setTokenReady] = useState(false);
 
@@ -44,15 +42,6 @@ const Settings: React.FC = () => {
     }
   }, [tokens, isLoading]);
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      navigate('/');
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-  };
-
   const tabs = [
     { id: 'pipeline', label: 'Pipeline', icon: Workflow },
     { id: 'classes', label: 'Dokumentklassen', icon: FileText },
@@ -65,50 +54,7 @@ const Settings: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 header-blur">
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
-            {/* Logo */}
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity"
-            >
-              <div className="hero-gradient p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-soft">
-                <Stethoscope className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <div className="text-left">
-                <h1 className="text-lg sm:text-2xl font-bold text-primary-900 tracking-tight">
-                  HealthLingo
-                </h1>
-                <p className="text-xs sm:text-sm text-primary-600 font-medium">Einstellungen</p>
-              </div>
-            </button>
-
-            {/* User Menu */}
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              {user && (
-                <div className="flex items-center space-x-2 px-3 py-1.5 bg-brand-50 rounded-lg">
-                  <User className="w-4 h-4 text-brand-600" />
-                  <span className="text-sm font-medium text-brand-700 hidden sm:inline">
-                    {user.full_name || user.email}
-                  </span>
-                  <span className="text-xs text-brand-600 bg-brand-100 px-2 py-0.5 rounded-full">
-                    {user.role === 'admin' ? 'Admin' : 'User'}
-                  </span>
-                </div>
-              )}
-              <button
-                onClick={handleLogout}
-                className="p-2 text-primary-600 hover:text-error-600 hover:bg-error-50 rounded-lg transition-all duration-200 group"
-                title="Abmelden"
-              >
-                <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <Header subtitle="Einstellungen" />
 
       {/* Main Content */}
       <main className="flex-1 py-6 sm:py-8">

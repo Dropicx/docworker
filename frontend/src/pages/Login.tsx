@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Stethoscope, Eye, EyeOff, AlertCircle, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, AlertCircle, Loader2, Stethoscope } from 'lucide-react';
+import Header from '../components/Header';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -64,29 +65,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
-      {/* Header */}
-      <header className="sticky top-0 z-50 header-blur">
-        <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 sm:h-20">
-            <button
-              onClick={handleBackToHome}
-              className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity"
-            >
-              <div className="hero-gradient p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-soft">
-                <Stethoscope className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <div className="text-left">
-                <h1 className="text-lg sm:text-2xl font-bold text-primary-900 tracking-tight">
-                  HealthLingo
-                </h1>
-                <p className="text-xs sm:text-sm text-primary-600 font-medium">
-                  Medizinische Dokumente verstehen
-                </p>
-              </div>
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header showHealthIndicator={false} />
 
       {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">

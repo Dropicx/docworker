@@ -15,7 +15,7 @@ from slowapi.util import get_remote_address
 from app.core.config import settings
 from app.core.error_middleware import register_error_handlers
 from app.database.init_db import init_database
-from app.routers import health, process, upload
+from app.routers import chat, health, process, upload
 from app.routers.admin.config import router as admin_config_router
 from app.routers.api_keys import router as api_keys_router
 from app.routers.audit import router as audit_router
@@ -274,6 +274,7 @@ app.include_router(
 app.include_router(
     feedback_router, tags=["feedback"]
 )  # User feedback system with GDPR data protection (Issue #47)
+app.include_router(chat.router, tags=["chat"])  # GuidelineChat RAG streaming proxy
 
 
 @app.get("/")
