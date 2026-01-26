@@ -6,6 +6,7 @@ import React from 'react';
 import { User, BookOpen, Loader2 } from 'lucide-react';
 import { ChatMessage as ChatMessageType } from '../../types/chat';
 import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -54,8 +55,18 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
           ) : isUser ? (
             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
           ) : (
-            <div className="prose prose-sm max-w-none prose-neutral prose-p:my-1 prose-headings:my-2 prose-ul:my-1 prose-li:my-0.5">
-              <ReactMarkdown>{message.content}</ReactMarkdown>
+            <div className="prose prose-sm max-w-none prose-neutral
+              prose-p:my-3 prose-p:leading-relaxed
+              prose-headings:mt-4 prose-headings:mb-2 prose-headings:font-semibold
+              prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
+              prose-ul:my-3 prose-ul:ml-4 prose-ol:my-3 prose-ol:ml-4
+              prose-li:my-1.5 prose-li:leading-relaxed
+              prose-strong:text-neutral-900
+              prose-code:bg-neutral-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs
+              prose-blockquote:border-l-brand-500 prose-blockquote:bg-brand-50 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:my-3
+              prose-hr:my-4
+            ">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
             </div>
           )}
 
