@@ -1,8 +1,12 @@
 """
 Chat Router for GuidelineChat
 
-Streaming proxy endpoint for Dify RAG service.
+Streaming proxy endpoint for multiple Dify RAG apps.
 Uses SSE (Server-Sent Events) for real-time streaming responses.
+
+Supports multiple chat modes:
+- guidelines: Q&A for medical guidelines (AWMF)
+- befund: Generate recommendation text for Befundberichte
 """
 
 import logging
@@ -17,9 +21,25 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
-# Configuration from environment (reuse existing Dify config)
-DIFY_RAG_URL = os.getenv("DIFY_RAG_URL", "")
-DIFY_RAG_API_KEY = os.getenv("DIFY_RAG_API_KEY", "")
+# Base Dify URL (same for all apps)
+DIFY_BASE_URL = os.getenv("DIFY_RAG_URL", "")
+
+# Multiple Dify app configurations
+# Each app has its own API key configured in Dify
+DIFY_APPS = {
+    "guidelines": {
+        "name": "Leitlinien Q&A",
+        "description": "Fragen zu AWMF-Leitlinien beantworten",
+        "api_key": os.getenv("DIFY_RAG_API_KEY", ""),  # Existing key
+        "icon": "book-open",
+    },
+    "befund": {
+        "name": "Befund-Empfehlungen",
+        "description": "Leitlinienbasierte Empfehlungstexte generieren",
+        "api_key": os.getenv("DIFY_BEFUND_API_KEY", ""),  # New key for Befund app
+        "icon": "file-text",
+    },
+}
 
 
 class ChatRequest(BaseModel):
@@ -27,6 +47,34 @@ class ChatRequest(BaseModel):
 
     query: str
     conversation_id: str | None = None
+    app_id: str = "guidelines"  # Default to guidelines app
+
+
+class AppInfo(BaseModel):
+    """Response model for app information."""
+
+    id: str
+    name: str
+    description: str
+    icon: str
+    available: bool
+
+
+@router.get("/apps")
+async def list_chat_apps() -> list[AppInfo]:
+    """List available chat apps/modes."""
+    apps = []
+    for app_id, config in DIFY_APPS.items():
+        apps.append(
+            AppInfo(
+                id=app_id,
+                name=config["name"],
+                description=config["description"],
+                icon=config["icon"],
+                available=bool(config["api_key"] and DIFY_BASE_URL),
+            )
+        )
+    return apps
 
 
 @router.post("/message")
@@ -34,12 +82,22 @@ async def stream_chat_message(request: ChatRequest):
     """
     Proxy chat message to Dify with SSE streaming.
 
-    Uses the existing Dify RAG configuration but with streaming mode
-    for real-time response delivery.
+    Supports multiple Dify apps via app_id parameter.
     """
-    if not DIFY_RAG_URL or not DIFY_RAG_API_KEY:
+    # Get app configuration
+    app_config = DIFY_APPS.get(request.app_id)
+    if not app_config:
         raise HTTPException(
-            status_code=503, detail="Chat service not configured. Please set DIFY_RAG_URL and DIFY_RAG_API_KEY."
+            status_code=400,
+            detail=f"Unknown app_id: {request.app_id}. Available: {list(DIFY_APPS.keys())}",
+        )
+
+    api_key = app_config["api_key"]
+
+    if not DIFY_BASE_URL or not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Chat app '{request.app_id}' not configured. Missing API key or base URL.",
         )
 
     async def generate():
@@ -59,10 +117,10 @@ async def stream_chat_message(request: ChatRequest):
 
                 async with client.stream(
                     "POST",
-                    f"{DIFY_RAG_URL}/v1/chat-messages",
+                    f"{DIFY_BASE_URL}/v1/chat-messages",
                     json=payload,
                     headers={
-                        "Authorization": f"Bearer {DIFY_RAG_API_KEY}",
+                        "Authorization": f"Bearer {api_key}",
                         "Content-Type": "application/json",
                     },
                     timeout=120.0,
@@ -103,31 +161,40 @@ async def stream_chat_message(request: ChatRequest):
 @router.get("/health")
 async def chat_health():
     """Check health of chat service (Dify connection)."""
-    if not DIFY_RAG_URL:
-        return {"status": "not_configured", "url": None}
+    if not DIFY_BASE_URL:
+        return {"status": "not_configured", "url": None, "apps": {}}
+
+    # Check which apps are configured
+    apps_status = {}
+    for app_id, config in DIFY_APPS.items():
+        apps_status[app_id] = {
+            "name": config["name"],
+            "configured": bool(config["api_key"]),
+        }
 
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{DIFY_RAG_URL}/health")
+            response = await client.get(f"{DIFY_BASE_URL}/health")
 
             if response.status_code == 200:
                 return {
                     "status": "healthy",
-                    "url": DIFY_RAG_URL,
-                    "api_key_configured": bool(DIFY_RAG_API_KEY),
+                    "url": DIFY_BASE_URL,
+                    "apps": apps_status,
                 }
             else:
                 return {
                     "status": "error",
-                    "url": DIFY_RAG_URL,
+                    "url": DIFY_BASE_URL,
                     "error": f"HTTP {response.status_code}",
+                    "apps": apps_status,
                 }
 
     except httpx.TimeoutException:
-        return {"status": "timeout", "url": DIFY_RAG_URL, "error": "Connection timeout"}
+        return {"status": "timeout", "url": DIFY_BASE_URL, "error": "Connection timeout", "apps": apps_status}
 
     except httpx.ConnectError as e:
-        return {"status": "unreachable", "url": DIFY_RAG_URL, "error": str(e)}
+        return {"status": "unreachable", "url": DIFY_BASE_URL, "error": str(e), "apps": apps_status}
 
     except Exception as e:
-        return {"status": "error", "url": DIFY_RAG_URL, "error": str(e)}
+        return {"status": "error", "url": DIFY_BASE_URL, "error": str(e), "apps": apps_status}

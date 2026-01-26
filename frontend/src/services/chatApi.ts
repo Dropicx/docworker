@@ -4,21 +4,48 @@
  * Uses fetch API for SSE streaming (axios doesn't support SSE well).
  */
 
-import { ChatStreamEvent } from '../types/chat';
+import { ChatStreamEvent, ChatApp } from '../types/chat';
 
 // Base API URL
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+/**
+ * Fetch available chat apps from the backend.
+ */
+export async function getChatApps(): Promise<ChatApp[]> {
+  try {
+    const response = await fetch(`${API_URL}/chat/apps`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch apps: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch chat apps:', error);
+    // Return default apps if fetch fails
+    return [
+      {
+        id: 'guidelines',
+        name: 'Leitlinien Q&A',
+        description: 'Fragen zu AWMF-Leitlinien beantworten',
+        icon: 'book-open',
+        available: true,
+      },
+    ];
+  }
+}
 
 /**
  * Stream chat message from the backend (SSE).
  *
  * @param query - The user's message
  * @param conversationId - Optional Dify conversation ID for context
+ * @param appId - Which Dify app to use (default: guidelines)
  * @yields ChatStreamEvent objects as they arrive
  */
 export async function* streamChatMessage(
   query: string,
-  conversationId?: string
+  conversationId?: string,
+  appId: string = 'guidelines'
 ): AsyncGenerator<ChatStreamEvent> {
   const response = await fetch(`${API_URL}/chat/message`, {
     method: 'POST',
@@ -28,6 +55,7 @@ export async function* streamChatMessage(
     body: JSON.stringify({
       query,
       conversation_id: conversationId,
+      app_id: appId,
     }),
   });
 

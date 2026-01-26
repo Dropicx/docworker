@@ -13,10 +13,19 @@ export interface ChatMessage {
 export interface ChatConversation {
   id: string;
   difyConversationId?: string;
+  appId: string;  // Which Dify app this conversation uses
   title: string;
   messages: ChatMessage[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ChatApp {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  available: boolean;
 }
 
 export interface ChatStorageSchema {

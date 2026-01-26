@@ -92,9 +92,10 @@ export function useChatHistory() {
   /**
    * Create a new conversation.
    */
-  const createConversation = useCallback((): ChatConversation => {
+  const createConversation = useCallback((appId: string = 'guidelines'): ChatConversation => {
     const newConversation: ChatConversation = {
       id: generateId(),
+      appId,
       title: 'Neue Unterhaltung',
       messages: [],
       createdAt: new Date().toISOString(),
@@ -144,15 +145,17 @@ export function useChatHistory() {
         // Find or create conversation
         let targetConv = conversations.find(c => c.id === targetId);
         if (!targetConv) {
-          targetConv = {
+          const newConv: ChatConversation = {
             id: generateId(),
+            appId: 'guidelines', // Default app for auto-created conversations
             title: 'Neue Unterhaltung',
             messages: [],
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
           };
-          conversations = [targetConv, ...conversations];
-          activeId = targetConv.id;
+          targetConv = newConv;
+          conversations = [newConv, ...conversations];
+          activeId = newConv.id;
         }
 
         // Update conversation with new message
