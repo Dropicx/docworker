@@ -270,33 +270,88 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
 
   return (
     <div className="space-y-6 sm:space-y-8 animate-fade-in">
-      {/* Guidelines Loading Indicator - Sticky top-right */}
-      {guidelinesData?.status !== 'not_configured' && (
-        <GuidelinesIndicator
-          status={guidelinesLoading ? 'loading' : guidelinesData?.status || 'idle'}
-          onScrollToGuidelines={scrollToGuidelines}
-          errorMessage={guidelinesData?.error_message}
-        />
-      )}
-
-      {/* Hero Section - Mobile Optimized */}
-      <div className="text-center space-y-4 sm:space-y-6">
-        <div className="relative">
-          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-success-500 via-brand-600 to-accent-600 rounded-2xl sm:rounded-3xl flex items-center justify-center mx-auto shadow-glow">
-            <Sparkles className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+      {/* Hero Section - Horizontal layout with guidelines loading on right */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-6">
+        {/* Left side: Icon + Text */}
+        <div className="flex items-center space-x-4 sm:space-x-5">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 bg-gradient-to-br from-success-500 via-brand-600 to-accent-600 rounded-2xl flex items-center justify-center shadow-glow flex-shrink-0">
+            <Sparkles className="w-7 h-7 sm:w-8 sm:h-8 text-white" />
+          </div>
+          <div>
+            <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary-900 via-brand-700 to-success-700 bg-clip-text text-transparent">
+              Übersetzung abgeschlossen
+            </h2>
+            <p className="text-sm sm:text-base text-primary-600">
+              {result.language_translated_text
+                ? 'Ihr Dokument wurde vereinfacht und übersetzt'
+                : 'Ihr Dokument wurde in verständliche Sprache übersetzt'}
+            </p>
           </div>
         </div>
 
-        <div className="space-y-2 px-4 sm:px-0">
-          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary-900 via-brand-700 to-success-700 bg-clip-text text-transparent">
-            Übersetzung abgeschlossen
-          </h2>
-          <p className="text-base sm:text-lg text-primary-600 max-w-3xl mx-auto">
-            {result.language_translated_text
-              ? 'Ihr medizinisches Dokument wurde vereinfacht und übersetzt'
-              : 'Ihr medizinisches Dokument wurde erfolgreich in verständliche Sprache übersetzt'}
-          </p>
-        </div>
+        {/* Right side: Guidelines loading status */}
+        {guidelinesData?.status !== 'not_configured' && (
+          <div className="flex items-center space-x-3 sm:space-x-4 bg-gradient-to-r from-brand-50 to-accent-50 rounded-xl px-4 py-3 sm:px-5 sm:py-4 border border-brand-200/50 shadow-soft">
+            {guidelinesLoading ? (
+              <>
+                <div className="relative flex-shrink-0">
+                  <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-brand-100 flex items-center justify-center">
+                    <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-brand-500" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white bg-brand-500 flex items-center justify-center">
+                    <div className="w-2 h-2 rounded-full border border-white border-t-transparent animate-spin" />
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm sm:text-base font-semibold text-brand-800">
+                    Medizinische Leitlinien
+                  </p>
+                  <p className="text-xs sm:text-sm text-brand-600">
+                    Passende AWMF-Empfehlungen werden gesucht...
+                  </p>
+                  <p className="text-xs text-brand-500 mt-0.5">
+                    Ergebnis erscheint unten auf dieser Seite
+                  </p>
+                </div>
+              </>
+            ) : guidelinesData?.status === 'success' ? (
+              <>
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-success-100 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 text-success-600" />
+                </div>
+                <div>
+                  <p className="text-sm sm:text-base font-semibold text-success-800">
+                    Leitlinien gefunden
+                  </p>
+                  <p className="text-xs sm:text-sm text-success-600 mb-1">
+                    Relevante AWMF-Empfehlungen verfügbar
+                  </p>
+                  <button
+                    onClick={scrollToGuidelines}
+                    className="text-xs sm:text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center space-x-1 group"
+                  >
+                    <span>Jetzt ansehen</span>
+                    <span className="group-hover:translate-y-0.5 transition-transform">↓</span>
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-neutral-100 flex items-center justify-center flex-shrink-0">
+                  <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-neutral-400" />
+                </div>
+                <div>
+                  <p className="text-sm sm:text-base font-semibold text-neutral-700">
+                    Keine passenden Leitlinien
+                  </p>
+                  <p className="text-xs sm:text-sm text-neutral-500">
+                    Für diesen Dokumenttyp wurden keine AWMF-Empfehlungen gefunden
+                  </p>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Sprache Card - Mobile Optimized */}
