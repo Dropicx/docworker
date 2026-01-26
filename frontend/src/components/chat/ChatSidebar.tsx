@@ -74,8 +74,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       <aside
         className={`
           fixed md:relative inset-y-0 left-0 z-40
-          w-72 bg-white border-r border-neutral-200
-          flex flex-col
+          w-72 h-full bg-white border-r border-neutral-200
+          flex flex-col overflow-hidden
           transform transition-transform duration-200 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           md:transform-none

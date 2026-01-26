@@ -27,7 +27,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   // Empty state
   if (messages.length === 0) {
     return (
-      <div className="flex-1 flex items-center justify-center p-8">
+      <div className="flex-1 overflow-y-auto flex items-center justify-center p-8">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-accent-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <BookOpen className="w-8 h-8 text-accent-600" />

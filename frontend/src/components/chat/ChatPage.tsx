@@ -15,7 +15,6 @@ import { ChatInput } from './ChatInput';
 import { useChatHistory } from '../../hooks/useChatHistory';
 import { streamChatMessage, getChatApps } from '../../services/chatApi';
 import { ChatApp } from '../../types/chat';
-import Footer from '../Footer';
 
 // Icon mapping for apps
 const APP_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -209,11 +208,13 @@ export const ChatPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
+    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-neutral-50 via-white to-accent-50/30">
+      {/* Fixed Header */}
       <Header />
 
+      {/* Main Content - fills remaining height */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Sidebar */}
+        {/* Sidebar - independently scrollable */}
         <ChatSidebar
           conversations={conversations}
           activeId={activeConversationId}
@@ -224,11 +225,11 @@ export const ChatPage: React.FC = () => {
           onToggle={() => setSidebarOpen(!sidebarOpen)}
         />
 
-        {/* Main chat area */}
-        <main className="flex-1 flex flex-col min-w-0">
-          {/* App Selector Bar */}
+        {/* Main chat area - flex column with fixed input */}
+        <main className="flex-1 flex flex-col min-w-0 min-h-0 bg-white overflow-hidden">
+          {/* App Selector Bar - fixed at top */}
           {apps.length > 1 && (
-            <div className="border-b border-neutral-200 bg-white px-4 py-2">
+            <div className="flex-shrink-0 border-b border-neutral-200 bg-white px-4 py-2 z-10">
               <div className="relative inline-block">
                 <button
                   onClick={() => setAppSelectorOpen(!appSelectorOpen)}
@@ -253,7 +254,7 @@ export const ChatPage: React.FC = () => {
                 {appSelectorOpen && (
                   <div className="absolute left-0 top-full mt-1 w-72 bg-white rounded-lg shadow-lg border border-neutral-200 z-50 overflow-hidden">
                     <div className="px-3 py-2 bg-neutral-50 border-b border-neutral-200">
-                      <span className="text-xs font-medium text-neutral-500">Assistent wählen</span>
+                      <span className="text-xs font-medium text-neutral-500">Assistent wahlen</span>
                     </div>
                     {apps.map(app => {
                       const IconComponent = APP_ICONS[app.icon] || BookOpen;
@@ -307,7 +308,10 @@ export const ChatPage: React.FC = () => {
             </div>
           )}
 
+          {/* Message List - scrollable area */}
           <ChatMessageList messages={messages} isStreaming={isStreaming} />
+
+          {/* Input - fixed at bottom */}
           <ChatInput
             onSend={handleSend}
             disabled={isStreaming}
@@ -315,8 +319,6 @@ export const ChatPage: React.FC = () => {
           />
         </main>
       </div>
-
-      <Footer />
     </div>
   );
 };
