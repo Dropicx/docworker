@@ -112,9 +112,14 @@ variable "dify_secret_key" {
 }
 
 variable "dify_init_password" {
-  description = "Dify initial admin password"
+  description = "Dify initial admin password (max 30 characters)"
   type        = string
   default     = "changeme123"
+
+  validation {
+    condition     = length(var.dify_init_password) <= 30
+    error_message = "Dify init password must be 30 characters or less."
+  }
 }
 
 # Object Storage variables (for PDF source)
@@ -140,6 +145,20 @@ variable "s3_bucket" {
   description = "Object Storage bucket name for AWMF PDFs"
   type        = string
   default     = "awmf-guidelines"
+}
+
+# AWMF Weekly Sync variables
+variable "dify_dataset_api_key" {
+  description = "Dify Dataset API key for AWMF Knowledge Base (create after initial setup)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "dify_dataset_id" {
+  description = "Dify Dataset ID for AWMF Knowledge Base (create after initial setup)"
+  type        = string
+  default     = ""
 }
 
 # -----------------------------------------------------------------------------
@@ -251,7 +270,7 @@ write_files:
       # Database
       DB_USERNAME=dify
       DB_PASSWORD=${random_password.root_password[0].result}
-      DB_HOST=db
+      DB_HOST=db_postgres
       DB_PORT=5432
       DB_DATABASE=dify
 
@@ -265,6 +284,9 @@ write_files:
       # Certbot (not used, but required by Dify docker-compose)
       CERTBOT_EMAIL=
       CERTBOT_DOMAIN=
+
+      # Docker Compose profiles (enable postgresql and weaviate)
+      COMPOSE_PROFILES=postgresql,weaviate
     permissions: '0600'
     owner: root:root
 
@@ -272,7 +294,7 @@ write_files:
   - path: /opt/dify-rag/docker-compose.override.yml
     content: |
       services:
-        db:
+        db_postgres:
           volumes:
             - /mnt/rag-data/postgres:/var/lib/postgresql/data
         weaviate:
@@ -341,7 +363,7 @@ write_files:
   # Logrotate for deployment logs
   - path: /etc/logrotate.d/dify-rag
     content: |
-      /var/log/dify-rag-deploy.log /var/log/dify-rag-watchdog.log {
+      /var/log/dify-rag-deploy.log /var/log/dify-rag-watchdog.log /var/log/awmf-sync.log {
         daily
         rotate 7
         compress
@@ -350,6 +372,227 @@ write_files:
         notifempty
         create 640 root root
       }
+    permissions: '0644'
+
+  # ==========================================================================
+  # AWMF Weekly Sync - Automated guideline synchronization
+  # ==========================================================================
+
+  # AWMF Sync environment configuration
+  - path: /opt/awmf-sync/.env
+    content: |
+      DIFY_URL=https://${local.domain_name}
+      DIFY_DATASET_API_KEY=${var.dify_dataset_api_key}
+      DIFY_DATASET_ID=${var.dify_dataset_id}
+      S3_ENDPOINT=${var.s3_endpoint}
+      S3_ACCESS_KEY=${var.s3_access_key}
+      S3_SECRET_KEY=${var.s3_secret_key}
+      S3_BUCKET=${var.s3_bucket}
+    permissions: '0600'
+    owner: root:root
+
+  # AWMF Document data model
+  - path: /opt/awmf-sync/scripts/awmf_document.py
+    content: |
+      """AWMF Document data model."""
+      from dataclasses import dataclass
+      import re
+
+      @dataclass
+      class AWMFDocument:
+          """Represents an AWMF guideline PDF."""
+          url: str
+          filename: str
+          registry_number: str
+          variant: str
+          classification: str
+          title: str
+          version_date: str
+          suffix: str | None
+
+          @classmethod
+          def from_url(cls, url: str) -> "AWMFDocument":
+              filename = url.split("/")[-1]
+              pattern = (
+                  r"^(\d{3}-\d{3})([a-z])?_"
+                  r"(S[123][ek]?)?_?"
+                  r"(.+?)_"
+                  r"(\d{4}-\d{2})"
+                  r"(?:-([a-z]+))?"
+                  r"\.pdf$$"
+              )
+              match = re.match(pattern, filename, re.IGNORECASE)
+              if match:
+                  return cls(
+                      url=url, filename=filename,
+                      registry_number=match.group(1), variant=match.group(2) or "",
+                      classification=match.group(3) or "", title=match.group(4),
+                      version_date=match.group(5), suffix=match.group(6),
+                  )
+              else:
+                  registry_number, variant, version_date, suffix = "", "", "", None
+                  reg_match = re.match(r"^(\d{3}-\d{3})([a-z])?", filename)
+                  if reg_match:
+                      registry_number, variant = reg_match.group(1), reg_match.group(2) or ""
+                  date_match = re.search(r"_(\d{4}-\d{2})(?:-([a-z]+))?\.pdf$$", filename, re.IGNORECASE)
+                  if date_match:
+                      version_date, suffix = date_match.group(1), date_match.group(2)
+                  return cls(url=url, filename=filename, registry_number=registry_number,
+                            variant=variant, classification="", title=filename.replace(".pdf",""),
+                            version_date=version_date, suffix=suffix)
+
+          @property
+          def registry_key(self) -> str:
+              return f"{self.registry_number}{self.variant}"
+
+          @property
+          def base_key(self) -> str:
+              pattern = r"_\d{4}-\d{2}(?:-[a-z]+)?\.pdf$$"
+              return re.sub(pattern, "", self.filename, flags=re.IGNORECASE)
+
+          def __hash__(self): return hash(self.filename)
+          def __eq__(self, other): return isinstance(other, AWMFDocument) and self.filename == other.filename
+
+      def extract_registry_key(filename: str) -> str:
+          pattern = r"_\d{4}-\d{2}(?:-[a-z]+)?\.pdf$$"
+          match = re.search(pattern, filename, re.IGNORECASE)
+          return filename[:match.start()] if match else filename.replace(".pdf", "")
+    permissions: '0644'
+
+  # AWMF Crawler (URL extraction)
+  - path: /opt/awmf-sync/rag/awmf_crawler.py
+    content: |
+      #!/usr/bin/env python3
+      """AWMF Crawler - URL extraction only."""
+      import asyncio
+      import sys
+      sys.path.insert(0, "/opt/awmf-sync")
+      from scripts.awmf_document import AWMFDocument
+
+      try:
+          from playwright.async_api import async_playwright
+      except ImportError:
+          import subprocess
+          subprocess.run(["pip3", "install", "playwright"], check=True)
+          subprocess.run(["python3", "-m", "playwright", "install", "chromium"], check=True)
+          from playwright.async_api import async_playwright
+
+      BASE_URL = "https://register.awmf.org"
+      LEITLINIEN_URL = f"{BASE_URL}/de/leitlinien/aktuelle-leitlinien"
+      REQUEST_DELAY = 2
+
+      async def get_fachgesellschaft_links(page):
+          await page.goto(LEITLINIEN_URL, wait_until="networkidle", timeout=60000)
+          await page.wait_for_timeout(5000)
+          links = await page.eval_on_selector_all(
+              "a[href*='/fachgesellschaft/']",
+              "elements => elements.map(el => ({href: el.href, text: el.textContent.trim()}))"
+          )
+          seen = set()
+          return [l for l in links if l["href"] not in seen and not seen.add(l["href"])]
+
+      async def get_leitlinien_links(page, fg_url, fg_name):
+          await page.goto(fg_url, wait_until="networkidle", timeout=60000)
+          await page.wait_for_timeout(4000)
+          links = await page.eval_on_selector_all(
+              "a[href*='/leitlinien/detail/']",
+              "elements => elements.map(el => ({href: el.href, text: el.textContent.trim()}))"
+          )
+          seen = set()
+          return [l for l in links if l["href"] not in seen and not seen.add(l["href"])]
+
+      async def get_pdf_links(page, leitlinie_url):
+          try:
+              await page.goto(leitlinie_url, wait_until="networkidle", timeout=60000)
+              await page.wait_for_timeout(4000)
+              pdf_links = await page.eval_on_selector_all("a[href$$='.pdf']",
+                  "elements => elements.map(el => ({href: el.href, text: el.textContent.trim()}))")
+              more_links = await page.eval_on_selector_all("a[href*='assets/guidelines']",
+                  "elements => elements.map(el => ({href: el.href, text: el.textContent.trim()}))")
+              seen = set()
+              return [l for l in pdf_links + more_links if l["href"].endswith(".pdf") and l["href"] not in seen and not seen.add(l["href"])]
+          except Exception as e:
+              print(f"Error loading {leitlinie_url}: {e}")
+              return []
+
+      async def crawl_for_urls(progress_callback=None):
+          async def log(msg):
+              print(msg)
+              if progress_callback: await progress_callback(msg)
+
+          await log("[1/3] Starting AWMF registry crawl...")
+          async with async_playwright() as p:
+              browser = await p.chromium.launch(headless=True)
+              context = await browser.new_context(user_agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36")
+              page = await context.new_page()
+              fg_links = await get_fachgesellschaft_links(page)
+              await log(f"    Found {len(fg_links)} Fachgesellschaft pages")
+
+              all_leitlinien = []
+              await log(f"[2/3] Scanning Fachgesellschaft pages...")
+              for i, fg in enumerate(fg_links):
+                  if (i + 1) % 10 == 0: await log(f"    [{i+1}/{len(fg_links)}] Scanning...")
+                  all_leitlinien.extend(await get_leitlinien_links(page, fg["href"], fg["text"]))
+                  await asyncio.sleep(REQUEST_DELAY)
+
+              seen = set()
+              unique_leitlinien = [ll for ll in all_leitlinien if ll["href"] not in seen and not seen.add(ll["href"])]
+              await log(f"    Total unique Leitlinien: {len(unique_leitlinien)}")
+
+              all_pdfs = []
+              await log(f"[3/3] Scanning Leitlinien for PDFs...")
+              for i, ll in enumerate(unique_leitlinien):
+                  if (i + 1) % 50 == 0: await log(f"    [{i+1}/{len(unique_leitlinien)}] Processing...")
+                  for pdf in await get_pdf_links(page, ll["href"]):
+                      if pdf["href"] not in [p["href"] for p in all_pdfs]: all_pdfs.append(pdf)
+                  await asyncio.sleep(REQUEST_DELAY)
+              await browser.close()
+
+          await log(f"    Building index for {len(all_pdfs)} PDFs...")
+          documents = {AWMFDocument.from_url(pdf["href"]).filename: AWMFDocument.from_url(pdf["href"]) for pdf in all_pdfs}
+          await log(f"    Crawl complete: {len(documents)} unique PDFs")
+          return documents
+    permissions: '0755'
+
+  # AWMF Weekly Sync main script
+  - path: /opt/awmf-sync/awmf_weekly_sync.py
+    encoding: b64
+    content: ${filebase64("${path.module}/scripts/awmf_weekly_sync.py")}
+    permissions: '0755'
+
+  # AWMF Sync systemd service
+  - path: /etc/systemd/system/awmf-sync.service
+    content: |
+      [Unit]
+      Description=AWMF Guidelines Weekly Sync
+      After=network.target docker.service
+
+      [Service]
+      Type=oneshot
+      WorkingDirectory=/opt/awmf-sync
+      EnvironmentFile=/opt/awmf-sync/.env
+      ExecStart=/usr/bin/python3 /opt/awmf-sync/awmf_weekly_sync.py
+      StandardOutput=append:/var/log/awmf-sync.log
+      StandardError=append:/var/log/awmf-sync.log
+      TimeoutStartSec=7200
+
+      [Install]
+      WantedBy=multi-user.target
+    permissions: '0644'
+
+  # AWMF Sync systemd timer (weekly Sunday 2 AM CET)
+  - path: /etc/systemd/system/awmf-sync.timer
+    content: |
+      [Unit]
+      Description=Run AWMF sync weekly on Sunday at 2 AM CET
+
+      [Timer]
+      OnCalendar=Sun *-*-* 02:00:00 Europe/Berlin
+      Persistent=true
+      RandomizedDelaySec=300
+
+      [Install]
+      WantedBy=timers.target
     permissions: '0644'
 
 runcmd:
@@ -371,6 +614,8 @@ runcmd:
   - mkdir -p /mnt/rag-data/weaviate
   - mkdir -p /mnt/rag-data/redis
   - mkdir -p /mnt/rag-data/storage
+  # Fix storage permissions for Dify API (runs as uid 1001)
+  - chown -R 1001:1001 /mnt/rag-data/storage
   # Secure file ownership
   - chown -R root:root /opt/dify-rag
   - chmod 755 /opt/dify-rag/deploy.sh
@@ -393,6 +638,28 @@ runcmd:
     cd /opt/dify-rag && ./deploy.sh >> /var/log/dify-rag-deploy.log 2>&1
     # Start via systemd after initial deploy
     systemctl start dify-rag.service
+  # ==========================================================================
+  # AWMF Weekly Sync Setup
+  # ==========================================================================
+  - mkdir -p /opt/awmf-sync/scripts /opt/awmf-sync/rag
+  - |
+    echo "Installing AWMF sync dependencies..."
+    apt-get install -y -qq python3-pip python3-venv
+    pip3 install --break-system-packages boto3 httpx playwright aiohttp
+    python3 -m playwright install chromium --with-deps
+    echo "AWMF sync dependencies installed"
+  - chmod 600 /opt/awmf-sync/.env
+  - chmod 755 /opt/awmf-sync/awmf_weekly_sync.py
+  - |
+    # Enable AWMF sync timer (only if credentials are configured)
+    if grep -q "DIFY_DATASET_API_KEY=dataset-" /opt/awmf-sync/.env 2>/dev/null; then
+      systemctl daemon-reload
+      systemctl enable awmf-sync.timer
+      systemctl start awmf-sync.timer
+      echo "AWMF sync timer enabled"
+    else
+      echo "AWMF sync timer NOT enabled - configure dify_dataset_api_key and dify_dataset_id in terraform.tfvars after creating Knowledge Base"
+    fi
 
 final_message: "Dify RAG service deployment complete! Service managed by systemd."
 EOF
@@ -645,15 +912,31 @@ output "deploy_instructions" {
        a. Log into https://${local.domain_name} with init password
        b. Add Mistral as model provider
        c. Create Knowledge Base "AWMF Leitlinien"
-       d. Run bulk PDF upload script
-       e. Create Chat App, get API key
+       d. Get Dataset API key and ID from Knowledge Base settings
+       e. Run bulk PDF upload script
+       f. Create Chat App, get API key
 
-    3. Backend environment variables:
+    3. Enable AWMF Weekly Sync (after step 2):
+       a. Add to terraform.tfvars:
+          dify_dataset_api_key = "dataset-YOUR_KEY"
+          dify_dataset_id      = "YOUR_DATASET_ID"
+       b. Run: terraform apply
+       c. Or manually on server:
+          Edit /opt/awmf-sync/.env
+          systemctl enable --now awmf-sync.timer
+
+    4. AWMF Sync Commands:
+       - Check timer: systemctl list-timers awmf-sync.timer
+       - Manual sync: systemctl start awmf-sync.service
+       - View logs: tail -f /var/log/awmf-sync.log
+       - Dry run: cd /opt/awmf-sync && source .env && python3 awmf_weekly_sync.py --dry-run
+
+    5. Backend environment variables:
        DIFY_RAG_URL=https://${local.domain_name}
        DIFY_RAG_API_KEY=app-YOUR_DIFY_APP_KEY
        USE_DIFY_RAG=true
 
-    4. Health check: https://${local.domain_name}/health
+    6. Health check: https://${local.domain_name}/health
 
     ============================================
   EOF

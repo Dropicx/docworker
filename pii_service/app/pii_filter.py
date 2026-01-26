@@ -238,6 +238,17 @@ class PIIFilter:
                 r"(?<!Vitamin )(?<!Typ )(?<![a-zäöü]\.)\b([A-Z]\.)\s*([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)?)\b"
             ),
 
+            # Patient name in header block after PLZ/City or placeholder
+            # Catches: "[PLZ_CITY], Fritz, , Status M" or "12345 Berlin, Hans, , Status"
+            # Pattern: After city/PLZ, comma, then a capitalized German first name, comma, then Status
+            "name_in_header_block": re.compile(
+                r"(?:\]|[a-zäöüß])\s*,\s*"  # After placeholder ] or lowercase letter (city), comma
+                r"([A-ZÄÖÜ][a-zäöüß]+)"     # Capture first name (capitalized)
+                r"\s*,\s*,?\s*"              # Comma(s)
+                r"(?:Status|$)",             # Followed by "Status" or end of line
+                re.IGNORECASE
+            ),
+
             # =============================================================
             # DATE PATTERNS (NEW - German month names)
             # =============================================================
@@ -434,6 +445,9 @@ class PIIFilter:
                 r"(?:Unternehmensgruppe|Rheinland\s+Klinikum|Lukaskrankenhaus|"
                 r"Universitätsklinikum|Städtisches\s+Klinikum|Kreiskrankenhaus|"
                 r"Marienhospital|St\.\s*[\w\-]+\s*(?:Hospital|Krankenhaus)|"
+                r"Maria\s+Hilf\s+Kliniken?|"  # Maria Hilf Kliniken
+                r"Bethesda\s+(?:Krankenhaus|Klinik)|"  # Bethesda hospitals
+                r"[A-ZÄÖÜ][a-zäöüß]+\s+Hilf\s+Kliniken?|"  # [Name] Hilf Kliniken pattern
                 r"Klinikum\s+\w+|Krankenhaus\s+\w+)\b"
                 r"[^.]*?(?:GmbH|gGmbH|AG|e\.V\.)?",
                 re.IGNORECASE
@@ -451,6 +465,15 @@ class PIIFilter:
             "hospital_department": re.compile(
                 r"(?:Klinik\s+für|Abteilung\s+für|Institut\s+für|Zentrum\s+für)\s+"
                 r"[A-ZÄÖÜ][a-zäöüß]+(?:\s+(?:und|u\.)\s+[A-ZÄÖÜ][a-zäöüß]+)*",
+                re.IGNORECASE
+            ),
+
+            # Hospital name with city in referral context
+            # Catches: "Maria Hilf Kliniken Mönchengladbach", "Universitätsklinikum Köln"
+            "hospital_with_city": re.compile(
+                r"(?:Maria\s+Hilf\s+Kliniken?|Universitätsklinikum|Städtisches\s+Klinikum|"
+                r"[A-ZÄÖÜ][a-zäöüß]+(?:hospital|klinik|kliniken|krankenhaus))"
+                r"\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)",
                 re.IGNORECASE
             ),
         }
@@ -2425,6 +2448,7 @@ class PIIFilter:
             "name_comma_format": "[PATIENT_NAME]",
             "labeled_name": "[PATIENT_NAME]",
             "doctor_initial_name": "[DOCTOR_NAME]",
+            "name_in_header_block": "[NAME]",  # Names in patient header after PLZ/City
 
             # Date patterns
             "birthdate": "[BIRTHDATE]",
@@ -2465,6 +2489,7 @@ class PIIFilter:
 
             # Letterhead patterns
             "hospital_letterhead": "[HOSPITAL_INFO]",
+            "hospital_with_city": "[ORGANIZATION]",  # Hospital names with city
         }
         return placeholder_map.get(pii_type, f"[{pii_type.upper()}]")
 
@@ -2482,6 +2507,7 @@ class PIIFilter:
             "honorific_name",     # Then "Herr Müller", "Frau Schmidt"
             "name_comma_format",  # Then "Müller, Anna"
             "labeled_name",       # Then "Patient: Schmidt"
+            "name_in_header_block",  # Names after PLZ/City in header blocks
         ]
 
         # Patterns that need context-aware processing (not simple substitution)

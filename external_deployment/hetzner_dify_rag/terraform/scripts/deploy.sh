@@ -26,6 +26,9 @@ mkdir -p /mnt/rag-data/weaviate
 mkdir -p /mnt/rag-data/redis
 mkdir -p /mnt/rag-data/storage
 
+# Fix storage permissions for Dify API (runs as uid 1001)
+chown -R 1001:1001 /mnt/rag-data/storage
+
 # 2. Clone Dify docker repo
 if [ ! -d "dify" ]; then
     echo "Cloning Dify repository..."

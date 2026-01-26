@@ -1,0 +1,15 @@
+[Unit]
+Description=AWMF Guidelines Weekly Sync
+After=network.target docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/awmf-sync
+ExecStart=/usr/bin/python3 /opt/awmf-sync/awmf_weekly_sync.py
+EnvironmentFile=/opt/awmf-sync/.env
+StandardOutput=append:/var/log/awmf-sync.log
+StandardError=append:/var/log/awmf-sync.log
+TimeoutStartSec=7200
+
+[Install]
+WantedBy=multi-user.target

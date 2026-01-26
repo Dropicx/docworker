@@ -42,7 +42,8 @@ mistral_api_key = "your-mistral-api-key"
 dify_secret_key = "your-dify-secret-key"
 
 # Optional: Dify initial admin password (default: changeme123)
-dify_init_password = "your-secure-init-password"
+# IMPORTANT: Max 30 characters! Dify validation rejects longer passwords.
+dify_init_password = "your-init-password"
 
 # Required: Hetzner Object Storage credentials
 # Get from: https://console.hetzner.cloud/ -> Object Storage -> Access Keys
@@ -50,3 +51,23 @@ s3_access_key = "your-s3-access-key"
 s3_secret_key = "your-s3-secret-key"
 s3_endpoint   = "https://fsn1.your-objectstorage.com"
 s3_bucket     = "awmf-guidelines"
+
+# =============================================================================
+# AWMF Weekly Sync (Optional - configure after initial setup)
+# =============================================================================
+# These credentials are obtained AFTER creating the Knowledge Base in Dify UI.
+# The weekly sync will automatically keep AWMF guidelines up-to-date.
+#
+# Steps to get these values:
+# 1. Log into Dify UI at https://rag.your-domain.de
+# 2. Create Knowledge Base "AWMF Leitlinien"
+# 3. Go to Knowledge Base Settings -> API Access
+# 4. Copy the Dataset API Key and Dataset ID
+#
+# Leave empty for initial deployment, add later and run: terraform apply
+
+# Dify Dataset API key (starts with "dataset-")
+# dify_dataset_api_key = "dataset-xxxxxxxxxxxxxxxxxxxx"
+
+# Dify Dataset ID (UUID format)
+# dify_dataset_id = "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"

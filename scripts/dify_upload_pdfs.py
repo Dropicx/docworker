@@ -202,7 +202,7 @@ async def main():
         s3_secret_key=S3_SECRET_KEY,
     )
 
-    await uploader.upload_all(delay=1.0)
+    await uploader.upload_all(delay=10.0)  # 10 seconds delay for Titan embeddings
 
 
 if __name__ == "__main__":

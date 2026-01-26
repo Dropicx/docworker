@@ -1,0 +1,10 @@
+[Unit]
+Description=Run AWMF sync weekly on Sunday at 2 AM CET
+
+[Timer]
+OnCalendar=Sun *-*-* 02:00:00 Europe/Berlin
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
