@@ -173,7 +173,12 @@ async def get_guidelines(
     """
     Fetch AWMF guideline recommendations for a completed translation.
 
-    This is a potentially slow operation (up to 90s) as it queries the Dify RAG service.
+    Guidelines are cached in the database following GDPR consent flow:
+    - First fetch: Queries Dify RAG and stores in pipeline_jobs
+    - Subsequent fetches: Returns cached guidelines
+    - Cleanup: Guidelines cleared with other content based on consent
+
+    This is a potentially slow operation (up to 90s) on first fetch.
     Should be called asynchronously after the main result is displayed.
     """
     from app.services.dify_rag_client import DifyRAGClient
@@ -191,7 +196,37 @@ async def get_guidelines(
         )
 
     try:
-        # Get the job to access the translated text
+        # Get job from database to check for cached guidelines
+        job = service.get_job_by_processing_id(processing_id)
+        if not job:
+            raise ValueError(f"Processing job {processing_id} not found")
+
+        # Check for cached guidelines (not cleared by GDPR)
+        if job.guidelines_text and job.guidelines_text != "[Content cleared - GDPR]":
+            return GuidelinesResponse(
+                processing_id=processing_id,
+                status="success",
+                guidelines_text=job.guidelines_text,
+                target_language=target_language,
+                document_type=job.document_type_detected,
+                processing_time_seconds=time.time() - start_time,
+                metadata={"cached": True},
+                timestamp=datetime.now(),
+            )
+
+        # Guidelines cleared by GDPR - return not_available
+        if job.guidelines_text == "[Content cleared - GDPR]":
+            return GuidelinesResponse(
+                processing_id=processing_id,
+                status="not_available",
+                document_type=job.document_type_detected,
+                target_language=target_language,
+                error_message="Guidelines cleared per GDPR policy",
+                processing_time_seconds=time.time() - start_time,
+                timestamp=datetime.now(),
+            )
+
+        # Not cached - fetch from Dify RAG
         result_data = service.get_processing_result(processing_id)
 
         # Use translated text as context for guidelines
@@ -219,6 +254,10 @@ async def get_guidelines(
                 processing_time_seconds=processing_time,
                 timestamp=datetime.now(),
             )
+
+        # Store guidelines in database for future requests (GDPR consent flow)
+        service.update_job_guidelines(processing_id, guidelines_text)
+        logger.info(f"📚 Guidelines cached for {processing_id[:8]}")
 
         # Return successful response with formatted bilingual text
         return GuidelinesResponse(

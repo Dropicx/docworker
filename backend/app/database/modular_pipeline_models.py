@@ -332,6 +332,7 @@ class PipelineJobDB(Base):
     translated_text = Column(Text, nullable=True)  # Final translation (encrypted)
     language_translated_text = Column(Text, nullable=True)  # Multi-language output (encrypted)
     ocr_markdown = Column(Text, nullable=True)  # Markdown OCR (encrypted)
+    guidelines_text = Column(Text, nullable=True)  # AWMF guidelines (encrypted at rest)
 
     # Results: Metadata (unencrypted, queryable)
     document_type_detected = Column(String(100), nullable=True, index=True)

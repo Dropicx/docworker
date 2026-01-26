@@ -487,6 +487,8 @@ class PipelineJobFeedbackRepository:
         }
         if job.language_translated_text:
             gdpr_update["language_translated_text"] = "[Content cleared - GDPR]"
+        if job.guidelines_text:
+            gdpr_update["guidelines_text"] = "[Content cleared - GDPR]"
         # Note: EncryptedRepositoryMixin.update() returns None by design
         self.job_repo.update(job.id, **gdpr_update)
 

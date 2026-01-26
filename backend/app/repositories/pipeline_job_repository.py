@@ -40,6 +40,7 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
         "translated_text",           # Medical content
         "language_translated_text",  # Medical content
         "ocr_markdown",              # Medical content
+        "guidelines_text",           # AWMF guidelines (medical content)
     ]
 
     def __init__(self, db: Session):

@@ -233,6 +233,30 @@ class ProcessingService:
             "timestamp": datetime.now(),
         }
 
+    def get_job_by_processing_id(self, processing_id: str):
+        """
+        Get job record by processing_id.
+
+        Args:
+            processing_id: Unique processing identifier
+
+        Returns:
+            PipelineJobDB instance or None if not found
+        """
+        return self.job_repository.get_by_processing_id(processing_id)
+
+    def update_job_guidelines(self, processing_id: str, guidelines_text: str) -> None:
+        """
+        Store guidelines text in the job record.
+
+        Args:
+            processing_id: Unique processing identifier
+            guidelines_text: Guidelines text to store (will be encrypted at rest)
+        """
+        job = self.job_repository.get_by_processing_id(processing_id)
+        if job:
+            self.job_repository.update(job.id, guidelines_text=guidelines_text)
+
     def _map_status_to_api(self, db_status: StepExecutionStatus, progress: int = 0) -> ProcessingStatus:
         """
         Map database status to API status enum.
