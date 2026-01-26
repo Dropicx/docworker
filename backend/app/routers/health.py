@@ -19,16 +19,15 @@ def check_ocr_capabilities() -> dict:
     Check OCR architecture status
 
     OCR engines:
-    1. Mistral OCR (primary) - Fast, accurate document OCR
-    2. PaddleOCR Hetzner (fallback) - External service via EXTERNAL_OCR_URL
+    1. Mistral OCR (primary) - Fast, accurate document OCR via Mistral AI API
     """
     return {
         "ocr_location": "worker_service",
         "backend_ocr": False,
-        "available_engines": ["MISTRAL_OCR", "PADDLEOCR"],
+        "available_engines": ["MISTRAL_OCR"],
         "architecture": "worker_based",
         "status": "delegated_to_worker",
-        "note": "OCR handled by Celery worker with Mistral OCR (primary) and PaddleOCR Hetzner (fallback)",
+        "note": "OCR handled by Celery worker with Mistral OCR",
     }
 
 
@@ -87,23 +86,6 @@ async def health_check(request: Request = None):
         ovh_client = OVHClient()
         ovh_connected, error_msg = await ovh_client.check_connection()
         services["ovh_api"] = "healthy" if ovh_connected else f"error: {error_msg[:100]}"
-
-        # PaddleOCR External Service prüfen (Hetzner)
-        try:
-            external_ocr_url = os.getenv("EXTERNAL_OCR_URL")
-            if external_ocr_url:
-                import httpx
-
-                async with httpx.AsyncClient(timeout=2.0) as client:
-                    response = await client.get(f"{external_ocr_url}/health")
-                    if response.status_code == 200:
-                        services["paddleocr_hetzner"] = "healthy"
-                    else:
-                        services["paddleocr_hetzner"] = f"error: HTTP {response.status_code}"
-            else:
-                services["paddleocr_hetzner"] = "not_configured"
-        except Exception as e:
-            services["paddleocr_hetzner"] = f"error: {str(e)[:50]}"
 
         # Mistral OCR API prüfen
         mistral_key = os.getenv("MISTRAL_API_KEY")

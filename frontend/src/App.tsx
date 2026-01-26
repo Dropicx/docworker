@@ -221,7 +221,6 @@ function App() {
   const formatServiceName = (name: string) => {
     const names: Record<string, string> = {
       mistral_ocr: 'Mistral OCR',
-      paddleocr_hetzner: 'PaddleOCR',
       ovh_api: 'OVH API',
       worker: 'Worker',
       redis: 'Redis',
@@ -257,7 +256,7 @@ function App() {
     }
 
     // Full dropdown for admin users
-    const keyServices = ['mistral_ocr', 'paddleocr_hetzner', 'ovh_api', 'worker'];
+    const keyServices = ['mistral_ocr', 'ovh_api', 'worker'];
     const displayServices = keyServices.filter(s => health.services[s]);
 
     return (
