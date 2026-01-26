@@ -46,6 +46,11 @@ export const ChatPage: React.FC = () => {
     getChatApps().then(setApps);
   }, []);
 
+  // Start fresh on page visit - no active conversation
+  useEffect(() => {
+    setActiveConversation(null);
+  }, [setActiveConversation]);
+
   // Update selected app when conversation changes
   useEffect(() => {
     if (activeConversation?.appId) {
