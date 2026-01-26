@@ -23,24 +23,41 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
     return null;
   }
 
-  // Loading skeleton
+  // Loading state - horizontal layout with left header and right loading indicator
   if (isLoading) {
     return (
-      <div ref={sectionRef} className="card-elevated border-brand-200/50 animate-pulse">
+      <div ref={sectionRef} className="card-elevated border-brand-200/50 bg-gradient-to-br from-brand-50/30 to-accent-50/30">
         <div className="card-body">
-          <div className="flex items-center space-x-3 mb-6">
-            <div className="w-12 h-12 bg-brand-100 rounded-xl" />
-            <div className="flex-1">
-              <div className="h-6 bg-brand-100 rounded w-64 mb-2" />
-              <div className="h-4 bg-brand-50 rounded w-48" />
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            {/* Left side: Logo and title */}
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-brand-500 via-brand-600 to-accent-600 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-soft flex-shrink-0">
+                <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7 text-white" />
+              </div>
+              <div className="min-w-0">
+                <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-primary-900">
+                  Leitlinien-Empfehlungen
+                </h3>
+                <p className="text-xs sm:text-sm lg:text-base text-primary-600">
+                  Basierend auf AWMF-Richtlinien
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="space-y-3">
-            <div className="h-4 bg-neutral-100 rounded w-full" />
-            <div className="h-4 bg-neutral-100 rounded w-5/6" />
-            <div className="h-4 bg-neutral-100 rounded w-4/6" />
-            <div className="h-4 bg-neutral-100 rounded w-full" />
-            <div className="h-4 bg-neutral-100 rounded w-3/4" />
+
+            {/* Right side: Loading indicator with description */}
+            <div className="flex items-center space-x-3 sm:space-x-4 bg-brand-50/50 rounded-xl px-4 py-3 sm:px-5 sm:py-4">
+              <div className="relative flex-shrink-0">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-brand-200 border-t-brand-500 animate-spin" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm sm:text-base font-medium text-brand-700">
+                  Leitlinien werden geladen...
+                </p>
+                <p className="text-xs sm:text-sm text-brand-500">
+                  Relevante AWMF-Empfehlungen werden abgerufen
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
