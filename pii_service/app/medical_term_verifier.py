@@ -351,6 +351,52 @@ class MedicalTermVerifier:
             'zytologie', 'zytologisch', 'zytologische', 'zytologischer',
             'histologie', 'histologisch', 'histologische', 'histologischer',
             'pathologie', 'pathologisch', 'pathologische', 'pathologischer',
+
+            # Clinical findings (commonly misclassified as LOCATION/NAME)
+            'blutungsstigmata', 'stigmata',  # Signs of bleeding
+            'voraufnahme', 'voraufnahmen',  # Previous imaging/admission
+            'voruntersuchung', 'voruntersuchungen',
+
+            # Severity descriptors (commonly misclassified as LOCATION)
+            'höchstgradig', 'höchstgradige', 'höchstgradiger', 'höchstgradiges',
+            'hochgradig', 'hochgradige', 'hochgradiger', 'hochgradiges',
+            'mittelgradig', 'mittelgradige', 'mittelgradiger', 'mittelgradiges',
+            'geringgradig', 'geringgradige', 'geringgradiger', 'geringgradiges',
+            'höhergradig', 'höhergradige', 'höhergradiger', 'höhergradiges',
+
+            # Substance abuse terms (commonly misclassified as NAME)
+            'cannabisabusus', 'cannabis', 'drogenabusus', 'medikamentenabusus',
+            'polytoxikomanie', 'nikotinabusus', 'alkoholabusus', 'abusus',
+
+            # Liver conditions (commonly misclassified as NAME)
+            'stauungsleber',
+
+            # Cardiac valve conditions (commonly misclassified as NAME)
+            'trikuspidalinsuffizienz', 'trikuspidalklappeninsuffizienz',
+            'trikuspidalsuffizienz',  # Variant spelling
+            'mitralklappeninsuffizienz', 'aortenklappeninsuffizienz',
+            'pulmonalklappeninsuffizienz', 'klappeninsuffizienz',
+            'herzinsuffizienz', 'rechtsherzinsuffizienz', 'linksherzinsuffizienz',
+
+            # Lung anatomy - carina terms (commonly misclassified)
+            'mittellappenkarina', 'mittellappencarina', 'karina', 'carina',
+            'hauptkarina', 'hauptcarina', 'oberlappenkarina', 'unterlappenkarina',
+            'oberlappencarina', 'unterlappencarina',
+
+            # Bronchial anatomy
+            'hauptbronchus', 'oberlappenbronchus', 'mittellappenbronchus',
+            'unterlappenbronchus', 'segmentbronchus', 'segmentbronchien',
+            'trachealbifurkation',
+
+            # Joint terms (commonly misclassified as ORGANIZATION)
+            'sprunggelenk', 'sprunggelenke', 'sprunggelenken',
+            'vorfuß', 'vorfüße', 'fußgelenk', 'fußgelenke',
+
+            # Involvement terms
+            'lungenbeteiligung', 'leberbeteiligung', 'nierenbeteiligung',
+
+            # Procedure variants
+            'appendektimie', 'appendektomie',  # Including common typo
         }
 
     @lru_cache(maxsize=10000)
