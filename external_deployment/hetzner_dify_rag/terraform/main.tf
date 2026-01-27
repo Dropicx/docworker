@@ -193,7 +193,7 @@ resource "hcloud_network_subnet" "rag" {
 
 resource "hcloud_volume" "rag_data" {
   name     = "${var.server_name}-data"
-  size     = 30 # GB (postgres + weaviate vectors + redis, no raw PDFs)
+  size     = 50 # GB (postgres + weaviate vectors + redis + dify storage)
   location = var.location
   format   = "ext4"
 
