@@ -337,6 +337,20 @@ class MedicalTermVerifier:
             'knöchel-arm-index', 'ankle-brachial-index',
             'leukozyten', 'erythrozyten', 'thrombozyten',
             'hämatokrit', 'hämoglobin',
+
+            # Patient/Patientin - German words for patient, NOT names!
+            # These are critically important - commonly misdetected as PERSON
+            'patient', 'patientin', 'patienten', 'patientinnen',
+            'pat', 'pat.',  # Abbreviations
+
+            # General condition terms (commonly misclassified as NAME)
+            'az-reduziert', 'az-reduzierte', 'az-reduzierter', 'az-reduzierten',
+            'allgemeinzustand', 'allgemeinzustandes', 'allgemeinzustandsreduziert',
+
+            # Cytology/pathology terms
+            'zytologie', 'zytologisch', 'zytologische', 'zytologischer',
+            'histologie', 'histologisch', 'histologische', 'histologischer',
+            'pathologie', 'pathologisch', 'pathologische', 'pathologischer',
         }
 
     @lru_cache(maxsize=10000)

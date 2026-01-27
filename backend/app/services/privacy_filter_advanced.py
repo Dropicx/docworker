@@ -714,6 +714,155 @@ class AdvancedPrivacyFilter:
             # Clinical conditions
             "stauungsdermatitis", "anasarka", "aszites",
             "exokrin", "exokriner", "endokrin", "endokriner",
+            # ==================== PII FIX: ADDITIONAL MEDICAL TERMS (2025-01) ====================
+            # Substance abuse terms (commonly misclassified as NAME)
+            "cannabisabusus", "cannabis", "drogenabusus", "medikamentenabusus",
+            "polytoxikomanie", "nikotinabusus", "alkoholabusus", "abusus",
+            # Liver conditions (commonly misclassified as NAME)
+            "stauungsleber",
+            # Cardiac valve conditions (commonly misclassified as NAME/removed)
+            "trikuspidalinsuffizienz", "trikuspidalklappeninsuffizienz",
+            "trikuspidalsuffizienz",  # Variant spelling (missing 'in')
+            "mitralklappeninsuffizienz", "aortenklappeninsuffizienz",
+            "pulmonalklappeninsuffizienz", "klappeninsuffizienz",
+            "herzinsuffizienz", "rechtsherzinsuffizienz", "linksherzinsuffizienz",
+            # Clinical findings (commonly misclassified as NAME)
+            "blutungsstigmata", "stigmata",
+            # Lung anatomy - carina terms (commonly removed)
+            "mittellappenkarina", "mittellappencarina", "karina", "carina",
+            "hauptkarina", "hauptcarina",
+            # Severity descriptors (commonly misclassified)
+            "höchstgradig", "höchstgradige", "höchstgradiger", "höchstgradiges",
+            "hochgradig", "hochgradige", "hochgradiger", "hochgradiges",
+            "mittelgradig", "mittelgradige", "mittelgradiger",
+            "geringgradig", "geringgradige", "geringgradiger",
+            "höhergradig", "höhergradige", "höhergradiger",
+            # Other medical terms (commonly removed/misclassified)
+            "lungenbeteiligung", "leberbeteiligung", "nierenbeteiligung",
+            "voraufnahme", "voraufnahmen", "voruntersuchung", "voruntersuchungen",
+            # Procedure variants (including common typos)
+            "appendektimie", "appendektomie",
+            # ==================== PII FIX: SARKOIDOSE DOCUMENT TERMS (2025-01) ====================
+            # Joint/body parts (commonly misclassified as ORGANIZATION)
+            "sprunggelenk", "sprunggelenke", "sprunggelenken",
+            "vorfuß", "vorfüße", "fußgelenk", "fußgelenke",
+            # Imaging modalities (commonly misclassified as ORGANIZATION)
+            "ct-thorax", "ct thorax", "mrt-thorax", "mrt thorax",
+            "pet-ct", "pet/ct", "spect-ct",
+            # Bronchoscopy procedures and equipment (commonly misclassified as ORGANIZATION)
+            "ebus", "endobronchialerultraschall", "endobronchialer ultraschall",
+            "ultraschallbronchoskop", "ultraschallbronchoskops",
+            # Bronchoscopy procedures (commonly misclassified as LOCATION)
+            "spülungen", "spülung", "lavagen", "lavage",
+            "bronchoalveoläre lavage", "bronchoalveolärelavage",
+            # Bronchial anatomy - karina/carina terms (commonly misclassified as LOCATION)
+            "oberlappenkarina", "unterlappenkarina",
+            "hauptbronchus", "oberlappenbronchus", "mittellappenbronchus", "unterlappenbronchus",
+            "segmentbronchus", "segmentbronchien",
+            "bifurkation", "trachealbifurkation",
+            # Cell surface markers (commonly misclassified as LOCATION)
+            "cd19", "cd19+", "cd3", "cd3+", "cd4", "cd4+", "cd8", "cd8+",
+            "cd16", "cd16+", "cd56", "cd56+", "cd45", "cd45+",
+            "hla-dr", "hla-dr+",
+            # ==================== PII FIX: ALTINDAG DOCUMENT ANALYSIS (2025-01) ====================
+            # Joint abbreviations (commonly misclassified as ORGANIZATION)
+            "osg", "usg",  # Oberes/Unteres Sprunggelenk
+            "osg-arthritis", "osg-arthrose",
+            # Lung segment/carina abbreviations (commonly misclassified as ORGANIZATION)
+            "ol karina", "ol-karina", "ol karina",  # Oberlappen Karina
+            "ul karina", "ul-karina",  # Unterlappen Karina
+            "ml karina", "ml-karina",  # Mittellappen Karina
+            # Carina variant spellings with 'c' (commonly misclassified as LOCATION)
+            "oberlappencarina", "unterlappencarina", "mittellappencarina",
+            # Clinical density terms (commonly misclassified when combined with anatomy)
+            "verdichte", "verdichtete", "verdichteter", "verdichtung", "verdichtungen",
+            # ==================== PII FIX: FISCHELL DOCUMENT ANALYSIS (2025-01) ====================
+            # Cardiac abbreviations (commonly misclassified as ORGANIZATION)
+            "ti", "mi", "ai", "pi",  # Valve insufficiency abbreviations (Trikuspidalinsuffizienz, etc.)
+            "hfref", "hfpef", "hfmref",  # Heart failure types
+            "lvef", "rvef",  # Ejection fraction abbreviations
+            "crt", "crt-d", "crt-p",  # Cardiac resynchronization therapy
+            "icd", "s-icd",  # Implantable cardioverter-defibrillator
+            # Pacemaker modes and settings (commonly misclassified)
+            "vvi", "vvir", "ddd", "dddr", "aai", "aair", "voo", "doo",
+            "lv stimulation", "rv stimulation",
+            # Pacemaker/ICD manufacturers and models (should be preserved for device identification)
+            "biotronik", "medtronic", "boston scientific", "abbott", "st. jude",
+            "etrinsa", "evia", "edora", "entovis", "eluna",  # Biotronik models
+            "dr-t", "sr-t", "hf-t",  # Device type suffixes
+            # Cardiac electrophysiology terms (commonly misclassified)
+            "av-junktional", "av-junktionalen", "av-junktionaler",
+            "av-block", "av-knoten", "av-überleitung",
+            "ersatzrhythmus", "junktionalrhythmus",
+            # Cardiac procedures (commonly misclassified as LOCATION)
+            "cryo", "cryo-ballon", "cryoballon", "kryoballon",
+            "pulmonalvenenablation", "pulmonalvenenisolation", "pvi",
+            "elektrokardioversion", "elektrokardioversionen",
+            # Lab value abbreviations (commonly misclassified)
+            "rpi", "irf",  # Reticulocyte indices
+            "hb", "hgb",  # Hämoglobin abbreviations
+            "herz-thorax-quotient", "htq", "ctr",  # Cardiothoracic ratio
+            # Medications commonly misclassified as names
+            "torasemid", "furosemid", "spironolacton", "eplerenon",
+            "prednisolon", "colchicin", "rivaroxaban", "apixaban", "edoxaban",
+            # Latin medical terms (commonly misclassified as LOCATION)
+            "domo", "in domo",  # in-house
+            "loco", "in loco",  # on-site
+            # ==================== PII FIX: PAAR DOCUMENT ANALYSIS (2025-01) ====================
+            # Microbiology terms (commonly misclassified as BIC/ORGANIZATION)
+            "keimzahl",  # Colony count - wrongly replaced with [BIC]
+            "kbe", "kbe/ml",  # Koloniebildende Einheiten (CFU)
+            "cfu", "cfu/ml",  # Colony forming units
+            "kulturbefund",  # Culture findings
+            "antibiogramm",  # Antibiogram
+            # Urine collection methods
+            "mittelstrahlurin", "mittelstrahl-urin", "mittelstrahl",
+            "katheterurin", "spontanurin", "morgenurin", "sammelurin",
+            # Microbiology organisms (commonly appearing in culture results)
+            "morganella", "morganella morganii",
+            "enterococcus", "enterococcus spp",
+            "escherichia", "escherichia coli", "e. coli",
+            "klebsiella", "pseudomonas", "staphylococcus", "streptococcus",
+            # Antibiotic resistance markers
+            "mrsa", "esbl", "vre", "mrgn",
+            # Lab test abbreviations (urinalysis)
+            "nit", "leu", "bakt", "ket", "bil", "glu", "eiw",
+            # ==================== PII FIX: KRÜGER DOCUMENT ANALYSIS (2025-01) ====================
+            # Laboratory test methods (commonly misclassified as BIC/ORGANIZATION)
+            "immunoassay",  # Lab test method - wrongly replaced with [BIC]
+            "antigennachweis",  # Antigen detection
+            "molekularbiologischer", "direktnachweis",
+            "elisa", "eia", "ria", "clia", "eclia",  # Immunoassay types
+            "pcr", "rt-pcr", "qpcr",  # Molecular tests
+            # Pathogen names (appearing in lab results)
+            "c. difficile", "clostridioides difficile", "clostridium difficile",
+            "gdh-ag", "gdh",  # Glutamate dehydrogenase antigen
+            "staph", "staph.", "staphylococcus epidermidis", "staphylococcus capitis",
+            "staphylococcus aureus", "s. aureus", "s. epidermidis",
+            # Liver disease terms
+            "meld", "meld-score", "meld-na", "child-pugh", "child a", "child b", "child c",
+            "tipps", "tips",  # Transjugular intrahepatic portosystemic shunt
+            "parazentese", "aszitespunktion", "aszitesdrainage",
+            # Anatomical terms (lung hilum)
+            "perihilär", "infrahilär", "hilär", "hilus",
+            # Medical eponyms (conditions named after people)
+            "mallory-weiss", "mallory-weiss-syndrom", "mallory-weiss-riss",
+            # Medication
+            "terlipressin", "albumin", "albuminsubstitution",
+            # Clinical abbreviations
+            "dnr", "dni", "dnr/dni",  # Do not resuscitate/intubate
+            # ==================== PII FIX: KAMES DOCUMENT ANALYSIS (2025-01) ====================
+            # Patient/Patientin - German words for patient, NOT names!
+            # These are commonly misdetected as PERSON entities
+            "patient", "patientin", "patienten", "patientinnen",
+            "pat", "pat.",  # Abbreviations
+            # General condition terms
+            "az-reduziert", "az-reduzierte", "az-reduzierter", "az-reduzierten",
+            "allgemeinzustandsreduziert", "allgemeinzustandsreduzierte",
+            # Cytology/pathology terms
+            "zytologie", "zytologisch", "zytologische",
+            "histologie", "histologisch", "histologische",
+            "pathologie", "pathologisch", "pathologische",
         }
 
         # Titel und Anreden, die auf Namen hinweisen

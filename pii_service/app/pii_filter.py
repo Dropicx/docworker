@@ -328,6 +328,18 @@ class PIIFilter:
                 r"\b(\d{4,5})\s+(\d{3})\s*[-–]\s*(\d{4})\b"
             ),
 
+            # Phone extensions that appear after placeholder or partial number
+            # Handles: "/- 2764", "/-2764", "/ -2764", "/ 2764"
+            "phone_extension": re.compile(
+                r"\s*/\s*-?\s*\d{2,5}\b"
+            ),
+
+            # Orphaned phone digits after [PHONE] placeholder
+            # Handles: "[PHONE] /- 2764" → should all be [PHONE]
+            "phone_orphan": re.compile(
+                r"\[PHONE\]\s*/?\s*-?\s*\d{2,5}"
+            ),
+
             # Email
             "email": re.compile(
                 r"(?:e[- ]?mail|mail)\s*[:.]?\s*"
@@ -340,6 +352,14 @@ class PIIFilter:
             "address": re.compile(
                 r"([A-ZÄÖÜ][a-zäöüß]+(?:stra(?:ß|ss)e|str\.|weg|platz|allee|gasse|ring|damm|ufer|chaussee|promenade)"
                 r"\s*\d+[a-zA-Z]?)",
+                re.IGNORECASE
+            ),
+
+            # Street address without common suffix (e.g., "Rhedung 18 b")
+            # Matches: [StreetName] [Number][optional letter], followed by PLZ
+            # This catches addresses like "Rhedung 18 b, 41352 Korschenbroich"
+            "address_no_suffix": re.compile(
+                r"([A-ZÄÖÜ][a-zäöüß-]+)\s+(\d{1,4}\s*[a-zA-Z]?)\s*,\s*(?=\d{5}\s)",
                 re.IGNORECASE
             ),
 
@@ -364,12 +384,28 @@ class PIIFilter:
 
             # Insurance numbers after known insurance company names
             # \b word boundary prevents matching "TK" inside "Kreditkarte"
+            # Updated to also match Letter + digits format (e.g., O598926034)
             "insurance_company": re.compile(
                 r"\b(?:AOK|TK|Barmer|DAK|BKK|IKK|KKH|HEK|hkk|Techniker|"
                 r"KNAPPSCHAFT|Viactiv|Mobil\s*Oil|SBK|mhplus|Novitas|"
                 r"Pronova|Big\s*direkt|Audi\s*BKK|BMW\s*BKK|Bosch\s*BKK)\b"
                 r"[^,\n]{0,40}?(?:Nr\.?|Nummer|Versicherten)?[:\s]*"
-                r"(\d{9,12})",
+                r"([A-Z]?\d{9,12})",
+                re.IGNORECASE
+            ),
+
+            # Standalone insurance ID (German Versichertennummer)
+            # Format: Letter + 9 digits (e.g., O598926034, A123456789)
+            # Appears after insurance company names without explicit label
+            "insurance_standalone": re.compile(
+                r"(?<=,\s)[A-Z]\d{9,10}(?=,|\s|$)",
+                re.IGNORECASE
+            ),
+
+            # Insurance status codes (Status M, Status P, Status F)
+            # These indicate member status and should be removed
+            "insurance_status": re.compile(
+                r",?\s*Status\s+[MPFRK]\b",
                 re.IGNORECASE
             ),
 
@@ -378,6 +414,14 @@ class PIIFilter:
                 r"(?:patient(?:en)?[- ]?(?:nr\.?|nummer|id)|"
                 r"fall(?:nummer|nr\.?)|aktenzeichen)\s*[:.]?\s*"
                 r"([A-Z0-9\-]{5,20})",
+                re.IGNORECASE
+            ),
+
+            # Case number (Fallnummer) - standalone numeric format
+            # Handles: "Fallnummer: 1250070091", "Fall-Nr.: 123456789"
+            "case_number": re.compile(
+                r"(?:Fallnummer|Fall[- ]?Nr\.?|Aufnahme[- ]?Nr\.?)\s*[:.]?\s*"
+                r"(\d{8,15})",
                 re.IGNORECASE
             ),
 
@@ -402,6 +446,21 @@ class PIIFilter:
             # Full email addresses (enhanced)
             "email_full": re.compile(
                 r"\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b",
+                re.IGNORECASE
+            ),
+
+            # Email addresses split across lines (name on one line, @domain on next)
+            # Handles: "silvia.jacquemin-fink\n@rheinlandklinikum.de"
+            "email_split": re.compile(
+                r"[a-zA-ZäöüÄÖÜß0-9]+(?:[.\-_][a-zA-ZäöüÄÖÜß0-9]+)+\s*\n\s*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
+                re.IGNORECASE
+            ),
+
+            # Email local part before @[EMAIL_DOMAIN] placeholder (post-processing)
+            # Catches names that were split from domain: "firstname.lastname\n@[EMAIL_DOMAIN]"
+            # Replaces entire email (name + domain placeholder) with [EMAIL]
+            "email_local_part": re.compile(
+                r"[a-zA-ZäöüÄÖÜß]+(?:[.\-_][a-zA-ZäöüÄÖÜß]+)+\s*\n?\s*@\[EMAIL_DOMAIN\]",
                 re.IGNORECASE
             ),
 
@@ -2464,17 +2523,25 @@ class PIIFilter:
             # Insurance patterns
             "insurance": "[INSURANCE_ID]",
             "insurance_company": "[INSURANCE_ID]",
+            "insurance_standalone": "[INSURANCE_ID]",
+            "insurance_status": "",  # Remove entirely (empty placeholder)
+            "case_number": "[CASE_ID]",
 
             # Contact patterns
             "phone": "[PHONE]",
             "phone_spaced": "[PHONE]",
+            "phone_extension": "",  # Remove entirely (cleanup after main phone)
+            "phone_orphan": "[PHONE]",  # Replace orphaned extensions with single placeholder
             "fax": "[FAX]",
             "email": "[EMAIL]",
             "email_full": "[EMAIL]",
+            "email_split": "[EMAIL]",
+            "email_local_part": "[EMAIL]",  # Replace full email (name + domain placeholder)
             "named_email_domain": "[EMAIL_DOMAIN]",
 
             # Address patterns
             "address": "[ADDRESS]",
+            "address_no_suffix": "[ADDRESS]",  # Street addresses without common suffix
             "plz_city": "[PLZ_CITY]",
             "zipcode": "[ZIPCODE]",
 
@@ -2908,6 +2975,13 @@ class PIIFilter:
                         logger.debug(f"Skipping phone false positive: '{entity_text}' (only {digit_count} digits)")
                         continue
 
+                # Skip IP_ADDRESS that are actually lab reference ranges
+                # E.g., "Haptoglobin 0.93 (0.14.2.58 g/l)" - the "0.14.2.58" looks like IP but is a typo for "0.14-2.58"
+                if result.entity_type == "IP_ADDRESS":
+                    if self._is_lab_reference_range_context(text, result.start, result.end):
+                        logger.debug(f"Skipping IP_ADDRESS false positive: '{entity_text}' (lab reference range context)")
+                        continue
+
                 # Map Presidio entity types to our placeholders
                 placeholder_map = {
                     "PERSON": "[NAME]",
@@ -3024,6 +3098,74 @@ class PIIFilter:
                 return True
             # Also check with space: "4000 Hz"
             if text_after_lower.startswith(" " + unit) or text_after_lower.startswith("-" + unit):
+                return True
+
+        return False
+
+    def _is_lab_reference_range_context(self, text: str, start: int, end: int) -> bool:
+        """
+        Check if an IP_ADDRESS match is actually a lab reference range with a typo.
+
+        Lab reference ranges are often formatted like "(0.14-2.58 g/l)" but sometimes
+        have typos like "(0.14.2.58 g/l)" where the dash is replaced with a dot.
+        These patterns look like IP addresses but are medical values.
+
+        Args:
+            text: The full text
+            start: Start position of the detected entity
+            end: End position of the detected entity
+
+        Returns:
+            True if the detected IP address appears to be a lab reference range
+        """
+        # Get context: 30 chars before, 30 after
+        context_start = max(0, start - 30)
+        context_end = min(len(text), end + 30)
+        context_before = text[context_start:start]
+        context_after = text[end:context_end]
+
+        # Check if inside parentheses (typical for reference ranges)
+        has_open_paren = '(' in context_before
+        has_close_paren = ')' in context_after
+
+        # Check if followed by medical units (g/l, mg/dl, etc.)
+        lab_units = [
+            'g/l', 'mg/l', 'µg/l', 'ng/l', 'pg/l',
+            'g/dl', 'mg/dl', 'µg/dl', 'ng/dl', 'pg/dl',
+            'mmol/l', 'µmol/l', 'nmol/l', 'pmol/l',
+            'u/l', 'iu/l', 'mu/l',
+            'ml', 'µl', 'nl', 'pl',
+            '%', '‰',
+            '10^3/µl', '10^6/µl', '10^9/l', '10^12/l',
+            '/µl', '/ml', '/l',
+        ]
+
+        context_after_lower = context_after.lower().strip()
+
+        # If in parentheses and followed by medical unit, it's likely a reference range
+        if has_open_paren:
+            for unit in lab_units:
+                if context_after_lower.startswith(unit) or context_after_lower.startswith(' ' + unit):
+                    logger.debug(f"Lab reference range detected: '{text[start:end]}' followed by '{unit}'")
+                    return True
+
+        # Also check for lab value keywords before
+        lab_keywords = [
+            'haptoglobin', 'haptogobin', 'ferritin', 'transferrin', 'albumin',
+            'hämoglobin', 'hemoglobin', 'hämatokrit', 'hematocrit',
+            'kreatinin', 'creatinine', 'bilirubin', 'glucose', 'glukose',
+            'cholesterin', 'triglyceride', 'eisen', 'iron', 'kupfer', 'copper',
+            'calcium', 'kalium', 'natrium', 'magnesium', 'phosphat',
+            'leukozyten', 'erythrozyten', 'thrombozyten',
+            'quick', 'inr', 'ptt', 'aptt',
+            'tsh', 'ft3', 'ft4', 't3', 't4',
+            'crp', 'bsg', 'ldh', 'ggt', 'got', 'gpt', 'ast', 'alt',
+        ]
+
+        context_before_lower = context_before.lower()
+        for keyword in lab_keywords:
+            if keyword in context_before_lower:
+                logger.debug(f"Lab reference range detected: '{keyword}' found before '{text[start:end]}'")
                 return True
 
         return False

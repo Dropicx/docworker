@@ -18,11 +18,135 @@ import asyncio
 import json
 import logging
 import os
+import re
 from typing import Literal
 
 import httpx
 
 logger = logging.getLogger(__name__)
+
+
+def _post_process_pii_cleanup(text: str) -> str:
+    """
+    Post-process cleaned text to catch PII patterns missed by external service.
+
+    This catches edge cases where the external SpaCy/Presidio service fails:
+    1. Email local parts that look like names (firstname.lastname@)
+    2. German insurance IDs and status codes
+    3. Partial phone numbers and extensions
+    4. Leaked names before @[EMAIL_DOMAIN]
+
+    Args:
+        text: Text already processed by external PII service
+
+    Returns:
+        Text with additional PII patterns removed
+    """
+    if not text:
+        return text
+
+    original_length = len(text)
+
+    # 1. Clean email local parts that look like names before @[EMAIL_DOMAIN]
+    # Pattern: firstname.lastname@ or firstname-lastname@ or firstname_lastname@
+    # Also handles compound names like silvia.jacquemin-fink
+    # These should be replaced with [EMAIL] entirely
+    text = re.sub(
+        r'[a-zA-ZäöüÄÖÜß]+(?:[.\-_][a-zA-ZäöüÄÖÜß]+)+\s*\n?\s*@\[EMAIL_DOMAIN\]',
+        '[EMAIL]',
+        text,
+        flags=re.IGNORECASE
+    )
+
+    # Also catch standalone name patterns before @ (with newline between)
+    text = re.sub(
+        r'[a-zA-ZäöüÄÖÜß]+(?:[.\-_][a-zA-ZäöüÄÖÜß]+)+\s*\n\s*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
+        '[EMAIL]',
+        text,
+        flags=re.IGNORECASE
+    )
+
+    # Catch email local parts before @ without [EMAIL_DOMAIN] placeholder
+    text = re.sub(
+        r'[a-zA-ZäöüÄÖÜß]+(?:[.\-_][a-zA-ZäöüÄÖÜß]+)+\s*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
+        '[EMAIL]',
+        text,
+        flags=re.IGNORECASE
+    )
+
+    # 2. Clean German insurance IDs (Versichertennummer)
+    # Format: Letter + 9 digits (e.g., O598926034) or just 9-10 digit numbers
+    text = re.sub(
+        r'\b[A-Z]\d{9,10}\b',
+        '[INSURANCE_ID]',
+        text
+    )
+
+    # 3. Clean insurance status patterns (e.g., "Status M", "Status P", "Status F")
+    text = re.sub(
+        r',?\s*Status\s+[A-Z]\b',
+        '',
+        text,
+        flags=re.IGNORECASE
+    )
+
+    # 4. Clean partial phone extensions (e.g., "/- 2764", "/ -2764", "/-2764")
+    # These appear when the main number was anonymized but extension leaked
+    text = re.sub(
+        r'\s*/\s*-?\s*\d{2,5}\b',
+        '',
+        text
+    )
+
+    # 5. Clean orphaned phone patterns after [PHONE] placeholder
+    text = re.sub(
+        r'\[PHONE\]\s*/?\s*-?\s*\d{2,5}',
+        '[PHONE]',
+        text
+    )
+
+    # 6. Clean Fallnummer (case number) patterns
+    text = re.sub(
+        r'Fallnummer:?\s*\d{8,12}',
+        'Fallnummer: [CASE_ID]',
+        text,
+        flags=re.IGNORECASE
+    )
+
+    # 7. Clean any remaining German city/insurance combo (e.g., "/Hamburg")
+    # Pattern: slash followed by German city name in header context
+    text = re.sub(
+        r'/[A-ZÄÖÜ][a-zäöüß]+(?=,|\s|$)',
+        '',
+        text
+    )
+
+    # 8. Clean street addresses without common suffixes (e.g., "Rhedung 18 b")
+    # Pattern: StreetName + Number + optional letter, followed by PLZ
+    # Replaces the street+number part, keeps the PLZ handling to other patterns
+    text = re.sub(
+        r'([A-ZÄÖÜ][a-zäöüß-]+)\s+(\d{1,4}\s*[a-zA-Z]?)\s*,\s*(?=\d{5}\s|\[PLZ)',
+        '[ADDRESS], ',
+        text,
+        flags=re.IGNORECASE
+    )
+
+    # 9. Fix IP_ADDRESS false positives in lab reference ranges
+    # Pattern: "[IP_ADDRESS]" appearing inside parentheses followed by lab units
+    # E.g., "Haptoglobin 0.93 ([IP_ADDRESS] g/l)" should be restored to show the range format
+    # Since we can't restore the original value, we replace with a generic range indicator
+    text = re.sub(
+        r'\(\[IP_ADDRESS\]\s*(g/l|mg/dl|mmol/l|µmol/l|u/l|iu/l|%|/µl|/ml)\)',
+        r'([REF_RANGE] \1)',
+        text,
+        flags=re.IGNORECASE
+    )
+
+    # Log if we made changes
+    if len(text) != original_length:
+        logger.debug(f"PII post-processing removed {original_length - len(text)} chars")
+
+    return text
 
 # Configuration from environment
 # Primary: Hetzner PII service (production)
@@ -314,9 +438,15 @@ class PIIServiceClient:
 
             if response.status_code == 200:
                 result = response.json()
+                cleaned_text = result["cleaned_text"]
+
+                # Apply post-processing to catch missed PII patterns
+                cleaned_text = _post_process_pii_cleanup(cleaned_text)
+
                 metadata = result.get("metadata", {})
                 metadata["custom_terms_synced"] = len(custom_terms) if custom_terms else 0
-                return result["cleaned_text"], metadata
+                metadata["post_processed"] = True
+                return cleaned_text, metadata
 
             elif response.status_code in (401, 403):
                 raise Exception(f"PII service authentication failed: {response.status_code}")
@@ -458,10 +588,14 @@ class PIIServiceClient:
 
             if response.status_code == 200:
                 result = response.json()
-                return [
-                    (item["cleaned_text"], item.get("metadata", {}))
-                    for item in result["results"]
-                ]
+                # Apply post-processing to each result
+                processed_results = []
+                for item in result["results"]:
+                    cleaned_text = _post_process_pii_cleanup(item["cleaned_text"])
+                    metadata = item.get("metadata", {})
+                    metadata["post_processed"] = True
+                    processed_results.append((cleaned_text, metadata))
+                return processed_results
             else:
                 raise Exception(f"Batch PII service error: {response.status_code}")
 
