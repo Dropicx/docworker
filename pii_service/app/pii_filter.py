@@ -489,9 +489,13 @@ class PIIFilter:
                 re.IGNORECASE
             ),
 
-            # BIC/SWIFT codes
+            # BIC/SWIFT codes - with exclusions for medical terms that look like bank codes
+            # Medical terms like KEIMZAHL, IMMUNOASSAY are 8-11 uppercase letters matching BIC format
             "bic": re.compile(
-                r"\b[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\b"
+                r"\b(?!KEIMZAHL|IMMUNOASSAY|ANTIBIOGRAMM|KULTURBEFUND|ANTIGENNACHWEIS|"
+                r"MOLEKULAR|DIREKTNACHWEIS|RESISTENZ|PATHOLOGIE|HISTOLOGIE|ZYTOLOGIE|"
+                r"SCREENING|DIAGNOSTIK|SEROLOGIE|VIROLOGIE|BAKTERIEN|ERREGERN)"
+                r"[A-Z]{4}[A-Z]{2}[A-Z0-9]{2}(?:[A-Z0-9]{3})?\b"
             ),
 
             # =============================================================
