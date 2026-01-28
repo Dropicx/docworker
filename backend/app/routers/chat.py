@@ -318,6 +318,30 @@ async def stream_chat_message(request: Request, chat_request: ChatRequest):
                                             message_end_data["completion_tokens"] = usage.get("completion_tokens")
                                             message_end_data["total_tokens"] = usage.get("total_tokens")
                                             message_end_data["total_price"] = usage.get("total_price")
+
+                                        # Enrich message_end with retriever_resources for citations
+                                        # Sanitize for GDPR (only expose: document_name, segment_id, score, truncated content)
+                                        if "metadata" in event_data:
+                                            metadata = event_data["metadata"]
+                                            if "retriever_resources" in metadata:
+                                                sanitized_resources = []
+                                                for resource in metadata["retriever_resources"]:
+                                                    sanitized = {
+                                                        "document_name": resource.get("document_name", "Unbekannt"),
+                                                        "segment_id": resource.get("segment_id", ""),
+                                                        "score": round(resource.get("score", 0), 3),
+                                                    }
+                                                    # Truncate content preview for GDPR (max 150 chars, no PII)
+                                                    content = resource.get("content", "")
+                                                    if content:
+                                                        sanitized["content_preview"] = content[:150] + ("..." if len(content) > 150 else "")
+                                                    sanitized_resources.append(sanitized)
+
+                                                # Add sanitized resources to event_data for forwarding
+                                                event_data["retriever_resources"] = sanitized_resources
+
+                                        # Re-serialize the enriched event
+                                        chunk = f"data: {json.dumps(event_data)}\n\n"
                             except json.JSONDecodeError:
                                 # Not JSON or malformed, continue
                                 pass
@@ -477,3 +501,77 @@ async def get_rate_limit_status(request: Request):
         safe_status["temp_ban_until"] = status["temp_ban_until"]
 
     return safe_status
+
+
+class SuggestedQuestionsResponse(BaseModel):
+    """Response model for suggested questions."""
+
+    questions: list[str]
+    message_id: str
+
+
+@router.get("/messages/{message_id}/suggested")
+@limiter.limit(settings.chat_apps_rate_limit)
+async def get_suggested_questions(
+    request: Request, message_id: str, app_id: str = "guidelines"
+) -> SuggestedQuestionsResponse:
+    """
+    Get suggested follow-up questions for a message from Dify.
+
+    Proxies to Dify's suggested questions API.
+    Requires suggested_questions_after_answer to be enabled in Dify app settings.
+    """
+    # Get app configuration
+    app_config = DIFY_APPS.get(app_id)
+    if not app_config:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown app_id: {app_id}. Available: {list(DIFY_APPS.keys())}",
+        )
+
+    api_key = app_config["api_key"]
+
+    if not DIFY_BASE_URL or not api_key:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Chat app '{app_id}' not configured. Missing API key or base URL.",
+        )
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.get(
+                f"{DIFY_BASE_URL}/v1/messages/{message_id}/suggested",
+                params={"user": "anonymous"},
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                },
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                # Dify returns: {"result": "success", "data": ["q1", "q2", "q3"]}
+                questions = data.get("data", [])
+                return SuggestedQuestionsResponse(
+                    questions=questions[:3],  # Limit to 3 questions
+                    message_id=message_id,
+                )
+            elif response.status_code == 404:
+                # Message not found or suggested questions not enabled
+                return SuggestedQuestionsResponse(questions=[], message_id=message_id)
+            else:
+                logger.warning(
+                    f"Dify suggested questions error: {response.status_code} - {response.text[:200]}"
+                )
+                return SuggestedQuestionsResponse(questions=[], message_id=message_id)
+
+    except httpx.TimeoutException:
+        logger.warning("Dify suggested questions request timed out")
+        return SuggestedQuestionsResponse(questions=[], message_id=message_id)
+
+    except httpx.ConnectError as e:
+        logger.warning(f"Failed to connect to Dify for suggested questions: {e}")
+        return SuggestedQuestionsResponse(questions=[], message_id=message_id)
+
+    except Exception as e:
+        logger.error(f"Suggested questions error: {e}")
+        return SuggestedQuestionsResponse(questions=[], message_id=message_id)

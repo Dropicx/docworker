@@ -12,11 +12,13 @@ import { Header } from '../Header';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
+import { SuggestedQuestions } from './SuggestedQuestions';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { ConsentModal } from '../common/ConsentModal';
 import { useChatHistory } from '../../hooks/useChatHistory';
 import { useConsent } from '../../hooks/useConsent';
-import { streamChatMessage, ChatRateLimitError, formatRetryTime } from '../../services/chatApi';
+import { streamChatMessage, ChatRateLimitError, formatRetryTime, getSuggestedQuestions } from '../../services/chatApi';
+import { RetrieverResource } from '../../types/chat';
 
 // Fixed app ID for this standalone chat
 const APP_ID = 'guidelines';
@@ -40,6 +42,10 @@ export const ChatPage: React.FC = () => {
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  // Suggested questions state
+  const [suggestedQuestions, setSuggestedQuestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
 
   // Modal state for confirmations
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
@@ -99,6 +105,9 @@ export const ChatPage: React.FC = () => {
    */
   const handleSend = useCallback(
     async (content: string) => {
+      // Clear previous suggested questions when starting new message
+      setSuggestedQuestions([]);
+
       // Get or create conversation
       let convId = activeConversationId;
 
@@ -123,6 +132,8 @@ export const ChatPage: React.FC = () => {
 
       // Track content for abort handling
       let fullContent = '';
+      let finalMessageId: string | undefined;
+      let retrieverResources: RetrieverResource[] | undefined;
 
       try {
         // Get current Dify conversation ID for context
@@ -148,9 +159,16 @@ export const ChatPage: React.FC = () => {
               newDifyConvId = event.conversation_id;
             }
           } else if (event.event === 'message_end') {
-            // Message complete
+            // Message complete - capture metadata
             if (event.conversation_id) {
               newDifyConvId = event.conversation_id;
+            }
+            if (event.message_id) {
+              finalMessageId = event.message_id;
+            }
+            // Capture retriever resources for citations
+            if (event.retriever_resources && event.retriever_resources.length > 0) {
+              retrieverResources = event.retriever_resources;
             }
           } else if (event.event === 'error') {
             // Handle error
@@ -163,15 +181,30 @@ export const ChatPage: React.FC = () => {
           }
         }
 
-        // Finalize message
+        // Finalize message with citations
         updateMessage(assistantMessage.id, {
           content: fullContent || 'Keine Antwort erhalten.',
           isStreaming: false,
+          messageId: finalMessageId,
+          retrieverResources: retrieverResources,
         });
 
         // Store Dify conversation ID for context continuity
         if (newDifyConvId && convId) {
           setDifyConversationId(newDifyConvId, convId);
+        }
+
+        // Fetch suggested questions after stream completes
+        if (finalMessageId) {
+          setLoadingSuggestions(true);
+          try {
+            const questions = await getSuggestedQuestions(finalMessageId, APP_ID);
+            setSuggestedQuestions(questions);
+          } catch (err) {
+            console.warn('Failed to fetch suggested questions:', err);
+          } finally {
+            setLoadingSuggestions(false);
+          }
         }
       } catch (error) {
         // Handle abort gracefully - don't show error, just finalize partial content
@@ -286,6 +319,15 @@ export const ChatPage: React.FC = () => {
     abortControllerRef.current?.abort();
   }, []);
 
+  /**
+   * Handle clicking a suggested question.
+   */
+  const handleSuggestedQuestionClick = useCallback((question: string) => {
+    // Clear suggestions and send the question
+    setSuggestedQuestions([]);
+    handleSend(question);
+  }, [handleSend]);
+
   // Get messages for active conversation
   const messages = activeConversation?.messages || [];
 
@@ -361,6 +403,15 @@ export const ChatPage: React.FC = () => {
 
           {/* Message List - scrollable area */}
           <ChatMessageList messages={messages} isStreaming={isStreaming} conversationId={activeConversationId ?? undefined} />
+
+          {/* Suggested Questions - between message list and input */}
+          {(suggestedQuestions.length > 0 || loadingSuggestions) && !isStreaming && (
+            <SuggestedQuestions
+              questions={suggestedQuestions}
+              onQuestionClick={handleSuggestedQuestionClick}
+              isLoading={loadingSuggestions}
+            />
+          )}
 
           {/* Input - fixed at bottom */}
           <ChatInput

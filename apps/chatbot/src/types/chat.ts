@@ -2,12 +2,26 @@
  * TypeScript types for GuidelineChat feature
  */
 
+export interface RetrieverResource {
+  document_name: string;
+  segment_id: string;
+  score: number;
+  content_preview?: string;
+}
+
+export interface SuggestedQuestionsResponse {
+  questions: string[];
+  message_id: string;
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
   isStreaming?: boolean;
+  messageId?: string;  // Dify message ID for suggested questions
+  retrieverResources?: RetrieverResource[];  // Citations/sources
 }
 
 export interface ChatConversation {
@@ -43,6 +57,7 @@ export interface ChatStreamEvent {
   created_at?: number;
   message?: string;
   code?: string;
+  retriever_resources?: RetrieverResource[];  // Citations from message_end event
 }
 
 export interface ChatRequest {

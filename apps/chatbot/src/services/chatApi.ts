@@ -13,6 +13,7 @@ import {
   MessageFeedback,
   FeedbackRequest,
   FeedbackDeleteResponse,
+  SuggestedQuestionsResponse,
 } from '../types/chat';
 
 // Base API URL - uses relative path, nginx proxies to backend
@@ -318,4 +319,35 @@ export async function deleteMessageFeedback(
   }
 
   return await response.json();
+}
+
+// ==================== SUGGESTED QUESTIONS API ====================
+
+/**
+ * Get suggested follow-up questions for a message.
+ * Returns empty array if not available or on error.
+ */
+export async function getSuggestedQuestions(
+  messageId: string,
+  appId: string = 'guidelines'
+): Promise<string[]> {
+  try {
+    const response = await fetch(
+      `${API_URL}/chat/messages/${messageId}/suggested?app_id=${encodeURIComponent(appId)}`,
+      {
+        headers: getChatHeaders(),
+      }
+    );
+
+    if (!response.ok) {
+      console.warn(`Failed to fetch suggested questions: ${response.status}`);
+      return [];
+    }
+
+    const data: SuggestedQuestionsResponse = await response.json();
+    return data.questions || [];
+  } catch (error) {
+    console.warn('Error fetching suggested questions:', error);
+    return [];
+  }
 }
