@@ -276,6 +276,23 @@ export function useChatHistory() {
   }, []);
 
   /**
+   * Update suggested questions for a conversation.
+   */
+  const setSuggestedQuestions = useCallback(
+    (questions: string[], conversationId?: string): void => {
+      setState(prev => ({
+        ...prev,
+        conversations: prev.conversations.map(conv =>
+          conv.id === (conversationId || prev.activeConversationId)
+            ? { ...conv, suggestedQuestions: questions }
+            : conv
+        ),
+      }));
+    },
+    []
+  );
+
+  /**
    * Clear all conversations.
    */
   const clearAll = useCallback((): void => {
@@ -299,6 +316,7 @@ export function useChatHistory() {
     addMessage,
     updateMessage,
     setDifyConversationId,
+    setSuggestedQuestions,
     deleteConversation,
     setActiveConversation,
     updateTitle,

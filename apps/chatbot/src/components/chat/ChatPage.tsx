@@ -32,6 +32,7 @@ export const ChatPage: React.FC = () => {
     addMessage,
     updateMessage,
     setDifyConversationId,
+    setSuggestedQuestions: storeSuggestedQuestions,
     deleteConversation,
     setActiveConversation,
     updateTitle,
@@ -114,6 +115,9 @@ export const ChatPage: React.FC = () => {
       if (!convId) {
         const newConv = createConversation(APP_ID);
         convId = newConv.id;
+      } else {
+        // Clear stored suggestions for existing conversation
+        storeSuggestedQuestions([], convId);
       }
 
       // Add user message
@@ -201,11 +205,13 @@ export const ChatPage: React.FC = () => {
         }
 
         // Fetch suggested questions after stream completes
-        if (finalMessageId) {
+        if (finalMessageId && convId) {
           setLoadingSuggestions(true);
           try {
             const questions = await getSuggestedQuestions(finalMessageId, APP_ID);
             setSuggestedQuestions(questions);
+            // Store in conversation for persistence
+            storeSuggestedQuestions(questions, convId);
           } catch (err) {
             console.warn('Failed to fetch suggested questions:', err);
           } finally {
@@ -253,6 +259,7 @@ export const ChatPage: React.FC = () => {
       addMessage,
       updateMessage,
       setDifyConversationId,
+      storeSuggestedQuestions,
     ]
   );
 
@@ -262,7 +269,7 @@ export const ChatPage: React.FC = () => {
   const handleNewConversation = useCallback(() => {
     createConversation(APP_ID);
     setSidebarOpen(false);
-    setSuggestedQuestions([]); // Clear suggested questions from previous chat
+    setSuggestedQuestions([]); // New chat has no suggested questions
   }, [createConversation]);
 
   /**
@@ -271,9 +278,11 @@ export const ChatPage: React.FC = () => {
   const handleSelectConversation = useCallback(
     (id: string) => {
       setActiveConversation(id);
-      setSuggestedQuestions([]); // Clear suggested questions from previous chat
+      // Load stored suggested questions for this conversation
+      const conv = conversations.find(c => c.id === id);
+      setSuggestedQuestions(conv?.suggestedQuestions || []);
     },
-    [setActiveConversation]
+    [setActiveConversation, conversations]
   );
 
   /**
@@ -331,10 +340,13 @@ export const ChatPage: React.FC = () => {
    * Handle clicking a suggested question.
    */
   const handleSuggestedQuestionClick = useCallback((question: string) => {
-    // Clear suggestions and send the question
+    // Clear suggestions (new ones will be generated with the response)
     setSuggestedQuestions([]);
+    if (activeConversationId) {
+      storeSuggestedQuestions([], activeConversationId);
+    }
     handleSend(question);
-  }, [handleSend]);
+  }, [handleSend, activeConversationId, storeSuggestedQuestions]);
 
   // Get messages for active conversation
   const messages = activeConversation?.messages || [];

@@ -31,6 +31,7 @@ export interface ChatConversation {
   appId: string;  // Which Dify app this conversation uses
   title: string;
   messages: ChatMessage[];
+  suggestedQuestions?: string[];  // Stored suggested questions for this conversation
   createdAt: string;
   updatedAt: string;
 }
