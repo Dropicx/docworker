@@ -94,32 +94,32 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, conversationI
 
   return (
     <div
-      className={`group flex gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
+      className={`group flex gap-2 md:gap-3 ${isUser ? 'flex-row-reverse' : ''}`}
     >
-      {/* Avatar */}
+      {/* Avatar - hidden on mobile for assistant, smaller gap */}
       <div
-        className={`flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center ${
+        className={`flex-shrink-0 w-7 h-7 md:w-8 md:h-8 rounded-lg flex items-center justify-center ${
           isUser
             ? 'bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400'
-            : 'bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400'
+            : 'hidden md:flex bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400'
         }`}
       >
         {isUser ? (
-          <User className="w-4 h-4" />
+          <User className="w-3.5 h-3.5 md:w-4 md:h-4" />
         ) : (
-          <BookOpen className="w-4 h-4" />
+          <BookOpen className="w-3.5 h-3.5 md:w-4 md:h-4" />
         )}
       </div>
 
       {/* Message bubble */}
       <div
-        className={`flex-1 max-w-[80%] ${
+        className={`flex-1 max-w-full md:max-w-[85%] ${
           isUser ? 'flex flex-col items-end' : ''
         }`}
       >
         <div className="relative">
           <div
-            className={`rounded-2xl px-4 py-3 ${
+            className={`rounded-2xl px-3 py-2.5 md:px-4 md:py-3 ${
               isUser
                 ? 'bg-brand-600 text-white rounded-tr-sm'
                 : 'bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-100 rounded-tl-sm shadow-sm dark:shadow-none'

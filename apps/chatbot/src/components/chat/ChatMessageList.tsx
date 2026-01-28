@@ -73,8 +73,8 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   // Empty state
   if (messages.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto flex items-center justify-center p-8 bg-neutral-50 dark:bg-neutral-900">
-        <div className="text-center max-w-md">
+      <div className="flex-1 overflow-y-auto flex items-center justify-center p-4 md:p-8 bg-neutral-50 dark:bg-neutral-900">
+        <div className="text-center max-w-sm md:max-w-md">
           <div className="w-16 h-16 bg-accent-100 dark:bg-accent-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <BookOpen className="w-8 h-8 text-accent-600 dark:text-accent-400" />
           </div>
@@ -106,7 +106,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto p-4 space-y-4 bg-neutral-50 dark:bg-neutral-900 scrollbar-thin"
+        className="h-full overflow-y-auto px-2 py-3 md:p-4 space-y-3 md:space-y-4 bg-neutral-50 dark:bg-neutral-900 scrollbar-thin"
       >
         {messages.map(message => (
           <ChatMessage key={message.id} message={message} conversationId={conversationId} />
