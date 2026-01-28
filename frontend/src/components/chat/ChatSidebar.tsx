@@ -2,13 +2,15 @@
  * Chat sidebar with conversation list.
  */
 
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   Plus,
   MessageSquare,
   Trash2,
   X,
   Menu,
+  Pencil,
+  Check,
 } from 'lucide-react';
 import { ChatConversation } from '../../types/chat';
 
@@ -18,6 +20,8 @@ interface ChatSidebarProps {
   onSelect: (id: string) => void;
   onNew: () => void;
   onDelete: (id: string) => void;
+  onClearAll: () => void;
+  onRename: (id: string, newTitle: string) => void;
   isOpen: boolean;
   onToggle: () => void;
 }
@@ -28,9 +32,50 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onSelect,
   onNew,
   onDelete,
+  onClearAll,
+  onRename,
   isOpen,
   onToggle,
 }) => {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  // Focus input when editing starts
+  useEffect(() => {
+    if (editingId && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingId]);
+
+  const handleStartEdit = (conv: ChatConversation, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(conv.id);
+    setEditTitle(conv.title);
+  };
+
+  const handleSaveEdit = () => {
+    if (editingId && editTitle.trim()) {
+      onRename(editingId, editTitle.trim());
+    }
+    setEditingId(null);
+    setEditTitle('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setEditTitle('');
+  };
+
+  const handleEditKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSaveEdit();
+    } else if (e.key === 'Escape') {
+      handleCancelEdit();
+    }
+  };
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -115,13 +160,15 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 >
                   <button
                     onClick={() => {
-                      onSelect(conv.id);
-                      // Close sidebar on mobile after selection
-                      if (window.innerWidth < 768) {
-                        onToggle();
+                      if (editingId !== conv.id) {
+                        onSelect(conv.id);
+                        // Close sidebar on mobile after selection
+                        if (window.innerWidth < 768) {
+                          onToggle();
+                        }
                       }
                     }}
-                    className="w-full text-left p-3 pr-10"
+                    className="w-full text-left p-3 pr-20"
                   >
                     <div className="flex items-start gap-2">
                       <MessageSquare
@@ -130,13 +177,38 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         }`}
                       />
                       <div className="flex-1 min-w-0">
-                        <p
-                          className={`text-sm font-medium truncate ${
-                            conv.id === activeId ? 'text-brand-700' : 'text-neutral-700'
-                          }`}
-                        >
-                          {conv.title}
-                        </p>
+                        {editingId === conv.id ? (
+                          <div className="flex items-center gap-1">
+                            <input
+                              ref={editInputRef}
+                              type="text"
+                              value={editTitle}
+                              onChange={e => setEditTitle(e.target.value)}
+                              onKeyDown={handleEditKeyDown}
+                              onBlur={handleSaveEdit}
+                              className="flex-1 text-sm font-medium px-1.5 py-0.5 border border-brand-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-500"
+                              onClick={e => e.stopPropagation()}
+                            />
+                            <button
+                              onClick={e => {
+                                e.stopPropagation();
+                                handleSaveEdit();
+                              }}
+                              className="p-1 text-brand-600 hover:bg-brand-100 rounded"
+                              title="Speichern"
+                            >
+                              <Check className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <p
+                            className={`text-sm font-medium truncate ${
+                              conv.id === activeId ? 'text-brand-700' : 'text-neutral-700'
+                            }`}
+                          >
+                            {conv.title}
+                          </p>
+                        )}
                         <p className="text-xs text-neutral-400 mt-0.5">
                           {formatDate(conv.updatedAt)}
                         </p>
@@ -144,17 +216,28 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     </div>
                   </button>
 
-                  {/* Delete button */}
-                  <button
-                    onClick={e => {
-                      e.stopPropagation();
-                      onDelete(conv.id);
-                    }}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-neutral-400 hover:text-error-600 hover:bg-error-50 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                    title="Loschen"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {/* Action buttons */}
+                  {editingId !== conv.id && (
+                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={e => handleStartEdit(conv, e)}
+                        className="p-1.5 text-neutral-400 hover:text-brand-600 hover:bg-brand-50 rounded"
+                        title="Umbenennen"
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={e => {
+                          e.stopPropagation();
+                          onDelete(conv.id);
+                        }}
+                        className="p-1.5 text-neutral-400 hover:text-error-600 hover:bg-error-50 rounded"
+                        title="Loschen"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -162,8 +245,17 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-neutral-200 text-center">
-          <p className="text-xs text-neutral-400">
+        <div className="p-4 border-t border-neutral-200">
+          {conversations.length > 0 && (
+            <button
+              onClick={onClearAll}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-error-600 hover:bg-error-50 rounded-lg transition-colors mb-3"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Alle loschen</span>
+            </button>
+          )}
+          <p className="text-xs text-neutral-400 text-center">
             Verlauf wird lokal gespeichert
           </p>
         </div>

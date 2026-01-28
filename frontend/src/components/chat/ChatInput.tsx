@@ -3,18 +3,22 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
+import { Send, Loader2, StopCircle } from 'lucide-react';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
+  onStop?: () => void;
   disabled?: boolean;
   placeholder?: string;
+  maxLength?: number;
 }
 
 export const ChatInput: React.FC<ChatInputProps> = ({
   onSend,
+  onStop,
   disabled = false,
   placeholder = 'Stellen Sie eine Frage zu medizinischen Leitlinien...',
+  maxLength = 2000,
 }) => {
   const [message, setMessage] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -66,23 +70,39 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={disabled || !message.trim()}
-          className="flex-shrink-0 p-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed transition-colors"
-          title="Nachricht senden"
-        >
-          {disabled ? (
-            <Loader2 className="w-5 h-5 animate-spin" />
-          ) : (
-            <Send className="w-5 h-5" />
-          )}
-        </button>
+        {disabled && onStop ? (
+          <button
+            type="button"
+            onClick={onStop}
+            className="flex-shrink-0 p-3 bg-error-600 text-white rounded-xl hover:bg-error-700 transition-colors"
+            title="Generierung stoppen"
+          >
+            <StopCircle className="w-5 h-5" />
+          </button>
+        ) : (
+          <button
+            type="submit"
+            disabled={disabled || !message.trim()}
+            className="flex-shrink-0 p-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed transition-colors"
+            title="Nachricht senden"
+          >
+            {disabled ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}
+          </button>
+        )}
       </div>
 
-      <p className="text-xs text-neutral-400 mt-2 text-center">
-        Enter zum Senden, Shift+Enter fur neue Zeile
-      </p>
+      <div className="flex justify-between items-center mt-2 px-1">
+        <p className="text-xs text-neutral-400">
+          Enter zum Senden, Shift+Enter fur neue Zeile
+        </p>
+        <p className={`text-xs ${message.length > maxLength * 0.9 ? 'text-amber-600 font-medium' : 'text-neutral-400'}`}>
+          {message.length.toLocaleString('de-DE')} / {maxLength.toLocaleString('de-DE')} Zeichen
+        </p>
+      </div>
     </form>
   );
 };

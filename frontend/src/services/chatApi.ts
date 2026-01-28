@@ -40,12 +40,14 @@ export async function getChatApps(): Promise<ChatApp[]> {
  * @param query - The user's message
  * @param conversationId - Optional Dify conversation ID for context
  * @param appId - Which Dify app to use (default: guidelines)
+ * @param signal - Optional AbortSignal for cancellation
  * @yields ChatStreamEvent objects as they arrive
  */
 export async function* streamChatMessage(
   query: string,
   conversationId?: string,
-  appId: string = 'guidelines'
+  appId: string = 'guidelines',
+  signal?: AbortSignal
 ): AsyncGenerator<ChatStreamEvent> {
   const response = await fetch(`${API_URL}/chat/message`, {
     method: 'POST',
@@ -57,6 +59,7 @@ export async function* streamChatMessage(
       conversation_id: conversationId,
       app_id: appId,
     }),
+    signal,
   });
 
   if (!response.ok) {

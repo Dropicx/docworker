@@ -6,12 +6,13 @@
  * Supports multiple Dify apps via app selector.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { BookOpen, FileText, ChevronDown } from 'lucide-react';
 import { Header } from '../Header';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
+import { ConfirmModal } from '../common/ConfirmModal';
 import { useChatHistory } from '../../hooks/useChatHistory';
 import { streamChatMessage, getChatApps } from '../../services/chatApi';
 import { ChatApp } from '../../types/chat';
@@ -33,6 +34,8 @@ export const ChatPage: React.FC = () => {
     setDifyConversationId,
     deleteConversation,
     setActiveConversation,
+    updateTitle,
+    clearAll,
   } = useChatHistory();
 
   const [isStreaming, setIsStreaming] = useState(false);
@@ -40,6 +43,14 @@ export const ChatPage: React.FC = () => {
   const [apps, setApps] = useState<ChatApp[]>([]);
   const [selectedAppId, setSelectedAppId] = useState('guidelines');
   const [appSelectorOpen, setAppSelectorOpen] = useState(false);
+
+  // Modal state for confirmations
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
+  const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
+
+  // AbortController for stopping stream
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   // Fetch available apps on mount
   useEffect(() => {
@@ -90,16 +101,21 @@ export const ChatPage: React.FC = () => {
 
       setIsStreaming(true);
 
+      // Create new AbortController for this request
+      abortControllerRef.current = new AbortController();
+
+      // Track content for abort handling
+      let fullContent = '';
+
       try {
         // Get current Dify conversation ID for context
         const currentConv = conversations.find(c => c.id === convId);
         const difyConvId = currentConv?.difyConversationId;
 
-        let fullContent = '';
         let newDifyConvId: string | undefined;
 
         // Stream the response with the correct app
-        for await (const event of streamChatMessage(content, difyConvId, appId)) {
+        for await (const event of streamChatMessage(content, difyConvId, appId, abortControllerRef.current.signal)) {
           if (event.event === 'message' || event.event === 'agent_message') {
             // Append streamed content
             if (event.answer) {
@@ -141,12 +157,21 @@ export const ChatPage: React.FC = () => {
           setDifyConversationId(newDifyConvId, convId);
         }
       } catch (error) {
-        console.error('Chat error:', error);
-        updateMessage(assistantMessage.id, {
-          content: `Fehler: ${error instanceof Error ? error.message : 'Verbindungsfehler'}`,
-          isStreaming: false,
-        });
+        // Handle abort gracefully - don't show error, just finalize partial content
+        if (error instanceof Error && error.name === 'AbortError') {
+          updateMessage(assistantMessage.id, {
+            content: fullContent || 'Generierung abgebrochen.',
+            isStreaming: false,
+          });
+        } else {
+          console.error('Chat error:', error);
+          updateMessage(assistantMessage.id, {
+            content: `Fehler: ${error instanceof Error ? error.message : 'Verbindungsfehler'}`,
+            isStreaming: false,
+          });
+        }
       } finally {
+        abortControllerRef.current = null;
         setIsStreaming(false);
       }
     },
@@ -180,16 +205,55 @@ export const ChatPage: React.FC = () => {
   );
 
   /**
-   * Handle deleting a conversation.
+   * Handle deleting a conversation - opens confirmation modal.
    */
-  const handleDeleteConversation = useCallback(
-    (id: string) => {
-      if (window.confirm('Unterhaltung wirklich loschen?')) {
-        deleteConversation(id);
-      }
+  const handleDeleteConversation = useCallback((id: string) => {
+    setDeleteTargetId(id);
+    setDeleteModalOpen(true);
+  }, []);
+
+  /**
+   * Confirm deletion of conversation.
+   */
+  const confirmDeleteConversation = useCallback(() => {
+    if (deleteTargetId) {
+      deleteConversation(deleteTargetId);
+    }
+    setDeleteModalOpen(false);
+    setDeleteTargetId(null);
+  }, [deleteTargetId, deleteConversation]);
+
+  /**
+   * Handle clearing all conversations - opens confirmation modal.
+   */
+  const handleClearAll = useCallback(() => {
+    setClearAllModalOpen(true);
+  }, []);
+
+  /**
+   * Confirm clearing all conversations.
+   */
+  const confirmClearAll = useCallback(() => {
+    clearAll();
+    setClearAllModalOpen(false);
+  }, [clearAll]);
+
+  /**
+   * Handle renaming a conversation.
+   */
+  const handleRename = useCallback(
+    (id: string, newTitle: string) => {
+      updateTitle(id, newTitle);
     },
-    [deleteConversation]
+    [updateTitle]
   );
+
+  /**
+   * Handle stopping the current stream.
+   */
+  const handleStop = useCallback(() => {
+    abortControllerRef.current?.abort();
+  }, []);
 
   /**
    * Handle app selection - switches app and deselects current conversation.
@@ -226,6 +290,8 @@ export const ChatPage: React.FC = () => {
           onSelect={handleSelectConversation}
           onNew={handleNewConversation}
           onDelete={handleDeleteConversation}
+          onClearAll={handleClearAll}
+          onRename={handleRename}
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen(!sidebarOpen)}
         />
@@ -319,11 +385,39 @@ export const ChatPage: React.FC = () => {
           {/* Input - fixed at bottom */}
           <ChatInput
             onSend={handleSend}
+            onStop={handleStop}
             disabled={isStreaming}
             placeholder={getPlaceholder()}
           />
         </main>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteModalOpen}
+        title="Unterhaltung loschen"
+        message="Diese Unterhaltung wird unwiderruflich geloscht. Mochten Sie fortfahren?"
+        confirmText="Loschen"
+        cancelText="Abbrechen"
+        variant="danger"
+        onConfirm={confirmDeleteConversation}
+        onCancel={() => {
+          setDeleteModalOpen(false);
+          setDeleteTargetId(null);
+        }}
+      />
+
+      {/* Clear All Confirmation Modal */}
+      <ConfirmModal
+        isOpen={clearAllModalOpen}
+        title="Alle Unterhaltungen loschen"
+        message={`Alle ${conversations.length} Unterhaltungen werden unwiderruflich geloscht. Mochten Sie fortfahren?`}
+        confirmText="Alle loschen"
+        cancelText="Abbrechen"
+        variant="danger"
+        onConfirm={confirmClearAll}
+        onCancel={() => setClearAllModalOpen(false)}
+      />
     </div>
   );
 };
