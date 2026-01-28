@@ -1,9 +1,12 @@
 /**
  * Scrollable message list component.
+ *
+ * Smart auto-scroll: only scrolls to bottom if user is already near bottom.
+ * Allows free scrolling during streaming responses.
  */
 
-import React, { useRef, useEffect } from 'react';
-import { BookOpen, MessageCircle } from 'lucide-react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
+import { BookOpen, MessageCircle, ArrowDown } from 'lucide-react';
 import { ChatMessage as ChatMessageType } from '../../types/chat';
 import { ChatMessage } from './ChatMessage';
 
@@ -18,11 +21,52 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [showScrollButton, setShowScrollButton] = useState(false);
 
-  // Auto-scroll to bottom on new messages
+  // Check if user is at or near the bottom (within 100px threshold)
+  const checkIfAtBottom = useCallback(() => {
+    const container = containerRef.current;
+    if (!container) return true;
+
+    const threshold = 100;
+    const distanceFromBottom = container.scrollHeight - container.scrollTop - container.clientHeight;
+    return distanceFromBottom <= threshold;
+  }, []);
+
+  // Handle scroll events
+  const handleScroll = useCallback(() => {
+    const atBottom = checkIfAtBottom();
+    setIsAtBottom(atBottom);
+    setShowScrollButton(!atBottom && messages.length > 0);
+  }, [checkIfAtBottom, messages.length]);
+
+  // Scroll to bottom function
+  const scrollToBottom = useCallback((smooth = true) => {
+    bottomRef.current?.scrollIntoView({
+      behavior: smooth ? 'smooth' : 'auto'
+    });
+    setIsAtBottom(true);
+    setShowScrollButton(false);
+  }, []);
+
+  // Auto-scroll only when user is at bottom
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, isStreaming]);
+    if (isAtBottom) {
+      // Use instant scroll during streaming for smoother experience
+      scrollToBottom(!isStreaming);
+    } else if (isStreaming) {
+      // Show scroll button when streaming and user has scrolled up
+      setShowScrollButton(true);
+    }
+  }, [messages, isStreaming, isAtBottom, scrollToBottom]);
+
+  // Scroll to bottom when a new conversation starts (first message)
+  useEffect(() => {
+    if (messages.length === 1) {
+      scrollToBottom(false);
+    }
+  }, [messages.length, scrollToBottom]);
 
   // Empty state
   if (messages.length === 0) {
@@ -56,14 +100,28 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="flex-1 overflow-y-auto p-4 space-y-4 bg-neutral-50"
-    >
-      {messages.map(message => (
-        <ChatMessage key={message.id} message={message} />
-      ))}
-      <div ref={bottomRef} />
+    <div className="relative flex-1 overflow-hidden">
+      <div
+        ref={containerRef}
+        onScroll={handleScroll}
+        className="h-full overflow-y-auto p-4 space-y-4 bg-neutral-50"
+      >
+        {messages.map(message => (
+          <ChatMessage key={message.id} message={message} />
+        ))}
+        <div ref={bottomRef} />
+      </div>
+
+      {/* Scroll to bottom button */}
+      {showScrollButton && (
+        <button
+          onClick={() => scrollToBottom(true)}
+          className="absolute bottom-4 right-4 p-3 bg-white border border-neutral-200 rounded-full shadow-medium hover:shadow-hard hover:bg-neutral-50 transition-all z-10"
+          title="Nach unten scrollen"
+        >
+          <ArrowDown className="w-5 h-5 text-neutral-600" />
+        </button>
+      )}
     </div>
   );
 };
