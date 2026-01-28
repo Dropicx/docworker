@@ -321,24 +321,32 @@ async def stream_chat_message(request: Request, chat_request: ChatRequest):
 
                                         # Enrich message_end with retriever_resources for citations
                                         # Sanitize for GDPR (only expose: document_name, segment_id, score, truncated content)
-                                        if "metadata" in event_data:
-                                            metadata = event_data["metadata"]
-                                            if "retriever_resources" in metadata:
-                                                sanitized_resources = []
-                                                for resource in metadata["retriever_resources"]:
-                                                    sanitized = {
-                                                        "document_name": resource.get("document_name", "Unbekannt"),
-                                                        "segment_id": resource.get("segment_id", ""),
-                                                        "score": round(resource.get("score", 0), 3),
-                                                    }
-                                                    # Truncate content preview for GDPR (max 150 chars, no PII)
-                                                    content = resource.get("content", "")
-                                                    if content:
-                                                        sanitized["content_preview"] = content[:150] + ("..." if len(content) > 150 else "")
-                                                    sanitized_resources.append(sanitized)
+                                        # Check both metadata.retriever_resources and root-level retriever_resources (Dify versions differ)
+                                        raw_resources = None
+                                        if "metadata" in event_data and "retriever_resources" in event_data["metadata"]:
+                                            raw_resources = event_data["metadata"]["retriever_resources"]
+                                            logger.debug(f"Found retriever_resources in metadata: {len(raw_resources)} items")
+                                        elif "retriever_resources" in event_data:
+                                            raw_resources = event_data["retriever_resources"]
+                                            logger.debug(f"Found retriever_resources at root level: {len(raw_resources)} items")
 
-                                                # Add sanitized resources to event_data for forwarding
-                                                event_data["retriever_resources"] = sanitized_resources
+                                        if raw_resources:
+                                            sanitized_resources = []
+                                            for resource in raw_resources:
+                                                sanitized = {
+                                                    "document_name": resource.get("document_name", "Unbekannt"),
+                                                    "segment_id": resource.get("segment_id", ""),
+                                                    "score": round(resource.get("score", 0), 3),
+                                                }
+                                                # Truncate content preview for GDPR (max 150 chars, no PII)
+                                                content = resource.get("content", "")
+                                                if content:
+                                                    sanitized["content_preview"] = content[:150] + ("..." if len(content) > 150 else "")
+                                                sanitized_resources.append(sanitized)
+
+                                            # Add sanitized resources to event_data for forwarding
+                                            event_data["retriever_resources"] = sanitized_resources
+                                            logger.info(f"Forwarding {len(sanitized_resources)} retriever_resources to client")
 
                                         # Re-serialize the enriched event
                                         chunk = f"data: {json.dumps(event_data)}\n\n"

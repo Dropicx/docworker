@@ -160,6 +160,7 @@ export const ChatPage: React.FC = () => {
             }
           } else if (event.event === 'message_end') {
             // Message complete - capture metadata
+            console.log('[ChatPage] message_end event:', JSON.stringify(event, null, 2));
             if (event.conversation_id) {
               newDifyConvId = event.conversation_id;
             }
@@ -168,7 +169,10 @@ export const ChatPage: React.FC = () => {
             }
             // Capture retriever resources for citations
             if (event.retriever_resources && event.retriever_resources.length > 0) {
+              console.log('[ChatPage] Found retriever_resources:', event.retriever_resources.length);
               retrieverResources = event.retriever_resources;
+            } else {
+              console.log('[ChatPage] No retriever_resources in message_end');
             }
           } else if (event.event === 'error') {
             // Handle error
