@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Loader2, StopCircle } from 'lucide-react';
+import { Send, Loader2, StopCircle, X } from 'lucide-react';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -21,7 +21,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   maxLength = 2000,
 }) => {
   const [message, setMessage] = useState('');
+  const [showDisclaimer, setShowDisclaimer] = useState(() => {
+    return localStorage.getItem('hideAiDisclaimer') !== 'true';
+  });
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleDismissDisclaimer = () => {
+    setShowDisclaimer(false);
+    localStorage.setItem('hideAiDisclaimer', 'true');
+  };
 
   // Auto-resize textarea
   useEffect(() => {
@@ -105,14 +113,24 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         </p>
       </div>
 
-      {/* AI Disclaimer */}
-      <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-        <p className="text-[10px] text-neutral-400 dark:text-neutral-500 text-center leading-relaxed">
-          <span className="font-medium text-amber-600 dark:text-amber-400">Hinweis:</span> Dies ist ein KI-Assistent, kein Arzt.
-          Die Antworten basieren auf Leitlinien, ersetzen aber keine ärztliche Beratung.
-          Bei gesundheitlichen Beschwerden wenden Sie sich an medizinisches Fachpersonal.
-        </p>
-      </div>
+      {/* AI Disclaimer - dismissable */}
+      {showDisclaimer && (
+        <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 relative">
+          <button
+            type="button"
+            onClick={handleDismissDisclaimer}
+            className="absolute -top-1 right-0 p-1 text-neutral-300 dark:text-neutral-600 hover:text-neutral-500 dark:hover:text-neutral-400 transition-colors"
+            title="Hinweis ausblenden"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+          <p className="text-[10px] text-neutral-400 dark:text-neutral-500 text-center leading-relaxed pr-4">
+            <span className="font-medium text-amber-600 dark:text-amber-400">Hinweis:</span> Dies ist ein KI-Assistent, kein Arzt.
+            Die Antworten basieren auf Leitlinien, ersetzen aber keine ärztliche Beratung.
+            Bei gesundheitlichen Beschwerden wenden Sie sich an medizinisches Fachpersonal.
+          </p>
+        </div>
+      )}
     </form>
   );
 };
