@@ -63,22 +63,26 @@ export const CitationsDisplay: React.FC<CitationsDisplayProps> = ({
               <span className="text-xs text-neutral-700 dark:text-neutral-300 max-w-[200px] truncate">
                 {resource.document_name}
               </span>
-              <span className={`text-[10px] font-medium ${getScoreColor(resource.score)}`}>
-                {formatScore(resource.score)}
-              </span>
+              {resource.score > 0 && (
+                <span className={`text-[10px] font-medium ${getScoreColor(resource.score)}`}>
+                  {formatScore(resource.score)}
+                </span>
+              )}
             </div>
 
             {/* Tooltip with content preview */}
             {resource.content_preview && (
-              <div className="absolute bottom-full left-0 mb-2 w-64 p-3 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+              <div className="absolute bottom-full left-0 mb-1 w-64 p-3 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-150 z-10 pointer-events-none">
                 <p className="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-4">
                   {resource.content_preview}
                 </p>
-                <div className="mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700">
-                  <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
-                    Relevanz: {formatScore(resource.score)}
-                  </span>
-                </div>
+                {resource.score > 0 && (
+                  <div className="mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-700">
+                    <span className="text-[10px] text-neutral-400 dark:text-neutral-500">
+                      Relevanz: {formatScore(resource.score)}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
