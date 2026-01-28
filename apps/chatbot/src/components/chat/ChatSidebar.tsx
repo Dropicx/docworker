@@ -99,18 +99,16 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
   return (
     <>
-      {/* Mobile toggle button */}
-      <button
-        onClick={onToggle}
-        className={`md:hidden fixed left-3 z-50 p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 ${isOpen ? 'top-3' : 'top-[4.5rem]'}`}
-        title={isOpen ? 'Menu schliessen' : 'Menu offnen'}
-      >
-        {isOpen ? (
-          <X className="w-5 h-5 text-neutral-700 dark:text-neutral-200" />
-        ) : (
+      {/* Mobile menu button - only shown when sidebar is closed */}
+      {!isOpen && (
+        <button
+          onClick={onToggle}
+          className="md:hidden fixed left-3 top-[4.5rem] z-50 p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700"
+          title="Menu öffnen"
+        >
           <Menu className="w-5 h-5 text-neutral-700 dark:text-neutral-200" />
-        )}
-      </button>
+        </button>
+      )}
 
       {/* Overlay for mobile */}
       {isOpen && (
@@ -133,13 +131,25 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       >
         {/* Header */}
         <div className="p-4 border-b border-neutral-200 dark:border-neutral-700">
-          <button
-            onClick={onNew}
-            className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
-          >
-            <Plus className="w-4 h-4" />
-            <span className="font-medium">Neue Unterhaltung</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Close button - mobile only */}
+            <button
+              onClick={onToggle}
+              className="md:hidden flex-shrink-0 p-2.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+              title="Menu schließen"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* New conversation button */}
+            <button
+              onClick={onNew}
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+            >
+              <Plus className="w-4 h-4" />
+              <span className="font-medium">Neue Unterhaltung</span>
+            </button>
+          </div>
         </div>
 
         {/* Conversation list */}
