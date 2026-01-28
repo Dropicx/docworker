@@ -353,8 +353,8 @@ export const ChatPage: React.FC = () => {
       {/* Consent Modal - blocks until accepted */}
       <ConsentModal isOpen={!hasConsented} onAccept={acceptConsent} />
 
-      {/* Fixed Header */}
-      <Header />
+      {/* Fixed Header - hidden on mobile when sidebar is open */}
+      <Header hiddenOnMobile={sidebarOpen} />
 
       {/* Main Content - fills remaining height */}
       <div className="flex-1 flex overflow-hidden">

@@ -8,13 +8,17 @@ import { BookOpen, Sun, Moon, Info } from 'lucide-react';
 import { useTheme } from '../contexts/ThemeContext';
 import { AboutModal } from './common/AboutModal';
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  hiddenOnMobile?: boolean;
+}
+
+export const Header: React.FC<HeaderProps> = ({ hiddenOnMobile = false }) => {
   const { theme, toggleTheme } = useTheme();
   const [aboutOpen, setAboutOpen] = useState(false);
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-700">
+      <header className={`sticky top-0 z-50 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-700 ${hiddenOnMobile ? 'hidden md:block' : ''}`}>
         <div className="px-4">
           <div className="flex items-center justify-between h-16">
             {/* Left: Logo and title */}
