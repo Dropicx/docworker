@@ -19,18 +19,18 @@ export const SuggestedQuestions: React.FC<SuggestedQuestionsProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <div className="px-4 py-3 border-t border-neutral-100 dark:border-neutral-800">
-        <div className="flex items-center gap-2 mb-2">
-          <Sparkles className="w-3.5 h-3.5 text-accent-500 animate-pulse" />
-          <span className="text-xs font-medium text-neutral-500 dark:text-neutral-400">
+      <div className="px-3 py-2 md:px-4 md:py-3 border-t border-neutral-100 dark:border-neutral-800">
+        <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2">
+          <Sparkles className="w-3 h-3 md:w-3.5 md:h-3.5 text-accent-500 animate-pulse" />
+          <span className="text-[10px] md:text-xs font-medium text-neutral-500 dark:text-neutral-400">
             Lade Vorschlage...
           </span>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {[1, 2, 3].map((i) => (
+        <div className="flex flex-wrap gap-1.5 md:gap-2">
+          {[1, 2].map((i) => (
             <div
               key={i}
-              className="h-8 w-48 bg-neutral-100 dark:bg-neutral-800 rounded-lg animate-pulse"
+              className="h-7 md:h-8 w-32 md:w-48 bg-neutral-100 dark:bg-neutral-800 rounded-lg animate-pulse"
             />
           ))}
         </div>

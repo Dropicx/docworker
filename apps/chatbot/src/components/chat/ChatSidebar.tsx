@@ -103,8 +103,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       {!isOpen && (
         <button
           onClick={onToggle}
-          className="md:hidden fixed left-3 top-[4.5rem] z-50 p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700"
-          title="Menu öffnen"
+          className="md:hidden fixed left-2 top-14 z-50 p-1.5 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700"
+          title="Menu offnen"
         >
           <Menu className="w-5 h-5 text-neutral-700 dark:text-neutral-200" />
         </button>
@@ -122,21 +122,21 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       <aside
         className={`
           fixed md:relative md:top-0 bottom-0 left-0 z-40
-          w-72 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700
+          w-64 md:w-72 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700
           flex flex-col overflow-hidden
           transform transition-transform duration-150 ease-in-out
-          ${isOpen ? 'translate-x-0 top-0' : '-translate-x-full top-16 md:translate-x-0'}
+          ${isOpen ? 'translate-x-0 top-0' : '-translate-x-full top-12 md:translate-x-0'}
           md:transform-none
         `}
       >
         {/* Header */}
-        <div className="p-4 border-b border-neutral-200 dark:border-neutral-700">
+        <div className="p-3 md:p-4 border-b border-neutral-200 dark:border-neutral-700">
           <div className="flex items-center gap-2">
             {/* Close button - mobile only */}
             <button
               onClick={onToggle}
-              className="md:hidden flex-shrink-0 p-2.5 text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
-              title="Menu schließen"
+              className="md:hidden flex-shrink-0 p-2 text-neutral-500 dark:text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+              title="Menu schliessen"
             >
               <X className="w-5 h-5" />
             </button>
@@ -144,20 +144,20 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
             {/* New conversation button */}
             <button
               onClick={onNew}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+              className="flex-1 flex items-center justify-center gap-2 px-3 py-2 md:px-4 md:py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
             >
               <Plus className="w-4 h-4" />
-              <span className="font-medium">Neue Unterhaltung</span>
+              <span className="text-sm md:text-base font-medium">Neuer Chat</span>
             </button>
           </div>
         </div>
 
         {/* Conversation list */}
-        <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
+        <div className="flex-1 overflow-y-auto p-1.5 md:p-2 scrollbar-thin">
           {conversations.length === 0 ? (
-            <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
-              <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">Keine Unterhaltungen</p>
+            <div className="text-center py-6 md:py-8 text-neutral-500 dark:text-neutral-400">
+              <MessageSquare className="w-6 h-6 md:w-8 md:h-8 mx-auto mb-2 opacity-50" />
+              <p className="text-xs md:text-sm">Keine Chats</p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -183,7 +183,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         }
                       }
                     }}
-                    className="w-full text-left p-3 pr-20"
+                    className="w-full text-left p-2.5 md:p-3 pr-16 md:pr-20"
                   >
                     <div className="flex items-start gap-2">
                       <MessageSquare
@@ -219,7 +219,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                           </div>
                         ) : (
                           <p
-                            className={`text-sm font-medium truncate ${
+                            className={`text-xs md:text-sm font-medium truncate ${
                               conv.id === activeId
                                 ? 'text-brand-700 dark:text-brand-300'
                                 : 'text-neutral-700 dark:text-neutral-200'
@@ -228,7 +228,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                             {conv.title}
                           </p>
                         )}
-                        <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">
+                        <p className="text-[10px] md:text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">
                           {formatDate(conv.updatedAt)}
                         </p>
                       </div>
@@ -263,40 +263,40 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-4 border-t border-neutral-200 dark:border-neutral-700">
+        {/* Footer - compact on mobile */}
+        <div className="p-3 md:p-4 border-t border-neutral-200 dark:border-neutral-700">
           {conversations.length > 0 && (
             <button
               onClick={onClearAll}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-error-600 dark:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20 rounded-lg transition-colors mb-3"
+              className="w-full flex items-center justify-center gap-2 px-3 py-1.5 md:py-2 text-xs md:text-sm text-error-600 dark:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20 rounded-lg transition-colors mb-2 md:mb-3"
             >
-              <Trash2 className="w-4 h-4" />
+              <Trash2 className="w-3.5 h-3.5 md:w-4 md:h-4" />
               <span>Alle loschen</span>
             </button>
           )}
-          <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center">
-            Verlauf wird lokal gespeichert
+          <p className="text-[10px] md:text-xs text-neutral-400 dark:text-neutral-500 text-center">
+            Lokal gespeichert
           </p>
 
           {/* Legal links */}
-          <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex flex-wrap justify-center gap-x-3 gap-y-1">
+          <div className="mt-2 md:mt-3 pt-2 md:pt-3 border-t border-neutral-100 dark:border-neutral-800 flex flex-wrap justify-center gap-x-2 md:gap-x-3 gap-y-0.5 md:gap-y-1">
             <Link
               to="/impressum"
-              className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+              className="text-[9px] md:text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
             >
               Impressum
             </Link>
             <Link
               to="/datenschutz"
-              className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+              className="text-[9px] md:text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
             >
               Datenschutz
             </Link>
             <Link
               to="/nutzungsbedingungen"
-              className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
+              className="text-[9px] md:text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
             >
-              Nutzungsbedingungen
+              AGB
             </Link>
           </div>
         </div>

@@ -73,27 +73,26 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   // Empty state
   if (messages.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto flex items-center justify-center p-4 md:p-8 bg-neutral-50 dark:bg-neutral-900">
+      <div className="flex-1 overflow-y-auto flex items-center justify-center p-3 md:p-8 bg-neutral-50 dark:bg-neutral-900">
         <div className="text-center max-w-sm md:max-w-md">
-          <div className="w-16 h-16 bg-accent-100 dark:bg-accent-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="w-8 h-8 text-accent-600 dark:text-accent-400" />
+          <div className="w-12 h-12 md:w-16 md:h-16 bg-accent-100 dark:bg-accent-900/30 rounded-xl md:rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+            <BookOpen className="w-6 h-6 md:w-8 md:h-8 text-accent-600 dark:text-accent-400" />
           </div>
-          <h3 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100 mb-2">
+          <h3 className="text-lg md:text-xl font-semibold text-neutral-800 dark:text-neutral-100 mb-1 md:mb-2">
             Frag die Leitlinie
           </h3>
-          <p className="text-neutral-600 dark:text-neutral-400 mb-6">
-            Stellen Sie Fragen zu deutschen medizinischen Leitlinien (AWMF).
-            Der Assistent durchsucht die Leitlinien-Datenbank und gibt Ihnen
-            fundierte Antworten.
+          <p className="text-sm md:text-base text-neutral-600 dark:text-neutral-400 mb-4 md:mb-6">
+            Fragen zu AWMF-Leitlinien stellen.
+            <span className="hidden md:inline"> Der Assistent durchsucht die Leitlinien-Datenbank und gibt Ihnen fundierte Antworten.</span>
           </p>
-          <div className="space-y-2 text-sm text-neutral-500 dark:text-neutral-400">
-            <p className="flex items-center justify-center gap-2">
-              <MessageCircle className="w-4 h-4" />
-              Beispiel: "Was sind die Empfehlungen bei Diabetes Typ 2?"
+          <div className="space-y-1.5 md:space-y-2 text-xs md:text-sm text-neutral-500 dark:text-neutral-400">
+            <p className="flex items-center justify-center gap-1.5 md:gap-2">
+              <MessageCircle className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+              <span className="text-left">"Empfehlungen bei Diabetes Typ 2?"</span>
             </p>
-            <p className="flex items-center justify-center gap-2">
-              <MessageCircle className="w-4 h-4" />
-              Beispiel: "Wie wird Bluthochdruck behandelt?"
+            <p className="flex items-center justify-center gap-1.5 md:gap-2">
+              <MessageCircle className="w-3.5 h-3.5 md:w-4 md:h-4 flex-shrink-0" />
+              <span className="text-left">"Behandlung von Bluthochdruck?"</span>
             </p>
           </div>
         </div>
