@@ -135,16 +135,16 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message, conversationI
           ) : (
             <>
               <div className="prose prose-sm max-w-none prose-neutral dark:prose-invert
-                prose-p:my-4 prose-p:leading-relaxed
-                prose-headings:mt-6 prose-headings:mb-3 prose-headings:font-semibold
-                prose-h1:text-lg prose-h2:text-base prose-h3:text-sm
-                prose-ul:my-4 prose-ul:ml-4 prose-ol:my-4 prose-ol:ml-4
-                prose-li:my-2 prose-li:leading-relaxed
+                prose-p:my-6 prose-p:leading-relaxed
+                prose-headings:mt-8 prose-headings:mb-4 prose-headings:font-semibold
+                prose-h1:text-xl prose-h2:text-lg prose-h3:text-base
+                prose-ul:my-6 prose-ul:ml-6 prose-ol:my-6 prose-ol:ml-6
+                prose-li:my-1 prose-li:leading-relaxed
                 prose-strong:text-neutral-900 dark:prose-strong:text-neutral-100
-                prose-code:bg-neutral-100 dark:prose-code:bg-neutral-700 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:text-xs
-                prose-blockquote:border-l-brand-500 prose-blockquote:bg-brand-50 dark:prose-blockquote:bg-brand-900/20 prose-blockquote:py-1 prose-blockquote:px-3 prose-blockquote:my-4
-                prose-hr:my-6
-                prose-pre:p-0 prose-pre:bg-transparent prose-pre:my-0
+                prose-code:bg-neutral-100 dark:prose-code:bg-neutral-700 prose-code:px-1.5 prose-code:py-1 prose-code:rounded prose-code:text-xs
+                prose-blockquote:border-l-brand-500 prose-blockquote:bg-brand-50 dark:prose-blockquote:bg-brand-900/20 prose-blockquote:py-3 prose-blockquote:px-4 prose-blockquote:my-6
+                prose-hr:my-8
+                prose-pre:p-0 prose-pre:bg-transparent prose-pre:my-4
               ">
                 <ReactMarkdown
                   remarkPlugins={[remarkGfm]}
