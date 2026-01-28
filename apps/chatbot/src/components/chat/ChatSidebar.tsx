@@ -3,6 +3,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Plus,
   MessageSquare,
@@ -258,6 +259,28 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
           <p className="text-xs text-neutral-400 text-center">
             Verlauf wird lokal gespeichert
           </p>
+
+          {/* Legal links */}
+          <div className="mt-3 pt-3 border-t border-neutral-100 flex flex-wrap justify-center gap-x-3 gap-y-1">
+            <Link
+              to="/impressum"
+              className="text-[10px] text-neutral-400 hover:text-neutral-600 transition-colors"
+            >
+              Impressum
+            </Link>
+            <Link
+              to="/datenschutz"
+              className="text-[10px] text-neutral-400 hover:text-neutral-600 transition-colors"
+            >
+              Datenschutz
+            </Link>
+            <Link
+              to="/nutzungsbedingungen"
+              className="text-[10px] text-neutral-400 hover:text-neutral-600 transition-colors"
+            >
+              Nutzungsbedingungen
+            </Link>
+          </div>
         </div>
       </aside>
     </>
