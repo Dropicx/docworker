@@ -102,7 +102,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       {/* Mobile toggle button */}
       <button
         onClick={onToggle}
-        className="md:hidden fixed top-20 left-3 z-40 p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700"
+        className="md:hidden fixed top-[4.5rem] left-3 z-50 p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700"
         title={isOpen ? 'Menu schliessen' : 'Menu offnen'}
       >
         {isOpen ? (
@@ -115,7 +115,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/30 dark:bg-black/50 z-30"
+          className="md:hidden fixed top-16 bottom-0 left-0 right-0 bg-black/30 dark:bg-black/50 z-30"
           onClick={onToggle}
         />
       )}
@@ -123,8 +123,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       {/* Sidebar */}
       <aside
         className={`
-          fixed md:relative inset-y-0 left-0 z-40
-          w-72 h-full bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700
+          fixed md:relative top-16 md:top-0 bottom-0 left-0 z-40
+          w-72 bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700
           flex flex-col overflow-hidden
           transform transition-transform duration-150 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}

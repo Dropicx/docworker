@@ -54,8 +54,8 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex-shrink-0 border-t border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-4">
-      <div className="flex items-end gap-3">
+    <form onSubmit={handleSubmit} className="flex-shrink-0 border-t border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 px-4 pt-4 pb-3">
+      <div className="flex items-center gap-3">
         <div className="flex-1 relative">
           <textarea
             ref={textareaRef}
@@ -74,7 +74,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <button
             type="button"
             onClick={onStop}
-            className="flex-shrink-0 p-3 bg-error-600 text-white rounded-xl hover:bg-error-700 transition-colors"
+            className="flex-shrink-0 p-3 bg-error-600 text-white rounded-xl hover:bg-error-700 transition-colors self-center"
             title="Generierung stoppen"
           >
             <StopCircle className="w-5 h-5" />
@@ -83,7 +83,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <button
             type="submit"
             disabled={disabled || !message.trim()}
-            className="flex-shrink-0 p-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:bg-neutral-200 dark:disabled:bg-neutral-700 disabled:text-neutral-400 dark:disabled:text-neutral-500 disabled:cursor-not-allowed transition-colors"
+            className="flex-shrink-0 p-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:bg-neutral-200 dark:disabled:bg-neutral-700 disabled:text-neutral-400 dark:disabled:text-neutral-500 disabled:cursor-not-allowed transition-colors self-center"
             title="Nachricht senden"
           >
             {disabled ? (
@@ -95,12 +95,22 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         )}
       </div>
 
+      {/* Character count and hint */}
       <div className="flex justify-between items-center mt-2 px-1">
         <p className="text-xs text-neutral-400 dark:text-neutral-500">
           Enter zum Senden, Shift+Enter fur neue Zeile
         </p>
         <p className={`text-xs ${message.length > maxLength * 0.9 ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-neutral-400 dark:text-neutral-500'}`}>
           {message.length.toLocaleString('de-DE')} / {maxLength.toLocaleString('de-DE')} Zeichen
+        </p>
+      </div>
+
+      {/* AI Disclaimer */}
+      <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+        <p className="text-[10px] text-neutral-400 dark:text-neutral-500 text-center leading-relaxed">
+          <span className="font-medium text-amber-600 dark:text-amber-400">Hinweis:</span> Dies ist ein KI-Assistent, kein Arzt.
+          Die Antworten basieren auf Leitlinien, ersetzen aber keine ärztliche Beratung.
+          Bei gesundheitlichen Beschwerden wenden Sie sich an medizinisches Fachpersonal.
         </p>
       </div>
     </form>

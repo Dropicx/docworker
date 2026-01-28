@@ -262,6 +262,7 @@ export const ChatPage: React.FC = () => {
   const handleNewConversation = useCallback(() => {
     createConversation(APP_ID);
     setSidebarOpen(false);
+    setSuggestedQuestions([]); // Clear suggested questions from previous chat
   }, [createConversation]);
 
   /**
@@ -270,6 +271,7 @@ export const ChatPage: React.FC = () => {
   const handleSelectConversation = useCallback(
     (id: string) => {
       setActiveConversation(id);
+      setSuggestedQuestions([]); // Clear suggested questions from previous chat
     },
     [setActiveConversation]
   );
