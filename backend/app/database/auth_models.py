@@ -229,6 +229,11 @@ class AuditAction(str, Enum):
     ACCOUNT_LOCKED = "account_locked"
     RATE_LIMIT_EXCEEDED = "rate_limit_exceeded"
 
+    # Chat rate limiting actions
+    CHAT_RATE_LIMIT_WARNING = "chat_rate_limit_warning"
+    CHAT_TEMP_BAN = "chat_temp_ban"
+    CHAT_PERMANENT_BAN = "chat_permanent_ban"
+
     # Note: Public document uploads are NOT logged for privacy
 
 

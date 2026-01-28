@@ -49,3 +49,26 @@ export interface ChatRequest {
   query: string;
   conversation_id?: string;
 }
+
+export interface RateLimitError {
+  error: 'rate_limit_exceeded';
+  message: string;
+  retry_after: number | null;
+  limit_type: 'minute' | 'hour' | 'day' | 'temp_ban' | 'permanent_ban' | null;
+}
+
+export interface RateLimitStatus {
+  messages_minute: number;
+  messages_hour: number;
+  messages_day: number;
+  limits: {
+    minute: number;
+    hour: number;
+    day: number;
+  };
+  remaining_minute: number;
+  remaining_hour: number;
+  remaining_day: number;
+  banned: boolean;
+  temp_ban_until?: string;
+}

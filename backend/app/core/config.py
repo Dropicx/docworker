@@ -225,6 +225,28 @@ class Settings(BaseSettings):
     rate_limit_per_minute: int = Field(default=60, description="API rate limit per minute")
 
     # ==================
+    # Chat Rate Limiting
+    # ==================
+    chat_rate_limit_enabled: bool = Field(
+        default=True, description="Enable rate limiting for chat endpoints"
+    )
+    chat_rate_limit_per_minute: int = Field(
+        default=10, description="Chat messages allowed per minute"
+    )
+    chat_rate_limit_per_hour: int = Field(
+        default=50, description="Chat messages allowed per hour"
+    )
+    chat_rate_limit_per_day: int = Field(
+        default=200, description="Chat messages allowed per day"
+    )
+    chat_apps_rate_limit: str = Field(
+        default="20/minute", description="Rate limit for /chat/apps endpoint"
+    )
+    chat_health_rate_limit: str = Field(
+        default="30/minute", description="Rate limit for /chat/health endpoint"
+    )
+
+    # ==================
     # Pydantic Configuration
     # ==================
     model_config = SettingsConfigDict(

@@ -2,19 +2,63 @@
  * Chat API Service for GuidelineChat
  *
  * Uses fetch API for SSE streaming (axios doesn't support SSE well).
+ * Includes session token management and rate limit handling.
  */
 
-import { ChatStreamEvent, ChatApp } from '../types/chat';
+import { ChatStreamEvent, ChatApp, RateLimitError, RateLimitStatus } from '../types/chat';
 
 // Base API URL
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+// Session token storage key
+const SESSION_TOKEN_KEY = 'chat_session_token';
+
+/**
+ * Get or create a chat session token for rate limiting.
+ * Uses crypto.randomUUID() for secure token generation.
+ */
+function getChatSessionToken(): string {
+  let token = localStorage.getItem(SESSION_TOKEN_KEY);
+  if (!token) {
+    token = crypto.randomUUID();
+    localStorage.setItem(SESSION_TOKEN_KEY, token);
+  }
+  return token;
+}
+
+/**
+ * Get common headers for chat API requests.
+ */
+function getChatHeaders(): HeadersInit {
+  return {
+    'Content-Type': 'application/json',
+    'X-Chat-Session': getChatSessionToken(),
+  };
+}
+
+/**
+ * Custom error class for rate limit errors.
+ */
+export class ChatRateLimitError extends Error {
+  public readonly retryAfter: number | null;
+  public readonly limitType: string | null;
+
+  constructor(data: RateLimitError) {
+    super(data.message);
+    this.name = 'ChatRateLimitError';
+    this.retryAfter = data.retry_after;
+    this.limitType = data.limit_type;
+  }
+}
 
 /**
  * Fetch available chat apps from the backend.
  */
 export async function getChatApps(): Promise<ChatApp[]> {
   try {
-    const response = await fetch(`${API_URL}/chat/apps`);
+    const response = await fetch(`${API_URL}/chat/apps`, {
+      headers: getChatHeaders(),
+    });
     if (!response.ok) {
       throw new Error(`Failed to fetch apps: ${response.status}`);
     }
@@ -42,6 +86,7 @@ export async function getChatApps(): Promise<ChatApp[]> {
  * @param appId - Which Dify app to use (default: guidelines)
  * @param signal - Optional AbortSignal for cancellation
  * @yields ChatStreamEvent objects as they arrive
+ * @throws ChatRateLimitError if rate limited
  */
 export async function* streamChatMessage(
   query: string,
@@ -51,9 +96,7 @@ export async function* streamChatMessage(
 ): AsyncGenerator<ChatStreamEvent> {
   const response = await fetch(`${API_URL}/chat/message`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers: getChatHeaders(),
     body: JSON.stringify({
       query,
       conversation_id: conversationId,
@@ -61,6 +104,12 @@ export async function* streamChatMessage(
     }),
     signal,
   });
+
+  // Handle rate limit error
+  if (response.status === 429) {
+    const errorData: RateLimitError = await response.json();
+    throw new ChatRateLimitError(errorData);
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
@@ -167,12 +216,42 @@ export async function checkChatHealth(): Promise<{
   error?: string;
 }> {
   try {
-    const response = await fetch(`${API_URL}/chat/health`);
+    const response = await fetch(`${API_URL}/chat/health`, {
+      headers: getChatHeaders(),
+    });
     return await response.json();
   } catch (error) {
     return {
       status: 'error',
       error: error instanceof Error ? error.message : 'Unknown error',
     };
+  }
+}
+
+/**
+ * Get current rate limit status for this client.
+ */
+export async function getRateLimitStatus(): Promise<RateLimitStatus> {
+  const response = await fetch(`${API_URL}/chat/rate-limit-status`, {
+    headers: getChatHeaders(),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to fetch rate limit status: ${response.status}`);
+  }
+  return await response.json();
+}
+
+/**
+ * Format retry time for display.
+ */
+export function formatRetryTime(seconds: number): string {
+  if (seconds < 60) {
+    return `${seconds} Sekunden`;
+  } else if (seconds < 3600) {
+    const minutes = Math.ceil(seconds / 60);
+    return `${minutes} Minute${minutes !== 1 ? 'n' : ''}`;
+  } else {
+    const hours = Math.ceil(seconds / 3600);
+    return `${hours} Stunde${hours !== 1 ? 'n' : ''}`;
   }
 }

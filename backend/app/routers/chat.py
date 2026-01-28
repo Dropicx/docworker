@@ -7,15 +7,31 @@ Uses SSE (Server-Sent Events) for real-time streaming responses.
 Supports multiple chat modes:
 - guidelines: Q&A for medical guidelines (AWMF)
 - befund: Generate recommendation text for Befundberichte
+
+Rate limiting:
+- /apps: 20/minute (lightweight endpoint)
+- /health: 30/minute (allow monitoring)
+- /message: Custom multi-window rate limiting (10/min, 50/hour, 200/day)
 """
 
 import logging
 import os
 
 import httpx
-from fastapi import APIRouter, HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+
+from app.core.config import settings
+from app.services.chat_rate_limiter import chat_rate_limiter
+
+# Rate limiting for lightweight endpoints (disabled in test/development)
+limiter = Limiter(
+    key_func=get_remote_address,
+    enabled=os.getenv("ENVIRONMENT") not in ["test", "development"],
+)
 
 logger = logging.getLogger(__name__)
 
@@ -60,8 +76,48 @@ class AppInfo(BaseModel):
     available: bool
 
 
+class RateLimitError(BaseModel):
+    """Response model for rate limit errors."""
+
+    error: str = "rate_limit_exceeded"
+    message: str
+    retry_after: int | None = None
+    limit_type: str | None = None
+
+
+def get_client_ip(request: Request) -> str:
+    """Extract client IP address from request, handling proxies."""
+    # Check for forwarded headers (Railway, nginx, etc.)
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        # Take the first IP (original client)
+        return forwarded_for.split(",")[0].strip()
+
+    # Check for real IP header
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip.strip()
+
+    # Fall back to direct connection IP
+    if request.client:
+        return request.client.host
+
+    return "unknown"
+
+
+def get_session_token(request: Request) -> str | None:
+    """Extract chat session token from request headers."""
+    return request.headers.get("X-Chat-Session")
+
+
+def get_user_agent(request: Request) -> str | None:
+    """Extract user agent from request headers."""
+    return request.headers.get("User-Agent")
+
+
 @router.get("/apps")
-async def list_chat_apps() -> list[AppInfo]:
+@limiter.limit(settings.chat_apps_rate_limit)
+async def list_chat_apps(request: Request) -> list[AppInfo]:
     """List available chat apps/modes."""
     apps = []
     for app_id, config in DIFY_APPS.items():
@@ -78,18 +134,64 @@ async def list_chat_apps() -> list[AppInfo]:
 
 
 @router.post("/message")
-async def stream_chat_message(request: ChatRequest):
+async def stream_chat_message(request: Request, chat_request: ChatRequest):
     """
     Proxy chat message to Dify with SSE streaming.
 
     Supports multiple Dify apps via app_id parameter.
+
+    Rate limited: 10/minute, 50/hour, 200/day per IP:session combo.
+    Violations trigger escalating penalties (warnings, temp bans, permanent bans).
     """
+    # Extract client identifiers
+    ip_address = get_client_ip(request)
+    session_token = get_session_token(request)
+    user_agent = get_user_agent(request)
+
+    # Check rate limit BEFORE processing
+    rate_limit_result = chat_rate_limiter.check_rate_limit(
+        ip_address=ip_address,
+        session_token=session_token,
+        user_agent=user_agent,
+    )
+
+    if not rate_limit_result.allowed:
+        # Record the violation and apply escalating penalties
+        violation_result = chat_rate_limiter.record_violation(
+            ip_address=ip_address,
+            session_token=session_token,
+            user_agent=user_agent,
+            limit_type=rate_limit_result.limit_type or "unknown",
+        )
+
+        # Use updated message/retry_after if penalty was escalated
+        message = violation_result.message or rate_limit_result.message
+        retry_after = violation_result.retry_after or rate_limit_result.retry_after
+
+        logger.warning(
+            f"Rate limit exceeded for {ip_address}: "
+            f"type={rate_limit_result.limit_type}, violations={violation_result.violations}"
+        )
+
+        response = JSONResponse(
+            status_code=429,
+            content={
+                "error": "rate_limit_exceeded",
+                "message": message,
+                "retry_after": retry_after,
+                "limit_type": violation_result.limit_type or rate_limit_result.limit_type,
+            },
+        )
+        if retry_after:
+            response.headers["Retry-After"] = str(retry_after)
+        return response
+
     # Get app configuration
-    app_config = DIFY_APPS.get(request.app_id)
+    app_config = DIFY_APPS.get(chat_request.app_id)
     if not app_config:
         raise HTTPException(
             status_code=400,
-            detail=f"Unknown app_id: {request.app_id}. Available: {list(DIFY_APPS.keys())}",
+            detail=f"Unknown app_id: {chat_request.app_id}. Available: {list(DIFY_APPS.keys())}",
         )
 
     api_key = app_config["api_key"]
@@ -97,7 +199,7 @@ async def stream_chat_message(request: ChatRequest):
     if not DIFY_BASE_URL or not api_key:
         raise HTTPException(
             status_code=503,
-            detail=f"Chat app '{request.app_id}' not configured. Missing API key or base URL.",
+            detail=f"Chat app '{chat_request.app_id}' not configured. Missing API key or base URL.",
         )
 
     async def generate():
@@ -105,15 +207,15 @@ async def stream_chat_message(request: ChatRequest):
         try:
             async with httpx.AsyncClient() as client:
                 payload = {
-                    "query": request.query,
+                    "query": chat_request.query,
                     "response_mode": "streaming",
                     "user": "anonymous",
                     "inputs": {},
                 }
 
                 # Only include conversation_id if provided (for continuing conversations)
-                if request.conversation_id:
-                    payload["conversation_id"] = request.conversation_id
+                if chat_request.conversation_id:
+                    payload["conversation_id"] = chat_request.conversation_id
 
                 async with client.stream(
                     "POST",
@@ -147,6 +249,13 @@ async def stream_chat_message(request: ChatRequest):
             logger.error(f"Chat streaming error: {e}")
             yield f'data: {{"event": "error", "message": "Internal error: {str(e)}"}}\n\n'
 
+    # Record the message AFTER starting the stream (request is being processed)
+    chat_rate_limiter.record_message(
+        ip_address=ip_address,
+        session_token=session_token,
+        user_agent=user_agent,
+    )
+
     return StreamingResponse(
         generate(),
         media_type="text/event-stream",
@@ -159,7 +268,8 @@ async def stream_chat_message(request: ChatRequest):
 
 
 @router.get("/health")
-async def chat_health():
+@limiter.limit(settings.chat_health_rate_limit)
+async def chat_health(request: Request):
     """Check health of chat service (Dify connection)."""
     if not DIFY_BASE_URL:
         return {"status": "not_configured", "url": None, "apps": {}}
@@ -198,3 +308,33 @@ async def chat_health():
 
     except Exception as e:
         return {"status": "error", "url": DIFY_BASE_URL, "error": str(e), "apps": apps_status}
+
+
+@router.get("/rate-limit-status")
+async def get_rate_limit_status(request: Request):
+    """
+    Get current rate limit status for the requesting client.
+
+    Useful for clients to show remaining quota.
+    """
+    ip_address = get_client_ip(request)
+    session_token = get_session_token(request)
+
+    status = chat_rate_limiter.get_status(ip_address, session_token)
+
+    # Remove sensitive identifier from public response
+    safe_status = {
+        "messages_minute": status["messages_minute"],
+        "messages_hour": status["messages_hour"],
+        "messages_day": status["messages_day"],
+        "limits": status["limits"],
+        "remaining_minute": status.get("remaining_minute", status["limits"]["minute"]),
+        "remaining_hour": status.get("remaining_hour", status["limits"]["hour"]),
+        "remaining_day": status.get("remaining_day", status["limits"]["day"]),
+        "banned": status.get("banned", False),
+    }
+
+    if status.get("temp_ban_until"):
+        safe_status["temp_ban_until"] = status["temp_ban_until"]
+
+    return safe_status

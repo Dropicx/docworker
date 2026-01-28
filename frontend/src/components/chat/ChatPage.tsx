@@ -7,14 +7,14 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { BookOpen, FileText, ChevronDown } from 'lucide-react';
+import { BookOpen, FileText, ChevronDown, AlertTriangle, Clock } from 'lucide-react';
 import { Header } from '../Header';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { useChatHistory } from '../../hooks/useChatHistory';
-import { streamChatMessage, getChatApps } from '../../services/chatApi';
+import { streamChatMessage, getChatApps, ChatRateLimitError, formatRetryTime } from '../../services/chatApi';
 import { ChatApp } from '../../types/chat';
 
 // Icon mapping for apps
@@ -49,8 +49,17 @@ export const ChatPage: React.FC = () => {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [clearAllModalOpen, setClearAllModalOpen] = useState(false);
 
+  // Rate limit error state
+  const [rateLimitError, setRateLimitError] = useState<{
+    message: string;
+    retryAfter: number | null;
+    limitType: string | null;
+  } | null>(null);
+  const [retryCountdown, setRetryCountdown] = useState<number | null>(null);
+
   // AbortController for stopping stream
   const abortControllerRef = useRef<AbortController | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch available apps on mount
   useEffect(() => {
@@ -68,6 +77,37 @@ export const ChatPage: React.FC = () => {
       setSelectedAppId(activeConversation.appId);
     }
   }, [activeConversation]);
+
+  // Handle rate limit countdown
+  useEffect(() => {
+    if (retryCountdown !== null && retryCountdown > 0) {
+      countdownIntervalRef.current = setInterval(() => {
+        setRetryCountdown(prev => {
+          if (prev === null || prev <= 1) {
+            // Clear the error when countdown reaches 0
+            setRateLimitError(null);
+            return null;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => {
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+        }
+      };
+    }
+  }, [retryCountdown]);
+
+  // Cleanup countdown on unmount
+  useEffect(() => {
+    return () => {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
+  }, []);
 
   const selectedApp = apps.find(a => a.id === selectedAppId) || apps[0];
 
@@ -161,6 +201,21 @@ export const ChatPage: React.FC = () => {
         if (error instanceof Error && error.name === 'AbortError') {
           updateMessage(assistantMessage.id, {
             content: fullContent || 'Generierung abgebrochen.',
+            isStreaming: false,
+          });
+        } else if (error instanceof ChatRateLimitError) {
+          // Handle rate limit error
+          console.warn('Rate limit exceeded:', error.message);
+          setRateLimitError({
+            message: error.message,
+            retryAfter: error.retryAfter,
+            limitType: error.limitType,
+          });
+          if (error.retryAfter) {
+            setRetryCountdown(error.retryAfter);
+          }
+          updateMessage(assistantMessage.id, {
+            content: `Limit erreicht: ${error.message}`,
             isStreaming: false,
           });
         } else {
@@ -375,6 +430,42 @@ export const ChatPage: React.FC = () => {
                     )}
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Rate Limit Error Banner */}
+          {rateLimitError && (
+            <div className="flex-shrink-0 bg-amber-50 border-b border-amber-200 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-amber-800">
+                    {rateLimitError.limitType === 'permanent_ban'
+                      ? 'Zugang gesperrt'
+                      : rateLimitError.limitType === 'temp_ban'
+                        ? 'Temporar gesperrt'
+                        : 'Limit erreicht'}
+                  </p>
+                  <p className="text-sm text-amber-700">{rateLimitError.message}</p>
+                </div>
+                {retryCountdown !== null && retryCountdown > 0 && (
+                  <div className="flex items-center gap-2 bg-amber-100 px-3 py-1.5 rounded-lg">
+                    <Clock className="w-4 h-4 text-amber-600" />
+                    <span className="text-sm font-medium text-amber-800">
+                      {formatRetryTime(retryCountdown)}
+                    </span>
+                  </div>
+                )}
+                <button
+                  onClick={() => {
+                    setRateLimitError(null);
+                    setRetryCountdown(null);
+                  }}
+                  className="text-amber-600 hover:text-amber-800 text-sm font-medium"
+                >
+                  Schliessen
+                </button>
               </div>
             </div>
           )}
