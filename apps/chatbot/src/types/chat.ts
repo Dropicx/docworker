@@ -6,7 +6,8 @@ export interface RetrieverResource {
   document_name: string;
   segment_id: string;
   score: number;
-  content_preview?: string;
+  content_preview?: string;  // From our backend (sanitized)
+  content?: string;  // From raw Dify response (fallback)
 }
 
 export interface SuggestedQuestionsResponse {
@@ -57,7 +58,15 @@ export interface ChatStreamEvent {
   created_at?: number;
   message?: string;
   code?: string;
-  retriever_resources?: RetrieverResource[];  // Citations from message_end event
+  retriever_resources?: RetrieverResource[];  // Citations from message_end event (processed by backend)
+  metadata?: {  // Raw Dify metadata (fallback)
+    retriever_resources?: RetrieverResource[];
+    usage?: {
+      prompt_tokens?: number;
+      completion_tokens?: number;
+      total_tokens?: number;
+    };
+  };
 }
 
 export interface ChatRequest {

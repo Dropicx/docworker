@@ -168,9 +168,11 @@ export const ChatPage: React.FC = () => {
               finalMessageId = event.message_id;
             }
             // Capture retriever resources for citations
-            if (event.retriever_resources && event.retriever_resources.length > 0) {
-              console.log('[ChatPage] Found retriever_resources:', event.retriever_resources.length);
-              retrieverResources = event.retriever_resources;
+            // Check both root level (from our backend) and metadata (raw Dify response)
+            const resources = event.retriever_resources || event.metadata?.retriever_resources;
+            if (resources && resources.length > 0) {
+              console.log('[ChatPage] Found retriever_resources:', resources.length);
+              retrieverResources = resources;
             } else {
               console.log('[ChatPage] No retriever_resources in message_end');
             }
