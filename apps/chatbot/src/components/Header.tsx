@@ -15,7 +15,7 @@ export const Header: React.FC = () => {
   return (
     <>
       <header className="sticky top-0 z-50 bg-white/80 dark:bg-neutral-900/80 backdrop-blur-sm border-b border-neutral-200 dark:border-neutral-700">
-        <div className="max-w-4xl mx-auto px-4">
+        <div className="px-4">
           <div className="flex items-center justify-between h-16">
             {/* Left: Logo and title */}
             <div className="flex items-center space-x-3">
