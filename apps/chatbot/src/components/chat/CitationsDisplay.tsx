@@ -56,11 +56,11 @@ export const CitationsDisplay: React.FC<CitationsDisplayProps> = ({
         {visibleResources.map((resource, index) => (
           <div
             key={resource.segment_id || index}
-            className="group relative"
+            className="group/citation relative"
           >
             {/* Citation chip */}
-            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-neutral-50 dark:bg-neutral-700/50 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg border border-neutral-200 dark:border-neutral-600 transition-colors cursor-default">
-              <span className="text-xs text-neutral-700 dark:text-neutral-300 max-w-[200px] truncate">
+            <div className="flex items-center gap-1.5 px-2.5 py-1.5 bg-neutral-50 dark:bg-neutral-700/50 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded-lg border border-neutral-200 dark:border-neutral-600 transition-colors cursor-pointer">
+              <span className="text-xs text-neutral-700 dark:text-neutral-300 max-w-[150px] md:max-w-[200px] truncate">
                 {resource.document_name}
               </span>
               {resource.score > 0 && (
@@ -70,9 +70,9 @@ export const CitationsDisplay: React.FC<CitationsDisplayProps> = ({
               )}
             </div>
 
-            {/* Tooltip with content preview */}
+            {/* Tooltip with content preview - desktop only */}
             {(resource.content_preview || resource.content) && (
-              <div className="absolute bottom-full left-0 mb-1 w-64 p-3 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 hidden group-hover:block z-10 pointer-events-none">
+              <div className="hidden md:block absolute bottom-full left-0 mb-1 w-64 p-3 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 invisible group-hover/citation:visible opacity-0 group-hover/citation:opacity-100 transition-opacity duration-150 z-20 pointer-events-none">
                 <p className="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-4">
                   {resource.content_preview || (resource.content?.slice(0, 200) + (resource.content && resource.content.length > 200 ? '...' : ''))}
                 </p>
