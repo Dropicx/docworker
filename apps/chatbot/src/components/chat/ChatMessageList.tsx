@@ -13,11 +13,13 @@ import { ChatMessage } from './ChatMessage';
 interface ChatMessageListProps {
   messages: ChatMessageType[];
   isStreaming?: boolean;
+  conversationId?: string;
 }
 
 export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   messages,
   isStreaming = false,
+  conversationId,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -107,7 +109,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
         className="h-full overflow-y-auto p-4 space-y-4 bg-neutral-50 dark:bg-neutral-900 scrollbar-thin"
       >
         {messages.map(message => (
-          <ChatMessage key={message.id} message={message} />
+          <ChatMessage key={message.id} message={message} conversationId={conversationId} />
         ))}
         <div ref={bottomRef} />
       </div>

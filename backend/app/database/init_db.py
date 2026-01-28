@@ -10,8 +10,10 @@ from sqlalchemy import create_engine
 from app.core.config import settings
 from app.core.security import hash_password
 from app.database.auth_models import Base as AuthBase, UserRole
+from app.database.chat_feedback_models import ChatMessageFeedbackDB  # noqa: F401 - import to register models
 from app.database.chat_models import ChatLogDB, ChatRateLimitDB  # noqa: F401 - import to register models
 from app.database.connection import get_session
+from app.database.models import Base as ModelsBase  # For chat_message_feedback table
 from app.database.unified_models import Base  # Import to register models with Base.metadata
 from app.repositories.user_repository import UserRepository
 
@@ -26,6 +28,7 @@ def init_database():
         # Create all tables
         Base.metadata.create_all(bind=engine)
         AuthBase.metadata.create_all(bind=engine)  # Auth tables including chat_rate_limits
+        ModelsBase.metadata.create_all(bind=engine)  # Core models including chat_message_feedback
         logger.info("Database tables created successfully")
 
         # Seed modular pipeline configuration

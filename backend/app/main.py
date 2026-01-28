@@ -20,6 +20,7 @@ from app.routers.admin.config import router as admin_config_router
 from app.routers.api_keys import router as api_keys_router
 from app.routers.audit import router as audit_router
 from app.routers.auth import router as auth_router
+from app.routers.chat_feedback import router as chat_feedback_router
 from app.routers.chat_statistics import router as chat_statistics_router
 from app.routers.cost_statistics import router as cost_statistics_router
 from app.routers.feedback import router as feedback_router
@@ -279,6 +280,9 @@ app.include_router(chat.router, prefix="/api", tags=["chat"])  # GuidelineChat R
 app.include_router(
     chat_statistics_router, tags=["chat-statistics"]
 )  # Chat usage analytics and cost tracking
+app.include_router(
+    chat_feedback_router, tags=["chat-feedback"]
+)  # Chat message like/dislike feedback
 
 
 @app.get("/")

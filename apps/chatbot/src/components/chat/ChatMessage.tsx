@@ -2,7 +2,7 @@
  * Individual chat message bubble component.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { User, BookOpen, Loader2, Copy, Check } from 'lucide-react';
 import { ChatMessage as ChatMessageType } from '../../types/chat';
 import ReactMarkdown, { Components } from 'react-markdown';
@@ -10,9 +10,11 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { oneLight, oneDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { useTheme } from '../../contexts/ThemeContext';
+import { MessageActions } from './MessageActions';
 
 interface ChatMessageProps {
   message: ChatMessageType;
+  conversationId?: string;
 }
 
 /**
@@ -84,20 +86,9 @@ const createCodeComponent = (isDark: boolean): Components['code'] => {
   };
 };
 
-export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+export const ChatMessage: React.FC<ChatMessageProps> = ({ message, conversationId }) => {
   const isUser = message.role === 'user';
-  const [copied, setCopied] = useState(false);
   const { theme } = useTheme();
-
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(message.content);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (err) {
-      console.error('Failed to copy:', err);
-    }
-  }, [message.content]);
 
   return (
     <div
@@ -169,33 +160,34 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
             )}
           </div>
 
-          {/* Copy button - only for assistant messages with content */}
-          {!isUser && message.content && !message.isStreaming && (
-            <button
-              onClick={handleCopy}
-              className="absolute -right-8 top-2 p-1.5 text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-700 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-              title={copied ? 'Kopiert!' : 'Kopieren'}
-            >
-              {copied ? (
-                <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
-              ) : (
-                <Copy className="w-4 h-4" />
-              )}
-            </button>
-          )}
         </div>
 
-        {/* Timestamp */}
-        <div
-          className={`text-xs text-neutral-400 dark:text-neutral-500 mt-1 px-1 ${
-            isUser ? 'text-right' : 'text-left'
-          }`}
-        >
-          {new Date(message.timestamp).toLocaleTimeString('de-DE', {
-            hour: '2-digit',
-            minute: '2-digit',
-          })}
-        </div>
+        {/* Message Actions (like/dislike/copy) - only for assistant messages */}
+        {!isUser && message.content && !message.isStreaming && (
+          <div className="flex items-center justify-between mt-1 px-1">
+            <MessageActions
+              messageId={message.id}
+              conversationId={conversationId}
+              content={message.content}
+            />
+            <div className="text-xs text-neutral-400 dark:text-neutral-500">
+              {new Date(message.timestamp).toLocaleTimeString('de-DE', {
+                hour: '2-digit',
+                minute: '2-digit',
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Timestamp for user messages */}
+        {isUser && (
+          <div className="text-xs text-neutral-400 dark:text-neutral-500 mt-1 px-1 text-right">
+            {new Date(message.timestamp).toLocaleTimeString('de-DE', {
+              hour: '2-digit',
+              minute: '2-digit',
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

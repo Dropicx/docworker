@@ -5,7 +5,15 @@
  * Includes session token management and rate limit handling.
  */
 
-import { ChatStreamEvent, ChatApp, RateLimitError, RateLimitStatus } from '../types/chat';
+import {
+  ChatStreamEvent,
+  ChatApp,
+  RateLimitError,
+  RateLimitStatus,
+  MessageFeedback,
+  FeedbackRequest,
+  FeedbackDeleteResponse,
+} from '../types/chat';
 
 // Base API URL - uses relative path, nginx proxies to backend
 const API_URL = import.meta.env.VITE_API_URL || '/api';
@@ -254,4 +262,60 @@ export function formatRetryTime(seconds: number): string {
     const hours = Math.ceil(seconds / 3600);
     return `${hours} Stunde${hours !== 1 ? 'n' : ''}`;
   }
+}
+
+// ==================== MESSAGE FEEDBACK API ====================
+
+/**
+ * Submit feedback (like/dislike) for a chat message.
+ */
+export async function submitMessageFeedback(
+  request: FeedbackRequest
+): Promise<MessageFeedback> {
+  const response = await fetch(`${API_URL}/chat/feedback`, {
+    method: 'POST',
+    headers: getChatHeaders(),
+    body: JSON.stringify(request),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to submit feedback: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Get feedback for a specific message.
+ */
+export async function getMessageFeedback(
+  messageId: string
+): Promise<MessageFeedback> {
+  const response = await fetch(`${API_URL}/chat/feedback/${messageId}`, {
+    headers: getChatHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to get feedback: ${response.status}`);
+  }
+
+  return await response.json();
+}
+
+/**
+ * Delete feedback for a message.
+ */
+export async function deleteMessageFeedback(
+  messageId: string
+): Promise<FeedbackDeleteResponse> {
+  const response = await fetch(`${API_URL}/chat/feedback/${messageId}`, {
+    method: 'DELETE',
+    headers: getChatHeaders(),
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to delete feedback: ${response.status}`);
+  }
+
+  return await response.json();
 }

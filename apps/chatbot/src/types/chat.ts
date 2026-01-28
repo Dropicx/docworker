@@ -72,3 +72,25 @@ export interface RateLimitStatus {
   banned: boolean;
   temp_ban_until?: string;
 }
+
+// Message feedback types
+export type FeedbackType = 'like' | 'dislike' | null;
+
+export interface MessageFeedback {
+  message_id: string;
+  feedback: FeedbackType;
+  reason?: string | null;
+  submitted_at?: string | null;
+}
+
+export interface FeedbackRequest {
+  message_id: string;
+  conversation_id?: string;
+  feedback: 'like' | 'dislike';
+  reason?: string;
+}
+
+export interface FeedbackDeleteResponse {
+  message_id: string;
+  deleted: boolean;
+}

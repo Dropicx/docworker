@@ -360,7 +360,7 @@ export const ChatPage: React.FC = () => {
           )}
 
           {/* Message List - scrollable area */}
-          <ChatMessageList messages={messages} isStreaming={isStreaming} />
+          <ChatMessageList messages={messages} isStreaming={isStreaming} conversationId={activeConversationId ?? undefined} />
 
           {/* Input - fixed at bottom */}
           <ChatInput
