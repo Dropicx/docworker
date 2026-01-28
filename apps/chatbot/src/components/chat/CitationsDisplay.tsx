@@ -72,7 +72,7 @@ export const CitationsDisplay: React.FC<CitationsDisplayProps> = ({
 
             {/* Tooltip with content preview */}
             {resource.content_preview && (
-              <div className="absolute bottom-full left-0 mb-1 w-64 p-3 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-opacity duration-150 z-10 pointer-events-none">
+              <div className="absolute bottom-full left-0 mb-1 w-64 p-3 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700 hidden group-hover:block z-10 pointer-events-none">
                 <p className="text-xs text-neutral-600 dark:text-neutral-300 line-clamp-4">
                   {resource.content_preview}
                 </p>
