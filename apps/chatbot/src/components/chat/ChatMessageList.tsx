@@ -71,20 +71,20 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   // Empty state
   if (messages.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto flex items-center justify-center p-8">
+      <div className="flex-1 overflow-y-auto flex items-center justify-center p-8 bg-neutral-50 dark:bg-neutral-900">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 bg-accent-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <BookOpen className="w-8 h-8 text-accent-600" />
+          <div className="w-16 h-16 bg-accent-100 dark:bg-accent-900/30 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <BookOpen className="w-8 h-8 text-accent-600 dark:text-accent-400" />
           </div>
-          <h3 className="text-xl font-semibold text-neutral-800 mb-2">
+          <h3 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100 mb-2">
             Frag die Leitlinie
           </h3>
-          <p className="text-neutral-600 mb-6">
+          <p className="text-neutral-600 dark:text-neutral-400 mb-6">
             Stellen Sie Fragen zu deutschen medizinischen Leitlinien (AWMF).
             Der Assistent durchsucht die Leitlinien-Datenbank und gibt Ihnen
             fundierte Antworten.
           </p>
-          <div className="space-y-2 text-sm text-neutral-500">
+          <div className="space-y-2 text-sm text-neutral-500 dark:text-neutral-400">
             <p className="flex items-center justify-center gap-2">
               <MessageCircle className="w-4 h-4" />
               Beispiel: "Was sind die Empfehlungen bei Diabetes Typ 2?"
@@ -104,7 +104,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
       <div
         ref={containerRef}
         onScroll={handleScroll}
-        className="h-full overflow-y-auto p-4 space-y-4 bg-neutral-50"
+        className="h-full overflow-y-auto p-4 space-y-4 bg-neutral-50 dark:bg-neutral-900 scrollbar-thin"
       >
         {messages.map(message => (
           <ChatMessage key={message.id} message={message} />
@@ -116,10 +116,10 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
       {showScrollButton && (
         <button
           onClick={() => scrollToBottom(true)}
-          className="absolute bottom-4 right-4 p-3 bg-white border border-neutral-200 rounded-full shadow-medium hover:shadow-hard hover:bg-neutral-50 transition-all z-10"
+          className="absolute bottom-4 right-4 p-3 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-full shadow-medium hover:shadow-hard hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-all z-10"
           title="Nach unten scrollen"
         >
-          <ArrowDown className="w-5 h-5 text-neutral-600" />
+          <ArrowDown className="w-5 h-5 text-neutral-600 dark:text-neutral-300" />
         </button>
       )}
     </div>

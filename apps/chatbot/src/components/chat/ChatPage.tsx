@@ -7,13 +7,15 @@
  */
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
-import { AlertTriangle, Clock } from 'lucide-react';
+import { AlertTriangle, Clock, Loader2 } from 'lucide-react';
 import { Header } from '../Header';
 import { ChatSidebar } from './ChatSidebar';
 import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
 import { ConfirmModal } from '../common/ConfirmModal';
+import { ConsentModal } from '../common/ConsentModal';
 import { useChatHistory } from '../../hooks/useChatHistory';
+import { useConsent } from '../../hooks/useConsent';
 import { streamChatMessage, ChatRateLimitError, formatRetryTime } from '../../services/chatApi';
 
 // Fixed app ID for this standalone chat
@@ -33,6 +35,8 @@ export const ChatPage: React.FC = () => {
     updateTitle,
     clearAll,
   } = useChatHistory();
+
+  const { hasConsented, acceptConsent, isLoading: consentLoading } = useConsent();
 
   const [isStreaming, setIsStreaming] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -285,8 +289,20 @@ export const ChatPage: React.FC = () => {
   // Get messages for active conversation
   const messages = activeConversation?.messages || [];
 
+  // Loading state while checking consent
+  if (consentLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800">
+        <Loader2 className="w-8 h-8 text-brand-600 animate-spin" />
+      </div>
+    );
+  }
+
   return (
-    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-neutral-50 via-white to-accent-50/30">
+    <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 dark:from-neutral-900 dark:via-neutral-900 dark:to-neutral-800">
+      {/* Consent Modal - blocks until accepted */}
+      <ConsentModal isOpen={!hasConsented} onAccept={acceptConsent} />
+
       {/* Fixed Header */}
       <Header />
 
@@ -306,26 +322,26 @@ export const ChatPage: React.FC = () => {
         />
 
         {/* Main chat area - flex column with fixed input */}
-        <main className="flex-1 flex flex-col min-w-0 min-h-0 bg-white overflow-hidden">
+        <main className="flex-1 flex flex-col min-w-0 min-h-0 bg-white dark:bg-neutral-900 overflow-hidden">
           {/* Rate Limit Error Banner */}
           {rateLimitError && (
-            <div className="flex-shrink-0 bg-amber-50 border-b border-amber-200 px-4 py-3">
+            <div className="flex-shrink-0 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-800 px-4 py-3">
               <div className="flex items-center gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0" />
+                <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
                 <div className="flex-1">
-                  <p className="text-sm font-medium text-amber-800">
+                  <p className="text-sm font-medium text-amber-800 dark:text-amber-300">
                     {rateLimitError.limitType === 'permanent_ban'
                       ? 'Zugang gesperrt'
                       : rateLimitError.limitType === 'temp_ban'
                         ? 'Temporar gesperrt'
                         : 'Limit erreicht'}
                   </p>
-                  <p className="text-sm text-amber-700">{rateLimitError.message}</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400">{rateLimitError.message}</p>
                 </div>
                 {retryCountdown !== null && retryCountdown > 0 && (
-                  <div className="flex items-center gap-2 bg-amber-100 px-3 py-1.5 rounded-lg">
-                    <Clock className="w-4 h-4 text-amber-600" />
-                    <span className="text-sm font-medium text-amber-800">
+                  <div className="flex items-center gap-2 bg-amber-100 dark:bg-amber-900/30 px-3 py-1.5 rounded-lg">
+                    <Clock className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                    <span className="text-sm font-medium text-amber-800 dark:text-amber-300">
                       {formatRetryTime(retryCountdown)}
                     </span>
                   </div>
@@ -335,7 +351,7 @@ export const ChatPage: React.FC = () => {
                     setRateLimitError(null);
                     setRetryCountdown(null);
                   }}
-                  className="text-amber-600 hover:text-amber-800 text-sm font-medium"
+                  className="text-amber-600 dark:text-amber-400 hover:text-amber-800 dark:hover:text-amber-300 text-sm font-medium"
                 >
                   Schliessen
                 </button>

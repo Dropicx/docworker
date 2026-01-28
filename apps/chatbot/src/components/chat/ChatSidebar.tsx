@@ -102,16 +102,20 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       {/* Mobile toggle button */}
       <button
         onClick={onToggle}
-        className="md:hidden fixed top-20 left-3 z-40 p-2 bg-white rounded-lg shadow-lg border border-neutral-200"
+        className="md:hidden fixed top-20 left-3 z-40 p-2 bg-white dark:bg-neutral-800 rounded-lg shadow-lg border border-neutral-200 dark:border-neutral-700"
         title={isOpen ? 'Menu schliessen' : 'Menu offnen'}
       >
-        {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        {isOpen ? (
+          <X className="w-5 h-5 text-neutral-700 dark:text-neutral-200" />
+        ) : (
+          <Menu className="w-5 h-5 text-neutral-700 dark:text-neutral-200" />
+        )}
       </button>
 
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="md:hidden fixed inset-0 bg-black/30 z-30"
+          className="md:hidden fixed inset-0 bg-black/30 dark:bg-black/50 z-30"
           onClick={onToggle}
         />
       )}
@@ -120,15 +124,15 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       <aside
         className={`
           fixed md:relative inset-y-0 left-0 z-40
-          w-72 h-full bg-white border-r border-neutral-200
+          w-72 h-full bg-white dark:bg-neutral-900 border-r border-neutral-200 dark:border-neutral-700
           flex flex-col overflow-hidden
-          transform transition-transform duration-200 ease-in-out
+          transform transition-transform duration-150 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
           md:transform-none
         `}
       >
         {/* Header */}
-        <div className="p-4 border-b border-neutral-200">
+        <div className="p-4 border-b border-neutral-200 dark:border-neutral-700">
           <button
             onClick={onNew}
             className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
@@ -139,9 +143,9 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         </div>
 
         {/* Conversation list */}
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
           {conversations.length === 0 ? (
-            <div className="text-center py-8 text-neutral-500">
+            <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
               <MessageSquare className="w-8 h-8 mx-auto mb-2 opacity-50" />
               <p className="text-sm">Keine Unterhaltungen</p>
             </div>
@@ -154,8 +158,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     group relative rounded-lg cursor-pointer transition-colors
                     ${
                       conv.id === activeId
-                        ? 'bg-brand-50 border border-brand-200'
-                        : 'hover:bg-neutral-50 border border-transparent'
+                        ? 'bg-brand-50 dark:bg-brand-900/20 border-l-2 border-l-brand-500 border border-brand-200 dark:border-brand-800'
+                        : 'hover:bg-neutral-50 dark:hover:bg-neutral-800 border border-transparent'
                     }
                   `}
                 >
@@ -174,7 +178,9 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     <div className="flex items-start gap-2">
                       <MessageSquare
                         className={`w-4 h-4 mt-0.5 flex-shrink-0 ${
-                          conv.id === activeId ? 'text-brand-600' : 'text-neutral-400'
+                          conv.id === activeId
+                            ? 'text-brand-600 dark:text-brand-400'
+                            : 'text-neutral-400 dark:text-neutral-500'
                         }`}
                       />
                       <div className="flex-1 min-w-0">
@@ -187,7 +193,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                               onChange={e => setEditTitle(e.target.value)}
                               onKeyDown={handleEditKeyDown}
                               onBlur={handleSaveEdit}
-                              className="flex-1 text-sm font-medium px-1.5 py-0.5 border border-brand-300 rounded focus:outline-none focus:ring-1 focus:ring-brand-500"
+                              className="flex-1 text-sm font-medium px-1.5 py-0.5 border border-brand-300 dark:border-brand-600 rounded bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 focus:outline-none focus:ring-1 focus:ring-brand-500"
                               onClick={e => e.stopPropagation()}
                             />
                             <button
@@ -195,7 +201,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                                 e.stopPropagation();
                                 handleSaveEdit();
                               }}
-                              className="p-1 text-brand-600 hover:bg-brand-100 rounded"
+                              className="p-1 text-brand-600 dark:text-brand-400 hover:bg-brand-100 dark:hover:bg-brand-900/30 rounded"
                               title="Speichern"
                             >
                               <Check className="w-3 h-3" />
@@ -204,13 +210,15 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                         ) : (
                           <p
                             className={`text-sm font-medium truncate ${
-                              conv.id === activeId ? 'text-brand-700' : 'text-neutral-700'
+                              conv.id === activeId
+                                ? 'text-brand-700 dark:text-brand-300'
+                                : 'text-neutral-700 dark:text-neutral-200'
                             }`}
                           >
                             {conv.title}
                           </p>
                         )}
-                        <p className="text-xs text-neutral-400 mt-0.5">
+                        <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">
                           {formatDate(conv.updatedAt)}
                         </p>
                       </div>
@@ -222,7 +230,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                     <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         onClick={e => handleStartEdit(conv, e)}
-                        className="p-1.5 text-neutral-400 hover:text-brand-600 hover:bg-brand-50 rounded"
+                        className="p-1.5 text-neutral-400 dark:text-neutral-500 hover:text-brand-600 dark:hover:text-brand-400 hover:bg-brand-50 dark:hover:bg-brand-900/30 rounded"
                         title="Umbenennen"
                       >
                         <Pencil className="w-3.5 h-3.5" />
@@ -232,7 +240,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                           e.stopPropagation();
                           onDelete(conv.id);
                         }}
-                        className="p-1.5 text-neutral-400 hover:text-error-600 hover:bg-error-50 rounded"
+                        className="p-1.5 text-neutral-400 dark:text-neutral-500 hover:text-error-600 dark:hover:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/30 rounded"
                         title="Loschen"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -246,37 +254,37 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-neutral-200">
+        <div className="p-4 border-t border-neutral-200 dark:border-neutral-700">
           {conversations.length > 0 && (
             <button
               onClick={onClearAll}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-error-600 hover:bg-error-50 rounded-lg transition-colors mb-3"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm text-error-600 dark:text-error-400 hover:bg-error-50 dark:hover:bg-error-900/20 rounded-lg transition-colors mb-3"
             >
               <Trash2 className="w-4 h-4" />
               <span>Alle loschen</span>
             </button>
           )}
-          <p className="text-xs text-neutral-400 text-center">
+          <p className="text-xs text-neutral-400 dark:text-neutral-500 text-center">
             Verlauf wird lokal gespeichert
           </p>
 
           {/* Legal links */}
-          <div className="mt-3 pt-3 border-t border-neutral-100 flex flex-wrap justify-center gap-x-3 gap-y-1">
+          <div className="mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex flex-wrap justify-center gap-x-3 gap-y-1">
             <Link
               to="/impressum"
-              className="text-[10px] text-neutral-400 hover:text-neutral-600 transition-colors"
+              className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
             >
               Impressum
             </Link>
             <Link
               to="/datenschutz"
-              className="text-[10px] text-neutral-400 hover:text-neutral-600 transition-colors"
+              className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
             >
               Datenschutz
             </Link>
             <Link
               to="/nutzungsbedingungen"
-              className="text-[10px] text-neutral-400 hover:text-neutral-600 transition-colors"
+              className="text-[10px] text-neutral-400 dark:text-neutral-500 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors"
             >
               Nutzungsbedingungen
             </Link>

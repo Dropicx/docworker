@@ -54,7 +54,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex-shrink-0 border-t border-neutral-200 bg-white p-4">
+    <form onSubmit={handleSubmit} className="flex-shrink-0 border-t border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-4">
       <div className="flex items-end gap-3">
         <div className="flex-1 relative">
           <textarea
@@ -65,7 +65,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             placeholder={placeholder}
             disabled={disabled}
             rows={1}
-            className="w-full px-4 py-3 border border-neutral-200 rounded-xl resize-none focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-colors disabled:bg-neutral-50 disabled:text-neutral-400"
+            className="w-full px-4 py-3 border border-neutral-200 dark:border-neutral-700 rounded-xl resize-none bg-white dark:bg-neutral-800 text-neutral-900 dark:text-neutral-100 placeholder:text-neutral-400 dark:placeholder:text-neutral-500 focus:border-brand-500 dark:focus:border-brand-400 focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-900/30 focus:outline-none transition-colors disabled:bg-neutral-50 dark:disabled:bg-neutral-800 disabled:text-neutral-400 dark:disabled:text-neutral-500"
             style={{ minHeight: '48px', maxHeight: '150px' }}
           />
         </div>
@@ -83,7 +83,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           <button
             type="submit"
             disabled={disabled || !message.trim()}
-            className="flex-shrink-0 p-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed transition-colors"
+            className="flex-shrink-0 p-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:bg-neutral-200 dark:disabled:bg-neutral-700 disabled:text-neutral-400 dark:disabled:text-neutral-500 disabled:cursor-not-allowed transition-colors"
             title="Nachricht senden"
           >
             {disabled ? (
@@ -96,10 +96,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       </div>
 
       <div className="flex justify-between items-center mt-2 px-1">
-        <p className="text-xs text-neutral-400">
+        <p className="text-xs text-neutral-400 dark:text-neutral-500">
           Enter zum Senden, Shift+Enter fur neue Zeile
         </p>
-        <p className={`text-xs ${message.length > maxLength * 0.9 ? 'text-amber-600 font-medium' : 'text-neutral-400'}`}>
+        <p className={`text-xs ${message.length > maxLength * 0.9 ? 'text-amber-600 dark:text-amber-400 font-medium' : 'text-neutral-400 dark:text-neutral-500'}`}>
           {message.length.toLocaleString('de-DE')} / {maxLength.toLocaleString('de-DE')} Zeichen
         </p>
       </div>
