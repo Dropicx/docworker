@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.database.connection import get_session
 from app.repositories.ai_log_interaction_repository import AILogInteractionRepository
 from app.repositories.available_model_repository import AvailableModelRepository
+from app.repositories.chat_log_repository import ChatLogRepository
 from app.repositories.document_class_repository import DocumentClassRepository
 from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
 from app.repositories.pipeline_job_repository import PipelineJobRepository
@@ -18,6 +19,7 @@ from app.repositories.pipeline_step_execution_repository import PipelineStepExec
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.repositories.system_settings_repository import SystemSettingsRepository
 from app.services.ai_cost_tracker import AICostTracker
+from app.services.chat_log_service import ChatLogService
 from app.services.cache_service import CacheService, get_cache_service
 from app.services.cached_repositories import (
     CachedAvailableModelRepository,
@@ -305,3 +307,32 @@ def get_cached_ocr_configuration_repository(
         CachedOCRConfigurationRepository instance
     """
     return CachedOCRConfigurationRepository(db, cache)
+
+
+# ==================== Chat Log Factories ====================
+
+
+def get_chat_log_repository(db: Session = Depends(get_session)) -> ChatLogRepository:
+    """
+    Dependency injection factory for ChatLogRepository.
+
+    Args:
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        ChatLogRepository instance
+    """
+    return ChatLogRepository(db)
+
+
+def get_chat_log_service(db: Session = Depends(get_session)) -> ChatLogService:
+    """
+    Dependency injection factory for ChatLogService.
+
+    Args:
+        db: Database session (injected by FastAPI)
+
+    Returns:
+        ChatLogService instance with database session
+    """
+    return ChatLogService(db)

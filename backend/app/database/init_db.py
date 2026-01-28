@@ -10,7 +10,7 @@ from sqlalchemy import create_engine
 from app.core.config import settings
 from app.core.security import hash_password
 from app.database.auth_models import Base as AuthBase, UserRole
-from app.database.chat_models import ChatRateLimitDB  # noqa: F401 - import to register model
+from app.database.chat_models import ChatLogDB, ChatRateLimitDB  # noqa: F401 - import to register models
 from app.database.connection import get_session
 from app.database.unified_models import Base  # Import to register models with Base.metadata
 from app.repositories.user_repository import UserRepository
