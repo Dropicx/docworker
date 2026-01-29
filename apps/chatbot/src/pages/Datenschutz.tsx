@@ -11,7 +11,7 @@ export const Datenschutz: React.FC = () => {
     <LegalLayout title="Datenschutzerklarung">
       {/* Introduction */}
       <section className="mb-8">
-        <p className="text-neutral-600 mb-4">
+        <p className="text-neutral-600 dark:text-neutral-400 mb-4">
           Der Schutz Ihrer personenbezogenen Daten ist uns ein wichtiges Anliegen. Diese
           Datenschutzerklarung informiert Sie ausfuhrlich daruber, welche Daten wir erheben,
           wie wir sie verarbeiten und welche Rechte Sie haben. Wir verarbeiten Ihre Daten

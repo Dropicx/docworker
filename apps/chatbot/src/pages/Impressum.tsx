@@ -9,10 +9,10 @@ export const Impressum: React.FC = () => {
   return (
     <LegalLayout title="Impressum">
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-neutral-800 mb-4">
+        <h2 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100 mb-4">
           Angaben gemass § 5 TMG
         </h2>
-        <address className="not-italic text-neutral-600 leading-relaxed">
+        <address className="not-italic text-neutral-600 dark:text-neutral-400 leading-relaxed">
           HealthLingo UG (haftungsbeschrankt)<br />
           Musterstrasse 123<br />
           10115 Berlin<br />
@@ -21,17 +21,17 @@ export const Impressum: React.FC = () => {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-neutral-800 mb-4">Kontakt</h2>
-        <p className="text-neutral-600">
-          E-Mail: <a href="mailto:kontakt@fragdieleitlinie.de" className="text-brand-600 hover:underline">kontakt@fragdieleitlinie.de</a>
+        <h2 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100 mb-4">Kontakt</h2>
+        <p className="text-neutral-600 dark:text-neutral-400">
+          E-Mail: <a href="mailto:kontakt@fragdieleitlinie.de" className="text-brand-600 dark:text-brand-400 hover:underline">kontakt@fragdieleitlinie.de</a>
         </p>
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-neutral-800 mb-4">
+        <h2 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100 mb-4">
           Verantwortlich fur den Inhalt nach § 55 Abs. 2 RStV
         </h2>
-        <address className="not-italic text-neutral-600 leading-relaxed">
+        <address className="not-italic text-neutral-600 dark:text-neutral-400 leading-relaxed">
           [Name des Verantwortlichen]<br />
           Musterstrasse 123<br />
           10115 Berlin
@@ -39,18 +39,18 @@ export const Impressum: React.FC = () => {
       </section>
 
       <section className="mb-8">
-        <h2 className="text-xl font-semibold text-neutral-800 mb-4">
+        <h2 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100 mb-4">
           Haftungsausschluss
         </h2>
 
-        <h3 className="text-lg font-medium text-neutral-700 mb-2">Haftung fur Inhalte</h3>
-        <p className="text-neutral-600 mb-4">
+        <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300 mb-2">Haftung fur Inhalte</h3>
+        <p className="text-neutral-600 dark:text-neutral-400 mb-4">
           Die Inhalte unserer Seiten wurden mit grosster Sorgfalt erstellt. Fur die Richtigkeit,
           Vollstandigkeit und Aktualitat der Inhalte konnen wir jedoch keine Gewahr ubernehmen.
         </p>
 
-        <h3 className="text-lg font-medium text-neutral-700 mb-2">Medizinischer Hinweis</h3>
-        <p className="text-neutral-600 mb-4">
+        <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300 mb-2">Medizinischer Hinweis</h3>
+        <p className="text-neutral-600 dark:text-neutral-400 mb-4">
           <strong>Wichtig:</strong> Die durch diesen Dienst bereitgestellten Informationen werden
           durch Kunstliche Intelligenz generiert und stellen keine medizinische Beratung dar.
           Die Antworten basieren auf medizinischen Leitlinien, ersetzen jedoch keinesfalls die
@@ -59,8 +59,8 @@ export const Impressum: React.FC = () => {
           immer an einen Arzt.
         </p>
 
-        <h3 className="text-lg font-medium text-neutral-700 mb-2">Haftung fur Links</h3>
-        <p className="text-neutral-600">
+        <h3 className="text-lg font-medium text-neutral-700 dark:text-neutral-300 mb-2">Haftung fur Links</h3>
+        <p className="text-neutral-600 dark:text-neutral-400">
           Unser Angebot enthalt Links zu externen Webseiten Dritter, auf deren Inhalte wir
           keinen Einfluss haben. Deshalb konnen wir fur diese fremden Inhalte auch keine
           Gewahr ubernehmen.
@@ -68,8 +68,8 @@ export const Impressum: React.FC = () => {
       </section>
 
       <section>
-        <h2 className="text-xl font-semibold text-neutral-800 mb-4">Urheberrecht</h2>
-        <p className="text-neutral-600">
+        <h2 className="text-xl font-semibold text-neutral-800 dark:text-neutral-100 mb-4">Urheberrecht</h2>
+        <p className="text-neutral-600 dark:text-neutral-400">
           Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten
           unterliegen dem deutschen Urheberrecht. Die Vervielfaltigung, Bearbeitung,
           Verbreitung und jede Art der Verwertung ausserhalb der Grenzen des Urheberrechtes
