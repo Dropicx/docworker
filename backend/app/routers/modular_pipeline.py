@@ -59,6 +59,7 @@ class OCRConfigRequest(BaseModel):
     mistral_ocr_config: dict[str, Any] | None = None
     paddleocr_config: dict[str, Any] | None = None
     pii_removal_enabled: bool | None = True
+    guidelines_analysis_enabled: bool | None = True
 
 
 class OCRConfigResponse(BaseModel):
@@ -69,6 +70,7 @@ class OCRConfigResponse(BaseModel):
     mistral_ocr_config: dict[str, Any] | None
     paddleocr_config: dict[str, Any] | None
     pii_removal_enabled: bool
+    guidelines_analysis_enabled: bool
     last_modified: datetime
 
     # Pydantic V2 configuration

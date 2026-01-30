@@ -114,6 +114,9 @@ class OCRConfigurationDB(Base):
     # Privacy settings
     pii_removal_enabled = Column(Boolean, default=True, nullable=False)  # Global PII removal toggle
 
+    # Feature toggles
+    guidelines_analysis_enabled = Column(Boolean, default=True, nullable=False)  # AWMF guidelines toggle
+
     # Metadata
     last_modified = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
     modified_by = Column(String(255), nullable=True)

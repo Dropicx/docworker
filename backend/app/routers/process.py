@@ -181,9 +181,21 @@ async def get_guidelines(
     This is a potentially slow operation (up to 90s) on first fetch.
     Should be called asynchronously after the main result is displayed.
     """
+    from app.repositories.ocr_configuration_repository import OCRConfigurationRepository
     from app.services.dify_rag_client import DifyRAGClient
 
     start_time = time.time()
+
+    # Check if guidelines analysis is enabled in admin settings
+    ocr_config_repo = OCRConfigurationRepository(service.db)
+    ocr_config = ocr_config_repo.get_config()
+    if ocr_config and not ocr_config.guidelines_analysis_enabled:
+        return GuidelinesResponse(
+            processing_id=processing_id,
+            status="not_configured",
+            error_message="Guidelines analysis is disabled in admin settings",
+            timestamp=datetime.now(),
+        )
 
     # Check if Dify RAG is configured
     rag_client = DifyRAGClient()

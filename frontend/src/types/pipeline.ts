@@ -46,6 +46,7 @@ export interface OCRConfiguration {
   mistral_ocr_config: OCRConfig | null;
   last_modified: string;
   pii_removal_enabled: boolean; // NEW: Global PII removal toggle
+  guidelines_analysis_enabled: boolean; // AWMF guidelines toggle
 }
 
 export interface OCRConfigRequest {
@@ -55,6 +56,7 @@ export interface OCRConfigRequest {
   hybrid_config?: OCRConfig | null;
   mistral_ocr_config?: OCRConfig | null;
   pii_removal_enabled?: boolean; // NEW: Global PII removal toggle
+  guidelines_analysis_enabled?: boolean; // AWMF guidelines toggle
 }
 
 // ==================== PIPELINE STEPS ====================
