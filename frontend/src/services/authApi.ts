@@ -9,6 +9,7 @@ const authApi = axios.create({
   timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
 });
 

@@ -8,6 +8,7 @@ import sys
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
+from fastapi.responses import JSONResponse, PlainTextResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -173,6 +174,54 @@ app.add_middleware(
 )
 
 
+# CSRF Protection Middleware
+@app.middleware("http")
+async def csrf_protection(request: Request, call_next):
+    """
+    Validate X-Requested-With header on state-changing requests.
+
+    Custom headers cannot be set by CSRF attacks (form submissions, img tags),
+    only by JavaScript — which is subject to CORS preflight checks.
+
+    Exemptions:
+    - Safe methods (GET, HEAD, OPTIONS)
+    - Requests with Authorization header (already proves JS/programmatic access)
+    - sendBeacon endpoints (cannot set custom headers)
+    """
+    if not settings.csrf_protection_enabled:
+        return await call_next(request)
+
+    # Skip safe/read-only methods
+    if request.method in ("GET", "HEAD", "OPTIONS"):
+        return await call_next(request)
+
+    # Skip exempt paths (sendBeacon endpoints)
+    for exempt_path in settings.csrf_exempt_paths:
+        if request.url.path.startswith(exempt_path):
+            return await call_next(request)
+
+    # Skip if Authorization header is present (proves JS/programmatic access)
+    if request.headers.get("authorization"):
+        return await call_next(request)
+
+    # Validate CSRF header
+    csrf_value = request.headers.get(settings.csrf_header_name.lower())
+    if csrf_value != settings.csrf_header_value:
+        logger.warning(
+            f"CSRF validation failed: {request.method} {request.url.path} "
+            f"(missing or invalid {settings.csrf_header_name} header)"
+        )
+        return JSONResponse(
+            status_code=403,
+            content={
+                "detail": "CSRF validation failed",
+                "error_code": "CSRF_VALIDATION_FAILED",
+            },
+        )
+
+    return await call_next(request)
+
+
 # Request Logging Middleware
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -283,6 +332,20 @@ app.include_router(
 app.include_router(
     chat_feedback_router, tags=["chat-feedback"]
 )  # Chat message like/dislike feedback
+
+
+SECURITY_TXT = """\
+Contact: mailto:security@healthlingo.de
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en, de
+Canonical: https://healthlingo.de/.well-known/security.txt
+Policy: https://github.com/Dropicx/doctranslator/security/policy
+"""
+
+
+@app.get("/.well-known/security.txt", include_in_schema=False)
+async def security_txt():
+    return PlainTextResponse(content=SECURITY_TXT, media_type="text/plain")
 
 
 @app.get("/")

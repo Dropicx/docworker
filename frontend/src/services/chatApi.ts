@@ -32,6 +32,7 @@ function getChatSessionToken(): string {
 function getChatHeaders(): HeadersInit {
   return {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
     'X-Chat-Session': getChatSessionToken(),
   };
 }

@@ -125,6 +125,7 @@ class PipelineApiService {
     return {
       Authorization: `Bearer ${this.token}`,
       'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
     };
   }
 

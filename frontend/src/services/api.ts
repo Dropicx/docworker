@@ -21,6 +21,7 @@ const api = axios.create({
   timeout: 300000, // 5 minutes timeout for processing
   headers: {
     'Content-Type': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
   },
 });
 
@@ -76,6 +77,8 @@ api.interceptors.response.use(
             // Try to refresh the token
             const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {
               refresh_token: tokens.refresh_token,
+            }, {
+              headers: { 'X-Requested-With': 'XMLHttpRequest' },
             });
 
             const newTokens = {

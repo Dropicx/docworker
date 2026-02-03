@@ -33,6 +33,7 @@ class FeedbackApiService {
   private getHeaders(): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
     };
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
@@ -60,7 +61,7 @@ class FeedbackApiService {
   async submitFeedback(data: FeedbackSubmission): Promise<FeedbackResponse> {
     const response = await fetch(API_BASE, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
       body: JSON.stringify(data),
     });
     return this.handleResponse<FeedbackResponse>(response);
@@ -96,6 +97,7 @@ class FeedbackApiService {
         keepalive: true,
         headers: {
           'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
         },
       }).catch(() => {
         // Ignore errors - cleanup is best effort
@@ -110,6 +112,7 @@ class FeedbackApiService {
   async cleanupContentAsync(processingId: string): Promise<CleanupResponse> {
     const response = await fetch(`${API_BASE}/cleanup/${processingId}`, {
       method: 'POST',
+      headers: { 'X-Requested-With': 'XMLHttpRequest' },
     });
     return this.handleResponse<CleanupResponse>(response);
   }

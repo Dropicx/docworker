@@ -105,6 +105,12 @@ class Settings(BaseSettings):
     trusted_hosts: list[str] = Field(
         default_factory=lambda: ["*"], description="Trusted host headers"
     )
+    csrf_header_name: str = Field(default="X-Requested-With")
+    csrf_header_value: str = Field(default="XMLHttpRequest")
+    csrf_protection_enabled: bool = Field(default=True)
+    csrf_exempt_paths: list[str] = Field(
+        default_factory=lambda: ["/api/feedback/cleanup/", "/api/feedback/clear/"]
+    )
 
     # ==================
     # JWT Configuration
@@ -370,7 +376,7 @@ class Settings(BaseSettings):
                 raise ValueError(
                     "CORS wildcard '*' is not allowed in production environment. "
                     "Please specify explicit origins in ALLOWED_ORIGINS environment variable. "
-                    "Example: ALLOWED_ORIGINS='https://doctranslator.com,https://app.doctranslator.com'"
+                    "Example: ALLOWED_ORIGINS='https://healthlingo.de,https://app.healthlingo.de'"
                 )
             logger.info(f"✅ Production CORS origins validated: {v}")
         else:

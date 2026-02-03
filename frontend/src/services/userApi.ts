@@ -60,6 +60,7 @@ class UserApiService {
   private getHeaders(): HeadersInit {
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
+      'X-Requested-With': 'XMLHttpRequest',
     };
     if (this.token) {
       headers['Authorization'] = `Bearer ${this.token}`;
