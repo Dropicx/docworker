@@ -1,15 +1,7 @@
-/**
- * Reusable Header component with app switcher dropdown.
- *
- * Allows navigation between HealthLingo (document translation)
- * and GuidelineChat (RAG chatbot).
- */
-
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Stethoscope,
-  BookOpen,
   ChevronDown,
   User,
   Settings,
@@ -19,31 +11,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { HealthCheck } from '../types/api';
-
-interface AppDefinition {
-  id: string;
-  name: string;
-  path: string;
-  icon: React.ComponentType<{ className?: string }>;
-  subtitle: string;
-}
-
-const apps: AppDefinition[] = [
-  {
-    id: 'healthlingo',
-    name: 'HealthLingo',
-    path: '/',
-    icon: Stethoscope,
-    subtitle: 'Dokumente verstehen',
-  },
-  {
-    id: 'chat',
-    name: 'GuidelineChat',
-    path: '/chat',
-    icon: BookOpen,
-    subtitle: 'Leitlinien-Assistent',
-  },
-];
 
 interface HeaderProps {
   health?: HealthCheck | null;
@@ -59,30 +26,15 @@ export const Header: React.FC<HeaderProps> = ({
   subtitle,
 }) => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { isAuthenticated, user, logout } = useAuth();
 
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [showHealthDetails, setShowHealthDetails] = useState(false);
 
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const healthDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Determine current app from path
-  const currentApp =
-    apps.find(app => {
-      if (app.path === '/') {
-        return location.pathname === '/';
-      }
-      return location.pathname.startsWith(app.path);
-    }) || apps[0];
 
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
       if (
         healthDropdownRef.current &&
         !healthDropdownRef.current.contains(event.target as Node)
@@ -108,16 +60,11 @@ export const Header: React.FC<HeaderProps> = ({
     navigate('/settings');
   };
 
-  const handleAppSwitch = (app: AppDefinition) => {
-    setDropdownOpen(false);
-    navigate(app.path);
-  };
-
   const handleLogoClick = () => {
     if (onLogoClick) {
       onLogoClick();
     } else {
-      navigate(currentApp.path);
+      navigate('/');
     }
   };
 
@@ -266,81 +213,27 @@ export const Header: React.FC<HeaderProps> = ({
     );
   };
 
-  const CurrentIcon = currentApp.icon;
-
   return (
     <header className="sticky top-0 z-50 header-blur">
       <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
-          {/* Logo with App Switcher */}
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity group"
-            >
-              <div className="hero-gradient p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-soft">
-                <CurrentIcon className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
-              </div>
-              <div className="text-left">
-                <div className="flex items-center space-x-1">
-                  <h1 className="text-lg sm:text-2xl font-bold text-primary-900 tracking-tight">
-                    {currentApp.name}
-                  </h1>
-                  <ChevronDown
-                    className={`w-4 h-4 text-primary-500 transition-transform ${
-                      dropdownOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </div>
-                <p className="text-xs sm:text-sm text-primary-600 font-medium">
-                  {subtitle || currentApp.subtitle}
-                </p>
-              </div>
-            </button>
-
-            {/* App Switcher Dropdown */}
-            {dropdownOpen && (
-              <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-neutral-200 overflow-hidden z-50 animate-fade-in">
-                <div className="px-4 py-3 bg-neutral-50 border-b border-neutral-200">
-                  <h4 className="text-sm font-semibold text-neutral-800">Anwendungen</h4>
-                </div>
-                <div className="p-2">
-                  {apps.map(app => {
-                    const Icon = app.icon;
-                    const isActive = app.id === currentApp.id;
-                    return (
-                      <button
-                        key={app.id}
-                        onClick={() => handleAppSwitch(app)}
-                        className={`w-full flex items-center space-x-3 px-3 py-3 rounded-lg transition-colors ${
-                          isActive
-                            ? 'bg-brand-50 text-brand-700 ring-1 ring-brand-200'
-                            : 'text-neutral-700 hover:bg-neutral-50'
-                        }`}
-                      >
-                        <div
-                          className={`p-2 rounded-lg ${
-                            isActive ? 'bg-brand-100' : 'bg-neutral-100'
-                          }`}
-                        >
-                          <Icon className="w-5 h-5" />
-                        </div>
-                        <div className="text-left">
-                          <div className="font-medium">{app.name}</div>
-                          <div className="text-xs text-neutral-500">{app.subtitle}</div>
-                        </div>
-                        {isActive && (
-                          <div className="ml-auto">
-                            <div className="w-2 h-2 bg-brand-500 rounded-full" />
-                          </div>
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
+          {/* Logo */}
+          <button
+            onClick={handleLogoClick}
+            className="flex items-center space-x-2 sm:space-x-3 hover:opacity-80 transition-opacity"
+          >
+            <div className="hero-gradient p-2 sm:p-3 rounded-xl sm:rounded-2xl shadow-soft">
+              <Stethoscope className="w-5 h-5 sm:w-7 sm:h-7 text-white" />
+            </div>
+            <div className="text-left">
+              <h1 className="text-lg sm:text-2xl font-bold text-primary-900 tracking-tight">
+                HealthLingo
+              </h1>
+              <p className="text-xs sm:text-sm text-primary-600 font-medium">
+                {subtitle || 'Dokumente verstehen'}
+              </p>
+            </div>
+          </button>
 
           {/* Right side: Health indicator & User menu */}
           <div className="flex items-center space-x-4">
