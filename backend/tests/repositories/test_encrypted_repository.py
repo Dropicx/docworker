@@ -78,9 +78,9 @@ class TestSystemSettingsRepositoryEncryption:
         # Database should have ciphertext
         assert stored_value != "my_secret_api_key_12345"
         assert len(stored_value) > len("my_secret_api_key_12345")
-        # Stored value should be base64-encoded (our outer encoding)
+        # Stored value should be base64-encoded (Fernet uses URL-safe base64)
         try:
-            base64.b64decode(stored_value.encode("ascii"))
+            base64.urlsafe_b64decode(stored_value.encode("ascii"))
             is_valid_base64 = True
         except Exception:
             is_valid_base64 = False
@@ -231,10 +231,10 @@ class TestUserRepositoryEncryption:
             assert (
                 stored_full_name != "Max Müller"
             ), f"Full name not encrypted! Got: {stored_full_name}"
-            # Values should be base64-encoded
+            # Values should be base64-encoded (Fernet uses URL-safe base64)
             try:
-                base64.b64decode(stored_email.encode("ascii"))
-                base64.b64decode(stored_full_name.encode("ascii"))
+                base64.urlsafe_b64decode(stored_email.encode("ascii"))
+                base64.urlsafe_b64decode(stored_full_name.encode("ascii"))
                 is_valid_base64 = True
             except Exception:
                 is_valid_base64 = False
