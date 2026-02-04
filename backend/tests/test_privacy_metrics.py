@@ -51,7 +51,7 @@ def _mock_test_privacy_filter(text, timeout=30):
     """Mock privacy filter test for CI."""
     return {
         "input_length": len(text),
-        "output_length": max(1, len(text) - 20),
+        "output_length": max(1, int(len(text) * 0.95)),
         "cleaned_text": "[NAME ENTFERNT] test result",
         "processing_time_ms": 15.5,
         "pii_types_detected": ["patient_name", "birthdate", "street_address", "phone_number"],
@@ -311,4 +311,7 @@ class TestPrivacyFilterIntegration:
         response = client.post("/api/privacy/test", json={"text": long_text})
 
         assert response.status_code == 400
-        assert "too long" in response.json()["detail"].lower()
+        data = response.json()
+        # Error middleware wraps errors as {"error": {"message": ...}}
+        error_msg = data.get("error", {}).get("message", data.get("detail", "")).lower()
+        assert "too long" in error_msg
