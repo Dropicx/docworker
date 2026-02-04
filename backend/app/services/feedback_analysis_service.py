@@ -180,6 +180,13 @@ class FeedbackAnalysisService:
         Returns:
             Formatted prompt string
         """
+        from app.services.prompt_guard import sanitize_for_prompt
+
+        # Sanitize all user-provided texts before embedding in prompt
+        original_text, _ = sanitize_for_prompt(original_text)
+        pii_text, _ = sanitize_for_prompt(pii_text)
+        translated_text, _ = sanitize_for_prompt(translated_text)
+
         # Truncate texts if too long to avoid token limits
         max_chars = 8000  # ~2000 tokens per text section
 
@@ -278,24 +285,22 @@ class FeedbackAnalysisService:
                 )
                 return {"status": "skipped", "message": "Content not available"}
 
-            # Build prompt
+            # Build prompt (user message with document texts)
             prompt = self.build_analysis_prompt(
                 original_text=texts["original_text"],
                 pii_text=texts["pii_text"],
                 translated_text=texts["translated_text"],
             )
 
-            # Add system context
-            full_prompt = f"{ANALYSIS_SYSTEM_PROMPT}\n\n{prompt}"
-
-            # Call Mistral Large
+            # Call Mistral Large with system/user role separation
             logger.info(f"Calling Mistral Large for feedback {feedback_id}")
             start_time = time.time()
             response = await self.mistral_client.process_text(
-                prompt=full_prompt,
+                prompt=prompt,
                 model="mistral-large-latest",
                 temperature=0.3,  # Lower temperature for more consistent analysis
                 max_tokens=2000,
+                system_prompt=ANALYSIS_SYSTEM_PROMPT,
             )
             processing_time = time.time() - start_time
 

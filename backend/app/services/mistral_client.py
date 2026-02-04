@@ -31,15 +31,19 @@ class MistralClient:
         model: str = "mistral-large-latest",
         temperature: float = 0.7,
         max_tokens: int = 4096,
+        system_prompt: str | None = None,
     ) -> dict:
         """
         Process text with Mistral model.
 
         Args:
-            prompt: The full prompt to send to the model
+            prompt: The full prompt to send to the model (user message)
             model: Mistral model name (default: mistral-large-latest)
             temperature: Sampling temperature (0.0-1.0)
             max_tokens: Maximum tokens in response
+            system_prompt: Optional system message for role separation.
+                When provided, instructions go in a system message and
+                prompt becomes the user message.
 
         Returns:
             dict with keys:
@@ -52,9 +56,15 @@ class MistralClient:
         )
 
         try:
+            # Build messages with system/user role separation when system_prompt provided
+            messages = []
+            if system_prompt:
+                messages.append({"role": "system", "content": system_prompt})
+            messages.append({"role": "user", "content": prompt})
+
             response = self.client.chat.complete(
                 model=model,
-                messages=[{"role": "user", "content": prompt}],
+                messages=messages,
                 temperature=temperature,
                 max_tokens=max_tokens,
             )

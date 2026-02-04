@@ -250,7 +250,8 @@ class DynamicPipelineStepDB(Base):
     )  # Runs after doc-specific steps
 
     # Step configuration
-    prompt_template = Column(Text, nullable=False)  # Custom prompt for this step
+    prompt_template = Column(Text, nullable=False)  # Custom prompt for this step (user message)
+    system_prompt = Column(Text, nullable=True)  # System prompt for role separation (instruction part)
     selected_model_id = Column(Integer, nullable=False)  # FK to available_models
 
     # Advanced settings

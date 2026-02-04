@@ -30,6 +30,12 @@ from app.services.document_class_manager import DocumentClassManager
 from app.services.mistral_client import MistralClient
 from app.services.ovh_client import OVHClient
 from app.services.pipeline_progress_tracker import PipelineProgressTracker
+from app.services.prompt_guard import (
+    detect_injection,
+    log_injection_detection,
+    sanitize_for_prompt,
+    validate_step_output,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -575,16 +581,33 @@ class ModularPipelineExecutor:
             logger.error(f"❌ {error}")
             return False, "", error
 
-        # Prepare prompt with variable substitution
+        # Sanitize input text before prompt construction
+        sanitized_input, was_modified = sanitize_for_prompt(input_text)
+        if was_modified:
+            logger.info(f"Input text sanitized for step '{step.name}'")
+
+        # Detect injection patterns (log only, don't block)
+        injection_report = detect_injection(input_text)
+        if injection_report.has_detections:
+            log_injection_detection(
+                report=injection_report,
+                processing_id=processing_id,
+                step_name=step.name,
+            )
+
+        # Prepare prompt with variable substitution (sanitized input)
         try:
             prompt = step.prompt_template.format(
-                input_text=input_text,
+                input_text=sanitized_input,
                 **context,  # e.g., target_language
             )
         except KeyError as e:
             error = f"Missing required variable in prompt template: {e}"
             logger.error(f"❌ {error}")
             return False, "", error
+
+        # Get system_prompt for role separation (may be None for backward compat)
+        system_prompt = getattr(step, "system_prompt", None)
 
         # Execute with retries
         max_retries = step.max_retries if step.retry_on_failure else 1
@@ -611,6 +634,7 @@ class ModularPipelineExecutor:
                         model=model.name,
                         temperature=step.temperature or 0.7,
                         max_tokens=step.max_tokens or model.max_tokens or 4096,
+                        system_prompt=system_prompt,
                     )
                     result_dict = {
                         "text": mistral_result["content"],
@@ -649,6 +673,7 @@ class ModularPipelineExecutor:
                         temperature=step.temperature or 0.7,
                         max_tokens=step.max_tokens or model.max_tokens or 4096,
                         use_fast_model=(model.name == "Mistral-Nemo-Instruct-2407"),
+                        system_prompt=system_prompt,
                     )
 
                 execution_time = time.time() - start_time
@@ -705,6 +730,29 @@ class ModularPipelineExecutor:
                 except Exception as log_error:
                     # Don't fail the pipeline if logging fails!
                     logger.error(f"⚠️ Failed to log AI costs (non-critical): {log_error}")
+
+                # Validate output
+                expected_values = None
+                stop_conds = getattr(step, "stop_conditions", None)
+                if isinstance(stop_conds, dict) and stop_conds.get("stop_on_values"):
+                    # For classification/validation steps, check output format
+                    expected_values = list(stop_conds["stop_on_values"])
+
+                is_valid, validation_msg = validate_step_output(
+                    step_name=step.name,
+                    output=result,
+                    input_text=input_text,
+                    expected_values=expected_values,
+                    system_prompt=system_prompt if isinstance(system_prompt, str) else None,
+                )
+                if not is_valid:
+                    logger.warning(
+                        f"Output validation failed for '{step.name}': {validation_msg}"
+                    )
+                    # On structured steps (classification), retry
+                    if getattr(step, "is_branching_step", False) and attempt < max_retries - 1:
+                        last_error = f"Output validation: {validation_msg}"
+                        continue
 
                 # Success!
                 logger.info(f"✅ Step '{step.name}' completed in {execution_time:.2f}s")
