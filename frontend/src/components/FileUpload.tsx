@@ -13,10 +13,13 @@ import {
   ChevronDown,
   Search,
   Globe,
+  ScanLine,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ApiService from '../services/api';
 import { QualityGateErrorDetails, SupportedLanguage } from '../types/api';
+import { useMobileDetect } from '../hooks/useMobileDetect';
+import DocumentScanner from './DocumentScanner';
 
 interface FileUploadProps {
   onStartProcessing: (file: File, language: string | null) => void;
@@ -60,8 +63,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [validationError, setValidationError] = useState<string | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
+  const [scannerOpen, setScannerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const privacyCheckboxRef = useRef<HTMLDivElement>(null);
+  const { shouldShowScanner } = useMobileDetect();
 
   const qualityGateError = externalQualityGateError || null;
 
@@ -96,6 +101,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
       }, 300);
     },
     [onUploadError, onClearQualityGateError]
+  );
+
+  const handleScanCapture = useCallback(
+    (file: File) => {
+      setScannerOpen(false);
+      handleFileUpload([file]);
+    },
+    [handleFileUpload]
   );
 
   const handleStartProcessing = useCallback(() => {
@@ -222,6 +235,27 @@ const FileUpload: React.FC<FileUploadProps> = ({
           )}
         </div>
       </div>
+
+      {/* Scan Button (mobile only) */}
+      {shouldShowScanner && selectedFiles.length === 0 && (
+        <div className="flex justify-center">
+          <button
+            onClick={() => setScannerOpen(true)}
+            disabled={disabled}
+            className="flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-brand-500 to-brand-600 text-white rounded-xl font-medium text-sm shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <ScanLine className="w-5 h-5" />
+            <span>Dokument scannen</span>
+          </button>
+        </div>
+      )}
+
+      {/* Document Scanner Overlay */}
+      <DocumentScanner
+        isOpen={scannerOpen}
+        onCapture={handleScanCapture}
+        onClose={() => setScannerOpen(false)}
+      />
 
       {/* Selected Files List */}
       {selectedFiles.length > 0 && (
