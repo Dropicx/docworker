@@ -150,11 +150,7 @@ def test_privacy_filter_via_worker(text: str, timeout: int = 30) -> dict[str, An
     try:
         logger.info(f"📤 Sending privacy filter test to worker ({len(text)} chars)")
 
-        result = celery_client.send_task(
-            "test_privacy_filter",
-            args=(text,),
-            queue="default"
-        )
+        result = celery_client.send_task("test_privacy_filter", args=(text,), queue="default")
 
         # Wait for result with timeout
         task_result = result.get(timeout=timeout)
@@ -192,10 +188,7 @@ def get_privacy_filter_status_via_worker(timeout: int = 10) -> dict[str, Any]:
     try:
         logger.info("📤 Requesting privacy filter status from worker")
 
-        result = celery_client.send_task(
-            "get_privacy_filter_status",
-            queue="default"
-        )
+        result = celery_client.send_task("get_privacy_filter_status", queue="default")
 
         # Wait for result with timeout
         task_result = result.get(timeout=timeout)
@@ -203,7 +196,9 @@ def get_privacy_filter_status_via_worker(timeout: int = 10) -> dict[str, Any]:
         if task_result.get("status") == "error":
             raise Exception(task_result.get("error", "Unknown worker error"))
 
-        logger.info(f"✅ Got privacy filter status from worker (NER: {task_result.get('filter_capabilities', {}).get('has_ner')})")
+        logger.info(
+            f"✅ Got privacy filter status from worker (NER: {task_result.get('filter_capabilities', {}).get('has_ner')})"
+        )
         return task_result
 
     except Exception as e:
@@ -493,12 +488,12 @@ def enqueue_feedback_analysis(feedback_id: int) -> str | None:
         logger.info(f"📤 Enqueueing feedback analysis: feedback_id={feedback_id}")
 
         result = celery_client.send_task(
-            "analyze_feedback_quality",
-            args=(feedback_id,),
-            queue="low_priority"
+            "analyze_feedback_quality", args=(feedback_id,), queue="low_priority"
         )
 
-        logger.info(f"✅ Feedback analysis task enqueued: feedback_id={feedback_id} (task_id: {result.id})")
+        logger.info(
+            f"✅ Feedback analysis task enqueued: feedback_id={feedback_id} (task_id: {result.id})"
+        )
         return result.id
 
     except Exception as e:

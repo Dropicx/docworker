@@ -33,7 +33,7 @@ def test_advanced_filter():
     Die kardiale Funktion ist unauffällig.
     """
 
-    result_1 = filter.remove_pii(test_text_1)
+    result_1, metadata_1 = filter.remove_pii(test_text_1)
     print("\n📝 TEST 1 - Unbekannte Namen:")
     print("Original:")
     print(test_text_1)
@@ -58,7 +58,7 @@ def test_advanced_filter():
     - Thiamazol 10mg (Morbus Basedow)
     """
 
-    result_2 = filter.remove_pii(test_text_2)
+    result_2, metadata_2 = filter.remove_pii(test_text_2)
     print("\n📝 TEST 2 - Medizinische Eponyme vs. echte Namen:")
     print("Original:")
     print(test_text_2)
@@ -105,7 +105,7 @@ def test_advanced_filter():
     Patient Max zeigt Zeichen einer Gastritis.
     """
 
-    result_3 = filter.remove_pii(test_text_3)
+    result_3, metadata_3 = filter.remove_pii(test_text_3)
     print("\n📝 TEST 3 - Komplexe Namensformate:")
     print("Original (gekürzt):")
     print(test_text_3[:300] + "...")
@@ -126,7 +126,7 @@ def test_advanced_filter():
     Patient Klaus hat einen BMI von 28.
     """
 
-    result_4 = filter.remove_pii(test_text_4)
+    result_4, metadata_4 = filter.remove_pii(test_text_4)
     print("\n📝 TEST 4 - Kontext-sensitive Erkennung:")
     print("Original:")
     print(test_text_4)
@@ -201,7 +201,7 @@ def test_advanced_filter():
     Oberärztin Endokrinologie
     """
 
-    result_5 = filter.remove_pii(test_text_5)
+    result_5, metadata_5 = filter.remove_pii(test_text_5)
     print("\n📝 TEST 5 - Realistischer komplexer Arztbrief:")
     print(f"Original: {len(test_text_5)} Zeichen")
     print(f"Bereinigt: {len(result_5)} Zeichen")

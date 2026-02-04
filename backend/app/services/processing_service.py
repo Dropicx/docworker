@@ -257,7 +257,9 @@ class ProcessingService:
         if job:
             self.job_repository.update(job.id, guidelines_text=guidelines_text)
 
-    def _map_status_to_api(self, db_status: StepExecutionStatus, progress: int = 0) -> ProcessingStatus:
+    def _map_status_to_api(
+        self, db_status: StepExecutionStatus, progress: int = 0
+    ) -> ProcessingStatus:
         """
         Map database status to API status enum.
 
@@ -273,10 +275,9 @@ class ProcessingService:
         if db_status == StepExecutionStatus.RUNNING:
             if progress < 20:
                 return ProcessingStatus.EXTRACTING_TEXT
-            elif progress < 70:
+            if progress < 70:
                 return ProcessingStatus.TRANSLATING
-            else:
-                return ProcessingStatus.LANGUAGE_TRANSLATING
+            return ProcessingStatus.LANGUAGE_TRANSLATING
 
         status_mapping = {
             StepExecutionStatus.PENDING: ProcessingStatus.PENDING,
@@ -300,24 +301,23 @@ class ProcessingService:
             p = job.progress_percent
             if p < 10:
                 return "Text wird aus dem Dokument extrahiert (OCR)..."
-            elif p < 20:
+            if p < 20:
                 return "Medizinischer Inhalt wird validiert..."
-            elif p < 30:
+            if p < 30:
                 return "Dokumenttyp wird erkannt..."
-            elif p < 40:
+            if p < 40:
                 return "Datenschutz-Filter wird angewendet..."
-            elif p < 55:
+            if p < 55:
                 return "KI vereinfacht den medizinischen Text..."
-            elif p < 65:
+            if p < 65:
                 return "Medizinische Fakten werden geprüft..."
-            elif p < 75:
+            if p < 75:
                 return "Grammatik und Ausdruck werden optimiert..."
-            elif p < 85:
+            if p < 85:
                 return "Sprachübersetzung wird durchgeführt..."
-            elif p < 95:
+            if p < 95:
                 return "Qualitätsprüfung läuft..."
-            else:
-                return "Formatierung wird abgeschlossen..."
+            return "Formatierung wird abgeschlossen..."
         if job.status == StepExecutionStatus.COMPLETED:
             return "Verarbeitung abgeschlossen"
         if job.status == StepExecutionStatus.FAILED:

@@ -7,10 +7,10 @@ Simplified OCR service with two engines:
 """
 
 import base64
+from io import BytesIO
 import logging
 import os
 import time
-from io import BytesIO
 from typing import Any
 
 import httpx
@@ -136,9 +136,7 @@ class OCREngineManager:
         except Exception as e:
             logger.error(f"❌ OCR extraction failed: {e}")
             return OCRResult(
-                text=f"OCR extraction error: {str(e)}",
-                confidence=0.0,
-                engine=str(selected_engine)
+                text=f"OCR extraction error: {str(e)}", confidence=0.0, engine=str(selected_engine)
             )
 
     async def extract_text_legacy(
@@ -163,7 +161,7 @@ class OCREngineManager:
         """
         from mistralai import Mistral
 
-        logger.info(f"🔮 Using MISTRAL_OCR extraction")
+        logger.info("🔮 Using MISTRAL_OCR extraction")
         logger.info(f"📄 File: {filename}, Type: {file_type}, Size: {len(file_content)} bytes")
 
         if not MISTRAL_API_KEY:
@@ -197,11 +195,8 @@ class OCREngineManager:
 
                     ocr_response = client.ocr.process(
                         model="mistral-ocr-latest",
-                        document={
-                            "type": "image_url",
-                            "image_url": {"url": data_url}
-                        },
-                        include_image_base64=False
+                        document={"type": "image_url", "image_url": {"url": data_url}},
+                        include_image_base64=False,
                     )
 
                     for page in ocr_response.pages:
@@ -223,11 +218,8 @@ class OCREngineManager:
 
                 ocr_response = client.ocr.process(
                     model="mistral-ocr-latest",
-                    document={
-                        "type": "image_url",
-                        "image_url": {"url": data_url}
-                    },
-                    include_image_base64=False
+                    document={"type": "image_url", "image_url": {"url": data_url}},
+                    include_image_base64=False,
                 )
 
                 for page in ocr_response.pages:
@@ -246,7 +238,7 @@ class OCREngineManager:
                 markdown=extracted_text,
                 processing_time=processing_time,
                 engine="MISTRAL_OCR",
-                mode="mistral"
+                mode="mistral",
             )
 
         except Exception as e:
@@ -268,7 +260,7 @@ class OCREngineManager:
             return OCRResult(
                 text="OCR service not configured. Set EXTERNAL_OCR_URL.",
                 confidence=0.0,
-                engine="PADDLEOCR"
+                engine="PADDLEOCR",
             )
 
         logger.info(f"🌐 Using PaddleOCR at {EXTERNAL_OCR_URL}")
@@ -278,7 +270,9 @@ class OCREngineManager:
 
         try:
             async with httpx.AsyncClient(timeout=180.0) as client:
-                mime_type = "application/pdf" if file_type.lower() == "pdf" else f"image/{file_type}"
+                mime_type = (
+                    "application/pdf" if file_type.lower() == "pdf" else f"image/{file_type}"
+                )
                 files = {"file": (filename, file_content, mime_type)}
 
                 headers = {}
@@ -286,9 +280,7 @@ class OCREngineManager:
                     headers["X-API-Key"] = EXTERNAL_API_KEY
 
                 response = await client.post(
-                    f"{EXTERNAL_OCR_URL}/extract",
-                    files=files,
-                    headers=headers
+                    f"{EXTERNAL_OCR_URL}/extract", files=files, headers=headers
                 )
 
                 if response.status_code == 200:
@@ -300,54 +292,45 @@ class OCREngineManager:
                     engine = result.get("engine", "PaddleOCR")
 
                     logger.info(f"✅ PaddleOCR completed in {processing_time:.2f}s")
-                    logger.info(f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars")
+                    logger.info(
+                        f"📊 Confidence: {confidence:.2%}, Length: {len(extracted_text)} chars"
+                    )
 
                     return OCRResult(
                         text=extracted_text,
                         confidence=confidence,
                         processing_time=processing_time,
                         engine=engine,
-                        mode="paddleocr"
+                        mode="paddleocr",
                     )
 
-                elif response.status_code in (401, 403):
+                if response.status_code in (401, 403):
                     logger.error(f"❌ PaddleOCR authentication failed: {response.status_code}")
                     return OCRResult(
                         text="PaddleOCR authentication failed. Check EXTERNAL_API_KEY.",
                         confidence=0.0,
-                        engine="PADDLEOCR"
+                        engine="PADDLEOCR",
                     )
-                else:
-                    logger.error(f"❌ PaddleOCR service error: {response.status_code}")
-                    return OCRResult(
-                        text=f"PaddleOCR service error: {response.status_code}",
-                        confidence=0.0,
-                        engine="PADDLEOCR"
-                    )
+                logger.error(f"❌ PaddleOCR service error: {response.status_code}")
+                return OCRResult(
+                    text=f"PaddleOCR service error: {response.status_code}",
+                    confidence=0.0,
+                    engine="PADDLEOCR",
+                )
 
         except httpx.TimeoutException:
             logger.error("❌ PaddleOCR service timeout")
-            return OCRResult(
-                text="PaddleOCR service timeout",
-                confidence=0.0,
-                engine="PADDLEOCR"
-            )
+            return OCRResult(text="PaddleOCR service timeout", confidence=0.0, engine="PADDLEOCR")
 
         except httpx.ConnectError as e:
             logger.error(f"❌ Cannot connect to PaddleOCR: {e}")
             return OCRResult(
-                text=f"Cannot connect to PaddleOCR service: {e}",
-                confidence=0.0,
-                engine="PADDLEOCR"
+                text=f"Cannot connect to PaddleOCR service: {e}", confidence=0.0, engine="PADDLEOCR"
             )
 
         except Exception as e:
             logger.error(f"❌ PaddleOCR extraction failed: {e}")
-            return OCRResult(
-                text=f"PaddleOCR error: {e}",
-                confidence=0.0,
-                engine="PADDLEOCR"
-            )
+            return OCRResult(text=f"PaddleOCR error: {e}", confidence=0.0, engine="PADDLEOCR")
 
     # ==================== UTILITY METHODS ====================
 

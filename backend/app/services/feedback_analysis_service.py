@@ -10,18 +10,18 @@ Compares OCR text → PII-anonymized text → final translation to identify:
 Uses Mistral Large for analysis.
 """
 
+from datetime import datetime
 import json
 import logging
 import re
 import time
-from datetime import datetime
 
 from sqlalchemy.orm import Session
 
 from app.database.modular_pipeline_models import FeedbackAnalysisStatus
 from app.repositories.feedback_repository import FeedbackRepository
-from app.repositories.pipeline_step_execution_repository import PipelineStepExecutionRepository
 from app.repositories.pipeline_job_repository import PipelineJobRepository
+from app.repositories.pipeline_step_execution_repository import PipelineStepExecutionRepository
 from app.services.ai_cost_tracker import AICostTracker
 from app.services.mistral_client import MistralClient
 
@@ -140,7 +140,10 @@ class FeedbackAnalysisService:
         pii_text = None
         for step in step_executions:
             # Look for PII-related step names
-            if any(keyword in step.step_name.lower() for keyword in ["pii", "privacy", "datenschutz", "anonym"]):
+            if any(
+                keyword in step.step_name.lower()
+                for keyword in ["pii", "privacy", "datenschutz", "anonym"]
+            ):
                 # The input to the next step after PII removal is the anonymized text
                 pii_text = step.output_text
                 break
@@ -149,7 +152,9 @@ class FeedbackAnalysisService:
         # (which would be the text after PII removal if done as preprocessing)
         if not pii_text:
             for step in step_executions:
-                if any(keyword in step.step_name.lower() for keyword in ["extraction", "ocr", "text"]):
+                if any(
+                    keyword in step.step_name.lower() for keyword in ["extraction", "ocr", "text"]
+                ):
                     pii_text = step.output_text
                     break
 
@@ -163,9 +168,7 @@ class FeedbackAnalysisService:
             "translated_text": translated_text,
         }
 
-    def build_analysis_prompt(
-        self, original_text: str, pii_text: str, translated_text: str
-    ) -> str:
+    def build_analysis_prompt(self, original_text: str, pii_text: str, translated_text: str) -> str:
         """
         Build the AI prompt for quality analysis.
 
@@ -211,7 +214,7 @@ class FeedbackAnalysisService:
         # Try to find JSON in the response (may have extra text)
         try:
             # Look for JSON object pattern
-            json_match = re.search(r'\{[\s\S]*\}', response_text)
+            json_match = re.search(r"\{[\s\S]*\}", response_text)
             if json_match:
                 return json.loads(json_match.group())
         except (json.JSONDecodeError, AttributeError):

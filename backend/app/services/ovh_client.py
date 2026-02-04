@@ -1,10 +1,7 @@
-import base64
 from collections.abc import AsyncGenerator
-from io import BytesIO
 import logging
 from typing import Any
 
-import httpx
 from openai import AsyncOpenAI
 from PIL import Image
 
@@ -478,7 +475,9 @@ BEREINIGTER TEXT (nur medizinische Inhalte):"""
 
             result = response.choices[0].message.content
 
-            logger.info(f"✅ OVH preprocessing completed: {len(result)} characters (reduced by {len(text) - len(result)})")
+            logger.info(
+                f"✅ OVH preprocessing completed: {len(result)} characters (reduced by {len(text) - len(result)})"
+            )
 
             # Clean up formatting
             import re
@@ -697,7 +696,9 @@ ORIGINAL MEDIZINISCHER TEXT:
             # Evaluate quality
             confidence = self._evaluate_translation_quality(text, translated_text)
 
-            logger.info(f"✅ TRANSLATION COMPLETED: {len(translated_text)} characters, confidence: {confidence:.2%}")
+            logger.info(
+                f"✅ TRANSLATION COMPLETED: {len(translated_text)} characters, confidence: {confidence:.2%}"
+            )
 
             return translated_text, document_type, confidence, text
 
@@ -956,8 +957,13 @@ Nutze IMMER das einheitliche Format oben, egal welche Inhalte das Dokument hat."
             >>> manager = OCREngineManager(db_session)
             >>> result = await manager.extract_text(file_content, file_type, filename)
         """
-        logger.warning("⚠️ DEPRECATED: extract_text_with_vision called - use OCREngineManager instead")
-        return "DEPRECATED: Vision OCR removed. Use OCREngineManager with Mistral OCR or PaddleOCR.", 0.0
+        logger.warning(
+            "⚠️ DEPRECATED: extract_text_with_vision called - use OCREngineManager instead"
+        )
+        return (
+            "DEPRECATED: Vision OCR removed. Use OCREngineManager with Mistral OCR or PaddleOCR.",
+            0.0,
+        )
 
     async def _deprecated_extract_text_with_vision(
         self,
@@ -1091,7 +1097,10 @@ Begin text extraction with perfect structure preservation:"""
             >>> result = await manager.extract_text(file_content, file_type, filename)
         """
         logger.warning("⚠️ DEPRECATED: process_multiple_images_ocr called - use OCREngineManager")
-        return "DEPRECATED: Vision OCR removed. Use OCREngineManager with Mistral OCR or PaddleOCR.", 0.0
+        return (
+            "DEPRECATED: Vision OCR removed. Use OCREngineManager with Mistral OCR or PaddleOCR.",
+            0.0,
+        )
 
     async def _deprecated_process_multiple_images_ocr(
         self, images: list[bytes | Image.Image], merge_strategy: str = "sequential"

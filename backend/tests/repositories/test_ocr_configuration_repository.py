@@ -42,7 +42,7 @@ class TestOCRConfigurationRepository:
 
     def test_get_config_returns_singleton(self, repository, create_ocr_configuration):
         """Test that get_config returns the same singleton instance."""
-        create_ocr_configuration(selected_engine=OCREngineEnum.HYBRID)
+        create_ocr_configuration(selected_engine=OCREngineEnum.MISTRAL_OCR)
 
         config1 = repository.get_config()
         config2 = repository.get_config()
@@ -71,7 +71,7 @@ class TestOCRConfigurationRepository:
 
         assert config is not None
         assert config.id is not None
-        assert config.selected_engine == OCREngineEnum.HYBRID
+        assert config.selected_engine == OCREngineEnum.MISTRAL_OCR
         assert config.pii_removal_enabled is True
 
     def test_get_or_create_config_idempotent(self, repository):
@@ -87,33 +87,33 @@ class TestOCRConfigurationRepository:
         """Test updating the selected OCR engine."""
         create_ocr_configuration(selected_engine=OCREngineEnum.PADDLEOCR)
 
-        updated = repository.update_selected_engine(OCREngineEnum.VISION_LLM)
+        updated = repository.update_selected_engine(OCREngineEnum.MISTRAL_OCR)
 
         assert updated is not None
-        assert updated.selected_engine == OCREngineEnum.VISION_LLM
+        assert updated.selected_engine == OCREngineEnum.MISTRAL_OCR
 
     def test_update_selected_engine_all_types(self, repository, create_ocr_configuration):
         """Test updating to all available OCR engine types."""
         create_ocr_configuration(selected_engine=OCREngineEnum.PADDLEOCR)
 
         # Test each engine type
-        for engine in [OCREngineEnum.VISION_LLM, OCREngineEnum.HYBRID, OCREngineEnum.PADDLEOCR]:
+        for engine in [OCREngineEnum.MISTRAL_OCR, OCREngineEnum.PADDLEOCR]:
             updated = repository.update_selected_engine(engine)
             assert updated.selected_engine == engine
 
     def test_update_selected_engine_when_no_config(self, repository):
         """Test update_selected_engine returns None when no configuration exists."""
-        result = repository.update_selected_engine(OCREngineEnum.HYBRID)
+        result = repository.update_selected_engine(OCREngineEnum.MISTRAL_OCR)
         assert result is None
 
     def test_update_selected_engine_persists(self, repository, create_ocr_configuration):
         """Test that engine update persists across queries."""
         create_ocr_configuration(selected_engine=OCREngineEnum.PADDLEOCR)
 
-        repository.update_selected_engine(OCREngineEnum.VISION_LLM)
+        repository.update_selected_engine(OCREngineEnum.MISTRAL_OCR)
         reloaded = repository.get_config()
 
-        assert reloaded.selected_engine == OCREngineEnum.VISION_LLM
+        assert reloaded.selected_engine == OCREngineEnum.MISTRAL_OCR
 
     # ==================== UPDATE ENGINE CONFIG TESTS ====================
 
@@ -127,25 +127,15 @@ class TestOCRConfigurationRepository:
         assert updated is not None
         assert updated.paddleocr_config == paddle_config
 
-    def test_update_vision_llm_config(self, repository, create_ocr_configuration):
-        """Test updating Vision LLM engine-specific configuration."""
-        create_ocr_configuration(selected_engine=OCREngineEnum.VISION_LLM)
+    def test_update_mistral_ocr_config(self, repository, create_ocr_configuration):
+        """Test updating Mistral OCR engine-specific configuration."""
+        create_ocr_configuration(selected_engine=OCREngineEnum.MISTRAL_OCR)
 
-        vision_config = {"model": "Qwen2.5-VL-72B-Instruct", "timeout": 60}
-        updated = repository.update_engine_config(OCREngineEnum.VISION_LLM, vision_config)
-
-        assert updated is not None
-        assert updated.vision_llm_config == vision_config
-
-    def test_update_hybrid_config(self, repository, create_ocr_configuration):
-        """Test updating Hybrid engine-specific configuration."""
-        create_ocr_configuration(selected_engine=OCREngineEnum.HYBRID)
-
-        hybrid_config = {"quality_threshold": 0.7, "fallback_to_llm": True}
-        updated = repository.update_engine_config(OCREngineEnum.HYBRID, hybrid_config)
+        mistral_config = {"model": "mistral-ocr-latest", "timeout": 60}
+        updated = repository.update_engine_config(OCREngineEnum.MISTRAL_OCR, mistral_config)
 
         assert updated is not None
-        assert updated.hybrid_config == hybrid_config
+        assert updated.mistral_ocr_config == mistral_config
 
     def test_update_engine_config_when_no_config(self, repository):
         """Test update_engine_config returns None when no configuration exists."""
@@ -164,20 +154,17 @@ class TestOCRConfigurationRepository:
 
     def test_update_engine_config_multiple_engines(self, repository, create_ocr_configuration):
         """Test updating configurations for multiple engines independently."""
-        create_ocr_configuration(selected_engine=OCREngineEnum.HYBRID)
+        create_ocr_configuration(selected_engine=OCREngineEnum.MISTRAL_OCR)
 
         paddle_config = {"use_gpu": True}
-        vision_config = {"model": "Qwen2.5"}
-        hybrid_config = {"quality_threshold": 0.7}
+        mistral_config = {"model": "mistral-ocr-latest"}
 
         repository.update_engine_config(OCREngineEnum.PADDLEOCR, paddle_config)
-        repository.update_engine_config(OCREngineEnum.VISION_LLM, vision_config)
-        repository.update_engine_config(OCREngineEnum.HYBRID, hybrid_config)
+        repository.update_engine_config(OCREngineEnum.MISTRAL_OCR, mistral_config)
 
         config = repository.get_config()
         assert config.paddleocr_config == paddle_config
-        assert config.vision_llm_config == vision_config
-        assert config.hybrid_config == hybrid_config
+        assert config.mistral_ocr_config == mistral_config
 
     def test_update_engine_config_overwrites_previous(self, repository, create_ocr_configuration):
         """Test that updating engine config overwrites previous configuration."""
@@ -245,23 +232,22 @@ class TestOCRConfigurationRepository:
 
     def test_get_selected_engine_when_exists(self, repository, create_ocr_configuration):
         """Test getting selected engine when configuration exists."""
-        create_ocr_configuration(selected_engine=OCREngineEnum.VISION_LLM)
+        create_ocr_configuration(selected_engine=OCREngineEnum.PADDLEOCR)
 
         engine = repository.get_selected_engine()
 
-        assert engine == OCREngineEnum.VISION_LLM
+        assert engine == OCREngineEnum.PADDLEOCR
 
     def test_get_selected_engine_default_when_no_config(self, repository):
-        """Test get_selected_engine returns HYBRID default when no configuration exists."""
+        """Test get_selected_engine returns MISTRAL_OCR default when no configuration exists."""
         engine = repository.get_selected_engine()
-        assert engine == OCREngineEnum.HYBRID
+        assert engine == OCREngineEnum.MISTRAL_OCR
 
     def test_get_selected_engine_all_types(self, repository, create_ocr_configuration):
         """Test getting all engine types."""
         for engine_type in [
             OCREngineEnum.PADDLEOCR,
-            OCREngineEnum.VISION_LLM,
-            OCREngineEnum.HYBRID,
+            OCREngineEnum.MISTRAL_OCR,
         ]:
             create_ocr_configuration(selected_engine=engine_type)
 
@@ -304,7 +290,7 @@ class TestOCRConfigurationRepository:
 
         # Create default config
         config = repository.get_or_create_config()
-        assert config.selected_engine == OCREngineEnum.HYBRID
+        assert config.selected_engine == OCREngineEnum.MISTRAL_OCR
         assert config.pii_removal_enabled is True
 
         # Update engine
@@ -320,15 +306,15 @@ class TestOCRConfigurationRepository:
         repository.toggle_pii_removal(False)
         assert repository.is_pii_removal_enabled() is False
 
-        # Switch to Vision LLM
-        repository.update_selected_engine(OCREngineEnum.VISION_LLM)
-        vision_config = {"model": "Qwen2.5-VL-72B-Instruct"}
-        repository.update_engine_config(OCREngineEnum.VISION_LLM, vision_config)
+        # Switch to Mistral OCR
+        repository.update_selected_engine(OCREngineEnum.MISTRAL_OCR)
+        mistral_config = {"model": "mistral-ocr-latest"}
+        repository.update_engine_config(OCREngineEnum.MISTRAL_OCR, mistral_config)
 
         # Verify final state
         final_config = repository.get_config()
-        assert final_config.selected_engine == OCREngineEnum.VISION_LLM
-        assert final_config.vision_llm_config == vision_config
+        assert final_config.selected_engine == OCREngineEnum.MISTRAL_OCR
+        assert final_config.mistral_ocr_config == mistral_config
         assert final_config.paddleocr_config == paddle_config  # Previous config preserved
         assert final_config.pii_removal_enabled is False
 
@@ -347,19 +333,17 @@ class TestOCRConfigurationRepository:
 
     def test_engine_config_independence(self, repository, create_ocr_configuration):
         """Test that each engine's configuration is independent."""
-        create_ocr_configuration(selected_engine=OCREngineEnum.HYBRID)
+        create_ocr_configuration(selected_engine=OCREngineEnum.MISTRAL_OCR)
 
-        # Configure all engines differently
+        # Configure both engines differently
         repository.update_engine_config(OCREngineEnum.PADDLEOCR, {"setting": "paddle"})
-        repository.update_engine_config(OCREngineEnum.VISION_LLM, {"setting": "vision"})
-        repository.update_engine_config(OCREngineEnum.HYBRID, {"setting": "hybrid"})
+        repository.update_engine_config(OCREngineEnum.MISTRAL_OCR, {"setting": "mistral"})
 
         config = repository.get_config()
 
         # Verify each engine has its own config
         assert config.paddleocr_config["setting"] == "paddle"
-        assert config.vision_llm_config["setting"] == "vision"
-        assert config.hybrid_config["setting"] == "hybrid"
+        assert config.mistral_ocr_config["setting"] == "mistral"
 
     def test_updates_preserve_other_fields(self, repository, create_ocr_configuration):
         """Test that updating one field doesn't affect others."""
@@ -370,7 +354,7 @@ class TestOCRConfigurationRepository:
         )
 
         # Update engine
-        repository.update_selected_engine(OCREngineEnum.HYBRID)
+        repository.update_selected_engine(OCREngineEnum.MISTRAL_OCR)
         config = repository.get_config()
         assert config.pii_removal_enabled is True
         assert config.paddleocr_config == {"use_gpu": False}
@@ -378,13 +362,13 @@ class TestOCRConfigurationRepository:
         # Update PII removal
         repository.toggle_pii_removal(False)
         config = repository.get_config()
-        assert config.selected_engine == OCREngineEnum.HYBRID
+        assert config.selected_engine == OCREngineEnum.MISTRAL_OCR
         assert config.paddleocr_config == {"use_gpu": False}
 
         # Update engine config
-        repository.update_engine_config(OCREngineEnum.HYBRID, {"quality": 0.8})
+        repository.update_engine_config(OCREngineEnum.MISTRAL_OCR, {"model": "latest"})
         config = repository.get_config()
-        assert config.selected_engine == OCREngineEnum.HYBRID
+        assert config.selected_engine == OCREngineEnum.MISTRAL_OCR
         assert config.pii_removal_enabled is False
         assert config.paddleocr_config == {"use_gpu": False}
 
@@ -401,19 +385,19 @@ class TestOCRConfigurationRepository:
 
     def test_update_with_complex_config_structure(self, repository, create_ocr_configuration):
         """Test updating engine config with nested/complex structures."""
-        create_ocr_configuration(selected_engine=OCREngineEnum.HYBRID)
+        create_ocr_configuration(selected_engine=OCREngineEnum.MISTRAL_OCR)
 
         complex_config = {
-            "quality_threshold": 0.7,
-            "engines": {"primary": "paddleocr", "fallback": "vision_llm"},
+            "model": "mistral-ocr-latest",
+            "options": {"include_image_base64": False, "page_limit": 50},
             "timeouts": [30, 60, 120],
             "enabled": True,
         }
 
-        updated = repository.update_engine_config(OCREngineEnum.HYBRID, complex_config)
+        updated = repository.update_engine_config(OCREngineEnum.MISTRAL_OCR, complex_config)
 
         assert updated is not None
-        assert updated.hybrid_config == complex_config
+        assert updated.mistral_ocr_config == complex_config
 
     def test_get_or_create_only_creates_once(self, repository):
         """Test that get_or_create_config doesn't create duplicates."""

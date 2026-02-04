@@ -43,11 +43,11 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
           <div className="space-y-2 text-sm text-neutral-500">
             <p className="flex items-center justify-center gap-2">
               <MessageCircle className="w-4 h-4" />
-              Beispiel: "Was sind die Empfehlungen bei Diabetes Typ 2?"
+              Beispiel: &ldquo;Was sind die Empfehlungen bei Diabetes Typ 2?&rdquo;
             </p>
             <p className="flex items-center justify-center gap-2">
               <MessageCircle className="w-4 h-4" />
-              Beispiel: "Wie wird Bluthochdruck behandelt?"
+              Beispiel: &ldquo;Wie wird Bluthochdruck behandelt?&rdquo;
             </p>
           </div>
         </div>

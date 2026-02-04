@@ -20,7 +20,6 @@ import { exportToPDF } from '../utils/pdfExportAdvanced';
 import { useAuth } from '../contexts/AuthContext';
 import FeedbackWidget from './FeedbackWidget';
 import { feedbackApi } from '../services/feedbackApi';
-import GuidelinesIndicator from './GuidelinesIndicator';
 import GuidelinesSection from './GuidelinesSection';
 
 interface TranslationResultProps {
@@ -230,7 +229,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
     // CRITICAL: Remove 4+ leading spaces from ALL lines to prevent code block rendering
     // Markdown interprets 4+ leading spaces as code blocks
     // Preserve up to 3 spaces for nested lists, remove the rest
-    cleaned = cleaned.replace(/^(\s{4,})/gm, (match) => {
+    cleaned = cleaned.replace(/^(\s{4,})/gm, (_match) => {
       // Keep max 2 spaces for nesting, remove excessive indentation
       return '  ';
     });

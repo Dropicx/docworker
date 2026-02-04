@@ -83,6 +83,7 @@ def _get_spacy_model() -> tuple:
     # Initialize lock on first access (thread-safe)
     if _SPACY_MODEL_LOCK is None:
         import threading
+
         _SPACY_MODEL_LOCK = threading.Lock()
 
     # Fast path: Model already loaded (no lock needed for read)
@@ -132,9 +133,7 @@ def _get_spacy_model() -> tuple:
                 return _SPACY_MODEL_SINGLETON
 
         except (OSError, ImportError) as e:
-            logger.warning(
-                f"⚠️ spaCy model not available - using limited heuristic mode: {e}"
-            )
+            logger.warning(f"⚠️ spaCy model not available - using limited heuristic mode: {e}")
             logger.info("💡 For better name recognition: python -m spacy download de_core_news_sm")
             try:
                 # Fallback: Try blank German model
@@ -143,9 +142,7 @@ def _get_spacy_model() -> tuple:
                 _SPACY_MODEL_SINGLETON = (nlp, False)
                 return _SPACY_MODEL_SINGLETON
             except Exception as e2:
-                logger.warning(
-                    f"⚠️ spaCy initialization failed - using pure heuristics: {e2}"
-                )
+                logger.warning(f"⚠️ spaCy initialization failed - using pure heuristics: {e2}")
                 _SPACY_MODEL_SINGLETON = (None, False)
                 return _SPACY_MODEL_SINGLETON
 
@@ -684,185 +681,450 @@ class AdvancedPrivacyFilter:
             "urinstatus",
             # ==================== PII OPTIMIZATION: NEW TERMS ====================
             # Medical scoring systems (commonly misclassified as names)
-            "child", "child-pugh", "meld", "meld-na", "sofa", "apache",
-            "nyha", "killip", "timi", "grace", "forrest", "rockall",
-            "ranson", "bisap", "curb-65", "curb", "psi", "fine",
-            "baveno", "paquet", "los angeles", "savary-miller", "siewert",
-            "glasgow", "gcs", "nihss", "apgar", "karnofsky", "ecog",
+            "child",
+            "child-pugh",
+            "meld",
+            "meld-na",
+            "sofa",
+            "apache",
+            "nyha",
+            "killip",
+            "timi",
+            "grace",
+            "forrest",
+            "rockall",
+            "ranson",
+            "bisap",
+            "curb-65",
+            "curb",
+            "psi",
+            "fine",
+            "baveno",
+            "paquet",
+            "los angeles",
+            "savary-miller",
+            "siewert",
+            "glasgow",
+            "gcs",
+            "nihss",
+            "apgar",
+            "karnofsky",
+            "ecog",
             # German medical abbreviations (commonly misclassified as organizations)
-            "ögd", "oegd", "ösophagogastroduodenoskopie", "ercp", "mrcp", "ptcd",
-            "tipss", "tips", "tace", "rfa", "mwa", "sbp",
-            "pcr", "elisa", "western-blot", "immunblot",
-            "ena", "ana", "anca", "p-anca", "c-anca", "asma", "ama", "lkm",
-            "fibroscan", "elastographie",
+            "ögd",
+            "oegd",
+            "ösophagogastroduodenoskopie",
+            "ercp",
+            "mrcp",
+            "ptcd",
+            "tipss",
+            "tips",
+            "tace",
+            "rfa",
+            "mwa",
+            "sbp",
+            "pcr",
+            "elisa",
+            "western-blot",
+            "immunblot",
+            "p-anca",
+            "c-anca",
+            "asma",
+            "ama",
+            "lkm",
+            "fibroscan",
+            "elastographie",
             # Bacterial species (commonly misclassified as locations)
-            "aureus", "epidermidis", "haemolyticus", "saprophyticus",
-            "pneumoniae", "pyogenes", "aeruginosa", "coli", "difficile",
-            "pylori", "perfringens", "faecalis", "faecium",
-            "helicobacter", "h. pylori", "staphylococcus", "streptococcus",
-            "pseudomonas", "klebsiella", "enterococcus", "escherichia",
-            "clostridium", "clostridioides", "candida", "aspergillus",
+            "aureus",
+            "epidermidis",
+            "haemolyticus",
+            "saprophyticus",
+            "pneumoniae",
+            "pyogenes",
+            "aeruginosa",
+            "coli",
+            "difficile",
+            "pylori",
+            "perfringens",
+            "faecalis",
+            "faecium",
+            "helicobacter",
+            "h. pylori",
+            "staphylococcus",
+            "streptococcus",
+            "pseudomonas",
+            "klebsiella",
+            "enterococcus",
+            "escherichia",
+            "clostridium",
+            "clostridioides",
+            "candida",
+            "aspergillus",
             # Autoantibody terms (commonly misclassified as organizations)
-            "anti-jo-1", "anti-nxp2", "anti-sma", "anti-lkm", "anti-dsdna",
-            "anti-ccp", "anti-tpo", "anti-gad", "anti-centromere",
+            "anti-jo-1",
+            "anti-nxp2",
+            "anti-sma",
+            "anti-lkm",
+            "anti-dsdna",
+            "anti-tpo",
+            "anti-gad",
+            "anti-centromere",
             # Anatomical terms (commonly misclassified as locations)
-            "unterlappen", "oberlappen", "mittellappen", "lingula",
-            "liegetechnik", "stehendtechnik",
+            "unterlappen",
+            "oberlappen",
+            "mittellappen",
+            "lingula",
+            "liegetechnik",
+            "stehendtechnik",
             # Genetic terms (commonly misclassified as names)
-            "heterozygoter", "heterozygote", "homozygoter", "homozygote",
-            "h63d", "c282y", "hfe",
+            "heterozygoter",
+            "heterozygote",
+            "homozygoter",
+            "homozygote",
+            "h63d",
+            "c282y",
+            "hfe",
             # Clinical conditions
-            "stauungsdermatitis", "anasarka", "aszites",
-            "exokrin", "exokriner", "endokrin", "endokriner",
+            "stauungsdermatitis",
+            "anasarka",
+            "aszites",
+            "exokrin",
+            "exokriner",
+            "endokrin",
+            "endokriner",
             # ==================== PII FIX: ADDITIONAL MEDICAL TERMS (2025-01) ====================
             # Substance abuse terms (commonly misclassified as NAME)
-            "cannabisabusus", "cannabis", "drogenabusus", "medikamentenabusus",
-            "polytoxikomanie", "nikotinabusus", "alkoholabusus", "abusus",
+            "cannabisabusus",
+            "cannabis",
+            "drogenabusus",
+            "medikamentenabusus",
+            "polytoxikomanie",
+            "nikotinabusus",
+            "alkoholabusus",
+            "abusus",
             # Liver conditions (commonly misclassified as NAME)
             "stauungsleber",
             # Cardiac valve conditions (commonly misclassified as NAME/removed)
-            "trikuspidalinsuffizienz", "trikuspidalklappeninsuffizienz",
+            "trikuspidalinsuffizienz",
+            "trikuspidalklappeninsuffizienz",
             "trikuspidalsuffizienz",  # Variant spelling (missing 'in')
-            "mitralklappeninsuffizienz", "aortenklappeninsuffizienz",
-            "pulmonalklappeninsuffizienz", "klappeninsuffizienz",
-            "herzinsuffizienz", "rechtsherzinsuffizienz", "linksherzinsuffizienz",
+            "mitralklappeninsuffizienz",
+            "aortenklappeninsuffizienz",
+            "pulmonalklappeninsuffizienz",
+            "klappeninsuffizienz",
+            "herzinsuffizienz",
+            "rechtsherzinsuffizienz",
+            "linksherzinsuffizienz",
             # Clinical findings (commonly misclassified as NAME)
-            "blutungsstigmata", "stigmata",
+            "blutungsstigmata",
+            "stigmata",
             # Lung anatomy - carina terms (commonly removed)
-            "mittellappenkarina", "mittellappencarina", "karina", "carina",
-            "hauptkarina", "hauptcarina",
+            "mittellappenkarina",
+            "mittellappencarina",
+            "karina",
+            "carina",
+            "hauptkarina",
+            "hauptcarina",
             # Severity descriptors (commonly misclassified)
-            "höchstgradig", "höchstgradige", "höchstgradiger", "höchstgradiges",
-            "hochgradig", "hochgradige", "hochgradiger", "hochgradiges",
-            "mittelgradig", "mittelgradige", "mittelgradiger",
-            "geringgradig", "geringgradige", "geringgradiger",
-            "höhergradig", "höhergradige", "höhergradiger",
+            "höchstgradig",
+            "höchstgradige",
+            "höchstgradiger",
+            "höchstgradiges",
+            "hochgradig",
+            "hochgradige",
+            "hochgradiger",
+            "hochgradiges",
+            "mittelgradig",
+            "mittelgradige",
+            "mittelgradiger",
+            "geringgradig",
+            "geringgradige",
+            "geringgradiger",
+            "höhergradig",
+            "höhergradige",
+            "höhergradiger",
             # Other medical terms (commonly removed/misclassified)
-            "lungenbeteiligung", "leberbeteiligung", "nierenbeteiligung",
-            "voraufnahme", "voraufnahmen", "voruntersuchung", "voruntersuchungen",
+            "lungenbeteiligung",
+            "leberbeteiligung",
+            "nierenbeteiligung",
+            "voraufnahme",
+            "voraufnahmen",
+            "voruntersuchung",
+            "voruntersuchungen",
             # Procedure variants (including common typos)
-            "appendektimie", "appendektomie",
+            "appendektimie",
+            "appendektomie",
             # ==================== PII FIX: SARKOIDOSE DOCUMENT TERMS (2025-01) ====================
             # Joint/body parts (commonly misclassified as ORGANIZATION)
-            "sprunggelenk", "sprunggelenke", "sprunggelenken",
-            "vorfuß", "vorfüße", "fußgelenk", "fußgelenke",
+            "sprunggelenk",
+            "sprunggelenke",
+            "sprunggelenken",
+            "vorfuß",
+            "vorfüße",
+            "fußgelenk",
+            "fußgelenke",
             # Imaging modalities (commonly misclassified as ORGANIZATION)
-            "ct-thorax", "ct thorax", "mrt-thorax", "mrt thorax",
-            "pet-ct", "pet/ct", "spect-ct",
+            "ct-thorax",
+            "ct thorax",
+            "mrt-thorax",
+            "mrt thorax",
+            "pet-ct",
+            "pet/ct",
+            "spect-ct",
             # Bronchoscopy procedures and equipment (commonly misclassified as ORGANIZATION)
-            "ebus", "endobronchialerultraschall", "endobronchialer ultraschall",
-            "ultraschallbronchoskop", "ultraschallbronchoskops",
+            "ebus",
+            "endobronchialerultraschall",
+            "endobronchialer ultraschall",
+            "ultraschallbronchoskop",
+            "ultraschallbronchoskops",
             # Bronchoscopy procedures (commonly misclassified as LOCATION)
-            "spülungen", "spülung", "lavagen", "lavage",
-            "bronchoalveoläre lavage", "bronchoalveolärelavage",
+            "spülungen",
+            "spülung",
+            "lavagen",
+            "lavage",
+            "bronchoalveoläre lavage",
+            "bronchoalveolärelavage",
             # Bronchial anatomy - karina/carina terms (commonly misclassified as LOCATION)
-            "oberlappenkarina", "unterlappenkarina",
-            "hauptbronchus", "oberlappenbronchus", "mittellappenbronchus", "unterlappenbronchus",
-            "segmentbronchus", "segmentbronchien",
-            "bifurkation", "trachealbifurkation",
+            "oberlappenkarina",
+            "unterlappenkarina",
+            "hauptbronchus",
+            "oberlappenbronchus",
+            "mittellappenbronchus",
+            "unterlappenbronchus",
+            "segmentbronchus",
+            "segmentbronchien",
+            "bifurkation",
+            "trachealbifurkation",
             # Cell surface markers (commonly misclassified as LOCATION)
-            "cd19", "cd19+", "cd3", "cd3+", "cd4", "cd4+", "cd8", "cd8+",
-            "cd16", "cd16+", "cd56", "cd56+", "cd45", "cd45+",
-            "hla-dr", "hla-dr+",
+            "cd19",
+            "cd19+",
+            "cd3",
+            "cd3+",
+            "cd4",
+            "cd4+",
+            "cd8",
+            "cd8+",
+            "cd16",
+            "cd16+",
+            "cd56",
+            "cd56+",
+            "cd45",
+            "cd45+",
+            "hla-dr",
+            "hla-dr+",
             # ==================== PII FIX: ALTINDAG DOCUMENT ANALYSIS (2025-01) ====================
             # Joint abbreviations (commonly misclassified as ORGANIZATION)
-            "osg", "usg",  # Oberes/Unteres Sprunggelenk
-            "osg-arthritis", "osg-arthrose",
+            "osg",
+            "usg",  # Oberes/Unteres Sprunggelenk
+            "osg-arthritis",
+            "osg-arthrose",
             # Lung segment/carina abbreviations (commonly misclassified as ORGANIZATION)
-            "ol karina", "ol-karina", "ol karina",  # Oberlappen Karina
-            "ul karina", "ul-karina",  # Unterlappen Karina
-            "ml karina", "ml-karina",  # Mittellappen Karina
+            "ol karina",
+            "ol-karina",  # Oberlappen Karina
+            "ul karina",
+            "ul-karina",  # Unterlappen Karina
+            "ml karina",
+            "ml-karina",  # Mittellappen Karina
             # Carina variant spellings with 'c' (commonly misclassified as LOCATION)
-            "oberlappencarina", "unterlappencarina", "mittellappencarina",
-            # Clinical density terms (commonly misclassified when combined with anatomy)
-            "verdichte", "verdichtete", "verdichteter", "verdichtung", "verdichtungen",
+            "oberlappencarina",
+            "unterlappencarina",  # Clinical density terms (commonly misclassified when combined with anatomy)
+            "verdichte",
+            "verdichtete",
+            "verdichteter",
+            "verdichtung",
+            "verdichtungen",
             # ==================== PII FIX: FISCHELL DOCUMENT ANALYSIS (2025-01) ====================
             # Cardiac abbreviations (commonly misclassified as ORGANIZATION)
-            "ti", "mi", "ai", "pi",  # Valve insufficiency abbreviations (Trikuspidalinsuffizienz, etc.)
-            "hfref", "hfpef", "hfmref",  # Heart failure types
-            "lvef", "rvef",  # Ejection fraction abbreviations
-            "crt", "crt-d", "crt-p",  # Cardiac resynchronization therapy
-            "icd", "s-icd",  # Implantable cardioverter-defibrillator
+            "ti",
+            "mi",
+            "ai",
+            "pi",  # Valve insufficiency abbreviations (Trikuspidalinsuffizienz, etc.)
+            "hfref",
+            "hfpef",
+            "hfmref",  # Heart failure types
+            "lvef",
+            "rvef",  # Ejection fraction abbreviations
+            "crt",
+            "crt-d",
+            "crt-p",  # Cardiac resynchronization therapy
+            "icd",
+            "s-icd",  # Implantable cardioverter-defibrillator
             # Pacemaker modes and settings (commonly misclassified)
-            "vvi", "vvir", "ddd", "dddr", "aai", "aair", "voo", "doo",
-            "lv stimulation", "rv stimulation",
+            "vvi",
+            "vvir",
+            "ddd",
+            "dddr",
+            "aai",
+            "aair",
+            "voo",
+            "doo",
+            "lv stimulation",
+            "rv stimulation",
             # Pacemaker/ICD manufacturers and models (should be preserved for device identification)
-            "biotronik", "medtronic", "boston scientific", "abbott", "st. jude",
-            "etrinsa", "evia", "edora", "entovis", "eluna",  # Biotronik models
-            "dr-t", "sr-t", "hf-t",  # Device type suffixes
+            "biotronik",
+            "medtronic",
+            "boston scientific",
+            "abbott",
+            "st. jude",
+            "etrinsa",
+            "evia",
+            "edora",
+            "entovis",
+            "eluna",  # Biotronik models
+            "dr-t",
+            "sr-t",
+            "hf-t",  # Device type suffixes
             # Cardiac electrophysiology terms (commonly misclassified)
-            "av-junktional", "av-junktionalen", "av-junktionaler",
-            "av-block", "av-knoten", "av-überleitung",
-            "ersatzrhythmus", "junktionalrhythmus",
+            "av-junktional",
+            "av-junktionalen",
+            "av-junktionaler",
+            "av-block",
+            "av-knoten",
+            "av-überleitung",
+            "ersatzrhythmus",
+            "junktionalrhythmus",
             # Cardiac procedures (commonly misclassified as LOCATION)
-            "cryo", "cryo-ballon", "cryoballon", "kryoballon",
-            "pulmonalvenenablation", "pulmonalvenenisolation", "pvi",
-            "elektrokardioversion", "elektrokardioversionen",
+            "cryo",
+            "cryo-ballon",
+            "cryoballon",
+            "kryoballon",
+            "pulmonalvenenablation",
+            "pulmonalvenenisolation",
+            "pvi",
+            "elektrokardioversion",
+            "elektrokardioversionen",
             # Lab value abbreviations (commonly misclassified)
-            "rpi", "irf",  # Reticulocyte indices
-            "hb", "hgb",  # Hämoglobin abbreviations
-            "herz-thorax-quotient", "htq", "ctr",  # Cardiothoracic ratio
+            "rpi",
+            "irf",  # Reticulocyte indices
+            "hb",
+            "hgb",  # Hämoglobin abbreviations
+            "herz-thorax-quotient",
+            "htq",
+            "ctr",  # Cardiothoracic ratio
             # Medications commonly misclassified as names
-            "torasemid", "furosemid", "spironolacton", "eplerenon",
-            "prednisolon", "colchicin", "rivaroxaban", "apixaban", "edoxaban",
+            "torasemid",
+            "furosemid",
+            "spironolacton",
+            "eplerenon",
+            "prednisolon",
+            "colchicin",
+            "rivaroxaban",
+            "apixaban",
+            "edoxaban",
             # Latin medical terms (commonly misclassified as LOCATION)
-            "domo", "in domo",  # in-house
-            "loco", "in loco",  # on-site
+            "domo",
+            "in domo",  # in-house
+            "loco",
+            "in loco",  # on-site
             # ==================== PII FIX: PAAR DOCUMENT ANALYSIS (2025-01) ====================
             # Microbiology terms (commonly misclassified as BIC/ORGANIZATION)
             "keimzahl",  # Colony count - wrongly replaced with [BIC]
-            "kbe", "kbe/ml",  # Koloniebildende Einheiten (CFU)
-            "cfu", "cfu/ml",  # Colony forming units
+            "kbe",
+            "kbe/ml",  # Koloniebildende Einheiten (CFU)
+            "cfu",
+            "cfu/ml",  # Colony forming units
             "kulturbefund",  # Culture findings
             "antibiogramm",  # Antibiogram
             # Urine collection methods
-            "mittelstrahlurin", "mittelstrahl-urin", "mittelstrahl",
-            "katheterurin", "spontanurin", "morgenurin", "sammelurin",
+            "mittelstrahlurin",
+            "mittelstrahl-urin",
+            "mittelstrahl",
+            "katheterurin",
+            "spontanurin",
+            "morgenurin",
+            "sammelurin",
             # Microbiology organisms (commonly appearing in culture results)
-            "morganella", "morganella morganii",
-            "enterococcus", "enterococcus spp",
-            "escherichia", "escherichia coli", "e. coli",
-            "klebsiella", "pseudomonas", "staphylococcus", "streptococcus",
+            "morganella",
+            "morganella morganii",
+            "enterococcus spp",
+            "escherichia coli",
+            "e. coli",
             # Antibiotic resistance markers
-            "mrsa", "esbl", "vre", "mrgn",
+            "mrsa",
+            "esbl",
+            "vre",
+            "mrgn",
             # Lab test abbreviations (urinalysis)
-            "nit", "leu", "bakt", "ket", "bil", "glu", "eiw",
+            "nit",
+            "leu",
+            "bakt",
+            "ket",
+            "bil",
+            "glu",
+            "eiw",
             # ==================== PII FIX: KRÜGER DOCUMENT ANALYSIS (2025-01) ====================
             # Laboratory test methods (commonly misclassified as BIC/ORGANIZATION)
             "immunoassay",  # Lab test method - wrongly replaced with [BIC]
             "antigennachweis",  # Antigen detection
-            "molekularbiologischer", "direktnachweis",
-            "elisa", "eia", "ria", "clia", "eclia",  # Immunoassay types
-            "pcr", "rt-pcr", "qpcr",  # Molecular tests
+            "molekularbiologischer",
+            "direktnachweis",
+            "eia",
+            "ria",
+            "clia",
+            "eclia",  # Immunoassay types
+            "rt-pcr",
+            "qpcr",  # Molecular tests
             # Pathogen names (appearing in lab results)
-            "c. difficile", "clostridioides difficile", "clostridium difficile",
-            "gdh-ag", "gdh",  # Glutamate dehydrogenase antigen
-            "staph", "staph.", "staphylococcus epidermidis", "staphylococcus capitis",
-            "staphylococcus aureus", "s. aureus", "s. epidermidis",
+            "c. difficile",
+            "clostridioides difficile",
+            "clostridium difficile",
+            "gdh-ag",
+            "gdh",  # Glutamate dehydrogenase antigen
+            "staph",
+            "staph.",
+            "staphylococcus epidermidis",
+            "staphylococcus capitis",
+            "staphylococcus aureus",
+            "s. aureus",
+            "s. epidermidis",
             # Liver disease terms
-            "meld", "meld-score", "meld-na", "child-pugh", "child a", "child b", "child c",
-            "tipps", "tips",  # Transjugular intrahepatic portosystemic shunt
-            "parazentese", "aszitespunktion", "aszitesdrainage",
+            "meld-score",
+            "child a",
+            "child b",
+            "child c",
+            "tipps",  # Transjugular intrahepatic portosystemic shunt
+            "parazentese",
+            "aszitespunktion",
+            "aszitesdrainage",
             # Anatomical terms (lung hilum)
-            "perihilär", "infrahilär", "hilär", "hilus",
+            "perihilär",
+            "infrahilär",
+            "hilär",
+            "hilus",
             # Medical eponyms (conditions named after people)
-            "mallory-weiss", "mallory-weiss-syndrom", "mallory-weiss-riss",
+            "mallory-weiss",
+            "mallory-weiss-syndrom",
+            "mallory-weiss-riss",
             # Medication
-            "terlipressin", "albumin", "albuminsubstitution",
+            "terlipressin",
+            "albuminsubstitution",
             # Clinical abbreviations
-            "dnr", "dni", "dnr/dni",  # Do not resuscitate/intubate
+            "dnr",
+            "dni",
+            "dnr/dni",  # Do not resuscitate/intubate
             # ==================== PII FIX: KAMES DOCUMENT ANALYSIS (2025-01) ====================
             # Patient/Patientin - German words for patient, NOT names!
             # These are commonly misdetected as PERSON entities
-            "patient", "patientin", "patienten", "patientinnen",
-            "pat", "pat.",  # Abbreviations
+            "patienten",
+            "patientinnen",
+            "pat",
+            "pat.",  # Abbreviations
             # General condition terms
-            "az-reduziert", "az-reduzierte", "az-reduzierter", "az-reduzierten",
-            "allgemeinzustandsreduziert", "allgemeinzustandsreduzierte",
+            "az-reduziert",
+            "az-reduzierte",
+            "az-reduzierter",
+            "az-reduzierten",
+            "allgemeinzustandsreduziert",
+            "allgemeinzustandsreduzierte",
             # Cytology/pathology terms
-            "zytologie", "zytologisch", "zytologische",
-            "histologie", "histologisch", "histologische",
-            "pathologie", "pathologisch", "pathologische",
+            "zytologie",
+            "zytologisch",
+            "zytologische",
+            "histologie",
+            "histologisch",
+            "histologische",
+            "pathologie",
+            "pathologische",
         }
 
         # Titel und Anreden, die auf Namen hinweisen
@@ -962,120 +1224,310 @@ class AdvancedPrivacyFilter:
         # MUST NOT be removed as they are medical terminology, not patient names
         self.drug_database = {
             # Common painkillers (Schmerzmittel)
-            "ibuprofen", "diclofenac", "paracetamol", "acetylsalicylsäure", "ass",
-            "tramadol", "tilidin", "naloxon", "metamizol", "novaminsulfon",
-            "celecoxib", "etoricoxib", "naproxen", "ketoprofen",
+            "ibuprofen",
+            "diclofenac",
+            "paracetamol",
+            "acetylsalicylsäure",
+            "ass",
+            "tramadol",
+            "tilidin",
+            "naloxon",
+            "metamizol",
+            "novaminsulfon",
+            "celecoxib",
+            "etoricoxib",
+            "naproxen",
+            "ketoprofen",
             # Brand names
-            "voltaren", "novalgin", "aspirin", "dolormin", "ibuflam",
-
+            "voltaren",
+            "novalgin",
+            "aspirin",
+            "dolormin",
+            "ibuflam",
             # Antibiotics (Antibiotika)
-            "amoxicillin", "ampicillin", "penicillin", "cefuroxim", "cefixim",
-            "azithromycin", "clarithromycin", "doxycyclin", "ciprofloxacin",
-            "levofloxacin", "moxifloxacin", "cotrimoxazol", "clindamycin",
+            "amoxicillin",
+            "ampicillin",
+            "penicillin",
+            "cefuroxim",
+            "cefixim",
+            "azithromycin",
+            "clarithromycin",
+            "doxycyclin",
+            "ciprofloxacin",
+            "levofloxacin",
+            "moxifloxacin",
+            "cotrimoxazol",
+            "clindamycin",
             # Brand names
-            "augmentan", "amoxiclav", "unacid", "zinnat",
-
+            "augmentan",
+            "amoxiclav",
+            "unacid",
+            "zinnat",
             # Cardiovascular (Herz-Kreislauf)
-            "metoprolol", "bisoprolol", "carvedilol", "atenolol", "nebivolol",
-            "ramipril", "enalapril", "lisinopril", "losartan", "valsartan",
-            "candesartan", "telmisartan", "amlodipin", "nifedipin",
-            "simvastatin", "atorvastatin", "pravastatin", "rosuvastatin",
-            "clopidogrel", "ticagrelor", "phenprocoumon", "warfarin",
-            "rivaroxaban", "apixaban", "edoxaban", "dabigatran",
-            "furosemid", "torasemid", "hydrochlorothiazid", "spironolacton",
-            "digitoxin", "digoxin", "isosorbid",
+            "metoprolol",
+            "bisoprolol",
+            "carvedilol",
+            "atenolol",
+            "nebivolol",
+            "ramipril",
+            "enalapril",
+            "lisinopril",
+            "losartan",
+            "valsartan",
+            "candesartan",
+            "telmisartan",
+            "amlodipin",
+            "nifedipin",
+            "simvastatin",
+            "atorvastatin",
+            "pravastatin",
+            "rosuvastatin",
+            "clopidogrel",
+            "ticagrelor",
+            "phenprocoumon",
+            "warfarin",
+            "rivaroxaban",
+            "apixaban",
+            "edoxaban",
+            "dabigatran",
+            "furosemid",
+            "torasemid",
+            "hydrochlorothiazid",
+            "spironolacton",
+            "digitoxin",
+            "digoxin",
+            "isosorbid",
             # Brand names
-            "beloc", "concor", "diovan", "atacand", "norvasc", "sortis",
-            "marcumar", "xarelto", "eliquis", "pradaxa", "lasix",
-
+            "beloc",
+            "concor",
+            "diovan",
+            "atacand",
+            "norvasc",
+            "sortis",
+            "marcumar",
+            "xarelto",
+            "eliquis",
+            "pradaxa",
+            "lasix",
             # Diabetes medications (Antidiabetika)
-            "metformin", "glibenclamid", "glimepirid", "sitagliptin",
-            "vildagliptin", "empagliflozin", "dapagliflozin", "insulin",
-            "liraglutid", "dulaglutid", "semaglutid", "exenatid",
+            "metformin",
+            "glibenclamid",
+            "glimepirid",
+            "sitagliptin",
+            "vildagliptin",
+            "empagliflozin",
+            "dapagliflozin",
+            "insulin",
+            "liraglutid",
+            "dulaglutid",
+            "semaglutid",
+            "exenatid",
             # Brand names
-            "glucophage", "januvia", "jardiance", "forxiga", "victoza", "ozempic",
-
+            "glucophage",
+            "januvia",
+            "jardiance",
+            "forxiga",
+            "victoza",
+            "ozempic",
             # Thyroid (Schilddrüse)
-            "levothyroxin", "liothyronin", "carbimazol", "thiamazol",
+            "levothyroxin",
+            "liothyronin",
+            "carbimazol",
+            "thiamazol",
             # Brand names
-            "l-thyroxin", "euthyrox", "favistan",
-
+            "l-thyroxin",
+            "euthyrox",
+            "favistan",
             # Psychiatric medications (Psychopharmaka)
-            "citalopram", "escitalopram", "sertralin", "fluoxetin", "paroxetin",
-            "venlafaxin", "duloxetin", "mirtazapin", "amitriptylin",
-            "trimipramin", "doxepin", "clomipramin",
-            "diazepam", "lorazepam", "oxazepam", "alprazolam", "bromazepam",
-            "zolpidem", "zopiclon", "quetiapin", "olanzapin", "risperidon",
-            "aripiprazol", "haloperidol", "pipamperon", "melperon",
-            "lithium", "valproat", "carbamazepin", "lamotrigin",
+            "citalopram",
+            "escitalopram",
+            "sertralin",
+            "fluoxetin",
+            "paroxetin",
+            "venlafaxin",
+            "duloxetin",
+            "mirtazapin",
+            "amitriptylin",
+            "trimipramin",
+            "doxepin",
+            "clomipramin",
+            "diazepam",
+            "lorazepam",
+            "oxazepam",
+            "alprazolam",
+            "bromazepam",
+            "zolpidem",
+            "zopiclon",
+            "quetiapin",
+            "olanzapin",
+            "risperidon",
+            "aripiprazol",
+            "haloperidol",
+            "pipamperon",
+            "melperon",
+            "lithium",
+            "valproat",
+            "carbamazepin",
+            "lamotrigin",
             # Brand names
-            "cipralex", "zoloft", "fluctin", "trevilor", "cymbalta",
-            "saroten", "valium", "tavor", "lexotanil", "seroquel",
-
+            "cipralex",
+            "zoloft",
+            "fluctin",
+            "trevilor",
+            "cymbalta",
+            "saroten",
+            "valium",
+            "tavor",
+            "lexotanil",
+            "seroquel",
             # Gastrointestinal (Magen-Darm)
-            "omeprazol", "pantoprazol", "esomeprazol", "lansoprazol",
-            "ranitidin", "famotidin", "metoclopramid", "domperidon",
-            "loperamid", "mesalazin", "sulfasalazin", "lactulose",
+            "omeprazol",
+            "pantoprazol",
+            "esomeprazol",
+            "lansoprazol",
+            "ranitidin",
+            "famotidin",
+            "metoclopramid",
+            "domperidon",
+            "loperamid",
+            "mesalazin",
+            "sulfasalazin",
+            "lactulose",
             # Brand names
-            "pantozol", "nexium", "antra", "paspertin", "imodium",
-
+            "pantozol",
+            "nexium",
+            "antra",
+            "paspertin",
+            "imodium",
             # Respiratory (Atemwege)
-            "salbutamol", "terbutalin", "formoterol", "salmeterol",
-            "tiotropium", "ipratropium", "budesonid", "fluticason",
-            "beclometason", "montelukast", "theophyllin", "n-acetylcystein",
-            "ambroxol", "bromhexin", "codein", "dextromethorphan",
+            "salbutamol",
+            "terbutalin",
+            "formoterol",
+            "salmeterol",
+            "tiotropium",
+            "ipratropium",
+            "budesonid",
+            "fluticason",
+            "beclometason",
+            "montelukast",
+            "theophyllin",
+            "n-acetylcystein",
+            "ambroxol",
+            "bromhexin",
+            "codein",
+            "dextromethorphan",
             # Brand names
-            "spiriva", "symbicort", "foster", "acc", "mucosolvan",
-
+            "spiriva",
+            "symbicort",
+            "foster",
+            "acc",
+            "mucosolvan",
             # Anticoagulants (Gerinnungshemmer)
-            "heparin", "enoxaparin", "fondaparinux", "dalteparin",
+            "heparin",
+            "enoxaparin",
+            "fondaparinux",
+            "dalteparin",
             # Brand names
-            "clexane", "arixtra", "fragmin",
-
+            "clexane",
+            "arixtra",
+            "fragmin",
             # Immunosuppressants
-            "prednisolon", "methylprednisolon", "dexamethason", "hydrocortison",
-            "azathioprin", "mycophenolat", "ciclosporin", "tacrolimus",
-            "methotrexat", "cyclophosphamid",
+            "prednisolon",
+            "methylprednisolon",
+            "dexamethason",
+            "hydrocortison",
+            "azathioprin",
+            "mycophenolat",
+            "ciclosporin",
+            "tacrolimus",
+            "methotrexat",
+            "cyclophosphamid",
             # Brand names
-            "decortin", "urbason", "cellcept", "sandimmun", "prograf",
-
+            "decortin",
+            "urbason",
+            "cellcept",
+            "sandimmun",
+            "prograf",
             # Anticonvulsants (Antiepileptika)
-            "levetiracetam", "pregabalin", "gabapentin", "topiramat",
-            "phenytoin", "phenobarbital", "ethosuximid",
+            "levetiracetam",
+            "pregabalin",
+            "gabapentin",
+            "topiramat",
+            "phenytoin",
+            "phenobarbital",
+            "ethosuximid",
             # Brand names
-            "keppra", "lyrica", "topamax",
-
+            "keppra",
+            "lyrica",
+            "topamax",
             # Parkinson medications
-            "levodopa", "carbidopa", "benserazid", "pramipexol",
-            "ropinirol", "rotigotin", "amantadin", "entacapon",
+            "levodopa",
+            "carbidopa",
+            "benserazid",
+            "pramipexol",
+            "ropinirol",
+            "rotigotin",
+            "amantadin",
+            "entacapon",
             # Brand names
-            "madopar", "stalevo", "sifrol", "requip", "neupro",
-
+            "madopar",
+            "stalevo",
+            "sifrol",
+            "requip",
+            "neupro",
             # Dementia medications
-            "donepezil", "rivastigmin", "galantamin", "memantin",
+            "donepezil",
+            "rivastigmin",
+            "galantamin",
+            "memantin",
             # Brand names
-            "aricept", "exelon", "ebixa",
-
+            "aricept",
+            "exelon",
+            "ebixa",
             # Osteoporosis
-            "alendronat", "risedronat", "ibandronat", "denosumab",
-            "raloxifen", "teriparatid",
+            "alendronat",
+            "risedronat",
+            "ibandronat",
+            "denosumab",
+            "raloxifen",
+            "teriparatid",
             # Brand names
-            "fosamax", "actonel", "bonviva", "prolia", "evista", "forsteo",
-
+            "fosamax",
+            "actonel",
+            "bonviva",
+            "prolia",
+            "evista",
+            "forsteo",
             # Vitamins & Supplements (already in medical_terms, but adding formulations)
-            "cholecalciferol", "ergocalciferol", "cyanocobalamin",
-            "hydroxocobalamin", "tocopherol", "retinol", "phytomenadion",
-
+            "cholecalciferol",
+            "ergocalciferol",
+            "cyanocobalamin",
+            "hydroxocobalamin",
+            "tocopherol",
+            "retinol",
+            "phytomenadion",
             # Hormones
-            "levonorgestrel", "ethinylestradiol", "norethisteron",
-            "dydrogesteron", "estradiol", "testosteron", "somatropin",
-
+            "levonorgestrel",
+            "ethinylestradiol",
+            "norethisteron",
+            "dydrogesteron",
+            "estradiol",
+            "testosteron",
+            "somatropin",
             # Other common medications
-            "allopurinol", "colchicin", "probenecid",  # Gout
-            "sildenafil", "tadalafil", "vardenafil",  # Erectile dysfunction
-            "tamsulosin", "finasterid", "dutasterid",  # Prostate
-            "isotretinoin", "tretinoin",  # Dermatology
-            "interferon", "ribavirin",  # Antivirals
+            "allopurinol",
+            "colchicin",
+            "probenecid",  # Gout
+            "sildenafil",
+            "tadalafil",
+            "vardenafil",  # Erectile dysfunction
+            "tamsulosin",
+            "finasterid",
+            "dutasterid",  # Prostate
+            "isotretinoin",
+            "tretinoin",  # Dermatology
+            "interferon",
+            "ribavirin",  # Antivirals
         }
 
         # ==================== PHASE 4.3: MEDICAL CODING SUPPORT ====================
@@ -1085,15 +1537,12 @@ class AdvancedPrivacyFilter:
             # ICD-10 codes: Letter + 2 digits + optional decimal + digit
             # Examples: I50.1, E11.9, C50.9
             "icd10": re.compile(r"\b[A-Z]\d{2}(?:\.\d{1,2})?\b"),
-
             # OPS codes (German procedure codes): Digit + dash + digit pattern
             # Examples: 5-470.11, 1-632.0, 8-854.3
             "ops": re.compile(r"\b\d-\d{3}(?:\.\d{1,2})?\b"),
-
             # EBM codes (German outpatient billing): 5 digits
             # Examples: 03230, 35100
             "ebm": re.compile(r"\b\d{5}\b(?=.*(?:EBM|ebm|Ziffer))"),  # Only if "EBM" nearby
-
             # LOINC codes (Lab test identifiers): Numeric + dash + check digit
             # Examples: 2339-0 (Glucose), 718-7 (Hemoglobin), 2160-0 (Creatinine)
             # Format: 1-7 digits + hyphen + single check digit
@@ -1105,78 +1554,78 @@ class AdvancedPrivacyFilter:
         # These are protected even without the pattern match
         self.common_loinc_codes = {
             # Blood Chemistry
-            "2339-0",   # Glucose [Mass/Vol]
-            "2345-7",   # Glucose [Mass/Vol] in Serum or Plasma
-            "2160-0",   # Creatinine [Mass/Vol]
-            "3094-0",   # Urea nitrogen [Mass/Vol]
-            "2823-3",   # Potassium [Moles/Vol]
-            "2951-2",   # Sodium [Moles/Vol]
-            "2075-0",   # Chloride [Moles/Vol]
+            "2339-0",  # Glucose [Mass/Vol]
+            "2345-7",  # Glucose [Mass/Vol] in Serum or Plasma
+            "2160-0",  # Creatinine [Mass/Vol]
+            "3094-0",  # Urea nitrogen [Mass/Vol]
+            "2823-3",  # Potassium [Moles/Vol]
+            "2951-2",  # Sodium [Moles/Vol]
+            "2075-0",  # Chloride [Moles/Vol]
             "17861-6",  # Calcium [Mass/Vol]
-            "2601-3",   # Magnesium [Mass/Vol]
+            "2601-3",  # Magnesium [Mass/Vol]
             # Liver Function
-            "1742-6",   # ALT (GPT) [Catalytic activity/Vol]
-            "1920-8",   # AST (GOT) [Catalytic activity/Vol]
-            "2324-2",   # GGT [Catalytic activity/Vol]
-            "6768-6",   # Alkaline phosphatase [Catalytic activity/Vol]
-            "1975-2",   # Bilirubin total [Mass/Vol]
-            "1968-7",   # Bilirubin direct [Mass/Vol]
+            "1742-6",  # ALT (GPT) [Catalytic activity/Vol]
+            "1920-8",  # AST (GOT) [Catalytic activity/Vol]
+            "2324-2",  # GGT [Catalytic activity/Vol]
+            "6768-6",  # Alkaline phosphatase [Catalytic activity/Vol]
+            "1975-2",  # Bilirubin total [Mass/Vol]
+            "1968-7",  # Bilirubin direct [Mass/Vol]
             # Kidney Function
             "33914-3",  # eGFR (CKD-EPI)
             "48642-3",  # eGFR (MDRD)
             "14682-9",  # Creatinine clearance
             # Hematology
-            "718-7",    # Hemoglobin [Mass/Vol]
-            "4544-3",   # Hematocrit [Volume Fraction]
-            "789-8",    # Erythrocytes [#/Vol]
-            "6690-2",   # Leukocytes [#/Vol]
-            "777-3",    # Platelets [#/Vol]
-            "787-2",    # MCV [Entitic Volume]
-            "785-6",    # MCH [Entitic Mass]
-            "786-4",    # MCHC [Mass/Vol]
+            "718-7",  # Hemoglobin [Mass/Vol]
+            "4544-3",  # Hematocrit [Volume Fraction]
+            "789-8",  # Erythrocytes [#/Vol]
+            "6690-2",  # Leukocytes [#/Vol]
+            "777-3",  # Platelets [#/Vol]
+            "787-2",  # MCV [Entitic Volume]
+            "785-6",  # MCH [Entitic Mass]
+            "786-4",  # MCHC [Mass/Vol]
             # Coagulation
-            "5902-2",   # Prothrombin time (PT)
-            "6301-6",   # INR
-            "3173-2",   # aPTT
-            "3255-7",   # Fibrinogen [Mass/Vol]
+            "5902-2",  # Prothrombin time (PT)
+            "6301-6",  # INR
+            "3173-2",  # aPTT
+            "3255-7",  # Fibrinogen [Mass/Vol]
             "48065-7",  # D-Dimer [Mass/Vol]
             # Lipids
-            "2093-3",   # Cholesterol total [Mass/Vol]
-            "2085-9",   # HDL Cholesterol [Mass/Vol]
-            "2089-1",   # LDL Cholesterol [Mass/Vol]
-            "2571-8",   # Triglycerides [Mass/Vol]
+            "2093-3",  # Cholesterol total [Mass/Vol]
+            "2085-9",  # HDL Cholesterol [Mass/Vol]
+            "2089-1",  # LDL Cholesterol [Mass/Vol]
+            "2571-8",  # Triglycerides [Mass/Vol]
             # Diabetes
-            "4548-4",   # HbA1c [Ratio]
+            "4548-4",  # HbA1c [Ratio]
             "17856-6",  # HbA1c IFCC [Ratio]
             # Thyroid
-            "3016-3",   # TSH [Units/Vol]
-            "3051-0",   # Free T3 [Mass/Vol]
-            "3024-7",   # Free T4 [Mass/Vol]
+            "3016-3",  # TSH [Units/Vol]
+            "3051-0",  # Free T3 [Mass/Vol]
+            "3024-7",  # Free T4 [Mass/Vol]
             # Inflammation
-            "1988-5",   # CRP [Mass/Vol]
+            "1988-5",  # CRP [Mass/Vol]
             "30522-7",  # High-sensitivity CRP [Mass/Vol]
             "33762-6",  # Procalcitonin [Mass/Vol]
             # Tumor Markers
-            "2857-1",   # PSA [Mass/Vol]
+            "2857-1",  # PSA [Mass/Vol]
             "10886-0",  # Free PSA [Mass/Vol]
-            "2039-6",   # CEA [Mass/Vol]
+            "2039-6",  # CEA [Mass/Vol]
             "10334-1",  # AFP [Mass/Vol]
             "15156-3",  # CA 19-9 [Units/Vol]
             "10873-8",  # CA 125 [Units/Vol]
             # Cardiac Markers
             "10839-9",  # Troponin I [Mass/Vol]
-            "6598-7",   # Troponin T [Mass/Vol]
+            "6598-7",  # Troponin T [Mass/Vol]
             "30934-4",  # NT-proBNP [Mass/Vol]
             "42637-9",  # BNP [Mass/Vol]
-            "2157-6",   # CK [Catalytic activity/Vol]
+            "2157-6",  # CK [Catalytic activity/Vol]
             "13969-1",  # CK-MB [Catalytic activity/Vol]
             # Vitamins & Minerals
-            "1989-3",   # Vitamin D (25-OH) [Mass/Vol]
-            "2132-9",   # Vitamin B12 [Mass/Vol]
-            "2284-8",   # Folate [Mass/Vol]
-            "2498-4",   # Iron [Mass/Vol]
-            "2500-7",   # Ferritin [Mass/Vol]
-            "2501-5",   # Transferrin [Mass/Vol]
+            "1989-3",  # Vitamin D (25-OH) [Mass/Vol]
+            "2132-9",  # Vitamin B12 [Mass/Vol]
+            "2284-8",  # Folate [Mass/Vol]
+            "2498-4",  # Iron [Mass/Vol]
+            "2500-7",  # Ferritin [Mass/Vol]
+            "2501-5",  # Transferrin [Mass/Vol]
         }
 
         # Medizinische Abkürzungen, die geschützt werden müssen (ERWEITERT)
@@ -1455,23 +1904,29 @@ class AdvancedPrivacyFilter:
 
             with next(get_session()) as db:
                 # Load custom medical terms
-                custom_terms_setting = db.query(SystemSettingsDB).filter(
-                    SystemSettingsDB.key == "privacy_filter.custom_medical_terms"
-                ).first()
+                custom_terms_setting = (
+                    db.query(SystemSettingsDB)
+                    .filter(SystemSettingsDB.key == "privacy_filter.custom_medical_terms")
+                    .first()
+                )
 
                 if custom_terms_setting and custom_terms_setting.value:
                     try:
                         custom_terms = json.loads(custom_terms_setting.value)
                         if isinstance(custom_terms, list):
                             self.medical_terms.update(term.lower() for term in custom_terms)
-                            logger.info(f"✅ Loaded {len(custom_terms)} custom medical terms from database")
+                            logger.info(
+                                f"✅ Loaded {len(custom_terms)} custom medical terms from database"
+                            )
                     except json.JSONDecodeError:
                         logger.warning("⚠️ Invalid JSON in privacy_filter.custom_medical_terms")
 
                 # Load custom drug names
-                custom_drugs_setting = db.query(SystemSettingsDB).filter(
-                    SystemSettingsDB.key == "privacy_filter.custom_drugs"
-                ).first()
+                custom_drugs_setting = (
+                    db.query(SystemSettingsDB)
+                    .filter(SystemSettingsDB.key == "privacy_filter.custom_drugs")
+                    .first()
+                )
 
                 if custom_drugs_setting and custom_drugs_setting.value:
                     try:
@@ -1483,23 +1938,29 @@ class AdvancedPrivacyFilter:
                         logger.warning("⚠️ Invalid JSON in privacy_filter.custom_drugs")
 
                 # Load custom eponyms
-                custom_eponyms_setting = db.query(SystemSettingsDB).filter(
-                    SystemSettingsDB.key == "privacy_filter.custom_eponyms"
-                ).first()
+                custom_eponyms_setting = (
+                    db.query(SystemSettingsDB)
+                    .filter(SystemSettingsDB.key == "privacy_filter.custom_eponyms")
+                    .first()
+                )
 
                 if custom_eponyms_setting and custom_eponyms_setting.value:
                     try:
                         custom_eponyms = json.loads(custom_eponyms_setting.value)
                         if isinstance(custom_eponyms, list):
                             self.medical_eponyms.update(eponym.lower() for eponym in custom_eponyms)
-                            logger.info(f"✅ Loaded {len(custom_eponyms)} custom eponyms from database")
+                            logger.info(
+                                f"✅ Loaded {len(custom_eponyms)} custom eponyms from database"
+                            )
                     except json.JSONDecodeError:
                         logger.warning("⚠️ Invalid JSON in privacy_filter.custom_eponyms")
 
                 # Load excluded terms (remove from protection)
-                excluded_setting = db.query(SystemSettingsDB).filter(
-                    SystemSettingsDB.key == "privacy_filter.excluded_terms"
-                ).first()
+                excluded_setting = (
+                    db.query(SystemSettingsDB)
+                    .filter(SystemSettingsDB.key == "privacy_filter.excluded_terms")
+                    .first()
+                )
 
                 if excluded_setting and excluded_setting.value:
                     try:
@@ -1532,7 +1993,6 @@ class AdvancedPrivacyFilter:
         """
         return {
             # ==================== EXISTING PATTERNS ====================
-
             # Geburtsdaten - matches "Geb.: 15.05.1965", "geb. 15.05.1965", etc.
             "birthdate": re.compile(
                 r"\b(?:geb(?:oren)?\.?:?\s*(?:am\s*)?|geboren\s+am\s+|geburtsdatum:?\s*)"
@@ -1577,9 +2037,7 @@ class AdvancedPrivacyFilter:
                 r"hochachtungsvoll.*?$)",
                 re.IGNORECASE | re.MULTILINE,
             ),
-
             # ==================== PHASE 2.1: ADDITIONAL GERMAN PII TYPES ====================
-
             # German Tax ID (Steuer-ID / Steueridentifikationsnummer)
             # Format: 11 digits, e.g., "12 345 678 910" or "12345678910"
             # Pattern matches with or without spaces/dashes
@@ -1588,7 +2046,6 @@ class AdvancedPrivacyFilter:
                 r"\d{2}[\s\-]?\d{3}[\s\-]?\d{3}[\s\-]?\d{3}\b",
                 re.IGNORECASE,
             ),
-
             # German Social Security Number (Sozialversicherungsnummer / Rentenversicherungsnummer)
             # Format: 12 characters - Area code (2 digits) + Birthday (6 digits, DDMMYY) +
             # Serial number (2 digits) + Initial (1 letter) + Check digit (1 digit)
@@ -1598,7 +2055,6 @@ class AdvancedPrivacyFilter:
                 r"\d{2}[\s\-]?\d{6}[\s\-]?[A-Z][\s\-]?\d{3}\b",
                 re.IGNORECASE,
             ),
-
             # German Passport Number (Reisepassnummer)
             # Format: 9 characters - Starts with C, followed by 8 digits
             # Example: "C01X00T47" or "C 01X00T47"
@@ -1607,7 +2063,6 @@ class AdvancedPrivacyFilter:
                 r"C[\s\-]?[A-Z0-9]{8}\b",
                 re.IGNORECASE,
             ),
-
             # German ID Card (Personalausweis)
             # Format: 9 characters - Letter + 8 digits (since 2010)
             # Example: "L01X00T47" or older: "1234567890"
@@ -1616,9 +2071,7 @@ class AdvancedPrivacyFilter:
                 r"(?:[A-Z][\s\-]?[A-Z0-9]{8}|\d{10})\b",
                 re.IGNORECASE,
             ),
-
             # ==================== PHASE 2.2: HEALTHCARE-SPECIFIC IDENTIFIERS ====================
-
             # Patient ID / Case Number / Medical Record Number
             # Matches: "Patienten-ID: 12345", "Fallnummer: ABC-123", "Aktenzeichen: 2024/123"
             "patient_id": re.compile(
@@ -1629,7 +2082,6 @@ class AdvancedPrivacyFilter:
                 r"[\dA-Z][\dA-Z\-\/]*\b",
                 re.IGNORECASE,
             ),
-
             # Hospital/Clinic Internal Numbers
             # Matches: "Behandlungsnummer: 2024-12345", "Aufnahmenummer: 123456"
             "hospital_id": re.compile(
@@ -1637,17 +2089,13 @@ class AdvancedPrivacyFilter:
                 r"[\dA-Z][\dA-Z\-\/]*\b",
                 re.IGNORECASE,
             ),
-
             # Insurance Policy Number (more specific than general insurance pattern)
             # Matches: "Versichertennummer: A123456789", "Krankenkassennummer: 123456789012"
             "insurance_policy": re.compile(
-                r"\b(?:versicherten|kranken?kassen?)[\-\s]*nummer[:\s]*"
-                r"[A-Z]?\d{9,12}\b",
+                r"\b(?:versicherten|kranken?kassen?)[\-\s]*nummer[:\s]*" r"[A-Z]?\d{9,12}\b",
                 re.IGNORECASE,
             ),
-
             # ==================== PHASE 2.3: ENHANCED CONTACT INFORMATION ====================
-
             # Enhanced German Mobile Phone Numbers
             # Matches: "0151 12345678", "0171-1234567", "+49 151 12345678"
             # German mobile prefixes: 015x, 016x, 017x
@@ -1656,21 +2104,18 @@ class AdvancedPrivacyFilter:
                 r"(?:(?:\+49|0049)[\s\-]?(?:15|16|17)\d[\s\-]?\d+|0(?:15|16|17)\d[\s\-]?\d+)\b",
                 re.IGNORECASE,
             ),
-
             # Fax Numbers
             "fax": re.compile(
                 r"\b(?:fax|telefax)[:\s]*"
                 r"(?:(?:\+49|0049)\s*\d+(?:[\s\-\(\)\/]\d+)*|0\d{2,}(?:[\s\-\(\)\/]\d+)*)",
                 re.IGNORECASE,
             ),
-
             # Website URLs
             # Matches: "http://example.com", "https://example.de", "www.example.com"
             "url": re.compile(
                 r"\b(?:https?://|www\.)[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,}(?:/[^\s]*)?\b",
                 re.IGNORECASE,
             ),
-
             # Enhanced Address - House number with letter/suffix
             # Matches: "Hauptstraße 12a", "Bergweg 5-7", "Marktplatz 1 Etage 3"
             "street_extended": re.compile(
@@ -1715,6 +2160,7 @@ class AdvancedPrivacyFilter:
 
         # ==================== PHASE 3.3: PERFORMANCE MONITORING ====================
         import time
+
         perf_start = time.time()
         original_length = len(text)
 
@@ -1728,18 +2174,15 @@ class AdvancedPrivacyFilter:
             "low_confidence_count": 0,
             "eponyms_preserved": 0,
             "has_ner": self.has_ner,
-
             # Phase 5.1: Enhanced confidence scoring
             "high_confidence_removals": 0,  # Entities with title context
             "medium_confidence_removals": 0,  # Multi-word names
             "low_confidence_removals": 0,  # Single-word without context
             "pattern_based_removals": 0,  # Regex-based removals (birthdates, etc.)
-
             # Phase 5.2: False positive/negative tracking
             "potential_false_positives": [],  # Entities flagged for review
             "preserved_medical_terms": [],  # Medical terms that could be names
             "review_recommended": False,  # Flag if manual review needed
-
             # Phase 5.3: GDPR audit trail
             "processing_timestamp": datetime.now().isoformat(),
             "gdpr_compliant": True,  # All PII processed locally
@@ -1811,7 +2254,9 @@ class AdvancedPrivacyFilter:
         if not medical_validation_passed:
             self._pii_metadata["gdpr_compliant"] = False
             self._pii_metadata["review_recommended"] = True
-            logger.warning("⚠️ Medical content validation concern - output may have lost medical information")
+            logger.warning(
+                "⚠️ Medical content validation concern - output may have lost medical information"
+            )
 
         # Finalize performance metrics
         perf_metrics["total_time_ms"] = (time.time() - perf_start) * 1000
@@ -1819,7 +2264,7 @@ class AdvancedPrivacyFilter:
         perf_metrics["char_reduction"] = original_length - len(cleaned_text)
         perf_metrics["char_reduction_percent"] = round(
             (perf_metrics["char_reduction"] / original_length * 100) if original_length > 0 else 0,
-            2
+            2,
         )
 
         logger.info("✅ Persönliche Daten entfernt - medizinische Informationen erhalten")
@@ -1837,9 +2282,7 @@ class AdvancedPrivacyFilter:
         metadata["quality_summary"] = self._get_quality_summary()
 
         if metadata.get("low_confidence_count", 0) > 0:
-            logger.warning(
-                f"⚠️ {metadata['low_confidence_count']} low-confidence PII detections"
-            )
+            logger.warning(f"⚠️ {metadata['low_confidence_count']} low-confidence PII detections")
 
         return cleaned_text, metadata
 
@@ -1881,6 +2324,7 @@ class AdvancedPrivacyFilter:
 
         logger.info(f"🔄 Batch processing {len(texts)} documents (batch_size={batch_size})...")
         import time
+
         batch_start = time.time()
 
         results = []
@@ -2056,7 +2500,6 @@ class AdvancedPrivacyFilter:
         text = re.sub(r"§OPS_([^§]+)§", r"\1", text)
         return re.sub(r"§LOINC_([^§]+)§", r"\1", text)
 
-
     def _classify_date_context(self, date_match: re.Match, full_text: str) -> str:
         """Classify whether a date is PII (birthdate) or medical (exam/lab date).
 
@@ -2073,7 +2516,7 @@ class AdvancedPrivacyFilter:
         """
         # Get context around the date (50 chars before)
         start_pos = max(0, date_match.start() - 50)
-        context_before = full_text[start_pos:date_match.start()].lower()
+        context_before = full_text[start_pos : date_match.start()].lower()
 
         # PII context indicators (birthdates)
         pii_indicators = ["geb.", "geboren", "geburtsdatum", "geb:", "* ", "*datum"]
@@ -2147,16 +2590,37 @@ class AdvancedPrivacyFilter:
         # Check for presence of medical indicators (any one is sufficient)
         medical_indicators = [
             # Medical keywords
-            "diagnose", "befund", "therapie", "medikament", "behandlung",
-            "untersuchung", "labor", "patient", "klinik", "arzt",
+            "diagnose",
+            "befund",
+            "therapie",
+            "medikament",
+            "behandlung",
+            "untersuchung",
+            "labor",
+            "patient",
+            "klinik",
+            "arzt",
             # Common medical abbreviations
-            "mg", "ml", "mg/dl", "mmol", "g/dl",
+            "mg",
+            "ml",
+            "mg/dl",
+            "mmol",
+            "g/dl",
             # Lab-related
-            "wert", "ergebnis", "normal", "erhöht", "erniedrigt",
+            "wert",
+            "ergebnis",
+            "normal",
+            "erhöht",
+            "erniedrigt",
             # Procedure markers
-            "mrt", "ct", "ekg", "röntgen",
+            "mrt",
+            "ct",
+            "ekg",
+            "röntgen",
             # Replacement markers (indicate PII was processed)
-            "[name entfernt]", "[geburtsdatum entfernt]", "[adresse entfernt]",
+            "[name entfernt]",
+            "[geburtsdatum entfernt]",
+            "[adresse entfernt]",
         ]
 
         # At least one medical indicator should be present
@@ -2164,7 +2628,9 @@ class AdvancedPrivacyFilter:
 
         # If no medical indicators but text is substantial, flag for review
         if not has_medical_content and len(text) > 200:
-            logger.debug("Medical content validation: No medical indicators found in substantial output")
+            logger.debug(
+                "Medical content validation: No medical indicators found in substantial output"
+            )
             return False
 
         return True
@@ -2195,10 +2661,7 @@ class AdvancedPrivacyFilter:
         else:
             # Weight: pattern-based (100%), high (100%), medium (80%), low (50%)
             weighted_score = (
-                (pattern_based * 100) +
-                (high_conf * 100) +
-                (medium_conf * 80) +
-                (low_conf * 50)
+                (pattern_based * 100) + (high_conf * 100) + (medium_conf * 80) + (low_conf * 50)
             )
             quality_score = round(weighted_score / total_removals, 1)
 
@@ -2207,7 +2670,9 @@ class AdvancedPrivacyFilter:
         if low_conf > 2:
             review_flags.append(f"{low_conf} low-confidence name removals")
         if len(self._pii_metadata.get("potential_false_positives", [])) > 0:
-            review_flags.append(f"{len(self._pii_metadata['potential_false_positives'])} potential false positives")
+            review_flags.append(
+                f"{len(self._pii_metadata['potential_false_positives'])} potential false positives"
+            )
         if not self._pii_metadata.get("gdpr_compliant", True):
             review_flags.append("Medical content validation concern")
 
@@ -2348,8 +2813,7 @@ class AdvancedPrivacyFilter:
 
         # Geschlecht entfernen (wenn explizit als "Geschlecht:" angegeben)
         gender_pattern = re.compile(
-            r"\b(?:geschlecht)[:\s]*(?:männlich|weiblich|divers|m|w|d)\b",
-            re.IGNORECASE
+            r"\b(?:geschlecht)[:\s]*(?:männlich|weiblich|divers|m|w|d)\b", re.IGNORECASE
         )
         if gender_pattern.search(text):
             self._track_pii_removal("gender")
@@ -2388,7 +2852,9 @@ class AdvancedPrivacyFilter:
             for keyword in self.medical_context_keywords:
                 if keyword in context_lower:
                     # Medical context found - likely an eponym
-                    logger.debug(f"Medical context '{keyword}' found near '{name}' - preserving as eponym")
+                    logger.debug(
+                        f"Medical context '{keyword}' found near '{name}' - preserving as eponym"
+                    )
                     return True
 
         return False
@@ -2471,15 +2937,20 @@ class AdvancedPrivacyFilter:
                     logger.debug(f"Preserving medical eponym: {ent.text}")
                     self._pii_metadata["eponyms_preserved"] += 1
                     # Phase 5.2: Track preserved terms that could be names
-                    self._pii_metadata["preserved_medical_terms"].append({
-                        "text": ent.text,
-                        "reason": "medical_eponym",
-                        "context": context[:100]  # Truncate for storage
-                    })
+                    self._pii_metadata["preserved_medical_terms"].append(
+                        {
+                            "text": ent.text,
+                            "reason": "medical_eponym",
+                            "context": context[:100],  # Truncate for storage
+                        }
+                    )
                     continue
 
                 # Prüfe ob es ein medizinischer Begriff oder Medikament ist (Phase 4.2)
-                if ent.text.lower() not in self.medical_terms and ent.text.lower() not in self.drug_database:
+                if (
+                    ent.text.lower() not in self.medical_terms
+                    and ent.text.lower() not in self.drug_database
+                ):
                     # Keine Zahlen im Namen (könnte Laborwert sein)
                     if not any(char.isdigit() for char in ent.text):
                         persons_to_remove.add(ent.text)
@@ -2511,11 +2982,13 @@ class AdvancedPrivacyFilter:
 
                             # Phase 5.2: Check if this could be a false positive
                             if self._is_potential_false_positive(ent.text, context):
-                                self._pii_metadata["potential_false_positives"].append({
-                                    "text": ent.text,
-                                    "context": context[:100],
-                                    "reason": "low_confidence_single_word"
-                                })
+                                self._pii_metadata["potential_false_positives"].append(
+                                    {
+                                        "text": ent.text,
+                                        "context": context[:100],
+                                        "reason": "low_confidence_single_word",
+                                    }
+                                )
 
         # Zusätzlich: Erkenne Titel+Name Kombinationen
         for i, token in enumerate(doc):

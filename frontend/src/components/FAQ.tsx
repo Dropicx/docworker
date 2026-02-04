@@ -178,7 +178,7 @@ const FAQ: React.FC = () => {
                 </div>
               </AccordionTrigger>
 
-              <AccordionContent className="px-4 sm:px-6 pb-4 sm:pb-5 pl-16 sm:pl-20 lg:pl-24">
+              <AccordionContent className="px-4 sm:px-6 pt-2 pb-4 sm:pb-5 pl-16 sm:pl-20 lg:pl-24">
                 <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
                   {item.answer}
                 </p>

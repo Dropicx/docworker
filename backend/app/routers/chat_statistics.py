@@ -10,7 +10,6 @@ Provides admin endpoints for viewing chat usage statistics, including:
 """
 
 from datetime import date, datetime, timedelta
-from enum import Enum
 import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -252,10 +251,7 @@ async def get_cost_breakdown(
     try:
         breakdown = repo.get_cost_breakdown(start_date=start_date, end_date=end_date)
 
-        by_app = {
-            app_id: AppCostBreakdown(**data)
-            for app_id, data in breakdown["by_app"].items()
-        }
+        by_app = {app_id: AppCostBreakdown(**data) for app_id, data in breakdown["by_app"].items()}
 
         return CostBreakdownResponse(
             total_cost_usd=breakdown["total_cost_usd"],

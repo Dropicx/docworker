@@ -46,7 +46,9 @@ class OCRConfigurationRepository(BaseRepository[OCRConfigurationDB]):
         """
         config = self.get_config()
         if not config:
-            config = self.create(selected_engine=OCREngineEnum.MISTRAL_OCR, pii_removal_enabled=True)
+            config = self.create(
+                selected_engine=OCREngineEnum.MISTRAL_OCR, pii_removal_enabled=True
+            )
         return config
 
     def update_selected_engine(self, engine: OCREngineEnum) -> OCRConfigurationDB | None:

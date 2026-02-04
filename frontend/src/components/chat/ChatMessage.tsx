@@ -49,7 +49,7 @@ const CodeCopyButton: React.FC<{ code: string }> = ({ code }) => {
  * Custom code component for ReactMarkdown with syntax highlighting.
  */
 const createCodeComponent = (): Components['code'] => {
-  return ({ className, children, ...props }) => {
+  const CodeComponent: React.FC<{ className?: string; children?: React.ReactNode }> = ({ className, children, ...props }) => {
     const match = /language-(\w+)/.exec(className || '');
     const code = String(children).replace(/\n$/, '');
     const isInline = !match && !code.includes('\n');
@@ -81,6 +81,8 @@ const createCodeComponent = (): Components['code'] => {
       </div>
     );
   };
+  CodeComponent.displayName = 'CodeComponent';
+  return CodeComponent;
 };
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {

@@ -60,9 +60,7 @@ class FeedbackSubmission(BaseModel):
 
     processing_id: str = Field(..., description="Processing job ID")
     overall_rating: int = Field(..., ge=1, le=5, description="Overall rating (1-5)")
-    detailed_ratings: DetailedRatings | None = Field(
-        None, description="Optional detailed ratings"
-    )
+    detailed_ratings: DetailedRatings | None = Field(None, description="Optional detailed ratings")
     comment: str | None = Field(None, max_length=2000, description="Optional comment")
     data_consent_given: bool = Field(
         ..., description="Whether user consents to data usage for improvement"
@@ -142,9 +140,7 @@ class FeedbackStatsResponse(BaseModel):
 
     total_feedback: int = Field(..., description="Total feedback count")
     average_overall_rating: float = Field(..., description="Average overall rating")
-    rating_distribution: dict[str, int] = Field(
-        ..., description="Distribution of ratings (1-5)"
-    )
+    rating_distribution: dict[str, int] = Field(..., description="Distribution of ratings (1-5)")
     consent_rate: float = Field(..., description="Percentage of users who gave consent")
     with_comments_count: int = Field(..., description="Number with comments")
     average_detailed_ratings: DetailedRatingsStats = Field(
@@ -176,9 +172,7 @@ class JobData(BaseModel):
     document_type: str | None = Field(None, description="Document type")
     original_text: str | None = Field(None, description="Original text (if consented)")
     translated_text: str | None = Field(None, description="Translated text (if consented)")
-    language_translated_text: str | None = Field(
-        None, description="Language translated text"
-    )
+    language_translated_text: str | None = Field(None, description="Language translated text")
     content_available: bool | None = Field(None, description="Whether content is available")
 
 
@@ -202,9 +196,7 @@ class FeedbackDetailResponse(BaseModel):
     ai_analysis_summary: AIAnalysisSummary | None = Field(
         None, description="Structured analysis summary"
     )
-    ai_analysis_completed_at: str | None = Field(
-        None, description="When analysis was completed"
-    )
+    ai_analysis_completed_at: str | None = Field(None, description="When analysis was completed")
     ai_analysis_error: str | None = Field(None, description="Error message if analysis failed")
 
 
@@ -235,9 +227,7 @@ async def submit_feedback(
         # Convert detailed ratings to dict if provided
         detailed_ratings_dict = None
         if submission.detailed_ratings:
-            detailed_ratings_dict = submission.detailed_ratings.model_dump(
-                exclude_none=True
-            )
+            detailed_ratings_dict = submission.detailed_ratings.model_dump(exclude_none=True)
 
         result = service.submit_feedback(
             processing_id=submission.processing_id,
@@ -288,7 +278,9 @@ async def check_feedback_exists(
 
 
 @router.post("/cleanup/{processing_id}", response_model=CleanupResponse)
-@router.post("/clear/{processing_id}", response_model=CleanupResponse)  # Alias to avoid ad blocker blocking
+@router.post(
+    "/clear/{processing_id}", response_model=CleanupResponse
+)  # Alias to avoid ad blocker blocking
 async def cleanup_content(
     processing_id: str,
     db: Session = Depends(get_session),

@@ -105,15 +105,15 @@ class FeedbackService:
         else:
             # If consent was not given, immediately clear content (GDPR compliance)
             if not data_consent_given:
-                logger.info(
-                    f"Clearing content for {processing_id} - consent not given"
-                )
+                logger.info(f"Clearing content for {processing_id} - consent not given")
                 self.job_feedback_repo.clear_content_for_job(processing_id)
             else:
                 # Consent given - trigger AI analysis if feature enabled
                 logger.info(f"Consent given for {processing_id}, triggering AI analysis...")
                 analysis_triggered = self._trigger_ai_analysis(feedback.id)
-                logger.info(f"AI analysis trigger result for feedback {feedback.id}: {analysis_triggered}")
+                logger.info(
+                    f"AI analysis trigger result for feedback {feedback.id}: {analysis_triggered}"
+                )
 
         logger.info(
             f"Feedback submitted for {processing_id}: rating={overall_rating}, consent={data_consent_given}"
@@ -172,20 +172,15 @@ class FeedbackService:
             # Enqueue analysis task
             task_id = enqueue_feedback_analysis(feedback_id)
             if task_id:
-                logger.info(
-                    f"AI analysis enqueued for feedback {feedback_id}: task_id={task_id}"
-                )
+                logger.info(f"AI analysis enqueued for feedback {feedback_id}: task_id={task_id}")
                 return True
-            else:
-                logger.warning(
-                    f"Failed to enqueue AI analysis for feedback {feedback_id}"
-                )
-                self.feedback_repo.update_analysis_result(
-                    feedback_id=feedback_id,
-                    status=FeedbackAnalysisStatus.FAILED,
-                    error_message="Failed to enqueue analysis task",
-                )
-                return False
+            logger.warning(f"Failed to enqueue AI analysis for feedback {feedback_id}")
+            self.feedback_repo.update_analysis_result(
+                feedback_id=feedback_id,
+                status=FeedbackAnalysisStatus.FAILED,
+                error_message="Failed to enqueue analysis task",
+            )
+            return False
 
         except Exception as e:
             logger.error(f"Error triggering AI analysis for feedback {feedback_id}: {e}")
@@ -334,7 +329,7 @@ class FeedbackService:
 
     def _feedback_to_dict(self, feedback) -> dict:
         """Convert feedback model to dict."""
-        result = {
+        return {
             "id": feedback.id,
             "processing_id": feedback.processing_id,
             "overall_rating": feedback.overall_rating,
@@ -344,9 +339,7 @@ class FeedbackService:
             "submitted_at": feedback.submitted_at.isoformat(),
             # AI analysis fields
             "ai_analysis_status": (
-                feedback.ai_analysis_status.value
-                if feedback.ai_analysis_status
-                else None
+                feedback.ai_analysis_status.value if feedback.ai_analysis_status else None
             ),
             "ai_analysis_quality_score": (
                 feedback.ai_analysis_summary.get("overall_quality_score")
@@ -354,7 +347,6 @@ class FeedbackService:
                 else None
             ),
         }
-        return result
 
     def _feedback_to_detail_dict(self, feedback) -> dict:
         """Convert feedback model to detailed dict with all AI analysis fields."""

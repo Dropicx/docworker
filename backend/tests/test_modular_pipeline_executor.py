@@ -622,12 +622,12 @@ class TestModularPipelineManager:
         """Test updating existing OCR configuration"""
         mock_config = Mock(spec=OCRConfigurationDB)
         manager.get_ocr_config = Mock(return_value=mock_config)
-        config_data = {"selected_engine": "VISION_LLM"}
+        config_data = {"selected_engine": "MISTRAL_OCR"}
 
         result = manager.update_ocr_config(config_data)
 
         assert result == mock_config
-        assert mock_config.selected_engine == "VISION_LLM"
+        assert mock_config.selected_engine == "MISTRAL_OCR"
 
     def test_update_ocr_config_new(self, manager):
         """Test creating new OCR configuration"""

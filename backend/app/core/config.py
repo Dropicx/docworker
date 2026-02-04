@@ -61,9 +61,7 @@ class Settings(BaseSettings):
     cache_pipeline_ttl_seconds: int = Field(
         default=600, description="Pipeline/model config cache TTL in seconds (10 minutes)"
     )
-    cache_key_prefix: str = Field(
-        default="doctranslator", description="Redis cache key prefix"
-    )
+    cache_key_prefix: str = Field(default="doctranslator", description="Redis cache key prefix")
 
     # ==================
     # OVH AI Endpoints
@@ -239,12 +237,8 @@ class Settings(BaseSettings):
     chat_rate_limit_per_minute: int = Field(
         default=10, description="Chat messages allowed per minute"
     )
-    chat_rate_limit_per_hour: int = Field(
-        default=50, description="Chat messages allowed per hour"
-    )
-    chat_rate_limit_per_day: int = Field(
-        default=200, description="Chat messages allowed per day"
-    )
+    chat_rate_limit_per_hour: int = Field(default=50, description="Chat messages allowed per hour")
+    chat_rate_limit_per_day: int = Field(default=200, description="Chat messages allowed per day")
     chat_apps_rate_limit: str = Field(
         default="20/minute", description="Rate limit for /chat/apps endpoint"
     )

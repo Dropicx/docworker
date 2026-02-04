@@ -47,7 +47,9 @@ class MistralClient:
                 - input_tokens: Number of input tokens used
                 - output_tokens: Number of output tokens generated
         """
-        logger.info(f"Calling Mistral API (model: {model}, temp: {temperature}, max_tokens: {max_tokens})")
+        logger.info(
+            f"Calling Mistral API (model: {model}, temp: {temperature}, max_tokens: {max_tokens})"
+        )
 
         try:
             response = self.client.chat.complete(
@@ -61,7 +63,9 @@ class MistralClient:
             input_tokens = response.usage.prompt_tokens
             output_tokens = response.usage.completion_tokens
 
-            logger.info(f"Mistral response: {len(content)} chars, {input_tokens} in / {output_tokens} out tokens")
+            logger.info(
+                f"Mistral response: {len(content)} chars, {input_tokens} in / {output_tokens} out tokens"
+            )
 
             return {
                 "content": content,

@@ -24,9 +24,9 @@ import logging
 import os
 import time
 
-import httpx
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
+import httpx
 from pydantic import BaseModel
 from slowapi import Limiter
 from slowapi.util import get_remote_address
@@ -311,42 +311,68 @@ async def stream_chat_message(request: Request, chat_request: ChatRequest):
                                     if event_type == "message_end":
                                         message_end_data = event_data
                                         final_message_id = event_data.get("message_id")
-                                        if "metadata" in event_data and "usage" in event_data["metadata"]:
+                                        if (
+                                            "metadata" in event_data
+                                            and "usage" in event_data["metadata"]
+                                        ):
                                             # Dify usage format
                                             usage = event_data["metadata"]["usage"]
-                                            message_end_data["prompt_tokens"] = usage.get("prompt_tokens")
-                                            message_end_data["completion_tokens"] = usage.get("completion_tokens")
-                                            message_end_data["total_tokens"] = usage.get("total_tokens")
-                                            message_end_data["total_price"] = usage.get("total_price")
+                                            message_end_data["prompt_tokens"] = usage.get(
+                                                "prompt_tokens"
+                                            )
+                                            message_end_data["completion_tokens"] = usage.get(
+                                                "completion_tokens"
+                                            )
+                                            message_end_data["total_tokens"] = usage.get(
+                                                "total_tokens"
+                                            )
+                                            message_end_data["total_price"] = usage.get(
+                                                "total_price"
+                                            )
 
                                         # Enrich message_end with retriever_resources for citations
                                         # Sanitize for GDPR (only expose: document_name, segment_id, score, truncated content)
                                         # Check both metadata.retriever_resources and root-level retriever_resources (Dify versions differ)
                                         raw_resources = None
-                                        if "metadata" in event_data and "retriever_resources" in event_data["metadata"]:
-                                            raw_resources = event_data["metadata"]["retriever_resources"]
-                                            logger.debug(f"Found retriever_resources in metadata: {len(raw_resources)} items")
+                                        if (
+                                            "metadata" in event_data
+                                            and "retriever_resources" in event_data["metadata"]
+                                        ):
+                                            raw_resources = event_data["metadata"][
+                                                "retriever_resources"
+                                            ]
+                                            logger.debug(
+                                                f"Found retriever_resources in metadata: {len(raw_resources)} items"
+                                            )
                                         elif "retriever_resources" in event_data:
                                             raw_resources = event_data["retriever_resources"]
-                                            logger.debug(f"Found retriever_resources at root level: {len(raw_resources)} items")
+                                            logger.debug(
+                                                f"Found retriever_resources at root level: {len(raw_resources)} items"
+                                            )
 
                                         if raw_resources:
                                             sanitized_resources = []
                                             for resource in raw_resources:
                                                 sanitized = {
-                                                    "document_name": resource.get("document_name", "Unbekannt"),
+                                                    "document_name": resource.get(
+                                                        "document_name", "Unbekannt"
+                                                    ),
                                                     "segment_id": resource.get("segment_id", ""),
                                                     "score": round(resource.get("score", 0), 3),
                                                 }
                                                 # Truncate content preview for GDPR (max 150 chars, no PII)
                                                 content = resource.get("content", "")
                                                 if content:
-                                                    sanitized["content_preview"] = content[:150] + ("..." if len(content) > 150 else "")
+                                                    sanitized["content_preview"] = content[:150] + (
+                                                        "..." if len(content) > 150 else ""
+                                                    )
                                                 sanitized_resources.append(sanitized)
 
                                             # Add sanitized resources to event_data for forwarding
                                             event_data["retriever_resources"] = sanitized_resources
-                                            logger.info(f"Forwarding {len(sanitized_resources)} retriever_resources to client")
+                                            logger.info(
+                                                f"Forwarding {len(sanitized_resources)} retriever_resources to client"
+                                            )
 
                                         # Re-serialize the enriched event
                                         chunk = f"data: {json.dumps(event_data)}\n\n"
@@ -463,16 +489,20 @@ async def chat_health(request: Request):
                     "url": DIFY_BASE_URL,
                     "apps": apps_status,
                 }
-            else:
-                return {
-                    "status": "error",
-                    "url": DIFY_BASE_URL,
-                    "error": f"HTTP {response.status_code}",
-                    "apps": apps_status,
-                }
+            return {
+                "status": "error",
+                "url": DIFY_BASE_URL,
+                "error": f"HTTP {response.status_code}",
+                "apps": apps_status,
+            }
 
     except httpx.TimeoutException:
-        return {"status": "timeout", "url": DIFY_BASE_URL, "error": "Connection timeout", "apps": apps_status}
+        return {
+            "status": "timeout",
+            "url": DIFY_BASE_URL,
+            "error": "Connection timeout",
+            "apps": apps_status,
+        }
 
     except httpx.ConnectError as e:
         return {"status": "unreachable", "url": DIFY_BASE_URL, "error": str(e), "apps": apps_status}
@@ -563,14 +593,13 @@ async def get_suggested_questions(
                     questions=questions[:3],  # Limit to 3 questions
                     message_id=message_id,
                 )
-            elif response.status_code == 404:
+            if response.status_code == 404:
                 # Message not found or suggested questions not enabled
                 return SuggestedQuestionsResponse(questions=[], message_id=message_id)
-            else:
-                logger.warning(
-                    f"Dify suggested questions error: {response.status_code} - {response.text[:200]}"
-                )
-                return SuggestedQuestionsResponse(questions=[], message_id=message_id)
+            logger.warning(
+                f"Dify suggested questions error: {response.status_code} - {response.text[:200]}"
+            )
+            return SuggestedQuestionsResponse(questions=[], message_id=message_id)
 
     except httpx.TimeoutException:
         logger.warning("Dify suggested questions request timed out")

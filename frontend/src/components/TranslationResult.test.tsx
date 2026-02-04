@@ -12,7 +12,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
-import { renderWithRouter, userEvent } from '../test/helpers/renderWithProviders';
+import { renderWithProviders, userEvent } from '../test/helpers/renderWithProviders';
 import { createMockTranslationResult } from '../test/helpers/testData';
 import TranslationResult from './TranslationResult';
 import ApiService from '../services/api';
@@ -76,7 +76,7 @@ describe('TranslationResult Component', () => {
     it('should render translation result with all main sections', () => {
       const mockResult = createMockTranslationResult();
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -101,7 +101,7 @@ describe('TranslationResult Component', () => {
         processing_time_seconds: 12.5,
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -115,7 +115,7 @@ describe('TranslationResult Component', () => {
         target_language: 'en',
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -130,7 +130,7 @@ describe('TranslationResult Component', () => {
         target_language: null,
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -143,7 +143,7 @@ describe('TranslationResult Component', () => {
         target_language: 'en',
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -163,7 +163,7 @@ describe('TranslationResult Component', () => {
         target_language: 'en',
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -179,7 +179,7 @@ describe('TranslationResult Component', () => {
         target_language: 'en',
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -201,7 +201,7 @@ describe('TranslationResult Component', () => {
         target_language: null,
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -220,7 +220,7 @@ describe('TranslationResult Component', () => {
         target_language: null,
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -241,7 +241,7 @@ describe('TranslationResult Component', () => {
         target_language: null,
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -264,7 +264,7 @@ describe('TranslationResult Component', () => {
         target_language: null,
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -293,7 +293,7 @@ describe('TranslationResult Component', () => {
         original_text: 'Original text to copy',
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -320,7 +320,7 @@ describe('TranslationResult Component', () => {
         original_text: 'Hidden original text',
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -334,7 +334,7 @@ describe('TranslationResult Component', () => {
         original_text: 'Now visible original text',
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -351,7 +351,7 @@ describe('TranslationResult Component', () => {
         original_text: 'Toggleable text',
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -372,7 +372,7 @@ describe('TranslationResult Component', () => {
       const user = userEvent.setup({ delay: null });
       const mockResult = createMockTranslationResult();
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -409,7 +409,7 @@ describe('TranslationResult Component', () => {
         document_type_detected: 'ARZTBRIEF',
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -437,7 +437,7 @@ describe('TranslationResult Component', () => {
         document_type_detected: 'ARZTBRIEF',
       });
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
@@ -472,7 +472,7 @@ describe('TranslationResult Component', () => {
       const user = userEvent.setup({ delay: null });
       const mockResult = createMockTranslationResult();
 
-      renderWithRouter(
+      renderWithProviders(
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 

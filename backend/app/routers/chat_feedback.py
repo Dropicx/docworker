@@ -29,8 +29,12 @@ class FeedbackRequest(BaseModel):
 
     message_id: str = Field(..., description="ID of the message being rated")
     conversation_id: str | None = Field(None, description="Conversation ID")
-    feedback: str = Field(..., pattern="^(like|dislike)$", description="Feedback type: 'like' or 'dislike'")
-    reason: str | None = Field(None, max_length=500, description="Optional reason (typically for dislikes)")
+    feedback: str = Field(
+        ..., pattern="^(like|dislike)$", description="Feedback type: 'like' or 'dislike'"
+    )
+    reason: str | None = Field(
+        None, max_length=500, description="Optional reason (typically for dislikes)"
+    )
 
 
 class FeedbackResponse(BaseModel):
@@ -115,7 +119,9 @@ async def submit_feedback(
         db.commit()
         db.refresh(feedback)
 
-        logger.info(f"Chat feedback submitted: message_id={request.message_id}, feedback={request.feedback}")
+        logger.info(
+            f"Chat feedback submitted: message_id={request.message_id}, feedback={request.feedback}"
+        )
 
         return FeedbackResponse(
             message_id=feedback.message_id,
@@ -129,7 +135,7 @@ async def submit_feedback(
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="Feedback already exists for this message",
-        )
+        ) from None
     except Exception as e:
         db.rollback()
         logger.error(f"Error submitting chat feedback: {e}")

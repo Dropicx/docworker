@@ -19,7 +19,6 @@ from app.repositories.pipeline_step_execution_repository import PipelineStepExec
 from app.repositories.pipeline_step_repository import PipelineStepRepository
 from app.repositories.system_settings_repository import SystemSettingsRepository
 from app.services.ai_cost_tracker import AICostTracker
-from app.services.chat_log_service import ChatLogService
 from app.services.cache_service import CacheService, get_cache_service
 from app.services.cached_repositories import (
     CachedAvailableModelRepository,
@@ -28,6 +27,7 @@ from app.services.cached_repositories import (
     CachedPipelineStepRepository,
     CachedSystemSettingsRepository,
 )
+from app.services.chat_log_service import ChatLogService
 from app.services.processing_service import ProcessingService
 from app.services.statistics_service import StatisticsService
 

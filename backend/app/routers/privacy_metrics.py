@@ -27,6 +27,7 @@ router = APIRouter(prefix="/api/privacy", tags=["Privacy Metrics"])
 
 class ConfidenceBreakdown(BaseModel):
     """Confidence level breakdown for PII removals."""
+
     high_confidence: int = 0
     medium_confidence: int = 0
     low_confidence: int = 0
@@ -35,6 +36,7 @@ class ConfidenceBreakdown(BaseModel):
 
 class DetectionStats(BaseModel):
     """PII detection statistics."""
+
     pii_types_supported: list[str]
     pii_types_count: int
     medical_terms_count: int
@@ -46,6 +48,7 @@ class DetectionStats(BaseModel):
 
 class FilterCapabilities(BaseModel):
     """Privacy filter capabilities and configuration."""
+
     has_ner: bool
     spacy_model: str
     removal_method: str
@@ -54,6 +57,7 @@ class FilterCapabilities(BaseModel):
 
 class PrivacyMetricsResponse(BaseModel):
     """Complete privacy metrics response."""
+
     timestamp: str
     filter_capabilities: FilterCapabilities
     detection_stats: DetectionStats
@@ -63,6 +67,7 @@ class PrivacyMetricsResponse(BaseModel):
 
 class LiveTestResult(BaseModel):
     """Result of a live privacy filter test."""
+
     input_length: int
     output_length: int
     cleaned_text: str
@@ -76,6 +81,7 @@ class LiveTestResult(BaseModel):
 
 class LiveTestRequest(BaseModel):
     """Request body for live testing."""
+
     text: str
 
 
@@ -125,7 +131,7 @@ async def get_privacy_metrics():
         logger.error(f"Failed to get metrics from worker: {str(e)}")
         raise HTTPException(
             status_code=503,
-            detail=f"Worker unavailable: {str(e)}. Please ensure the worker service is running."
+            detail=f"Worker unavailable: {str(e)}. Please ensure the worker service is running.",
         ) from e
 
 
@@ -173,7 +179,7 @@ async def test_privacy_filter(request: LiveTestRequest):
         logger.error(f"Privacy filter test failed: {str(e)}")
         raise HTTPException(
             status_code=503,
-            detail=f"Worker processing failed: {str(e)}. Please ensure the worker service is running."
+            detail=f"Worker processing failed: {str(e)}. Please ensure the worker service is running.",
         ) from e
 
 
@@ -227,23 +233,79 @@ async def list_pii_types():
     - Replacement marker used
     """
     pii_types = [
-        {"type": "birthdate", "description": "Birth dates (Geb., Geboren)", "marker": "[GEBURTSDATUM ENTFERNT]"},
-        {"type": "patient_name", "description": "Patient names (explicit patterns)", "marker": "[NAME ENTFERNT]"},
-        {"type": "street_address", "description": "Street addresses", "marker": "[ADRESSE ENTFERNT]"},
-        {"type": "postal_code_city", "description": "PLZ and city names", "marker": "[PLZ/ORT ENTFERNT]"},
+        {
+            "type": "birthdate",
+            "description": "Birth dates (Geb., Geboren)",
+            "marker": "[GEBURTSDATUM ENTFERNT]",
+        },
+        {
+            "type": "patient_name",
+            "description": "Patient names (explicit patterns)",
+            "marker": "[NAME ENTFERNT]",
+        },
+        {
+            "type": "street_address",
+            "description": "Street addresses",
+            "marker": "[ADRESSE ENTFERNT]",
+        },
+        {
+            "type": "postal_code_city",
+            "description": "PLZ and city names",
+            "marker": "[PLZ/ORT ENTFERNT]",
+        },
         {"type": "phone_number", "description": "Phone numbers", "marker": "[TELEFON ENTFERNT]"},
-        {"type": "mobile_phone", "description": "Mobile phone numbers", "marker": "[MOBILTELEFON ENTFERNT]"},
+        {
+            "type": "mobile_phone",
+            "description": "Mobile phone numbers",
+            "marker": "[MOBILTELEFON ENTFERNT]",
+        },
         {"type": "fax_number", "description": "Fax numbers", "marker": "[FAX ENTFERNT]"},
         {"type": "email_address", "description": "Email addresses", "marker": "[EMAIL ENTFERNT]"},
-        {"type": "insurance_number", "description": "Insurance numbers", "marker": "[NUMMER ENTFERNT]"},
-        {"type": "insurance_policy", "description": "Insurance policy numbers", "marker": "[VERSICHERTENNUMMER ENTFERNT]"},
-        {"type": "patient_id", "description": "Patient IDs and case numbers", "marker": "[PATIENTEN-ID ENTFERNT]"},
-        {"type": "hospital_id", "description": "Hospital/clinic internal numbers", "marker": "[KRANKENHAUS-NR ENTFERNT]"},
-        {"type": "tax_id", "description": "German tax ID (Steuer-ID)", "marker": "[STEUER-ID ENTFERNT]"},
-        {"type": "social_security_number", "description": "German social security number", "marker": "[SOZIALVERSICHERUNGSNUMMER ENTFERNT]"},
-        {"type": "passport_number", "description": "German passport number", "marker": "[REISEPASSNUMMER ENTFERNT]"},
-        {"type": "id_card_number", "description": "German ID card number", "marker": "[PERSONALAUSWEIS ENTFERNT]"},
-        {"type": "gender", "description": "Gender information (when labeled)", "marker": "[GESCHLECHT ENTFERNT]"},
+        {
+            "type": "insurance_number",
+            "description": "Insurance numbers",
+            "marker": "[NUMMER ENTFERNT]",
+        },
+        {
+            "type": "insurance_policy",
+            "description": "Insurance policy numbers",
+            "marker": "[VERSICHERTENNUMMER ENTFERNT]",
+        },
+        {
+            "type": "patient_id",
+            "description": "Patient IDs and case numbers",
+            "marker": "[PATIENTEN-ID ENTFERNT]",
+        },
+        {
+            "type": "hospital_id",
+            "description": "Hospital/clinic internal numbers",
+            "marker": "[KRANKENHAUS-NR ENTFERNT]",
+        },
+        {
+            "type": "tax_id",
+            "description": "German tax ID (Steuer-ID)",
+            "marker": "[STEUER-ID ENTFERNT]",
+        },
+        {
+            "type": "social_security_number",
+            "description": "German social security number",
+            "marker": "[SOZIALVERSICHERUNGSNUMMER ENTFERNT]",
+        },
+        {
+            "type": "passport_number",
+            "description": "German passport number",
+            "marker": "[REISEPASSNUMMER ENTFERNT]",
+        },
+        {
+            "type": "id_card_number",
+            "description": "German ID card number",
+            "marker": "[PERSONALAUSWEIS ENTFERNT]",
+        },
+        {
+            "type": "gender",
+            "description": "Gender information (when labeled)",
+            "marker": "[GESCHLECHT ENTFERNT]",
+        },
         {"type": "url", "description": "Website URLs", "marker": "[URL ENTFERNT]"},
     ]
 

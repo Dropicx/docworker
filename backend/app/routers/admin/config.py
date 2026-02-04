@@ -24,7 +24,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.core.config import Settings, get_settings, settings
-from app.core.permissions import get_current_user_required, has_role, Role
+from app.core.permissions import Role, get_current_user_required, has_role
 from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.repositories.feature_flags_repository import FeatureFlagsRepository

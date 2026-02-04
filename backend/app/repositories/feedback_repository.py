@@ -5,8 +5,8 @@ Handles database operations for user feedback on translations (Issue #47).
 Includes AI-powered quality analysis for self-improving feedback.
 """
 
-import logging
 from datetime import datetime, timedelta
+import logging
 
 from sqlalchemy.orm import Session
 
@@ -67,9 +67,7 @@ class FeedbackRepository(EncryptedRepositoryMixin, BaseRepository[UserFeedbackDB
         Returns:
             True if feedback exists, False otherwise
         """
-        return (
-            self.db.query(self.model).filter_by(processing_id=processing_id).count() > 0
-        )
+        return self.db.query(self.model).filter_by(processing_id=processing_id).count() > 0
 
     def get_feedback_with_filters(
         self,
@@ -343,34 +341,23 @@ class FeedbackRepository(EncryptedRepositoryMixin, BaseRepository[UserFeedbackDB
 
         total = len(feedbacks)
         completed = sum(
-            1 for f in feedbacks
-            if f.ai_analysis_status == FeedbackAnalysisStatus.COMPLETED
+            1 for f in feedbacks if f.ai_analysis_status == FeedbackAnalysisStatus.COMPLETED
         )
         pending = sum(
-            1 for f in feedbacks
-            if f.ai_analysis_status == FeedbackAnalysisStatus.PENDING
+            1 for f in feedbacks if f.ai_analysis_status == FeedbackAnalysisStatus.PENDING
         )
-        failed = sum(
-            1 for f in feedbacks
-            if f.ai_analysis_status == FeedbackAnalysisStatus.FAILED
-        )
+        failed = sum(1 for f in feedbacks if f.ai_analysis_status == FeedbackAnalysisStatus.FAILED)
         skipped = sum(
-            1 for f in feedbacks
-            if f.ai_analysis_status == FeedbackAnalysisStatus.SKIPPED
+            1 for f in feedbacks if f.ai_analysis_status == FeedbackAnalysisStatus.SKIPPED
         )
 
         # Calculate average quality score from completed analyses
         quality_scores = [
             f.ai_analysis_summary.get("overall_quality_score", 0)
             for f in feedbacks
-            if f.ai_analysis_status == FeedbackAnalysisStatus.COMPLETED
-            and f.ai_analysis_summary
+            if f.ai_analysis_status == FeedbackAnalysisStatus.COMPLETED and f.ai_analysis_summary
         ]
-        avg_quality = (
-            round(sum(quality_scores) / len(quality_scores), 1)
-            if quality_scores
-            else 0
-        )
+        avg_quality = round(sum(quality_scores) / len(quality_scores), 1) if quality_scores else 0
 
         return {
             "total_with_consent": total,
@@ -415,15 +402,12 @@ class PipelineJobFeedbackRepository:
         job_id = job.id  # Save ID before update (job may be expunged)
 
         # Update using repository to ensure encryption is handled
-        # Note: EncryptedRepositoryMixin.update() returns None by design to prevent
-        # session tracking issues, but the update still happens successfully
-        self.job_repo.update(
+        updated = self.job_repo.update(
             job_id, has_feedback=True, data_consent_given=consent_given
         )
 
-        # Return the original job object (update was successful if we got here)
-        return job
-
+        # Return updated entity if available, otherwise original
+        return updated or job
 
     def clear_content_for_step_executions(self, job_id: str) -> int:
         """
@@ -442,11 +426,7 @@ class PipelineJobFeedbackRepository:
         cleared_count = self.step_execution_repo.clear_text_content(job_id)
 
         # Also clear prompt_used and error_message (not encrypted, but should be cleared)
-        step_executions = (
-            self.db.query(PipelineStepExecutionDB)
-            .filter_by(job_id=job_id)
-            .all()
-        )
+        step_executions = self.db.query(PipelineStepExecutionDB).filter_by(job_id=job_id).all()
 
         for step_exec in step_executions:
             step_exec.prompt_used = None
@@ -489,7 +469,6 @@ class PipelineJobFeedbackRepository:
             gdpr_update["language_translated_text"] = "[Content cleared - GDPR]"
         if job.guidelines_text:
             gdpr_update["guidelines_text"] = "[Content cleared - GDPR]"
-        # Note: EncryptedRepositoryMixin.update() returns None by design
         self.job_repo.update(job.id, **gdpr_update)
 
         # Clear content from all step executions for this job
@@ -497,16 +476,12 @@ class PipelineJobFeedbackRepository:
         self.clear_content_for_step_executions(job.job_id)
 
         # Update content_cleared_at timestamp
-        # Note: EncryptedRepositoryMixin.update() returns None by design
-        self.job_repo.update(job.id, content_cleared_at=datetime.now())
+        updated = self.job_repo.update(job.id, content_cleared_at=datetime.now())
 
-        # Return the original job object (updates were successful if we got here)
-        return job
+        # Return updated entity if available, otherwise original
+        return updated or job
 
-
-    def get_jobs_without_feedback(
-        self, older_than_hours: int = 1
-    ) -> list[PipelineJobDB]:
+    def get_jobs_without_feedback(self, older_than_hours: int = 1) -> list[PipelineJobDB]:
         """
         Get completed jobs without feedback older than specified hours.
         Used by cleanup task.
@@ -544,9 +519,7 @@ class PipelineJobFeedbackRepository:
             Tuple of (feedback, job) or (None, None)
             Job will have decrypted file_content
         """
-        feedback = (
-            self.db.query(UserFeedbackDB).filter_by(id=feedback_id).first()
-        )
+        feedback = self.db.query(UserFeedbackDB).filter_by(id=feedback_id).first()
 
         if not feedback:
             return None, None

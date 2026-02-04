@@ -89,10 +89,10 @@ class TestFeatureFlags:
 
     def test_is_enabled_from_environment_variable_true(self, clear_env_vars, db_session):
         """Test feature enabled via environment variable (highest priority)."""
-        os.environ["FEATURE_FLAG_VISION_LLM_FALLBACK_ENABLED"] = "true"
+        os.environ["FEATURE_FLAG_FEEDBACK_AI_ANALYSIS_ENABLED"] = "true"
         flags = FeatureFlags(session=db_session)
 
-        result = flags.is_enabled(Feature.VISION_LLM_FALLBACK)
+        result = flags.is_enabled(Feature.FEEDBACK_AI_ANALYSIS)
 
         assert result is True
 
@@ -130,10 +130,10 @@ class TestFeatureFlags:
         self, clear_env_vars, db_session, env_value, expected
     ):
         """Test environment variable value parsing for various formats."""
-        os.environ["FEATURE_FLAG_VISION_LLM_FALLBACK_ENABLED"] = env_value
+        os.environ["FEATURE_FLAG_FEEDBACK_AI_ANALYSIS_ENABLED"] = env_value
         flags = FeatureFlags(session=db_session)
 
-        result = flags.is_enabled(Feature.VISION_LLM_FALLBACK)
+        result = flags.is_enabled(Feature.FEEDBACK_AI_ANALYSIS)
 
         assert result is expected
 
@@ -142,13 +142,13 @@ class TestFeatureFlags:
     ):
         """Test environment variable overrides database setting (priority test)."""
         # Set database to False
-        create_system_setting(key="vision_llm_fallback_enabled", value="false")
+        create_system_setting(key="feedback_ai_analysis_enabled", value="false")
 
         # Set environment to True (should override)
-        os.environ["FEATURE_FLAG_VISION_LLM_FALLBACK_ENABLED"] = "true"
+        os.environ["FEATURE_FLAG_FEEDBACK_AI_ANALYSIS_ENABLED"] = "true"
 
         flags = FeatureFlags(session=db_session, settings_repository=repository)
-        result = flags.is_enabled(Feature.VISION_LLM_FALLBACK)
+        result = flags.is_enabled(Feature.FEEDBACK_AI_ANALYSIS)
 
         assert result is True  # Environment wins
 
@@ -260,7 +260,7 @@ class TestFeatureFlags:
         flags = FeatureFlags(session=db_session, settings=None)
 
         # These should be True by default
-        assert flags.is_enabled(Feature.VISION_LLM_FALLBACK) is True
+        assert flags.is_enabled(Feature.FEEDBACK_AI_ANALYSIS) is True
         assert flags.is_enabled(Feature.MULTI_FILE_PROCESSING) is True
         assert flags.is_enabled(Feature.ADVANCED_PRIVACY_FILTER) is True
         assert flags.is_enabled(Feature.PII_REMOVAL_ENABLED) is True
@@ -276,8 +276,6 @@ class TestFeatureFlags:
 
         # Experimental features should be False by default
         assert flags.is_enabled(Feature.PARALLEL_STEP_EXECUTION) is False
-        assert flags.is_enabled(Feature.HYBRID_OCR_STRATEGY) is False
-        assert flags.is_enabled(Feature.AUTO_QUALITY_DETECTION) is False
 
     def test_unknown_feature_defaults_to_false(self, clear_env_vars, db_session):
         """Test that features not in DEFAULTS dict default to False."""
@@ -350,7 +348,7 @@ class TestFeatureFlags:
 
         assert isinstance(enabled, list)
         assert len(enabled) > 0
-        assert "vision_llm_fallback_enabled" in enabled
+        assert "feedback_ai_analysis_enabled" in enabled
         assert "cost_tracking_enabled" in enabled
         assert "parallel_step_execution_enabled" not in enabled  # Disabled by default
 
@@ -374,7 +372,7 @@ class TestFeatureFlags:
         assert len(status) == len(Feature)  # All features included
 
         # Check specific features
-        assert status["vision_llm_fallback_enabled"] is True
+        assert status["feedback_ai_analysis_enabled"] is True
         assert status["cost_tracking_enabled"] is True
         assert status["parallel_step_execution_enabled"] is False
 
@@ -391,7 +389,7 @@ class TestFeatureFlags:
 
         assert status["cost_tracking_enabled"] is False  # From env
         assert status["ai_logging_enabled"] is False  # From DB
-        assert status["vision_llm_fallback_enabled"] is True  # From defaults
+        assert status["feedback_ai_analysis_enabled"] is True  # From defaults
 
     def test_require_feature_enabled_passes(self, clear_env_vars, db_session):
         """Test require_feature() passes when feature is enabled."""
@@ -424,7 +422,7 @@ class TestFeatureFlags:
     def test_global_is_feature_enabled_without_session(self, clear_env_vars, mock_settings):
         """Test global helper without session."""
         result = is_feature_enabled(
-            Feature.VISION_LLM_FALLBACK, session=None, settings=mock_settings
+            Feature.FEEDBACK_AI_ANALYSIS, session=None, settings=mock_settings
         )
 
         assert isinstance(result, bool)
@@ -562,7 +560,7 @@ class TestFeatureFlags:
         assert flags.is_enabled(Feature.COST_TRACKING) is False  # From env
         assert flags.is_enabled(Feature.AI_LOGGING) is False  # From DB
         assert flags.is_enabled(Feature.MULTI_FILE_PROCESSING) is True  # From config
-        assert flags.is_enabled(Feature.VISION_LLM_FALLBACK) is True  # From defaults
+        assert flags.is_enabled(Feature.FEEDBACK_AI_ANALYSIS) is True  # From defaults
         assert (
             flags.is_enabled(Feature.PARALLEL_STEP_EXECUTION) is False
         )  # From defaults (experimental)

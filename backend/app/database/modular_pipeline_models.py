@@ -115,7 +115,9 @@ class OCRConfigurationDB(Base):
     pii_removal_enabled = Column(Boolean, default=True, nullable=False)  # Global PII removal toggle
 
     # Feature toggles
-    guidelines_analysis_enabled = Column(Boolean, default=True, nullable=False)  # AWMF guidelines toggle
+    guidelines_analysis_enabled = Column(
+        Boolean, default=True, nullable=False
+    )  # AWMF guidelines toggle
 
     # Metadata
     last_modified = Column(DateTime, default=func.now(), onupdate=func.now(), nullable=False)
@@ -302,7 +304,7 @@ class PipelineJobDB(Base):
     filename = Column(String(255), nullable=False)
     file_type = Column(String(50), nullable=False)  # "pdf", "jpg", "png"
     file_size = Column(Integer, nullable=False)
-    file_content = Column(LargeBinary, nullable=False)  # Binary file data
+    file_content = Column(LargeBinary, nullable=True)  # Binary file data (nullable for GDPR content clearing)
 
     # Upload metadata
     client_ip = Column(String(100), nullable=True)  # Client IP for security logging
@@ -479,7 +481,9 @@ class UserFeedbackDB(Base):
         default=None,
     )
     ai_analysis_text = Column(Text, nullable=True)  # Full analysis text (encrypted)
-    ai_analysis_summary = Column(JSON, nullable=True)  # Structured: {pii_issues, translation_issues, recommendations, quality_score}
+    ai_analysis_summary = Column(
+        JSON, nullable=True
+    )  # Structured: {pii_issues, translation_issues, recommendations, quality_score}
     ai_analysis_started_at = Column(DateTime, nullable=True)
     ai_analysis_completed_at = Column(DateTime, nullable=True)
     ai_analysis_error = Column(Text, nullable=True)  # Error message if analysis failed

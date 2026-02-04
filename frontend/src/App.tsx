@@ -176,7 +176,7 @@ function App() {
           {/* Subtle background gradient */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.08),transparent)]" />
 
-          <div className="relative z-10 max-w-6xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
             {/* Error State */}
             {appState === 'error' && (
               <div className="animate-fade-in max-w-5xl mx-auto">

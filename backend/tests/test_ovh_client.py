@@ -28,7 +28,7 @@ class TestOVHClientInitialization:
 
             assert client is not None
             assert client.client is not None
-            assert client.vision_client is not None
+            assert client.client is not None
 
     def test_initialization_without_token(self):
         """Test client initialization without token logs warning and uses dummy key"""
@@ -241,7 +241,7 @@ class TestMedicalTextProcessing:
 
 
 class TestVisionOCR:
-    """Test suite for vision-based OCR extraction"""
+    """Test suite for vision-based OCR extraction (deprecated - now uses OCREngineManager)"""
 
     @pytest.fixture
     def client(self):
@@ -256,143 +256,69 @@ class TestVisionOCR:
 
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_success(self, client, test_image):
-        """Test successful vision OCR extraction"""
-        mock_http_response = Mock()
-        mock_http_response.status_code = 200
-        mock_http_response.json.return_value = {
-            "choices": [{"message": {"content": "Extracted medical text from image"}}]
-        }
+        """Test vision OCR returns deprecation message"""
+        text, confidence = await client.extract_text_with_vision(test_image, "image")
 
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = AsyncMock()
-            mock_client.post = AsyncMock(return_value=mock_http_response)
-            mock_client_class.return_value = mock_client
-
-            text, confidence = await client.extract_text_with_vision(test_image, "image")
-
-            assert "medical text" in text.lower()
-            assert confidence > 0.0
-            assert confidence <= 1.0
+        assert "DEPRECATED" in text or "deprecated" in text.lower()
+        assert confidence == 0.0
 
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_pdf_type(self, client, test_image):
-        """Test vision OCR with PDF file type"""
-        mock_http_response = Mock()
-        mock_http_response.status_code = 200
-        mock_http_response.json.return_value = {
-            "choices": [{"message": {"content": "PDF content extracted"}}]
-        }
+        """Test vision OCR with PDF file type returns deprecation message"""
+        text, confidence = await client.extract_text_with_vision(test_image, "pdf")
 
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = AsyncMock()
-            mock_client.post = AsyncMock(return_value=mock_http_response)
-            mock_client_class.return_value = mock_client
-
-            text, confidence = await client.extract_text_with_vision(test_image, "pdf")
-
-            assert len(text) > 0
-            assert confidence > 0.0
+        assert len(text) > 0
+        assert "DEPRECATED" in text or "deprecated" in text.lower()
+        assert confidence == 0.0
 
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_error_handling(self, client, test_image):
-        """Test vision OCR error handling"""
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = AsyncMock()
-            mock_client.post = AsyncMock(side_effect=Exception("Vision API Error"))
-            mock_client_class.return_value = mock_client
+        """Test vision OCR returns deprecation even in error scenarios"""
+        text, confidence = await client.extract_text_with_vision(test_image, "image")
 
-            text, confidence = await client.extract_text_with_vision(test_image, "image")
-
-            assert "Error" in text or "Fehler" in text or "error" in text.lower()
-            assert confidence == 0.0
+        assert "DEPRECATED" in text or "OCREngineManager" in text
+        assert confidence == 0.0
 
     @pytest.mark.asyncio
     async def test_extract_text_with_vision_empty_response(self, client, test_image):
-        """Test vision OCR with empty API response"""
-        mock_http_response = Mock()
-        mock_http_response.status_code = 200
-        mock_http_response.json.return_value = {
-            "choices": []  # Empty response
-        }
+        """Test vision OCR returns deprecation regardless of input"""
+        text, confidence = await client.extract_text_with_vision(test_image, "image")
 
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = AsyncMock()
-            mock_client.post = AsyncMock(return_value=mock_http_response)
-            mock_client_class.return_value = mock_client
-
-            text, confidence = await client.extract_text_with_vision(test_image, "image")
-
-            # Empty response returns error message with calculated confidence (not 0.0)
-            assert "Unerwartetes Antwortformat" in text
-            assert confidence > 0.0  # Calculated based on error message text quality
-            assert confidence <= 1.0
+        assert "DEPRECATED" in text
+        assert confidence == 0.0
 
     @pytest.mark.asyncio
     async def test_process_multiple_images_ocr_success(self, client, test_image):
-        """Test processing multiple images successfully"""
+        """Test processing multiple images returns deprecation message"""
         images = [test_image, test_image, test_image]
+        text, confidence = await client.process_multiple_images_ocr(images)
 
-        mock_http_response = Mock()
-        mock_http_response.status_code = 200
-        mock_http_response.json.return_value = {
-            "choices": [{"message": {"content": "Combined text from all pages"}}]
-        }
-
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = AsyncMock()
-            mock_client.post = AsyncMock(return_value=mock_http_response)
-            mock_client_class.return_value = mock_client
-
-            text, confidence = await client.process_multiple_images_ocr(images)
-
-            assert len(text) > 0
-            assert confidence > 0.0
+        assert len(text) > 0
+        assert "DEPRECATED" in text or "deprecated" in text.lower()
+        assert confidence == 0.0
 
     @pytest.mark.asyncio
     async def test_process_multiple_images_empty_list(self, client):
         """Test processing empty image list"""
         text, confidence = await client.process_multiple_images_ocr([])
 
-        assert "No images" in text or "no images" in text.lower() or len(text) == 0
+        assert len(text) > 0  # Returns deprecation message
         assert confidence == 0.0
 
     @pytest.mark.asyncio
     async def test_process_multiple_images_merge_strategies(self, client, test_image):
-        """Test different merge strategies for multiple images"""
+        """Test different merge strategies return deprecation message"""
         images = [test_image, test_image]
 
-        mock_http_response = Mock()
-        mock_http_response.status_code = 200
-        mock_http_response.json.return_value = {"choices": [{"message": {"content": "Page text"}}]}
+        text_smart, conf_smart = await client.process_multiple_images_ocr(
+            images, merge_strategy="smart"
+        )
+        assert len(text_smart) > 0
 
-        with patch("httpx.AsyncClient") as mock_client_class:
-            mock_client = AsyncMock()
-            mock_client.__aenter__.return_value = mock_client
-            mock_client.__aexit__.return_value = AsyncMock()
-            mock_client.post = AsyncMock(return_value=mock_http_response)
-            mock_client_class.return_value = mock_client
-
-            # Test smart merge
-            text_smart, conf_smart = await client.process_multiple_images_ocr(
-                images, merge_strategy="smart"
-            )
-            assert len(text_smart) > 0
-
-            # Test sequential merge
-            text_seq, conf_seq = await client.process_multiple_images_ocr(
-                images, merge_strategy="sequential"
-            )
-            assert len(text_seq) > 0
+        text_seq, conf_seq = await client.process_multiple_images_ocr(
+            images, merge_strategy="sequential"
+        )
+        assert len(text_seq) > 0
 
 
 class TestLanguageTranslation:
@@ -527,19 +453,14 @@ class TestTokenUsageTracking:
 
     @pytest.mark.asyncio
     async def test_vision_token_usage_tracked(self, client):
-        """Test that vision API token usage is tracked"""
+        """Test that deprecated vision OCR returns without errors"""
         test_image = Image.new("RGB", (100, 100), color="white")
 
-        mock_response = Mock()
-        mock_response.choices = [Mock(message=Mock(content="OCR text"))]
-        mock_response.usage = Mock(prompt_tokens=1000, completion_tokens=200, total_tokens=1200)
+        text, confidence = await client.extract_text_with_vision(test_image, "image")
 
-        with patch.object(
-            client.vision_client.chat.completions, "create", return_value=mock_response
-        ):
-            await client.extract_text_with_vision(test_image, "image")
-
-            # Token tracking happens internally - verify no errors
+        # Deprecated method returns static response without errors
+        assert "DEPRECATED" in text
+        assert confidence == 0.0
 
 
 class TestEdgeCases:

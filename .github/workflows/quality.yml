@@ -98,6 +98,7 @@ jobs:
       JWT_SECRET_KEY: "test-secret-key-for-testing-only-do-not-use-in-production"
       ENCRYPTION_KEY: "zPHjQcR5HQOY8r-KJB6_XyI2Sv_hG8VqGx0yT4N6RZo="
       ENVIRONMENT: "development"
+      CSRF_PROTECTION_ENABLED: "false"
 
     steps:
       - name: Checkout code

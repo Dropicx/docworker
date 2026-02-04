@@ -35,12 +35,12 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
 
     # Define fields to encrypt (Issue #55: separate columns instead of result_data JSON)
     encrypted_fields = [
-        "file_content",              # Binary PDF/image files
-        "original_text",             # Medical content
-        "translated_text",           # Medical content
+        "file_content",  # Binary PDF/image files
+        "original_text",  # Medical content
+        "translated_text",  # Medical content
         "language_translated_text",  # Medical content
-        "ocr_markdown",              # Medical content
-        "guidelines_text",           # AWMF guidelines (medical content)
+        "ocr_markdown",  # Medical content
+        "guidelines_text",  # AWMF guidelines (medical content)
     ]
 
     def __init__(self, db: Session):
@@ -63,7 +63,9 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
             # Expunge to prevent accidental overwrites of decrypted data
             if decrypted_job:
                 self.db.expunge(decrypted_job)
-                logger.debug(f"Expunged PipelineJobDB entity (id={decrypted_job.id}) after decryption in get_by_job_id()")
+                logger.debug(
+                    f"Expunged PipelineJobDB entity (id={decrypted_job.id}) after decryption in get_by_job_id()"
+                )
 
             return decrypted_job
         except Exception as e:
@@ -91,7 +93,9 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
             # Expunge to prevent accidental overwrites of decrypted data
             if decrypted_job:
                 self.db.expunge(decrypted_job)
-                logger.debug(f"Expunged PipelineJobDB entity (id={decrypted_job.id}) after decryption in get_by_processing_id()")
+                logger.debug(
+                    f"Expunged PipelineJobDB entity (id={decrypted_job.id}) after decryption in get_by_processing_id()"
+                )
 
             return decrypted_job
         except Exception as e:
@@ -125,7 +129,9 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
             # Expunge all to prevent accidental overwrites of decrypted data
             for job in decrypted_jobs:
                 self.db.expunge(job)
-            logger.debug(f"Expunged {len(decrypted_jobs)} PipelineJobDB entities after decryption in get_by_status()")
+            logger.debug(
+                f"Expunged {len(decrypted_jobs)} PipelineJobDB entities after decryption in get_by_status()"
+            )
 
             return decrypted_jobs
         except Exception as e:
@@ -144,9 +150,7 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
         """
         return self.get_by_status(StepExecutionStatus.PENDING, skip=0, limit=limit)
 
-    def get_completed_jobs(
-        self, skip: int = 0, limit: int = 100
-    ) -> list[PipelineJobDB]:
+    def get_completed_jobs(self, skip: int = 0, limit: int = 100) -> list[PipelineJobDB]:
         """
         Get completed pipeline jobs.
 
@@ -220,9 +224,7 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
             logger.error(f"Error clearing file_content for job_id={job_id}: {e}")
             raise
 
-    def get_jobs_without_consent(
-        self, older_than_hours: int = 1
-    ) -> list[PipelineJobDB]:
+    def get_jobs_without_consent(self, older_than_hours: int = 1) -> list[PipelineJobDB]:
         """
         Get jobs without user consent that are older than specified hours.
 
@@ -255,7 +257,9 @@ class PipelineJobRepository(EncryptedRepositoryMixin, BaseRepository[PipelineJob
             # Expunge all to prevent accidental overwrites of decrypted data
             for job in decrypted_jobs:
                 self.db.expunge(job)
-            logger.debug(f"Expunged {len(decrypted_jobs)} PipelineJobDB entities after decryption in get_jobs_without_consent()")
+            logger.debug(
+                f"Expunged {len(decrypted_jobs)} PipelineJobDB entities after decryption in get_jobs_without_consent()"
+            )
 
             return decrypted_jobs
         except Exception as e:

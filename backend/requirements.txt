@@ -1,7 +1,8 @@
 # Core Web Framework
 fastapi==0.120.1  # Updated for starlette 0.49.0 (fixes CVE-2025-54121)
 uvicorn[standard]==0.34.0
-python-multipart==0.0.18  # Security fix for CVE-2024-53981
+python-multipart==0.0.22  # Security fix for GHSA-wp53-j4wj-2cfg
+filelock>=3.20.3  # Security fix for GHSA-qmgc, GHSA-w853
 
 # File Processing
 aiofiles==24.1.0
@@ -9,7 +10,7 @@ Pillow==11.1.0
 opencv-python-headless==4.10.0.84  # Image quality analysis (headless for Railway deployment)
 # pytesseract removed - Tesseract OCR deprecated
 pdf2image==1.17.0
-pypdf==6.1.3  # Replaced PyPDF2 (deprecated) - fixes GHSA-4vvm-4w3v-6mr8
+pypdf==6.6.2  # Security fixes for GHSA-2q4j, GHSA-4f6g, GHSA-4xc4, GHSA-m449
 pdfplumber==0.11.5
 
 # HTTP & Networking

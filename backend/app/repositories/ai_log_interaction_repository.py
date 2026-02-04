@@ -238,13 +238,10 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
         base_filter = ~self.model.processing_id.like("feedback_%")
 
         # Build subquery: sum costs per processing_id
-        subquery = (
-            self.db.query(
-                self.model.processing_id,
-                func.sum(self.model.total_cost_usd).label("doc_total_cost"),
-            )
-            .filter(base_filter)
-        )
+        subquery = self.db.query(
+            self.model.processing_id,
+            func.sum(self.model.total_cost_usd).label("doc_total_cost"),
+        ).filter(base_filter)
 
         if start_date:
             subquery = subquery.filter(self.model.created_at >= start_date)
@@ -254,12 +251,16 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
         subquery = subquery.group_by(self.model.processing_id).subquery()
 
         # Calculate aggregate stats from subquery
-        result = self.db.query(
-            func.count().label("document_count"),
-            func.avg(subquery.c.doc_total_cost).label("avg_cost_per_doc"),
-            func.min(subquery.c.doc_total_cost).label("min_cost"),
-            func.max(subquery.c.doc_total_cost).label("max_cost"),
-        ).select_from(subquery).first()
+        result = (
+            self.db.query(
+                func.count().label("document_count"),
+                func.avg(subquery.c.doc_total_cost).label("avg_cost_per_doc"),
+                func.min(subquery.c.doc_total_cost).label("min_cost"),
+                func.max(subquery.c.doc_total_cost).label("max_cost"),
+            )
+            .select_from(subquery)
+            .first()
+        )
 
         return {
             "document_count": result.document_count or 0,
@@ -306,5 +307,7 @@ class AILogInteractionRepository(BaseRepository[AILogInteractionDB]):
             "total_calls": total_calls,
             "total_tokens": int(result.total_tokens or 0),
             "total_cost_usd": round(total_cost, 6),
-            "average_cost_per_analysis": round(total_cost / total_calls, 6) if total_calls > 0 else 0.0,
+            "average_cost_per_analysis": round(total_cost / total_calls, 6)
+            if total_calls > 0
+            else 0.0,
         }

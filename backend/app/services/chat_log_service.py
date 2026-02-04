@@ -8,15 +8,14 @@ Provides logging functionality for chat requests with:
 - Two-phase logging (request first, response update after)
 """
 
+from datetime import datetime
 import hashlib
 import logging
-from datetime import datetime
 from typing import Any
 from uuid import uuid4
 
 from sqlalchemy.orm import Session
 
-from app.database.chat_models import ChatLogDB
 from app.database.connection import get_db_session_context
 from app.repositories.chat_log_repository import ChatLogRepository
 

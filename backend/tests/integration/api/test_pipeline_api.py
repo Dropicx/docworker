@@ -170,14 +170,14 @@ def test_update_ocr_config(client, mock_auth, seed_test_data):
     response = client.put(
         "/api/pipeline/ocr-config",
         json={
-            "selected_engine": "HYBRID",
+            "selected_engine": "MISTRAL_OCR",
             "pii_removal_enabled": False,
         },
     )
 
     assert response.status_code == 200
     data = response.json()
-    assert data["selected_engine"] == "HYBRID"
+    assert data["selected_engine"] == "MISTRAL_OCR"
     assert data["pii_removal_enabled"] is False
 
 
@@ -196,7 +196,7 @@ def test_get_available_engines(client, mock_auth, seed_test_data):
         assert response.status_code == 200
         data = response.json()
         assert "PADDLEOCR" in data
-        assert "HYBRID" in data
+        assert "MISTRAL_OCR" in data
         assert data["PADDLEOCR"]["available"] is True
 
 

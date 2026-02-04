@@ -206,13 +206,14 @@ async def cleanup_old_database_jobs():
 
     try:
         # Import here to avoid circular imports
+        from sqlalchemy import or_
+
         from app.database.connection import get_db_session
         from app.database.modular_pipeline_models import (
             PipelineJobDB,
             PipelineStepExecutionDB,
             UserFeedbackDB,
         )
-        from sqlalchemy import or_
 
         db = next(get_db_session())
 
@@ -220,16 +221,22 @@ async def cleanup_old_database_jobs():
             cutoff_time = datetime.now() - timedelta(hours=DB_RETENTION_HOURS)
 
             # Find jobs older than retention period without consent
-            old_jobs = db.query(PipelineJobDB).filter(
-                PipelineJobDB.uploaded_at < cutoff_time,
-                or_(
-                    PipelineJobDB.data_consent_given == False,
-                    PipelineJobDB.data_consent_given == None
+            old_jobs = (
+                db.query(PipelineJobDB)
+                .filter(
+                    PipelineJobDB.uploaded_at < cutoff_time,
+                    or_(
+                        PipelineJobDB.data_consent_given.is_(False),
+                        PipelineJobDB.data_consent_given.is_(None),
+                    ),
                 )
-            ).all()
+                .all()
+            )
 
             if old_jobs:
-                logger.info(f"🗑️ Found {len(old_jobs)} jobs older than {DB_RETENTION_HOURS} hours (without consent)")
+                logger.info(
+                    f"🗑️ Found {len(old_jobs)} jobs older than {DB_RETENTION_HOURS} hours (without consent)"
+                )
 
                 for job in old_jobs:
                     job_age_hours = (datetime.now() - job.uploaded_at).total_seconds() / 3600
@@ -238,22 +245,28 @@ async def cleanup_old_database_jobs():
                     )
 
                     # Delete related step executions (contains PII text)
-                    step_count = db.query(PipelineStepExecutionDB).filter(
-                        PipelineStepExecutionDB.job_id == job.job_id
-                    ).delete(synchronize_session=False)
+                    step_count = (
+                        db.query(PipelineStepExecutionDB)
+                        .filter(PipelineStepExecutionDB.job_id == job.job_id)
+                        .delete(synchronize_session=False)
+                    )
                     step_executions_removed += step_count
 
                     # NOTE: ai_interaction_logs are PRESERVED for cost statistics
                     # They only contain token counts and costs, no PII
 
                     # Delete feedback only if feedback's consent is also not given
-                    feedback_count = db.query(UserFeedbackDB).filter(
-                        UserFeedbackDB.processing_id == job.processing_id,
-                        or_(
-                            UserFeedbackDB.data_consent_given == False,
-                            UserFeedbackDB.data_consent_given == None
+                    feedback_count = (
+                        db.query(UserFeedbackDB)
+                        .filter(
+                            UserFeedbackDB.processing_id == job.processing_id,
+                            or_(
+                                UserFeedbackDB.data_consent_given.is_(False),
+                                UserFeedbackDB.data_consent_given.is_(None),
+                            ),
                         )
-                    ).delete(synchronize_session=False)
+                        .delete(synchronize_session=False)
+                    )
                     feedback_removed += feedback_count
 
                     # Delete the job itself
@@ -266,7 +279,9 @@ async def cleanup_old_database_jobs():
                     f"{feedback_removed} feedback records (ai_interaction_logs preserved for statistics)"
                 )
             else:
-                logger.debug(f"📊 No jobs older than {DB_RETENTION_HOURS} hours found (excluding consented jobs)")
+                logger.debug(
+                    f"📊 No jobs older than {DB_RETENTION_HOURS} hours found (excluding consented jobs)"
+                )
 
             # Also cleanup orphaned step executions (records without parent job)
             orphaned_cleaned = await cleanup_orphaned_step_executions(db)
@@ -274,10 +289,14 @@ async def cleanup_old_database_jobs():
                 logger.info(f"🧹 Cleaned {orphaned_cleaned} orphaned step executions")
 
             # Log count of preserved jobs with consent (for monitoring)
-            consented_jobs_count = db.query(PipelineJobDB).filter(
-                PipelineJobDB.uploaded_at < cutoff_time,
-                PipelineJobDB.data_consent_given == True
-            ).count()
+            consented_jobs_count = (
+                db.query(PipelineJobDB)
+                .filter(
+                    PipelineJobDB.uploaded_at < cutoff_time,
+                    PipelineJobDB.data_consent_given.is_(True),
+                )
+                .count()
+            )
             if consented_jobs_count > 0:
                 logger.info(f"📋 Preserved {consented_jobs_count} old jobs with user consent")
 
@@ -307,35 +326,43 @@ async def cleanup_orphaned_step_executions(db=None):
     close_db = False
 
     try:
+        from sqlalchemy import or_
+
         from app.database.modular_pipeline_models import (
             PipelineJobDB,
             PipelineStepExecutionDB,
             UserFeedbackDB,
         )
-        from sqlalchemy import or_
 
         if db is None:
             from app.database.connection import get_db_session
+
             db = next(get_db_session())
             close_db = True
 
         try:
             # Get all valid job_ids
             valid_job_ids = {j.job_id for j in db.query(PipelineJobDB.job_id).all()}
-            valid_processing_ids = {j.processing_id for j in db.query(PipelineJobDB.processing_id).all()}
+            valid_processing_ids = {
+                j.processing_id for j in db.query(PipelineJobDB.processing_id).all()
+            }
 
             # Find and delete orphaned step executions (job_id not in valid jobs)
             # These contain PII text and must be cleaned
             if valid_job_ids:
-                orphaned_steps = db.query(PipelineStepExecutionDB).filter(
-                    ~PipelineStepExecutionDB.job_id.in_(valid_job_ids)
-                ).delete(synchronize_session=False)
+                orphaned_steps = (
+                    db.query(PipelineStepExecutionDB)
+                    .filter(~PipelineStepExecutionDB.job_id.in_(valid_job_ids))
+                    .delete(synchronize_session=False)
+                )
             else:
                 # No jobs exist, all step executions are orphaned
                 orphaned_steps = db.query(PipelineStepExecutionDB).delete(synchronize_session=False)
 
             if orphaned_steps > 0:
-                logger.info(f"   🗑️ Deleted {orphaned_steps} orphaned step executions (contained PII text)")
+                logger.info(
+                    f"   🗑️ Deleted {orphaned_steps} orphaned step executions (contained PII text)"
+                )
                 total_removed += orphaned_steps
 
             # NOTE: ai_interaction_logs are PRESERVED for cost/usage statistics
@@ -344,24 +371,34 @@ async def cleanup_orphaned_step_executions(db=None):
             # Find and delete orphaned feedback where consent NOT given
             # (feedback with consent may be kept for analysis even without job)
             if valid_processing_ids:
-                orphaned_feedback = db.query(UserFeedbackDB).filter(
-                    ~UserFeedbackDB.processing_id.in_(valid_processing_ids),
-                    or_(
-                        UserFeedbackDB.data_consent_given == False,
-                        UserFeedbackDB.data_consent_given == None
+                orphaned_feedback = (
+                    db.query(UserFeedbackDB)
+                    .filter(
+                        ~UserFeedbackDB.processing_id.in_(valid_processing_ids),
+                        or_(
+                            UserFeedbackDB.data_consent_given.is_(False),
+                            UserFeedbackDB.data_consent_given.is_(None),
+                        ),
                     )
-                ).delete(synchronize_session=False)
+                    .delete(synchronize_session=False)
+                )
             else:
                 # No jobs exist, delete feedback without consent
-                orphaned_feedback = db.query(UserFeedbackDB).filter(
-                    or_(
-                        UserFeedbackDB.data_consent_given == False,
-                        UserFeedbackDB.data_consent_given == None
+                orphaned_feedback = (
+                    db.query(UserFeedbackDB)
+                    .filter(
+                        or_(
+                            UserFeedbackDB.data_consent_given.is_(False),
+                            UserFeedbackDB.data_consent_given.is_(None),
+                        )
                     )
-                ).delete(synchronize_session=False)
+                    .delete(synchronize_session=False)
+                )
 
             if orphaned_feedback > 0:
-                logger.info(f"   🗑️ Deleted {orphaned_feedback} orphaned feedback records (without consent)")
+                logger.info(
+                    f"   🗑️ Deleted {orphaned_feedback} orphaned feedback records (without consent)"
+                )
                 total_removed += orphaned_feedback
 
             if total_removed > 0:
@@ -645,17 +682,21 @@ async def cleanup_all_completed_jobs():
 
             for job in completed_jobs:
                 # Delete related step executions (contains PII text)
-                step_count = db.query(PipelineStepExecutionDB).filter(
-                    PipelineStepExecutionDB.job_id == job.job_id
-                ).delete(synchronize_session=False)
+                step_count = (
+                    db.query(PipelineStepExecutionDB)
+                    .filter(PipelineStepExecutionDB.job_id == job.job_id)
+                    .delete(synchronize_session=False)
+                )
                 step_executions_removed += step_count
 
                 # NOTE: ai_interaction_logs are PRESERVED for cost statistics
 
                 # Delete related feedback (emergency mode ignores consent)
-                feedback_count = db.query(UserFeedbackDB).filter(
-                    UserFeedbackDB.processing_id == job.processing_id
-                ).delete(synchronize_session=False)
+                feedback_count = (
+                    db.query(UserFeedbackDB)
+                    .filter(UserFeedbackDB.processing_id == job.processing_id)
+                    .delete(synchronize_session=False)
+                )
                 feedback_removed += feedback_count
 
                 db.delete(job)

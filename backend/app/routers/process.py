@@ -20,7 +20,7 @@ from app.models.document import (
     TranslationResult,
 )
 from app.services.pipeline_progress_tracker import PipelineProgressTracker
-from app.services.processing_service import ProcessingService, STEP_DESCRIPTIONS
+from app.services.processing_service import STEP_DESCRIPTIONS, ProcessingService
 from app.services.statistics_service import StatisticsService
 
 # Setup logging

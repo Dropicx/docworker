@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator';
 const Footer: React.FC = () => {
   return (
     <footer className="bg-gradient-to-r from-primary-50 via-brand-50 to-accent-50 border-t border-primary-200 mt-auto">
-      <div className="container mx-auto px-3 sm:px-4 py-6 sm:py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="flex flex-col items-center space-y-3 sm:space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
             <Button variant="link" asChild className="text-primary-600 hover:text-primary-800 text-xs sm:text-sm px-2">

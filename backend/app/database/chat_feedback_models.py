@@ -34,9 +34,7 @@ class ChatMessageFeedbackDB(Base):
 
     # Unique constraint: one feedback per message per session
     __table_args__ = (
-        UniqueConstraint(
-            "message_id", "session_token_hash", name="uq_message_session_feedback"
-        ),
+        UniqueConstraint("message_id", "session_token_hash", name="uq_message_session_feedback"),
     )
 
     def __repr__(self) -> str:

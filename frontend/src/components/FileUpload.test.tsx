@@ -6,13 +6,13 @@
  * - File selection
  * - File validation
  * - Privacy checkbox flow
- * - Upload process
+ * - Start processing flow
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, waitFor, act } from '@testing-library/react';
 import { renderWithRouter, userEvent } from '../test/helpers/renderWithProviders';
-import { createMockFile, createMockUploadResponse } from '../test/helpers/testData';
+import { createMockFile } from '../test/helpers/testData';
 import FileUpload from './FileUpload';
 import ApiService from '../services/api';
 
@@ -60,14 +60,25 @@ const simulateFileDrop = (files: File[]) => {
   });
 };
 
+const mockLanguages = [
+  { code: 'en', name: 'English', nativeName: 'English' },
+  { code: 'fr', name: 'French', nativeName: 'Français' },
+];
+
 describe('FileUpload Component', () => {
-  const mockOnUploadSuccess = vi.fn();
+  const mockOnStartProcessing = vi.fn();
   const mockOnUploadError = vi.fn();
+
+  const defaultProps = {
+    onStartProcessing: mockOnStartProcessing,
+    onUploadError: mockOnUploadError,
+    availableLanguages: mockLanguages,
+    languagesLoaded: true,
+  };
 
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(ApiService.validateFile).mockReturnValue({ valid: true });
-    vi.mocked(ApiService.uploadDocument).mockResolvedValue(createMockUploadResponse());
   });
 
   afterEach(() => {
@@ -78,22 +89,13 @@ describe('FileUpload Component', () => {
 
   describe('Rendering', () => {
     it('should render upload area', () => {
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       expect(screen.getByText('Dokumente hochladen')).toBeInTheDocument();
-      expect(screen.getByText('Unterstützte Formate')).toBeInTheDocument();
     });
 
     it('should render with disabled state', () => {
-      renderWithRouter(
-        <FileUpload
-          onUploadSuccess={mockOnUploadSuccess}
-          onUploadError={mockOnUploadError}
-          disabled={true}
-        />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} disabled={true} />);
 
       const dropzone = screen.getByTestId('dropzone');
       expect(dropzone).toHaveClass('opacity-50');
@@ -104,9 +106,7 @@ describe('FileUpload Component', () => {
 
   describe('File Selection', () => {
     it('should display selected file', async () => {
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const file = createMockFile();
       simulateFileDrop([file]);
@@ -117,9 +117,7 @@ describe('FileUpload Component', () => {
     });
 
     it('should allow multiple file selection', async () => {
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const files = [createMockFile('document1.pdf'), createMockFile('document2.pdf')];
 
@@ -133,9 +131,7 @@ describe('FileUpload Component', () => {
     it('should clear all files', async () => {
       const user = userEvent.setup();
 
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const files = [createMockFile('document1.pdf')];
       simulateFileDrop(files);
@@ -162,15 +158,13 @@ describe('FileUpload Component', () => {
         error: 'Dateityp nicht unterstützt',
       });
 
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const file = createMockFile('document.docx', 1024000, 'application/msword');
       simulateFileDrop([file]);
 
       await waitFor(() => {
-        expect(screen.getByText('Upload fehlgeschlagen')).toBeInTheDocument();
+        expect(screen.getByText('Dateityp nicht unterstützt')).toBeInTheDocument();
       });
     });
 
@@ -180,9 +174,7 @@ describe('FileUpload Component', () => {
         error: 'Datei zu groß',
       });
 
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const file = createMockFile('huge.pdf', 60 * 1024 * 1024);
       simulateFileDrop([file]);
@@ -193,9 +185,7 @@ describe('FileUpload Component', () => {
     });
 
     it('should accept valid PDF files', async () => {
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const file = createMockFile('valid.pdf');
       simulateFileDrop([file]);
@@ -212,9 +202,7 @@ describe('FileUpload Component', () => {
 
   describe('Privacy Checkbox', () => {
     it('should show privacy checkbox after file selection', async () => {
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const file = createMockFile();
       simulateFileDrop([file]);
@@ -225,9 +213,7 @@ describe('FileUpload Component', () => {
     });
 
     it('should disable submit button when privacy not accepted', async () => {
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const file = createMockFile();
       simulateFileDrop([file]);
@@ -241,9 +227,7 @@ describe('FileUpload Component', () => {
     it('should enable submit button when privacy accepted', async () => {
       const user = userEvent.setup();
 
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const file = createMockFile();
       simulateFileDrop([file]);
@@ -261,17 +245,13 @@ describe('FileUpload Component', () => {
     });
   });
 
-  // ==================== Upload Process Tests ====================
+  // ==================== Start Processing Tests ====================
 
-  describe('Upload Process', () => {
-    it('should upload file successfully', async () => {
+  describe('Start Processing', () => {
+    it('should call onStartProcessing when submit is clicked', async () => {
       const user = userEvent.setup();
 
-      vi.mocked(ApiService.uploadDocument).mockResolvedValue(createMockUploadResponse());
-
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const file = createMockFile();
       simulateFileDrop([file]);
@@ -287,30 +267,15 @@ describe('FileUpload Component', () => {
       const submitButton = screen.getByRole('button', { name: /Verarbeitung starten/ });
       await user.click(submitButton);
 
-      // Wait for upload to complete
-      await waitFor(
-        () => {
-          expect(ApiService.uploadDocument).toHaveBeenCalledWith(file);
-          expect(mockOnUploadSuccess).toHaveBeenCalled();
-        },
-        { timeout: 3000 }
-      );
+      await waitFor(() => {
+        expect(mockOnStartProcessing).toHaveBeenCalledWith(file, null);
+      });
     });
 
-    it('should show upload progress overlay', async () => {
+    it('should clear files after starting processing', async () => {
       const user = userEvent.setup();
 
-      // Delay the upload response slightly to see the loading state
-      vi.mocked(ApiService.uploadDocument).mockImplementation(
-        () =>
-          new Promise(resolve => {
-            setTimeout(() => resolve(createMockUploadResponse()), 100);
-          })
-      );
-
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const file = createMockFile();
       simulateFileDrop([file]);
@@ -326,54 +291,23 @@ describe('FileUpload Component', () => {
       const submitButton = screen.getByRole('button', { name: /Verarbeitung starten/ });
       await user.click(submitButton);
 
-      // Check that upload overlay appears
-      await waitFor(
-        () => {
-          expect(screen.getByText('Datei wird hochgeladen')).toBeInTheDocument();
-        },
-        { timeout: 1000 }
-      );
-
-      // Wait for upload to complete
-      await waitFor(
-        () => {
-          expect(mockOnUploadSuccess).toHaveBeenCalled();
-        },
-        { timeout: 3000 }
-      );
+      await waitFor(() => {
+        expect(screen.queryByText('test-document.pdf')).not.toBeInTheDocument();
+      });
     });
 
-    it('should handle upload error', async () => {
-      const user = userEvent.setup();
-
-      vi.mocked(ApiService.uploadDocument).mockRejectedValue(new Error('Network error'));
-
-      renderWithRouter(
-        <FileUpload onUploadSuccess={mockOnUploadSuccess} onUploadError={mockOnUploadError} />
-      );
+    it('should not call onStartProcessing without privacy acceptance', async () => {
+      renderWithRouter(<FileUpload {...defaultProps} />);
 
       const file = createMockFile();
       simulateFileDrop([file]);
 
       await waitFor(() => {
-        const checkbox = screen.getByRole('checkbox');
-        expect(checkbox).toBeInTheDocument();
+        const submitButton = screen.getByRole('button', { name: /Verarbeitung starten/ });
+        expect(submitButton).toBeDisabled();
       });
 
-      const checkbox = screen.getByRole('checkbox');
-      await user.click(checkbox);
-
-      const submitButton = screen.getByRole('button', { name: /Verarbeitung starten/ });
-      await user.click(submitButton);
-
-      // Wait for error to appear
-      await waitFor(
-        () => {
-          expect(screen.getByText('Upload fehlgeschlagen')).toBeInTheDocument();
-          expect(mockOnUploadError).toHaveBeenCalledWith('Network error');
-        },
-        { timeout: 3000 }
-      );
+      expect(mockOnStartProcessing).not.toHaveBeenCalled();
     });
   });
 });

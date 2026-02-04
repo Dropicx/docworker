@@ -52,83 +52,57 @@ def _post_process_pii_cleanup(text: str) -> str:
     # Also handles compound names like silvia.jacquemin-fink
     # These should be replaced with [EMAIL] entirely
     text = re.sub(
-        r'[a-zA-ZäöüÄÖÜß]+(?:[.\-_][a-zA-ZäöüÄÖÜß]+)+\s*\n?\s*@\[EMAIL_DOMAIN\]',
-        '[EMAIL]',
+        r"[a-zA-ZäöüÄÖÜß]+(?:[.\-_][a-zA-ZäöüÄÖÜß]+)+\s*\n?\s*@\[EMAIL_DOMAIN\]",
+        "[EMAIL]",
         text,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
     # Also catch standalone name patterns before @ (with newline between)
     text = re.sub(
-        r'[a-zA-ZäöüÄÖÜß]+(?:[.\-_][a-zA-ZäöüÄÖÜß]+)+\s*\n\s*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
-        '[EMAIL]',
+        r"[a-zA-ZäöüÄÖÜß]+(?:[.\-_][a-zA-ZäöüÄÖÜß]+)+\s*\n\s*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
+        "[EMAIL]",
         text,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
     # Catch email local parts before @ without [EMAIL_DOMAIN] placeholder
     text = re.sub(
-        r'[a-zA-ZäöüÄÖÜß]+(?:[.\-_][a-zA-ZäöüÄÖÜß]+)+\s*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}',
-        '[EMAIL]',
+        r"[a-zA-ZäöüÄÖÜß]+(?:[.\-_][a-zA-ZäöüÄÖÜß]+)+\s*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}",
+        "[EMAIL]",
         text,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
     # 2. Clean German insurance IDs (Versichertennummer)
     # Format: Letter + 9 digits (e.g., O598926034) or just 9-10 digit numbers
-    text = re.sub(
-        r'\b[A-Z]\d{9,10}\b',
-        '[INSURANCE_ID]',
-        text
-    )
+    text = re.sub(r"\b[A-Z]\d{9,10}\b", "[INSURANCE_ID]", text)
 
     # 3. Clean insurance status patterns (e.g., "Status M", "Status P", "Status F")
-    text = re.sub(
-        r',?\s*Status\s+[A-Z]\b',
-        '',
-        text,
-        flags=re.IGNORECASE
-    )
+    text = re.sub(r",?\s*Status\s+[A-Z]\b", "", text, flags=re.IGNORECASE)
 
     # 4. Clean partial phone extensions (e.g., "/- 2764", "/ -2764", "/-2764")
     # These appear when the main number was anonymized but extension leaked
-    text = re.sub(
-        r'\s*/\s*-?\s*\d{2,5}\b',
-        '',
-        text
-    )
+    text = re.sub(r"\s*/\s*-?\s*\d{2,5}\b", "", text)
 
     # 5. Clean orphaned phone patterns after [PHONE] placeholder
-    text = re.sub(
-        r'\[PHONE\]\s*/?\s*-?\s*\d{2,5}',
-        '[PHONE]',
-        text
-    )
+    text = re.sub(r"\[PHONE\]\s*/?\s*-?\s*\d{2,5}", "[PHONE]", text)
 
     # 6. Clean Fallnummer (case number) patterns
-    text = re.sub(
-        r'Fallnummer:?\s*\d{8,12}',
-        'Fallnummer: [CASE_ID]',
-        text,
-        flags=re.IGNORECASE
-    )
+    text = re.sub(r"Fallnummer:?\s*\d{8,12}", "Fallnummer: [CASE_ID]", text, flags=re.IGNORECASE)
 
     # 7. Clean any remaining German city/insurance combo (e.g., "/Hamburg")
     # Pattern: slash followed by German city name in header context
-    text = re.sub(
-        r'/[A-ZÄÖÜ][a-zäöüß]+(?=,|\s|$)',
-        '',
-        text
-    )
+    text = re.sub(r"/[A-ZÄÖÜ][a-zäöüß]+(?=,|\s|$)", "", text)
 
     # 8. Clean street addresses without common suffixes (e.g., "Rhedung 18 b")
     # Pattern: StreetName + Number + optional letter, followed by PLZ
     # Replaces the street+number part, keeps the PLZ handling to other patterns
     text = re.sub(
-        r'([A-ZÄÖÜ][a-zäöüß-]+)\s+(\d{1,4}\s*[a-zA-Z]?)\s*,\s*(?=\d{5}\s|\[PLZ)',
-        '[ADDRESS], ',
+        r"([A-ZÄÖÜ][a-zäöüß-]+)\s+(\d{1,4}\s*[a-zA-Z]?)\s*,\s*(?=\d{5}\s|\[PLZ)",
+        "[ADDRESS], ",
         text,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
     # 9. Fix IP_ADDRESS false positives in lab reference ranges
@@ -136,10 +110,10 @@ def _post_process_pii_cleanup(text: str) -> str:
     # E.g., "Haptoglobin 0.93 ([IP_ADDRESS] g/l)" should be restored to show the range format
     # Since we can't restore the original value, we replace with a generic range indicator
     text = re.sub(
-        r'\(\[IP_ADDRESS\]\s*(g/l|mg/dl|mmol/l|µmol/l|u/l|iu/l|%|/µl|/ml)\)',
-        r'([REF_RANGE] \1)',
+        r"\(\[IP_ADDRESS\]\s*(g/l|mg/dl|mmol/l|µmol/l|u/l|iu/l|%|/µl|/ml)\)",
+        r"([REF_RANGE] \1)",
         text,
-        flags=re.IGNORECASE
+        flags=re.IGNORECASE,
     )
 
     # Log if we made changes
@@ -147,6 +121,7 @@ def _post_process_pii_cleanup(text: str) -> str:
         logger.debug(f"PII post-processing removed {original_length - len(text)} chars")
 
     return text
+
 
 # Configuration from environment
 # Primary: Hetzner PII service (production)
@@ -178,7 +153,7 @@ class PIIServiceClient:
         fallback_url: str | None = None,
         fallback_api_key: str | None = None,
         timeout: float = 60.0,
-        fallback_timeout: float = 180.0
+        fallback_timeout: float = 180.0,
     ):
         """
         Initialize PII service client.
@@ -245,9 +220,7 @@ class PIIServiceClient:
                 ]
 
                 for key in settings_keys:
-                    setting = db.query(SystemSettingsDB).filter(
-                        SystemSettingsDB.key == key
-                    ).first()
+                    setting = db.query(SystemSettingsDB).filter(SystemSettingsDB.key == key).first()
 
                     if setting and setting.value:
                         try:
@@ -278,10 +251,7 @@ class PIIServiceClient:
         return bool(self.fallback_url)
 
     async def _wake_up_fallback_service(
-        self,
-        max_attempts: int = 10,
-        initial_delay: float = 3.0,
-        max_delay: float = 15.0
+        self, max_attempts: int = 10, initial_delay: float = 3.0, max_delay: float = 15.0
     ) -> bool:
         """
         Wake up the Railway fallback service from sleep mode.
@@ -313,20 +283,32 @@ class PIIServiceClient:
                         status = health.get("status", "unknown")
 
                         if status == "healthy":
-                            logger.info(f"Railway PII service is healthy after {attempt} attempt(s)")
+                            logger.info(
+                                f"Railway PII service is healthy after {attempt} attempt(s)"
+                            )
                             return True
-                        elif status == "degraded":
+                        if status == "degraded":
                             # Service is up but not all models loaded yet
-                            logger.info(f"Railway PII service is degraded, waiting for models... (attempt {attempt}/{max_attempts})")
+                            logger.info(
+                                f"Railway PII service is degraded, waiting for models... (attempt {attempt}/{max_attempts})"
+                            )
                         else:
-                            logger.info(f"Railway PII service status: {status} (attempt {attempt}/{max_attempts})")
+                            logger.info(
+                                f"Railway PII service status: {status} (attempt {attempt}/{max_attempts})"
+                            )
                     else:
-                        logger.debug(f"Health check returned {response.status_code} (attempt {attempt}/{max_attempts})")
+                        logger.debug(
+                            f"Health check returned {response.status_code} (attempt {attempt}/{max_attempts})"
+                        )
 
             except httpx.ConnectError:
-                logger.debug(f"Railway PII service not yet reachable (attempt {attempt}/{max_attempts})")
+                logger.debug(
+                    f"Railway PII service not yet reachable (attempt {attempt}/{max_attempts})"
+                )
             except httpx.TimeoutException:
-                logger.debug(f"Railway PII service health check timeout (attempt {attempt}/{max_attempts})")
+                logger.debug(
+                    f"Railway PII service health check timeout (attempt {attempt}/{max_attempts})"
+                )
             except Exception as e:
                 logger.debug(f"Health check error: {e} (attempt {attempt}/{max_attempts})")
 
@@ -340,10 +322,7 @@ class PIIServiceClient:
         return False
 
     async def remove_pii(
-        self,
-        text: str,
-        language: Literal["de", "en"] = "de",
-        include_metadata: bool = True
+        self, text: str, language: Literal["de", "en"] = "de", include_metadata: bool = True
     ) -> tuple[str, dict]:
         """
         Remove PII from text using external service with Railway fallback.
@@ -371,8 +350,7 @@ class PIIServiceClient:
             try:
                 logger.debug(f"Calling primary PII service: {self.url}")
                 result = await self._call_service(
-                    self.url, self.api_key, text, language, include_metadata,
-                    timeout=self.timeout
+                    self.url, self.api_key, text, language, include_metadata, timeout=self.timeout
                 )
                 result[1]["service_used"] = "primary"
                 return result
@@ -386,12 +364,18 @@ class PIIServiceClient:
                 # Wake up the sleeping Railway service first
                 is_ready = await self._wake_up_fallback_service()
                 if not is_ready:
-                    logger.warning("Railway PII service wake-up failed, attempting request anyway...")
+                    logger.warning(
+                        "Railway PII service wake-up failed, attempting request anyway..."
+                    )
 
                 logger.info(f"Calling fallback PII service: {self.fallback_url}")
                 result = await self._call_service(
-                    self.fallback_url, self.fallback_api_key, text, language, include_metadata,
-                    timeout=self.fallback_timeout
+                    self.fallback_url,
+                    self.fallback_api_key,
+                    text,
+                    language,
+                    include_metadata,
+                    timeout=self.fallback_timeout,
                 )
                 result[1]["service_used"] = "fallback"
                 return result
@@ -411,7 +395,7 @@ class PIIServiceClient:
         text: str,
         language: str,
         include_metadata: bool,
-        timeout: float | None = None
+        timeout: float | None = None,
     ) -> tuple[str, dict]:
         """Call a PII service API with custom protection terms."""
         headers = {"Content-Type": "application/json"}
@@ -425,16 +409,12 @@ class PIIServiceClient:
             "text": text,
             "language": language,
             "include_metadata": include_metadata,
-            "custom_protection_terms": custom_terms if custom_terms else None
+            "custom_protection_terms": custom_terms if custom_terms else None,
         }
 
         request_timeout = timeout or self.timeout
         async with httpx.AsyncClient(timeout=request_timeout) as client:
-            response = await client.post(
-                f"{url}/remove-pii",
-                json=payload,
-                headers=headers
-            )
+            response = await client.post(f"{url}/remove-pii", json=payload, headers=headers)
 
             if response.status_code == 200:
                 result = response.json()
@@ -448,14 +428,13 @@ class PIIServiceClient:
                 metadata["post_processed"] = True
                 return cleaned_text, metadata
 
-            elif response.status_code in (401, 403):
+            if response.status_code in (401, 403):
                 raise Exception(f"PII service authentication failed: {response.status_code}")
 
-            elif response.status_code == 503:
+            if response.status_code == 503:
                 raise Exception("PII service unavailable (503)")
 
-            else:
-                raise Exception(f"PII service error: {response.status_code}")
+            raise Exception(f"PII service error: {response.status_code}")
 
     async def check_health(self) -> dict:
         """
@@ -475,39 +454,23 @@ class PIIServiceClient:
                     health = response.json()
                     health["external_url"] = self.url
                     return health
-                else:
-                    return {
-                        "status": "error",
-                        "external_url": self.url,
-                        "error": f"HTTP {response.status_code}"
-                    }
+                return {
+                    "status": "error",
+                    "external_url": self.url,
+                    "error": f"HTTP {response.status_code}",
+                }
 
         except httpx.TimeoutException:
-            return {
-                "status": "timeout",
-                "external_url": self.url,
-                "error": "Connection timeout"
-            }
+            return {"status": "timeout", "external_url": self.url, "error": "Connection timeout"}
 
         except httpx.ConnectError as e:
-            return {
-                "status": "unreachable",
-                "external_url": self.url,
-                "error": str(e)
-            }
+            return {"status": "unreachable", "external_url": self.url, "error": str(e)}
 
         except Exception as e:
-            return {
-                "status": "error",
-                "external_url": self.url,
-                "error": str(e)
-            }
+            return {"status": "error", "external_url": self.url, "error": str(e)}
 
     async def remove_pii_batch(
-        self,
-        texts: list[str],
-        language: Literal["de", "en"] = "de",
-        batch_size: int = 32
+        self, texts: list[str], language: Literal["de", "en"] = "de", batch_size: int = 32
     ) -> list[tuple[str, dict]]:
         """
         Remove PII from multiple texts with fallback support.
@@ -527,8 +490,7 @@ class PIIServiceClient:
         if self.is_external_enabled:
             try:
                 return await self._call_batch_service(
-                    self.url, self.api_key, texts, language, batch_size,
-                    timeout=self.timeout * 2
+                    self.url, self.api_key, texts, language, batch_size, timeout=self.timeout * 2
                 )
             except Exception as e:
                 primary_error = str(e)
@@ -540,18 +502,26 @@ class PIIServiceClient:
                 # Wake up the sleeping Railway service first
                 is_ready = await self._wake_up_fallback_service()
                 if not is_ready:
-                    logger.warning("Railway PII service wake-up failed, attempting batch request anyway...")
+                    logger.warning(
+                        "Railway PII service wake-up failed, attempting batch request anyway..."
+                    )
 
                 return await self._call_batch_service(
-                    self.fallback_url, self.fallback_api_key, texts, language, batch_size,
-                    timeout=self.fallback_timeout * 2
+                    self.fallback_url,
+                    self.fallback_api_key,
+                    texts,
+                    language,
+                    batch_size,
+                    timeout=self.fallback_timeout * 2,
                 )
             except Exception as e:
                 fallback_error = str(e)
                 logger.error(f"Fallback batch PII also failed: {e}")
 
         # Both failed
-        error_msg = f"All batch PII services failed. Primary: {primary_error}, Fallback: {fallback_error}"
+        error_msg = (
+            f"All batch PII services failed. Primary: {primary_error}, Fallback: {fallback_error}"
+        )
         raise Exception(error_msg)
 
     async def _call_batch_service(
@@ -561,7 +531,7 @@ class PIIServiceClient:
         texts: list[str],
         language: str,
         batch_size: int,
-        timeout: float | None = None
+        timeout: float | None = None,
     ) -> list[tuple[str, dict]]:
         """Call a batch PII service API with custom protection terms."""
         headers = {"Content-Type": "application/json"}
@@ -575,16 +545,12 @@ class PIIServiceClient:
             "texts": texts,
             "language": language,
             "batch_size": batch_size,
-            "custom_protection_terms": custom_terms if custom_terms else None
+            "custom_protection_terms": custom_terms if custom_terms else None,
         }
 
         request_timeout = timeout or (self.timeout * 2)
         async with httpx.AsyncClient(timeout=request_timeout) as client:
-            response = await client.post(
-                f"{url}/remove-pii/batch",
-                json=payload,
-                headers=headers
-            )
+            response = await client.post(f"{url}/remove-pii/batch", json=payload, headers=headers)
 
             if response.status_code == 200:
                 result = response.json()
@@ -596,15 +562,11 @@ class PIIServiceClient:
                     metadata["post_processed"] = True
                     processed_results.append((cleaned_text, metadata))
                 return processed_results
-            else:
-                raise Exception(f"Batch PII service error: {response.status_code}")
+            raise Exception(f"Batch PII service error: {response.status_code}")
 
 
 # Convenience function for simple usage
-async def remove_pii_external(
-    text: str,
-    language: Literal["de", "en"] = "de"
-) -> tuple[str, dict]:
+async def remove_pii_external(text: str, language: Literal["de", "en"] = "de") -> tuple[str, dict]:
     """
     Convenience function to remove PII using external service.
 

@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 import logging
 from uuid import UUID
 
-from sqlalchemy import and_, or_
+from sqlalchemy import and_
 from sqlalchemy.orm import Session
 
 from app.database.auth_models import UserDB, UserRole, UserStatus
@@ -412,9 +412,10 @@ class UserRepository(EncryptedRepositoryMixin, BaseRepository[UserDB]):
             # Filter in-memory after decryption
             search_lower = search_term.lower()
             matching_users = [
-                user for user in decrypted_users
-                if (user.email and search_lower in user.email.lower()) or
-                   (user.full_name and search_lower in user.full_name.lower())
+                user
+                for user in decrypted_users
+                if (user.email and search_lower in user.email.lower())
+                or (user.full_name and search_lower in user.full_name.lower())
             ]
 
             return matching_users[:limit]

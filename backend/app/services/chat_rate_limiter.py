@@ -8,10 +8,10 @@ Provides rate limiting for chat API endpoints with:
 - Database persistence for state across restarts
 """
 
-import json
-import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta
+import json
+import logging
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -81,9 +81,7 @@ class ChatRateLimiter:
             return f"{ip_address}:{session_token}"
         return f"{ip_address}:anonymous"
 
-    def _reset_windows_if_needed(
-        self, record: ChatRateLimitDB, now: datetime
-    ) -> ChatRateLimitDB:
+    def _reset_windows_if_needed(self, record: ChatRateLimitDB, now: datetime) -> ChatRateLimitDB:
         """Reset time windows if they have expired."""
         # Reset minute window (60 seconds)
         if record.minute_window_start:
@@ -126,13 +124,13 @@ class ChatRateLimiter:
         """
         if violations >= PENALTY_THRESHOLDS["permanent_ban"][0]:
             return "permanent_ban", None
-        elif violations >= PENALTY_THRESHOLDS["temp_ban_24hour"][0]:
+        if violations >= PENALTY_THRESHOLDS["temp_ban_24hour"][0]:
             return "temp_ban", 24 * 60  # 24 hours in minutes
-        elif violations >= PENALTY_THRESHOLDS["temp_ban_1hour"][0]:
+        if violations >= PENALTY_THRESHOLDS["temp_ban_1hour"][0]:
             return "temp_ban", 60  # 1 hour
-        elif violations >= PENALTY_THRESHOLDS["temp_ban_15min"][0]:
+        if violations >= PENALTY_THRESHOLDS["temp_ban_15min"][0]:
             return "temp_ban", 15  # 15 minutes
-        elif violations >= PENALTY_THRESHOLDS["warning"][0]:
+        if violations >= PENALTY_THRESHOLDS["warning"][0]:
             return "warning", None
         return "log", None
 
@@ -377,7 +375,9 @@ class ChatRateLimiter:
             if action == "permanent_ban":
                 record.permanent_ban = True
                 record.ban_reason = f"Exceeded {violations} rate limit violations"
-                logger.warning(f"PERMANENT BAN applied to {ip_address} after {violations} violations")
+                logger.warning(
+                    f"PERMANENT BAN applied to {ip_address} after {violations} violations"
+                )
                 self._log_audit(
                     db,
                     AuditAction.CHAT_PERMANENT_BAN,
@@ -388,7 +388,9 @@ class ChatRateLimiter:
 
             elif action == "temp_ban" and ban_minutes:
                 record.temp_ban_until = now + timedelta(minutes=ban_minutes)
-                record.ban_reason = f"Temporary ban for {ban_minutes} minutes after {violations} violations"
+                record.ban_reason = (
+                    f"Temporary ban for {ban_minutes} minutes after {violations} violations"
+                )
                 logger.warning(
                     f"TEMP BAN ({ban_minutes}m) applied to {ip_address} after {violations} violations"
                 )
@@ -397,7 +399,11 @@ class ChatRateLimiter:
                     AuditAction.CHAT_TEMP_BAN,
                     ip_address,
                     user_agent,
-                    {"violations": violations, "ban_minutes": ban_minutes, "identifier": identifier},
+                    {
+                        "violations": violations,
+                        "ban_minutes": ban_minutes,
+                        "identifier": identifier,
+                    },
                 )
 
             elif action == "warning":
@@ -489,9 +495,13 @@ class ChatRateLimiter:
                 "remaining_day": max(0, self.limits["day"] - record.messages_last_day),
                 "violations": record.rate_limit_violations,
                 "banned": record.is_banned(now),
-                "temp_ban_until": record.temp_ban_until.isoformat() if record.temp_ban_until else None,
+                "temp_ban_until": record.temp_ban_until.isoformat()
+                if record.temp_ban_until
+                else None,
                 "permanent_ban": record.permanent_ban,
-                "last_request": record.last_request_at.isoformat() if record.last_request_at else None,
+                "last_request": record.last_request_at.isoformat()
+                if record.last_request_at
+                else None,
             }
 
 

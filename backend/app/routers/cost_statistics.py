@@ -83,9 +83,7 @@ class StepCostBreakdown(BaseModel):
 class CostBreakdownResponse(BaseModel):
     """Cost breakdown by model and pipeline step"""
 
-    by_model: dict[str, ModelCostBreakdown] = Field(
-        ..., description="Cost breakdown per model"
-    )
+    by_model: dict[str, ModelCostBreakdown] = Field(..., description="Cost breakdown per model")
     by_step: dict[str, StepCostBreakdown] = Field(
         ..., description="Cost breakdown per pipeline step"
     )
@@ -399,9 +397,7 @@ async def get_feedback_analysis_costs(
     Returns costs for the self-improving feedback feature using Mistral Large.
     """
     try:
-        stats = repository.get_feedback_analysis_stats(
-            start_date=start_date, end_date=end_date
-        )
+        stats = repository.get_feedback_analysis_stats(start_date=start_date, end_date=end_date)
 
         return FeedbackAnalysisCostResponse(
             total_cost_usd=stats["total_cost_usd"],

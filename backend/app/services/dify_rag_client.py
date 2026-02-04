@@ -175,16 +175,13 @@ class DifyRAGClient:
                 }
                 return answer, metadata
 
-            elif response.status_code in (401, 403):
+            if response.status_code in (401, 403):
                 raise Exception(f"Dify RAG authentication failed: {response.status_code}")
 
-            elif response.status_code == 429:
+            if response.status_code == 429:
                 raise Exception("Dify RAG rate limit exceeded")
 
-            else:
-                raise Exception(
-                    f"Dify RAG error: {response.status_code} - {response.text[:200]}"
-                )
+            raise Exception(f"Dify RAG error: {response.status_code} - {response.text[:200]}")
 
     def _build_query(self, medical_text: str, document_type: str) -> str:
         """Build German query with medical context for patient-friendly output (max 2000 chars)."""
@@ -203,7 +200,7 @@ class DifyRAGClient:
             f"2. Fokussiere auf PRAKTISCHE TIPPS - was kann der Patient TUN?\n"
             f"3. Halte jede Empfehlung KURZ (2-3 Sätze)\n"
             f"4. JEDE Empfehlung MUSS eine Quellenangabe haben im Format:\n"
-            f"   📚 Quelle: AWMF Leitlinie \"[Name]\" (Reg.-Nr. [Nummer]), [S-Klassifikation]\n"
+            f'   📚 Quelle: AWMF Leitlinie "[Name]" (Reg.-Nr. [Nummer]), [S-Klassifikation]\n'
             f"5. Maximal 5 Empfehlungen - nur die WICHTIGSTEN\n\n"
             f"Dokumentinhalt:\n{truncated_text}"
         )
@@ -259,12 +256,11 @@ class DifyRAGClient:
                         "url": self.url,
                         "enabled": self.is_enabled,
                     }
-                else:
-                    return {
-                        "status": "error",
-                        "url": self.url,
-                        "error": f"HTTP {response.status_code}",
-                    }
+                return {
+                    "status": "error",
+                    "url": self.url,
+                    "error": f"HTTP {response.status_code}",
+                }
 
         except httpx.TimeoutException:
             return {"status": "timeout", "url": self.url, "error": "Connection timeout"}

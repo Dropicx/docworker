@@ -344,20 +344,16 @@ class FieldEncryptor:
 
         Note:
             This is a heuristic check based on Fernet token format.
-            Since we double-encode (Fernet + base64), we need to decode twice.
+            encrypt_field returns Fernet tokens directly (base64url-encoded).
         """
         if not value or not isinstance(value, str):
             return False
 
-        # Our encrypt_field method base64-encodes the Fernet token
-        # So we need to decode twice to check the Fernet version byte
         try:
-            # First decode: our base64 encoding
-            outer_decoded = base64.b64decode(value.encode("ascii"))
-            # Second decode: Fernet's base64 encoding
-            inner_decoded = base64.b64decode(outer_decoded)
+            # Fernet tokens are base64url-encoded; decode to check version byte
+            decoded = base64.urlsafe_b64decode(value)
             # Fernet tokens start with version byte 0x80
-            return len(inner_decoded) > 0 and inner_decoded[0] == 0x80
+            return len(decoded) > 0 and decoded[0] == 0x80
         except Exception:
             return False
 
@@ -406,7 +402,9 @@ class FieldEncryptor:
             # Returns: "gAAAAABk1x2y..." (base64-encoded Fernet token)
         """
         if not self.is_enabled():
-            logger.warning("⚠️ Encryption disabled in encrypt_binary_field, returning base64-encoded binary (NOT ENCRYPTED)")
+            logger.warning(
+                "⚠️ Encryption disabled in encrypt_binary_field, returning base64-encoded binary (NOT ENCRYPTED)"
+            )
             if binary_data is None:
                 return None
             return base64.b64encode(binary_data).decode("ascii")
@@ -435,26 +433,38 @@ class FieldEncryptor:
             # Note: Fernet tokens start with "gAAAAA" in base64, which is "Z0FBQUFB" in base64 encoding
             # But the encrypted_string is already base64-encoded, so we check for the base64 representation
             if encrypted_string.startswith("gAAAAA"):
-                logger.debug("   ✅ encrypt_binary_field: Verified Fernet token format (starts with 'gAAAAA')")
+                logger.debug(
+                    "   ✅ encrypt_binary_field: Verified Fernet token format (starts with 'gAAAAA')"
+                )
             elif encrypted_string.startswith("Z0FBQUFB"):
-                logger.debug("   ✅ encrypt_binary_field: Verified Fernet token format (base64 encoded, starts with 'Z0FBQUFB')")
+                logger.debug(
+                    "   ✅ encrypt_binary_field: Verified Fernet token format (base64 encoded, starts with 'Z0FBQUFB')"
+                )
             else:
                 # Decode base64 to check if it's a Fernet token
                 try:
                     import base64 as b64
+
                     decoded = b64.b64decode(encrypted_string)
                     if decoded.startswith(b"gAAAAA"):
-                        logger.debug("   ✅ encrypt_binary_field: Verified Fernet token format (after base64 decode)")
+                        logger.debug(
+                            "   ✅ encrypt_binary_field: Verified Fernet token format (after base64 decode)"
+                        )
                     else:
-                        logger.warning(f"   ⚠️ encrypt_binary_field: Doesn't look like Fernet token: {encrypted_string[:20]}...")
+                        logger.warning(
+                            f"   ⚠️ encrypt_binary_field: Doesn't look like Fernet token: {encrypted_string[:20]}..."
+                        )
                 except Exception:
-                    logger.warning(f"   ⚠️ encrypt_binary_field: Cannot verify token format: {encrypted_string[:20]}...")
+                    logger.warning(
+                        f"   ⚠️ encrypt_binary_field: Cannot verify token format: {encrypted_string[:20]}..."
+                    )
 
             return encrypted_string
 
         except Exception as e:
             logger.error(f"Binary encryption failed: {e}")
             import traceback
+
             logger.error(traceback.format_exc())
             raise EncryptionError(f"Failed to encrypt binary field: {e}") from e
 
@@ -500,7 +510,6 @@ class FieldEncryptor:
             # Step 2: Decode base64 string back to binary
             return base64.b64decode(base64_string.encode("ascii"))
 
-
         except Exception as e:
             logger.error(f"Binary decryption failed: {e}")
             raise DecryptionError(f"Failed to decrypt binary field: {e}") from e
@@ -535,6 +544,7 @@ class FieldEncryptor:
         if not self.is_enabled():
             logger.warning("Encryption disabled - returning JSON as string")
             import json
+
             return json.dumps(json_data)
 
         try:
@@ -546,7 +556,9 @@ class FieldEncryptor:
 
             # Step 2: Encrypt the JSON string
             encrypted_string = self.encrypt_field(json_string)
-            logger.debug(f"Encrypted JSON field: {len(json_string)} chars → {len(encrypted_string) if encrypted_string else 0} chars")
+            logger.debug(
+                f"Encrypted JSON field: {len(json_string)} chars → {len(encrypted_string) if encrypted_string else 0} chars"
+            )
 
             return encrypted_string
 
@@ -579,6 +591,7 @@ class FieldEncryptor:
         if not self.is_enabled():
             logger.warning("Encryption disabled - parsing JSON directly")
             import json
+
             return json.loads(encrypted_string)
 
         try:
@@ -587,10 +600,12 @@ class FieldEncryptor:
             # Check if it's encrypted (Fernet token) or plaintext JSON
             # Use heuristic check: Fernet tokens start with 'gAAAAA' or base64-encoded 'Z0FBQUFB'
             looks_encrypted = (
-                encrypted_string.startswith('gAAAAA') or  # Direct Fernet token
-                encrypted_string.startswith('Z0FBQUFB')   # Base64-encoded Fernet token
+                encrypted_string.startswith("gAAAAA")  # Direct Fernet token
+                or encrypted_string.startswith("Z0FBQUFB")  # Base64-encoded Fernet token
             )
-            logger.debug(f"Checking if encrypted: first 50 chars: {encrypted_string[:50] if encrypted_string else 'EMPTY'}...")
+            logger.debug(
+                f"Checking if encrypted: first 50 chars: {encrypted_string[:50] if encrypted_string else 'EMPTY'}..."
+            )
             logger.info(f"looks_encrypted (heuristic): {looks_encrypted}")
 
             if looks_encrypted:
@@ -601,7 +616,9 @@ class FieldEncryptor:
                     logger.error("decrypt_field returned None")
                     return None
 
-                logger.info(f"Decrypted JSON field: {len(encrypted_string)} chars → {len(json_string)} chars")
+                logger.info(
+                    f"Decrypted JSON field: {len(encrypted_string)} chars → {len(json_string)} chars"
+                )
 
                 # Debug: Log first 100 chars of decrypted string
                 if json_string:
@@ -613,7 +630,9 @@ class FieldEncryptor:
                 return json.loads(json_string)
 
             # Plaintext JSON (backward compatibility) - is_encrypted returned False
-            logger.warning(f"is_encrypted=False, treating as plaintext JSON. First 50 chars: {encrypted_string[:50]}...")
+            logger.warning(
+                f"is_encrypted=False, treating as plaintext JSON. First 50 chars: {encrypted_string[:50]}..."
+            )
             return json.loads(encrypted_string)
 
         except json.JSONDecodeError as e:

@@ -58,9 +58,7 @@ class PipelineStepExecutionRepository(
             logger.error(f"Error getting step executions by job_id={job_id}: {e}")
             raise
 
-    def get_by_step_name(
-        self, job_id: str, step_name: str
-    ) -> PipelineStepExecutionDB | None:
+    def get_by_step_name(self, job_id: str, step_name: str) -> PipelineStepExecutionDB | None:
         """
         Get step execution by job_id and step_name.
 
@@ -136,7 +134,9 @@ class PipelineStepExecutionRepository(
                 self.update(execution.id, input_text=None, output_text=None)
                 cleared_count += 1
 
-            logger.info(f"Cleared text content for {cleared_count} step executions (job_id={job_id})")
+            logger.info(
+                f"Cleared text content for {cleared_count} step executions (job_id={job_id})"
+            )
             return cleared_count
         except Exception as e:
             logger.error(f"Error clearing text content for job_id={job_id}: {e}")

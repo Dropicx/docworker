@@ -95,7 +95,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
         }, 400);
       }, 300);
     },
-    [onUploadError]
+    [onUploadError, onClearQualityGateError]
   );
 
   const handleStartProcessing = useCallback(() => {

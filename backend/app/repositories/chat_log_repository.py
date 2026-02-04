@@ -5,10 +5,10 @@ Handles database operations for chat request logging and analytics.
 Provides CRUD operations and specialized analytics queries.
 """
 
-from datetime import datetime, date
+from datetime import date, datetime
 from typing import Any
 
-from sqlalchemy import func, case, and_
+from sqlalchemy import and_, case, func
 from sqlalchemy.orm import Session
 
 from app.database.chat_models import ChatLogDB
@@ -42,11 +42,7 @@ class ChatLogRepository(BaseRepository[ChatLogDB]):
         Returns:
             ChatLogDB instance or None
         """
-        return (
-            self.db.query(self.model)
-            .filter(self.model.request_id == request_id)
-            .first()
-        )
+        return self.db.query(self.model).filter(self.model.request_id == request_id).first()
 
     def update_by_request_id(self, request_id: str, **kwargs) -> ChatLogDB | None:
         """
@@ -109,12 +105,7 @@ class ChatLogRepository(BaseRepository[ChatLogDB]):
         if ip_hash:
             query = query.filter(self.model.ip_address_hash == ip_hash)
 
-        return (
-            query.order_by(self.model.created_at.desc())
-            .offset(offset)
-            .limit(limit)
-            .all()
-        )
+        return query.order_by(self.model.created_at.desc()).offset(offset).limit(limit).all()
 
     # ==================== Analytics Queries ====================
 
@@ -138,19 +129,13 @@ class ChatLogRepository(BaseRepository[ChatLogDB]):
             func.count(self.model.id).label("total_requests"),
             func.coalesce(func.sum(self.model.total_tokens), 0).label("total_tokens"),
             func.coalesce(func.sum(self.model.cost_usd), 0.0).label("total_cost_usd"),
-            func.count(
-                case((self.model.status == "success", 1))
-            ).label("success_count"),
-            func.avg(
-                case(
-                    (self.model.status == "success", self.model.response_time_ms)
-                )
-            ).label("avg_response_time_ms"),
-            func.avg(
-                case(
-                    (self.model.status == "success", self.model.first_token_time_ms)
-                )
-            ).label("avg_first_token_time_ms"),
+            func.count(case((self.model.status == "success", 1))).label("success_count"),
+            func.avg(case((self.model.status == "success", self.model.response_time_ms))).label(
+                "avg_response_time_ms"
+            ),
+            func.avg(case((self.model.status == "success", self.model.first_token_time_ms))).label(
+                "avg_first_token_time_ms"
+            ),
         )
 
         if start_date:
@@ -211,11 +196,7 @@ class ChatLogRepository(BaseRepository[ChatLogDB]):
         if app_id:
             query = query.filter(self.model.app_id == app_id)
 
-        results = (
-            query.group_by(date_col)
-            .order_by(date_col.desc())
-            .all()
-        )
+        results = query.group_by(date_col).order_by(date_col.desc()).all()
 
         return [
             {
@@ -227,8 +208,8 @@ class ChatLogRepository(BaseRepository[ChatLogDB]):
                 "error_count": row.error_count,
                 "rate_limited_count": row.rate_limited_count,
                 "success_rate": round(
-                    (row.success_count / row.request_count * 100)
-                    if row.request_count > 0 else 0.0, 2
+                    (row.success_count / row.request_count * 100) if row.request_count > 0 else 0.0,
+                    2,
                 ),
             }
             for row in results
@@ -264,11 +245,7 @@ class ChatLogRepository(BaseRepository[ChatLogDB]):
         if app_id:
             query = query.filter(self.model.app_id == app_id)
 
-        results = (
-            query.group_by(hour_col)
-            .order_by(hour_col)
-            .all()
-        )
+        results = query.group_by(hour_col).order_by(hour_col).all()
 
         return [
             {
@@ -383,9 +360,7 @@ class ChatLogRepository(BaseRepository[ChatLogDB]):
 
         return {
             "by_status": {row.status: row.count for row in status_results},
-            "by_error_type": {
-                (row.error_type or "unknown"): row.count for row in error_results
-            },
+            "by_error_type": {(row.error_type or "unknown"): row.count for row in error_results},
         }
 
     def get_performance_percentiles(
@@ -467,9 +442,7 @@ class ChatLogRepository(BaseRepository[ChatLogDB]):
         Returns:
             Count of unique IP hashes
         """
-        query = self.db.query(
-            func.count(func.distinct(self.model.ip_address_hash))
-        )
+        query = self.db.query(func.count(func.distinct(self.model.ip_address_hash)))
 
         if start_date:
             query = query.filter(self.model.created_at >= start_date)
@@ -489,11 +462,7 @@ class ChatLogRepository(BaseRepository[ChatLogDB]):
             Number of deleted records
         """
         try:
-            deleted = (
-                self.db.query(self.model)
-                .filter(self.model.created_at < older_than)
-                .delete()
-            )
+            deleted = self.db.query(self.model).filter(self.model.created_at < older_than).delete()
             self.db.commit()
             return deleted
         except Exception:

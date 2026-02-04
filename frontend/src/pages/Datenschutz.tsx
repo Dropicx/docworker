@@ -1,24 +1,18 @@
 import React from 'react';
-import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import Header from '../components/Header';
+import Footer from '../components/Footer';
 
 const Datenschutz: React.FC = () => {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-brand-50/10 to-accent-50/10">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <Link
-          to="/"
-          className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-8 transition-colors"
-        >
-          <ArrowLeft className="w-5 h-5 mr-2" />
-          Zurück zur Startseite
-        </Link>
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
+      <Header />
 
-        <div className="card-elevated">
-          <div className="card-body">
-            <h1 className="text-3xl font-bold text-primary-900 mb-8">Datenschutzerklärung</h1>
+      <main className="flex-1">
+        <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <h1 className="text-3xl font-bold text-primary-900 mb-8">Datenschutzerklärung</h1>
 
-            <div className="space-y-6 text-primary-700">
+          <div className="space-y-6 text-primary-700">
               <section>
                 <h2 className="text-xl font-semibold text-primary-900 mb-3">
                   1. Datenschutz auf einen Blick
@@ -377,20 +371,21 @@ const Datenschutz: React.FC = () => {
                 </ul>
               </section>
 
-              <section className="pt-4 border-t border-primary-200">
-                <p className="text-sm text-primary-600">
-                  Stand:{' '}
-                  {new Date().toLocaleDateString('de-DE', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                  })}
-                </p>
-              </section>
-            </div>
+            <section className="pt-4 border-t border-primary-200">
+              <p className="text-sm text-primary-600">
+                Stand:{' '}
+                {new Date().toLocaleDateString('de-DE', {
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </p>
+            </section>
           </div>
         </div>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 };

@@ -8,8 +8,6 @@ import {
   Sparkles,
   Zap,
   FileCheck,
-  Clock,
-  RefreshCw,
   FileText,
   Image,
 } from 'lucide-react';
@@ -228,8 +226,6 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
   useEffect(() => {
     if (phase !== 'processing' || !processingId) return;
 
-    let intervalId: NodeJS.Timeout;
-
     const pollStatus = async () => {
       if (!isPollingRef.current) return;
       try {
@@ -258,7 +254,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
 
     isPollingRef.current = true;
     pollStatus();
-    intervalId = setInterval(pollStatus, 2000);
+    const intervalId = setInterval(pollStatus, 2000);
 
     return () => {
       isPollingRef.current = false;

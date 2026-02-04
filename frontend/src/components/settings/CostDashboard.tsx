@@ -3,7 +3,6 @@ import {
   DollarSign,
   AlertCircle,
   RefreshCw,
-  TrendingUp,
   Cpu,
   FileText,
   ChevronDown,

@@ -207,16 +207,14 @@ def create_ocr_configuration(db_session):
     def _create(
         selected_engine: OCREngineEnum = OCREngineEnum.PADDLEOCR,
         paddleocr_config: dict = None,
-        vision_llm_config: dict = None,
-        hybrid_config: dict = None,
+        mistral_ocr_config: dict = None,
         pii_removal_enabled: bool = True,
         **kwargs,
     ) -> OCRConfigurationDB:
         config = OCRConfigurationDB(
             selected_engine=selected_engine,
             paddleocr_config=paddleocr_config,
-            vision_llm_config=vision_llm_config,
-            hybrid_config=hybrid_config,
+            mistral_ocr_config=mistral_ocr_config,
             pii_removal_enabled=pii_removal_enabled,
             **kwargs,
         )

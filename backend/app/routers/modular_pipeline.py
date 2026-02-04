@@ -17,7 +17,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from sqlalchemy.orm import Session
 
 from app.core.dependencies import get_pipeline_step_repository
-from app.core.permissions import get_current_user_required, has_any_role, require_admin, Role
+from app.core.permissions import Role, get_current_user_required, has_any_role, require_admin
 from app.database.auth_models import UserDB
 from app.database.connection import get_session
 from app.database.modular_pipeline_models import OCREngineEnum
@@ -106,7 +106,9 @@ class PipelineStepRequest(BaseModel):
     stop_conditions: dict[str, Any] | None = None
 
     # UI stage mapping
-    ui_stage: str = Field("translation", pattern="^(ocr|validation|classification|translation|quality|formatting)$")
+    ui_stage: str = Field(
+        "translation", pattern="^(ocr|validation|classification|translation|quality|formatting)$"
+    )
 
     @field_validator("prompt_template")
     @classmethod

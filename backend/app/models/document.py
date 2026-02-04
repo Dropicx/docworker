@@ -80,8 +80,7 @@ class ProcessingOptions(BaseModel):
         None, description="Zielsprache für Übersetzung (optional)"
     )
     source_language: Literal["de", "en"] = Field(
-        default="de",
-        description="Quellsprache des Dokuments für PII-Entfernung ('de' oder 'en')"
+        default="de", description="Quellsprache des Dokuments für PII-Entfernung ('de' oder 'en')"
     )
 
 

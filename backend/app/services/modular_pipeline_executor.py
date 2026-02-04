@@ -305,7 +305,9 @@ class ModularPipelineExecutor:
             input_text=input_text,  # FULL text (was truncated to 1000 chars before)
             output_text=output_text,  # FULL text (was truncated to 1000 chars before)
             model_used=self.get_model_info(step.selected_model_id).name if output_text else None,
-            prompt_used=step.prompt_template[:500] if step.prompt_template else None,  # Metadata can be truncated
+            prompt_used=step.prompt_template[:500]
+            if step.prompt_template
+            else None,  # Metadata can be truncated
             started_at=datetime.fromtimestamp(step_start_time),
             completed_at=datetime.now(),
             execution_time_seconds=time.time() - step_start_time,
@@ -454,8 +456,12 @@ class ModularPipelineExecutor:
                 branch_value = found_class
             else:
                 # Fallback to first word if no valid class found
-                branch_value = cleaned_output.split()[0] if cleaned_output.split() else cleaned_output
-                logger.warning(f"⚠️ No valid document class found in output, using first word: {branch_value}")
+                branch_value = (
+                    cleaned_output.split()[0] if cleaned_output.split() else cleaned_output
+                )
+                logger.warning(
+                    f"⚠️ No valid document class found in output, using first word: {branch_value}"
+                )
         else:
             # For other branching fields, extract first word
             branch_value = cleaned_output.split()[0] if cleaned_output.split() else cleaned_output
