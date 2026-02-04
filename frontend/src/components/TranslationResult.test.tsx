@@ -18,6 +18,28 @@ import TranslationResult from './TranslationResult';
 import ApiService from '../services/api';
 import * as pdfExport from '../utils/pdfExportAdvanced';
 
+// Mock useAuth to return admin user (original text section is admin-only)
+vi.mock('../contexts/AuthContext', async () => {
+  const actual = await vi.importActual('../contexts/AuthContext');
+  return {
+    ...(actual as object),
+    useAuth: vi.fn(() => ({
+      user: {
+        id: '1',
+        role: 'admin',
+        email: 'admin@test.com',
+        full_name: 'Admin User',
+        is_active: true,
+      },
+      isAuthenticated: true,
+      isLoading: false,
+      login: vi.fn(),
+      logout: vi.fn(),
+      refreshTokens: vi.fn(),
+    })),
+  };
+});
+
 // Mock ApiService
 vi.mock('../services/api', () => ({
   default: {
@@ -33,6 +55,11 @@ vi.mock('../services/api', () => ({
         const minutes = Math.floor((seconds % 3600) / 60);
         return `${hours}h ${minutes}m`;
       }
+    }),
+    getGuidelines: vi.fn().mockResolvedValue({
+      processing_id: 'test-123',
+      status: 'not_configured',
+      timestamp: new Date().toISOString(),
     }),
   },
 }));
@@ -50,6 +77,11 @@ vi.mock('react-markdown', () => ({
 // Mock remark-gfm
 vi.mock('remark-gfm', () => ({
   default: vi.fn(),
+}));
+
+// Mock GuidelinesSection component
+vi.mock('./GuidelinesSection', () => ({
+  default: () => <div data-testid="guidelines-section">Guidelines Mock</div>,
 }));
 
 describe('TranslationResult Component', () => {

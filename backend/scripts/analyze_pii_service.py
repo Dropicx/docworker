@@ -17,7 +17,9 @@ from collections import defaultdict
 
 # PII Service configuration
 PII_URL = "https://pii.fra-la.de/remove-pii"
-PII_API_KEY = os.getenv("PII_API_KEY", "2070e777e9e423da7328bba459f4e23db36049a33b364b4b65aadef47a756f20")
+PII_API_KEY = os.getenv(
+    "PII_API_KEY", "2070e777e9e423da7328bba459f4e23db36049a33b364b4b65aadef47a756f20"
+)
 
 # Test cases with expected behavior
 TEST_CASES = [
@@ -46,7 +48,6 @@ TEST_CASES = [
         "should_remove": ["Dr. Schmidt", "Maria Hilf Kliniken", "Mönchengladbach"],
         "should_preserve": ["Terminvereinbarung"],
     },
-
     # === FALSE POSITIVE TESTS (Medical terms that should be preserved) ===
     {
         "name": "Child-Pugh Score",
@@ -96,7 +97,6 @@ TEST_CASES = [
         "should_remove": [],
         "should_preserve": ["Metformin", "Ramipril", "ASS"],
     },
-
     # === COMPLEX DOCUMENT TEST ===
     {
         "name": "Full medical document excerpt",
@@ -126,10 +126,31 @@ Wiedervorstellung in der Abteilung von Dr. Weber, Universitätsklinikum Köln
 Mit freundlichen Grüßen,
 Dr. med. Schmidt
         """,
-        "should_remove": ["Müller", "Hans", "15.03.1980", "Musterstr. 15", "12345 Berlin",
-                         "Dr. Weber", "Universitätsklinikum Köln", "Dr. med. Schmidt"],
-        "should_preserve": ["Child B", "MELD-Score", "TIPS", "Pfortader", "Lebervenen",
-                           "LDH", "CK", "U/l", "ANA", "ENA", "Metformin", "Vitamin D", "Ramipril"],
+        "should_remove": [
+            "Müller",
+            "Hans",
+            "15.03.1980",
+            "Musterstr. 15",
+            "12345 Berlin",
+            "Dr. Weber",
+            "Universitätsklinikum Köln",
+            "Dr. med. Schmidt",
+        ],
+        "should_preserve": [
+            "Child B",
+            "MELD-Score",
+            "TIPS",
+            "Pfortader",
+            "Lebervenen",
+            "LDH",
+            "CK",
+            "U/l",
+            "ANA",
+            "ENA",
+            "Metformin",
+            "Vitamin D",
+            "Ramipril",
+        ],
     },
 ]
 
@@ -185,7 +206,9 @@ def generate_report(results: list) -> str:
     # Summary
     total_fn = sum(len(r["false_negatives"]) for r in results)
     total_fp = sum(len(r["false_positives"]) for r in results)
-    total_correct = sum(len(r["correct_removals"]) + len(r["correct_preservations"]) for r in results)
+    total_correct = sum(
+        len(r["correct_removals"]) + len(r["correct_preservations"]) for r in results
+    )
 
     report += "## Summary\n\n"
     report += f"| Metric | Count |\n"
@@ -267,8 +290,14 @@ def main():
             analysis = analyze_result(test, response)
             results.append(analysis)
 
-            status = "PASS" if not analysis["false_negatives"] and not analysis["false_positives"] else "FAIL"
-            print(f"  [{status}] FN: {len(analysis['false_negatives'])}, FP: {len(analysis['false_positives'])}")
+            status = (
+                "PASS"
+                if not analysis["false_negatives"] and not analysis["false_positives"]
+                else "FAIL"
+            )
+            print(
+                f"  [{status}] FN: {len(analysis['false_negatives'])}, FP: {len(analysis['false_positives'])}"
+            )
 
             if analysis["false_negatives"]:
                 print(f"    False negatives: {analysis['false_negatives']}")

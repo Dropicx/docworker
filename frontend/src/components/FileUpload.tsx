@@ -304,21 +304,26 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       Nur vereinfachen
                     </button>
 
-                    {availableLanguages.filter(lang => lang.popular).slice(0, 4).map(language => (
-                      <button
-                        key={language.code}
-                        onClick={() =>
-                          setSelectedLanguage(language.code === selectedLanguage ? null : language.code)
-                        }
-                        className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium rounded-md sm:rounded-lg transition-all duration-200 ${
-                          selectedLanguage === language.code
-                            ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-300'
-                            : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
-                        }`}
-                      >
-                        {language.name}
-                      </button>
-                    ))}
+                    {availableLanguages
+                      .filter(lang => lang.popular)
+                      .slice(0, 4)
+                      .map(language => (
+                        <button
+                          key={language.code}
+                          onClick={() =>
+                            setSelectedLanguage(
+                              language.code === selectedLanguage ? null : language.code
+                            )
+                          }
+                          className={`px-2 sm:px-3 py-1.5 sm:py-2 text-xs font-medium rounded-md sm:rounded-lg transition-all duration-200 ${
+                            selectedLanguage === language.code
+                              ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-300'
+                              : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
+                          }`}
+                        >
+                          {language.name}
+                        </button>
+                      ))}
 
                     <button
                       onClick={() => setShowAllLanguages(!showAllLanguages)}
@@ -356,45 +361,50 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
                         <div className="p-3 max-h-64 overflow-y-auto">
                           <div className="grid grid-cols-2 gap-2">
-                            {availableLanguages.filter(
-                              lang =>
-                                lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
-                                lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
-                            ).map(language => (
-                              <button
-                                key={language.code}
-                                onClick={() => {
-                                  setSelectedLanguage(
-                                    language.code === selectedLanguage ? null : language.code
-                                  );
-                                  setShowAllLanguages(false);
-                                  setLanguageSearchTerm('');
-                                }}
-                                className={`text-left px-3 py-2 text-sm rounded-lg transition-colors duration-150 ${
-                                  selectedLanguage === language.code
-                                    ? 'bg-brand-100 text-brand-700 font-medium'
-                                    : 'text-neutral-700 hover:bg-neutral-50'
-                                }`}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <span className="truncate">{language.name}</span>
-                                  <span className="text-xs text-neutral-500 font-mono ml-2">
-                                    {language.code}
-                                  </span>
-                                </div>
-                              </button>
-                            ))}
+                            {availableLanguages
+                              .filter(
+                                lang =>
+                                  lang.name
+                                    .toLowerCase()
+                                    .includes(languageSearchTerm.toLowerCase()) ||
+                                  lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
+                              )
+                              .map(language => (
+                                <button
+                                  key={language.code}
+                                  onClick={() => {
+                                    setSelectedLanguage(
+                                      language.code === selectedLanguage ? null : language.code
+                                    );
+                                    setShowAllLanguages(false);
+                                    setLanguageSearchTerm('');
+                                  }}
+                                  className={`text-left px-3 py-2 text-sm rounded-lg transition-colors duration-150 ${
+                                    selectedLanguage === language.code
+                                      ? 'bg-brand-100 text-brand-700 font-medium'
+                                      : 'text-neutral-700 hover:bg-neutral-50'
+                                  }`}
+                                >
+                                  <div className="flex items-center justify-between">
+                                    <span className="truncate">{language.name}</span>
+                                    <span className="text-xs text-neutral-500 font-mono ml-2">
+                                      {language.code}
+                                    </span>
+                                  </div>
+                                </button>
+                              ))}
                           </div>
 
                           {availableLanguages.filter(
                             lang =>
                               lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
                               lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
-                          ).length === 0 && languageSearchTerm && (
-                            <div className="text-center py-4 text-sm text-neutral-500">
-                              Keine Sprachen gefunden für &quot;{languageSearchTerm}&quot;
-                            </div>
-                          )}
+                          ).length === 0 &&
+                            languageSearchTerm && (
+                              <div className="text-center py-4 text-sm text-neutral-500">
+                                Keine Sprachen gefunden für &quot;{languageSearchTerm}&quot;
+                              </div>
+                            )}
                         </div>
 
                         <div className="px-3 py-2 border-t border-neutral-100 bg-neutral-50 text-xs text-neutral-500 text-center rounded-b-xl">
@@ -408,7 +418,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     <div className="flex items-center space-x-3 px-4 py-3 bg-brand-50 rounded-xl border border-brand-200">
                       <Globe className="w-4 h-4 text-brand-600" />
                       <span className="text-sm text-brand-700">
-                        <strong>Ausgewählt:</strong> {availableLanguages.find(lang => lang.code === selectedLanguage)?.name}
+                        <strong>Ausgewählt:</strong>{' '}
+                        {availableLanguages.find(lang => lang.code === selectedLanguage)?.name}
                       </span>
                       <button
                         onClick={() => setSelectedLanguage(null)}
@@ -440,21 +451,27 @@ const FileUpload: React.FC<FileUploadProps> = ({
           >
             <div className="card-body">
               {/* Header with status indicator */}
-              <div className={`flex items-center space-x-2 mb-3 pb-3 border-b ${
-                privacyAccepted ? 'border-success-200' : 'border-amber-200'
-              }`}>
-                <div className={`p-1.5 rounded-lg ${
-                  privacyAccepted ? 'bg-success-100' : 'bg-amber-100 animate-pulse'
-                }`}>
+              <div
+                className={`flex items-center space-x-2 mb-3 pb-3 border-b ${
+                  privacyAccepted ? 'border-success-200' : 'border-amber-200'
+                }`}
+              >
+                <div
+                  className={`p-1.5 rounded-lg ${
+                    privacyAccepted ? 'bg-success-100' : 'bg-amber-100 animate-pulse'
+                  }`}
+                >
                   {privacyAccepted ? (
                     <Shield className="w-4 h-4 text-success-600" />
                   ) : (
                     <AlertCircle className="w-4 h-4 text-amber-600" />
                   )}
                 </div>
-                <span className={`text-sm font-semibold ${
-                  privacyAccepted ? 'text-success-700' : 'text-amber-700'
-                }`}>
+                <span
+                  className={`text-sm font-semibold ${
+                    privacyAccepted ? 'text-success-700' : 'text-amber-700'
+                  }`}
+                >
                   {privacyAccepted ? 'Datenschutz bestätigt' : 'Bitte bestätigen'}
                 </span>
               </div>
@@ -510,7 +527,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
               <span>Verarbeitung starten</span>
             </button>
           </div>
-
         </div>
       )}
 

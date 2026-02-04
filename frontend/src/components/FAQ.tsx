@@ -1,13 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Shield,
-  Lock,
-  Clock,
-  Database,
-  Globe,
-  FileText,
-  AlertCircle,
-} from 'lucide-react';
+import { Shield, Lock, Clock, Database, Globe, FileText, AlertCircle } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,

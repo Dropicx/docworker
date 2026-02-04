@@ -284,13 +284,13 @@ const CostDashboard: React.FC = () => {
           {/* Date Range Preset */}
           <select
             value={datePreset}
-            onChange={(e) => {
+            onChange={e => {
               setDatePreset(e.target.value as DateRangePreset);
               setCurrentPage(0);
             }}
             className="px-3 py-2 text-sm border border-primary-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500 bg-white"
           >
-            {DATE_PRESETS.map((preset) => (
+            {DATE_PRESETS.map(preset => (
               <option key={preset.value} value={preset.value}>
                 {preset.label}
               </option>
@@ -424,7 +424,9 @@ const CostDashboard: React.FC = () => {
                         </span>
                         <div className="flex items-center space-x-2">
                           <span className="text-primary-600">{formatCurrency(data.cost_usd)}</span>
-                          <span className="text-xs text-primary-500">({percentage.toFixed(0)}%)</span>
+                          <span className="text-xs text-primary-500">
+                            ({percentage.toFixed(0)}%)
+                          </span>
                         </div>
                       </div>
                       <div className="h-2 bg-primary-100 rounded-full overflow-hidden">
@@ -434,7 +436,8 @@ const CostDashboard: React.FC = () => {
                         />
                       </div>
                       <div className="text-xs text-primary-500">
-                        {data.calls.toLocaleString('de-DE')} Aufrufe · {formatNumber(data.tokens)} Tokens
+                        {data.calls.toLocaleString('de-DE')} Aufrufe · {formatNumber(data.tokens)}{' '}
+                        Tokens
                       </div>
                     </div>
                   );
@@ -462,7 +465,9 @@ const CostDashboard: React.FC = () => {
                         <span className="font-medium text-primary-900">{step}</span>
                         <div className="flex items-center space-x-2">
                           <span className="text-primary-600">{formatCurrency(data.cost_usd)}</span>
-                          <span className="text-xs text-primary-500">({percentage.toFixed(0)}%)</span>
+                          <span className="text-xs text-primary-500">
+                            ({percentage.toFixed(0)}%)
+                          </span>
                         </div>
                       </div>
                       <div className="h-2 bg-primary-100 rounded-full overflow-hidden">
@@ -472,7 +477,8 @@ const CostDashboard: React.FC = () => {
                         />
                       </div>
                       <div className="text-xs text-primary-500">
-                        {data.calls.toLocaleString('de-DE')} Aufrufe · {formatNumber(data.tokens)} Tokens
+                        {data.calls.toLocaleString('de-DE')} Aufrufe · {formatNumber(data.tokens)}{' '}
+                        Tokens
                       </div>
                     </div>
                   );
@@ -490,9 +496,7 @@ const CostDashboard: React.FC = () => {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
               <h4 className="font-semibold text-primary-900">Verarbeitungsvorgänge</h4>
-              <p className="text-sm text-primary-600">
-                {jobsTotal} Vorgänge insgesamt
-              </p>
+              <p className="text-sm text-primary-600">{jobsTotal} Vorgänge insgesamt</p>
             </div>
 
             {/* Search */}
@@ -552,7 +556,7 @@ const CostDashboard: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-primary-100">
               {jobs.length > 0 ? (
-                jobs.map((job) => (
+                jobs.map(job => (
                   <React.Fragment key={job.processing_id}>
                     <tr
                       className="hover:bg-primary-50 cursor-pointer"
@@ -643,7 +647,7 @@ const CostDashboard: React.FC = () => {
                                     </tr>
                                   </thead>
                                   <tbody className="divide-y divide-primary-100">
-                                    {jobDetail.entries.map((entry) => (
+                                    {jobDetail.entries.map(entry => (
                                       <tr key={entry.id}>
                                         <td className="px-3 py-2 text-xs text-primary-900">
                                           {entry.step_name}
@@ -705,14 +709,14 @@ const CostDashboard: React.FC = () => {
             </div>
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
+                onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
                 disabled={currentPage === 0}
                 className="px-3 py-1 text-sm border border-primary-300 rounded hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Zurück
               </button>
               <button
-                onClick={() => setCurrentPage((p) => p + 1)}
+                onClick={() => setCurrentPage(p => p + 1)}
                 disabled={(currentPage + 1) * ITEMS_PER_PAGE >= jobsTotal}
                 className="px-3 py-1 text-sm border border-primary-300 rounded hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed"
               >

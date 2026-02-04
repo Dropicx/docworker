@@ -14,8 +14,9 @@ from urllib.parse import urlparse
 # Add the project root to Python path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 def run_migration():
     """Run the authentication tables migration"""
@@ -34,12 +35,14 @@ def run_migration():
             return False
 
     # Get database URL from environment or command line
-    database_url = os.environ.get('DATABASE_URL')
+    database_url = os.environ.get("DATABASE_URL")
     if len(sys.argv) > 1:
         database_url = sys.argv[1]
-    
+
     if not database_url:
-        logger.error("No database URL provided. Set DATABASE_URL environment variable or pass as argument.")
+        logger.error(
+            "No database URL provided. Set DATABASE_URL environment variable or pass as argument."
+        )
         return False
 
     logger.info(f"🚀 Starting authentication tables migration")
@@ -48,14 +51,14 @@ def run_migration():
     try:
         # Parse database URL
         parsed_url = urlparse(database_url)
-        
+
         # Connect to database
         conn = psycopg2.connect(
             host=parsed_url.hostname,
             port=parsed_url.port,
             database=parsed_url.path[1:],  # Remove leading slash
             user=parsed_url.username,
-            password=parsed_url.password
+            password=parsed_url.password,
         )
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = conn.cursor()
@@ -63,18 +66,20 @@ def run_migration():
         logger.info("📝 Running migration: 001_add_authentication_tables.sql")
 
         # Read and execute the migration SQL
-        migration_file = os.path.join(os.path.dirname(__file__), '..', 'migrations', '001_add_authentication_tables.sql')
-        
+        migration_file = os.path.join(
+            os.path.dirname(__file__), "..", "migrations", "001_add_authentication_tables.sql"
+        )
+
         if not os.path.exists(migration_file):
             logger.error(f"Migration file not found: {migration_file}")
             return False
 
-        with open(migration_file, 'r') as f:
+        with open(migration_file, "r") as f:
             migration_sql = f.read()
 
         # Split SQL into individual statements and execute them
-        statements = [stmt.strip() for stmt in migration_sql.split(';') if stmt.strip()]
-        
+        statements = [stmt.strip() for stmt in migration_sql.split(";") if stmt.strip()]
+
         for i, statement in enumerate(statements, 1):
             if statement:
                 logger.info(f"  Executing statement {i}/{len(statements)}")
@@ -101,14 +106,16 @@ def run_migration():
         logger.info("  - audit_logs")
         logger.info("  - pipeline_jobs (updated with user_id columns)")
         logger.info("🎉 Authentication system is ready for deployment!")
-        
+
         return True
 
     except Exception as e:
         logger.error(f"❌ Migration failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False
+
 
 if __name__ == "__main__":
     success = run_migration()

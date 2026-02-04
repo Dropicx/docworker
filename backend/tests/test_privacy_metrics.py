@@ -15,6 +15,7 @@ class TestPrivacyMetricsEndpoints:
     def client(self):
         """Create test client."""
         from app.main import app
+
         return TestClient(app)
 
     def test_get_metrics(self, client):
@@ -80,8 +81,7 @@ class TestPrivacyMetricsEndpoints:
     def test_live_test_basic(self, client):
         """Test POST /api/privacy/test with basic text."""
         response = client.post(
-            "/api/privacy/test",
-            json={"text": "Patient: Müller, Hans\nGeb.: 15.05.1965"}
+            "/api/privacy/test", json={"text": "Patient: Müller, Hans\nGeb.: 15.05.1965"}
         )
 
         assert response.status_code == 200
@@ -106,10 +106,7 @@ class TestPrivacyMetricsEndpoints:
 
     def test_live_test_empty_text(self, client):
         """Test POST /api/privacy/test with empty text."""
-        response = client.post(
-            "/api/privacy/test",
-            json={"text": ""}
-        )
+        response = client.post("/api/privacy/test", json={"text": ""})
 
         assert response.status_code == 400
 
@@ -117,7 +114,7 @@ class TestPrivacyMetricsEndpoints:
         """Test that medical content is preserved in live test."""
         response = client.post(
             "/api/privacy/test",
-            json={"text": "Diagnose: Diabetes mellitus Typ 2 (E11.9)\nTherapie: Metformin 1000mg"}
+            json={"text": "Diagnose: Diabetes mellitus Typ 2 (E11.9)\nTherapie: Metformin 1000mg"},
         )
 
         assert response.status_code == 200
@@ -133,7 +130,7 @@ class TestPrivacyMetricsEndpoints:
         """Test that processing time is reasonable."""
         response = client.post(
             "/api/privacy/test",
-            json={"text": "Patient: Test Person, Geb.: 01.01.1980, Diagnose: Diabetes"}
+            json={"text": "Patient: Test Person, Geb.: 01.01.1980, Diagnose: Diabetes"},
         )
 
         assert response.status_code == 200
@@ -150,6 +147,7 @@ class TestPrivacyMetricsDataQuality:
     def client(self):
         """Create test client."""
         from app.main import app
+
         return TestClient(app)
 
     def test_metrics_pii_types_complete(self, client):
@@ -192,6 +190,7 @@ class TestPrivacyFilterIntegration:
     def client(self):
         """Create test client."""
         from app.main import app
+
         return TestClient(app)
 
     def test_full_document_processing(self, client):
@@ -221,10 +220,7 @@ class TestPrivacyFilterIntegration:
         Dr. med. Weber
         """
 
-        response = client.post(
-            "/api/privacy/test",
-            json={"text": document}
-        )
+        response = client.post("/api/privacy/test", json={"text": document})
 
         assert response.status_code == 200
         data = response.json()
@@ -242,10 +238,7 @@ class TestPrivacyFilterIntegration:
         """Test that very long text is rejected."""
         long_text = "A" * 60000  # Over 50000 char limit
 
-        response = client.post(
-            "/api/privacy/test",
-            json={"text": long_text}
-        )
+        response = client.post("/api/privacy/test", json={"text": long_text})
 
         assert response.status_code == 400
         assert "too long" in response.json()["detail"].lower()

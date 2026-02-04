@@ -13,8 +13,8 @@ export interface ProcessingProgress {
   status: ProcessingStatus;
   progress_percent: number;
   current_step: string;
-  current_step_name?: string;  // Actual pipeline step name (e.g. "TRANSLATION")
-  ui_stage?: string;  // Database-driven UI stage: "ocr" | "validation" | "classification" | "translation" | "quality" | "formatting"
+  current_step_name?: string; // Actual pipeline step name (e.g. "TRANSLATION")
+  ui_stage?: string; // Database-driven UI stage: "ocr" | "validation" | "classification" | "translation" | "quality" | "formatting"
   message?: string;
   error?: string;
   timestamp: string;

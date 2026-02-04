@@ -3,15 +3,7 @@
  */
 
 import React, { useState, useRef, useEffect } from 'react';
-import {
-  Plus,
-  MessageSquare,
-  Trash2,
-  X,
-  Menu,
-  Pencil,
-  Check,
-} from 'lucide-react';
+import { Plus, MessageSquare, Trash2, X, Menu, Pencil, Check } from 'lucide-react';
 import { ChatConversation } from '../../types/chat';
 
 interface ChatSidebarProps {
@@ -108,12 +100,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       </button>
 
       {/* Overlay for mobile */}
-      {isOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/30 z-30"
-          onClick={onToggle}
-        />
-      )}
+      {isOpen && <div className="md:hidden fixed inset-0 bg-black/30 z-30" onClick={onToggle} />}
 
       {/* Sidebar */}
       <aside
@@ -255,9 +242,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
               <span>Alle loschen</span>
             </button>
           )}
-          <p className="text-xs text-neutral-400 text-center">
-            Verlauf wird lokal gespeichert
-          </p>
+          <p className="text-xs text-neutral-400 text-center">Verlauf wird lokal gespeichert</p>
         </div>
       </aside>
     </>

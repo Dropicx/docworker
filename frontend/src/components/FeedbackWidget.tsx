@@ -39,7 +39,7 @@ const StarRating: React.FC<StarRatingProps> = ({
         {required && <span className="text-error-500 ml-1">*</span>}
       </span>
       <div className="flex space-x-1">
-        {[1, 2, 3, 4, 5].map((star) => (
+        {[1, 2, 3, 4, 5].map(star => (
           <button
             key={star}
             type="button"
@@ -105,7 +105,7 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
 
   // Handle detailed rating change
   const handleDetailedRating = useCallback((key: keyof DetailedRatings, value: number) => {
-    setDetailedRatings((prev) => ({ ...prev, [key]: value }));
+    setDetailedRatings(prev => ({ ...prev, [key]: value }));
   }, []);
 
   // Submit feedback
@@ -128,7 +128,8 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
       const filteredDetailedRatings: DetailedRatings = {};
       if (detailedRatings.clarity) filteredDetailedRatings.clarity = detailedRatings.clarity;
       if (detailedRatings.accuracy) filteredDetailedRatings.accuracy = detailedRatings.accuracy;
-      if (detailedRatings.formatting) filteredDetailedRatings.formatting = detailedRatings.formatting;
+      if (detailedRatings.formatting)
+        filteredDetailedRatings.formatting = detailedRatings.formatting;
       if (detailedRatings.speed) filteredDetailedRatings.speed = detailedRatings.speed;
 
       const submission: FeedbackSubmission = {
@@ -180,9 +181,7 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
             <CheckCircle className="w-8 h-8 text-white" />
           </div>
           <h4 className="text-xl font-bold text-success-900">Vielen Dank!</h4>
-          <p className="text-success-700">
-            Ihr Feedback hilft uns, den Service zu verbessern.
-          </p>
+          <p className="text-success-700">Ihr Feedback hilft uns, den Service zu verbessern.</p>
         </div>
       </div>
     );
@@ -220,11 +219,7 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
           className="flex items-center justify-between w-full text-sm text-primary-600 hover:text-primary-800 transition-colors"
         >
           <span className="font-medium">Detailbewertung (optional)</span>
-          {showDetails ? (
-            <ChevronUp className="w-4 h-4" />
-          ) : (
-            <ChevronDown className="w-4 h-4" />
-          )}
+          {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
 
         {/* Detailed Ratings */}
@@ -232,25 +227,25 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
           <div className="space-y-3 animate-slide-down bg-white/30 rounded-xl p-4 border border-neutral-100">
             <StarRating
               value={detailedRatings.clarity || 0}
-              onChange={(v) => handleDetailedRating('clarity', v)}
+              onChange={v => handleDetailedRating('clarity', v)}
               label="Verständlichkeit"
               size="sm"
             />
             <StarRating
               value={detailedRatings.accuracy || 0}
-              onChange={(v) => handleDetailedRating('accuracy', v)}
+              onChange={v => handleDetailedRating('accuracy', v)}
               label="Genauigkeit"
               size="sm"
             />
             <StarRating
               value={detailedRatings.formatting || 0}
-              onChange={(v) => handleDetailedRating('formatting', v)}
+              onChange={v => handleDetailedRating('formatting', v)}
               label="Formatierung"
               size="sm"
             />
             <StarRating
               value={detailedRatings.speed || 0}
-              onChange={(v) => handleDetailedRating('speed', v)}
+              onChange={v => handleDetailedRating('speed', v)}
               label="Geschwindigkeit"
               size="sm"
             />
@@ -264,15 +259,13 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
           </label>
           <textarea
             value={comment}
-            onChange={(e) => setComment(e.target.value)}
+            onChange={e => setComment(e.target.value)}
             placeholder="Teilen Sie uns Ihre Gedanken mit..."
             className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-none transition-all"
             rows={3}
             maxLength={1000}
           />
-          <div className="text-xs text-primary-500 text-right mt-1">
-            {comment.length}/1000
-          </div>
+          <div className="text-xs text-primary-500 text-right mt-1">{comment.length}/1000</div>
         </div>
 
         {/* Consent Checkbox */}
@@ -281,12 +274,11 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
             <input
               type="checkbox"
               checked={consentGiven}
-              onChange={(e) => setConsentGiven(e.target.checked)}
+              onChange={e => setConsentGiven(e.target.checked)}
               className="mt-1 w-5 h-5 text-brand-600 border-neutral-300 rounded focus:ring-brand-500 cursor-pointer"
             />
             <span className="text-sm text-primary-700">
-              Ich stimme zu, dass meine Daten zur Verbesserung des Systems verwendet werden
-              dürfen.
+              Ich stimme zu, dass meine Daten zur Verbesserung des Systems verwendet werden dürfen.
               <span className="text-error-500 ml-1">*</span>
             </span>
           </label>

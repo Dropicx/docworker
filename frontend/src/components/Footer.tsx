@@ -10,19 +10,35 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="flex flex-col items-center space-y-3 sm:space-y-4">
           <div className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2">
-            <Button variant="link" asChild className="text-primary-600 hover:text-primary-800 text-xs sm:text-sm px-2">
+            <Button
+              variant="link"
+              asChild
+              className="text-primary-600 hover:text-primary-800 text-xs sm:text-sm px-2"
+            >
               <Link to="/impressum">Impressum</Link>
             </Button>
             <Separator orientation="vertical" className="hidden sm:block h-4" />
-            <Button variant="link" asChild className="text-primary-600 hover:text-primary-800 text-xs sm:text-sm px-2">
+            <Button
+              variant="link"
+              asChild
+              className="text-primary-600 hover:text-primary-800 text-xs sm:text-sm px-2"
+            >
               <Link to="/datenschutz">Datenschutzerklärung</Link>
             </Button>
             <Separator orientation="vertical" className="hidden sm:block h-4" />
-            <Button variant="link" asChild className="text-primary-600 hover:text-primary-800 text-xs sm:text-sm px-2">
+            <Button
+              variant="link"
+              asChild
+              className="text-primary-600 hover:text-primary-800 text-xs sm:text-sm px-2"
+            >
               <Link to="/nutzungsbedingungen">Nutzungsbedingungen</Link>
             </Button>
             <Separator orientation="vertical" className="hidden sm:block h-4" />
-            <Button variant="link" asChild className="text-primary-400 hover:text-primary-600 text-xs px-2">
+            <Button
+              variant="link"
+              asChild
+              className="text-primary-400 hover:text-primary-600 text-xs px-2"
+            >
               <Link to="/login">Admin</Link>
             </Button>
           </div>

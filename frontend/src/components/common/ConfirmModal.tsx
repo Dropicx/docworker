@@ -67,10 +67,7 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/50 transition-opacity"
-        onClick={onCancel}
-      />
+      <div className="fixed inset-0 bg-black/50 transition-opacity" onClick={onCancel} />
 
       {/* Modal */}
       <div className="flex min-h-full items-center justify-center p-4">
@@ -90,12 +87,8 @@ export const ConfirmModal: React.FC<ConfirmModalProps> = ({
                 <AlertTriangle className="w-6 h-6" />
               </div>
               <div className="flex-1">
-                <h3 className="text-lg font-semibold text-neutral-900">
-                  {title}
-                </h3>
-                <p className="mt-2 text-sm text-neutral-600">
-                  {message}
-                </p>
+                <h3 className="text-lg font-semibold text-neutral-900">{title}</h3>
+                <p className="mt-2 text-sm text-neutral-600">{message}</p>
               </div>
             </div>
 

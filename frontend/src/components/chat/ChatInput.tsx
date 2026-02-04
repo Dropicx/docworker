@@ -54,7 +54,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex-shrink-0 border-t border-neutral-200 bg-white p-4">
+    <form
+      onSubmit={handleSubmit}
+      className="flex-shrink-0 border-t border-neutral-200 bg-white p-4"
+    >
       <div className="flex items-end gap-3">
         <div className="flex-1 relative">
           <textarea
@@ -86,20 +89,16 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             className="flex-shrink-0 p-3 bg-brand-600 text-white rounded-xl hover:bg-brand-700 disabled:bg-neutral-200 disabled:text-neutral-400 disabled:cursor-not-allowed transition-colors"
             title="Nachricht senden"
           >
-            {disabled ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Send className="w-5 h-5" />
-            )}
+            {disabled ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
           </button>
         )}
       </div>
 
       <div className="flex justify-between items-center mt-2 px-1">
-        <p className="text-xs text-neutral-400">
-          Enter zum Senden, Shift+Enter fur neue Zeile
-        </p>
-        <p className={`text-xs ${message.length > maxLength * 0.9 ? 'text-amber-600 font-medium' : 'text-neutral-400'}`}>
+        <p className="text-xs text-neutral-400">Enter zum Senden, Shift+Enter fur neue Zeile</p>
+        <p
+          className={`text-xs ${message.length > maxLength * 0.9 ? 'text-amber-600 font-medium' : 'text-neutral-400'}`}
+        >
           {message.length.toLocaleString('de-DE')} / {maxLength.toLocaleString('de-DE')} Zeichen
         </p>
       </div>

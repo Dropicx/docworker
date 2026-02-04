@@ -356,7 +356,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
               <option value="formatting">Finalisierung</option>
             </select>
             <p className="text-xs text-primary-500 mt-1">
-              Bestimmt, welche Fortschrittsanzeige im Frontend aktiv ist, wenn dieser Schritt ausgeführt wird.
+              Bestimmt, welche Fortschrittsanzeige im Frontend aktiv ist, wenn dieser Schritt
+              ausgeführt wird.
             </p>
           </div>
 

@@ -164,9 +164,7 @@ class TestPipelineJobRepositoryEncryption:
         assert cleared_job is not None
         assert cleared_job.file_content is None
 
-    def test_large_file_content_encryption(
-        self, job_repository: PipelineJobRepository
-    ):
+    def test_large_file_content_encryption(self, job_repository: PipelineJobRepository):
         """Test encryption of large binary content (simulates large PDF)."""
         # Create large binary content (1MB)
         large_content = b"X" * (1024 * 1024)
@@ -190,9 +188,7 @@ class TestPipelineJobRepositoryEncryption:
         assert retrieved_job.file_content == large_content
         assert len(retrieved_job.file_content) == 1024 * 1024
 
-    def test_null_file_content_handling(
-        self, job_repository: PipelineJobRepository
-    ):
+    def test_null_file_content_handling(self, job_repository: PipelineJobRepository):
         """Test that None file_content is handled correctly."""
         job = job_repository.create(
             job_id="test-job-null",

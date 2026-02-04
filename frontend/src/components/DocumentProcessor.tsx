@@ -113,7 +113,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
   // Rotating messages every 4 seconds
   useEffect(() => {
     const timer = setInterval(() => {
-      setRotatingMessageIndex((prev) => prev + 1);
+      setRotatingMessageIndex(prev => prev + 1);
     }, 4000);
     return () => clearInterval(timer);
   }, []);
@@ -124,7 +124,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
       animationFrameRef.current = requestAnimationFrame(animateProgress);
       return;
     }
-    setDisplayedProgress((current) => {
+    setDisplayedProgress(current => {
       const target = targetProgressRef.current;
       if (current < target) {
         const step = Math.max(0.3, (target - current) * 0.08);
@@ -172,7 +172,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
 
     const doUpload = async () => {
       try {
-        const response = await ApiService.uploadDocument(file, (percent) => {
+        const response = await ApiService.uploadDocument(file, percent => {
           if (!cancelled) setUploadProgress(percent);
         });
 
@@ -300,7 +300,12 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
     }
     const stepText = (status.current_step || '').toLowerCase();
     if (stepText.includes('extrahiert') || stepText.includes('ocr')) return 0;
-    if (stepText.includes('vereinfacht') || stepText.includes('fakten') || stepText.includes('grammatik')) return 3;
+    if (
+      stepText.includes('vereinfacht') ||
+      stepText.includes('fakten') ||
+      stepText.includes('grammatik')
+    )
+      return 3;
     if (stepText.includes('sprachübersetzung') || stepText.includes('qualitätsprüfung')) return 4;
     if (stepText.includes('formatierung') || stepText.includes('abgeschlossen')) return 5;
     if (stepText.includes('datenschutz') || stepText.includes('dokumenttyp')) return 2;
@@ -317,7 +322,8 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
   const getFileIcon = () => {
     const ext = file.name.split('.').pop()?.toLowerCase();
     if (ext === 'pdf') return <FileText className="w-5 h-5 text-error-500" />;
-    if (['jpg', 'jpeg', 'png'].includes(ext || '')) return <Image className="w-5 h-5 text-accent-500" />;
+    if (['jpg', 'jpeg', 'png'].includes(ext || ''))
+      return <Image className="w-5 h-5 text-accent-500" />;
     return <FileText className="w-5 h-5 text-primary-500" />;
   };
 
@@ -340,7 +346,9 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                 </div>
                 <div>
                   <h3 className="text-lg sm:text-xl font-bold text-primary-900">
-                    {phase === 'uploading' ? 'Datei wird hochgeladen' : 'Verarbeitung wird gestartet...'}
+                    {phase === 'uploading'
+                      ? 'Datei wird hochgeladen'
+                      : 'Verarbeitung wird gestartet...'}
                   </h3>
                   <p className="text-xs sm:text-sm text-primary-600">
                     Bitte warten Sie einen Moment
@@ -366,14 +374,17 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
 
             {/* Progress */}
             <div className="space-y-2">
-              <Progress
-                value={phase === 'initializing' ? 100 : uploadProgress}
-                className="h-2"
-              />
+              <Progress value={phase === 'initializing' ? 100 : uploadProgress} className="h-2" />
               <p className="text-center text-xs text-primary-500">
                 {phase === 'uploading' && uploadProgress < 30 && 'Verbindung wird hergestellt...'}
-                {phase === 'uploading' && uploadProgress >= 30 && uploadProgress < 60 && 'Datei wird übertragen...'}
-                {phase === 'uploading' && uploadProgress >= 60 && uploadProgress < 90 && 'Fast fertig...'}
+                {phase === 'uploading' &&
+                  uploadProgress >= 30 &&
+                  uploadProgress < 60 &&
+                  'Datei wird übertragen...'}
+                {phase === 'uploading' &&
+                  uploadProgress >= 60 &&
+                  uploadProgress < 90 &&
+                  'Fast fertig...'}
                 {phase === 'uploading' && uploadProgress >= 90 && 'Qualitätsprüfung...'}
                 {phase === 'initializing' && 'Verarbeitung wird vorbereitet...'}
               </p>
@@ -394,7 +405,8 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
             <AlertDescription className="text-success-700 ml-2">
               <span className="font-semibold text-success-900">Übersetzung abgeschlossen!</span>
               <br />
-              Ihr Dokument wurde erfolgreich in verständliche Sprache übersetzt. Das Ergebnis wird geladen...
+              Ihr Dokument wurde erfolgreich in verständliche Sprache übersetzt. Das Ergebnis wird
+              geladen...
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -443,11 +455,16 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                   ) : (
                     <Loader className="w-5 h-5 text-brand-600 animate-spin" />
                   )}
-                  <Badge variant="outline" className={
-                    status.status === 'completed' ? 'bg-success-50 text-success-700 border-success-200' :
-                    status.status === 'error' ? 'bg-error-50 text-error-700 border-error-200' :
-                    'bg-brand-50 text-brand-700 border-brand-200'
-                  }>
+                  <Badge
+                    variant="outline"
+                    className={
+                      status.status === 'completed'
+                        ? 'bg-success-50 text-success-700 border-success-200'
+                        : status.status === 'error'
+                          ? 'bg-error-50 text-error-700 border-error-200'
+                          : 'bg-brand-50 text-brand-700 border-brand-200'
+                    }
+                  >
                     {ApiService.getStatusText(status.status)}
                   </Badge>
                   {status.status !== 'completed' && status.status !== 'error' && (

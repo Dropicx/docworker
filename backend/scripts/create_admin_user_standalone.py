@@ -14,8 +14,9 @@ import secrets
 import logging
 from urllib.parse import urlparse
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
+
 
 def generate_password_hash(password: str) -> str:
     """
@@ -25,37 +26,41 @@ def generate_password_hash(password: str) -> str:
     # For now, we'll use a simple hash approach
     # In production, you should use proper bcrypt
     salt = secrets.token_hex(16)
-    password_bytes = password.encode('utf-8')
-    salt_bytes = salt.encode('utf-8')
-    
+    password_bytes = password.encode("utf-8")
+    salt_bytes = salt.encode("utf-8")
+
     # Create a simple hash (in production, use bcrypt)
-    hash_obj = hashlib.pbkdf2_hmac('sha256', password_bytes, salt_bytes, 100000)
+    hash_obj = hashlib.pbkdf2_hmac("sha256", password_bytes, salt_bytes, 100000)
     hash_hex = hash_obj.hex()
-    
+
     # Return in a format that can be verified
     return f"pbkdf2_sha256$100000${salt}${hash_hex}"
+
 
 def verify_password_hash(password: str, hash_value: str) -> bool:
     """Verify password against hash"""
     try:
-        parts = hash_value.split('$')
-        if len(parts) != 4 or parts[0] != 'pbkdf2_sha256':
+        parts = hash_value.split("$")
+        if len(parts) != 4 or parts[0] != "pbkdf2_sha256":
             return False
-        
+
         salt = parts[2]
         stored_hash = parts[3]
-        
-        password_bytes = password.encode('utf-8')
-        salt_bytes = salt.encode('utf-8')
-        
-        hash_obj = hashlib.pbkdf2_hmac('sha256', password_bytes, salt_bytes, 100000)
+
+        password_bytes = password.encode("utf-8")
+        salt_bytes = salt.encode("utf-8")
+
+        hash_obj = hashlib.pbkdf2_hmac("sha256", password_bytes, salt_bytes, 100000)
         computed_hash = hash_obj.hex()
-        
+
         return computed_hash == stored_hash
     except Exception:
         return False
 
-def create_admin_user_direct(database_url: str, email: str, password: str, full_name: str = "Admin User"):
+
+def create_admin_user_direct(
+    database_url: str, email: str, password: str, full_name: str = "Admin User"
+):
     """Create admin user directly in database"""
     try:
         # Try to import psycopg2 (PostgreSQL adapter)
@@ -74,24 +79,24 @@ def create_admin_user_direct(database_url: str, email: str, password: str, full_
     try:
         # Parse database URL
         parsed_url = urlparse(database_url)
-        
+
         # Connect to database
         conn = psycopg2.connect(
             host=parsed_url.hostname,
             port=parsed_url.port,
             database=parsed_url.path[1:],  # Remove leading slash
             user=parsed_url.username,
-            password=parsed_url.password
+            password=parsed_url.password,
         )
         conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)
         cursor = conn.cursor()
 
         logger.info(f"🔍 Checking if admin user already exists: {email}")
-        
+
         # Check if user already exists
         cursor.execute("SELECT id, email FROM users WHERE email = %s", (email,))
         existing_user = cursor.fetchone()
-        
+
         if existing_user:
             logger.info(f"✅ Admin user already exists: {email} (ID: {existing_user[0]})")
             return True
@@ -99,11 +104,12 @@ def create_admin_user_direct(database_url: str, email: str, password: str, full_
         # Generate user ID and password hash
         user_id = str(uuid.uuid4())
         password_hash = generate_password_hash(password)
-        
+
         logger.info(f"👤 Creating admin user: {email}")
-        
+
         # Insert admin user
-        cursor.execute("""
+        cursor.execute(
+            """
             INSERT INTO users (
                 id, 
                 email, 
@@ -117,15 +123,9 @@ def create_admin_user_direct(database_url: str, email: str, password: str, full_
             ) VALUES (
                 %s, %s, %s, %s, %s, %s, %s, NOW(), NOW()
             )
-        """, (
-            user_id,
-            email,
-            password_hash,
-            full_name,
-            'admin',
-            True,
-            True
-        ))
+        """,
+            (user_id, email, password_hash, full_name, "admin", True, True),
+        )
 
         cursor.close()
         conn.close()
@@ -135,22 +135,26 @@ def create_admin_user_direct(database_url: str, email: str, password: str, full_
         logger.info(f"   Role: admin")
         logger.info(f"   User ID: {user_id}")
         logger.info("🎉 You can now login with these credentials!")
-        
+
         return True
 
     except Exception as e:
         logger.error(f"❌ Failed to create admin user: {e}")
         import traceback
+
         traceback.print_exc()
         return False
 
-def create_admin_user_sql(database_url: str, email: str, password: str, full_name: str = "Admin User"):
+
+def create_admin_user_sql(
+    database_url: str, email: str, password: str, full_name: str = "Admin User"
+):
     """Create admin user using direct SQL (fallback method)"""
     try:
         # Generate user ID and password hash
         user_id = str(uuid.uuid4())
         password_hash = generate_password_hash(password)
-        
+
         # Create SQL insert statement
         sql = f"""
         INSERT INTO users (
@@ -175,7 +179,7 @@ def create_admin_user_sql(database_url: str, email: str, password: str, full_nam
             NOW()
         );
         """
-        
+
         logger.info("📝 SQL to create admin user:")
         logger.info("=" * 60)
         print(sql)
@@ -185,21 +189,22 @@ def create_admin_user_sql(database_url: str, email: str, password: str, full_nam
         logger.info(f"psql '{database_url}' -c \"{sql}\"")
         logger.info("")
         logger.info("Or copy the SQL above and run it in your database client.")
-        
+
         return True
 
     except Exception as e:
         logger.error(f"❌ Failed to generate SQL: {e}")
         return False
 
+
 def main():
     """Main function"""
     # Get configuration from environment or command line
-    database_url = os.environ.get('DATABASE_URL')
-    email = os.environ.get('INITIAL_ADMIN_EMAIL')
-    password = os.environ.get('INITIAL_ADMIN_PASSWORD')
-    full_name = os.environ.get('INITIAL_ADMIN_FULL_NAME', 'Admin User')
-    
+    database_url = os.environ.get("DATABASE_URL")
+    email = os.environ.get("INITIAL_ADMIN_EMAIL")
+    password = os.environ.get("INITIAL_ADMIN_PASSWORD")
+    full_name = os.environ.get("INITIAL_ADMIN_FULL_NAME", "Admin User")
+
     # Override with command line arguments if provided
     if len(sys.argv) > 1:
         database_url = sys.argv[1]
@@ -209,41 +214,42 @@ def main():
         password = sys.argv[3]
     if len(sys.argv) > 4:
         full_name = sys.argv[4]
-    
+
     # Validate required parameters
     if not database_url:
         logger.error("❌ No database URL provided.")
         logger.info("Set DATABASE_URL environment variable or pass as first argument.")
         sys.exit(1)
-    
+
     if not email:
         logger.error("❌ No admin email provided.")
         logger.info("Set INITIAL_ADMIN_EMAIL environment variable or pass as second argument.")
         sys.exit(1)
-    
+
     if not password:
         logger.error("❌ No admin password provided.")
         logger.info("Set INITIAL_ADMIN_PASSWORD environment variable or pass as third argument.")
         sys.exit(1)
-    
+
     logger.info("🚀 Creating admin user...")
     logger.info(f"Database: {database_url.split('@')[1] if '@' in database_url else database_url}")
     logger.info(f"Email: {email}")
     logger.info(f"Full Name: {full_name}")
-    
+
     # Try direct database connection first
     success = create_admin_user_direct(database_url, email, password, full_name)
-    
+
     if not success:
         logger.warning("⚠️ Direct database connection failed. Generating SQL instead...")
         success = create_admin_user_sql(database_url, email, password, full_name)
-    
+
     if success:
         logger.info("🎉 Admin user setup complete!")
         sys.exit(0)
     else:
         logger.error("❌ Failed to create admin user.")
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()

@@ -14,7 +14,12 @@ import { ChatMessageList } from './ChatMessageList';
 import { ChatInput } from './ChatInput';
 import { ConfirmModal } from '../common/ConfirmModal';
 import { useChatHistory } from '../../hooks/useChatHistory';
-import { streamChatMessage, getChatApps, ChatRateLimitError, formatRetryTime } from '../../services/chatApi';
+import {
+  streamChatMessage,
+  getChatApps,
+  ChatRateLimitError,
+  formatRetryTime,
+} from '../../services/chatApi';
 import { ChatApp } from '../../types/chat';
 
 // Icon mapping for apps
@@ -155,7 +160,12 @@ export const ChatPage: React.FC = () => {
         let newDifyConvId: string | undefined;
 
         // Stream the response with the correct app
-        for await (const event of streamChatMessage(content, difyConvId, appId, abortControllerRef.current.signal)) {
+        for await (const event of streamChatMessage(
+          content,
+          difyConvId,
+          appId,
+          abortControllerRef.current.signal
+        )) {
           if (event.event === 'message' || event.event === 'agent_message') {
             // Append streamed content
             if (event.answer) {
@@ -313,12 +323,15 @@ export const ChatPage: React.FC = () => {
   /**
    * Handle app selection - switches app and deselects current conversation.
    */
-  const handleAppSelect = useCallback((appId: string) => {
-    setSelectedAppId(appId);
-    setAppSelectorOpen(false);
-    // Deselect current conversation so user starts fresh with new app
-    setActiveConversation(null);
-  }, [setActiveConversation]);
+  const handleAppSelect = useCallback(
+    (appId: string) => {
+      setSelectedAppId(appId);
+      setAppSelectorOpen(false);
+      // Deselect current conversation so user starts fresh with new app
+      setActiveConversation(null);
+    },
+    [setActiveConversation]
+  );
 
   // Get messages for active conversation
   const messages = activeConversation?.messages || [];
@@ -371,7 +384,9 @@ export const ChatPage: React.FC = () => {
                       <span className="text-sm font-medium text-neutral-700">
                         {selectedApp.name}
                       </span>
-                      <ChevronDown className={`w-4 h-4 text-neutral-400 transition-transform ${appSelectorOpen ? 'rotate-180' : ''}`} />
+                      <ChevronDown
+                        className={`w-4 h-4 text-neutral-400 transition-transform ${appSelectorOpen ? 'rotate-180' : ''}`}
+                      />
                     </>
                   )}
                 </button>
@@ -399,14 +414,16 @@ export const ChatPage: React.FC = () => {
                                 : 'hover:bg-neutral-50'
                           }`}
                         >
-                          <IconComponent className={`w-5 h-5 mt-0.5 ${isSelected || isCurrentConv ? 'text-brand-600' : 'text-neutral-500'}`} />
+                          <IconComponent
+                            className={`w-5 h-5 mt-0.5 ${isSelected || isCurrentConv ? 'text-brand-600' : 'text-neutral-500'}`}
+                          />
                           <div className="flex-1 text-left">
-                            <div className={`text-sm font-medium ${isSelected || isCurrentConv ? 'text-brand-700' : 'text-neutral-700'}`}>
+                            <div
+                              className={`text-sm font-medium ${isSelected || isCurrentConv ? 'text-brand-700' : 'text-neutral-700'}`}
+                            >
                               {app.name}
                             </div>
-                            <div className="text-xs text-neutral-500">
-                              {app.description}
-                            </div>
+                            <div className="text-xs text-neutral-500">{app.description}</div>
                           </div>
                           {isCurrentConv && (
                             <span className="text-xs text-brand-600 bg-brand-100 px-2 py-0.5 rounded-full">

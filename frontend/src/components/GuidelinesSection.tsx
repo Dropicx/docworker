@@ -64,8 +64,7 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
                 Leitlinien-Empfehlungen nicht verfügbar
               </h3>
               <p className="text-warning-700 text-sm mb-4">
-                {guidelines?.error_message ||
-                  'Die AWMF-Leitlinien konnten nicht abgerufen werden.'}
+                {guidelines?.error_message || 'Die AWMF-Leitlinien konnten nicht abgerufen werden.'}
               </p>
               {onRetry && (
                 <button
@@ -149,9 +148,7 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
                 p: ({ children }) => (
                   <p className="mb-3 text-gray-700 leading-relaxed">{children}</p>
                 ),
-                ul: ({ children }) => (
-                  <ul className="list-none pl-0 mb-3 space-y-1">{children}</ul>
-                ),
+                ul: ({ children }) => <ul className="list-none pl-0 mb-3 space-y-1">{children}</ul>,
                 li: ({ children }) => (
                   <li className="flex items-start text-gray-800 leading-snug py-0.5">
                     <span className="text-brand-500 mr-2 mt-0.5 flex-shrink-0">•</span>
@@ -164,7 +161,11 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
                 em: ({ children }) => {
                   // Style citation lines differently (they typically contain source info)
                   const text = String(children);
-                  if (text.includes('Quelle:') || text.includes('AWMF') || text.includes('Reg.-Nr.')) {
+                  if (
+                    text.includes('Quelle:') ||
+                    text.includes('AWMF') ||
+                    text.includes('Reg.-Nr.')
+                  ) {
                     return (
                       <em className="block text-xs sm:text-sm text-primary-500 mt-2 not-italic">
                         {children}

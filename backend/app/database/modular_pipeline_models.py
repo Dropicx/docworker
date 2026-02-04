@@ -304,7 +304,9 @@ class PipelineJobDB(Base):
     filename = Column(String(255), nullable=False)
     file_type = Column(String(50), nullable=False)  # "pdf", "jpg", "png"
     file_size = Column(Integer, nullable=False)
-    file_content = Column(LargeBinary, nullable=True)  # Binary file data (nullable for GDPR content clearing)
+    file_content = Column(
+        LargeBinary, nullable=True
+    )  # Binary file data (nullable for GDPR content clearing)
 
     # Upload metadata
     client_ip = Column(String(100), nullable=True)  # Client IP for security logging

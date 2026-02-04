@@ -41,9 +41,7 @@ export default function CookieFreeBanner() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <Shield className="w-4 h-4 sm:hidden flex-shrink-0" />
                 <div>
-                  <p className="text-sm sm:text-base font-medium">
-                    Keine Cookies!
-                  </p>
+                  <p className="text-sm sm:text-base font-medium">Keine Cookies!</p>
                   <p className="text-xs sm:text-sm text-white/90 mt-0.5">
                     HealthLingo verwendet keine Cookies und speichert keine Tracking-Daten.
                   </p>

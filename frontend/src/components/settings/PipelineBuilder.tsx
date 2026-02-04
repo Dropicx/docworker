@@ -573,8 +573,7 @@ const PipelineBuilder: React.FC = () => {
                 <span>Leitlinien-Analyse (AWMF)</span>
               </h4>
               <p className="text-sm text-primary-600">
-                Zeigt automatisch relevante AWMF-Leitlinienempfehlungen nach der
-                Übersetzung an
+                Zeigt automatisch relevante AWMF-Leitlinienempfehlungen nach der Übersetzung an
               </p>
             </div>
             <label className="relative inline-flex items-center cursor-pointer ml-4">

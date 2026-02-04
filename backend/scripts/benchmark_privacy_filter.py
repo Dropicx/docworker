@@ -87,7 +87,9 @@ Dr. med. Weber
 Oberarzt
 """
 
-SAMPLE_ARZTBRIEF_LONG = SAMPLE_ARZTBRIEF_MEDIUM + """
+SAMPLE_ARZTBRIEF_LONG = (
+    SAMPLE_ARZTBRIEF_MEDIUM
+    + """
 
 Anamnese:
 Der 65-jährige Patient berichtet über gelegentliche Hypoglykämien am Vormittag,
@@ -152,6 +154,7 @@ Klinikdirektor
 Facharzt für Innere Medizin
 Diabetologie, Endokrinologie
 """
+)
 
 SAMPLE_BEFUNDBERICHT = """
 Radiologischer Befundbericht
@@ -246,9 +249,7 @@ def calculate_percentile(data: list[float], percentile: float) -> float:
 
 
 def benchmark_single_document(
-    filter_instance: AdvancedPrivacyFilter,
-    text: str,
-    iterations: int = 10
+    filter_instance: AdvancedPrivacyFilter, text: str, iterations: int = 10
 ) -> dict:
     """Benchmark a single document processing."""
     times = []
@@ -283,7 +284,7 @@ def benchmark_single_document(
 def benchmark_batch_processing(
     filter_instance: AdvancedPrivacyFilter,
     documents: list[str],
-    batch_sizes: list[int] = [1, 8, 16, 32]
+    batch_sizes: list[int] = [1, 8, 16, 32],
 ) -> dict:
     """Benchmark batch processing throughput."""
     results = {}
@@ -368,9 +369,7 @@ def run_full_benchmark(iterations: int = 20) -> dict:
     for doc_name, doc_info in SAMPLE_DOCUMENTS.items():
         print(f"  {doc_name} ({doc_info['size']}, {len(doc_info['text'])} chars)...", end=" ")
 
-        doc_results = benchmark_single_document(
-            filter_instance, doc_info["text"], iterations
-        )
+        doc_results = benchmark_single_document(filter_instance, doc_info["text"], iterations)
         doc_results["document_type"] = doc_info["type"]
         doc_results["size_category"] = doc_info["size"]
 
@@ -386,14 +385,14 @@ def run_full_benchmark(iterations: int = 20) -> dict:
     results["batch_processing"] = benchmark_batch_processing(filter_instance, batch_docs)
 
     for batch_name, batch_result in results["batch_processing"].items():
-        print(f"  {batch_name}: {batch_result['avg_time_per_doc_ms']:.1f}ms/doc, "
-              f"{batch_result['throughput_docs_per_second']:.1f} docs/sec")
+        print(
+            f"  {batch_name}: {batch_result['avg_time_per_doc_ms']:.1f}ms/doc, "
+            f"{batch_result['throughput_docs_per_second']:.1f} docs/sec"
+        )
 
     # Memory profiling
     print("\nProfiling memory usage...")
-    results["memory_profile"] = profile_memory(
-        filter_instance, SAMPLE_ARZTBRIEF_LONG
-    )
+    results["memory_profile"] = profile_memory(filter_instance, SAMPLE_ARZTBRIEF_LONG)
     print(f"  Peak memory: {results['memory_profile']['peak_mb']} MB")
 
     # Summary
@@ -402,10 +401,8 @@ def run_full_benchmark(iterations: int = 20) -> dict:
         "overall_avg_ms": overall_avg,
         "target_ms": 100,
         "passes_target": overall_avg < 100,
-        "slowest_doc": max(results["documents"].items(),
-                          key=lambda x: x[1]["times_ms"]["mean"])[0],
-        "fastest_doc": min(results["documents"].items(),
-                          key=lambda x: x[1]["times_ms"]["mean"])[0],
+        "slowest_doc": max(results["documents"].items(), key=lambda x: x[1]["times_ms"]["mean"])[0],
+        "fastest_doc": min(results["documents"].items(), key=lambda x: x[1]["times_ms"]["mean"])[0],
     }
 
     # Print summary
@@ -424,12 +421,14 @@ def run_full_benchmark(iterations: int = 20) -> dict:
 def main():
     parser = argparse.ArgumentParser(description="Privacy Filter Performance Benchmark")
     parser.add_argument(
-        "--iterations", "-i", type=int, default=20,
-        help="Number of iterations per document (default: 20)"
+        "--iterations",
+        "-i",
+        type=int,
+        default=20,
+        help="Number of iterations per document (default: 20)",
     )
     parser.add_argument(
-        "--output", "-o", type=str, default=None,
-        help="Output JSON file path (optional)"
+        "--output", "-o", type=str, default=None, help="Output JSON file path (optional)"
     )
     args = parser.parse_args()
 

@@ -127,10 +127,7 @@ export function useChatHistory() {
    * Add a message to the active conversation.
    */
   const addMessage = useCallback(
-    (
-      message: Omit<ChatMessage, 'id' | 'timestamp'>,
-      conversationId?: string
-    ): ChatMessage => {
+    (message: Omit<ChatMessage, 'id' | 'timestamp'>, conversationId?: string): ChatMessage => {
       const newMessage: ChatMessage = {
         ...message,
         id: generateId(),
@@ -194,41 +191,32 @@ export function useChatHistory() {
   /**
    * Update a message (for streaming updates).
    */
-  const updateMessage = useCallback(
-    (messageId: string, updates: Partial<ChatMessage>): void => {
-      setState(prev => ({
-        ...prev,
-        conversations: prev.conversations.map(conv => ({
-          ...conv,
-          messages: conv.messages.map(msg =>
-            msg.id === messageId ? { ...msg, ...updates } : msg
-          ),
-          updatedAt:
-            conv.messages.some(m => m.id === messageId)
-              ? new Date().toISOString()
-              : conv.updatedAt,
-        })),
-      }));
-    },
-    []
-  );
+  const updateMessage = useCallback((messageId: string, updates: Partial<ChatMessage>): void => {
+    setState(prev => ({
+      ...prev,
+      conversations: prev.conversations.map(conv => ({
+        ...conv,
+        messages: conv.messages.map(msg => (msg.id === messageId ? { ...msg, ...updates } : msg)),
+        updatedAt: conv.messages.some(m => m.id === messageId)
+          ? new Date().toISOString()
+          : conv.updatedAt,
+      })),
+    }));
+  }, []);
 
   /**
    * Update Dify conversation ID for active conversation.
    */
-  const setDifyConversationId = useCallback(
-    (difyId: string, conversationId?: string): void => {
-      setState(prev => ({
-        ...prev,
-        conversations: prev.conversations.map(conv =>
-          conv.id === (conversationId || prev.activeConversationId)
-            ? { ...conv, difyConversationId: difyId }
-            : conv
-        ),
-      }));
-    },
-    []
-  );
+  const setDifyConversationId = useCallback((difyId: string, conversationId?: string): void => {
+    setState(prev => ({
+      ...prev,
+      conversations: prev.conversations.map(conv =>
+        conv.id === (conversationId || prev.activeConversationId)
+          ? { ...conv, difyConversationId: difyId }
+          : conv
+      ),
+    }));
+  }, []);
 
   /**
    * Delete a conversation.
@@ -267,9 +255,7 @@ export function useChatHistory() {
     setState(prev => ({
       ...prev,
       conversations: prev.conversations.map(conv =>
-        conv.id === conversationId
-          ? { ...conv, title, updatedAt: new Date().toISOString() }
-          : conv
+        conv.id === conversationId ? { ...conv, title, updatedAt: new Date().toISOString() } : conv
       ),
     }));
   }, []);
@@ -285,9 +271,7 @@ export function useChatHistory() {
   }, []);
 
   // Get current active conversation
-  const activeConversation = state.conversations.find(
-    c => c.id === state.activeConversationId
-  );
+  const activeConversation = state.conversations.find(c => c.id === state.activeConversationId);
 
   return {
     conversations: state.conversations,

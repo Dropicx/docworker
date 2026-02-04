@@ -211,9 +211,7 @@ class TestPipelineStepExecutionRepositoryEncryption:
         assert retrieved_execution.input_text is None
         assert retrieved_execution.output_text is None
 
-    def test_partial_text_fields(
-        self, step_execution_repository: PipelineStepExecutionRepository
-    ):
+    def test_partial_text_fields(self, step_execution_repository: PipelineStepExecutionRepository):
         """Test execution with only input_text or only output_text."""
         # Only input_text
         execution1 = step_execution_repository.create(
@@ -270,9 +268,7 @@ class TestPipelineStepExecutionRepositoryEncryption:
         assert len(retrieved_execution.input_text) == 100 * 1024
         assert len(retrieved_execution.output_text) == 100 * 1024
 
-    def test_text_round_trip(
-        self, step_execution_repository: PipelineStepExecutionRepository
-    ):
+    def test_text_round_trip(self, step_execution_repository: PipelineStepExecutionRepository):
         """Test complete round-trip: create → retrieve → verify text integrity."""
         input_text = "Original input text with special chars: äöü ß €"
         output_text = "Original output text with numbers: 12345"
@@ -295,4 +291,3 @@ class TestPipelineStepExecutionRepositoryEncryption:
         assert retrieved_execution is not None
         assert retrieved_execution.input_text == input_text
         assert retrieved_execution.output_text == output_text
-

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Quick check of what's actually in Redis"""
+
 import redis
 
 REDIS_URL = "redis://default:zXupOXcPiRwhKDNbTByOkGybUQpSHxDN@yamanote.proxy.rlwy.net:26905"

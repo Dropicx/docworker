@@ -1,13 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Stethoscope,
-  User,
-  Settings,
-  LogOut,
-  Shield,
-  AlertTriangle,
-} from 'lucide-react';
+import { Stethoscope, User, Settings, LogOut, Shield, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { HealthCheck } from '../types/api';
 import { Badge } from '@/components/ui/badge';
@@ -163,10 +156,11 @@ export const Header: React.FC<HeaderProps> = ({
           {displayServices.map(serviceName => {
             const serviceStatus = health.services[serviceName];
             return (
-              <DropdownMenuItem key={serviceName} className="flex items-center justify-between cursor-default">
-                <span className="text-sm text-neutral-700">
-                  {formatServiceName(serviceName)}
-                </span>
+              <DropdownMenuItem
+                key={serviceName}
+                className="flex items-center justify-between cursor-default"
+              >
+                <span className="text-sm text-neutral-700">{formatServiceName(serviceName)}</span>
                 <div className="flex items-center space-x-2">
                   <span className={`text-sm font-medium ${getServiceColor(serviceStatus)}`}>
                     {getServiceIcon(serviceStatus)}
@@ -225,7 +219,10 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="text-sm font-medium text-brand-700 hidden sm:inline">
                     {user?.full_name || user?.email}
                   </span>
-                  <Badge variant="outline" className="text-xs bg-brand-100 text-brand-600 border-brand-200">
+                  <Badge
+                    variant="outline"
+                    className="text-xs bg-brand-100 text-brand-600 border-brand-200"
+                  >
                     {user?.role === 'admin' ? 'Admin' : 'User'}
                   </Badge>
                 </div>

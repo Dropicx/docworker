@@ -272,7 +272,7 @@ class TestPhase4DrugDatabase:
 
     def test_drug_database_initialized(self, filter):
         """Test that drug database is initialized with 100+ medications"""
-        assert hasattr(filter, 'drug_database')
+        assert hasattr(filter, "drug_database")
         assert len(filter.drug_database) >= 100
         # Check some specific drugs
         assert "metoprolol" in filter.drug_database
@@ -353,7 +353,7 @@ class TestPhase4MedicalCodes:
 
     def test_medical_code_patterns_initialized(self, filter):
         """Test that medical code patterns are compiled"""
-        assert hasattr(filter, 'medical_code_patterns')
+        assert hasattr(filter, "medical_code_patterns")
         assert "icd10" in filter.medical_code_patterns
         assert "ops" in filter.medical_code_patterns
         assert "loinc" in filter.medical_code_patterns
@@ -409,11 +409,11 @@ class TestPhase4MedicalCodes:
 
     def test_loinc_database_initialized(self, filter):
         """Test that LOINC code database is initialized"""
-        assert hasattr(filter, 'common_loinc_codes')
+        assert hasattr(filter, "common_loinc_codes")
         assert len(filter.common_loinc_codes) >= 50
         # Check specific codes
         assert "2339-0" in filter.common_loinc_codes  # Glucose
-        assert "718-7" in filter.common_loinc_codes   # Hemoglobin
+        assert "718-7" in filter.common_loinc_codes  # Hemoglobin
         assert "4548-4" in filter.common_loinc_codes  # HbA1c
 
 

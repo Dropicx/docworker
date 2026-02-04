@@ -2,6 +2,7 @@
 """
 Inspect Redis database for task cleanup issues
 """
+
 import redis
 from datetime import datetime, timedelta
 import json
@@ -24,7 +25,11 @@ for key in keys:
     # Extract pattern (prefix before UUID/ID)
     parts = key.split(":")
     if len(parts) > 1:
-        pattern = ":".join(parts[:-1]) if parts[-1].replace("-", "").isalnum() and len(parts[-1]) > 10 else key
+        pattern = (
+            ":".join(parts[:-1])
+            if parts[-1].replace("-", "").isalnum() and len(parts[-1]) > 10
+            else key
+        )
     else:
         pattern = key
 

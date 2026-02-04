@@ -14,6 +14,7 @@ Features:
     - Deletes old task results (>2 hours)
     - Shows before/after statistics
 """
+
 import redis
 import time
 import json
@@ -23,13 +24,15 @@ import sys
 # Connect to Redis (dev database)
 REDIS_URL = "redis://default:zXupOXcPiRwhKDNbTByOkGybUQpSHxDN@yamanote.proxy.rlwy.net:26905"
 
+
 def format_bytes(bytes_val):
     """Format bytes to human-readable format"""
-    for unit in ['B', 'KB', 'MB', 'GB']:
+    for unit in ["B", "KB", "MB", "GB"]:
         if bytes_val < 1024.0:
             return f"{bytes_val:.2f} {unit}"
         bytes_val /= 1024.0
     return f"{bytes_val:.2f} TB"
+
 
 def main():
     print("=" * 80)
@@ -56,11 +59,11 @@ def main():
 
     # Get memory info
     memory_info = r.info("memory")
-    used_memory_before = memory_info.get('used_memory', 0)
+    used_memory_before = memory_info.get("used_memory", 0)
     print(f"Memory used: {format_bytes(used_memory_before)}")
 
     # Get all celery result keys
-    pattern = b'celery-task-meta-*'
+    pattern = b"celery-task-meta-*"
     celery_keys = r.keys(pattern)
     print(f"\nCelery task result keys: {len(celery_keys)}")
 
@@ -73,11 +76,11 @@ def main():
     for key in celery_keys[:10]:
         ttl = r.ttl(key)
         if ttl == -1:
-            ttl_samples[key.decode('utf-8', errors='ignore')] = "No expiration (PERMANENT)"
+            ttl_samples[key.decode("utf-8", errors="ignore")] = "No expiration (PERMANENT)"
         elif ttl == -2:
-            ttl_samples[key.decode('utf-8', errors='ignore')] = "Expired/Doesn't exist"
+            ttl_samples[key.decode("utf-8", errors="ignore")] = "Expired/Doesn't exist"
         else:
-            ttl_samples[key.decode('utf-8', errors='ignore')] = f"{ttl}s ({ttl/3600:.2f}h)"
+            ttl_samples[key.decode("utf-8", errors="ignore")] = f"{ttl}s ({ttl/3600:.2f}h)"
 
     print("\nSample key TTLs (first 10):")
     for key, ttl in ttl_samples.items():
@@ -94,7 +97,7 @@ def main():
     print()
 
     response = input("Proceed with cleanup? (yes/no): ").strip().lower()
-    if response != 'yes':
+    if response != "yes":
         print("❌ Cleanup cancelled")
         return
 
@@ -113,7 +116,7 @@ def main():
 
     for idx, key in enumerate(celery_keys):
         if idx % 100 == 0:
-            print(f"Processing key {idx + 1}/{len(celery_keys)}...", end='\r')
+            print(f"Processing key {idx + 1}/{len(celery_keys)}...", end="\r")
 
         try:
             ttl = r.ttl(key)
@@ -136,10 +139,14 @@ def main():
                 result_data = r.get(key)
                 if result_data:
                     result_json = json.loads(result_data)
-                    if 'date_done' in result_json:
+                    if "date_done" in result_json:
                         try:
-                            date_done = datetime.fromisoformat(result_json['date_done'].replace('Z', '+00:00'))
-                            age_seconds = (datetime.now(date_done.tzinfo) - date_done).total_seconds()
+                            date_done = datetime.fromisoformat(
+                                result_json["date_done"].replace("Z", "+00:00")
+                            )
+                            age_seconds = (
+                                datetime.now(date_done.tzinfo) - date_done
+                            ).total_seconds()
 
                             # Delete results older than 2 hours
                             if age_seconds > 7200:
@@ -187,10 +194,12 @@ def main():
 
     # Memory after cleanup
     memory_info = r.info("memory")
-    used_memory_after = memory_info.get('used_memory', 0)
+    used_memory_after = memory_info.get("used_memory", 0)
     memory_freed = used_memory_before - used_memory_after
 
-    print(f"\nMemory used: {format_bytes(used_memory_after)} (was {format_bytes(used_memory_before)})")
+    print(
+        f"\nMemory used: {format_bytes(used_memory_after)} (was {format_bytes(used_memory_before)})"
+    )
     print(f"Memory freed: {format_bytes(memory_freed)}")
 
     # Recommendations
@@ -209,5 +218,6 @@ def main():
     print("   Command: redis-cli -u <redis-url> INFO memory")
     print()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

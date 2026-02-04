@@ -7,7 +7,10 @@ from sqlalchemy import create_engine, text
 import sys
 
 # Database credentials
-DEV_DB_URL = "postgresql://postgres:KfcqZpqRnRCTyvVxHKkDHjssedAjXZSp@turntable.proxy.rlwy.net:58299/railway"
+DEV_DB_URL = (
+    "postgresql://postgres:KfcqZpqRnRCTyvVxHKkDHjssedAjXZSp@turntable.proxy.rlwy.net:58299/railway"
+)
+
 
 def connect_db(db_url: str, name: str):
     """Connect to database"""
@@ -20,9 +23,11 @@ def connect_db(db_url: str, name: str):
         print(f"❌ Failed to connect to {name} database: {e}")
         sys.exit(1)
 
+
 def show_schema(conn, table_name: str):
     """Show schema for a table"""
-    result = conn.execute(text("""
+    result = conn.execute(
+        text("""
         SELECT
             column_name,
             data_type,
@@ -32,7 +37,9 @@ def show_schema(conn, table_name: str):
         FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = :table_name
         ORDER BY ordinal_position
-    """), {"table_name": table_name})
+    """),
+        {"table_name": table_name},
+    )
 
     print(f"\nSchema for {table_name}:")
     print("=" * 80)
@@ -48,7 +55,10 @@ def show_schema(conn, table_name: str):
         if max_len:
             type_str += f"({max_len})"
 
-        print(f"  {col_name:30} {type_str:30} {'NULL' if nullable == 'YES' else 'NOT NULL':10} {default if default else ''}")
+        print(
+            f"  {col_name:30} {type_str:30} {'NULL' if nullable == 'YES' else 'NOT NULL':10} {default if default else ''}"
+        )
+
 
 def show_sample_data(conn, table_name: str):
     """Show sample data from table"""
@@ -61,6 +71,7 @@ def show_sample_data(conn, table_name: str):
         print(f"\nRow {i+1}:")
         for key, value in row._mapping.items():
             print(f"  {key}: {value}")
+
 
 def main():
     """Main workflow"""
@@ -80,10 +91,12 @@ def main():
     except Exception as e:
         print(f"\n❌ Failed: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         dev_conn.close()
         print("\n🔌 Database connection closed")
+
 
 if __name__ == "__main__":
     main()

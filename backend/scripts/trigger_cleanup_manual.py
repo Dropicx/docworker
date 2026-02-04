@@ -5,26 +5,30 @@ Manually trigger cleanup tasks
 Tests if cleanup tasks work when manually invoked (bypassing beat scheduler).
 This helps identify if the issue is with beat scheduling or with the tasks themselves.
 """
+
 import sys
 import os
 
 # Add paths
-sys.path.insert(0, '/app/backend')
-sys.path.insert(0, '/app/worker')
-sys.path.insert(0, '/app/shared')
+sys.path.insert(0, "/app/backend")
+sys.path.insert(0, "/app/worker")
+sys.path.insert(0, "/app/shared")
 
 from celery import Celery
 
 # Connect to Redis
-REDIS_URL = os.getenv('REDIS_URL', 'redis://default:zXupOXcPiRwhKDNbTByOkGybUQpSHxDN@yamanote.proxy.rlwy.net:26905')
+REDIS_URL = os.getenv(
+    "REDIS_URL", "redis://default:zXupOXcPiRwhKDNbTByOkGybUQpSHxDN@yamanote.proxy.rlwy.net:26905"
+)
 
 # Create Celery client
-celery_client = Celery('doctranslator_backend', broker=REDIS_URL, backend=REDIS_URL)
+celery_client = Celery("doctranslator_backend", broker=REDIS_URL, backend=REDIS_URL)
 celery_client.conf.update(
-    task_serializer='json',
-    accept_content=['json'],
-    result_serializer='json',
+    task_serializer="json",
+    accept_content=["json"],
+    result_serializer="json",
 )
+
 
 def trigger_task(task_name, description):
     """Trigger a cleanup task and wait for result"""
@@ -35,10 +39,7 @@ def trigger_task(task_name, description):
 
     try:
         # Send task to maintenance queue
-        result = celery_client.send_task(
-            task_name,
-            queue='maintenance'
-        )
+        result = celery_client.send_task(task_name, queue="maintenance")
 
         print(f"✅ Task queued with ID: {result.id}")
         print(f"Waiting for result (timeout: 60s)...")
@@ -56,6 +57,7 @@ def trigger_task(task_name, description):
         print(f"Error type: {type(e).__name__}")
         return False
 
+
 def main():
     print("=" * 80)
     print("MANUAL CLEANUP TASK TRIGGER")
@@ -66,10 +68,10 @@ def main():
     print()
 
     tasks = [
-        ('cleanup_celery_results', 'Clean up old Celery task results from Redis'),
-        ('cleanup_orphaned_jobs', 'Clean up orphaned pipeline jobs'),
-        ('cleanup_old_files', 'Clean up old temporary files'),
-        ('database_maintenance', 'Database maintenance and cleanup'),
+        ("cleanup_celery_results", "Clean up old Celery task results from Redis"),
+        ("cleanup_orphaned_jobs", "Clean up orphaned pipeline jobs"),
+        ("cleanup_old_files", "Clean up old temporary files"),
+        ("database_maintenance", "Database maintenance and cleanup"),
     ]
 
     print(f"Connected to Redis: {REDIS_URL.split('@')[0]}...")
@@ -88,7 +90,7 @@ def main():
 
     results = {}
 
-    if choice == 'all':
+    if choice == "all":
         print("\nRunning all cleanup tasks...")
         for task_name, description in tasks:
             success = trigger_task(task_name, description)
@@ -146,5 +148,6 @@ def main():
         print("  2. Check worker logs for errors")
         print("  3. Verify REDIS_URL configuration")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

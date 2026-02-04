@@ -64,10 +64,7 @@ export default function UserManagement() {
     try {
       setLoading(true);
       setError(null);
-      const [usersRes, statsRes] = await Promise.all([
-        userApi.listUsers(),
-        userApi.getStats(),
-      ]);
+      const [usersRes, statsRes] = await Promise.all([userApi.listUsers(), userApi.getStats()]);
       setUsers(usersRes.users);
       setStats(statsRes);
     } catch (err) {
@@ -291,23 +288,34 @@ export default function UserManagement() {
           <table className="w-full">
             <thead className="bg-neutral-50 border-b border-neutral-200">
               <tr>
-                <th className="text-left px-4 py-3 text-sm font-medium text-neutral-700">Benutzer</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-neutral-700">
+                  Benutzer
+                </th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-neutral-700">Rolle</th>
                 <th className="text-left px-4 py-3 text-sm font-medium text-neutral-700">Status</th>
-                <th className="text-left px-4 py-3 text-sm font-medium text-neutral-700">Letzter Login</th>
-                <th className="text-right px-4 py-3 text-sm font-medium text-neutral-700">Aktionen</th>
+                <th className="text-left px-4 py-3 text-sm font-medium text-neutral-700">
+                  Letzter Login
+                </th>
+                <th className="text-right px-4 py-3 text-sm font-medium text-neutral-700">
+                  Aktionen
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-100">
-              {users.map((user) => {
+              {users.map(user => {
                 const isCurrentUser = user.id === currentUser?.id;
                 return (
-                  <tr key={user.id} className={`hover:bg-neutral-50 ${!user.is_active ? 'opacity-60' : ''}`}>
+                  <tr
+                    key={user.id}
+                    className={`hover:bg-neutral-50 ${!user.is_active ? 'opacity-60' : ''}`}
+                  >
                     <td className="px-4 py-3">
                       <div className="flex items-center space-x-3">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                          user.role === 'admin' ? 'bg-brand-100' : 'bg-neutral-100'
-                        }`}>
+                        <div
+                          className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                            user.role === 'admin' ? 'bg-brand-100' : 'bg-neutral-100'
+                          }`}
+                        >
                           {user.role === 'admin' ? (
                             <Shield className="w-5 h-5 text-brand-600" />
                           ) : (
@@ -326,20 +334,24 @@ export default function UserManagement() {
                       </div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.role === 'admin'
-                          ? 'bg-brand-100 text-brand-700'
-                          : 'bg-neutral-100 text-neutral-700'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.role === 'admin'
+                            ? 'bg-brand-100 text-brand-700'
+                            : 'bg-neutral-100 text-neutral-700'
+                        }`}
+                      >
                         {user.role === 'admin' ? 'Admin' : 'Benutzer'}
                       </span>
                     </td>
                     <td className="px-4 py-3">
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        user.is_active
-                          ? 'bg-success-100 text-success-700'
-                          : 'bg-error-100 text-error-700'
-                      }`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          user.is_active
+                            ? 'bg-success-100 text-success-700'
+                            : 'bg-error-100 text-error-700'
+                        }`}
+                      >
                         {user.is_active ? 'Aktiv' : 'Inaktiv'}
                       </span>
                     </td>
@@ -349,7 +361,7 @@ export default function UserManagement() {
                     <td className="px-4 py-3 text-right">
                       <div className="relative">
                         <button
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation();
                             setOpenDropdown(openDropdown === user.id ? null : user.id);
                           }}
@@ -431,9 +443,7 @@ export default function UserManagement() {
         </div>
 
         {users.length === 0 && (
-          <div className="text-center py-12 text-neutral-500">
-            Keine Benutzer gefunden
-          </div>
+          <div className="text-center py-12 text-neutral-500">Keine Benutzer gefunden</div>
         )}
       </div>
 
@@ -469,25 +479,21 @@ export default function UserManagement() {
             {(modalType === 'create' || modalType === 'edit') && (
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Name
-                  </label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Name</label>
                   <input
                     type="text"
                     value={formData.full_name}
-                    onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+                    onChange={e => setFormData({ ...formData, full_name: e.target.value })}
                     className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                     placeholder="Max Mustermann"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    E-Mail
-                  </label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">E-Mail</label>
                   <input
                     type="email"
                     value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    onChange={e => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                     placeholder="max@example.com"
                   />
@@ -501,7 +507,7 @@ export default function UserManagement() {
                       <input
                         type={showPassword ? 'text' : 'password'}
                         value={formData.password}
-                        onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                        onChange={e => setFormData({ ...formData, password: e.target.value })}
                         className="w-full px-3 py-2 pr-10 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                         placeholder="Min. 8 Zeichen"
                       />
@@ -510,18 +516,20 @@ export default function UserManagement() {
                         onClick={() => setShowPassword(!showPassword)}
                         className="absolute right-2 top-1/2 -translate-y-1/2 p-1 text-neutral-400 hover:text-neutral-600"
                       >
-                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        {showPassword ? (
+                          <EyeOff className="w-4 h-4" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
                       </button>
                     </div>
                   </div>
                 )}
                 <div>
-                  <label className="block text-sm font-medium text-neutral-700 mb-1">
-                    Rolle
-                  </label>
+                  <label className="block text-sm font-medium text-neutral-700 mb-1">Rolle</label>
                   <select
                     value={formData.role}
-                    onChange={(e) => setFormData({ ...formData, role: e.target.value as UserRole })}
+                    onChange={e => setFormData({ ...formData, role: e.target.value as UserRole })}
                     className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                   >
                     <option value="user">Benutzer</option>
@@ -555,7 +563,8 @@ export default function UserManagement() {
             {modalType === 'resetPassword' && selectedUser && (
               <div className="space-y-4">
                 <p className="text-sm text-neutral-600">
-                  Neues Passwort für <strong>{selectedUser.full_name}</strong> ({selectedUser.email}) festlegen.
+                  Neues Passwort für <strong>{selectedUser.full_name}</strong> ({selectedUser.email}
+                  ) festlegen.
                 </p>
                 <div>
                   <label className="block text-sm font-medium text-neutral-700 mb-1">
@@ -565,7 +574,7 @@ export default function UserManagement() {
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                      onChange={e => setFormData({ ...formData, password: e.target.value })}
                       className="w-full px-3 py-2 pr-10 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
                       placeholder="Min. 8 Zeichen"
                     />
@@ -606,7 +615,8 @@ export default function UserManagement() {
               <div className="space-y-4">
                 <div className="p-4 bg-error-50 border border-error-200 rounded-lg">
                   <p className="text-error-700">
-                    Sind Sie sicher, dass Sie <strong>{selectedUser.full_name}</strong> ({selectedUser.email}) löschen möchten?
+                    Sind Sie sicher, dass Sie <strong>{selectedUser.full_name}</strong> (
+                    {selectedUser.email}) löschen möchten?
                   </p>
                   <p className="text-sm text-error-600 mt-2">
                     Der Benutzer wird deaktiviert und kann sich nicht mehr anmelden.

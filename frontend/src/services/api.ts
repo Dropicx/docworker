@@ -75,11 +75,15 @@ api.interceptors.response.use(
           const tokens = JSON.parse(storedTokens);
           if (tokens.refresh_token) {
             // Try to refresh the token
-            const refreshResponse = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-              refresh_token: tokens.refresh_token,
-            }, {
-              headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            });
+            const refreshResponse = await axios.post(
+              `${API_BASE_URL}/auth/refresh`,
+              {
+                refresh_token: tokens.refresh_token,
+              },
+              {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' },
+              }
+            );
 
             const newTokens = {
               ...tokens,
@@ -141,7 +145,7 @@ export class ApiService {
         'Content-Type': 'multipart/form-data',
       },
       timeout: 60000, // 60 seconds timeout (upload + quality gate analysis)
-      onUploadProgress: (e) => {
+      onUploadProgress: e => {
         if (e.total && onProgress) {
           onProgress(Math.round((e.loaded * 100) / e.total));
         }

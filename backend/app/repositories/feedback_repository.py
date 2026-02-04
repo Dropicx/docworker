@@ -402,9 +402,7 @@ class PipelineJobFeedbackRepository:
         job_id = job.id  # Save ID before update (job may be expunged)
 
         # Update using repository to ensure encryption is handled
-        updated = self.job_repo.update(
-            job_id, has_feedback=True, data_consent_given=consent_given
-        )
+        updated = self.job_repo.update(job_id, has_feedback=True, data_consent_given=consent_given)
 
         # Return updated entity if available, otherwise original
         return updated or job

@@ -10,7 +10,7 @@ import os
 from datetime import datetime, timedelta
 
 # Add backend to path
-backend_path = os.path.join(os.path.dirname(__file__), '..')
+backend_path = os.path.join(os.path.dirname(__file__), "..")
 sys.path.insert(0, os.path.abspath(backend_path))
 
 from app.database.connection import get_session
@@ -46,11 +46,7 @@ def test_content_clearing():
         print(f"   Status: {job.status}")
 
         # Count step executions
-        step_executions = (
-            session.query(PipelineStepExecutionDB)
-            .filter_by(job_id=job.job_id)
-            .all()
-        )
+        step_executions = session.query(PipelineStepExecutionDB).filter_by(job_id=job.job_id).all()
         print(f"   Step executions: {len(step_executions)}")
 
         if len(step_executions) == 0:
@@ -91,9 +87,7 @@ def test_content_clearing():
         # Refresh step executions
         session.refresh(cleared_job)
         step_executions_after = (
-            session.query(PipelineStepExecutionDB)
-            .filter_by(job_id=job.job_id)
-            .all()
+            session.query(PipelineStepExecutionDB).filter_by(job_id=job.job_id).all()
         )
 
         # Verify clearing
@@ -142,6 +136,7 @@ def test_content_clearing():
     except Exception as e:
         print(f"\n❌ Error during testing: {e}")
         import traceback
+
         traceback.print_exc()
         return False
     finally:
@@ -190,9 +185,7 @@ def test_consent_false_scenario():
             # Check that content was cleared
             session.refresh(job)
             updated_job = (
-                session.query(PipelineJobDB)
-                .filter_by(processing_id=job.processing_id)
-                .first()
+                session.query(PipelineJobDB).filter_by(processing_id=job.processing_id).first()
             )
 
             if updated_job.content_cleared_at:
@@ -212,6 +205,7 @@ def test_consent_false_scenario():
     except Exception as e:
         print(f"\n❌ Error during testing: {e}")
         import traceback
+
         traceback.print_exc()
         return False
     finally:
@@ -236,4 +230,3 @@ if __name__ == "__main__":
     else:
         print("❌ Some tests failed")
         sys.exit(1)
-

@@ -1,12 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import {
-  Shield,
-  AlertTriangle,
-  Sparkles,
-  FileText,
-  Zap,
-} from 'lucide-react';
+import { Shield, AlertTriangle, Sparkles, FileText, Zap } from 'lucide-react';
 import { Card, CardHeader, CardContent } from './components/ui/card';
 import { Button } from './components/ui/button';
 import FileUpload from './components/FileUpload';
@@ -274,8 +268,8 @@ function App() {
                         Datenschutz first
                       </h3>
                       <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                        Keine Speicherung Ihrer Daten. Alle Informationen werden nach der Übersetzung
-                        automatisch gelöscht.
+                        Keine Speicherung Ihrer Daten. Alle Informationen werden nach der
+                        Übersetzung automatisch gelöscht.
                       </p>
                     </CardContent>
                   </Card>

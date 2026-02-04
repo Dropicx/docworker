@@ -229,7 +229,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
     // CRITICAL: Remove 4+ leading spaces from ALL lines to prevent code block rendering
     // Markdown interprets 4+ leading spaces as code blocks
     // Preserve up to 3 spaces for nested lists, remove the rest
-    cleaned = cleaned.replace(/^(\s{4,})/gm, (_match) => {
+    cleaned = cleaned.replace(/^(\s{4,})/gm, _match => {
       // Keep max 2 spaces for nesting, remove excessive indentation
       return '  ';
     });
@@ -521,7 +521,9 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                       </th>
                     ),
                     td: ({ children }) => (
-                      <td className="px-4 py-2 text-sm text-primary-600 whitespace-pre-line">{children}</td>
+                      <td className="px-4 py-2 text-sm text-primary-600 whitespace-pre-line">
+                        {children}
+                      </td>
                     ),
                   }}
                 >
@@ -566,7 +568,9 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                   </div>
                   <div className="mt-1">
                     <span className="text-xs text-primary-500">Verarbeitungs-ID:</span>
-                    <span className="font-mono text-xs text-primary-500 ml-1">{result.processing_id}</span>
+                    <span className="font-mono text-xs text-primary-500 ml-1">
+                      {result.processing_id}
+                    </span>
                   </div>
                 </div>
               </div>

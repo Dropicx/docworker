@@ -34,9 +34,7 @@ def repositories(db_session: Session):
 class TestDocumentEncryptionFlow:
     """Test complete document encryption flow."""
 
-    def test_upload_process_download_flow(
-        self, repositories: dict, sample_binary_content: bytes
-    ):
+    def test_upload_process_download_flow(self, repositories: dict, sample_binary_content: bytes):
         """Test complete flow: upload → process → download with encryption."""
         job_repo = repositories["job_repo"]
         step_execution_repo = repositories["step_execution_repo"]
@@ -85,9 +83,7 @@ class TestDocumentEncryptionFlow:
         assert retrieved_executions[0].input_text == input_text  # Decrypted
         assert retrieved_executions[0].output_text == output_text  # Decrypted
 
-    def test_consent_flow_with_encryption(
-        self, repositories: dict, sample_binary_content: bytes
-    ):
+    def test_consent_flow_with_encryption(self, repositories: dict, sample_binary_content: bytes):
         """Test consent flow: content encrypted regardless of consent, cleared if no consent."""
         job_repo = repositories["job_repo"]
         feedback_repo = repositories["feedback_repo"]
@@ -188,9 +184,7 @@ class TestDocumentEncryptionFlow:
         assert executions[0].input_text is None
         assert executions[0].output_text is None
 
-    def test_multiple_jobs_encryption_isolation(
-        self, repositories: dict
-    ):
+    def test_multiple_jobs_encryption_isolation(self, repositories: dict):
         """Test that encryption is isolated per job (no cross-contamination)."""
         job_repo = repositories["job_repo"]
 
@@ -249,4 +243,3 @@ class TestDocumentEncryptionFlow:
         assert retrieved_job1.file_content != content3
         assert retrieved_job2.file_content != content1
         assert retrieved_job2.file_content != content3
-

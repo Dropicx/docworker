@@ -32,13 +32,10 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
           <div className="w-16 h-16 bg-accent-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <BookOpen className="w-8 h-8 text-accent-600" />
           </div>
-          <h3 className="text-xl font-semibold text-neutral-800 mb-2">
-            GuidelineChat
-          </h3>
+          <h3 className="text-xl font-semibold text-neutral-800 mb-2">GuidelineChat</h3>
           <p className="text-neutral-600 mb-6">
-            Stellen Sie Fragen zu deutschen medizinischen Leitlinien (AWMF).
-            Der Assistent durchsucht die Leitlinien-Datenbank und gibt Ihnen
-            fundierte Antworten.
+            Stellen Sie Fragen zu deutschen medizinischen Leitlinien (AWMF). Der Assistent
+            durchsucht die Leitlinien-Datenbank und gibt Ihnen fundierte Antworten.
           </p>
           <div className="space-y-2 text-sm text-neutral-500">
             <p className="flex items-center justify-center gap-2">
@@ -56,10 +53,7 @@ export const ChatMessageList: React.FC<ChatMessageListProps> = ({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="flex-1 overflow-y-auto p-4 space-y-4 bg-neutral-50"
-    >
+    <div ref={containerRef} className="flex-1 overflow-y-auto p-4 space-y-4 bg-neutral-50">
       {messages.map(message => (
         <ChatMessage key={message.id} message={message} />
       ))}

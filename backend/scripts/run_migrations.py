@@ -16,7 +16,7 @@ import os
 import logging
 from sqlalchemy import create_engine, text
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 
 
@@ -24,17 +24,17 @@ def run_migration_on_database(database_url: str, migration_name: str, migration_
     """Execute a single migration on the specified database"""
     try:
         # Temporarily override DATABASE_URL for this migration
-        original_db_url = os.environ.get('DATABASE_URL')
-        os.environ['DATABASE_URL'] = database_url
+        original_db_url = os.environ.get("DATABASE_URL")
+        os.environ["DATABASE_URL"] = database_url
 
         logger.info(f"📝 Running migration: {migration_name}")
         result = migration_func()
 
         # Restore original DATABASE_URL
         if original_db_url:
-            os.environ['DATABASE_URL'] = original_db_url
-        elif 'DATABASE_URL' in os.environ:
-            del os.environ['DATABASE_URL']
+            os.environ["DATABASE_URL"] = original_db_url
+        elif "DATABASE_URL" in os.environ:
+            del os.environ["DATABASE_URL"]
 
         return result
     except Exception as e:
@@ -45,17 +45,27 @@ def run_migration_on_database(database_url: str, migration_name: str, migration_
 def run_all_migrations(database_url: str):
     """Run all migrations on the specified database"""
     logger.info(f"🚀 Starting migrations on database")
-    logger.info(f"   Database: {database_url.split('@')[1] if '@' in database_url else database_url}")
+    logger.info(
+        f"   Database: {database_url.split('@')[1] if '@' in database_url else database_url}"
+    )
 
     # Set DATABASE_URL environment variable
-    os.environ['DATABASE_URL'] = database_url
+    os.environ["DATABASE_URL"] = database_url
 
     # Import migration modules
-    from app.database.migrations.add_pii_toggle_migration import run_migration as pii_toggle_migration
-    from app.database.migrations.add_step_metadata_migration import run_migration as step_metadata_migration
+    from app.database.migrations.add_pii_toggle_migration import (
+        run_migration as pii_toggle_migration,
+    )
+    from app.database.migrations.add_step_metadata_migration import (
+        run_migration as step_metadata_migration,
+    )
     from app.database.migrations.add_stop_conditions import upgrade as stop_conditions_migration
-    from app.database.migrations.add_post_branching_column import migrate_up as post_branching_migration
-    from app.database.migrations.add_required_context_variables import upgrade as required_context_vars_migration
+    from app.database.migrations.add_post_branching_column import (
+        migrate_up as post_branching_migration,
+    )
+    from app.database.migrations.add_required_context_variables import (
+        upgrade as required_context_vars_migration,
+    )
 
     migrations = [
         ("add_pii_toggle", pii_toggle_migration),
@@ -71,9 +81,9 @@ def run_all_migrations(database_url: str):
         results.append((migration_name, success))
 
     # Print summary
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info("📊 Migration Summary")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     all_successful = True
     for migration_name, success in results:
@@ -82,7 +92,7 @@ def run_all_migrations(database_url: str):
         if not success:
             all_successful = False
 
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     if all_successful:
         logger.info("🎉 All migrations completed successfully!")
@@ -107,5 +117,6 @@ if __name__ == "__main__":
     except Exception as e:
         logger.error(f"❌ Fatal error: {e}")
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

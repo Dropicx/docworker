@@ -32,7 +32,8 @@ export const exportToPDFAdvanced = async (
     tempDiv.style.width = '190mm'; // Optimierte Breite für weniger Seitenrand
     tempDiv.style.padding = '10mm 15mm'; // Reduzierte Abstände: oben/unten 10mm, links/rechts 15mm
     tempDiv.style.backgroundColor = 'white';
-    tempDiv.style.fontFamily = '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, -apple-system, sans-serif';
+    tempDiv.style.fontFamily =
+      '"Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", system-ui, -apple-system, sans-serif';
     tempDiv.style.fontSize = '12pt';
     tempDiv.style.lineHeight = '1.6';
     tempDiv.style.color = '#1f2937';

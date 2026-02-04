@@ -52,11 +52,7 @@ class CostApiService {
   /**
    * Build URL with optional date query parameters
    */
-  private buildDateUrl(
-    endpoint: string,
-    startDate?: string,
-    endDate?: string
-  ): string {
+  private buildDateUrl(endpoint: string, startDate?: string, endDate?: string): string {
     const params = new URLSearchParams();
     if (startDate) params.append('start_date', startDate);
     if (endDate) params.append('end_date', endDate);

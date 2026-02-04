@@ -4,11 +4,13 @@ Debug Celery Beat Service
 
 Checks if beat service is working and why cleanup tasks might not be running.
 """
+
 import redis
 import json
 from datetime import datetime
 
 REDIS_URL = "redis://default:zXupOXcPiRwhKDNbTByOkGybUQpSHxDN@yamanote.proxy.rlwy.net:26905"
+
 
 def main():
     print("=" * 80)
@@ -39,8 +41,8 @@ def main():
             if task_raw:
                 try:
                     task_data = json.loads(task_raw)
-                    headers = task_data.get('headers', {})
-                    task_name = headers.get('task', 'Unknown')
+                    headers = task_data.get("headers", {})
+                    task_name = headers.get("task", "Unknown")
                     print(f"      First task: {task_name}")
                 except:
                     pass
@@ -50,10 +52,10 @@ def main():
     # 3. Check for cleanup task results
     print("\n3. Checking Cleanup Task Execution History...")
     cleanup_tasks = [
-        'cleanup_celery_results',
-        'cleanup_orphaned_jobs',
-        'cleanup_old_files',
-        'database_maintenance'
+        "cleanup_celery_results",
+        "cleanup_orphaned_jobs",
+        "cleanup_old_files",
+        "database_maintenance",
     ]
 
     result_pattern = "celery-task-meta-*"
@@ -65,14 +67,16 @@ def main():
             result_data = r.get(key)
             if result_data:
                 result = json.loads(result_data)
-                task_name = result.get('task', '')
+                task_name = result.get("task", "")
                 if any(cleanup in task_name for cleanup in cleanup_tasks):
-                    cleanup_results_found.append({
-                        'key': key,
-                        'task': task_name,
-                        'status': result.get('status'),
-                        'date_done': result.get('date_done')
-                    })
+                    cleanup_results_found.append(
+                        {
+                            "key": key,
+                            "task": task_name,
+                            "status": result.get("status"),
+                            "date_done": result.get("date_done"),
+                        }
+                    )
         except:
             pass
 
@@ -92,7 +96,7 @@ def main():
         print(f"   ✅ Beat schedule key exists")
         schedule_type = r.type(schedule_key)
         print(f"      Type: {schedule_type}")
-        if schedule_type == 'string':
+        if schedule_type == "string":
             # Might be stored as JSON or pickle
             schedule_data = r.get(schedule_key)
             print(f"      Size: {len(schedule_data)} bytes")
@@ -189,5 +193,6 @@ def main():
     print("4. Manual task trigger (test if worker can process cleanup):")
     print("   See: backend/scripts/trigger_cleanup_manual.py")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -8,8 +8,13 @@ import sys
 import json
 
 # Database credentials
-DEV_DB_URL = "postgresql://postgres:KfcqZpqRnRCTyvVxHKkDHjssedAjXZSp@turntable.proxy.rlwy.net:58299/railway"
-PROD_DB_URL = "postgresql://postgres:VknAapdgHdGkHjkmsyHWsJyKCspFmqzO@gondola.proxy.rlwy.net:15456/railway"
+DEV_DB_URL = (
+    "postgresql://postgres:KfcqZpqRnRCTyvVxHKkDHjssedAjXZSp@turntable.proxy.rlwy.net:58299/railway"
+)
+PROD_DB_URL = (
+    "postgresql://postgres:VknAapdgHdGkHjkmsyHWsJyKCspFmqzO@gondola.proxy.rlwy.net:15456/railway"
+)
+
 
 def connect_db(db_url: str, name: str):
     """Connect to database"""
@@ -22,9 +27,11 @@ def connect_db(db_url: str, name: str):
         print(f"❌ Failed to connect to {name} database: {e}")
         sys.exit(1)
 
+
 def get_table_schema(conn, table_name: str):
     """Get detailed schema for a table"""
-    result = conn.execute(text("""
+    result = conn.execute(
+        text("""
         SELECT
             column_name,
             data_type,
@@ -34,9 +41,12 @@ def get_table_schema(conn, table_name: str):
         FROM information_schema.columns
         WHERE table_schema = 'public' AND table_name = :table_name
         ORDER BY ordinal_position
-    """), {"table_name": table_name})
+    """),
+        {"table_name": table_name},
+    )
 
     return [dict(row._mapping) for row in result]
+
 
 def get_table_data(conn, table_name: str):
     """Get all data from a table"""
@@ -47,18 +57,19 @@ def get_table_data(conn, table_name: str):
         print(f"⚠️  Error reading {table_name}: {e}")
         return []
 
+
 def compare_schemas(dev_conn, prod_conn, table_name: str):
     """Compare schema for a specific table"""
     print(f"\n{'='*80}")
     print(f"Schema Comparison: {table_name}")
-    print('='*80)
+    print("=" * 80)
 
     dev_schema = get_table_schema(dev_conn, table_name)
     prod_schema = get_table_schema(prod_conn, table_name)
 
     # Create dictionaries for easy comparison
-    dev_cols = {col['column_name']: col for col in dev_schema}
-    prod_cols = {col['column_name']: col for col in prod_schema}
+    dev_cols = {col["column_name"]: col for col in dev_schema}
+    prod_cols = {col["column_name"]: col for col in prod_schema}
 
     # Columns in dev but not in prod
     missing_in_prod = set(dev_cols.keys()) - set(prod_cols.keys())
@@ -93,11 +104,12 @@ def compare_schemas(dev_conn, prod_conn, table_name: str):
     if not missing_in_prod and not extra_in_prod and not different_cols:
         print(f"\n✅ Schemas match perfectly!")
 
+
 def compare_data(dev_conn, prod_conn, table_name: str):
     """Compare data in a specific table"""
     print(f"\n{'='*80}")
     print(f"Data Comparison: {table_name}")
-    print('='*80)
+    print("=" * 80)
 
     dev_data = get_table_data(dev_conn, table_name)
     prod_data = get_table_data(prod_conn, table_name)
@@ -121,6 +133,7 @@ def compare_data(dev_conn, prod_conn, table_name: str):
             for i, row in enumerate(prod_data[:5]):
                 print(f"  Row {i+1}: {row}")
 
+
 def main():
     """Main inspection workflow"""
     print("=" * 80)
@@ -134,20 +147,20 @@ def main():
     try:
         # Tables with schema differences
         schema_diff_tables = [
-            'pipeline_jobs',
-            'ai_interaction_logs',
-            'dynamic_pipeline_steps',
-            'ocr_configuration',
-            'pipeline_step_executions',
-            'available_models'
+            "pipeline_jobs",
+            "ai_interaction_logs",
+            "dynamic_pipeline_steps",
+            "ocr_configuration",
+            "pipeline_step_executions",
+            "available_models",
         ]
 
         # Configuration tables to check data
         config_tables = [
-            'universal_prompts',
-            'document_specific_prompts',
-            'universal_pipeline_steps',
-            'system_settings'
+            "universal_prompts",
+            "document_specific_prompts",
+            "universal_pipeline_steps",
+            "system_settings",
         ]
 
         # Check schema differences
@@ -169,11 +182,13 @@ def main():
     except Exception as e:
         print(f"\n❌ Inspection failed: {e}")
         import traceback
+
         traceback.print_exc()
     finally:
         dev_conn.close()
         prod_conn.close()
         print("\n🔌 Database connections closed")
+
 
 if __name__ == "__main__":
     main()

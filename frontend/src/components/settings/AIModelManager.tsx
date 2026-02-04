@@ -96,9 +96,7 @@ const AIModelManager: React.FC = () => {
       const updatedModel = await pipelineApi.updateModel(modelId, updateData);
 
       // Update the model in the list
-      setModels(prevModels =>
-        prevModels.map(m => (m.id === modelId ? updatedModel : m))
-      );
+      setModels(prevModels => prevModels.map(m => (m.id === modelId ? updatedModel : m)));
 
       setSuccess(`Preise für "${updatedModel.display_name}" erfolgreich aktualisiert!`);
       setEditingModel(null);
@@ -240,7 +238,9 @@ const AIModelManager: React.FC = () => {
                 <div className="border-t border-neutral-200 pt-4 mt-4">
                   <div className="flex items-center space-x-2 mb-3">
                     <DollarSign className="w-4 h-4 text-brand-600" />
-                    <h4 className="text-sm font-semibold text-neutral-900">Preise (pro 1M Tokens)</h4>
+                    <h4 className="text-sm font-semibold text-neutral-900">
+                      Preise (pro 1M Tokens)
+                    </h4>
                   </div>
 
                   {isEditing ? (
@@ -263,8 +263,7 @@ const AIModelManager: React.FC = () => {
                             const value = e.target.value;
                             setEditingModel({
                               ...editingModel,
-                              price_input_per_1m_tokens:
-                                value === '' ? null : parseFloat(value),
+                              price_input_per_1m_tokens: value === '' ? null : parseFloat(value),
                             });
                           }}
                           placeholder="0.0000"
@@ -290,8 +289,7 @@ const AIModelManager: React.FC = () => {
                             const value = e.target.value;
                             setEditingModel({
                               ...editingModel,
-                              price_output_per_1m_tokens:
-                                value === '' ? null : parseFloat(value),
+                              price_output_per_1m_tokens: value === '' ? null : parseFloat(value),
                             });
                           }}
                           placeholder="0.0000"
@@ -360,4 +358,3 @@ const AIModelManager: React.FC = () => {
 };
 
 export default AIModelManager;
-

@@ -27,7 +27,9 @@ import { pipelineApi } from '../services/pipelineApi';
 const Settings: React.FC = () => {
   const navigate = useNavigate();
   const { tokens, isLoading } = useAuth();
-  const [activeTab, setActiveTab] = useState<'pipeline' | 'classes' | 'costs' | 'feedback' | 'users' | 'monitoring' | 'models'>('pipeline');
+  const [activeTab, setActiveTab] = useState<
+    'pipeline' | 'classes' | 'costs' | 'feedback' | 'users' | 'monitoring' | 'models'
+  >('pipeline');
   const [tokenReady, setTokenReady] = useState(false);
 
   // Sync token with pipeline API when authenticated
