@@ -860,13 +860,25 @@ const PipelineBuilder: React.FC = () => {
 
                   {/* Expanded Details */}
                   {isExpanded && (
-                    <div className="border-t border-primary-200 p-4 bg-neutral-50">
-                      <h5 className="font-semibold text-sm text-primary-900 mb-2">
-                        Prompt Template:
-                      </h5>
-                      <pre className="text-xs bg-white border border-primary-200 rounded p-3 overflow-x-auto whitespace-pre-wrap text-primary-700">
-                        {step.prompt_template}
-                      </pre>
+                    <div className="border-t border-primary-200 p-4 bg-neutral-50 space-y-3">
+                      {step.system_prompt && (
+                        <div>
+                          <h5 className="font-semibold text-sm text-primary-900 mb-2">
+                            System-Prompt:
+                          </h5>
+                          <pre className="text-xs bg-blue-50 border border-blue-200 rounded p-3 overflow-x-auto whitespace-pre-wrap text-primary-700">
+                            {step.system_prompt}
+                          </pre>
+                        </div>
+                      )}
+                      <div>
+                        <h5 className="font-semibold text-sm text-primary-900 mb-2">
+                          Prompt Template:
+                        </h5>
+                        <pre className="text-xs bg-white border border-primary-200 rounded p-3 overflow-x-auto whitespace-pre-wrap text-primary-700">
+                          {step.prompt_template}
+                        </pre>
+                      </div>
                     </div>
                   )}
                 </div>

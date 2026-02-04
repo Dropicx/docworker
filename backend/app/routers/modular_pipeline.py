@@ -85,6 +85,7 @@ class PipelineStepRequest(BaseModel):
     order: int = Field(..., ge=1)
     enabled: bool = True
     prompt_template: str = Field(..., min_length=1)
+    system_prompt: str | None = None
     selected_model_id: int
     temperature: float | None = Field(0.7, ge=0.0, le=2.0)
     max_tokens: int | None = Field(None, ge=100, le=16000)
@@ -163,6 +164,7 @@ class PipelineStepResponse(BaseModel):
     order: int
     enabled: bool
     prompt_template: str
+    system_prompt: str | None
     selected_model_id: int
     temperature: float | None
     max_tokens: int | None

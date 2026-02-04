@@ -21,6 +21,7 @@ import {
   GitBranch,
   Tag,
   Boxes,
+  Shield,
 } from 'lucide-react';
 import { pipelineApi } from '../../services/pipelineApi';
 import { PipelineStep, AIModel, PipelineStepRequest, DocumentClass } from '../../types/pipeline';
@@ -54,6 +55,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   const [order, setOrder] = useState(1);
   const [enabled, setEnabled] = useState(true);
   const [promptTemplate, setPromptTemplate] = useState('');
+  const [systemPrompt, setSystemPrompt] = useState('');
   const [selectedModelId, setSelectedModelId] = useState<number | null>(null);
   const [temperature, setTemperature] = useState(0.7);
   const [maxTokens, setMaxTokens] = useState<number | null>(null);
@@ -95,6 +97,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setOrder(step.order);
       setEnabled(step.enabled);
       setPromptTemplate(step.prompt_template);
+      setSystemPrompt(step.system_prompt || '');
       setSelectedModelId(step.selected_model_id);
       setTemperature(step.temperature || 0.7);
       setMaxTokens(step.max_tokens);
@@ -130,6 +133,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setPromptTemplate(
         'Bearbeiten Sie den folgenden Text:\n\n{input_text}\n\nGeben Sie das Ergebnis zurück.'
       );
+      setSystemPrompt('');
       setSelectedModelId(models.length > 0 ? models[0].id : null);
       setTemperature(0.7);
       setMaxTokens(null);
@@ -203,6 +207,7 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
         order,
         enabled,
         prompt_template: promptTemplate,
+        system_prompt: systemPrompt.trim() || null,
         selected_model_id: selectedModelId!,
         temperature,
         max_tokens: maxTokens,
@@ -358,6 +363,25 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
             <p className="text-xs text-primary-500 mt-1">
               Bestimmt, welche Fortschrittsanzeige im Frontend aktiv ist, wenn dieser Schritt
               ausgeführt wird.
+            </p>
+          </div>
+
+          {/* System Prompt */}
+          <div>
+            <label className="block text-sm font-medium text-primary-700 mb-2 flex items-center space-x-2">
+              <Shield className="w-4 h-4" />
+              <span>System-Prompt (Sicherheits-Anweisungen)</span>
+            </label>
+            <textarea
+              value={systemPrompt}
+              onChange={e => setSystemPrompt(e.target.value)}
+              rows={6}
+              className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none font-mono text-sm"
+              placeholder="Optionaler System-Prompt mit Sicherheits-Anweisungen..."
+            />
+            <p className="text-xs text-primary-500 mt-1">
+              Vertrauenswürdige Anweisungen, die als System-Rolle an das KI-Modell gesendet werden.
+              Getrennt vom Benutzer-Inhalt, um Prompt-Injection zu verhindern. Optional.
             </p>
           </div>
 

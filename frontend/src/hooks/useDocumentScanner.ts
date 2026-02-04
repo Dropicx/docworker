@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import Scanner from 'jscanify/client';
+import Scanner from '../lib/jscanify';
 import { useOpenCV } from './useOpenCV';
 
 export type ScannerPhase = 'initializing' | 'scanning' | 'captured' | 'error';
@@ -255,12 +255,13 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         tCtx.drawImage(video, 0, 0, vw, vh);
 
         const result = scanner.extractPaper(tempCanvas, vw, vh);
+        if (!result) throw new Error('No paper detected');
         canvas.width = result.width;
         canvas.height = result.height;
         const ctx = canvas.getContext('2d')!;
         ctx.drawImage(result, 0, 0);
       } catch {
-        // Fallback: raw frame
+        // Fallback: raw frame (no paper detected or extraction failed)
         canvas.width = vw;
         canvas.height = vh;
         const ctx = canvas.getContext('2d')!;

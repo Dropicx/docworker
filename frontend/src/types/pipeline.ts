@@ -68,6 +68,7 @@ export interface PipelineStep {
   order: number;
   enabled: boolean;
   prompt_template: string;
+  system_prompt: string | null;
   selected_model_id: number;
   temperature: number | null;
   max_tokens: number | null;
@@ -105,6 +106,7 @@ export interface PipelineStepRequest {
   order: number;
   enabled: boolean;
   prompt_template: string;
+  system_prompt?: string | null;
   selected_model_id: number;
   temperature?: number | null;
   max_tokens?: number | null;
