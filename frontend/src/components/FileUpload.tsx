@@ -16,14 +16,16 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ApiService from '../services/api';
-import { UploadResponse, ApiError, QualityGateErrorDetails, SupportedLanguage } from '../types/api';
+import { QualityGateErrorDetails, SupportedLanguage } from '../types/api';
 
 interface FileUploadProps {
-  onUploadSuccess: (response: UploadResponse, selectedLanguage: string | null) => void;
+  onStartProcessing: (file: File, language: string | null) => void;
   onUploadError: (error: string) => void;
   disabled?: boolean;
   availableLanguages: SupportedLanguage[];
   languagesLoaded: boolean;
+  qualityGateError?: QualityGateErrorDetails | null;
+  onClearQualityGateError?: () => void;
 }
 
 // Helper function to translate quality issues to German
@@ -44,29 +46,29 @@ const translateIssue = (issue: string): string => {
 };
 
 const FileUpload: React.FC<FileUploadProps> = ({
-  onUploadSuccess,
+  onStartProcessing,
   onUploadError,
   disabled = false,
   availableLanguages,
   languagesLoaded,
+  qualityGateError: externalQualityGateError,
+  onClearQualityGateError,
 }) => {
-  const [isUploading, setIsUploading] = useState(false);
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
   const [showAllLanguages, setShowAllLanguages] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [uploadingFileName, setUploadingFileName] = useState<string>('');
   const [validationError, setValidationError] = useState<string | null>(null);
-  const [qualityGateError, setQualityGateError] = useState<QualityGateErrorDetails | null>(null);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const privacyCheckboxRef = useRef<HTMLDivElement>(null);
 
+  const qualityGateError = externalQualityGateError || null;
+
   const handleFileUpload = useCallback(
     async (files: File[]) => {
       setValidationError(null);
-      setQualityGateError(null);
+      onClearQualityGateError?.();
 
       // Validate all files
       for (const file of files) {
@@ -96,78 +98,21 @@ const FileUpload: React.FC<FileUploadProps> = ({
     [onUploadError]
   );
 
-  const handleStartProcessing = useCallback(async () => {
+  const handleStartProcessing = useCallback(() => {
     if (selectedFiles.length === 0 || !privacyAccepted) return;
 
     setValidationError(null);
-    setQualityGateError(null);
-    setIsUploading(true);
-    setUploadingFileName(`${selectedFiles.length} Datei${selectedFiles.length > 1 ? 'en' : ''}`);
-    setUploadProgress(0);
 
-    try {
-      // For now, process only the first file (backend doesn't support multiple files yet)
-      // TODO: Update backend to support multiple files
-      const file = selectedFiles[0];
+    // For now, process only the first file (backend doesn't support multiple files yet)
+    const file = selectedFiles[0];
 
-      // Simulate upload progress for better UX - faster for mobile
-      const progressInterval = setInterval(() => {
-        setUploadProgress(prev => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          // Faster progress updates for mobile
-          return prev + Math.random() * 25;
-        });
-      }, 150); // Reduced from 300ms to 150ms
+    // Reset state
+    setSelectedFiles([]);
+    setPrivacyAccepted(false);
 
-      const response = await ApiService.uploadDocument(file);
-
-      clearInterval(progressInterval);
-      setUploadProgress(100);
-
-      // Reset state
-      setSelectedFiles([]);
-      setPrivacyAccepted(false);
-
-      // Immediately proceed on mobile for better UX
-      onUploadSuccess(response, selectedLanguage);
-    } catch (error) {
-      // Check if this is a quality gate error
-      if (error instanceof ApiError && error.isQualityGateError()) {
-        const qualityDetails = error.getQualityGateDetails();
-        if (qualityDetails) {
-          // Quality gate errors are validation errors - show in FileUpload, don't propagate to App
-          setQualityGateError(qualityDetails);
-          // Clear selected files and file input so user must select a new file
-          setSelectedFiles([]);
-          setPrivacyAccepted(false);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-          // Don't call onUploadError - keep FileUpload visible with error display
-        } else {
-          setValidationError(error.message);
-          onUploadError(error.message);
-        }
-      } else {
-        // Check if this is a timeout error
-        const errorMessage = (error as Error).message || 'Upload fehlgeschlagen';
-        if (errorMessage.includes('timeout')) {
-          setValidationError(
-            'Die Verbindung zum Server dauert länger als erwartet. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.'
-          );
-        } else {
-          setValidationError(errorMessage);
-        }
-        onUploadError(errorMessage);
-      }
-      setIsUploading(false);
-      setUploadProgress(0);
-      setUploadingFileName('');
-    }
-  }, [selectedFiles, privacyAccepted, selectedLanguage, onUploadSuccess, onUploadError]);
+    // Pass file and language to parent — upload happens in DocumentProcessor
+    onStartProcessing(file, selectedLanguage);
+  }, [selectedFiles, privacyAccepted, selectedLanguage, onStartProcessing]);
 
   const removeFile = useCallback((index: number) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
@@ -189,7 +134,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    disabled: disabled || isUploading,
+    disabled: disabled,
     maxFiles: 10, // Allow up to 10 files
     accept: {
       'application/pdf': ['.pdf'],
@@ -211,80 +156,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   const handleClick = () => {
-    if (fileInputRef.current && !disabled && !isUploading) {
+    if (fileInputRef.current && !disabled) {
       fileInputRef.current.click();
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Upload Loading Overlay - Shows during upload - Mobile Optimized */}
-      {isUploading && (
-        <div className="fixed inset-0 z-50 bg-white/95 backdrop-blur-sm flex items-center justify-center animate-fade-in">
-          <div className="max-w-md w-full mx-3 sm:mx-4">
-            <div className="card-elevated p-6 sm:p-8 space-y-4 sm:space-y-6">
-              {/* Upload Icon with Animation - Mobile Optimized */}
-              <div className="flex justify-center">
-                <div className="relative">
-                  <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl sm:rounded-3xl flex items-center justify-center animate-pulse-soft">
-                    <Upload className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
-                  </div>
-                  <div className="absolute -bottom-2 -right-2 w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-accent-500 to-accent-600 rounded-full flex items-center justify-center animate-spin-slow">
-                    <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  </div>
-                </div>
-              </div>
-
-              {/* Upload Status Text - Mobile Optimized */}
-              <div className="text-center space-y-2">
-                <h3 className="text-xl sm:text-2xl font-bold text-primary-900">
-                  Datei wird hochgeladen
-                </h3>
-                <p className="text-sm sm:text-base text-primary-600">
-                  {uploadingFileName && (
-                    <span className="font-medium truncate block max-w-full px-4">
-                      {uploadingFileName}
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs sm:text-sm text-primary-500">
-                  Bitte warten Sie einen Moment...
-                </p>
-              </div>
-
-              {/* Progress Bar */}
-              <div className="space-y-2">
-                <div className="w-full bg-neutral-100 rounded-full h-2 overflow-hidden">
-                  <div
-                    className="h-full bg-gradient-to-r from-brand-500 to-accent-500 rounded-full transition-all duration-300 ease-out"
-                    style={{ width: `${uploadProgress}%` }}
-                  />
-                </div>
-                <p className="text-center text-xs text-primary-500">
-                  {Math.round(uploadProgress)}% hochgeladen
-                </p>
-              </div>
-
-              {/* Info Text */}
-              <div className="text-center">
-                <p className="text-xs text-primary-500">
-                  {uploadProgress < 30 && 'Verbindung wird hergestellt...'}
-                  {uploadProgress >= 30 && uploadProgress < 60 && 'Datei wird übertragen...'}
-                  {uploadProgress >= 60 && uploadProgress < 90 && 'Fast fertig...'}
-                  {uploadProgress >= 90 && 'Verarbeitung wird vorbereitet...'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Regular Upload Area - Hidden during upload */}
+      {/* Upload Area */}
       <div
         {...getRootProps()}
         onClick={handleClick}
-        className={`upload-area ${selectedFiles.length > 0 ? 'py-6 sm:py-8' : ''} ${isDragActive ? 'dragover' : ''} ${disabled || isUploading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} ${isUploading ? 'pointer-events-none' : ''}`}
-        style={{ display: isUploading ? 'none' : 'block' }}
+        className={`upload-area ${selectedFiles.length > 0 ? 'py-6 sm:py-8' : ''} ${isDragActive ? 'dragover' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <input {...getInputProps()} ref={fileInputRef} />
 
@@ -317,7 +200,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             </p>
           </div>
 
-          {!isUploading && (
+          {selectedFiles.length === 0 && (
             <div className="flex justify-center">
               <div className="glass-effect px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl">
                 <div className="text-xs sm:text-sm text-primary-600 space-y-1 text-center">
@@ -341,7 +224,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       </div>
 
       {/* Selected Files List */}
-      {selectedFiles.length > 0 && !isUploading && (
+      {selectedFiles.length > 0 && (
         <div className="space-y-4">
           <div className="card-elevated">
             <div className="card-body">
@@ -714,10 +597,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
             <div className="pt-2">
               <button
                 onClick={() => {
-                  setQualityGateError(null);
+                  onClearQualityGateError?.();
                   setSelectedFiles([]);
                   setPrivacyAccepted(false);
-                  // Clear the file input so user must select a new file
                   if (fileInputRef.current) {
                     fileInputRef.current.value = '';
                   }
@@ -749,7 +631,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       )}
 
       {/* Success State (if needed) */}
-      {!validationError && !isUploading && selectedFiles.length === 0 && (
+      {!validationError && selectedFiles.length === 0 && (
         <div className="text-center">
           <p className="text-xs text-primary-500">
             Ihre Daten werden DSGVO-konform verarbeitet und nicht gespeichert

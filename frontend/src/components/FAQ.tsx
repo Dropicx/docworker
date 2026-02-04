@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import {
-  ChevronDown,
   Shield,
   Lock,
   Clock,
@@ -9,6 +8,12 @@ import {
   FileText,
   AlertCircle,
 } from 'lucide-react';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
 
 interface FAQItem {
   question: string;
@@ -17,21 +22,10 @@ interface FAQItem {
 }
 
 const FAQ: React.FC = () => {
-  const [openItems, setOpenItems] = useState<Set<number>>(new Set());
   const [modelConfig, setModelConfig] = useState<{
     model_mapping: Record<string, string>;
     model_descriptions: Record<string, string>;
   } | null>(null);
-
-  const toggleItem = (index: number) => {
-    const newOpenItems = new Set(openItems);
-    if (newOpenItems.has(index)) {
-      newOpenItems.delete(index);
-    } else {
-      newOpenItems.add(index);
-    }
-    setOpenItems(newOpenItems);
-  };
 
   // Load model configuration (only if authenticated)
   useEffect(() => {
@@ -160,59 +154,39 @@ const FAQ: React.FC = () => {
         </p>
       </div>
 
-      {/* FAQ Accordion */}
-      <div className="space-y-3 sm:space-y-4">
+      {/* FAQ Accordion (shadcn) */}
+      <Accordion type="multiple" className="space-y-3 sm:space-y-4">
         {faqItems.map((item, index) => {
-          const isOpen = openItems.has(index);
           const Icon = item.icon || Shield;
 
           return (
-            <div key={index} className="card-elevated overflow-hidden transition-all duration-200">
-              <button
-                onClick={() => toggleItem(index)}
-                className="w-full px-4 sm:px-6 py-4 sm:py-5 flex items-start space-x-3 sm:space-x-4 hover:bg-neutral-50 transition-colors duration-150"
-                aria-expanded={isOpen}
-                aria-controls={`faq-answer-${index}`}
-              >
-                {/* Icon */}
-                <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-brand-100 to-accent-100 rounded-lg sm:rounded-xl flex items-center justify-center">
-                  <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600" />
-                </div>
-
-                {/* Question and Arrow */}
-                <div className="flex-1 text-left">
+            <AccordionItem
+              key={index}
+              value={`item-${index}`}
+              className="bg-white rounded-xl sm:rounded-2xl shadow-soft border border-primary-100/50 overflow-hidden transition-all duration-200 hover:shadow-medium px-0 data-[state=open]:shadow-medium"
+            >
+              <AccordionTrigger className="px-4 sm:px-6 py-4 sm:py-5 hover:no-underline hover:bg-neutral-50 transition-colors duration-150 gap-3 sm:gap-4">
+                <div className="flex items-start space-x-3 sm:space-x-4 flex-1 text-left">
+                  {/* Icon */}
+                  <div className="flex-shrink-0 w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-brand-100 to-accent-100 rounded-lg sm:rounded-xl flex items-center justify-center">
+                    <Icon className="w-4 h-4 sm:w-5 sm:h-5 text-brand-600" />
+                  </div>
+                  {/* Question */}
                   <h3 className="text-sm sm:text-base lg:text-lg font-semibold text-primary-900 pr-2">
                     {item.question}
                   </h3>
                 </div>
+              </AccordionTrigger>
 
-                {/* Chevron */}
-                <div className="flex-shrink-0">
-                  <ChevronDown
-                    className={`w-5 h-5 sm:w-6 sm:h-6 text-primary-400 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180' : ''
-                    }`}
-                  />
-                </div>
-              </button>
-
-              {/* Answer */}
-              <div
-                id={`faq-answer-${index}`}
-                className={`overflow-hidden transition-all duration-300 ${
-                  isOpen ? 'max-h-96' : 'max-h-0'
-                }`}
-              >
-                <div className="px-4 sm:px-6 pb-4 sm:pb-5 pl-12 sm:pl-16 lg:pl-20">
-                  <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                    {item.answer}
-                  </p>
-                </div>
-              </div>
-            </div>
+              <AccordionContent className="px-4 sm:px-6 pb-4 sm:pb-5 pl-16 sm:pl-20 lg:pl-24">
+                <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                  {item.answer}
+                </p>
+              </AccordionContent>
+            </AccordionItem>
           );
         })}
-      </div>
+      </Accordion>
 
       {/* Bottom CTA */}
       <div className="text-center pt-4 sm:pt-6">

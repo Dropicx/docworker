@@ -1,8 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Stethoscope,
-  ChevronDown,
   User,
   Settings,
   LogOut,
@@ -11,6 +10,16 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { HealthCheck } from '../types/api';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface HeaderProps {
   health?: HealthCheck | null;
@@ -27,25 +36,6 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
-
-  const [showHealthDetails, setShowHealthDetails] = useState(false);
-
-  const healthDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdowns when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        healthDropdownRef.current &&
-        !healthDropdownRef.current.contains(event.target as Node)
-      ) {
-        setShowHealthDetails(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
   const handleLogout = async () => {
     try {
@@ -115,24 +105,23 @@ export const Header: React.FC<HeaderProps> = ({
     // Simple badge for non-admin users
     if (!isAdmin) {
       return (
-        <div
-          className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium ${
+        <Badge
+          variant="outline"
+          className={
             isHealthy
-              ? 'bg-success-50 text-success-700 ring-1 ring-success-200'
+              ? 'bg-success-50 text-success-700 border-success-200'
               : hasWarnings
-                ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200'
-                : 'bg-error-50 text-error-700 ring-1 ring-error-200'
-          }`}
+                ? 'bg-warning-50 text-warning-700 border-warning-200'
+                : 'bg-error-50 text-error-700 border-error-200'
+          }
         >
           {isHealthy ? (
-            <Shield className="w-3 h-3" />
+            <Shield className="w-3 h-3 mr-1" />
           ) : (
-            <AlertTriangle className="w-3 h-3" />
+            <AlertTriangle className="w-3 h-3 mr-1" />
           )}
-          <span>
-            {isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschrankt' : 'Systemfehler'}
-          </span>
-        </div>
+          {isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschrankt' : 'Systemfehler'}
+        </Badge>
       );
     }
 
@@ -141,81 +130,70 @@ export const Header: React.FC<HeaderProps> = ({
     const displayServices = keyServices.filter(s => health.services[s]);
 
     return (
-      <div className="relative" ref={healthDropdownRef}>
-        <button
-          onClick={() => setShowHealthDetails(!showHealthDetails)}
-          className={`flex items-center space-x-2 px-3 py-1.5 rounded-full text-xs font-medium cursor-pointer transition-all hover:shadow-md ${
-            isHealthy
-              ? 'bg-success-50 text-success-700 ring-1 ring-success-200 hover:bg-success-100'
-              : hasWarnings
-                ? 'bg-warning-50 text-warning-700 ring-1 ring-warning-200 hover:bg-warning-100'
-                : 'bg-error-50 text-error-700 ring-1 ring-error-200 hover:bg-error-100'
-          }`}
-        >
-          {isHealthy ? (
-            <Shield className="w-3 h-3" />
-          ) : (
-            <AlertTriangle className="w-3 h-3" />
-          )}
-          <span>
-            {isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschrankt' : 'Systemfehler'}
-          </span>
-          <ChevronDown
-            className={`w-3 h-3 transition-transform ${showHealthDetails ? 'rotate-180' : ''}`}
-          />
-        </button>
-
-        {showHealthDetails && (
-          <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-xl border border-neutral-200 overflow-hidden z-50 animate-fade-in">
-            <div className="px-4 py-3 bg-neutral-50 border-b border-neutral-200">
-              <h4 className="text-sm font-semibold text-neutral-800">System-Status</h4>
-              <p className="text-xs text-neutral-500">OCR & AI Services</p>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-auto px-3 py-1.5 rounded-full">
+            <Badge
+              variant="outline"
+              className={`cursor-pointer ${
+                isHealthy
+                  ? 'bg-success-50 text-success-700 border-success-200 hover:bg-success-100'
+                  : hasWarnings
+                    ? 'bg-warning-50 text-warning-700 border-warning-200 hover:bg-warning-100'
+                    : 'bg-error-50 text-error-700 border-error-200 hover:bg-error-100'
+              }`}
+            >
+              {isHealthy ? (
+                <Shield className="w-3 h-3 mr-1" />
+              ) : (
+                <AlertTriangle className="w-3 h-3 mr-1" />
+              )}
+              {isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschrankt' : 'Systemfehler'}
+            </Badge>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuLabel>
+            <div>
+              <p className="text-sm font-semibold">System-Status</p>
+              <p className="text-xs text-neutral-500 font-normal">OCR & AI Services</p>
             </div>
-            <div className="p-2">
-              {displayServices.map(serviceName => {
-                const status = health.services[serviceName];
-                return (
-                  <div
-                    key={serviceName}
-                    className="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-neutral-50"
-                  >
-                    <span className="text-sm text-neutral-700">
-                      {formatServiceName(serviceName)}
-                    </span>
-                    <div className="flex items-center space-x-2">
-                      <span className={`text-sm font-medium ${getServiceColor(status)}`}>
-                        {getServiceIcon(status)}
-                      </span>
-                      <span className="text-xs text-neutral-500">
-                        {status === 'healthy' || status === 'configured'
-                          ? 'OK'
-                          : status === 'not_configured'
-                            ? 'Nicht konfiguriert'
-                            : status.startsWith('error')
-                              ? 'Fehler'
-                              : status.includes('active')
-                                ? status.match(/\d+/)?.[0] + ' aktiv'
-                                : status}
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="px-4 py-2 bg-neutral-50 border-t border-neutral-200">
-              <p className="text-xs text-neutral-500 text-center">
-                Klicken Sie auserhalb, um zu schliesen
-              </p>
-            </div>
-          </div>
-        )}
-      </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          {displayServices.map(serviceName => {
+            const serviceStatus = health.services[serviceName];
+            return (
+              <DropdownMenuItem key={serviceName} className="flex items-center justify-between cursor-default">
+                <span className="text-sm text-neutral-700">
+                  {formatServiceName(serviceName)}
+                </span>
+                <div className="flex items-center space-x-2">
+                  <span className={`text-sm font-medium ${getServiceColor(serviceStatus)}`}>
+                    {getServiceIcon(serviceStatus)}
+                  </span>
+                  <span className="text-xs text-neutral-500">
+                    {serviceStatus === 'healthy' || serviceStatus === 'configured'
+                      ? 'OK'
+                      : serviceStatus === 'not_configured'
+                        ? 'Nicht konfiguriert'
+                        : serviceStatus.startsWith('error')
+                          ? 'Fehler'
+                          : serviceStatus.includes('active')
+                            ? serviceStatus.match(/\d+/)?.[0] + ' aktiv'
+                            : serviceStatus}
+                  </span>
+                </div>
+              </DropdownMenuItem>
+            );
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
     );
   };
 
   return (
     <header className="sticky top-0 z-50 header-blur">
-      <div className="max-w-5xl mx-auto px-3 sm:px-6 lg:px-8">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           {/* Logo */}
           <button
@@ -247,24 +225,28 @@ export const Header: React.FC<HeaderProps> = ({
                   <span className="text-sm font-medium text-brand-700 hidden sm:inline">
                     {user?.full_name || user?.email}
                   </span>
-                  <span className="text-xs text-brand-600 bg-brand-100 px-2 py-0.5 rounded-full">
+                  <Badge variant="outline" className="text-xs bg-brand-100 text-brand-600 border-brand-200">
                     {user?.role === 'admin' ? 'Admin' : 'User'}
-                  </span>
+                  </Badge>
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={handleSettingsClick}
-                  className="p-2 text-primary-600 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-all duration-200 group"
                   title="Einstellungen"
+                  className="text-primary-600 hover:text-brand-600 hover:bg-brand-50"
                 >
-                  <Settings className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                </button>
-                <button
+                  <Settings className="w-5 h-5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="icon"
                   onClick={handleLogout}
-                  className="p-2 text-primary-600 hover:text-error-600 hover:bg-error-50 rounded-lg transition-all duration-200 group"
                   title="Abmelden"
+                  className="text-primary-600 hover:text-error-600 hover:bg-error-50"
                 >
-                  <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                </button>
+                  <LogOut className="w-5 h-5" />
+                </Button>
               </div>
             )}
           </div>

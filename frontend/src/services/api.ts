@@ -127,7 +127,10 @@ api.interceptors.response.use(
 
 export class ApiService {
   // Upload document
-  static async uploadDocument(file: File): Promise<UploadResponse> {
+  static async uploadDocument(
+    file: File,
+    onProgress?: (percent: number) => void
+  ): Promise<UploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -138,6 +141,11 @@ export class ApiService {
         'Content-Type': 'multipart/form-data',
       },
       timeout: 60000, // 60 seconds timeout (upload + quality gate analysis)
+      onUploadProgress: (e) => {
+        if (e.total && onProgress) {
+          onProgress(Math.round((e.loaded * 100) / e.total));
+        }
+      },
     });
 
     return response.data;
