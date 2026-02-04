@@ -2434,6 +2434,23 @@ class AdvancedPrivacyFilter:
         lab_pattern = r"\b([0-9]+[,.]?[0-9]*[-]?OH[0-9]*[-]?[A-Z]?[0-9]*)\b"
         text = re.sub(lab_pattern, r"§LAB_\1§", text, flags=re.IGNORECASE)
 
+        # ==================== PHASE 4.3: PROTECT MEDICAL CODES ====================
+        # Must run BEFORE LABVAL protection to prevent LOINC codes like "2339-0"
+        # from being partially consumed by the term+number pattern
+        # Protect ICD-10 codes (e.g., I50.1, E11.9)
+        text = self.medical_code_patterns["icd10"].sub(lambda m: f"§ICD_{m.group()}§", text)
+
+        # Protect OPS codes (e.g., 5-470.11)
+        text = self.medical_code_patterns["ops"].sub(lambda m: f"§OPS_{m.group()}§", text)
+
+        # Protect LOINC codes (e.g., 2339-0, 718-7)
+        text = self.medical_code_patterns["loinc"].sub(lambda m: f"§LOINC_{m.group()}§", text)
+
+        # Also protect explicitly known LOINC codes
+        for loinc in self.common_loinc_codes:
+            pattern = r"\b" + re.escape(loinc) + r"\b"
+            text = re.sub(pattern, f"§LOINC_{loinc}§", text)
+
         # Schütze Laborwert-Zahlen-Kombinationen in Tabellen (z.B. "Hämoglobin 12.5")
         # Pattern: Laborwert gefolgt von Zahl und Einheit
         for term in self.medical_terms:
@@ -2455,21 +2472,6 @@ class AdvancedPrivacyFilter:
             if len(drug) > 3:  # Only longer drug names to avoid false positives
                 pattern = r"\b" + re.escape(drug) + r"\b"
                 text = re.sub(pattern, f"§DRUG_{drug.upper()}§", text, flags=re.IGNORECASE)
-
-        # ==================== PHASE 4.3: PROTECT MEDICAL CODES ====================
-        # Protect ICD-10 codes (e.g., I50.1, E11.9)
-        text = self.medical_code_patterns["icd10"].sub(lambda m: f"§ICD_{m.group()}§", text)
-
-        # Protect OPS codes (e.g., 5-470.11)
-        text = self.medical_code_patterns["ops"].sub(lambda m: f"§OPS_{m.group()}§", text)
-
-        # Protect LOINC codes (e.g., 2339-0, 718-7)
-        text = self.medical_code_patterns["loinc"].sub(lambda m: f"§LOINC_{m.group()}§", text)
-
-        # Also protect explicitly known LOINC codes
-        for loinc in self.common_loinc_codes:
-            pattern = r"\b" + re.escape(loinc) + r"\b"
-            text = re.sub(pattern, f"§LOINC_{loinc}§", text)
 
         return text
 
@@ -3060,9 +3062,13 @@ class AdvancedPrivacyFilter:
             # aber nur wenn sie nicht medizinisch sind
             def replace_name(match):
                 words = match.group(0).split()
-                # Prüfe ob eines der Wörter ein medizinischer Begriff ist
+                # Prüfe ob eines der Wörter ein medizinischer Begriff oder Eponym ist
                 for word in words:
-                    if word.lower() in self.medical_terms or "§" in word:
+                    if (
+                        word.lower() in self.medical_terms
+                        or word.lower() in self.medical_eponyms
+                        or "§" in word
+                    ):
                         return match.group(0)  # Behalte es
                 # Wenn keines medizinisch ist, könnte es ein Name sein
                 if len(words) >= 2:

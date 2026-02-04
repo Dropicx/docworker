@@ -4,8 +4,78 @@ Tests for Privacy Filter Metrics API (Issue #35 Phase 6.3)
 Tests the /api/privacy/* endpoints for monitoring and metrics.
 """
 
+from unittest.mock import patch
+
 import pytest
 from fastapi.testclient import TestClient
+
+# Mock worker responses for CI (no Celery worker available)
+MOCK_WORKER_STATUS = {
+    "filter_capabilities": {
+        "has_ner": True,
+        "spacy_model": "de_core_news_lg",
+        "removal_method": "AdvancedPrivacyFilter_Phase5",
+        "custom_terms_loaded": True,
+    },
+    "detection_stats": {
+        "pii_types_supported": [
+            "birthdate",
+            "patient_name",
+            "street_address",
+            "phone_number",
+            "email_address",
+            "tax_id",
+            "patient_id",
+            "insurance_number",
+            "iban",
+            "date_general",
+            "zip_city",
+            "doctor_name",
+            "clinic_name",
+            "age_reference",
+            "relative_reference",
+            "nationality",
+            "religion",
+        ],
+        "pii_types_count": 17,
+        "medical_terms_count": 350,
+        "drug_database_count": 120,
+        "abbreviations_count": 210,
+        "loinc_codes_count": 60,
+        "eponyms_count": 55,
+    },
+}
+
+
+def _mock_test_privacy_filter(text, timeout=30):
+    """Mock privacy filter test for CI."""
+    return {
+        "input_length": len(text),
+        "output_length": max(1, len(text) - 20),
+        "cleaned_text": "[NAME ENTFERNT] test result",
+        "processing_time_ms": 15.5,
+        "pii_types_detected": ["patient_name", "birthdate", "street_address", "phone_number"],
+        "entities_detected": 4,
+        "quality_score": 85.0,
+        "review_recommended": False,
+        "passes_performance_target": True,
+    }
+
+
+@pytest.fixture(autouse=True)
+def mock_celery_workers():
+    """Mock Celery worker calls for all privacy metrics tests."""
+    with (
+        patch(
+            "app.routers.privacy_metrics.get_privacy_filter_status_via_worker",
+            return_value=MOCK_WORKER_STATUS,
+        ),
+        patch(
+            "app.routers.privacy_metrics.test_privacy_filter_via_worker",
+            side_effect=_mock_test_privacy_filter,
+        ),
+    ):
+        yield
 
 
 class TestPrivacyMetricsEndpoints:

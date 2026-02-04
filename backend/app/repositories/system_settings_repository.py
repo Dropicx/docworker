@@ -166,7 +166,9 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
             self.db.refresh(setting)
 
             # Return with decrypted value for service layer
+            # Expunge from session to prevent auto-flush of plaintext back to DB
             if is_encrypted and encryptor.is_enabled():
+                self.db.expunge(setting)
                 setting.value = value
         else:
             # Create new
@@ -179,7 +181,9 @@ class SystemSettingsRepository(BaseRepository[SystemSettingsDB]):
             )
 
             # Return with decrypted value for service layer
+            # Expunge from session to prevent auto-flush of plaintext back to DB
             if is_encrypted and encryptor.is_enabled():
+                self.db.expunge(setting)
                 setting.value = value
 
         return setting
