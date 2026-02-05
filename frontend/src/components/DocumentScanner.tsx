@@ -1,6 +1,7 @@
 import React, { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { X, RotateCcw, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useDocumentScanner } from '../hooks/useDocumentScanner';
 import CaptureButton from './scanner/CaptureButton';
 
@@ -11,6 +12,7 @@ interface DocumentScannerProps {
 }
 
 const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, onClose }) => {
+  const { t } = useTranslation();
   const {
     phase,
     videoRef,
@@ -62,21 +64,21 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
     if (phase === 'scanning' && !opencvReady) {
       return (
         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/80 text-white backdrop-blur-sm">
-          Einfacher Modus
+          {t('scanner.simpleMode')}
         </span>
       );
     }
     if (phase === 'scanning' && autoProgress > 0) {
       return (
         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/90 text-white backdrop-blur-sm">
-          Dokument erkannt!
+          {t('scanner.documentDetected')}
         </span>
       );
     }
     if (phase === 'scanning') {
       return (
         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
-          Dokument suchen...
+          {t('scanner.searching')}
         </span>
       );
     }
@@ -96,7 +98,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
         <button
           onClick={handleClose}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white"
-          aria-label="Schließen"
+          aria-label={t('scanner.close')}
         >
           <X className="w-5 h-5" />
         </button>
@@ -111,7 +113,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
         {phase === 'initializing' && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white space-y-4">
             <Loader2 className="w-10 h-10 animate-spin text-white/80" />
-            <p className="text-sm text-white/70">Kamera wird gestartet...</p>
+            <p className="text-sm text-white/70">{t('scanner.starting')}</p>
           </div>
         )}
 
@@ -122,13 +124,13 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
               <AlertCircle className="w-8 h-8 text-red-400" />
             </div>
             <p className="text-sm text-white/80 text-center leading-relaxed">
-              {errorMessage || 'Ein Fehler ist aufgetreten.'}
+              {errorMessage || t('scanner.error')}
             </p>
             <button
               onClick={handleClose}
               className="px-6 py-2.5 bg-white/20 backdrop-blur-sm rounded-lg text-white text-sm font-medium"
             >
-              Schließen
+              {t('scanner.close')}
             </button>
           </div>
         )}
@@ -155,7 +157,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
           <div className="absolute inset-0 flex items-center justify-center bg-black">
             <img
               src={capturedImageUrl}
-              alt="Gescanntes Dokument"
+              alt={t('scanner.scannedDocument')}
               className="max-w-full max-h-full object-contain"
             />
           </div>
@@ -184,7 +186,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
               <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
                 <RotateCcw className="w-5 h-5" />
               </div>
-              <span className="text-xs">Wiederholen</span>
+              <span className="text-xs">{t('scanner.retake')}</span>
             </button>
             <button
               onClick={handleConfirm}
@@ -193,7 +195,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
               <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
                 <Check className="w-5 h-5" />
               </div>
-              <span className="text-xs">Verwenden</span>
+              <span className="text-xs">{t('scanner.use')}</span>
             </button>
           </div>
         )}

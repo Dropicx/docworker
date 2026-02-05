@@ -1,5 +1,6 @@
 import React from 'react';
 import { Loader2, ChevronDown, AlertCircle, BookOpen } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface GuidelinesIndicatorProps {
   status: 'idle' | 'loading' | 'success' | 'error' | 'not_available' | 'not_configured';
@@ -12,6 +13,8 @@ const GuidelinesIndicator: React.FC<GuidelinesIndicatorProps> = ({
   onScrollToGuidelines,
   errorMessage,
 }) => {
+  const { t } = useTranslation();
+
   // Don't show anything if not configured
   if (status === 'not_configured' || status === 'idle') {
     return null;
@@ -24,9 +27,9 @@ const GuidelinesIndicator: React.FC<GuidelinesIndicatorProps> = ({
           <div className="flex items-center space-x-2 sm:space-x-3 text-brand-600">
             <Loader2 className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" />
             <span className="hidden sm:inline text-sm font-medium">
-              Leitlinien werden geladen...
+              {t('guidelinesIndicator.loading')}
             </span>
-            <span className="sm:hidden text-xs font-medium">Laden...</span>
+            <span className="sm:hidden text-xs font-medium">{t('guidelinesIndicator.loadingShort')}</span>
           </div>
         );
 
@@ -38,9 +41,9 @@ const GuidelinesIndicator: React.FC<GuidelinesIndicatorProps> = ({
           >
             <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />
             <span className="hidden sm:inline text-sm font-medium group-hover:underline">
-              Zu den Leitlinien-Empfehlungen
+              {t('guidelinesIndicator.scrollTo')}
             </span>
-            <span className="sm:hidden text-xs font-medium">Leitlinien</span>
+            <span className="sm:hidden text-xs font-medium">{t('guidelinesIndicator.scrollToShort')}</span>
             <ChevronDown className="w-4 h-4 sm:w-5 sm:h-5 animate-bounce" />
           </button>
         );
@@ -50,10 +53,10 @@ const GuidelinesIndicator: React.FC<GuidelinesIndicatorProps> = ({
         return (
           <div
             className="flex items-center space-x-2 text-warning-600"
-            title={errorMessage || 'Leitlinien nicht verfügbar'}
+            title={errorMessage || t('guidelinesIndicator.notAvailable')}
           >
             <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5" />
-            <span className="hidden sm:inline text-xs">Leitlinien nicht verfügbar</span>
+            <span className="hidden sm:inline text-xs">{t('guidelinesIndicator.notAvailable')}</span>
           </div>
         );
 

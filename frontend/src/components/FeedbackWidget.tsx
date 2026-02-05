@@ -6,6 +6,7 @@
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import { Star, ChevronDown, ChevronUp, Send, CheckCircle, MessageSquare } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { feedbackApi } from '../services/feedbackApi';
 import type { DetailedRatings, FeedbackSubmission } from '../types/feedback';
 
@@ -29,6 +30,7 @@ const StarRating: React.FC<StarRatingProps> = ({
   required = false,
   size = 'md',
 }) => {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState<number>(0);
   const starSize = size === 'sm' ? 'w-5 h-5' : 'w-7 h-7';
 
@@ -47,7 +49,7 @@ const StarRating: React.FC<StarRatingProps> = ({
             onMouseEnter={() => setHovered(star)}
             onMouseLeave={() => setHovered(0)}
             className="focus:outline-none focus:ring-2 focus:ring-brand-500 rounded-sm transition-transform hover:scale-110"
-            aria-label={`${star} Stern${star > 1 ? 'e' : ''}`}
+            aria-label={t('feedback.starLabel', { count: star })}
           >
             <Star
               className={`${starSize} transition-colors duration-150 ${
@@ -64,6 +66,8 @@ const StarRating: React.FC<StarRatingProps> = ({
 };
 
 const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbackSubmitted }) => {
+  const { t } = useTranslation();
+
   // State
   const [overallRating, setOverallRating] = useState<number>(0);
   const [showDetails, setShowDetails] = useState<boolean>(false);
@@ -111,12 +115,12 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
   // Submit feedback
   const handleSubmit = async () => {
     if (overallRating === 0) {
-      setError('Bitte geben Sie eine Gesamtbewertung ab.');
+      setError(t('feedback.ratingRequired'));
       return;
     }
 
     if (!consentGiven) {
-      setError('Bitte stimmen Sie der Datenverwendung zu.');
+      setError(t('feedback.consentRequired'));
       return;
     }
 
@@ -147,7 +151,7 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
       // that existed BEFORE this session. isSubmitted alone prevents cleanup.
       onFeedbackSubmitted?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Feedback konnte nicht gesendet werden.');
+      setError(err instanceof Error ? err.message : t('feedback.submitError'));
     } finally {
       setIsSubmitting(false);
     }
@@ -162,9 +166,9 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
             <CheckCircle className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h4 className="font-semibold text-success-900">Feedback bereits erhalten</h4>
+            <h4 className="font-semibold text-success-900">{t('feedback.alreadyReceived')}</h4>
             <p className="text-success-700 text-sm">
-              Vielen Dank! Sie haben bereits Feedback zu dieser Übersetzung gegeben.
+              {t('feedback.alreadyReceivedDescription')}
             </p>
           </div>
         </div>
@@ -180,8 +184,8 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
           <div className="w-16 h-16 bg-gradient-to-br from-success-400 to-success-500 rounded-2xl flex items-center justify-center mx-auto shadow-soft animate-bounce-once">
             <CheckCircle className="w-8 h-8 text-white" />
           </div>
-          <h4 className="text-xl font-bold text-success-900">Vielen Dank!</h4>
-          <p className="text-success-700">Ihr Feedback hilft uns, den Service zu verbessern.</p>
+          <h4 className="text-xl font-bold text-success-900">{t('feedback.thankYou')}</h4>
+          <p className="text-success-700">{t('feedback.thankYouDescription')}</p>
         </div>
       </div>
     );
@@ -196,8 +200,8 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
             <MessageSquare className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h3 className="text-lg font-bold text-primary-900">Wie war Ihre Übersetzung?</h3>
-            <p className="text-sm text-primary-600">Ihre Meinung hilft uns, besser zu werden</p>
+            <h3 className="text-lg font-bold text-primary-900">{t('feedback.title')}</h3>
+            <p className="text-sm text-primary-600">{t('feedback.subtitle')}</p>
           </div>
         </div>
 
@@ -206,7 +210,7 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
           <StarRating
             value={overallRating}
             onChange={setOverallRating}
-            label="Gesamtbewertung"
+            label={t('feedback.overallRating')}
             required
             size="md"
           />
@@ -218,7 +222,7 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
           onClick={() => setShowDetails(!showDetails)}
           className="flex items-center justify-between w-full text-sm text-primary-600 hover:text-primary-800 transition-colors"
         >
-          <span className="font-medium">Detailbewertung (optional)</span>
+          <span className="font-medium">{t('feedback.detailedOptional')}</span>
           {showDetails ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
         </button>
 
@@ -228,25 +232,25 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
             <StarRating
               value={detailedRatings.clarity || 0}
               onChange={v => handleDetailedRating('clarity', v)}
-              label="Verständlichkeit"
+              label={t('feedback.clarity')}
               size="sm"
             />
             <StarRating
               value={detailedRatings.accuracy || 0}
               onChange={v => handleDetailedRating('accuracy', v)}
-              label="Genauigkeit"
+              label={t('feedback.accuracy')}
               size="sm"
             />
             <StarRating
               value={detailedRatings.formatting || 0}
               onChange={v => handleDetailedRating('formatting', v)}
-              label="Formatierung"
+              label={t('feedback.formatting')}
               size="sm"
             />
             <StarRating
               value={detailedRatings.speed || 0}
               onChange={v => handleDetailedRating('speed', v)}
-              label="Geschwindigkeit"
+              label={t('feedback.speed')}
               size="sm"
             />
           </div>
@@ -255,12 +259,12 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
         {/* Comment */}
         <div>
           <label className="block text-sm font-medium text-primary-700 mb-2">
-            Kommentar (optional)
+            {t('feedback.commentOptional')}
           </label>
           <textarea
             value={comment}
             onChange={e => setComment(e.target.value)}
-            placeholder="Teilen Sie uns Ihre Gedanken mit..."
+            placeholder={t('feedback.commentPlaceholder')}
             className="w-full px-4 py-3 border border-neutral-200 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 resize-none transition-all"
             rows={3}
             maxLength={1000}
@@ -278,7 +282,7 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
               className="mt-1 w-5 h-5 text-brand-600 border-neutral-300 rounded focus:ring-brand-500 cursor-pointer"
             />
             <span className="text-sm text-primary-700">
-              Ich stimme zu, dass meine Daten zur Verbesserung des Systems verwendet werden dürfen.
+              {t('feedback.consent')}
               <span className="text-error-500 ml-1">*</span>
             </span>
           </label>
@@ -300,19 +304,19 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
           {isSubmitting ? (
             <>
               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              <span>Wird gesendet...</span>
+              <span>{t('feedback.submitting')}</span>
             </>
           ) : (
             <>
               <Send className="w-5 h-5 transition-transform group-hover:translate-x-1" />
-              <span>Feedback senden</span>
+              <span>{t('feedback.submit')}</span>
             </>
           )}
         </button>
 
         {/* Privacy Note */}
         <p className="text-xs text-primary-500 text-center">
-          Ohne Zustimmung werden Ihre Dokumentinhalte nicht gespeichert.
+          {t('feedback.privacyNote')}
         </p>
       </div>
     </div>

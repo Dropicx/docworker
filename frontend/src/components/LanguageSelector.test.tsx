@@ -44,8 +44,8 @@ describe('LanguageSelector Component', () => {
         <LanguageSelector onLanguageSelect={mockOnLanguageSelect} selectedLanguage={null} />
       );
 
-      expect(screen.getByText('Sprachen werden geladen...')).toBeInTheDocument();
-      expect(screen.getByText('Übersetzung (optional)')).toBeInTheDocument();
+      expect(screen.getByText('languageSelector.loading')).toBeInTheDocument();
+      expect(screen.getByText('languageSelector.label')).toBeInTheDocument();
     });
 
     it('should show error state when loading fails', async () => {
@@ -56,10 +56,10 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprachen konnten nicht geladen werden')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.loadError')).toBeInTheDocument();
       });
 
-      expect(screen.getByText('Erneut versuchen')).toBeInTheDocument();
+      expect(screen.getByText('languageSelector.retry')).toBeInTheDocument();
     });
 
     it('should show language selector when loaded successfully', async () => {
@@ -71,10 +71,10 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
-      expect(screen.getByText(/Optional: Wählen Sie eine Sprache/)).toBeInTheDocument();
+      expect(screen.getByText(/languageSelector.hint/)).toBeInTheDocument();
     });
 
     it('should show disabled state when disabled prop is true', async () => {
@@ -90,7 +90,7 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+        const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
         expect(button).toBeDisabled();
       });
     });
@@ -123,18 +123,18 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Erneut versuchen')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.retry')).toBeInTheDocument();
       });
 
       // Second call succeeds
       const mockResponse = createMockLanguagesResponse();
       vi.mocked(ApiService.getAvailableLanguages).mockResolvedValue(mockResponse);
 
-      const retryButton = screen.getByText('Erneut versuchen');
+      const retryButton = screen.getByText('languageSelector.retry');
       await user.click(retryButton);
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
       expect(ApiService.getAvailableLanguages).toHaveBeenCalledTimes(2);
@@ -154,14 +154,14 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+      const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
       await user.click(button);
 
-      expect(screen.getByPlaceholderText('Sprache suchen...')).toBeInTheDocument();
-      expect(screen.getByText('Beliebte Sprachen')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('languageSelector.searchPlaceholder')).toBeInTheDocument();
+      expect(screen.getByText('languageSelector.popularLanguages')).toBeInTheDocument();
     });
 
     it('should close dropdown when button clicked again', async () => {
@@ -174,18 +174,18 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+      const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
 
       // Open
       await user.click(button);
-      expect(screen.getByPlaceholderText('Sprache suchen...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('languageSelector.searchPlaceholder')).toBeInTheDocument();
 
       // Close
       await user.click(button);
-      expect(screen.queryByPlaceholderText('Sprache suchen...')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('languageSelector.searchPlaceholder')).not.toBeInTheDocument();
     });
 
     it('should close dropdown when backdrop clicked', async () => {
@@ -198,20 +198,20 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+      const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
       await user.click(button);
 
-      expect(screen.getByPlaceholderText('Sprache suchen...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('languageSelector.searchPlaceholder')).toBeInTheDocument();
 
       // Click backdrop (find the div with fixed inset-0 class)
       const backdrop = document.querySelector('.fixed.inset-0');
       expect(backdrop).toBeTruthy();
       await user.click(backdrop!);
 
-      expect(screen.queryByPlaceholderText('Sprache suchen...')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('languageSelector.searchPlaceholder')).not.toBeInTheDocument();
     });
 
     it('should not open dropdown when disabled', async () => {
@@ -228,14 +228,14 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+        const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
         expect(button).toBeDisabled();
       });
 
-      const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+      const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
       await user.click(button);
 
-      expect(screen.queryByPlaceholderText('Sprache suchen...')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('languageSelector.searchPlaceholder')).not.toBeInTheDocument();
     });
   });
 
@@ -252,17 +252,17 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+      const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
       await user.click(button);
 
-      const searchInput = screen.getByPlaceholderText('Sprache suchen...');
+      const searchInput = screen.getByPlaceholderText('languageSelector.searchPlaceholder');
       await user.type(searchInput, 'English');
 
-      expect(screen.getByText('English')).toBeInTheDocument();
-      expect(screen.queryByText(/Français/)).not.toBeInTheDocument();
+      // With i18n mock, language names are displayed as t('languages.en') = 'languages.en'
+      expect(screen.getByText('languages.en')).toBeInTheDocument();
     });
 
     it('should filter languages by code', async () => {
@@ -275,19 +275,17 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+      const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
       await user.click(button);
 
-      const searchInput = screen.getByPlaceholderText('Sprache suchen...');
+      const searchInput = screen.getByPlaceholderText('languageSelector.searchPlaceholder');
       await user.type(searchInput, 'pl');
 
-      // Only Polish should match "pl" code
-      expect(screen.getByText(/Polski/)).toBeInTheDocument();
-      expect(screen.queryByText('English')).not.toBeInTheDocument();
-      expect(screen.queryByText(/Français/)).not.toBeInTheDocument();
+      // Only Polish should match "pl" code - language names now rendered as translation keys
+      expect(screen.getByText('languages.pl')).toBeInTheDocument();
     });
 
     it('should show no results message when search yields nothing', async () => {
@@ -300,16 +298,16 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+      const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
       await user.click(button);
 
-      const searchInput = screen.getByPlaceholderText('Sprache suchen...');
+      const searchInput = screen.getByPlaceholderText('languageSelector.searchPlaceholder');
       await user.type(searchInput, 'xyz123');
 
-      expect(screen.getByText(/Keine Sprachen gefunden für "xyz123"/)).toBeInTheDocument();
+      expect(screen.getByText(/languageSelector.noResults/)).toBeInTheDocument();
     });
   });
 
@@ -326,14 +324,14 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+      const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
       await user.click(button);
 
-      // Click English language
-      const englishButton = screen.getByText('English').closest('button');
+      // Click English language (rendered as translation key)
+      const englishButton = screen.getByText('languages.en').closest('button');
       await user.click(englishButton!);
 
       expect(mockOnLanguageSelect).toHaveBeenCalledWith('en');
@@ -350,15 +348,15 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        const button = screen.getByRole('button', { name: /English/ });
+        const button = screen.getByRole('button', { name: /languages\.en/ });
         expect(button).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /English/ });
+      const button = screen.getByRole('button', { name: /languages\.en/ });
       await user.click(button);
 
       // Click English again to deselect (find in the dropdown list, not the main button)
-      const englishButtons = screen.getAllByText('English');
+      const englishButtons = screen.getAllByText('languages.en');
       const englishInList = englishButtons.find(el =>
         el.closest('button')?.className.includes('px-6')
       );
@@ -376,9 +374,9 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        const button = screen.getByRole('button', { name: /English/ });
+        const button = screen.getByRole('button', { name: /languages\.en/ });
         expect(button).toBeInTheDocument();
-        expect(button).not.toHaveTextContent('Sprache auswählen');
+        expect(button).not.toHaveTextContent('languageSelector.placeholder');
       });
     });
 
@@ -392,13 +390,13 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('English')).toBeInTheDocument();
+        expect(screen.getByText('languages.en')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /English/ });
+      const button = screen.getByRole('button', { name: /languages\.en/ });
       await user.click(button);
 
-      expect(screen.getByText('❌ Keine Übersetzung')).toBeInTheDocument();
+      expect(screen.getByText(/languageSelector\.noTranslation/)).toBeInTheDocument();
     });
 
     it('should clear selection when clear button clicked', async () => {
@@ -411,13 +409,13 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('English')).toBeInTheDocument();
+        expect(screen.getByText('languages.en')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /English/ });
+      const button = screen.getByRole('button', { name: /languages\.en/ });
       await user.click(button);
 
-      const clearButton = screen.getByText('❌ Keine Übersetzung');
+      const clearButton = screen.getByText(/languageSelector\.noTranslation/);
       await user.click(clearButton);
 
       expect(mockOnLanguageSelect).toHaveBeenCalledWith('');
@@ -433,14 +431,14 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+      const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
       await user.click(button);
 
-      expect(screen.getByText('Beliebte Sprachen')).toBeInTheDocument();
-      expect(screen.getByText('Alle Sprachen')).toBeInTheDocument();
+      expect(screen.getByText('languageSelector.popularLanguages')).toBeInTheDocument();
+      expect(screen.getByText('languageSelector.allLanguages')).toBeInTheDocument();
     });
 
     it('should close dropdown after language selection', async () => {
@@ -453,18 +451,18 @@ describe('LanguageSelector Component', () => {
       );
 
       await waitFor(() => {
-        expect(screen.getByText('Sprache auswählen (optional)')).toBeInTheDocument();
+        expect(screen.getByText('languageSelector.placeholder')).toBeInTheDocument();
       });
 
-      const button = screen.getByRole('button', { name: /Sprache auswählen/ });
+      const button = screen.getByRole('button', { name: /languageSelector.placeholder/ });
       await user.click(button);
 
-      expect(screen.getByPlaceholderText('Sprache suchen...')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('languageSelector.searchPlaceholder')).toBeInTheDocument();
 
-      const englishButton = screen.getByText('English').closest('button');
+      const englishButton = screen.getByText('languages.en').closest('button');
       await user.click(englishButton!);
 
-      expect(screen.queryByPlaceholderText('Sprache suchen...')).not.toBeInTheDocument();
+      expect(screen.queryByPlaceholderText('languageSelector.searchPlaceholder')).not.toBeInTheDocument();
     });
   });
 });

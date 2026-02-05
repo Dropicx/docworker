@@ -5,6 +5,30 @@ import * as matchers from '@testing-library/jest-dom/matchers';
 // Extend Vitest's expect with jest-dom matchers
 expect.extend(matchers);
 
+// Mock react-i18next globally for all tests
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, opts?: Record<string, unknown>) => {
+      // Handle interpolation: replace {{var}} with the value
+      if (opts) {
+        let result = key;
+        for (const [k, v] of Object.entries(opts)) {
+          if (k === 'returnObjects') continue;
+          result = result.replace(`{{${k}}}`, String(v ?? ''));
+        }
+        return result;
+      }
+      return key;
+    },
+    i18n: {
+      language: 'de',
+      changeLanguage: vi.fn(),
+    },
+  }),
+  Trans: ({ children }: { children: React.ReactNode }) => children,
+  initReactI18next: { type: '3rdParty', init: () => {} },
+}));
+
 // Cleanup after each test
 afterEach(() => {
   cleanup();

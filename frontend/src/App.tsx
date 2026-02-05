@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Shield, AlertTriangle, Sparkles, FileText, Zap } from 'lucide-react';
 import { Card, CardHeader, CardContent } from './components/ui/card';
 import { Button } from './components/ui/button';
@@ -161,6 +162,7 @@ function App() {
   };
 
   const MainApp = () => {
+    const { t } = useTranslation();
     return (
       <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
         <Header health={health} onLogoClick={handleNewTranslation} />
@@ -176,7 +178,7 @@ function App() {
               <div className="animate-fade-in max-w-5xl mx-auto">
                 {errorMetadata?.isTermination ? (
                   <TerminationCard
-                    message={error || 'Verarbeitung wurde gestoppt'}
+                    message={error || t('error.processingStopped')}
                     reason={errorMetadata.reason as string | undefined}
                     step={errorMetadata.step as string | undefined}
                     onReset={handleNewTranslation}
@@ -190,12 +192,12 @@ function App() {
                         </div>
                         <div className="flex-1">
                           <h3 className="text-xl font-bold text-error-900 mb-2">
-                            Verarbeitung fehlgeschlagen
+                            {t('error.processingFailed')}
                           </h3>
                           <p className="text-error-700 mb-6 leading-relaxed">{error}</p>
                           <Button variant="brand" onClick={handleNewTranslation}>
                             <Sparkles className="w-4 h-4" />
-                            Neuen Versuch starten
+                            {t('error.retry')}
                           </Button>
                         </div>
                       </div>
@@ -213,31 +215,30 @@ function App() {
                   {/* Left: Heading + trust badges */}
                   <div className="lg:w-[55%] text-center lg:text-left space-y-5 sm:space-y-6 mb-8 lg:mb-0">
                     <h2 className="text-hero bg-gradient-to-r from-primary-900 via-brand-700 to-accent-700 bg-clip-text text-transparent px-2 lg:px-0">
-                      Medizinische Dokumente
+                      {t('hero.title1')}
                       <br className="hidden sm:block" />
                       <span className="sm:hidden"> </span>
                       <span className="bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">
-                        einfach verstehen
+                        {t('hero.title2')}
                       </span>
                     </h2>
                     <p className="text-lead max-w-xl mx-auto lg:mx-0 px-4 sm:px-0">
-                      Verwandeln Sie komplexe Arztbriefe und medizinische Befunde in verständliche
-                      Sprache. Schnell, sicher und DSGVO-konform.
+                      {t('hero.description')}
                     </p>
 
                     {/* Trust badges */}
                     <div className="flex flex-col sm:flex-row justify-center lg:justify-start items-center sm:items-start gap-2 sm:gap-6 text-xs sm:text-sm">
                       <div className="flex items-center space-x-2 text-primary-600">
                         <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                        <span className="font-medium">100% DSGVO</span>
+                        <span className="font-medium">{t('hero.gdpr')}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-primary-600">
                         <div className="w-2 h-2 bg-accent-500 rounded-full"></div>
-                        <span className="font-medium">Sofort bereit</span>
+                        <span className="font-medium">{t('hero.ready')}</span>
                       </div>
                       <div className="flex items-center space-x-2 text-primary-600">
                         <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                        <span className="font-medium">Keine Speicherung</span>
+                        <span className="font-medium">{t('hero.noStorage')}</span>
                       </div>
                     </div>
                   </div>
@@ -265,11 +266,10 @@ function App() {
                     </CardHeader>
                     <CardContent>
                       <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                        Datenschutz first
+                        {t('features.privacyTitle')}
                       </h3>
                       <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                        Keine Speicherung Ihrer Daten. Alle Informationen werden nach der
-                        Übersetzung automatisch gelöscht.
+                        {t('features.privacyDescription')}
                       </p>
                     </CardContent>
                   </Card>
@@ -282,11 +282,10 @@ function App() {
                     </CardHeader>
                     <CardContent>
                       <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                        Medizinisch präzise
+                        {t('features.precisionTitle')}
                       </h3>
                       <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                        Speziell für medizinische Fachbegriffe und Dokumente entwickelt. Präzise
-                        Übersetzungen ohne Informationsverlust.
+                        {t('features.precisionDescription')}
                       </p>
                     </CardContent>
                   </Card>
@@ -299,11 +298,10 @@ function App() {
                     </CardHeader>
                     <CardContent>
                       <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                        Blitzschnell
+                        {t('features.speedTitle')}
                       </h3>
                       <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                        Erhalten Sie in wenigen Sekunden eine verständliche Übersetzung Ihrer
-                        medizinischen Dokumente.
+                        {t('features.speedDescription')}
                       </p>
                     </CardContent>
                   </Card>

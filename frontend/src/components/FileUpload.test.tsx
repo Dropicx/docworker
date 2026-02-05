@@ -91,7 +91,7 @@ describe('FileUpload Component', () => {
     it('should render upload area', () => {
       renderWithRouter(<FileUpload {...defaultProps} />);
 
-      expect(screen.getByText('Dokumente hochladen')).toBeInTheDocument();
+      expect(screen.getByText('upload.title')).toBeInTheDocument();
     });
 
     it('should render with disabled state', () => {
@@ -124,7 +124,7 @@ describe('FileUpload Component', () => {
       simulateFileDrop(files);
 
       await waitFor(() => {
-        expect(screen.getByText('Ausgewählte Dateien (2)')).toBeInTheDocument();
+        expect(screen.getByText('upload.selectedFiles')).toBeInTheDocument();
       });
     });
 
@@ -137,14 +137,14 @@ describe('FileUpload Component', () => {
       simulateFileDrop(files);
 
       await waitFor(() => {
-        expect(screen.getByText('Ausgewählte Dateien (1)')).toBeInTheDocument();
+        expect(screen.getByText('upload.selectedFiles')).toBeInTheDocument();
       });
 
-      const clearButton = screen.getByText('Alle entfernen');
+      const clearButton = screen.getByText('upload.removeAll');
       await user.click(clearButton);
 
       await waitFor(() => {
-        expect(screen.queryByText('Ausgewählte Dateien')).not.toBeInTheDocument();
+        expect(screen.queryByText('upload.selectedFiles')).not.toBeInTheDocument();
       });
     });
   });
@@ -208,7 +208,7 @@ describe('FileUpload Component', () => {
       simulateFileDrop([file]);
 
       await waitFor(() => {
-        expect(screen.getByText(/Ich habe die/)).toBeInTheDocument();
+        expect(screen.getByText(/upload\.privacyConsentPrefix/)).toBeInTheDocument();
       });
     });
 
@@ -219,7 +219,7 @@ describe('FileUpload Component', () => {
       simulateFileDrop([file]);
 
       await waitFor(() => {
-        const submitButton = screen.getByRole('button', { name: /Verarbeitung starten/ });
+        const submitButton = screen.getByRole('button', { name: /upload.startProcessing/ });
         expect(submitButton).toBeDisabled();
       });
     });
@@ -240,7 +240,7 @@ describe('FileUpload Component', () => {
       const checkbox = screen.getByRole('checkbox');
       await user.click(checkbox);
 
-      const submitButton = screen.getByRole('button', { name: /Verarbeitung starten/ });
+      const submitButton = screen.getByRole('button', { name: /upload.startProcessing/ });
       expect(submitButton).toBeEnabled();
     });
   });
@@ -264,7 +264,7 @@ describe('FileUpload Component', () => {
       const checkbox = screen.getByRole('checkbox');
       await user.click(checkbox);
 
-      const submitButton = screen.getByRole('button', { name: /Verarbeitung starten/ });
+      const submitButton = screen.getByRole('button', { name: /upload.startProcessing/ });
       await user.click(submitButton);
 
       await waitFor(() => {
@@ -288,7 +288,7 @@ describe('FileUpload Component', () => {
       const checkbox = screen.getByRole('checkbox');
       await user.click(checkbox);
 
-      const submitButton = screen.getByRole('button', { name: /Verarbeitung starten/ });
+      const submitButton = screen.getByRole('button', { name: /upload.startProcessing/ });
       await user.click(submitButton);
 
       await waitFor(() => {
@@ -303,7 +303,7 @@ describe('FileUpload Component', () => {
       simulateFileDrop([file]);
 
       await waitFor(() => {
-        const submitButton = screen.getByRole('button', { name: /Verarbeitung starten/ });
+        const submitButton = screen.getByRole('button', { name: /upload.startProcessing/ });
         expect(submitButton).toBeDisabled();
       });
 

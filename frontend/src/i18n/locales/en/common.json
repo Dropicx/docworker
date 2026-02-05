@@ -1,0 +1,373 @@
+{
+  "header": {
+    "subtitle": "Understand documents",
+    "systemReady": "System ready",
+    "systemDegraded": "Degraded",
+    "systemError": "System error",
+    "systemStatus": "System Status",
+    "ocrAndAi": "OCR & AI Services",
+    "notConfigured": "Not configured",
+    "error": "Error",
+    "active": "active",
+    "settings": "Settings",
+    "logout": "Log out",
+    "filesystem": "Filesystem",
+    "imageProcessing": "Image processing",
+    "pdfProcessing": "PDF processing"
+  },
+  "hero": {
+    "title1": "Medical Documents",
+    "title2": "made simple",
+    "description": "Transform complex medical letters and reports into easy-to-understand language. Fast, secure and GDPR-compliant.",
+    "gdpr": "100% GDPR",
+    "ready": "Instant access",
+    "noStorage": "No data storage"
+  },
+  "features": {
+    "privacyTitle": "Privacy first",
+    "privacyDescription": "No storage of your data. All information is automatically deleted after translation.",
+    "precisionTitle": "Medically precise",
+    "precisionDescription": "Specifically developed for medical terminology and documents. Precise translations without information loss.",
+    "speedTitle": "Lightning fast",
+    "speedDescription": "Receive an easy-to-understand translation of your medical documents in seconds."
+  },
+  "upload": {
+    "title": "Upload documents",
+    "titleDragActive": "Drop files here",
+    "titleAddMore": "Add more files",
+    "descriptionDragActive": "Release the files to add them",
+    "descriptionAddMore": "Drag more files here or tap to select",
+    "description": "Drag files here or tap to select",
+    "supportedFormats": "Supported formats",
+    "maxSize": "Max. 50 MB",
+    "scanDocument": "Scan document",
+    "selectedFiles": "Selected files ({{count}})",
+    "removeAll": "Remove all",
+    "translationOptional": "Translation (optional)",
+    "simplifyOnly": "Simplify only",
+    "moreLanguages": "More languages",
+    "more": "More",
+    "searchLanguage": "Search language...",
+    "noLanguagesFound": "No languages found for \"{{term}}\"",
+    "languagesAvailable": "{{count}} languages available",
+    "selected": "Selected:",
+    "translationHintSelected": "The document will first be simplified and then translated into the selected language.",
+    "translationHintOptional": "Optional: Select a language to additionally translate the simplified result.",
+    "privacyConfirmed": "Privacy confirmed",
+    "pleaseConfirm": "Please confirm",
+    "privacyConsentPrefix": "I have read the",
+    "privacyPolicy": "Privacy Policy",
+    "privacyConsentSuffix": "and agree to the processing of my documents. I understand that my data will be processed in compliance with GDPR and automatically deleted after translation.",
+    "startProcessing": "Start processing",
+    "gdprNotice": "Your data is processed GDPR-compliant and not stored",
+    "uploadFailed": "Upload failed"
+  },
+  "qualityGate": {
+    "title": "Image quality too low",
+    "description": "The quality of your document is too low for reliable processing.",
+    "qualityScore": "Quality score:",
+    "required": "required",
+    "detectedIssues": "Detected issues:",
+    "improvementTips": "How to improve quality:",
+    "retakePhoto": "Take a new photo",
+    "issues": {
+      "poor_image_quality": "Poor image quality",
+      "significant_blur_detected": "Significant blur detected",
+      "low_blur_detection": "Blurry image",
+      "low_contrast": "Low contrast",
+      "poor_lighting": "Poor lighting",
+      "document_too_small": "Document too small",
+      "text_density_low": "Too little text recognizable",
+      "has_blur": "Image is blurry",
+      "has_low_contrast": "Contrast is too low"
+    }
+  },
+  "processing": {
+    "uploading": "Uploading file",
+    "starting": "Starting processing...",
+    "pleaseWait": "Please wait a moment",
+    "cancel": "Cancel",
+    "ready": "Ready",
+    "connecting": "Establishing connection...",
+    "transferring": "Transferring file...",
+    "almostDone": "Almost done...",
+    "qualityCheck": "Quality check...",
+    "preparing": "Preparing processing...",
+    "aiProcessing": "AI Processing",
+    "analyzing": "Your document is being analyzed and translated",
+    "cancelProcessing": "Cancel processing",
+    "connectionLabel": "Connecting...",
+    "activeLabel": "Active",
+    "progress": "Progress",
+    "processingFor": "Processing for {{time}}",
+    "stepsTitle": "Processing steps",
+    "processingId": "Processing ID:",
+    "completed": "Translation complete!",
+    "completedDescription": "Your document has been successfully translated into easy-to-understand language. Loading results...",
+    "uploadFailed": "Upload failed",
+    "timeoutError": "The server connection is taking longer than expected. Please check your internet connection and try again.",
+    "processingFailed": "Processing failed",
+    "steps": {
+      "ocr": "Extract text (OCR)",
+      "validation": "Medical validation",
+      "privacy": "Privacy filter",
+      "simplification": "AI simplification",
+      "quality": "Quality check",
+      "finalization": "Finalization"
+    },
+    "stepMessages": {
+      "extracting_text": [
+        "Scanning document...",
+        "Recognizing characters...",
+        "Analyzing text structure..."
+      ],
+      "translating": [
+        "Identifying medical terms...",
+        "Translating into plain language...",
+        "Checking coherence..."
+      ],
+      "language_translating": [
+        "Optimizing translation...",
+        "Checking grammar...",
+        "Adjusting formatting..."
+      ]
+    }
+  },
+  "result": {
+    "title": "Translation complete",
+    "descriptionWithLanguage": "Your document has been simplified and translated",
+    "descriptionSimplified": "Your document has been translated into easy-to-understand language",
+    "guidelines": {
+      "title": "Medical Guidelines",
+      "searching": "Searching for matching AWMF recommendations...",
+      "appearBelow": "Results will appear below on this page",
+      "found": "Guidelines found",
+      "available": "Relevant AWMF recommendations available",
+      "viewNow": "View now",
+      "notFound": "No matching guidelines",
+      "notFoundDescription": "No AWMF recommendations found for this document type"
+    },
+    "targetLanguage": "Target language",
+    "tabSimplified": "Simplified (German)",
+    "translationTitle": "Translation ({{lang}})",
+    "documentIn": "Your document in {{lang}}",
+    "createdAt": "Translation created on:",
+    "tagline": "HealthLingo - Understanding medical documents",
+    "processedIn": "Processed in",
+    "processingId": "Processing ID:",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "downloadPdf": "As PDF",
+    "originalText": "Original text",
+    "show": "Show",
+    "hide": "Hide",
+    "showOriginalHint": "Click \"Show\" to see the original text",
+    "newTranslation": "Translate new document",
+    "pdfExportFailed": "PDF export failed. Please try again.",
+    "pdfTitleTranslation": "Translation ({{lang}})",
+    "pdfTitleSimplified": "Plain language translation"
+  },
+  "disclaimer": {
+    "title": "Important notice",
+    "text": "This translation was automatically generated and is for informational purposes only. It does not replace professional medical advice, diagnosis, or treatment. Always consult your doctor or other qualified healthcare providers with any questions."
+  },
+  "scanner": {
+    "simpleMode": "Simple mode",
+    "documentDetected": "Document detected!",
+    "searching": "Searching for document...",
+    "close": "Close",
+    "starting": "Starting camera...",
+    "error": "An error occurred.",
+    "scannedDocument": "Scanned document",
+    "retake": "Retake",
+    "use": "Use"
+  },
+  "feedback": {
+    "title": "How was your translation?",
+    "subtitle": "Your opinion helps us improve",
+    "overallRating": "Overall rating",
+    "detailedOptional": "Detailed rating (optional)",
+    "clarity": "Clarity",
+    "accuracy": "Accuracy",
+    "formatting": "Formatting",
+    "speed": "Speed",
+    "commentOptional": "Comment (optional)",
+    "commentPlaceholder": "Share your thoughts with us...",
+    "consent": "I agree that my data may be used to improve the system.",
+    "ratingRequired": "Please provide an overall rating.",
+    "consentRequired": "Please agree to the data usage.",
+    "submitError": "Feedback could not be sent.",
+    "submitting": "Sending...",
+    "submit": "Send feedback",
+    "privacyNote": "Without consent, your document contents will not be stored.",
+    "alreadyReceived": "Feedback already received",
+    "alreadyReceivedDescription": "Thank you! You have already provided feedback for this translation.",
+    "thankYou": "Thank you!",
+    "thankYouDescription": "Your feedback helps us improve the service.",
+    "starLabel": "{{count}} star",
+    "starLabel_plural": "{{count}} stars"
+  },
+  "faq": {
+    "title": "Frequently Asked Questions",
+    "subtitle": "Everything you need to know about HealthLingo and the secure processing of your medical documents",
+    "contactUs": "Have more questions?",
+    "contactLink": "Contact us",
+    "items": {
+      "0": {
+        "question": "Where is my data processed and how secure is it?",
+        "answer": "HealthLingo is hosted on Railway.app, a SOC 2 Type I certified provider with full GDPR compliance. Servers are located in the EU and Railway offers a Data Processing Agreement (DPA) per GDPR Article 28. AI processing is done via OVH AI Endpoints in European data centers (ISO 27001, 27017, 27018, 27701 certified). OVH guarantees that your data is NEVER used for AI model training - all requests are anonymized and deleted immediately after processing."
+      },
+      "1": {
+        "question": "Is my medical data stored or used for AI training?",
+        "answer": "No, absolutely not. HealthLingo does not permanently store any data. OVH AI Endpoints has a strict no-training policy: customer data is never stored or used for model training. After translation, all documents, texts and personal information are automatically and irreversibly deleted. The AI models do NOT learn from your data - each request is isolated and leaves no trace."
+      },
+      "2": {
+        "question": "How long does the translation take?",
+        "answer": "Most documents are translated within 10-30 seconds. The exact duration depends on the length and complexity of the document. Scanned documents may take slightly longer as they first need to be processed via OCR (text recognition)."
+      },
+      "3": {
+        "question": "Which file formats are supported?",
+        "answer": "HealthLingo supports PDF files (both with embedded text and scanned documents) as well as image files (JPG, PNG, JPEG). The maximum file size is 10 MB. Multi-page documents are fully processed."
+      },
+      "4": {
+        "question": "Which languages can be translated to?",
+        "answer": "In addition to simplification into understandable German, we support translations into 19 carefully selected languages optimally supported by {{model}}: English, French, Spanish, Italian, Portuguese, Dutch, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Polish, Czech, Swedish, Norwegian and Danish. Translation always follows a two-step process: first simplification, then precise translation."
+      },
+      "5": {
+        "question": "What happens to personal data in the document?",
+        "answer": "Personal data such as names, addresses, dates of birth and insurance numbers are automatically detected and replaced with placeholders (e.g. [NAME REMOVED]). This protects your privacy while all medical information is fully preserved. Anonymization happens locally before data is sent to the AI endpoints."
+      },
+      "6": {
+        "question": "What security certifications do the services used have?",
+        "answer": "Railway.app is SOC 2 Type I certified (Type II following in 2025) and offers GDPR-compliant Data Processing Agreements. OVH Cloud holds comprehensive certifications: ISO/IEC 27001 (information security), ISO/IEC 27017 (cloud security), ISO/IEC 27018 (privacy in the cloud) and ISO/IEC 27701 (privacy management). Both providers are subject to European law and guarantee that your data does not leave the EU."
+      },
+      "7": {
+        "question": "Is the translation medically accurate?",
+        "answer": "HealthLingo uses advanced AI technology specifically trained for medical texts. The translations are very precise but do not replace professional medical advice. For important medical decisions, you should always consult your doctor."
+      },
+      "8": {
+        "question": "Can I download the translation?",
+        "answer": "Yes, you can download the translated version as a PDF file. The PDF contains the complete translation in a readable format with date and timestamp. You can also copy the text directly to the clipboard."
+      },
+      "9": {
+        "question": "Does HealthLingo work with scanned documents?",
+        "answer": "Yes! HealthLingo has advanced text recognition (OCR) with special optimization for German medical documents. Even handwritten notes, tables and poorly scanned documents are reliably recognized and processed."
+      },
+      "10": {
+        "question": "Is the service really free?",
+        "answer": "Yes, HealthLingo is completely free to use. There are no hidden costs, no registration and no limit on the number of translations. Our goal is to make medical information accessible to everyone."
+      }
+    }
+  },
+  "footer": {
+    "impressum": "Legal Notice",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Use",
+    "admin": "Admin",
+    "copyright": "HealthLingo. All rights reserved.",
+    "madeIn": "Made with {{heart}} in Germany"
+  },
+  "cookieFree": {
+    "title": "No Cookies!",
+    "description": "HealthLingo does not use cookies and does not store any tracking data.",
+    "closeBanner": "Close banner"
+  },
+  "termination": {
+    "title": "Processing stopped",
+    "technicalDetails": "Technical details",
+    "step": "Step:",
+    "reason": "Reason:",
+    "uploadNew": "Upload new document",
+    "hint": "Note",
+    "hintText": "This tool is specifically designed for medical documents, such as:",
+    "doctorLetters": "Doctor's letters and discharge summaries",
+    "reports": "Medical reports and diagnoses",
+    "labResults": "Lab results and test results"
+  },
+  "guidelinesSection": {
+    "title": "Guideline Recommendations",
+    "subtitle": "Based on AWMF guidelines",
+    "notAvailable": "Guideline recommendations not available",
+    "notAvailableDefault": "The AWMF guidelines could not be retrieved.",
+    "retry": "Try again",
+    "sources": "Sources used",
+    "documentFallback": "Document {{index}}",
+    "disclaimer": "These recommendations are based on official German treatment guidelines (AWMF) and are for informational purposes only. They do not replace a personal consultation with your doctor."
+  },
+  "guidelinesIndicator": {
+    "loading": "Loading guidelines...",
+    "loadingShort": "Loading...",
+    "scrollTo": "Go to guideline recommendations",
+    "scrollToShort": "Guidelines",
+    "notAvailable": "Guidelines not available"
+  },
+  "languageSelector": {
+    "label": "Translation (optional)",
+    "loading": "Loading languages...",
+    "loadError": "Languages could not be loaded",
+    "retry": "Try again",
+    "placeholder": "Select language (optional)",
+    "searchPlaceholder": "Search language...",
+    "noTranslation": "No translation",
+    "popularLanguages": "Popular languages",
+    "allLanguages": "All languages",
+    "noResults": "No languages found for \"{{term}}\"",
+    "hint": "Optional: Select a language to additionally translate the simplified result."
+  },
+  "login": {
+    "title": "Admin Login",
+    "description": "Sign in to access admin features",
+    "email": "Email address",
+    "emailPlaceholder": "your@email.com",
+    "password": "Password",
+    "passwordPlaceholder": "Your password",
+    "submit": "Sign in",
+    "submitting": "Signing in...",
+    "loading": "Loading...",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "failed": "Login failed",
+    "backToHome": "Back to home",
+    "noAccess": "No access?",
+    "contactAdmin": "Contact your administrator to create an account."
+  },
+  "error": {
+    "processingFailed": "Processing failed",
+    "processingStopped": "Processing was stopped",
+    "unknownError": "An unknown error occurred",
+    "retry": "Try again"
+  },
+  "status": {
+    "extracting_text": "Extracting text",
+    "translating": "Translating",
+    "language_translating": "Language translation",
+    "completed": "Completed",
+    "error": "Error",
+    "pending": "Pending",
+    "processing": "Processing"
+  },
+  "time": {
+    "seconds": "{{count}} sec.",
+    "minutesSeconds": "{{minutes}} min. {{seconds}} sec."
+  },
+  "languages": {
+    "de": "German",
+    "en": "English",
+    "fr": "French",
+    "es": "Spanish",
+    "it": "Italian",
+    "pt": "Portuguese",
+    "nl": "Dutch",
+    "pl": "Polish",
+    "ru": "Russian",
+    "zh": "Chinese",
+    "ja": "Japanese",
+    "ko": "Korean",
+    "ar": "Arabic",
+    "hi": "Hindi",
+    "cs": "Czech",
+    "sv": "Swedish",
+    "no": "Norwegian",
+    "da": "Danish",
+    "tr": "Turkish"
+  }
+}

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Stethoscope, User, Settings, LogOut, Shield, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { HealthCheck } from '../types/api';
@@ -13,6 +14,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import LanguageSwitcher from './LanguageSwitcher';
 
 interface HeaderProps {
   health?: HealthCheck | null;
@@ -29,6 +31,7 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const navigate = useNavigate();
   const { isAuthenticated, user, logout } = useAuth();
+  const { t } = useTranslation();
 
   const handleLogout = async () => {
     try {
@@ -81,9 +84,9 @@ export const Header: React.FC<HeaderProps> = ({
       ovh_api: 'OVH API',
       worker: 'Worker',
       redis: 'Redis',
-      filesystem: 'Dateisystem',
-      image_processing: 'Bildverarbeitung',
-      pdf_processing: 'PDF-Verarbeitung',
+      filesystem: t('header.filesystem'),
+      image_processing: t('header.imageProcessing'),
+      pdf_processing: t('header.pdfProcessing'),
     };
     return names[name] || name;
   };
@@ -113,7 +116,7 @@ export const Header: React.FC<HeaderProps> = ({
           ) : (
             <AlertTriangle className="w-3 h-3 mr-1" />
           )}
-          {isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschrankt' : 'Systemfehler'}
+          {isHealthy ? t('header.systemReady') : hasWarnings ? t('header.systemDegraded') : t('header.systemError')}
         </Badge>
       );
     }
@@ -141,15 +144,15 @@ export const Header: React.FC<HeaderProps> = ({
               ) : (
                 <AlertTriangle className="w-3 h-3 mr-1" />
               )}
-              {isHealthy ? 'System bereit' : hasWarnings ? 'Eingeschrankt' : 'Systemfehler'}
+              {isHealthy ? t('header.systemReady') : hasWarnings ? t('header.systemDegraded') : t('header.systemError')}
             </Badge>
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
           <DropdownMenuLabel>
             <div>
-              <p className="text-sm font-semibold">System-Status</p>
-              <p className="text-xs text-neutral-500 font-normal">OCR & AI Services</p>
+              <p className="text-sm font-semibold">{t('header.systemStatus')}</p>
+              <p className="text-xs text-neutral-500 font-normal">{t('header.ocrAndAi')}</p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -169,11 +172,11 @@ export const Header: React.FC<HeaderProps> = ({
                     {serviceStatus === 'healthy' || serviceStatus === 'configured'
                       ? 'OK'
                       : serviceStatus === 'not_configured'
-                        ? 'Nicht konfiguriert'
+                        ? t('header.notConfigured')
                         : serviceStatus.startsWith('error')
-                          ? 'Fehler'
+                          ? t('header.error')
                           : serviceStatus.includes('active')
-                            ? serviceStatus.match(/\d+/)?.[0] + ' aktiv'
+                            ? serviceStatus.match(/\d+/)?.[0] + ' ' + t('header.active')
                             : serviceStatus}
                   </span>
                 </div>
@@ -202,13 +205,14 @@ export const Header: React.FC<HeaderProps> = ({
                 HealthLingo
               </h1>
               <p className="text-xs sm:text-sm text-primary-600 font-medium">
-                {subtitle || 'Dokumente verstehen'}
+                {subtitle || t('header.subtitle')}
               </p>
             </div>
           </button>
 
-          {/* Right side: Health indicator & User menu */}
+          {/* Right side: Language switcher, Health indicator & User menu */}
           <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
             {renderHealthIndicator()}
 
             {/* User Menu */}
@@ -230,7 +234,7 @@ export const Header: React.FC<HeaderProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={handleSettingsClick}
-                  title="Einstellungen"
+                  title={t('header.settings')}
                   className="text-primary-600 hover:text-brand-600 hover:bg-brand-50"
                 >
                   <Settings className="w-5 h-5" />
@@ -239,7 +243,7 @@ export const Header: React.FC<HeaderProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={handleLogout}
-                  title="Abmelden"
+                  title={t('header.logout')}
                   className="text-primary-600 hover:text-error-600 hover:bg-error-50"
                 >
                   <LogOut className="w-5 h-5" />

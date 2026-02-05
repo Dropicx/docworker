@@ -2,6 +2,7 @@ import React from 'react';
 import { BookOpen, Clock, AlertTriangle, RefreshCw, FileText } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useTranslation } from 'react-i18next';
 import { GuidelinesResponse } from '../types/api';
 import ApiService from '../services/api';
 
@@ -18,6 +19,8 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
   sectionRef,
   onRetry,
 }) => {
+  const { t } = useTranslation();
+
   // Don't render if not configured
   if (guidelines?.status === 'not_configured') {
     return null;
@@ -61,10 +64,10 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
             </div>
             <div className="flex-1">
               <h3 className="text-lg font-bold text-warning-900 mb-2">
-                Leitlinien-Empfehlungen nicht verfügbar
+                {t('guidelinesSection.notAvailable')}
               </h3>
               <p className="text-warning-700 text-sm mb-4">
-                {guidelines?.error_message || 'Die AWMF-Leitlinien konnten nicht abgerufen werden.'}
+                {guidelines?.error_message || t('guidelinesSection.notAvailableDefault')}
               </p>
               {onRetry && (
                 <button
@@ -72,7 +75,7 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
                   className="btn-secondary text-sm inline-flex items-center space-x-2"
                 >
                   <RefreshCw className="w-4 h-4" />
-                  <span>Erneut versuchen</span>
+                  <span>{t('guidelinesSection.retry')}</span>
                 </button>
               )}
             </div>
@@ -101,10 +104,10 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
             </div>
             <div className="min-w-0">
               <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-primary-900">
-                Leitlinien-Empfehlungen
+                {t('guidelinesSection.title')}
               </h3>
               <p className="text-xs sm:text-sm lg:text-base text-primary-600">
-                Basierend auf AWMF-Richtlinien
+                {t('guidelinesSection.subtitle')}
               </p>
             </div>
           </div>
@@ -193,7 +196,7 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
             <div className="mt-4 pt-4 border-t border-primary-200/50">
               <div className="flex items-center space-x-2 text-xs text-primary-500 mb-2">
                 <FileText className="w-3.5 h-3.5" />
-                <span className="font-medium">Verwendete Quellen</span>
+                <span className="font-medium">{t('guidelinesSection.sources')}</span>
               </div>
               <div className="flex flex-wrap gap-2">
                 {guidelines.metadata.retriever_resources.slice(0, 5).map((resource, idx) => (
@@ -202,7 +205,7 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
                     className="inline-flex items-center px-2 py-1 bg-primary-50 text-primary-600 rounded text-xs"
                     title={`Score: ${resource.score?.toFixed(2) || 'N/A'}`}
                   >
-                    {resource.document_name || `Dokument ${idx + 1}`}
+                    {resource.document_name || t('guidelinesSection.documentFallback', { index: idx + 1 })}
                   </span>
                 ))}
               </div>
@@ -212,9 +215,7 @@ const GuidelinesSection: React.FC<GuidelinesSectionProps> = ({
         {/* Disclaimer */}
         <div className="mt-6 p-4 bg-warning-50/50 rounded-lg border border-warning-200/50">
           <p className="text-xs sm:text-sm text-warning-700">
-            <strong>Hinweis:</strong> Diese Empfehlungen basieren auf offiziellen deutschen
-            Behandlungsrichtlinien (AWMF) und dienen nur zur Information. Sie ersetzen nicht das
-            persönliche Gespräch mit Ihrem Arzt.
+            {t('guidelinesSection.disclaimer')}
           </p>
         </div>
       </div>

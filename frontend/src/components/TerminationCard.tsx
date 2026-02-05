@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { AlertCircle, Upload, ChevronDown, ChevronUp } from 'lucide-react';
 
 interface TerminationCardProps {
@@ -18,6 +19,7 @@ interface TerminationCardProps {
  * Termination is a graceful, expected outcome for certain inputs.
  */
 const TerminationCard: React.FC<TerminationCardProps> = ({ message, reason, step, onReset }) => {
+  const { t } = useTranslation();
   const [showDetails, setShowDetails] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -48,7 +50,7 @@ const TerminationCard: React.FC<TerminationCardProps> = ({ message, reason, step
 
               <div className="flex-1 min-w-0">
                 <h3 className="text-xl sm:text-2xl font-bold text-warning-900 mb-2">
-                  Verarbeitung gestoppt
+                  {t('termination.title')}
                 </h3>
                 <p className="text-warning-800 text-base sm:text-lg leading-relaxed">{message}</p>
               </div>
@@ -63,7 +65,7 @@ const TerminationCard: React.FC<TerminationCardProps> = ({ message, reason, step
                   aria-expanded={showDetails}
                   aria-controls="technical-details"
                 >
-                  <span>Technische Details</span>
+                  <span>{t('termination.technicalDetails')}</span>
                   {showDetails ? (
                     <ChevronUp className="w-4 h-4" />
                   ) : (
@@ -79,13 +81,13 @@ const TerminationCard: React.FC<TerminationCardProps> = ({ message, reason, step
                     <dl className="space-y-2 text-sm">
                       {step && (
                         <div>
-                          <dt className="font-semibold text-warning-900">Schritt:</dt>
+                          <dt className="font-semibold text-warning-900">{t('termination.step')}</dt>
                           <dd className="text-warning-700 ml-4">{step}</dd>
                         </div>
                       )}
                       {reason && (
                         <div>
-                          <dt className="font-semibold text-warning-900">Grund:</dt>
+                          <dt className="font-semibold text-warning-900">{t('termination.reason')}</dt>
                           <dd className="text-warning-700 ml-4">{reason}</dd>
                         </div>
                       )}
@@ -100,31 +102,31 @@ const TerminationCard: React.FC<TerminationCardProps> = ({ message, reason, step
               <button
                 onClick={onReset}
                 className="btn-primary group flex-1 sm:flex-initial"
-                aria-label="Neues Dokument hochladen"
+                aria-label={t('termination.uploadNew')}
               >
                 <Upload className="w-5 h-5 transition-transform duration-200 group-hover:scale-110" />
-                <span>Neues Dokument hochladen</span>
+                <span>{t('termination.uploadNew')}</span>
               </button>
             </div>
 
             {/* Helpful Tips */}
             <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <h4 className="text-sm font-semibold text-blue-900 mb-2">💡 Hinweis</h4>
+              <h4 className="text-sm font-semibold text-blue-900 mb-2">💡 {t('termination.hint')}</h4>
               <p className="text-sm text-blue-800 leading-relaxed">
-                Dieses Tool ist speziell für medizinische Dokumente entwickelt, wie:
+                {t('termination.hintText')}
               </p>
               <ul className="mt-2 space-y-1 text-sm text-blue-700">
                 <li className="flex items-start">
                   <span className="mr-2">•</span>
-                  <span>Arztbriefe und Entlassberichte</span>
+                  <span>{t('termination.doctorLetters')}</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mr-2">•</span>
-                  <span>Befundberichte und Diagnosen</span>
+                  <span>{t('termination.reports')}</span>
                 </li>
                 <li className="flex items-start">
                   <span className="mr-2">•</span>
-                  <span>Laborwerte und Testergebnisse</span>
+                  <span>{t('termination.labResults')}</span>
                 </li>
               </ul>
             </div>

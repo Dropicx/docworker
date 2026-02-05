@@ -113,19 +113,19 @@ describe('TranslationResult Component', () => {
       );
 
       // Hero section
-      expect(screen.getByText('Übersetzung abgeschlossen')).toBeInTheDocument();
+      expect(screen.getByText('result.title')).toBeInTheDocument();
 
       // Translation content - check for a substring since ReactMarkdown is mocked
       expect(screen.getByText(/Patient has diabetes/)).toBeInTheDocument();
 
       // Original text section
-      expect(screen.getByText('Originaltext')).toBeInTheDocument();
+      expect(screen.getByText('result.originalText')).toBeInTheDocument();
 
       // New translation button
-      expect(screen.getByText('Neues Dokument übersetzen')).toBeInTheDocument();
+      expect(screen.getByText('result.newTranslation')).toBeInTheDocument();
 
       // Disclaimer
-      expect(screen.getByText('Wichtiger Hinweis')).toBeInTheDocument();
+      expect(screen.getByText('disclaimer.title')).toBeInTheDocument();
     });
 
     it('should display processing time', () => {
@@ -138,7 +138,7 @@ describe('TranslationResult Component', () => {
       );
 
       expect(ApiService.formatDuration).toHaveBeenCalledWith(12.5);
-      expect(screen.getByText('Verarbeitet in')).toBeInTheDocument();
+      expect(screen.getByText('result.processedIn')).toBeInTheDocument();
     });
 
     it('should show language card when language translation exists', () => {
@@ -151,7 +151,7 @@ describe('TranslationResult Component', () => {
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
-      expect(screen.getByText('Zielsprache')).toBeInTheDocument();
+      expect(screen.getByText('result.targetLanguage')).toBeInTheDocument();
       // Multiple "EN" elements exist (language card + tab button), just check one exists
       expect(screen.getAllByText('EN').length).toBeGreaterThan(0);
     });
@@ -166,7 +166,7 @@ describe('TranslationResult Component', () => {
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
-      expect(screen.queryByText('Zielsprache')).not.toBeInTheDocument();
+      expect(screen.queryByText('result.targetLanguage')).not.toBeInTheDocument();
     });
 
     it('should show tabs when language translation exists', () => {
@@ -179,7 +179,7 @@ describe('TranslationResult Component', () => {
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
-      expect(screen.getByText('📄 Vereinfacht (Deutsch)')).toBeInTheDocument();
+      expect(screen.getByText(/result\.tabSimplified/)).toBeInTheDocument();
       // Multiple "EN" elements exist, just check at least one is present
       expect(screen.getAllByText('EN').length).toBeGreaterThan(0);
     });
@@ -219,7 +219,7 @@ describe('TranslationResult Component', () => {
       expect(screen.getByText('English translation')).toBeInTheDocument();
 
       // Click simplified tab
-      const simplifiedTab = screen.getByText('📄 Vereinfacht (Deutsch)');
+      const simplifiedTab = screen.getByText(/result\.tabSimplified/);
       await user.click(simplifiedTab);
 
       // Should now show simplified text
@@ -258,7 +258,7 @@ describe('TranslationResult Component', () => {
 
       const copyButton = screen
         .getAllByRole('button')
-        .find(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
+        .find(btn => btn.textContent?.includes('result.copy') || btn.textContent?.includes('Copy'));
       expect(copyButton).toBeDefined();
 
       await user.click(copyButton!);
@@ -279,12 +279,12 @@ describe('TranslationResult Component', () => {
 
       const copyButton = screen
         .getAllByRole('button')
-        .find(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
+        .find(btn => btn.textContent?.includes('result.copy') || btn.textContent?.includes('Copy'));
 
       await user.click(copyButton!);
 
       // Should show "Kopiert!" feedback
-      expect(screen.getByText('Kopiert!')).toBeInTheDocument();
+      expect(screen.getByText('result.copied')).toBeInTheDocument();
     });
 
     it('should reset copy feedback after 2 seconds', async () => {
@@ -302,18 +302,18 @@ describe('TranslationResult Component', () => {
 
       const copyButton = screen
         .getAllByRole('button')
-        .find(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
+        .find(btn => btn.textContent?.includes('result.copy') || btn.textContent?.includes('Copy'));
 
       await user.click(copyButton!);
 
       await waitFor(() => {
-        expect(screen.getByText('Kopiert!')).toBeInTheDocument();
+        expect(screen.getByText('result.copied')).toBeInTheDocument();
       });
 
       // Wait for setTimeout to complete (2 seconds)
       await waitFor(
         () => {
-          expect(screen.queryByText('Kopiert!')).not.toBeInTheDocument();
+          expect(screen.queryByText('result.copied')).not.toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -330,13 +330,13 @@ describe('TranslationResult Component', () => {
       );
 
       // Show original text
-      const showButton = screen.getByText('Anzeigen');
+      const showButton = screen.getByText('result.show');
       await user.click(showButton);
 
       // Find and click copy button for original text
       const copyButtons = screen
         .getAllByRole('button')
-        .filter(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
+        .filter(btn => btn.textContent?.includes('result.copy') || btn.textContent?.includes('Copy'));
       // Second copy button is for original text
       await user.click(copyButtons[1]);
 
@@ -356,7 +356,7 @@ describe('TranslationResult Component', () => {
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
-      expect(screen.getByText('Anzeigen')).toBeInTheDocument();
+      expect(screen.getByText('result.show')).toBeInTheDocument();
       expect(screen.queryByText('Hidden original text')).not.toBeInTheDocument();
     });
 
@@ -370,11 +370,11 @@ describe('TranslationResult Component', () => {
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
-      const showButton = screen.getByText('Anzeigen');
+      const showButton = screen.getByText('result.show');
       await user.click(showButton);
 
       expect(screen.getByText('Now visible original text')).toBeInTheDocument();
-      expect(screen.getByText('Ausblenden')).toBeInTheDocument();
+      expect(screen.getByText('result.hide')).toBeInTheDocument();
     });
 
     it('should hide original text when Ausblenden clicked', async () => {
@@ -388,13 +388,13 @@ describe('TranslationResult Component', () => {
       );
 
       // Show
-      const showButton = screen.getByText('Anzeigen');
+      const showButton = screen.getByText('result.show');
       await user.click(showButton);
 
       expect(screen.getByText('Toggleable text')).toBeInTheDocument();
 
       // Hide
-      const hideButton = screen.getByText('Ausblenden');
+      const hideButton = screen.getByText('result.hide');
       await user.click(hideButton);
 
       expect(screen.queryByText('Toggleable text')).not.toBeInTheDocument();
@@ -411,17 +411,17 @@ describe('TranslationResult Component', () => {
       // Initially, only main copy button (for translation)
       const initialCopyButtons = screen
         .getAllByRole('button')
-        .filter(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
+        .filter(btn => btn.textContent?.includes('result.copy') || btn.textContent?.includes('Copy'));
       expect(initialCopyButtons.length).toBe(1);
 
       // Show original text
-      const showButton = screen.getByText('Anzeigen');
+      const showButton = screen.getByText('result.show');
       await user.click(showButton);
 
       // Now should have two copy buttons
       const copyButtonsAfter = screen
         .getAllByRole('button')
-        .filter(btn => btn.textContent?.includes('Kopieren') || btn.textContent?.includes('Copy'));
+        .filter(btn => btn.textContent?.includes('result.copy') || btn.textContent?.includes('Copy'));
       expect(copyButtonsAfter.length).toBe(2);
     });
   });
@@ -445,7 +445,7 @@ describe('TranslationResult Component', () => {
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
-      const downloadButton = screen.getByText('Als PDF');
+      const downloadButton = screen.getByText('result.downloadPdf');
       await user.click(downloadButton);
 
       // Wait for setTimeout to complete (200ms)
@@ -474,7 +474,7 @@ describe('TranslationResult Component', () => {
       );
 
       // Language tab should be active by default
-      const downloadButton = screen.getByText('Als PDF');
+      const downloadButton = screen.getByText('result.downloadPdf');
       await user.click(downloadButton);
 
       // Wait for setTimeout to complete (200ms)
@@ -484,7 +484,7 @@ describe('TranslationResult Component', () => {
             'pdf-export-content-temp',
             expect.stringContaining('_en.pdf'),
             expect.objectContaining({
-              title: 'Übersetzung (EN)',
+              title: 'result.translationTitle',
               content: 'English text',
               language: 'en',
               processingTime: 10.5,
@@ -508,7 +508,7 @@ describe('TranslationResult Component', () => {
         <TranslationResult result={mockResult} onNewTranslation={mockOnNewTranslation} />
       );
 
-      const newTranslationButton = screen.getByText('Neues Dokument übersetzen');
+      const newTranslationButton = screen.getByText('result.newTranslation');
       await user.click(newTranslationButton);
 
       expect(mockOnNewTranslation).toHaveBeenCalledTimes(1);

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Shield, Lock, Clock, Database, Globe, FileText, AlertCircle } from 'lucide-react';
 import {
   Accordion,
@@ -14,6 +15,7 @@ interface FAQItem {
 }
 
 const FAQ: React.FC = () => {
+  const { t } = useTranslation();
   const [modelConfig, setModelConfig] = useState<{
     model_mapping: Record<string, string>;
     model_descriptions: Record<string, string>;
@@ -65,84 +67,25 @@ const FAQ: React.FC = () => {
     return model.split('-')[0] || 'Llama 3.3';
   };
 
-  const faqItems: FAQItem[] = [
-    {
-      question: 'Wo werden meine Daten verarbeitet und wie sicher ist das?',
-      answer:
-        'HealthLingo wird auf Railway.app gehostet, einem SOC 2 Type I zertifizierten Provider mit vollständiger DSGVO-Konformität. Die Server befinden sich in der EU und Railway bietet einen Data Processing Agreement (DPA) gemäß DSGVO Artikel 28. Die KI-Verarbeitung erfolgt über OVH AI Endpoints in europäischen Rechenzentren (ISO 27001, 27017, 27018, 27701 zertifiziert). OVH garantiert, dass Ihre Daten NIEMALS für das Training von KI-Modellen verwendet werden - alle Anfragen sind anonymisiert und werden nach der Verarbeitung sofort gelöscht.',
-      icon: Shield,
-    },
-    {
-      question: 'Werden meine medizinischen Daten gespeichert oder für KI-Training verwendet?',
-      answer:
-        'Nein, absolut nicht. HealthLingo speichert keinerlei Daten dauerhaft. OVH AI Endpoints hat eine strikte No-Training-Policy: Kundendaten werden niemals gespeichert oder für Modelltraining verwendet. Nach der Übersetzung werden alle Dokumente, Texte und persönlichen Informationen automatisch und unwiderruflich gelöscht. Die KI-Modelle lernen NICHT aus Ihren Daten - jede Anfrage ist isoliert und hinterlässt keine Spuren.',
-      icon: Database,
-    },
-    {
-      question: 'Wie lange dauert die Übersetzung?',
-      answer:
-        'Die meisten Dokumente werden innerhalb von 10-30 Sekunden übersetzt. Die genaue Dauer hängt von der Länge und Komplexität des Dokuments ab. Gescannte Dokumente können etwas länger dauern, da sie erst per OCR (Texterkennung) verarbeitet werden müssen.',
-      icon: Clock,
-    },
-    {
-      question: 'Welche Dateiformate werden unterstützt?',
-      answer:
-        'HealthLingo unterstützt PDF-Dateien (sowohl mit eingebettetem Text als auch gescannte Dokumente) sowie Bilddateien (JPG, PNG, JPEG). Die maximale Dateigröße beträgt 10 MB. Mehrseitige Dokumente werden vollständig verarbeitet.',
-      icon: FileText,
-    },
-    {
-      question: 'In welche Sprachen kann übersetzt werden?',
-      answer: `Neben der Vereinfachung ins verständliche Deutsch unterstützen wir Übersetzungen in 19 sorgfältig ausgewählte Sprachen, die von ${getLanguageTranslationModel()} optimal unterstützt werden: Englisch, Französisch, Spanisch, Italienisch, Portugiesisch, Niederländisch, Russisch, Chinesisch, Japanisch, Koreanisch, Arabisch, Hindi, Polnisch, Tschechisch, Schwedisch, Norwegisch und Dänisch. Die Übersetzung erfolgt dabei immer zweistufig: erst Vereinfachung, dann präzise Übersetzung.`,
-      icon: Globe,
-    },
-    {
-      question: 'Was passiert mit persönlichen Daten im Dokument?',
-      answer:
-        'Persönliche Daten wie Namen, Adressen, Geburtsdaten und Versicherungsnummern werden automatisch erkannt und durch Platzhalter ersetzt (z.B. [NAME ENTFERNT]). Dies schützt Ihre Privatsphäre, während alle medizinischen Informationen vollständig erhalten bleiben. Die Anonymisierung erfolgt lokal, bevor Daten an die KI-Endpoints gesendet werden.',
-      icon: Lock,
-    },
-    {
-      question: 'Welche Sicherheitszertifizierungen haben die verwendeten Dienste?',
-      answer:
-        'Railway.app ist SOC 2 Type I zertifiziert (Type II folgt 2025) und bietet DSGVO-konforme Data Processing Agreements. OVH Cloud besitzt umfassende Zertifizierungen: ISO/IEC 27001 (Informationssicherheit), ISO/IEC 27017 (Cloud-Sicherheit), ISO/IEC 27018 (Datenschutz in der Cloud) und ISO/IEC 27701 (Datenschutz-Management). Beide Provider unterliegen europäischem Recht und garantieren, dass Ihre Daten die EU nicht verlassen.',
-      icon: Shield,
-    },
-    {
-      question: 'Ist die Übersetzung medizinisch korrekt?',
-      answer:
-        'HealthLingo verwendet fortschrittliche KI-Technologie, die speziell für medizinische Texte trainiert wurde. Die Übersetzungen sind sehr präzise, ersetzen jedoch keine professionelle medizinische Beratung. Bei wichtigen medizinischen Entscheidungen sollten Sie immer Ihren Arzt konsultieren.',
-      icon: AlertCircle,
-    },
-    {
-      question: 'Kann ich die Übersetzung herunterladen?',
-      answer:
-        'Ja, Sie können die übersetzte Version als PDF-Datei herunterladen. Das PDF enthält die vollständige Übersetzung in gut lesbarem Format mit Datum und Zeitstempel. Sie können den Text auch direkt in die Zwischenablage kopieren.',
-      icon: FileText,
-    },
-    {
-      question: 'Funktioniert HealthLingo mit gescannten Dokumenten?',
-      answer:
-        'Ja! HealthLingo verfügt über eine fortschrittliche Texterkennung (OCR) mit spezieller Optimierung für deutsche medizinische Dokumente. Auch handschriftliche Notizen, Tabellen und schlecht gescannte Dokumente werden zuverlässig erkannt und verarbeitet.',
-      icon: FileText,
-    },
-    {
-      question: 'Ist der Service wirklich kostenlos?',
-      answer:
-        'Ja, HealthLingo ist vollständig kostenlos nutzbar. Es gibt keine versteckten Kosten, keine Registrierung und keine Begrenzung der Anzahl der Übersetzungen. Unser Ziel ist es, medizinische Informationen für alle zugänglich zu machen.',
-      icon: Shield,
-    },
-  ];
+  const faqIcons = [Shield, Database, Clock, FileText, Globe, Lock, Shield, AlertCircle, FileText, FileText, Shield];
+
+  const faqItems = faqIcons.map((icon, index) => ({
+    question: t(`faq.items.${index}.question`),
+    answer: index === 4
+      ? t(`faq.items.${index}.answer`, { model: getLanguageTranslationModel() })
+      : t(`faq.items.${index}.answer`),
+    icon,
+  }));
 
   return (
     <div className="space-y-6">
       {/* Section Header */}
       <div className="text-center space-y-4">
         <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold bg-gradient-to-r from-primary-900 via-brand-700 to-accent-700 bg-clip-text text-transparent">
-          Häufig gestellte Fragen
+          {t('faq.title')}
         </h2>
         <p className="text-base sm:text-lg text-primary-600 max-w-3xl mx-auto">
-          Alles was Sie über HealthLingo und die sichere Verarbeitung Ihrer medizinischen Dokumente
-          wissen müssen
+          {t('faq.subtitle')}
         </p>
       </div>
 
@@ -183,12 +126,12 @@ const FAQ: React.FC = () => {
       {/* Bottom CTA */}
       <div className="text-center pt-4 sm:pt-6">
         <p className="text-sm sm:text-base text-primary-600">
-          Haben Sie weitere Fragen?{' '}
+          {t('faq.contactUs')}{' '}
           <a
             href="mailto:support@healthlingo.de"
             className="text-brand-600 hover:text-brand-700 font-medium underline underline-offset-2"
           >
-            Kontaktieren Sie uns
+            {t('faq.contactLink')}
           </a>
         </p>
       </div>

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff, AlertCircle, Loader2, Stethoscope } from 'lucide-react';
 import Header from '../components/Header';
 
 const Login: React.FC = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -26,12 +28,12 @@ const Login: React.FC = () => {
   // Listen for logout events from API interceptor
   useEffect(() => {
     const handleLogout = () => {
-      setError('Ihre Sitzung ist abgelaufen. Bitte melden Sie sich erneut an.');
+      setError(t('login.sessionExpired'));
     };
 
     window.addEventListener('auth:logout', handleLogout);
     return () => window.removeEventListener('auth:logout', handleLogout);
-  }, []);
+  }, [t]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +44,7 @@ const Login: React.FC = () => {
       await login(email, password);
       // Navigation will be handled by useEffect
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Anmeldung fehlgeschlagen');
+      setError(error instanceof Error ? error.message : t('login.failed'));
     } finally {
       setIsLoading(false);
     }
@@ -57,7 +59,7 @@ const Login: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex items-center justify-center">
         <div className="flex items-center space-x-3">
           <Loader2 className="w-6 h-6 animate-spin text-brand-600" />
-          <span className="text-lg text-neutral-700">Lade...</span>
+          <span className="text-lg text-neutral-700">{t('login.loading')}</span>
         </div>
       </div>
     );
@@ -77,9 +79,9 @@ const Login: React.FC = () => {
                 <div className="w-16 h-16 bg-gradient-to-br from-brand-500 to-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Stethoscope className="w-8 h-8 text-white" />
                 </div>
-                <h2 className="text-2xl font-bold text-primary-900 mb-2">Admin-Anmeldung</h2>
+                <h2 className="text-2xl font-bold text-primary-900 mb-2">{t('login.title')}</h2>
                 <p className="text-primary-600">
-                  Melden Sie sich an, um auf die Verwaltungsfunktionen zuzugreifen
+                  {t('login.description')}
                 </p>
               </div>
 
@@ -98,7 +100,7 @@ const Login: React.FC = () => {
                     htmlFor="email"
                     className="block text-sm font-medium text-neutral-700 mb-2"
                   >
-                    E-Mail-Adresse
+                    {t('login.email')}
                   </label>
                   <input
                     id="email"
@@ -107,7 +109,7 @@ const Login: React.FC = () => {
                     onChange={e => setEmail(e.target.value)}
                     required
                     className="w-full px-4 py-3 border border-neutral-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-colors"
-                    placeholder="ihre@email.de"
+                    placeholder={t('login.emailPlaceholder')}
                     disabled={isLoading}
                   />
                 </div>
@@ -117,7 +119,7 @@ const Login: React.FC = () => {
                     htmlFor="password"
                     className="block text-sm font-medium text-neutral-700 mb-2"
                   >
-                    Passwort
+                    {t('login.password')}
                   </label>
                   <div className="relative">
                     <input
@@ -127,7 +129,7 @@ const Login: React.FC = () => {
                       onChange={e => setPassword(e.target.value)}
                       required
                       className="w-full px-4 py-3 pr-12 border border-neutral-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none transition-colors"
-                      placeholder="Ihr Passwort"
+                      placeholder={t('login.passwordPlaceholder')}
                       disabled={isLoading}
                     />
                     <button
@@ -149,10 +151,10 @@ const Login: React.FC = () => {
                   {isLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Anmeldung...</span>
+                      <span>{t('login.submitting')}</span>
                     </>
                   ) : (
-                    <span>Anmelden</span>
+                    <span>{t('login.submit')}</span>
                   )}
                 </button>
               </form>
@@ -164,7 +166,7 @@ const Login: React.FC = () => {
                   className="text-sm text-neutral-600 hover:text-brand-600 transition-colors"
                   disabled={isLoading}
                 >
-                  ← Zurück zur Hauptseite
+                  {t('login.backToHome')}
                 </button>
               </div>
             </div>
@@ -173,9 +175,9 @@ const Login: React.FC = () => {
           {/* Info Card */}
           <div className="mt-6 p-4 bg-neutral-50 border border-neutral-200 rounded-lg">
             <div className="text-center">
-              <h3 className="text-sm font-medium text-neutral-900 mb-1">Kein Zugang?</h3>
+              <h3 className="text-sm font-medium text-neutral-900 mb-1">{t('login.noAccess')}</h3>
               <p className="text-xs text-neutral-600">
-                Kontaktieren Sie Ihren Administrator, um ein Konto zu erstellen.
+                {t('login.contactAdmin')}
               </p>
             </div>
           </div>

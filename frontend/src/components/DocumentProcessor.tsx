@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Upload,
   CheckCircle,
@@ -37,30 +38,30 @@ interface DocumentProcessorProps {
   onQualityGateError: (error: QualityGateErrorDetails) => void;
 }
 
-const STEPS = [
-  { label: 'Text extrahieren (OCR)', threshold: 15, status: 'extracting_text' as Status },
-  { label: 'Medizinische Validierung', threshold: 30, status: 'extracting_text' as Status },
-  { label: 'Datenschutz-Filter', threshold: 48, status: 'translating' as Status },
-  { label: 'KI-Vereinfachung', threshold: 65, status: 'translating' as Status },
-  { label: 'Qualitätsprüfung', threshold: 82, status: 'language_translating' as Status },
-  { label: 'Finalisierung', threshold: 95, status: 'language_translating' as Status },
+const STEP_KEYS = [
+  { key: 'processing.steps.ocr', threshold: 15, status: 'extracting_text' as Status },
+  { key: 'processing.steps.validation', threshold: 30, status: 'extracting_text' as Status },
+  { key: 'processing.steps.privacy', threshold: 48, status: 'translating' as Status },
+  { key: 'processing.steps.simplification', threshold: 65, status: 'translating' as Status },
+  { key: 'processing.steps.quality', threshold: 82, status: 'language_translating' as Status },
+  { key: 'processing.steps.finalization', threshold: 95, status: 'language_translating' as Status },
 ];
 
-const STEP_MESSAGES: Record<string, string[]> = {
+const STEP_MESSAGE_KEYS: Record<string, string[]> = {
   extracting_text: [
-    'Dokument wird gescannt...',
-    'Zeichen werden erkannt...',
-    'Textstruktur wird analysiert...',
+    'processing.stepMessages.extracting_text.0',
+    'processing.stepMessages.extracting_text.1',
+    'processing.stepMessages.extracting_text.2',
   ],
   translating: [
-    'Medizinische Fachbegriffe werden erkannt...',
-    'Text wird in einfache Sprache übersetzt...',
-    'Zusammenhänge werden geprüft...',
+    'processing.stepMessages.translating.0',
+    'processing.stepMessages.translating.1',
+    'processing.stepMessages.translating.2',
   ],
   language_translating: [
-    'Übersetzung wird optimiert...',
-    'Grammatik wird geprüft...',
-    'Formatierung wird angepasst...',
+    'processing.stepMessages.language_translating.0',
+    'processing.stepMessages.language_translating.1',
+    'processing.stepMessages.language_translating.2',
   ],
 };
 
@@ -81,6 +82,8 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
   onCancel,
   onQualityGateError,
 }) => {
+  const { t } = useTranslation();
+
   const [phase, setPhase] = useState<Phase>('uploading');
   const [uploadProgress, setUploadProgress] = useState(0);
   const [processingId, setProcessingId] = useState<string | null>(null);
@@ -205,11 +208,9 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
           }
         }
 
-        const errorMessage = (error as Error).message || 'Upload fehlgeschlagen';
+        const errorMessage = (error as Error).message || t('processing.uploadFailed');
         if (errorMessage.includes('timeout')) {
-          onError(
-            'Die Verbindung zum Server dauert länger als erwartet. Bitte überprüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.'
-          );
+          onError(t('processing.timeoutError'));
         } else {
           onError(errorMessage);
         }
@@ -239,7 +240,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
           setTimeout(() => onComplete(pid!), 1500);
         } else if (statusResponse.status === 'error') {
           isPollingRef.current = false;
-          onError(statusResponse.error || 'Verarbeitung fehlgeschlagen');
+          onError(statusResponse.error || t('processing.processingFailed'));
         } else if (isTerminated(statusResponse)) {
           isPollingRef.current = false;
           const metadata = getTerminationMetadata(statusResponse);
@@ -275,15 +276,16 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
   };
 
   const formatElapsedTime = (seconds: number): string => {
-    if (seconds < 60) return `${seconds} Sek.`;
+    if (seconds < 60) return t('time.seconds', { count: seconds });
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
-    return `${mins} Min. ${secs} Sek.`;
+    return t('time.minutesSeconds', { minutes: mins, seconds: secs });
   };
 
   const getCurrentMessages = (): string[] => {
     const currentStatus = status?.status || 'extracting_text';
-    return STEP_MESSAGES[currentStatus] || STEP_MESSAGES['extracting_text'];
+    const keys = STEP_MESSAGE_KEYS[currentStatus] || STEP_MESSAGE_KEYS['extracting_text'];
+    return keys.map(key => t(key));
   };
 
   const getRotatingMessage = (): string => {
@@ -293,7 +295,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
 
   const getActiveStepIndex = (): number => {
     if (!status) return -1;
-    if (status.status === 'completed') return STEPS.length;
+    if (status.status === 'completed') return STEP_KEYS.length;
     if (status.ui_stage) {
       const idx = STAGE_TO_CARD[status.ui_stage];
       if (idx !== undefined) return idx;
@@ -347,15 +349,15 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                 <div>
                   <h3 className="text-lg sm:text-xl font-bold text-primary-900">
                     {phase === 'uploading'
-                      ? 'Datei wird hochgeladen'
-                      : 'Verarbeitung wird gestartet...'}
+                      ? t('processing.uploading')
+                      : t('processing.starting')}
                   </h3>
                   <p className="text-xs sm:text-sm text-primary-600">
-                    Bitte warten Sie einen Moment
+                    {t('processing.pleaseWait')}
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleCancel} title="Abbrechen">
+              <Button variant="ghost" size="icon" onClick={handleCancel} title={t('processing.cancel')}>
                 <X className="w-5 h-5" />
               </Button>
             </div>
@@ -368,7 +370,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                 <p className="text-xs text-primary-500">{ApiService.formatFileSize(file.size)}</p>
               </div>
               <Badge variant="outline" className="text-xs">
-                {phase === 'uploading' ? `${uploadProgress}%` : 'Bereit'}
+                {phase === 'uploading' ? `${uploadProgress}%` : t('processing.ready')}
               </Badge>
             </div>
 
@@ -376,17 +378,17 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
             <div className="space-y-2">
               <Progress value={phase === 'initializing' ? 100 : uploadProgress} className="h-2" />
               <p className="text-center text-xs text-primary-500">
-                {phase === 'uploading' && uploadProgress < 30 && 'Verbindung wird hergestellt...'}
+                {phase === 'uploading' && uploadProgress < 30 && t('processing.connecting')}
                 {phase === 'uploading' &&
                   uploadProgress >= 30 &&
                   uploadProgress < 60 &&
-                  'Datei wird übertragen...'}
+                  t('processing.transferring')}
                 {phase === 'uploading' &&
                   uploadProgress >= 60 &&
                   uploadProgress < 90 &&
-                  'Fast fertig...'}
-                {phase === 'uploading' && uploadProgress >= 90 && 'Qualitätsprüfung...'}
-                {phase === 'initializing' && 'Verarbeitung wird vorbereitet...'}
+                  t('processing.almostDone')}
+                {phase === 'uploading' && uploadProgress >= 90 && t('processing.qualityCheck')}
+                {phase === 'initializing' && t('processing.preparing')}
               </p>
             </div>
           </div>
@@ -403,10 +405,9 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
           <Alert className="border-success-200 bg-success-50/50">
             <Sparkles className="h-5 w-5 text-success-600" />
             <AlertDescription className="text-success-700 ml-2">
-              <span className="font-semibold text-success-900">Übersetzung abgeschlossen!</span>
+              <span className="font-semibold text-success-900">{t('processing.completed')}</span>
               <br />
-              Ihr Dokument wurde erfolgreich in verständliche Sprache übersetzt. Das Ergebnis wird
-              geladen...
+              {t('processing.completedDescription')}
             </AlertDescription>
           </Alert>
         </CardContent>
@@ -429,14 +430,14 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
               )}
             </div>
             <div className="min-w-0">
-              <h3 className="text-lg sm:text-xl font-bold text-primary-900">KI-Verarbeitung</h3>
+              <h3 className="text-lg sm:text-xl font-bold text-primary-900">{t('processing.aiProcessing')}</h3>
               <p className="text-xs sm:text-sm text-primary-600">
-                Ihr Dokument wird analysiert und übersetzt
+                {t('processing.analyzing')}
               </p>
             </div>
           </div>
 
-          <Button variant="ghost" size="icon" onClick={handleCancel} title="Verarbeitung abbrechen">
+          <Button variant="ghost" size="icon" onClick={handleCancel} title={t('processing.cancelProcessing')}>
             <X className="w-5 h-5" />
           </Button>
         </div>
@@ -465,12 +466,12 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                           : 'bg-brand-50 text-brand-700 border-brand-200'
                     }
                   >
-                    {ApiService.getStatusText(status.status)}
+                    {t('status.' + status.status)}
                   </Badge>
                   {status.status !== 'completed' && status.status !== 'error' && (
                     <div className="flex items-center text-xs text-brand-600">
                       <div className="w-2 h-2 bg-brand-500 rounded-full mr-2 animate-pulse"></div>
-                      Aktiv
+                      {t('processing.activeLabel')}
                     </div>
                   )}
                 </>
@@ -478,7 +479,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                 <>
                   <Loader className="w-5 h-5 text-brand-600 animate-spin" />
                   <Badge variant="outline" className="bg-brand-50 text-brand-700 border-brand-200">
-                    Verbindung...
+                    {t('processing.connectionLabel')}
                   </Badge>
                 </>
               )}
@@ -487,7 +488,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
             {/* Progress Bar */}
             <div className="space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="font-medium text-primary-700">Fortschritt</span>
+                <span className="font-medium text-primary-700">{t('processing.progress')}</span>
                 <div className="flex items-center space-x-2">
                   {(!status || (status.status !== 'completed' && status.status !== 'error')) && (
                     <div className="w-1.5 h-1.5 bg-brand-500 rounded-full animate-pulse"></div>
@@ -511,7 +512,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
 
               {status && status.status !== 'completed' && status.status !== 'error' && (
                 <p className="text-xs text-primary-500">
-                  Verarbeitung läuft seit {formatElapsedTime(elapsedSeconds)}
+                  {t('processing.processingFor', { time: formatElapsedTime(elapsedSeconds) })}
                 </p>
               )}
             </div>
@@ -521,11 +522,11 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
           <div className="space-y-3 sm:space-y-4">
             <h4 className="text-base sm:text-lg font-semibold text-primary-900 flex items-center">
               <FileCheck className="w-4 h-4 sm:w-5 sm:h-5 mr-2 text-brand-600" />
-              Verarbeitungsschritte
+              {t('processing.stepsTitle')}
             </h4>
 
             <div className="space-y-2 sm:space-y-3">
-              {STEPS.map((item, index) => {
+              {STEP_KEYS.map((item, index) => {
                 const activeIdx = getActiveStepIndex();
                 const completed = index < activeIdx;
                 const active = index === activeIdx;
@@ -567,7 +568,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                               : 'text-neutral-600'
                         }`}
                       >
-                        {item.label}
+                        {t(item.key)}
                       </div>
                       {active && (
                         <p className="text-xs text-brand-600 mt-0.5 animate-pulse-soft truncate">
@@ -597,7 +598,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
           {processingId && (
             <div className="text-center">
               <p className="text-xs text-primary-500">
-                Verarbeitungs-ID: <span className="font-mono">{processingId}</span>
+                {t('processing.processingId')} <span className="font-mono">{processingId}</span>
               </p>
             </div>
           )}

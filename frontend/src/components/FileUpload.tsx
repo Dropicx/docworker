@@ -16,6 +16,7 @@ import {
   ScanLine,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import ApiService from '../services/api';
 import { QualityGateErrorDetails, SupportedLanguage } from '../types/api';
 import { useMobileDetect } from '../hooks/useMobileDetect';
@@ -30,23 +31,6 @@ interface FileUploadProps {
   qualityGateError?: QualityGateErrorDetails | null;
   onClearQualityGateError?: () => void;
 }
-
-// Helper function to translate quality issues to German
-const translateIssue = (issue: string): string => {
-  const translations: Record<string, string> = {
-    poor_image_quality: 'Schlechte Bildqualität',
-    significant_blur_detected: 'Starke Unschärfe erkannt',
-    low_blur_detection: 'Unscharfes Bild',
-    low_contrast: 'Niedriger Kontrast',
-    poor_lighting: 'Schlechte Beleuchtung',
-    document_too_small: 'Dokument zu klein',
-    text_density_low: 'Zu wenig Text erkennbar',
-    has_blur: 'Bild ist unscharf',
-    has_low_contrast: 'Kontrast ist zu niedrig',
-  };
-
-  return translations[issue] || issue;
-};
 
 const FileUpload: React.FC<FileUploadProps> = ({
   onStartProcessing,
@@ -67,8 +51,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const privacyCheckboxRef = useRef<HTMLDivElement>(null);
   const { shouldShowScanner } = useMobileDetect();
+  const { t, i18n } = useTranslation();
 
   const qualityGateError = externalQualityGateError || null;
+
+  // Helper function to translate quality issues using i18n
+  const translateIssue = (issue: string): string => {
+    const key = `qualityGate.issues.${issue}`;
+    const translated = t(key);
+    return translated === key ? issue : translated;
+  };
 
   const handleFileUpload = useCallback(
     async (files: File[]) => {
@@ -198,18 +190,18 @@ const FileUpload: React.FC<FileUploadProps> = ({
           <div className="text-center space-y-2 sm:space-y-3">
             <h3 className="text-xl sm:text-2xl font-bold text-primary-900">
               {isDragActive
-                ? 'Dateien hier ablegen'
+                ? t('upload.titleDragActive')
                 : selectedFiles.length > 0
-                  ? 'Weitere Dateien hinzufügen'
-                  : 'Dokumente hochladen'}
+                  ? t('upload.titleAddMore')
+                  : t('upload.title')}
             </h3>
 
             <p className="text-primary-600 text-sm sm:text-base lg:text-lg leading-relaxed max-w-md mx-auto px-4 sm:px-0">
               {isDragActive
-                ? 'Lassen Sie die Dateien los, um sie hinzuzufügen'
+                ? t('upload.descriptionDragActive')
                 : selectedFiles.length > 0
-                  ? 'Ziehen Sie weitere Dateien hierher oder tippen Sie zum Auswählen'
-                  : 'Ziehen Sie Dateien hierher oder tippen Sie zum Auswählen'}
+                  ? t('upload.descriptionAddMore')
+                  : t('upload.description')}
             </p>
           </div>
 
@@ -217,7 +209,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             <div className="flex justify-center">
               <div className="glass-effect px-4 sm:px-6 py-2 sm:py-3 rounded-lg sm:rounded-xl">
                 <div className="text-xs sm:text-sm text-primary-600 space-y-1 text-center">
-                  <div className="font-semibold">Unterstützte Formate</div>
+                  <div className="font-semibold">{t('upload.supportedFormats')}</div>
                   <div className="flex flex-col sm:flex-row items-center justify-center sm:space-x-4 space-y-1 sm:space-y-0 text-xs">
                     <span className="flex items-center space-x-1">
                       <FileText className="w-3 h-3 text-error-500" />
@@ -227,7 +219,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       <Image className="w-3 h-3 text-accent-500" />
                       <span>JPG, PNG</span>
                     </span>
-                    <span className="text-primary-400">Max. 50 MB</span>
+                    <span className="text-primary-400">{t('upload.maxSize')}</span>
                   </div>
                 </div>
               </div>
@@ -245,7 +237,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             className="flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-brand-500 to-brand-600 text-white rounded-xl font-medium text-sm shadow-md hover:shadow-lg active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <ScanLine className="w-5 h-5" />
-            <span>Dokument scannen</span>
+            <span>{t('upload.scanDocument')}</span>
           </button>
         </div>
       )}
@@ -264,13 +256,13 @@ const FileUpload: React.FC<FileUploadProps> = ({
             <div className="card-body">
               <div className="flex items-center justify-between mb-4">
                 <h4 className="text-lg font-semibold text-primary-900">
-                  Ausgewählte Dateien ({selectedFiles.length})
+                  {t('upload.selectedFiles', { count: selectedFiles.length })}
                 </h4>
                 <button
                   onClick={clearAllFiles}
                   className="text-sm text-primary-600 hover:text-primary-700 font-medium"
                 >
-                  Alle entfernen
+                  {t('upload.removeAll')}
                 </button>
               </div>
 
@@ -305,7 +297,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               {!languagesLoaded ? (
                 <div className="space-y-3 sm:space-y-4">
                   <label className="block text-xs sm:text-sm font-medium text-neutral-700 text-center">
-                    Übersetzung (optional)
+                    {t('upload.translationOptional')}
                   </label>
                   <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center min-h-[40px]">
                     {[1, 2, 3, 4, 5].map(i => (
@@ -323,7 +315,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               ) : (
                 <div className="space-y-3 sm:space-y-4">
                   <label className="block text-xs sm:text-sm font-medium text-neutral-700 text-center">
-                    Übersetzung (optional)
+                    {t('upload.translationOptional')}
                   </label>
 
                   <div className="flex flex-wrap gap-1.5 sm:gap-2 justify-center">
@@ -335,11 +327,11 @@ const FileUpload: React.FC<FileUploadProps> = ({
                           : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
                       }`}
                     >
-                      Nur vereinfachen
+                      {t('upload.simplifyOnly')}
                     </button>
 
                     {availableLanguages
-                      .filter(lang => lang.popular)
+                      .filter(lang => lang.popular && lang.code !== i18n.language?.substring(0, 2))
                       .slice(0, 4)
                       .map(language => (
                         <button
@@ -355,7 +347,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                               : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
                           }`}
                         >
-                          {language.name}
+                          {t('languages.' + language.code, { defaultValue: language.name })}
                         </button>
                       ))}
 
@@ -367,8 +359,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                           : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100 border border-neutral-200'
                       }`}
                     >
-                      <span className="hidden sm:inline">Mehr Sprachen</span>
-                      <span className="sm:hidden">Mehr</span>
+                      <span className="hidden sm:inline">{t('upload.moreLanguages')}</span>
+                      <span className="sm:hidden">{t('upload.more')}</span>
                       <ChevronDown
                         className={`w-3 h-3 transition-transform duration-200 ${
                           showAllLanguages ? 'rotate-180' : ''
@@ -385,7 +377,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
                             <input
                               type="text"
-                              placeholder="Sprache suchen..."
+                              placeholder={t('upload.searchLanguage')}
                               value={languageSearchTerm}
                               onChange={e => setLanguageSearchTerm(e.target.value)}
                               className="w-full pl-10 pr-4 py-2 text-sm border border-neutral-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
@@ -396,6 +388,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                         <div className="p-3 max-h-64 overflow-y-auto">
                           <div className="grid grid-cols-2 gap-2">
                             {availableLanguages
+                              .filter(lang => lang.code !== i18n.language?.substring(0, 2))
                               .filter(
                                 lang =>
                                   lang.name
@@ -420,7 +413,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                                   }`}
                                 >
                                   <div className="flex items-center justify-between">
-                                    <span className="truncate">{language.name}</span>
+                                    <span className="truncate">{t('languages.' + language.code, { defaultValue: language.name })}</span>
                                     <span className="text-xs text-neutral-500 font-mono ml-2">
                                       {language.code}
                                     </span>
@@ -429,20 +422,22 @@ const FileUpload: React.FC<FileUploadProps> = ({
                               ))}
                           </div>
 
-                          {availableLanguages.filter(
-                            lang =>
-                              lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
-                              lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
-                          ).length === 0 &&
+                          {availableLanguages
+                            .filter(lang => lang.code !== i18n.language?.substring(0, 2))
+                            .filter(
+                              lang =>
+                                lang.name.toLowerCase().includes(languageSearchTerm.toLowerCase()) ||
+                                lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
+                            ).length === 0 &&
                             languageSearchTerm && (
                               <div className="text-center py-4 text-sm text-neutral-500">
-                                Keine Sprachen gefunden für &quot;{languageSearchTerm}&quot;
+                                {t('upload.noLanguagesFound', { term: languageSearchTerm })}
                               </div>
                             )}
                         </div>
 
                         <div className="px-3 py-2 border-t border-neutral-100 bg-neutral-50 text-xs text-neutral-500 text-center rounded-b-xl">
-                          {availableLanguages.length} Sprachen verfügbar
+                          {t('upload.languagesAvailable', { count: availableLanguages.length })}
                         </div>
                       </div>
                     </div>
@@ -452,8 +447,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     <div className="flex items-center space-x-3 px-4 py-3 bg-brand-50 rounded-xl border border-brand-200">
                       <Globe className="w-4 h-4 text-brand-600" />
                       <span className="text-sm text-brand-700">
-                        <strong>Ausgewählt:</strong>{' '}
-                        {availableLanguages.find(lang => lang.code === selectedLanguage)?.name}
+                        <strong>{t('upload.selected')}</strong>{' '}
+                        {t('languages.' + (availableLanguages.find(lang => lang.code === selectedLanguage)?.code || ''), { defaultValue: availableLanguages.find(lang => lang.code === selectedLanguage)?.name })}
                       </span>
                       <button
                         onClick={() => setSelectedLanguage(null)}
@@ -466,8 +461,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
                   <p className="text-xs text-neutral-500 px-2 sm:px-0 text-center">
                     {selectedLanguage
-                      ? 'Das Dokument wird zuerst vereinfacht und dann in die gewählte Sprache übersetzt.'
-                      : 'Optional: Wählen Sie eine Sprache, um das vereinfachte Ergebnis zusätzlich zu übersetzen.'}
+                      ? t('upload.translationHintSelected')
+                      : t('upload.translationHintOptional')}
                   </p>
                 </div>
               )}
@@ -506,7 +501,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     privacyAccepted ? 'text-success-700' : 'text-amber-700'
                   }`}
                 >
-                  {privacyAccepted ? 'Datenschutz bestätigt' : 'Bitte bestätigen'}
+                  {privacyAccepted ? t('upload.privacyConfirmed') : t('upload.pleaseConfirm')}
                 </span>
               </div>
 
@@ -529,17 +524,15 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     htmlFor="privacy-checkbox"
                     className="text-sm text-primary-700 cursor-pointer"
                   >
-                    Ich habe die{' '}
+                    {t('upload.privacyConsentPrefix')}{' '}
                     <Link
                       to="/datenschutz"
                       target="_blank"
                       className="text-brand-600 hover:text-brand-700 underline font-medium"
                     >
-                      Datenschutzerklärung
+                      {t('upload.privacyPolicy')}
                     </Link>{' '}
-                    gelesen und stimme der Verarbeitung meiner Dokumente zu. Ich verstehe, dass
-                    meine Daten DSGVO-konform verarbeitet und nach der Übersetzung automatisch
-                    gelöscht werden.
+                    {t('upload.privacyConsentSuffix')}
                   </label>
                 </div>
               </div>
@@ -558,7 +551,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               }`}
             >
               <Play className="w-5 h-5" />
-              <span>Verarbeitung starten</span>
+              <span>{t('upload.startProcessing')}</span>
             </button>
           </div>
         </div>
@@ -575,10 +568,10 @@ const FileUpload: React.FC<FileUploadProps> = ({
               </div>
               <div className="flex-1">
                 <h4 className="font-semibold text-amber-900 mb-1 text-lg">
-                  Bildqualität zu niedrig
+                  {t('qualityGate.title')}
                 </h4>
                 <p className="text-amber-700 text-sm leading-relaxed">
-                  Die Qualität Ihres Dokuments ist für eine zuverlässige Verarbeitung zu niedrig.
+                  {t('qualityGate.description')}
                 </p>
               </div>
             </div>
@@ -586,12 +579,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
             {/* Quality Score */}
             <div className="glass-effect p-3 rounded-lg">
               <div className="flex items-center justify-between text-sm">
-                <span className="text-primary-600 font-medium">Qualitätswert:</span>
+                <span className="text-primary-600 font-medium">{t('qualityGate.qualityScore')}</span>
                 <span className="font-semibold text-primary-900">
                   {(qualityGateError.details.confidence_score * 100).toFixed(0)}%
                   <span className="text-primary-500 font-normal">
                     {' '}
-                    / {(qualityGateError.details.min_threshold * 100).toFixed(0)}% erforderlich
+                    / {(qualityGateError.details.min_threshold * 100).toFixed(0)}% {t('qualityGate.required')}
                   </span>
                 </span>
               </div>
@@ -608,7 +601,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
               <div className="space-y-2">
                 <h5 className="text-sm font-semibold text-primary-900 flex items-center space-x-2">
                   <AlertCircle className="w-4 h-4 text-amber-600" />
-                  <span>Erkannte Probleme:</span>
+                  <span>{t('qualityGate.detectedIssues')}</span>
                 </h5>
                 <ul className="space-y-1.5">
                   {qualityGateError.details.issues.map((issue, index) => (
@@ -627,7 +620,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <div className="space-y-3 bg-gradient-to-br from-accent-50/50 to-transparent p-4 rounded-lg border border-accent-200/50">
                   <h5 className="text-sm font-semibold text-primary-900 flex items-center space-x-2">
                     <Lightbulb className="w-4 h-4 text-accent-600" />
-                    <span>So können Sie die Qualität verbessern:</span>
+                    <span>{t('qualityGate.improvementTips')}</span>
                   </h5>
                   <ul className="space-y-2">
                     {qualityGateError.details.suggestions.map((suggestion, index) => (
@@ -656,7 +649,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 }}
                 className="w-full btn-secondary text-sm py-2.5"
               >
-                Neues Foto aufnehmen
+                {t('qualityGate.retakePhoto')}
               </button>
             </div>
           </div>
@@ -672,7 +665,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <AlertCircle className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-error-900 mb-1">Upload fehlgeschlagen</h4>
+                <h4 className="font-semibold text-error-900 mb-1">{t('upload.uploadFailed')}</h4>
                 <p className="text-error-700 text-sm leading-relaxed">{validationError}</p>
               </div>
             </div>
@@ -684,7 +677,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
       {!validationError && selectedFiles.length === 0 && (
         <div className="text-center">
           <p className="text-xs text-primary-500">
-            Ihre Daten werden DSGVO-konform verarbeitet und nicht gespeichert
+            {t('upload.gdprNotice')}
           </p>
         </div>
       )}

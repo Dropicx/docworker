@@ -14,6 +14,7 @@ import {
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import ReactDOM from 'react-dom/client';
+import { useTranslation } from 'react-i18next';
 import ApiService from '../services/api';
 import { TranslationResult as TranslationData, GuidelinesResponse } from '../types/api';
 import { exportToPDF } from '../utils/pdfExportAdvanced';
@@ -30,6 +31,7 @@ interface TranslationResultProps {
 const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTranslation }) => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
+  const { t, i18n } = useTranslation();
 
   const [showOriginal, setShowOriginal] = useState(false);
   const [copiedText, setCopiedText] = useState<'original' | 'translated' | 'language' | null>(null);
@@ -176,8 +178,8 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
         // Exportiere als PDF
         await exportToPDF('pdf-export-content-temp', filename, {
           title: isLanguageExport
-            ? `Übersetzung (${result.target_language?.toUpperCase()})`
-            : 'Verständliche Übersetzung',
+            ? t('result.translationTitle', { lang: result.target_language?.toUpperCase() })
+            : t('result.tabSimplified'),
           content: textToExport,
           isTranslation: true,
           language: isLanguageExport ? result.target_language : 'Deutsch',
@@ -191,7 +193,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
       }, 200);
     } catch (error) {
       console.error('PDF Export failed:', error);
-      alert('PDF-Export fehlgeschlagen. Bitte versuchen Sie es erneut.');
+      alert(t('result.pdfExportFailed'));
     }
   };
 
@@ -278,12 +280,12 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
           </div>
           <div>
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold bg-gradient-to-r from-primary-900 via-brand-700 to-success-700 bg-clip-text text-transparent">
-              Übersetzung abgeschlossen
+              {t('result.title')}
             </h2>
             <p className="text-sm sm:text-base text-primary-600">
               {result.language_translated_text
-                ? 'Ihr Dokument wurde vereinfacht und übersetzt'
-                : 'Ihr Dokument wurde in verständliche Sprache übersetzt'}
+                ? t('result.descriptionWithLanguage')
+                : t('result.descriptionSimplified')}
             </p>
           </div>
         </div>
@@ -303,13 +305,13 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                 </div>
                 <div>
                   <p className="text-sm sm:text-base font-semibold text-brand-800">
-                    Medizinische Leitlinien
+                    {t('result.guidelines.title')}
                   </p>
                   <p className="text-xs sm:text-sm text-brand-600">
-                    Passende AWMF-Empfehlungen werden gesucht...
+                    {t('result.guidelines.searching')}
                   </p>
                   <p className="text-xs text-brand-500 mt-0.5">
-                    Ergebnis erscheint unten auf dieser Seite
+                    {t('result.guidelines.appearBelow')}
                   </p>
                 </div>
               </>
@@ -320,16 +322,16 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                 </div>
                 <div>
                   <p className="text-sm sm:text-base font-semibold text-success-800">
-                    Leitlinien gefunden
+                    {t('result.guidelines.found')}
                   </p>
                   <p className="text-xs sm:text-sm text-success-600 mb-1">
-                    Relevante AWMF-Empfehlungen verfügbar
+                    {t('result.guidelines.available')}
                   </p>
                   <button
                     onClick={scrollToGuidelines}
                     className="text-xs sm:text-sm text-brand-600 hover:text-brand-700 font-medium flex items-center space-x-1 group"
                   >
-                    <span>Jetzt ansehen</span>
+                    <span>{t('result.guidelines.viewNow')}</span>
                     <span className="group-hover:translate-y-0.5 transition-transform">↓</span>
                   </button>
                 </div>
@@ -341,10 +343,10 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                 </div>
                 <div>
                   <p className="text-sm sm:text-base font-semibold text-neutral-700">
-                    Keine passenden Leitlinien
+                    {t('result.guidelines.notFound')}
                   </p>
                   <p className="text-xs sm:text-sm text-neutral-500">
-                    Für diesen Dokumenttyp wurden keine AWMF-Empfehlungen gefunden
+                    {t('result.guidelines.notFoundDescription')}
                   </p>
                 </div>
               </>
@@ -363,7 +365,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
               </div>
               <div className="flex-1">
                 <div className="text-xs sm:text-sm font-medium text-primary-600 mb-1">
-                  Zielsprache
+                  {t('result.targetLanguage')}
                 </div>
                 <div className="font-bold text-primary-900 text-base sm:text-lg">
                   {result.target_language.toUpperCase()}
@@ -386,7 +388,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                   : 'text-neutral-600 hover:text-neutral-800'
               }`}
             >
-              📄 Vereinfacht (Deutsch)
+              {'📄 ' + t('result.tabSimplified')}
             </button>
             <button
               onClick={() => setActiveTab('language')}
@@ -414,10 +416,10 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                 </div>
                 <div className="min-w-0">
                   <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-primary-900">
-                    Übersetzung ({result.target_language?.toUpperCase()})
+                    {t('result.translationTitle', { lang: result.target_language?.toUpperCase() })}
                   </h3>
                   <p className="text-xs sm:text-sm lg:text-base text-primary-600">
-                    Ihr Dokument in {result.target_language}
+                    {t('result.documentIn', { lang: result.target_language })}
                   </p>
                 </div>
               </div>
@@ -533,8 +535,8 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                 {/* PDF Footer with Date - wird nur im Export angezeigt */}
                 <div className="mt-8 pt-4 border-t border-primary-200 text-center text-sm text-primary-600">
                   <p>
-                    Übersetzung erstellt am:{' '}
-                    {new Date().toLocaleDateString('de-DE', {
+                    {t('result.createdAt')}{' '}
+                    {new Date().toLocaleDateString(i18n.language === 'de' ? 'de-DE' : 'en-US', {
                       day: '2-digit',
                       month: '2-digit',
                       year: 'numeric',
@@ -542,7 +544,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                       minute: '2-digit',
                     })}
                   </p>
-                  <p className="text-xs mt-1">HealthLingo - Medizinische Dokumente verstehen</p>
+                  <p className="text-xs mt-1">{t('result.tagline')}</p>
                 </div>
               </div>
             </div>
@@ -561,13 +563,13 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                 </div>
                 <div>
                   <div>
-                    <span className="text-xs text-primary-500">Verarbeitet in</span>
+                    <span className="text-xs text-primary-500">{t('result.processedIn')}</span>
                     <span className="font-semibold text-primary-700 ml-1 sm:ml-2">
                       {ApiService.formatDuration(result.processing_time_seconds)}
                     </span>
                   </div>
                   <div className="mt-1">
-                    <span className="text-xs text-primary-500">Verarbeitungs-ID:</span>
+                    <span className="text-xs text-primary-500">{t('result.processingId')}</span>
                     <span className="font-mono text-xs text-primary-500 ml-1">
                       {result.processing_id}
                     </span>
@@ -589,13 +591,13 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                   {copiedText === (activeTab === 'language' ? 'language' : 'translated') ? (
                     <>
                       <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-success-600 flex-shrink-0" />
-                      <span className="text-success-600 hidden sm:inline">Kopiert!</span>
+                      <span className="text-success-600 hidden sm:inline">{t('result.copied')}</span>
                       <span className="text-success-600 sm:hidden">✓</span>
                     </>
                   ) : (
                     <>
                       <Copy className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                      <span className="hidden sm:inline">Kopieren</span>
+                      <span className="hidden sm:inline">{t('result.copy')}</span>
                       <span className="sm:hidden">Copy</span>
                     </>
                   )}
@@ -606,7 +608,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                   className="btn-primary group flex-1 sm:flex-initial"
                 >
                   <Download className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                  <span className="hidden sm:inline">Als PDF</span>
+                  <span className="hidden sm:inline">{t('result.downloadPdf')}</span>
                   <span className="sm:hidden">PDF</span>
                 </button>
               </div>
@@ -624,7 +626,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-lg sm:rounded-xl flex items-center justify-center">
                   <FileText className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
-                <h3 className="text-lg sm:text-xl font-bold text-primary-900">Originaltext</h3>
+                <h3 className="text-lg sm:text-xl font-bold text-primary-900">{t('result.originalText')}</h3>
               </div>
 
               <div className="flex space-x-2 sm:space-x-3">
@@ -635,13 +637,13 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                   {showOriginal ? (
                     <>
                       <EyeOff className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                      <span className="hidden sm:inline">Ausblenden</span>
+                      <span className="hidden sm:inline">{t('result.hide')}</span>
                       <span className="sm:hidden">Hide</span>
                     </>
                   ) : (
                     <>
                       <Eye className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                      <span className="hidden sm:inline">Anzeigen</span>
+                      <span className="hidden sm:inline">{t('result.show')}</span>
                       <span className="sm:hidden">Show</span>
                     </>
                   )}
@@ -656,13 +658,13 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                     {copiedText === 'original' ? (
                       <>
                         <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-success-600 flex-shrink-0" />
-                        <span className="text-success-600 hidden sm:inline">Kopiert!</span>
+                        <span className="text-success-600 hidden sm:inline">{t('result.copied')}</span>
                         <span className="text-success-600 sm:hidden">✓</span>
                       </>
                     ) : (
                       <>
                         <Copy className="w-3 h-3 sm:w-4 sm:h-4 transition-transform duration-200 group-hover:scale-110 flex-shrink-0" />
-                        <span className="hidden sm:inline">Kopieren</span>
+                        <span className="hidden sm:inline">{t('result.copy')}</span>
                         <span className="sm:hidden">Copy</span>
                       </>
                     )}
@@ -688,7 +690,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
                   <Eye className="w-8 h-8 text-primary-500" />
                 </div>
                 <p className="text-primary-600">
-                  Klicken Sie auf &quot;Anzeigen&quot;, um den Originaltext zu sehen
+                  {t('result.showOriginalHint')}
                 </p>
               </div>
             )}
@@ -716,7 +718,7 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
       <div className="flex justify-center pt-6">
         <button onClick={handleNewTranslation} className="btn-primary group">
           <RefreshCw className="w-5 h-5 transition-transform duration-200 group-hover:rotate-180 flex-shrink-0" />
-          <span>Neues Dokument übersetzen</span>
+          <span>{t('result.newTranslation')}</span>
         </button>
       </div>
 
@@ -727,12 +729,9 @@ const TranslationResult: React.FC<TranslationResultProps> = ({ result, onNewTran
             <span className="text-white text-sm">⚠️</span>
           </div>
           <div>
-            <h4 className="font-semibold text-warning-900 mb-2">Wichtiger Hinweis</h4>
+            <h4 className="font-semibold text-warning-900 mb-2">{t('disclaimer.title')}</h4>
             <p className="text-warning-800 text-sm leading-relaxed">
-              Diese Übersetzung wurde automatisch erstellt und dient nur zur Orientierung. Sie
-              ersetzt nicht die professionelle medizinische Beratung, Diagnose oder Behandlung.
-              Wenden Sie sich bei Fragen immer an Ihren Arzt oder andere qualifizierte
-              Gesundheitsdienstleister.
+              {t('disclaimer.text')}
             </p>
           </div>
         </div>

@@ -4,11 +4,13 @@
  */
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Cookie, X, Shield } from 'lucide-react';
 
 const BANNER_DISMISSED_KEY = 'cookieFreeBannerDismissed';
 
 export default function CookieFreeBanner() {
+  const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -41,9 +43,9 @@ export default function CookieFreeBanner() {
               <div className="flex items-center gap-2 sm:gap-3">
                 <Shield className="w-4 h-4 sm:hidden flex-shrink-0" />
                 <div>
-                  <p className="text-sm sm:text-base font-medium">Keine Cookies!</p>
+                  <p className="text-sm sm:text-base font-medium">{t('cookieFree.title')}</p>
                   <p className="text-xs sm:text-sm text-white/90 mt-0.5">
-                    HealthLingo verwendet keine Cookies und speichert keine Tracking-Daten.
+                    {t('cookieFree.description')}
                   </p>
                 </div>
               </div>
@@ -53,7 +55,7 @@ export default function CookieFreeBanner() {
             <button
               onClick={handleDismiss}
               className="flex-shrink-0 p-2 hover:bg-white/20 rounded-lg transition-colors duration-200 group"
-              aria-label="Banner schließen"
+              aria-label={t('cookieFree.closeBanner')}
             >
               <X className="w-5 h-5 group-hover:scale-110 transition-transform" />
             </button>

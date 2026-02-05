@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 
 const Footer: React.FC = () => {
+  const { t } = useTranslation();
+
   return (
     <footer className="bg-gradient-to-r from-primary-50 via-brand-50 to-accent-50 border-t border-primary-200 mt-auto">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8">
@@ -15,7 +18,7 @@ const Footer: React.FC = () => {
               asChild
               className="text-primary-600 hover:text-primary-800 text-xs sm:text-sm px-2"
             >
-              <Link to="/impressum">Impressum</Link>
+              <Link to="/impressum">{t('footer.impressum')}</Link>
             </Button>
             <Separator orientation="vertical" className="hidden sm:block h-4" />
             <Button
@@ -23,7 +26,7 @@ const Footer: React.FC = () => {
               asChild
               className="text-primary-600 hover:text-primary-800 text-xs sm:text-sm px-2"
             >
-              <Link to="/datenschutz">Datenschutzerklärung</Link>
+              <Link to="/datenschutz">{t('footer.privacy')}</Link>
             </Button>
             <Separator orientation="vertical" className="hidden sm:block h-4" />
             <Button
@@ -31,7 +34,7 @@ const Footer: React.FC = () => {
               asChild
               className="text-primary-600 hover:text-primary-800 text-xs sm:text-sm px-2"
             >
-              <Link to="/nutzungsbedingungen">Nutzungsbedingungen</Link>
+              <Link to="/nutzungsbedingungen">{t('footer.terms')}</Link>
             </Button>
             <Separator orientation="vertical" className="hidden sm:block h-4" />
             <Button
@@ -39,7 +42,7 @@ const Footer: React.FC = () => {
               asChild
               className="text-primary-400 hover:text-primary-600 text-xs px-2"
             >
-              <Link to="/login">Admin</Link>
+              <Link to="/login">{t('footer.admin')}</Link>
             </Button>
           </div>
 
@@ -47,10 +50,12 @@ const Footer: React.FC = () => {
 
           <div className="text-center space-y-2">
             <p className="text-xs text-primary-500">
-              &copy; {new Date().getFullYear()} HealthLingo. Alle Rechte vorbehalten.
+              &copy; {new Date().getFullYear()} {t('footer.copyright')}
             </p>
             <p className="text-xs text-primary-400 flex items-center justify-center gap-1">
-              Mit <Heart className="w-3 h-3 text-red-500 fill-current" /> in Deutschland entwickelt
+              {t('footer.madeIn', { heart: '' }).split('{{heart}}')[0]}
+              <Heart className="w-3 h-3 text-red-500 fill-current" />
+              {t('footer.madeIn', { heart: '' }).split('{{heart}}')[1] || ''}
             </p>
           </div>
         </div>

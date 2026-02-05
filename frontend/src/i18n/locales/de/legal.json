@@ -1,0 +1,238 @@
+{
+  "datenschutz": {
+    "pageTitle": "Datenschutzerklärung",
+    "section1": {
+      "title": "1. Datenschutz auf einen Blick",
+      "generalTitle": "Allgemeine Hinweise",
+      "generalText": "Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.",
+      "dataCollectionTitle": "Datenerfassung auf dieser Website",
+      "responsibleText": "Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten können Sie dem Impressum dieser Website entnehmen.",
+      "responsibleQuestion": "Wer ist verantwortlich für die Datenerfassung auf dieser Website?",
+      "anonymousTitle": "Anonyme Nutzung unseres Dienstes",
+      "anonymousText": "Unser Übersetzungsdienst funktioniert vollständig anonym. Sie benötigen kein Benutzerkonto und müssen sich nicht registrieren, um Dokumente zu übersetzen. Wir speichern keine personenbezogenen Daten von Endnutzern. Die Verarbeitung Ihrer Dokumente erfolgt ohne Zuordnung zu einer persönlichen Identität.",
+      "howCollectQuestion": "Wie erfassen wir Ihre Daten?",
+      "howCollectText": "Die einzigen Daten, die wir erheben, sind die Dokumente, die Sie zur Übersetzung hochladen. Diese werden ausschließlich für die Dauer der Verarbeitung temporär gespeichert. Wir erfassen keine weiteren personenbezogenen Daten von Ihnen.",
+      "purposeQuestion": "Wofür nutzen wir Ihre Daten?",
+      "purposeText": "Die hochgeladenen Dokumente werden ausschließlich zum Zweck der Übersetzung verarbeitet. Nach Abschluss der Verarbeitung werden alle Daten automatisch gelöscht. Es erfolgt keine dauerhafte Speicherung, keine Weitergabe an Dritte und keine Nutzung für andere Zwecke.",
+      "rightsQuestion": "Welche Rechte haben Sie bezüglich Ihrer Daten?",
+      "rightsText": "Da wir keine personenbezogenen Daten von Endnutzern speichern und die Verarbeitung vollständig anonym erfolgt, sind die meisten DSGVO-Rechte (wie Auskunft, Berichtigung, Löschung) nicht anwendbar. Ihre Dokumente werden automatisch nach der Verarbeitung gelöscht, sodass keine Daten mehr vorhanden sind, über die Auskunft erteilt werden könnte."
+    },
+    "section2": {
+      "title": "2. Allgemeine Hinweise und Pflichtinformationen",
+      "privacyTitle": "Datenschutz",
+      "privacyText": "Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend den gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.",
+      "responsibleTitle": "Hinweis zur verantwortlichen Stelle",
+      "responsibleText": "Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist im Impressum angegeben. Verantwortliche Stelle ist die natürliche oder juristische Person, die allein oder gemeinsam mit anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten entscheidet.",
+      "storageTitle": "Speicherdauer",
+      "storageText": "Hochgeladene Dokumente und deren Übersetzungen werden nur für die Dauer der Verarbeitung temporär gespeichert. Die Standard-Speicherdauer beträgt 24 Stunden nach Abschluss der Verarbeitung (konfigurierbar, kann auf bis zu 0 Stunden reduziert werden). Nach Ablauf dieser Frist werden alle Daten automatisch und vollständig gelöscht:",
+      "storageItems": [
+        "Das hochgeladene Originaldokument",
+        "Die extrahierten Texte (nach PII-Entfernung)",
+        "Die Übersetzungsergebnisse",
+        "Alle Verarbeitungsmetadaten",
+        "IP-Adressen (für Sicherheitsprotokollierung)"
+      ],
+      "storageNote": "Diese kurze Speicherdauer ermöglicht es Ihnen, Ihre Übersetzung herunterzuladen, während gleichzeitig der Datenschutz maximiert wird. Nach der Löschung sind die Daten nicht mehr wiederherstellbar. Die automatische Löschung erfolgt durch geplante Cleanup-Aufgaben, die stündlich ausgeführt werden.",
+      "sslTitle": "SSL- bzw. TLS-Verschlüsselung",
+      "sslText": "Diese Seite nutzt aus Sicherheitsgründen und zum Schutz der Übertragung vertraulicher Inhalte, wie zum Beispiel medizinischer Dokumente, die Sie an uns senden, eine SSL- bzw. TLS-Verschlüsselung. Eine verschlüsselte Verbindung erkennen Sie daran, dass die Adresszeile des Browsers von \"http://\" auf \"https://\" wechselt und an dem Schloss-Symbol in Ihrer Browserzeile."
+    },
+    "section3": {
+      "title": "3. Datenerfassung auf dieser Website",
+      "cookiesTitle": "Cookies",
+      "cookiesText1": "Wir verwenden keine Cookies.",
+      "cookiesText2": "Unser Dienst funktioniert vollständig ohne Cookies. Wir setzen weder Tracking-Cookies noch Analyse-Cookies noch Marketing-Cookies. Dies wird auch durch unser Cookie-freies Hinweis-Banner auf der Website transparent kommuniziert.",
+      "cookiesText3": "Die einzige lokale Speicherung, die wir verwenden, ist der Browser-LocalStorage, um Ihre Präferenz für das Cookie-Hinweis-Banner zu speichern (ob Sie das Banner geschlossen haben). Diese Information wird nur lokal in Ihrem Browser gespeichert und nicht an unseren Server übertragen.",
+      "cookiesText4": "Da wir keine Cookies verwenden, ist keine Cookie-Einwilligung erforderlich. Unser Dienst respektiert Ihre Privatsphäre von Anfang an und verzichtet vollständig auf Tracking und Analyse-Cookies.",
+      "serverLogsTitle": "Server-Log-Dateien",
+      "serverLogsText": "Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten Server-Log-Dateien, die Ihr Browser automatisch an uns übermittelt. Dies sind:",
+      "serverLogsItems": [
+        "Browsertyp und Browserversion",
+        "Verwendetes Betriebssystem",
+        "Referrer URL",
+        "Hostname des zugreifenden Rechners",
+        "Uhrzeit der Serveranfrage",
+        "IP-Adresse"
+      ],
+      "serverLogsNote": "Eine Zusammenführung dieser Daten mit anderen Datenquellen wird nicht vorgenommen.",
+      "medicalTitle": "Verarbeitung medizinischer Dokumente",
+      "medicalText": "Bei der Nutzung unseres Übersetzungsdienstes für medizinische Dokumente gelten folgende Datenschutzmaßnahmen:",
+      "medicalItems": [
+        "Automatische PII-Entfernung: Vor der Verarbeitung durch KI-Systeme werden personenbezogene Informationen (Namen, Adressen, Telefonnummern, Geburtsdaten, Versicherungsnummern) automatisch aus den Dokumenten entfernt. Dies erfolgt lokal auf unseren Servern mit Hilfe von spaCy NER (Natural Entity Recognition) und speziellen Mustern für deutsche medizinische Dokumente.",
+        "Temporäre Speicherung: Dokumente werden nur für die Dauer der Verarbeitung (maximal 24 Stunden) temporär gespeichert",
+        "Automatische Löschung: Nach Abschluss der Übersetzung werden alle Daten automatisch und vollständig gelöscht",
+        "Keine dauerhafte Speicherung: Es erfolgt keine dauerhafte Speicherung von Dokumenten oder Übersetzungen",
+        "Keine Weitergabe: Keine Weitergabe der Daten an Dritte (außer an den KI-Anbieter OVH für die Übersetzung, wobei nur PII-bereinigte Texte übertragen werden)",
+        "Verschlüsselte Übertragung: Alle Daten werden über HTTPS/TLS verschlüsselt übertragen",
+        "Verschlüsselung bei Speicherung: Administratorkonten (nicht für Endnutzer) verwenden verschlüsselte Speicherung für E-Mail-Adressen und Namen. Die Verschlüsselung von Dokumentinhalten ist geplant (siehe technische Roadmap).",
+        "Keine Cookies: Unser Dienst verwendet keine Cookies und speichert keine Tracking-Daten. Dies wird durch ein Cookie-freies Hinweis-Banner auf der Website transparent kommuniziert."
+      ]
+    },
+    "section4": {
+      "title": "4. Ihre Rechte",
+      "intro": "Da unser Dienst vollständig anonym funktioniert und wir keine personenbezogenen Daten von Endnutzern speichern, sind die meisten DSGVO-Rechte in diesem Kontext nicht direkt anwendbar. Ihre Dokumente werden automatisch nach der Verarbeitung gelöscht, sodass keine Daten mehr vorhanden sind, über die Auskunft erteilt werden könnte.",
+      "accessTitle": "Auskunftsrecht",
+      "accessText": "Da wir keine personenbezogenen Daten von Endnutzern speichern und die Verarbeitung anonym erfolgt, können wir keine Auskunft über gespeicherte Daten erteilen, da keine solchen Daten existieren. Falls Sie Fragen zum Thema Datenschutz haben, können Sie sich jederzeit an uns wenden (siehe Kontakt im Impressum).",
+      "deletionTitle": "Recht auf Löschung",
+      "deletionText": "Ihre hochgeladenen Dokumente werden automatisch nach 24 Stunden (oder früher) gelöscht. Es ist keine manuelle Löschung erforderlich, da die Löschung automatisch erfolgt. Falls Sie eine sofortige Löschung wünschen, können Sie sich an uns wenden.",
+      "restrictionTitle": "Recht auf Einschränkung der Verarbeitung",
+      "restrictionText": "Sie können jederzeit die Verarbeitung Ihrer Dokumente abbrechen, indem Sie den Verarbeitungsprozess beenden, bevor die Übersetzung abgeschlossen ist. In diesem Fall werden die Daten sofort gelöscht.",
+      "portabilityTitle": "Recht auf Datenübertragbarkeit",
+      "portabilityText": "Da wir keine personenbezogenen Daten von Endnutzern speichern, gibt es keine Daten, die übertragen werden könnten. Die Übersetzungsergebnisse können Sie direkt nach der Verarbeitung herunterladen.",
+      "complaintTitle": "Beschwerderecht bei einer Aufsichtsbehörde",
+      "complaintText": "Im Falle von Verstößen gegen die DSGVO steht Ihnen ein Beschwerderecht bei einer Aufsichtsbehörde zu, insbesondere in dem Mitgliedstaat Ihres gewöhnlichen Aufenthalts, Ihres Arbeitsplatzes oder des Orts des mutmaßlichen Verstoßes."
+    },
+    "section5": {
+      "title": "5. Besondere Hinweise zum Gesundheitsdatenschutz",
+      "intro": "Da unser Dienst die Verarbeitung medizinischer Dokumente ermöglicht, die möglicherweise Gesundheitsdaten enthalten, weisen wir besonders darauf hin:",
+      "items": [
+        "Gesundheitsdaten gehören zu den besonderen Kategorien personenbezogener Daten nach Art. 9 DSGVO",
+        "Wir verarbeiten diese Daten ausschließlich zum Zweck der Übersetzung und nur nach Ihrer ausdrücklichen Einwilligung (durch das Akzeptieren der Datenschutzerklärung beim Hochladen)",
+        "Die Verarbeitung erfolgt vollständig anonym - es werden keine personenbezogenen Daten von Endnutzern gespeichert",
+        "Vor der KI-Verarbeitung werden alle personenbezogenen Informationen (Namen, Adressen, Telefonnummern, etc.) automatisch entfernt",
+        "Es werden besondere technische und organisatorische Maßnahmen zum Schutz dieser Daten getroffen (Verschlüsselung, kurze Speicherdauer, automatische Löschung)",
+        "Alle Daten werden nach maximal 24 Stunden automatisch und vollständig gelöscht"
+      ]
+    },
+    "section6": {
+      "title": "6. Kontakt und Datenschutzanfragen",
+      "text": "Bei Fragen zum Datenschutz oder zur Ausübung Ihrer Rechte können Sie sich jederzeit an uns wenden. Die Kontaktdaten finden Sie im",
+      "impressumLink": "Impressum",
+      "responsibleLabel": "Verantwortliche Stelle:",
+      "responsibleText": "Die verantwortliche Stelle für die Datenverarbeitung ist im Impressum dieser Website angegeben."
+    },
+    "section7": {
+      "title": "7. Drittparteien und Datenverarbeitung",
+      "intro": "Für die Bereitstellung unseres Dienstes nutzen wir folgende Drittanbieter:",
+      "items": [
+        "OVH Cloud (EU): Für die KI-gestützte Übersetzung. Es werden nur PII-bereinigte Texte an OVH übertragen. Die Datenverarbeitung erfolgt ausschließlich in der EU.",
+        "Railway (EU): Für das Hosting der Anwendung und der Datenbank. Railway ist SOC 2 Type I zertifiziert und bietet DSGVO-konforme Data Processing Agreements.",
+        "PostgreSQL: Als Datenbanksystem. Die Datenbank wird in der EU gehostet."
+      ],
+      "note": "Alle Datenverarbeitung erfolgt ausschließlich innerhalb der EU. Es finden keine internationalen Datenübertragungen statt."
+    },
+    "lastUpdated": "Stand:"
+  },
+  "impressum": {
+    "pageTitle": "Impressum",
+    "section1": {
+      "title": "Angaben gemäß § 5 TMG",
+      "name": "[Ihr Name oder Firmenname]",
+      "address": "[Ihre Adresse]",
+      "city": "[PLZ und Ort]",
+      "country": "Deutschland"
+    },
+    "contact": {
+      "title": "Kontakt",
+      "phone": "Telefon: [Ihre Telefonnummer]",
+      "email": "E-Mail: [Ihre E-Mail-Adresse]",
+      "website": "Website: [Ihre Website-URL]"
+    },
+    "register": {
+      "title": "Registereintrag",
+      "text": "Eintragung im Handelsregister.",
+      "court": "Registergericht: [Ihr Registergericht]",
+      "number": "Registernummer: [Ihre Registernummer]"
+    },
+    "tax": {
+      "title": "Umsatzsteuer-ID",
+      "text": "Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:",
+      "number": "[Ihre USt-IdNr.]"
+    },
+    "profession": {
+      "title": "Berufsbezeichnung und berufsrechtliche Regelungen",
+      "designation": "Berufsbezeichnung: [Ihre Berufsbezeichnung]",
+      "chamber": "Zuständige Kammer: [Ihre zuständige Kammer]",
+      "grantedIn": "Verliehen in: Deutschland",
+      "regulations": "Es gelten folgende berufsrechtliche Regelungen: [Relevante Regelungen]"
+    },
+    "responsible": {
+      "title": "Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV",
+      "name": "[Name des Verantwortlichen]",
+      "address": "[Adresse]",
+      "city": "[PLZ und Ort]"
+    },
+    "disclaimer": {
+      "title": "Haftungsausschluss",
+      "contentTitle": "Haftung für Inhalte",
+      "contentText": "Die Inhalte unserer Seiten wurden mit größter Sorgfalt erstellt. Für die Richtigkeit, Vollständigkeit und Aktualität der Inhalte können wir jedoch keine Gewähr übernehmen. Als Diensteanbieter sind wir gemäß § 7 Abs.1 TMG für eigene Inhalte auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich.",
+      "linksTitle": "Haftung für Links",
+      "linksText": "Unser Angebot enthält Links zu externen Webseiten Dritter, auf deren Inhalte wir keinen Einfluss haben. Deshalb können wir für diese fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber der Seiten verantwortlich.",
+      "copyrightTitle": "Urheberrecht",
+      "copyrightText": "Die durch die Seitenbetreiber erstellten Inhalte und Werke auf diesen Seiten unterliegen dem deutschen Urheberrecht. Die Vervielfältigung, Bearbeitung, Verbreitung und jede Art der Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers."
+    },
+    "lastUpdated": "Stand:"
+  },
+  "nutzungsbedingungen": {
+    "pageTitle": "Nutzungsbedingungen",
+    "section1": {
+      "title": "§ 1 Geltungsbereich",
+      "p1": "(1) Diese Nutzungsbedingungen gelten für die Nutzung des medizinischen Dokumentenübersetzungsdienstes (nachfolgend \"Dienst\" genannt) auf dieser Website.",
+      "p2": "(2) Mit der Nutzung des Dienstes erklären Sie sich mit diesen Nutzungsbedingungen einverstanden. Wenn Sie mit diesen Bedingungen nicht einverstanden sind, nutzen Sie bitte unseren Dienst nicht."
+    },
+    "section2": {
+      "title": "§ 2 Leistungsbeschreibung",
+      "p1": "(1) Unser Dienst bietet eine automatisierte Übersetzung medizinischer Dokumente in vereinfachte, verständliche Sprache sowie in andere Sprachen.",
+      "p2": "(2) Die Übersetzungen werden durch künstliche Intelligenz erstellt und dienen ausschließlich zur Information und zum besseren Verständnis medizinischer Inhalte.",
+      "p3": "(3) Die Übersetzungen ersetzen keine professionelle medizinische Beratung, Diagnose oder Behandlung."
+    },
+    "section3": {
+      "title": "§ 3 Nutzungsbedingungen",
+      "p1": "(1) Der Dienst darf nur für persönliche, nicht-kommerzielle Zwecke genutzt werden.",
+      "p2": "(2) Sie verpflichten sich, den Dienst nur für rechtmäßige Zwecke zu nutzen und keine Inhalte hochzuladen, die:",
+      "items": [
+        "Rechte Dritter verletzen",
+        "Gegen geltendes Recht verstoßen",
+        "Schadsoftware oder schädlichen Code enthalten",
+        "Die Funktionsfähigkeit des Dienstes beeinträchtigen könnten"
+      ],
+      "p3": "(3) Die systematische Abfrage oder Extraktion von Daten ist untersagt."
+    },
+    "section4": {
+      "title": "§ 4 Medizinischer Haftungsausschluss",
+      "warning": "WICHTIGER HINWEIS: Die bereitgestellten Übersetzungen sind NICHT als medizinischer Rat zu verstehen!",
+      "p1": "(1) Die Übersetzungen werden automatisch durch künstliche Intelligenz erstellt und können Fehler, Ungenauigkeiten oder Missverständnisse enthalten.",
+      "p2": "(2) Die Übersetzungen dürfen niemals als Grundlage für medizinische Entscheidungen verwendet werden.",
+      "p3": "(3) Bei medizinischen Fragen oder Problemen konsultieren Sie immer einen qualifizierten Arzt oder Gesundheitsdienstleister.",
+      "p4": "(4) Im Notfall kontaktieren Sie sofort den Notruf (112) oder suchen Sie die nächste Notaufnahme auf.",
+      "p5": "(5) Verlassen Sie sich niemals ausschließlich auf die Übersetzungen dieses Dienstes für gesundheitsbezogene Entscheidungen."
+    },
+    "section5": {
+      "title": "§ 5 Haftungsbeschränkung",
+      "p1": "(1) Wir übernehmen keine Haftung für die Richtigkeit, Vollständigkeit oder Aktualität der Übersetzungen.",
+      "p2": "(2) Jegliche Haftung für Schäden, die direkt oder indirekt aus der Nutzung des Dienstes entstehen, wird ausgeschlossen, soweit gesetzlich zulässig.",
+      "p3": "(3) Dies gilt nicht für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit sowie für sonstige Schäden, die auf einer vorsätzlichen oder grob fahrlässigen Pflichtverletzung beruhen."
+    },
+    "section6": {
+      "title": "§ 6 Datenschutz",
+      "p1": "(1) Die Verarbeitung personenbezogener Daten erfolgt gemäß unserer Datenschutzerklärung.",
+      "p2": "(2) Hochgeladene Dokumente werden nur für die Dauer der Verarbeitung temporär gespeichert und anschließend automatisch gelöscht.",
+      "p3": "(3) Es erfolgt keine dauerhafte Speicherung oder Weitergabe Ihrer Dokumente an Dritte."
+    },
+    "section7": {
+      "title": "§ 7 Geistiges Eigentum",
+      "p1": "(1) Alle Rechte an der Website und dem Dienst, einschließlich Urheberrechte, Markenrechte und andere gewerbliche Schutzrechte, verbleiben bei uns.",
+      "p2": "(2) Die Nutzung des Dienstes gewährt Ihnen keine Rechte an unserem geistigen Eigentum, außer den in diesen Nutzungsbedingungen ausdrücklich eingeräumten Rechten."
+    },
+    "section8": {
+      "title": "§ 8 Verfügbarkeit",
+      "p1": "(1) Wir bemühen uns um eine hohe Verfügbarkeit des Dienstes, können diese jedoch nicht garantieren.",
+      "p2": "(2) Wir behalten uns vor, den Dienst jederzeit zu ändern, zu unterbrechen oder einzustellen.",
+      "p3": "(3) Wartungsarbeiten werden, soweit möglich, im Voraus angekündigt."
+    },
+    "section9": {
+      "title": "§ 9 Änderungen der Nutzungsbedingungen",
+      "p1": "(1) Wir behalten uns vor, diese Nutzungsbedingungen jederzeit zu ändern.",
+      "p2": "(2) Änderungen werden auf dieser Seite veröffentlicht. Die fortgesetzte Nutzung des Dienstes nach Veröffentlichung von Änderungen gilt als Zustimmung zu den geänderten Bedingungen."
+    },
+    "section10": {
+      "title": "§ 10 Anwendbares Recht und Gerichtsstand",
+      "p1": "(1) Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts.",
+      "p2": "(2) Gerichtsstand für alle Streitigkeiten aus oder im Zusammenhang mit diesen Nutzungsbedingungen ist, soweit gesetzlich zulässig, [Ihr Gerichtsstand]."
+    },
+    "section11": {
+      "title": "§ 11 Salvatorische Klausel",
+      "text": "Sollten einzelne Bestimmungen dieser Nutzungsbedingungen unwirksam oder undurchführbar sein oder werden, bleibt die Wirksamkeit der übrigen Bestimmungen hiervon unberührt."
+    },
+    "lastUpdated": "Stand:"
+  }
+}
