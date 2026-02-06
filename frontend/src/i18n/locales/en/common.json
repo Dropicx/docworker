@@ -187,7 +187,12 @@
     "scannedDocument": "Scanned document",
     "retake": "Retake",
     "use": "Use",
-    "capture": "Take photo"
+    "capture": "Take photo",
+    "holdSteady": "Hold steady",
+    "straightenDocument": "Straighten document",
+    "avoidGlare": "Avoid glare",
+    "moveCloser": "Move closer",
+    "alignWithGuides": "Keep document in frame"
   },
   "feedback": {
     "title": "How was your translation?",

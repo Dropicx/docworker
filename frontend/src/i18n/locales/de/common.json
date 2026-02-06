@@ -187,7 +187,12 @@
     "scannedDocument": "Gescanntes Dokument",
     "retake": "Wiederholen",
     "use": "Verwenden",
-    "capture": "Foto aufnehmen"
+    "capture": "Foto aufnehmen",
+    "holdSteady": "Ruhig halten",
+    "straightenDocument": "Dokument gerade ausrichten",
+    "avoidGlare": "Blendung vermeiden",
+    "moveCloser": "Näher herangehen",
+    "alignWithGuides": "Dokument im Rahmen halten"
   },
   "feedback": {
     "title": "Wie war Ihre Übersetzung?",

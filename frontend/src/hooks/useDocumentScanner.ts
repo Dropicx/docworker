@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import Scanner from '../lib/jscanify';
+import Scanner, { QualityWarning, QualityResult } from '../lib/jscanify';
 import { useOpenCV } from './useOpenCV';
 
 export type ScannerPhase = 'initializing' | 'scanning' | 'captured' | 'error';
@@ -19,6 +19,7 @@ interface UseDocumentScannerReturn {
   autoProgress: number;
   opencvReady: boolean;
   errorMessage: string | null;
+  qualityWarnings: QualityWarning[];
   startCamera: () => Promise<void>;
   captureManual: () => void;
   confirmCapture: () => File | null;
@@ -26,11 +27,12 @@ interface UseDocumentScannerReturn {
   cleanup: () => void;
 }
 
-const DETECTION_FPS = 15;
+const DETECTION_FPS = 30;
 const FRAME_INTERVAL = 1000 / DETECTION_FPS;
-const AUTO_CAPTURE_DELAY_MS = 1500;
+const AUTO_CAPTURE_DELAY_MS = 1000;
 const PROCESSING_WIDTH = 640;
-const STABILITY_THRESHOLD = 30; // px tolerance for corner movement
+const STABILITY_THRESHOLD = 20; // px tolerance for corner movement
+const KALMAN_SMOOTHING = 0.3; // Smoothing factor for corner positions (0 = no smoothing, 1 = instant)
 
 function cornersStable(prev: CornerPoints | null, curr: CornerPoints | null): boolean {
   if (!prev || !curr) return false;
@@ -43,11 +45,37 @@ function cornersStable(prev: CornerPoints | null, curr: CornerPoints | null): bo
   return true;
 }
 
+function smoothCorners(
+  current: CornerPoints,
+  previous: CornerPoints | null,
+  factor: number
+): CornerPoints {
+  if (!previous) return current;
+
+  const keys = ['topLeftCorner', 'topRightCorner', 'bottomLeftCorner', 'bottomRightCorner'] as const;
+  const smoothed: CornerPoints = {
+    topLeftCorner: { x: 0, y: 0 },
+    topRightCorner: { x: 0, y: 0 },
+    bottomLeftCorner: { x: 0, y: 0 },
+    bottomRightCorner: { x: 0, y: 0 },
+  };
+
+  for (const key of keys) {
+    smoothed[key] = {
+      x: previous[key].x + factor * (current[key].x - previous[key].x),
+      y: previous[key].y + factor * (current[key].y - previous[key].y),
+    };
+  }
+
+  return smoothed;
+}
+
 export function useDocumentScanner(): UseDocumentScannerReturn {
   const [phase, setPhase] = useState<ScannerPhase>('initializing');
   const [capturedImageUrl, setCapturedImageUrl] = useState<string | null>(null);
   const [autoProgress, setAutoProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [qualityWarnings, setQualityWarnings] = useState<QualityWarning[]>([]);
 
   const { status: opencvStatus, loadOpenCV } = useOpenCV();
 
@@ -60,6 +88,9 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const lastFrameTimeRef = useRef(0);
   const lastCornersRef = useRef<CornerPoints | null>(null);
+  const smoothedCornersRef = useRef<CornerPoints | null>(null);
+  const lastQualityCheckRef = useRef<number>(0);
+  const qualityResultRef = useRef<QualityResult | null>(null);
   const stableStartRef = useRef<number | null>(null);
   const phaseRef = useRef<ScannerPhase>('initializing');
 
@@ -191,6 +222,14 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
           const pts = scanner.getCornerPoints(contour);
           if (pts) corners = pts;
         }
+
+        // Run quality check periodically (every 200ms) when corners detected
+        if (corners && mat && timestamp - lastQualityCheckRef.current > 200) {
+          lastQualityCheckRef.current = timestamp;
+          const qualityResult = scanner.checkQuality(mat, corners, pw, ph);
+          qualityResultRef.current = qualityResult;
+          setQualityWarnings(qualityResult.warnings);
+        }
       } catch {
         // Detection error — skip frame
       } finally {
@@ -199,9 +238,17 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       }
 
       if (corners) {
-        drawOverlayQuad(corners, vw, vh, 1 / scale);
+        // Apply Kalman-like smoothing to reduce jitter in overlay
+        const smoothedCorners = smoothCorners(corners, smoothedCornersRef.current, KALMAN_SMOOTHING);
+        smoothedCornersRef.current = smoothedCorners;
 
-        if (cornersStable(lastCornersRef.current, corners)) {
+        // Draw overlay with smoothed corners for visual stability
+        drawOverlayQuad(smoothedCorners, vw, vh, 1 / scale);
+
+        // Check if quality is acceptable for auto-capture
+        const qualityOk = qualityResultRef.current?.isAcceptable ?? true;
+
+        if (cornersStable(lastCornersRef.current, corners) && qualityOk) {
           if (!stableStartRef.current) {
             stableStartRef.current = timestamp;
           }
@@ -222,8 +269,11 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       } else {
         clearOverlay();
         lastCornersRef.current = null;
+        smoothedCornersRef.current = null;
         stableStartRef.current = null;
         setAutoProgress(0);
+        setQualityWarnings([]);
+        qualityResultRef.current = null;
       }
 
       rafRef.current = requestAnimationFrame(detect);
@@ -284,7 +334,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     // Pause video (keep stream alive for retake)
     video.pause();
 
-    const url = canvas.toDataURL('image/jpeg', 0.92);
+    const url = canvas.toDataURL('image/jpeg', 0.95);
     setCapturedImageUrl(url);
     setAutoProgress(0);
     clearOverlay();
@@ -342,7 +392,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     if (!canvas) return null;
 
     // Convert to blob synchronously via toDataURL
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
     const byteString = atob(dataUrl.split(',')[1]);
     const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
     const ab = new ArrayBuffer(byteString.length);
@@ -358,8 +408,12 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const retake = useCallback(() => {
     setCapturedImageUrl(null);
     setAutoProgress(0);
+    setQualityWarnings([]);
     lastCornersRef.current = null;
+    smoothedCornersRef.current = null;
     stableStartRef.current = null;
+    qualityResultRef.current = null;
+    lastQualityCheckRef.current = 0;
 
     const video = videoRef.current;
     if (video && video.srcObject) {
@@ -391,8 +445,12 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setCapturedImageUrl(null);
     setAutoProgress(0);
     setErrorMessage(null);
+    setQualityWarnings([]);
     lastCornersRef.current = null;
+    smoothedCornersRef.current = null;
     stableStartRef.current = null;
+    qualityResultRef.current = null;
+    lastQualityCheckRef.current = 0;
     setPhase('initializing');
   }, [stopDetectionLoop]);
 
@@ -404,6 +462,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     autoProgress,
     opencvReady,
     errorMessage,
+    qualityWarnings,
     startCamera,
     captureManual,
     confirmCapture,

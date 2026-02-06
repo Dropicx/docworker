@@ -18,8 +18,32 @@ export interface CornerPoints {
   bottomRightCorner: Point;
 }
 
+export interface QualityWarning {
+  type: 'blur' | 'skew' | 'glare' | 'incomplete' | 'tooSmall';
+  message: string;
+  severity: 'warning' | 'error';
+}
+
+export interface QualityResult {
+  isAcceptable: boolean;
+  warnings: QualityWarning[];
+  blurScore: number;
+  skewAngle: number;
+  glarePercentage: number;
+  documentCoverage: number;
+}
+
 function distance(p1: Point, p2: Point): number {
   return Math.hypot(p1.x - p2.x, p1.y - p2.y);
+}
+
+function angleBetweenVectors(v1: Point, v2: Point): number {
+  const dot = v1.x * v2.x + v1.y * v2.y;
+  const mag1 = Math.hypot(v1.x, v1.y);
+  const mag2 = Math.hypot(v2.x, v2.y);
+  if (mag1 === 0 || mag2 === 0) return 0;
+  const cosAngle = Math.max(-1, Math.min(1, dot / (mag1 * mag2)));
+  return Math.acos(cosAngle) * (180 / Math.PI);
 }
 
 function getCv(): any {
@@ -30,8 +54,8 @@ function getCv(): any {
 const MIN_AREA_RATIO = 0.15;      // Contour must be at least 15% of frame (filters out small internal elements)
 const MAX_AREA_RATIO = 0.98;      // Not full frame
 const EPSILON_FACTOR = 0.04;      // Polygon approximation tolerance (more lenient)
-const MIN_ASPECT_RATIO = 0.4;     // Allow portrait documents (A4 portrait ~ 0.71)
-const MAX_ASPECT_RATIO = 2.5;     // Allow various document sizes
+const MIN_ASPECT_RATIO = 0.6;     // A4 portrait ~ 0.71, allow some tolerance
+const MAX_ASPECT_RATIO = 1.7;     // A4 landscape ~ 1.41, allow some tolerance
 const EDGE_MARGIN_RATIO = 0.15;   // How close contour should be to frame edges (15% of frame dimension)
 
 export default class Scanner {
@@ -73,7 +97,7 @@ export default class Scanner {
 
     // Canny edge detection with lower thresholds for white paper detection
     const edges = new cv.Mat();
-    cv.Canny(blurred, edges, 30, 100);
+    cv.Canny(blurred, edges, 75, 200);
 
     // Morphological closing with larger kernel to connect broken edges
     const kernel = cv.Mat.ones(7, 7, cv.CV_8U);
@@ -147,6 +171,62 @@ export default class Scanner {
   }
 
   /**
+   * Validates that all corners of the quadrilateral are approximately 90 degrees.
+   * @param corners The four corner points
+   * @param tolerance Maximum deviation from 90 degrees (default 25)
+   * @returns true if all angles are within tolerance of 90 degrees
+   */
+  private validateQuadrilateralAngles(corners: CornerPoints, tolerance = 25): boolean {
+    const { topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner } = corners;
+
+    // Calculate angle at each corner
+    const angles = [
+      this.getCornerAngle(bottomLeftCorner, topLeftCorner, topRightCorner),     // top-left
+      this.getCornerAngle(topLeftCorner, topRightCorner, bottomRightCorner),    // top-right
+      this.getCornerAngle(topRightCorner, bottomRightCorner, bottomLeftCorner), // bottom-right
+      this.getCornerAngle(bottomRightCorner, bottomLeftCorner, topLeftCorner),  // bottom-left
+    ];
+
+    // Check if all angles are within tolerance of 90 degrees
+    for (const angle of angles) {
+      if (Math.abs(angle - 90) > tolerance) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Calculate the angle at vertex b formed by points a-b-c
+   */
+  private getCornerAngle(a: Point, b: Point, c: Point): number {
+    const v1 = { x: a.x - b.x, y: a.y - b.y };
+    const v2 = { x: c.x - b.x, y: c.y - b.y };
+    return angleBetweenVectors(v1, v2);
+  }
+
+  /**
+   * Validates that opposite sides of the quadrilateral are similar in length.
+   * This helps reject shapes that are too trapezoidal.
+   * @param corners The four corner points
+   * @param minRatio Minimum ratio of shorter to longer opposite sides (default 0.7)
+   * @returns true if opposite sides are within the ratio threshold
+   */
+  private validateSideRatios(corners: CornerPoints, minRatio = 0.7): boolean {
+    const { topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner } = corners;
+
+    const topWidth = distance(topLeftCorner, topRightCorner);
+    const bottomWidth = distance(bottomLeftCorner, bottomRightCorner);
+    const leftHeight = distance(topLeftCorner, bottomLeftCorner);
+    const rightHeight = distance(topRightCorner, bottomRightCorner);
+
+    const widthRatio = Math.min(topWidth, bottomWidth) / Math.max(topWidth, bottomWidth);
+    const heightRatio = Math.min(leftHeight, rightHeight) / Math.max(leftHeight, rightHeight);
+
+    return widthRatio >= minRatio && heightRatio >= minRatio;
+  }
+
+  /**
    * Find the best quadrilateral contour from a list of contours
    */
   private findBestQuadrilateral(
@@ -203,6 +283,28 @@ export default class Scanner {
       const rect = cv.boundingRect(approx);
       const aspectRatio = rect.width / rect.height;
       if (aspectRatio < MIN_ASPECT_RATIO || aspectRatio > MAX_ASPECT_RATIO) {
+        approx.delete();
+        contour.delete();
+        continue;
+      }
+
+      // Get corner points for validation
+      const corners = this.getCornerPoints(approx);
+      if (!corners) {
+        approx.delete();
+        contour.delete();
+        continue;
+      }
+
+      // Validate quadrilateral angles (~90° ±25°)
+      if (!this.validateQuadrilateralAngles(corners)) {
+        approx.delete();
+        contour.delete();
+        continue;
+      }
+
+      // Validate opposite side ratios (within 30% of each other)
+      if (!this.validateSideRatios(corners)) {
         approx.delete();
         contour.delete();
         continue;
@@ -417,5 +519,286 @@ export default class Scanner {
     }
 
     return { topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner };
+  }
+
+  /**
+   * Calculate blur score using Laplacian variance.
+   * Higher score = sharper image, lower score = blurrier.
+   * @param img cv.Mat to analyze
+   * @returns Blur score (variance of Laplacian). Score < 100 is typically too blurry.
+   */
+  calculateBlurScore(img: any): number {
+    const cv = getCv();
+    if (!cv?.Mat) return 100; // Default to acceptable if OpenCV not ready
+
+    let gray: any = null;
+    let laplacian: any = null;
+
+    try {
+      gray = new cv.Mat();
+      if (img.channels() === 4) {
+        cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY);
+      } else if (img.channels() === 3) {
+        cv.cvtColor(img, gray, cv.COLOR_RGB2GRAY);
+      } else {
+        gray = img.clone();
+      }
+
+      laplacian = new cv.Mat();
+      cv.Laplacian(gray, laplacian, cv.CV_64F);
+
+      const mean = new cv.Mat();
+      const stddev = new cv.Mat();
+      cv.meanStdDev(laplacian, mean, stddev);
+
+      const variance = stddev.data64F[0] * stddev.data64F[0];
+
+      mean.delete();
+      stddev.delete();
+
+      return variance;
+    } catch {
+      return 100; // Default to acceptable on error
+    } finally {
+      if (gray) gray.delete();
+      if (laplacian) laplacian.delete();
+    }
+  }
+
+  /**
+   * Calculate the skew angle of the document based on detected corners.
+   * @param corners The detected corner points
+   * @returns Skew angle in degrees (0 = perfectly horizontal)
+   */
+  calculateSkewAngle(corners: CornerPoints): number {
+    const { topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner } = corners;
+
+    // Calculate angle of top edge from horizontal
+    const topAngle = Math.atan2(
+      topRightCorner.y - topLeftCorner.y,
+      topRightCorner.x - topLeftCorner.x
+    ) * (180 / Math.PI);
+
+    // Calculate angle of bottom edge from horizontal
+    const bottomAngle = Math.atan2(
+      bottomRightCorner.y - bottomLeftCorner.y,
+      bottomRightCorner.x - bottomLeftCorner.x
+    ) * (180 / Math.PI);
+
+    // Return average absolute skew
+    return (Math.abs(topAngle) + Math.abs(bottomAngle)) / 2;
+  }
+
+  /**
+   * Calculate glare percentage by detecting overexposed regions.
+   * @param img cv.Mat to analyze
+   * @param corners Optional corner points to limit analysis to document region
+   * @returns Percentage of pixels that are overexposed (> 240 brightness)
+   */
+  calculateGlareScore(img: any, corners?: CornerPoints): number {
+    const cv = getCv();
+    if (!cv?.Mat) return 0;
+
+    let gray: any = null;
+    let mask: any = null;
+
+    try {
+      gray = new cv.Mat();
+      if (img.channels() === 4) {
+        cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY);
+      } else if (img.channels() === 3) {
+        cv.cvtColor(img, gray, cv.COLOR_RGB2GRAY);
+      } else {
+        gray = img.clone();
+      }
+
+      // If corners provided, create a mask for the document region
+      let totalPixels: number;
+      let overexposedPixels: number;
+
+      if (corners) {
+        mask = cv.Mat.zeros(gray.rows, gray.cols, cv.CV_8U);
+        const points = [
+          corners.topLeftCorner,
+          corners.topRightCorner,
+          corners.bottomRightCorner,
+          corners.bottomLeftCorner,
+        ];
+        const contour = cv.matFromArray(4, 1, cv.CV_32SC2,
+          points.flatMap(p => [Math.round(p.x), Math.round(p.y)])
+        );
+        const contours = new cv.MatVector();
+        contours.push_back(contour);
+        cv.drawContours(mask, contours, 0, new cv.Scalar(255), -1);
+
+        // Count pixels in document region
+        totalPixels = cv.countNonZero(mask);
+
+        // Apply mask and count overexposed
+        const masked = new cv.Mat();
+        cv.bitwise_and(gray, mask, masked);
+        const thresh = new cv.Mat();
+        cv.threshold(masked, thresh, 240, 255, cv.THRESH_BINARY);
+        const overexposed = new cv.Mat();
+        cv.bitwise_and(thresh, mask, overexposed);
+        overexposedPixels = cv.countNonZero(overexposed);
+
+        contour.delete();
+        contours.delete();
+        masked.delete();
+        thresh.delete();
+        overexposed.delete();
+      } else {
+        totalPixels = gray.rows * gray.cols;
+        const thresh = new cv.Mat();
+        cv.threshold(gray, thresh, 240, 255, cv.THRESH_BINARY);
+        overexposedPixels = cv.countNonZero(thresh);
+        thresh.delete();
+      }
+
+      return totalPixels > 0 ? (overexposedPixels / totalPixels) * 100 : 0;
+    } catch {
+      return 0;
+    } finally {
+      if (gray) gray.delete();
+      if (mask) mask.delete();
+    }
+  }
+
+  /**
+   * Check if all corners are within the frame with a margin.
+   * @param corners The detected corner points
+   * @param frameWidth Frame width in pixels
+   * @param frameHeight Frame height in pixels
+   * @param margin Minimum distance from edge (default 10px)
+   * @returns true if all corners are safely within frame
+   */
+  checkCompleteness(
+    corners: CornerPoints,
+    frameWidth: number,
+    frameHeight: number,
+    margin = 10
+  ): boolean {
+    const points = [
+      corners.topLeftCorner,
+      corners.topRightCorner,
+      corners.bottomLeftCorner,
+      corners.bottomRightCorner,
+    ];
+
+    for (const p of points) {
+      if (p.x < margin || p.x > frameWidth - margin ||
+          p.y < margin || p.y > frameHeight - margin) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  /**
+   * Calculate document coverage as percentage of frame.
+   * @param corners The detected corner points
+   * @param frameWidth Frame width
+   * @param frameHeight Frame height
+   * @returns Coverage percentage (0-100)
+   */
+  calculateDocumentCoverage(
+    corners: CornerPoints,
+    frameWidth: number,
+    frameHeight: number
+  ): number {
+    const { topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner } = corners;
+
+    // Calculate document area using Shoelace formula
+    const docArea = 0.5 * Math.abs(
+      (topLeftCorner.x * topRightCorner.y - topRightCorner.x * topLeftCorner.y) +
+      (topRightCorner.x * bottomRightCorner.y - bottomRightCorner.x * topRightCorner.y) +
+      (bottomRightCorner.x * bottomLeftCorner.y - bottomLeftCorner.x * bottomRightCorner.y) +
+      (bottomLeftCorner.x * topLeftCorner.y - topLeftCorner.x * bottomLeftCorner.y)
+    );
+
+    const frameArea = frameWidth * frameHeight;
+    return (docArea / frameArea) * 100;
+  }
+
+  /**
+   * Perform comprehensive quality check on detected document.
+   * @param img cv.Mat of the current frame
+   * @param corners Detected corner points
+   * @param frameWidth Frame width
+   * @param frameHeight Frame height
+   * @returns Quality result with warnings
+   */
+  checkQuality(
+    img: any,
+    corners: CornerPoints,
+    frameWidth: number,
+    frameHeight: number
+  ): QualityResult {
+    const warnings: QualityWarning[] = [];
+
+    // Calculate all quality metrics
+    const blurScore = this.calculateBlurScore(img);
+    const skewAngle = this.calculateSkewAngle(corners);
+    const glarePercentage = this.calculateGlareScore(img, corners);
+    const isComplete = this.checkCompleteness(corners, frameWidth, frameHeight);
+    const documentCoverage = this.calculateDocumentCoverage(corners, frameWidth, frameHeight);
+
+    // Check blur (score < 100 is too blurry)
+    if (blurScore < 100) {
+      warnings.push({
+        type: 'blur',
+        message: 'scanner.holdSteady',
+        severity: blurScore < 50 ? 'error' : 'warning',
+      });
+    }
+
+    // Check skew (> 15° is too tilted)
+    if (skewAngle > 15) {
+      warnings.push({
+        type: 'skew',
+        message: 'scanner.straightenDocument',
+        severity: skewAngle > 25 ? 'error' : 'warning',
+      });
+    }
+
+    // Check glare (> 5% overexposed is problematic)
+    if (glarePercentage > 5) {
+      warnings.push({
+        type: 'glare',
+        message: 'scanner.avoidGlare',
+        severity: glarePercentage > 15 ? 'error' : 'warning',
+      });
+    }
+
+    // Check completeness
+    if (!isComplete) {
+      warnings.push({
+        type: 'incomplete',
+        message: 'scanner.alignWithGuides',
+        severity: 'warning',
+      });
+    }
+
+    // Check document size (< 20% of frame is too small)
+    if (documentCoverage < 20) {
+      warnings.push({
+        type: 'tooSmall',
+        message: 'scanner.moveCloser',
+        severity: 'warning',
+      });
+    }
+
+    // Document is acceptable if there are no error-level warnings
+    const hasErrors = warnings.some(w => w.severity === 'error');
+
+    return {
+      isAcceptable: !hasErrors,
+      warnings,
+      blurScore,
+      skewAngle,
+      glarePercentage,
+      documentCoverage,
+    };
   }
 }
