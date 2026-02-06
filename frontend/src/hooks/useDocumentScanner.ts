@@ -17,6 +17,14 @@ interface DisplayMapping {
   scale: number;
   scaledW: number;
   scaledH: number;
+  videoW: number;      // Original video width
+  videoH: number;      // Original video height
+  videoGuide: {        // Guide in video coordinates (for capture)
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  };
 }
 
 interface UseDocumentScannerReturn {
@@ -58,7 +66,11 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const lastFrameTimeRef = useRef(0);
   const stableStartRef = useRef<number | null>(null);
   const phaseRef = useRef<ScannerPhase>('initializing');
-  const displayMappingRef = useRef<DisplayMapping>({ offsetX: 0, offsetY: 0, scale: 1, scaledW: 0, scaledH: 0 });
+  const displayMappingRef = useRef<DisplayMapping>({
+    offsetX: 0, offsetY: 0, scale: 1, scaledW: 0, scaledH: 0,
+    videoW: 0, videoH: 0,
+    videoGuide: { x: 0, y: 0, width: 0, height: 0 }
+  });
   const scannerRef = useRef<Scanner | null>(null);
 
   // Initialize jscanify scanner
@@ -367,22 +379,11 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     stopDetectionLoop();
     setPhase('processing');
 
-    // Get the display mapping to calculate correct capture region
-    const { scale, scaledW, scaledH } = displayMappingRef.current;
+    // Use the pre-calculated video-coordinate guide directly
+    // No scaling/unscaling needed - this was calculated on original video dimensions
+    const { videoGuide } = displayMappingRef.current;
 
-    // Calculate guide frame in SCALED (display) coordinates
-    const displayGuide = calculateA4GuideFrame(scaledW, scaledH);
-
-    // Map back to VIDEO coordinates for full-resolution capture
-    const videoGuide = {
-      x: displayGuide.x / scale,
-      y: displayGuide.y / scale,
-      width: displayGuide.width / scale,
-      height: displayGuide.height / scale
-    };
-
-    console.log('Display guide:', displayGuide);
-    console.log('Video guide (mapped):', videoGuide);
+    console.log('Capturing video guide:', videoGuide);
 
     // Create capture canvas at full video resolution for the guide region
     const captureCanvas = document.createElement('canvas');
@@ -424,7 +425,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       clearDisplayCanvas();
       setPhase('captured');
     }, 50);
-  }, [stopDetectionLoop, clearDisplayCanvas, calculateA4GuideFrame, analyzeImageQuality, enhanceImage, applyPerspectiveCorrection]);
+  }, [stopDetectionLoop, clearDisplayCanvas, analyzeImageQuality, enhanceImage, applyPerspectiveCorrection]);
 
   const startDetectionLoop = useCallback(() => {
     const displayLoop = (timestamp: number) => {
@@ -486,18 +487,26 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       // Draw video frame (centered with letterbox)
       ctx.drawImage(video, offsetX, offsetY, scaledW, scaledH);
 
-      // Calculate guide frame in DISPLAY coordinates (within the scaled video area)
-      const guide = calculateA4GuideFrame(scaledW, scaledH);
+      // Calculate guide frame on ORIGINAL video dimensions (for accurate capture)
+      const videoGuide = calculateA4GuideFrame(videoW, videoH);
+
+      // Scale down for display
+      const displayGuide = {
+        x: videoGuide.x * scale,
+        y: videoGuide.y * scale,
+        width: videoGuide.width * scale,
+        height: videoGuide.height * scale
+      };
 
       // Check if paper is present using the displayed region
       // Sample from the canvas at display coordinates
       const isAligned = checkPaperInGuide(
         ctx,
         {
-          x: offsetX + guide.x,
-          y: offsetY + guide.y,
-          width: guide.width,
-          height: guide.height
+          x: offsetX + displayGuide.x,
+          y: offsetY + displayGuide.y,
+          width: displayGuide.width,
+          height: displayGuide.height
         },
         containerW,
         containerH
@@ -507,15 +516,19 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       const guideColor = isAligned ? '#22c55e' : '#ffffff';
       drawGuideFrame(
         ctx,
-        offsetX + guide.x,
-        offsetY + guide.y,
-        guide.width,
-        guide.height,
+        offsetX + displayGuide.x,
+        offsetY + displayGuide.y,
+        displayGuide.width,
+        displayGuide.height,
         guideColor
       );
 
-      // Store mapping for capture (so we can map back to video coordinates)
-      displayMappingRef.current = { offsetX, offsetY, scale, scaledW, scaledH };
+      // Store both video and display info for capture
+      displayMappingRef.current = {
+        offsetX, offsetY, scale, scaledW, scaledH,
+        videoW, videoH,
+        videoGuide  // Store the original video-coordinate guide for capture
+      };
 
       // Update alignment state
       setDocumentAligned(isAligned);
