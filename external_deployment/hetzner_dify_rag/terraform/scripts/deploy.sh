@@ -10,7 +10,7 @@ cd /opt/dify-rag
 # 1. Mount volume (if not already mounted by cloud-init)
 if ! mountpoint -q /mnt/rag-data; then
     echo "Mounting persistent volume..."
-    VOLUME_DEV=$(lsblk -o NAME,SIZE -b | grep -v "loop\|NAME" | awk '{if ($2 > 29000000000 && $2 < 35000000000) print "/dev/"$1}' | head -1)
+    VOLUME_DEV=$(lsblk -rno NAME,FSTYPE,SIZE | awk '$2 == "ext4" {print "/dev/"$1}' | grep -v sda | head -1)
     if [ -n "$VOLUME_DEV" ]; then
         mount "$VOLUME_DEV" /mnt/rag-data
         echo "Volume mounted at /mnt/rag-data"

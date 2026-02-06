@@ -369,7 +369,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const vw = video.videoWidth;
     const vh = video.videoHeight;
 
-    console.log('Capture - video dimensions:', vw, 'x', vh);
+    console.log('=== CAPTURE DEBUG ===');
+    console.log('Video element dimensions:', vw, 'x', vh);
 
     if (!vw || !vh) {
       console.error('Video dimensions not available');
@@ -379,11 +380,31 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     stopDetectionLoop();
     setPhase('processing');
 
-    // Use the pre-calculated video-coordinate guide directly
-    // No scaling/unscaling needed - this was calculated on original video dimensions
-    const { videoGuide } = displayMappingRef.current;
+    // Always calculate guide fresh from current video dimensions
+    // This ensures we capture exactly what's shown in the guide frame
+    const videoGuide = calculateA4GuideFrame(vw, vh);
 
-    console.log('Capturing video guide:', videoGuide);
+    // Log for debugging
+    const storedMapping = displayMappingRef.current;
+    console.log('Stored mapping:', {
+      videoW: storedMapping.videoW,
+      videoH: storedMapping.videoH,
+      storedGuide: storedMapping.videoGuide
+    });
+    console.log('Fresh videoGuide:', videoGuide);
+    console.log('Guide as % of video:', {
+      xPercent: ((videoGuide.x / vw) * 100).toFixed(1) + '%',
+      yPercent: ((videoGuide.y / vh) * 100).toFixed(1) + '%',
+      widthPercent: ((videoGuide.width / vw) * 100).toFixed(1) + '%',
+      heightPercent: ((videoGuide.height / vh) * 100).toFixed(1) + '%'
+    });
+
+    // Validate guide is within video bounds
+    if (videoGuide.x < 0 || videoGuide.y < 0 ||
+        videoGuide.x + videoGuide.width > vw ||
+        videoGuide.y + videoGuide.height > vh) {
+      console.error('Guide frame exceeds video bounds!');
+    }
 
     // Create capture canvas at full video resolution for the guide region
     const captureCanvas = document.createElement('canvas');
@@ -391,6 +412,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const outputHeight = Math.round(videoGuide.height);
     captureCanvas.width = outputWidth;
     captureCanvas.height = outputHeight;
+    console.log('Capture canvas size:', outputWidth, 'x', outputHeight);
+
     const ctx = captureCanvas.getContext('2d')!;
 
     // Draw the guide frame region from video at full resolution
@@ -419,13 +442,14 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       captureCanvasRef.current = finalCanvas;
 
       const url = finalCanvas.toDataURL('image/jpeg', 0.95);
-      console.log('Captured image dimensions:', finalCanvas.width, 'x', finalCanvas.height);
+      console.log('Final captured dimensions:', finalCanvas.width, 'x', finalCanvas.height);
+      console.log('=== END CAPTURE DEBUG ===');
       setCapturedImageUrl(url);
       setAutoProgress(0);
       clearDisplayCanvas();
       setPhase('captured');
     }, 50);
-  }, [stopDetectionLoop, clearDisplayCanvas, analyzeImageQuality, enhanceImage, applyPerspectiveCorrection]);
+  }, [stopDetectionLoop, clearDisplayCanvas, calculateA4GuideFrame, analyzeImageQuality, enhanceImage, applyPerspectiveCorrection]);
 
   const startDetectionLoop = useCallback(() => {
     const displayLoop = (timestamp: number) => {

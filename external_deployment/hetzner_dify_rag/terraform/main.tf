@@ -313,6 +313,9 @@ write_files:
         worker:
           volumes:
             - /mnt/rag-data/storage:/app/api/storage
+        plugin_daemon:
+          volumes:
+            - /mnt/rag-data/plugin_daemon:/app/storage
     permissions: '0644'
 
   # S3 configuration for Object Storage access
@@ -441,14 +444,21 @@ runcmd:
   - curl -fsSL https://get.docker.com | sh
   - systemctl enable docker
   - systemctl start docker
-  # Mount volume if not already mounted
+  # Mount volume at /mnt/rag-data (Hetzner auto-mount may use /mnt/HC_Volume_*)
   - |
-    if ! mountpoint -q /mnt/rag-data; then
-      VOLUME_DEV=$(lsblk -o NAME,SIZE -b | grep -v "loop\|NAME" | awk '{if ($2 > 29000000000 && $2 < 35000000000) print "/dev/"$1}' | head -1)
-      if [ -n "$VOLUME_DEV" ]; then
-        mount "$VOLUME_DEV" /mnt/rag-data
-        echo "$VOLUME_DEV /mnt/rag-data ext4 defaults 0 2" >> /etc/fstab
+    VOLUME_DEV=$(lsblk -rno NAME,FSTYPE,SIZE | awk '$2 == "ext4" {print "/dev/"$1}' | grep -v sda | head -1)
+    if [ -n "$VOLUME_DEV" ]; then
+      # Unmount from Hetzner auto-mount path if needed
+      AUTOMOUNT=$(mount | grep "$VOLUME_DEV" | awk '{print $3}')
+      if [ -n "$AUTOMOUNT" ] && [ "$AUTOMOUNT" != "/mnt/rag-data" ]; then
+        umount "$AUTOMOUNT" && rmdir "$AUTOMOUNT" 2>/dev/null || true
       fi
+      if ! mountpoint -q /mnt/rag-data; then
+        mount "$VOLUME_DEV" /mnt/rag-data
+      fi
+      # Ensure correct fstab entry
+      sed -i '/HC_Volume/d' /etc/fstab
+      grep -q "/mnt/rag-data" /etc/fstab || echo "$VOLUME_DEV /mnt/rag-data ext4 defaults 0 2" >> /etc/fstab
     fi
   # Create volume directories
   - mkdir -p /mnt/rag-data/postgres
