@@ -27,11 +27,11 @@ function getCv(): any {
 }
 
 // Detection constants for document filtering
-const MIN_AREA_RATIO = 0.10;      // Contour must be at least 10% of frame
+const MIN_AREA_RATIO = 0.05;      // Contour must be at least 5% of frame
 const MAX_AREA_RATIO = 0.98;      // Not full frame
-const EPSILON_FACTOR = 0.02;      // Polygon approximation tolerance
-const MIN_ASPECT_RATIO = 0.5;     // Allow portrait documents
-const MAX_ASPECT_RATIO = 2.0;     // Allow various document sizes
+const EPSILON_FACTOR = 0.04;      // Polygon approximation tolerance (more lenient)
+const MIN_ASPECT_RATIO = 0.4;     // Allow portrait documents (A4 portrait ~ 0.71)
+const MAX_ASPECT_RATIO = 2.5;     // Allow various document sizes
 
 export default class Scanner {
   /**
@@ -42,6 +42,22 @@ export default class Scanner {
    */
   findPaperContour(img: any): any | null {
     const cv = getCv();
+
+    // Try Canny edge detection first
+    let result = this.findContourWithCanny(img, cv);
+
+    // If Canny fails, try threshold-based detection for white paper
+    if (!result) {
+      result = this.findContourWithThreshold(img, cv);
+    }
+
+    return result;
+  }
+
+  /**
+   * Find paper contour using Canny edge detection
+   */
+  private findContourWithCanny(img: any, cv: any): any | null {
     const frameArea = img.rows * img.cols;
     const minArea = frameArea * MIN_AREA_RATIO;
     const maxArea = frameArea * MAX_AREA_RATIO;
@@ -50,27 +66,95 @@ export default class Scanner {
     const gray = new cv.Mat();
     cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY);
 
-    // Apply stronger Gaussian blur to reduce noise and smooth out document content
+    // Apply moderate Gaussian blur to reduce noise
     const blurred = new cv.Mat();
-    cv.GaussianBlur(gray, blurred, new cv.Size(7, 7), 0);
+    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
 
-    // Canny edge detection directly on blurred grayscale (not on threshold)
+    // Canny edge detection with lower thresholds for white paper detection
     const edges = new cv.Mat();
-    cv.Canny(blurred, edges, 75, 200);
+    cv.Canny(blurred, edges, 30, 100);
 
-    // Morphological closing (dilate then erode) to close gaps in paper outline
-    const kernel = cv.Mat.ones(5, 5, cv.CV_8U);
+    // Morphological closing with larger kernel to connect broken edges
+    const kernel = cv.Mat.ones(7, 7, cv.CV_8U);
     const dilated = new cv.Mat();
     const closed = new cv.Mat();
     cv.dilate(edges, dilated, kernel);
     cv.erode(dilated, closed, kernel);
 
-    // Find contours - use RETR_EXTERNAL for outer contours only
+    // Find contours
     const contours = new cv.MatVector();
     const hierarchy = new cv.Mat();
     cv.findContours(closed, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-    // Score and filter candidates
+    const bestContour = this.findBestQuadrilateral(contours, cv, minArea, maxArea, frameArea);
+
+    // Cleanup
+    gray.delete();
+    blurred.delete();
+    edges.delete();
+    kernel.delete();
+    dilated.delete();
+    closed.delete();
+    contours.delete();
+    hierarchy.delete();
+
+    return bestContour;
+  }
+
+  /**
+   * Find paper contour using threshold-based detection (for white paper)
+   */
+  private findContourWithThreshold(img: any, cv: any): any | null {
+    const frameArea = img.rows * img.cols;
+    const minArea = frameArea * MIN_AREA_RATIO;
+    const maxArea = frameArea * MAX_AREA_RATIO;
+
+    // Convert to grayscale
+    const gray = new cv.Mat();
+    cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY);
+
+    // Apply Gaussian blur
+    const blurred = new cv.Mat();
+    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+
+    // Use Otsu's threshold to find bright regions (white paper)
+    const thresh = new cv.Mat();
+    cv.threshold(blurred, thresh, 0, 255, cv.THRESH_BINARY + cv.THRESH_OTSU);
+
+    // Morphological operations to clean up
+    const kernel = cv.Mat.ones(5, 5, cv.CV_8U);
+    const morphed = new cv.Mat();
+    cv.morphologyEx(thresh, morphed, cv.MORPH_CLOSE, kernel);
+
+    // Find contours
+    const contours = new cv.MatVector();
+    const hierarchy = new cv.Mat();
+    cv.findContours(morphed, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+    const bestContour = this.findBestQuadrilateral(contours, cv, minArea, maxArea, frameArea);
+
+    // Cleanup
+    gray.delete();
+    blurred.delete();
+    thresh.delete();
+    kernel.delete();
+    morphed.delete();
+    contours.delete();
+    hierarchy.delete();
+
+    return bestContour;
+  }
+
+  /**
+   * Find the best quadrilateral contour from a list of contours
+   */
+  private findBestQuadrilateral(
+    contours: any,
+    cv: any,
+    minArea: number,
+    maxArea: number,
+    frameArea: number
+  ): any | null {
     let bestContour: any = null;
     let bestScore = 0;
 
@@ -84,21 +168,24 @@ export default class Scanner {
         continue;
       }
 
-      // Approximate to polygon
+      // Try multiple epsilon values to find a quadrilateral
       const peri = cv.arcLength(contour, true);
-      const approx = new cv.Mat();
-      cv.approxPolyDP(contour, approx, EPSILON_FACTOR * peri, true);
+      let approx: any = null;
 
-      // Must be a quadrilateral (exactly 4 corners)
-      if (approx.rows !== 4) {
-        approx.delete();
-        contour.delete();
-        continue;
+      // Try epsilon values from strict to lenient
+      for (const epsilon of [0.02, 0.03, 0.04, 0.05, 0.06]) {
+        const candidate = new cv.Mat();
+        cv.approxPolyDP(contour, candidate, epsilon * peri, true);
+
+        if (candidate.rows === 4 && cv.isContourConvex(candidate)) {
+          approx = candidate;
+          break;
+        }
+        candidate.delete();
       }
 
-      // Must be convex
-      if (!cv.isContourConvex(approx)) {
-        approx.delete();
+      // Must be a quadrilateral (exactly 4 corners) and convex
+      if (!approx) {
         contour.delete();
         continue;
       }
@@ -126,16 +213,6 @@ export default class Scanner {
 
       contour.delete();
     }
-
-    // Cleanup
-    gray.delete();
-    blurred.delete();
-    edges.delete();
-    kernel.delete();
-    dilated.delete();
-    closed.delete();
-    contours.delete();
-    hierarchy.delete();
 
     return bestContour;
   }
