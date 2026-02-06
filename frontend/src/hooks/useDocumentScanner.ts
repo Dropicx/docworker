@@ -35,7 +35,7 @@ const STABILITY_THRESHOLD = 20; // px tolerance for corner movement
 const KALMAN_SMOOTHING = 0.3; // Smoothing factor for corner positions (0 = no smoothing, 1 = instant)
 const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
 const GUIDE_PADDING = 0.08; // 8% padding from edges
-const CORNER_BRACKET_LENGTH = 30; // Length of corner bracket arms in pixels
+const CORNER_BRACKET_LENGTH = 40; // Length of corner bracket arms in pixels
 
 function cornersStable(prev: CornerPoints | null, curr: CornerPoints | null): boolean {
   if (!prev || !curr) return false;
@@ -128,8 +128,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const { x, y, width, height } = guide;
     const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.1, height * 0.1);
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 4;
     ctx.lineCap = 'round';
 
     // Top-left corner bracket
@@ -161,8 +161,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     ctx.stroke();
 
     // Draw small corner markers (circles)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    const markerRadius = 5;
+    ctx.fillStyle = '#ffffff';
+    const markerRadius = 6;
     const corners = [
       { cx: x, cy: y },
       { cx: x + width, cy: y },
