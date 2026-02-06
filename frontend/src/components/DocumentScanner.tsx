@@ -20,6 +20,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
     capturedImageUrl,
     autoProgress,
     errorMessage,
+    documentAligned,
     startCamera,
     captureManual,
     confirmCapture,
@@ -61,20 +62,22 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
 
   const statusBadge = (() => {
     if (phase === 'scanning') {
-      // Show progress indicator when auto-capture is counting down
-      if (autoProgress > 0) {
+      // Document aligned and counting down to capture
+      if (documentAligned && autoProgress > 0) {
         return (
           <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/90 text-white backdrop-blur-sm">
             {t('scanner.holdSteady')}
           </span>
         );
       }
-      // Default: prompt user to align document
-      return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
-          {t('scanner.alignWithFrame')}
-        </span>
-      );
+      // Document detected but not aligned with frame
+      if (!documentAligned) {
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
+            {t('scanner.alignWithFrame')}
+          </span>
+        );
+      }
     }
     return null;
   })();
