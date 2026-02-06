@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import Scanner from '../lib/jscanify';
+import Scanner, { CornerPoints } from '../lib/jscanify';
 
 export type ScannerPhase = 'initializing' | 'scanning' | 'captured' | 'processing' | 'error';
 
@@ -11,20 +11,9 @@ export interface ImageQuality {
   isAcceptable: boolean;
 }
 
-interface DisplayMapping {
-  offsetX: number;
-  offsetY: number;
-  scale: number;
-  scaledW: number;
-  scaledH: number;
-  videoW: number;      // Original video width
-  videoH: number;      // Original video height
-  videoGuide: {        // Guide in video coordinates (for capture)
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
+interface Point {
+  x: number;
+  y: number;
 }
 
 interface UseDocumentScannerReturn {
@@ -45,10 +34,12 @@ interface UseDocumentScannerReturn {
 
 const DETECTION_FPS = 30;
 const FRAME_INTERVAL = 1000 / DETECTION_FPS;
-const AUTO_CAPTURE_DELAY_MS = 3000; // 3 seconds after alignment detected
+const AUTO_CAPTURE_DELAY_MS = 3000; // 3 seconds after stable detection
 const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
 const GUIDE_PADDING = 0.06; // 6% padding from edges
 const CORNER_BRACKET_LENGTH = 100; // Length of corner bracket arms in pixels
+const STABLE_FRAMES_REQUIRED = 10; // ~330ms at 30fps for stability
+const CORNER_STABILITY_TOLERANCE = 15; // Pixel tolerance for corner stability
 
 export function useDocumentScanner(): UseDocumentScannerReturn {
   const [phase, setPhase] = useState<ScannerPhase>('initializing');
@@ -57,6 +48,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [documentAligned, setDocumentAligned] = useState(false);
   const [imageQuality, setImageQuality] = useState<ImageQuality | null>(null);
+  const [detectedCorners, setDetectedCorners] = useState<CornerPoints | null>(null);
+  const [opencvReady, setOpencvReady] = useState(false);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -66,12 +59,35 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const lastFrameTimeRef = useRef(0);
   const stableStartRef = useRef<number | null>(null);
   const phaseRef = useRef<ScannerPhase>('initializing');
-  const displayMappingRef = useRef<DisplayMapping>({
-    offsetX: 0, offsetY: 0, scale: 1, scaledW: 0, scaledH: 0,
-    videoW: 0, videoH: 0,
-    videoGuide: { x: 0, y: 0, width: 0, height: 0 }
-  });
   const scannerRef = useRef<Scanner | null>(null);
+
+  // Corner detection state refs
+  const detectedCornersRef = useRef<CornerPoints | null>(null);
+  const lastCornersRef = useRef<CornerPoints | null>(null);
+  const stableFramesRef = useRef(0);
+  const displayScaleRef = useRef(1);
+
+  // Check OpenCV availability on mount
+  useEffect(() => {
+    const checkOpenCV = () => {
+      const cv = (window as any).cv;
+      if (cv?.Mat) {
+        setOpencvReady(true);
+        return true;
+      }
+      return false;
+    };
+
+    if (checkOpenCV()) return;
+
+    const interval = setInterval(() => {
+      if (checkOpenCV()) {
+        clearInterval(interval);
+      }
+    }, 500);
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Initialize jscanify scanner
   const getScanner = useCallback(() => {
@@ -105,7 +121,6 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const contrast = maxBrightness - minBrightness;
 
     // Calculate blur score using Laplacian variance approximation
-    // Higher score = sharper image, lower score = blurry
     let laplacianSum = 0;
     const width = canvas.width;
     const height = canvas.height;
@@ -113,7 +128,6 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     for (let y = 1; y < height - 1; y++) {
       for (let x = 1; x < width - 1; x++) {
         const idx = y * width + x;
-        // Laplacian kernel: center * 4 - neighbors
         const laplacian = 4 * grayscale[idx] -
           grayscale[idx - 1] - grayscale[idx + 1] -
           grayscale[idx - width] - grayscale[idx + width];
@@ -122,9 +136,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
 
     const blurScore = Math.sqrt(laplacianSum / ((width - 2) * (height - 2)));
-    const isBlurry = blurScore < 15; // Threshold for blur detection
+    const isBlurry = blurScore < 15;
 
-    // Image is acceptable if not too blurry and has decent contrast
     const isAcceptable = !isBlurry && contrast > 50 && avgBrightness > 40 && avgBrightness < 220;
 
     return {
@@ -154,47 +167,27 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
     // Apply contrast stretching if needed
     const range = maxVal - minVal;
-    if (range < 200 && range > 10) { // Only enhance if contrast is low
+    if (range < 200 && range > 10) {
       const scale = 255 / range;
       for (let i = 0; i < data.length; i += 4) {
-        data[i] = Math.min(255, Math.max(0, (data[i] - minVal) * scale));     // R
-        data[i + 1] = Math.min(255, Math.max(0, (data[i + 1] - minVal) * scale)); // G
-        data[i + 2] = Math.min(255, Math.max(0, (data[i + 2] - minVal) * scale)); // B
+        data[i] = Math.min(255, Math.max(0, (data[i] - minVal) * scale));
+        data[i + 1] = Math.min(255, Math.max(0, (data[i + 1] - minVal) * scale));
+        data[i + 2] = Math.min(255, Math.max(0, (data[i + 2] - minVal) * scale));
       }
       ctx.putImageData(imageData, 0, 0);
     }
-
-    // Slight sharpening using unsharp mask approximation
-    // (simplified version - applies a subtle sharpen)
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = canvas.width;
-    tempCanvas.height = canvas.height;
-    const tempCtx = tempCanvas.getContext('2d')!;
-
-    // Draw slightly blurred version
-    tempCtx.filter = 'blur(1px)';
-    tempCtx.drawImage(canvas, 0, 0);
-    tempCtx.filter = 'none';
-
-    // Blend original with difference for sharpening
-    ctx.globalCompositeOperation = 'source-over';
-    ctx.globalAlpha = 1;
-    ctx.drawImage(canvas, 0, 0);
   }, []);
 
-  // Calculate A4 guide frame dimensions for given video dimensions
+  // Calculate A4 guide frame dimensions for given video dimensions (fallback when no detection)
   const calculateA4GuideFrame = useCallback((videoWidth: number, videoHeight: number) => {
     const maxW = videoWidth * (1 - GUIDE_PADDING * 2);
     const maxH = videoHeight * (1 - GUIDE_PADDING * 2);
 
     let guideW: number, guideH: number;
-    // A4 is portrait (taller than wide), so height = width * A4_RATIO
     if (maxH / maxW > A4_RATIO) {
-      // Width-constrained
       guideW = maxW;
       guideH = maxW * A4_RATIO;
     } else {
-      // Height-constrained
       guideH = maxH;
       guideW = maxH / A4_RATIO;
     }
@@ -205,59 +198,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     return { x, y, width: guideW, height: guideH };
   }, []);
 
-  // Check if paper is present inside the guide frame by comparing
-  // average brightness inside vs outside the frame
-  const checkPaperInGuide = useCallback((
-    ctx: CanvasRenderingContext2D,
-    guideFrame: { x: number; y: number; width: number; height: number },
-    canvasWidth: number,
-    canvasHeight: number
-  ): boolean => {
-    const { x, y, width, height } = guideFrame;
-    const sampleSize = 20; // Sample area size
-    const brightnessThreshold = 150; // Paper should be bright (white)
-    const contrastThreshold = 20; // Difference between inside and outside
-
-    // Sample brightness at center of guide frame (should be paper = bright)
-    const centerX = Math.round(x + width / 2 - sampleSize / 2);
-    const centerY = Math.round(y + height / 2 - sampleSize / 2);
-    const centerData = ctx.getImageData(centerX, centerY, sampleSize, sampleSize).data;
-    let centerBrightness = 0;
-    for (let i = 0; i < centerData.length; i += 4) {
-      centerBrightness += (centerData[i] + centerData[i + 1] + centerData[i + 2]) / 3;
-    }
-    centerBrightness /= (sampleSize * sampleSize);
-
-    // Sample brightness outside the guide frame (corners of the video)
-    const outsideOffset = 10;
-    const sampleOutside = (sx: number, sy: number): number => {
-      const clampedX = Math.max(0, Math.min(sx, canvasWidth - sampleSize));
-      const clampedY = Math.max(0, Math.min(sy, canvasHeight - sampleSize));
-      const data = ctx.getImageData(clampedX, clampedY, sampleSize, sampleSize).data;
-      let brightness = 0;
-      for (let i = 0; i < data.length; i += 4) {
-        brightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
-      }
-      return brightness / (sampleSize * sampleSize);
-    };
-
-    // Sample at corners outside the guide
-    const topLeftOut = sampleOutside(outsideOffset, outsideOffset);
-    const topRightOut = sampleOutside(canvasWidth - sampleSize - outsideOffset, outsideOffset);
-    const bottomLeftOut = sampleOutside(outsideOffset, canvasHeight - sampleSize - outsideOffset);
-    const bottomRightOut = sampleOutside(canvasWidth - sampleSize - outsideOffset, canvasHeight - sampleSize - outsideOffset);
-    const avgOutside = (topLeftOut + topRightOut + bottomLeftOut + bottomRightOut) / 4;
-
-    // Paper detected if:
-    // 1. Center is bright enough (paper is white/light)
-    // 2. Center is brighter than outside (contrast with background)
-    const isBright = centerBrightness > brightnessThreshold;
-    const hasContrast = centerBrightness - avgOutside > contrastThreshold;
-
-    return isBright && hasContrast;
-  }, []);
-
-  // Draw A4 guide frame with corner brackets at specified position
+  // Draw static A4 guide frame with corner brackets (fallback when no detection)
   const drawGuideFrame = useCallback((
     ctx: CanvasRenderingContext2D,
     x: number,
@@ -269,7 +210,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.15, height * 0.15);
 
     ctx.strokeStyle = color;
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
 
     // Top-left corner bracket
@@ -299,21 +240,56 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     ctx.lineTo(x, y + height);
     ctx.lineTo(x, y + height - bracketLen);
     ctx.stroke();
+  }, []);
 
-    // Draw corner markers (circles)
+  // Draw detected quad (green outline when document detected)
+  const drawDetectedQuad = useCallback((
+    ctx: CanvasRenderingContext2D,
+    corners: CornerPoints,
+    offsetX: number,
+    offsetY: number,
+    color: string = '#22c55e'
+  ) => {
+    const { topLeftCorner: tl, topRightCorner: tr,
+            bottomLeftCorner: bl, bottomRightCorner: br } = corners;
+
+    // Apply offset for letterboxing
+    const tlX = offsetX + tl.x;
+    const tlY = offsetY + tl.y;
+    const trX = offsetX + tr.x;
+    const trY = offsetY + tr.y;
+    const blX = offsetX + bl.x;
+    const blY = offsetY + bl.y;
+    const brX = offsetX + br.x;
+    const brY = offsetY + br.y;
+
+    // Draw quad outline
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(tlX, tlY);
+    ctx.lineTo(trX, trY);
+    ctx.lineTo(brX, brY);
+    ctx.lineTo(blX, blY);
+    ctx.closePath();
+    ctx.stroke();
+
+    // Draw corner markers (filled circles)
     ctx.fillStyle = color;
-    const markerRadius = 6;
-    const corners = [
-      { cx: x, cy: y },
-      { cx: x + width, cy: y },
-      { cx: x + width, cy: y + height },
-      { cx: x, cy: y + height },
-    ];
-    for (const corner of corners) {
+    for (const [cx, cy] of [[tlX, tlY], [trX, trY], [blX, blY], [brX, brY]]) {
       ctx.beginPath();
-      ctx.arc(corner.cx, corner.cy, markerRadius, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 8, 0, Math.PI * 2);
       ctx.fill();
     }
+  }, []);
+
+  // Check if corners are stable (not moving much between frames)
+  const cornersAreSimilar = useCallback((a: CornerPoints, b: CornerPoints, tolerance: number): boolean => {
+    const dist = (p1: Point, p2: Point) => Math.hypot(p1.x - p2.x, p1.y - p2.y);
+    return dist(a.topLeftCorner, b.topLeftCorner) < tolerance &&
+           dist(a.topRightCorner, b.topRightCorner) < tolerance &&
+           dist(a.bottomLeftCorner, b.bottomLeftCorner) < tolerance &&
+           dist(a.bottomRightCorner, b.bottomRightCorner) < tolerance;
   }, []);
 
   // Keep phaseRef in sync with phase state
@@ -337,119 +313,89 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     ctx.fillRect(0, 0, canvas.width, canvas.height);
   }, []);
 
-  // Apply perspective correction using jscanify if OpenCV is available
-  const applyPerspectiveCorrection = useCallback((canvas: HTMLCanvasElement): HTMLCanvasElement => {
-    const cv = (window as any).cv;
-    if (!cv?.Mat) {
-      console.log('OpenCV not available, skipping perspective correction');
-      return canvas;
-    }
-
-    try {
-      const scanner = getScanner();
-
-      // Try to extract and correct the paper
-      const corrected = scanner.extractPaper(canvas, canvas.width, canvas.height);
-
-      if (corrected) {
-        console.log('Perspective correction applied');
-        return corrected;
-      }
-    } catch (err) {
-      console.warn('Perspective correction failed:', err);
-    }
-
-    return canvas;
-  }, [getScanner]);
-
   const captureFrame = useCallback(() => {
     const video = videoRef.current;
-    if (!video) return;
+    if (!video || !video.videoWidth || !video.videoHeight) return;
 
     const vw = video.videoWidth;
     const vh = video.videoHeight;
 
-    console.log('=== CAPTURE DEBUG ===');
-    console.log('Video element dimensions:', vw, 'x', vh);
-
-    if (!vw || !vh) {
-      console.error('Video dimensions not available');
-      return;
-    }
+    // Get the detected corners at time of capture
+    const displayCorners = detectedCornersRef.current;
+    const scale = displayScaleRef.current;
 
     stopDetectionLoop();
     setPhase('processing');
-
-    // Always calculate guide fresh from current video dimensions
-    // This ensures we capture exactly what's shown in the guide frame
-    const videoGuide = calculateA4GuideFrame(vw, vh);
-
-    // Log for debugging
-    const storedMapping = displayMappingRef.current;
-    console.log('Stored mapping:', {
-      videoW: storedMapping.videoW,
-      videoH: storedMapping.videoH,
-      storedGuide: storedMapping.videoGuide
-    });
-    console.log('Fresh videoGuide:', videoGuide);
-    console.log('Guide as % of video:', {
-      xPercent: ((videoGuide.x / vw) * 100).toFixed(1) + '%',
-      yPercent: ((videoGuide.y / vh) * 100).toFixed(1) + '%',
-      widthPercent: ((videoGuide.width / vw) * 100).toFixed(1) + '%',
-      heightPercent: ((videoGuide.height / vh) * 100).toFixed(1) + '%'
-    });
-
-    // Validate guide is within video bounds
-    if (videoGuide.x < 0 || videoGuide.y < 0 ||
-        videoGuide.x + videoGuide.width > vw ||
-        videoGuide.y + videoGuide.height > vh) {
-      console.error('Guide frame exceeds video bounds!');
-    }
-
-    // Create capture canvas at full video resolution for the guide region
-    const captureCanvas = document.createElement('canvas');
-    const outputWidth = Math.round(videoGuide.width);
-    const outputHeight = Math.round(videoGuide.height);
-    captureCanvas.width = outputWidth;
-    captureCanvas.height = outputHeight;
-    console.log('Capture canvas size:', outputWidth, 'x', outputHeight);
-
-    const ctx = captureCanvas.getContext('2d')!;
-
-    // Draw the guide frame region from video at full resolution
-    ctx.drawImage(
-      video,
-      videoGuide.x, videoGuide.y, videoGuide.width, videoGuide.height,
-      0, 0, outputWidth, outputHeight
-    );
-
-    // Pause video (keep stream alive for retake)
     video.pause();
 
-    // Process asynchronously to allow UI update
+    // Step 1: Capture FULL video frame at native resolution
+    const fullCanvas = document.createElement('canvas');
+    fullCanvas.width = vw;
+    fullCanvas.height = vh;
+    const ctx = fullCanvas.getContext('2d')!;
+    ctx.drawImage(video, 0, 0);
+
     setTimeout(() => {
-      // Apply perspective correction if available
-      let finalCanvas = applyPerspectiveCorrection(captureCanvas);
+      let finalCanvas: HTMLCanvasElement;
+      const scanner = getScanner();
+      const cv = (window as any).cv;
 
-      // Apply image enhancement
+      if (displayCorners && cv?.Mat) {
+        // Scale corners from display coordinates back to video coordinates
+        const videoCorners: CornerPoints = {
+          topLeftCorner: {
+            x: displayCorners.topLeftCorner.x / scale,
+            y: displayCorners.topLeftCorner.y / scale
+          },
+          topRightCorner: {
+            x: displayCorners.topRightCorner.x / scale,
+            y: displayCorners.topRightCorner.y / scale
+          },
+          bottomLeftCorner: {
+            x: displayCorners.bottomLeftCorner.x / scale,
+            y: displayCorners.bottomLeftCorner.y / scale
+          },
+          bottomRightCorner: {
+            x: displayCorners.bottomRightCorner.x / scale,
+            y: displayCorners.bottomRightCorner.y / scale
+          },
+        };
+
+        // Apply perspective transform using detected corners
+        // Output at high resolution A4 size (2000x2828 = A4 ratio at 300dpi equivalent)
+        const corrected = scanner.extractPaper(fullCanvas, 2000, 2828, videoCorners);
+        finalCanvas = corrected || fullCanvas;
+      } else if (cv?.Mat) {
+        // Fallback: try to detect from full frame
+        const corrected = scanner.extractPaper(fullCanvas, 2000, 2828);
+        finalCanvas = corrected || fullCanvas;
+      } else {
+        // No OpenCV: extract the guide region as fallback
+        const videoGuide = calculateA4GuideFrame(vw, vh);
+        const guideCanvas = document.createElement('canvas');
+        guideCanvas.width = Math.round(videoGuide.width);
+        guideCanvas.height = Math.round(videoGuide.height);
+        const guideCtx = guideCanvas.getContext('2d')!;
+        guideCtx.drawImage(
+          fullCanvas,
+          videoGuide.x, videoGuide.y, videoGuide.width, videoGuide.height,
+          0, 0, guideCanvas.width, guideCanvas.height
+        );
+        finalCanvas = guideCanvas;
+      }
+
+      // Enhance and analyze
       enhanceImage(finalCanvas);
-
-      // Analyze quality
       const quality = analyzeImageQuality(finalCanvas);
       setImageQuality(quality);
 
-      // Store for confirmation
       captureCanvasRef.current = finalCanvas;
-
-      const url = finalCanvas.toDataURL('image/jpeg', 0.95);
-      console.log('Final captured dimensions:', finalCanvas.width, 'x', finalCanvas.height);
-      console.log('=== END CAPTURE DEBUG ===');
-      setCapturedImageUrl(url);
+      setCapturedImageUrl(finalCanvas.toDataURL('image/jpeg', 0.95));
       setAutoProgress(0);
       clearDisplayCanvas();
       setPhase('captured');
     }, 50);
-  }, [stopDetectionLoop, clearDisplayCanvas, calculateA4GuideFrame, analyzeImageQuality, enhanceImage, applyPerspectiveCorrection]);
+  }, [stopDetectionLoop, clearDisplayCanvas, calculateA4GuideFrame, getScanner, enhanceImage, analyzeImageQuality]);
 
   const startDetectionLoop = useCallback(() => {
     const displayLoop = (timestamp: number) => {
@@ -498,7 +444,10 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       const offsetX = (containerW - scaledW) / 2;
       const offsetY = (containerH - scaledH) / 2;
 
-      // Set canvas resolution to match container (for crisp rendering)
+      // Store scale for capture coordinate conversion
+      displayScaleRef.current = scale;
+
+      // Set canvas resolution to match container
       if (displayCanvas.width !== containerW || displayCanvas.height !== containerH) {
         displayCanvas.width = containerW;
         displayCanvas.height = containerH;
@@ -511,54 +460,71 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       // Draw video frame (centered with letterbox)
       ctx.drawImage(video, offsetX, offsetY, scaledW, scaledH);
 
-      // Calculate guide frame on ORIGINAL video dimensions (for accurate capture)
-      const videoGuide = calculateA4GuideFrame(videoW, videoH);
+      // Real-time document detection using OpenCV
+      let corners: CornerPoints | null = null;
+      const cv = (window as any).cv;
 
-      // Scale down for display
-      const displayGuide = {
-        x: videoGuide.x * scale,
-        y: videoGuide.y * scale,
-        width: videoGuide.width * scale,
-        height: videoGuide.height * scale
-      };
+      if (cv?.Mat) {
+        try {
+          // Create a temporary canvas at scaled size for detection
+          // (detecting on display-sized canvas is faster)
+          const detectCanvas = document.createElement('canvas');
+          detectCanvas.width = scaledW;
+          detectCanvas.height = scaledH;
+          const detectCtx = detectCanvas.getContext('2d')!;
+          detectCtx.drawImage(video, 0, 0, scaledW, scaledH);
 
-      // Check if paper is present using the displayed region
-      // Sample from the canvas at display coordinates
-      const isAligned = checkPaperInGuide(
-        ctx,
-        {
-          x: offsetX + displayGuide.x,
-          y: offsetY + displayGuide.y,
-          width: displayGuide.width,
-          height: displayGuide.height
-        },
-        containerW,
-        containerH
-      );
+          const img = cv.imread(detectCanvas);
+          const scanner = getScanner();
+          const contour = scanner.findPaperContour(img);
 
-      // Draw guide frame at DISPLAY coordinates (offset by video position)
-      const guideColor = isAligned ? '#22c55e' : '#ffffff';
-      drawGuideFrame(
-        ctx,
-        offsetX + displayGuide.x,
-        offsetY + displayGuide.y,
-        displayGuide.width,
-        displayGuide.height,
-        guideColor
-      );
+          if (contour) {
+            // Get corners in display coordinates (from scaled canvas)
+            corners = scanner.getCornerPoints(contour);
+            contour.delete();
+          }
+          img.delete();
+        } catch (err) {
+          // OpenCV error - fall back to no detection
+          corners = null;
+        }
+      }
 
-      // Store both video and display info for capture
-      displayMappingRef.current = {
-        offsetX, offsetY, scale, scaledW, scaledH,
-        videoW, videoH,
-        videoGuide  // Store the original video-coordinate guide for capture
-      };
+      // Track corner stability
+      if (corners && lastCornersRef.current) {
+        const isStable = cornersAreSimilar(corners, lastCornersRef.current, CORNER_STABILITY_TOLERANCE);
+        stableFramesRef.current = isStable ? stableFramesRef.current + 1 : 0;
+      } else if (!corners) {
+        stableFramesRef.current = 0;
+      }
+      lastCornersRef.current = corners;
 
-      // Update alignment state
-      setDocumentAligned(isAligned);
+      // Update state refs
+      detectedCornersRef.current = corners;
+      setDetectedCorners(corners);
+      setDocumentAligned(corners !== null && stableFramesRef.current >= STABLE_FRAMES_REQUIRED);
 
-      // Auto-capture timer
-      if (isAligned) {
+      // Draw overlay
+      if (corners) {
+        // Draw detected document outline (green)
+        drawDetectedQuad(ctx, corners, offsetX, offsetY, '#22c55e');
+      } else {
+        // Show static guide as hint when no document detected (white/dim)
+        const guide = calculateA4GuideFrame(scaledW, scaledH);
+        drawGuideFrame(
+          ctx,
+          offsetX + guide.x,
+          offsetY + guide.y,
+          guide.width,
+          guide.height,
+          'rgba(255, 255, 255, 0.5)'
+        );
+      }
+
+      // Auto-capture timer (only when stable)
+      const shouldCountdown = corners && stableFramesRef.current >= STABLE_FRAMES_REQUIRED;
+
+      if (shouldCountdown) {
         if (!stableStartRef.current) {
           stableStartRef.current = timestamp;
         }
@@ -580,7 +546,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     };
 
     rafRef.current = requestAnimationFrame(displayLoop);
-  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide, drawGuideFrame]);
+  }, [captureFrame, calculateA4GuideFrame, drawGuideFrame, drawDetectedQuad, cornersAreSimilar, getScanner]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');
@@ -589,12 +555,12 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     try {
       let stream: MediaStream;
       try {
-        // Request high resolution without forcing aspect ratio - let device choose best fit
+        // Request high resolution
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'environment' },
             width: { ideal: 1920 },
-            height: { ideal: 1920 }, // Square ideal lets device pick best orientation
+            height: { ideal: 1920 },
           },
           audio: false,
         });
@@ -645,7 +611,6 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const canvas = captureCanvasRef.current;
     if (!canvas) return null;
 
-    // Convert to blob synchronously via toDataURL
     const dataUrl = canvas.toDataURL('image/jpeg', 0.98);
     const byteString = atob(dataUrl.split(',')[1]);
     const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
@@ -664,16 +629,17 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setAutoProgress(0);
     setDocumentAligned(false);
     setImageQuality(null);
+    setDetectedCorners(null);
+    detectedCornersRef.current = null;
+    lastCornersRef.current = null;
+    stableFramesRef.current = 0;
     stableStartRef.current = null;
 
     const video = videoRef.current;
     if (video && video.srcObject) {
-      // Resume video playback and wait for it to be ready
       video.play().then(() => {
-        // Video is playing, now set phase to trigger detection loop
         setPhase('scanning');
       }).catch(() => {
-        // If play fails, still try to set scanning phase
         setPhase('scanning');
       });
     } else {
@@ -698,6 +664,10 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setErrorMessage(null);
     setDocumentAligned(false);
     setImageQuality(null);
+    setDetectedCorners(null);
+    detectedCornersRef.current = null;
+    lastCornersRef.current = null;
+    stableFramesRef.current = 0;
     stableStartRef.current = null;
     setPhase('initializing');
   }, [stopDetectionLoop]);
