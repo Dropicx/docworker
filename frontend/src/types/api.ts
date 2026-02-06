@@ -72,6 +72,7 @@ export interface GuidelinesResponse {
 
 export interface ProcessingOptions {
   target_language?: string;
+  source_language?: 'de' | 'en';
 }
 
 export interface SupportedLanguage {

@@ -70,6 +70,9 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
   const [branchingField, setBranchingField] = useState<string>('document_type');
   const [postBranching, setPostBranching] = useState(false); // NEW: Post-branching flag
 
+  // Source language routing
+  const [sourceLanguage, setSourceLanguage] = useState<string | null>(null);
+
   // UI stage mapping
   const [uiStage, setUiStage] = useState<string>('translation');
 
@@ -110,6 +113,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setIsBranchingStep(step.is_branching_step);
       setBranchingField(step.branching_field || 'document_type');
       setPostBranching(step.post_branching || false);
+      // Source language routing
+      setSourceLanguage(step.source_language || null);
       // UI stage
       setUiStage(step.ui_stage || 'translation');
       // NEW: Conditional execution
@@ -146,6 +151,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
       setIsBranchingStep(false);
       setBranchingField('document_type');
       setPostBranching(defaultPostBranching); // NEW: Pre-fill from active tab
+      // Source language routing default
+      setSourceLanguage(null);
       // UI stage default
       setUiStage('translation');
       // NEW: Conditional execution defaults
@@ -234,6 +241,8 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
             : null,
         // UI stage mapping
         ui_stage: uiStage,
+        // Source language routing
+        source_language: sourceLanguage,
       };
 
       if (step) {
@@ -431,6 +440,24 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                     {'{document_type}'}
                   </code>
                   <span className="ml-2">Dokumenttyp (nach Klassifizierungs-Schritt)</span>
+                </div>
+                <div>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">
+                    {'{source_language}'}
+                  </code>
+                  <span className="ml-2">Quellsprache des Dokuments (de/en)</span>
+                </div>
+                <div>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">
+                    {'{source_language_name}'}
+                  </code>
+                  <span className="ml-2">Quellsprache ausgeschrieben (German/English)</span>
+                </div>
+                <div>
+                  <code className="px-1.5 py-0.5 bg-brand-100 rounded font-mono">
+                    {'{source_language_instruction}'}
+                  </code>
+                  <span className="ml-2">Sprachanweisung für Prompts</span>
                 </div>
               </div>
             </div>
@@ -668,6 +695,38 @@ const StepEditorModal: React.FC<StepEditorModalProps> = ({
                   </p>
                 </div>
               )}
+
+              {/* Source Language Routing */}
+              <div>
+                <label className="block text-sm font-medium text-primary-700 mb-2 flex items-center space-x-2">
+                  <span>Quellsprache (Source Language)</span>
+                </label>
+                <select
+                  value={sourceLanguage || ''}
+                  onChange={e => setSourceLanguage(e.target.value || null)}
+                  className="w-full px-3 py-2 border border-primary-200 rounded-lg focus:border-brand-500 focus:ring-2 focus:ring-brand-100 focus:outline-none"
+                >
+                  <option value="">Universal (alle Sprachen)</option>
+                  <option value="de">Nur Deutsch (German input)</option>
+                  <option value="en">Nur Englisch (English input)</option>
+                </select>
+                <p className="text-xs text-primary-500 mt-1">
+                  Wählen Sie, für welche Dokumentsprache dieser Schritt ausgeführt werden soll.
+                  &quot;Universal&quot; bedeutet, dass der Schritt für alle Eingabesprachen läuft.
+                </p>
+                {sourceLanguage && (
+                  <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <p className="text-xs text-blue-700">
+                      <strong>Tipp:</strong> Erstellen Sie sprachspezifische Schritte für komplexe
+                      Übersetzungs-Prompts. Einfache Validierungen können universal bleiben und
+                      {' '}<code className="px-1 py-0.5 bg-blue-100 rounded font-mono">
+                        {'{source_language_instruction}'}
+                      </code>{' '}
+                      im Prompt verwenden.
+                    </p>
+                  </div>
+                )}
+              </div>
 
               {/* Branching Field (only shown if branching step is enabled) */}
               {isBranchingStep && (

@@ -23,7 +23,7 @@ import { useMobileDetect } from '../hooks/useMobileDetect';
 import DocumentScanner from './DocumentScanner';
 
 interface FileUploadProps {
-  onStartProcessing: (file: File, language: string | null) => void;
+  onStartProcessing: (file: File, language: string | null, sourceLanguage: 'de' | 'en') => void;
   onUploadError: (error: string) => void;
   disabled?: boolean;
   availableLanguages: SupportedLanguage[];
@@ -41,7 +41,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
   qualityGateError: externalQualityGateError,
   onClearQualityGateError,
 }) => {
+  const { t, i18n } = useTranslation();
+
+  // Default source language based on UI language (German user = German document, English user = English document)
+  const getDefaultSourceLanguage = (): 'de' | 'en' => {
+    const uiLang = i18n.language?.substring(0, 2);
+    return uiLang === 'en' ? 'en' : 'de';
+  };
+
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>(null);
+  const [sourceLanguage, setSourceLanguage] = useState<'de' | 'en'>(getDefaultSourceLanguage);
   const [showAllLanguages, setShowAllLanguages] = useState(false);
   const [languageSearchTerm, setLanguageSearchTerm] = useState('');
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -51,7 +60,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const privacyCheckboxRef = useRef<HTMLDivElement>(null);
   const { shouldShowScanner } = useMobileDetect();
-  const { t, i18n } = useTranslation();
 
   const qualityGateError = externalQualityGateError || null;
 
@@ -115,9 +123,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
     setSelectedFiles([]);
     setPrivacyAccepted(false);
 
-    // Pass file and language to parent — upload happens in DocumentProcessor
-    onStartProcessing(file, selectedLanguage);
-  }, [selectedFiles, privacyAccepted, selectedLanguage, onStartProcessing]);
+    // Pass file, language, and source language to parent — upload happens in DocumentProcessor
+    onStartProcessing(file, selectedLanguage, sourceLanguage);
+  }, [selectedFiles, privacyAccepted, selectedLanguage, sourceLanguage, onStartProcessing]);
 
   const removeFile = useCallback((index: number) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
@@ -291,7 +299,47 @@ const FileUpload: React.FC<FileUploadProps> = ({
             </div>
           </div>
 
-          {/* Language Selector (Optional) - Rendered between files and privacy checkbox */}
+          {/* Document Source Language Selector */}
+          <div className="card-elevated">
+            <div className="card-body">
+              <div className="space-y-3 sm:space-y-4">
+                <label className="block text-xs sm:text-sm font-medium text-neutral-700 text-center">
+                  {t('upload.documentLanguage')}
+                </label>
+                <div className="flex gap-3 justify-center">
+                  <button
+                    type="button"
+                    onClick={() => setSourceLanguage('de')}
+                    className={`flex-1 max-w-[140px] px-4 py-3 rounded-lg font-medium transition-all ${
+                      sourceLanguage === 'de'
+                        ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-300'
+                        : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
+                    }`}
+                  >
+                    <span className="mr-2">🇩🇪</span>
+                    {t('upload.german')}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSourceLanguage('en')}
+                    className={`flex-1 max-w-[140px] px-4 py-3 rounded-lg font-medium transition-all ${
+                      sourceLanguage === 'en'
+                        ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-300'
+                        : 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100'
+                    }`}
+                  >
+                    <span className="mr-2">🇬🇧</span>
+                    {t('upload.english')}
+                  </button>
+                </div>
+                <p className="text-xs text-neutral-500 px-2 sm:px-0 text-center">
+                  {t('upload.documentLanguageHint')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Target Language Selector (Optional) - Rendered between source language and privacy checkbox */}
           <div className="card-elevated">
             <div className="card-body">
               {!languagesLoaded ? (

@@ -98,6 +98,9 @@ export interface PipelineStep {
 
   // UI stage mapping
   ui_stage: string;
+
+  // Source language routing (null = universal, "de" = German-only, "en" = English-only)
+  source_language: string | null;
 }
 
 export interface PipelineStepRequest {
@@ -133,6 +136,9 @@ export interface PipelineStepRequest {
 
   // UI stage mapping
   ui_stage?: string;
+
+  // Source language routing (null = universal, "de" = German-only, "en" = English-only)
+  source_language?: string | null;
 }
 
 // ==================== AI MODELS ====================

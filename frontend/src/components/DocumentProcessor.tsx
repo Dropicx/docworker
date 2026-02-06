@@ -32,6 +32,7 @@ type Phase = 'uploading' | 'initializing' | 'processing' | 'complete';
 interface DocumentProcessorProps {
   file: File;
   selectedLanguage: string | null;
+  sourceLanguage?: 'de' | 'en';
   onComplete: (processingId: string) => void;
   onError: (error: string, metadata?: Record<string, unknown>) => void;
   onCancel: () => void;
@@ -77,6 +78,7 @@ const STAGE_TO_CARD: Record<string, number> = {
 const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
   file,
   selectedLanguage,
+  sourceLanguage = 'de',
   onComplete,
   onError,
   onCancel,
@@ -186,7 +188,9 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
         setPhase('initializing');
 
         // Start processing
-        const options: ProcessingOptions = {};
+        const options: ProcessingOptions = {
+          source_language: sourceLanguage,
+        };
         if (selectedLanguage) {
           options.target_language = selectedLanguage;
         }

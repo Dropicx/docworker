@@ -249,6 +249,9 @@ class DynamicPipelineStepDB(Base):
         Boolean, default=False, nullable=False, index=True
     )  # Runs after doc-specific steps
 
+    # Source language routing (NULL = universal, "de" = German-only, "en" = English-only)
+    source_language = Column(String(5), nullable=True, default=None, index=True)
+
     # Step configuration
     prompt_template = Column(Text, nullable=False)  # Custom prompt for this step (user message)
     system_prompt = Column(Text, nullable=True)  # System prompt for role separation (instruction part)

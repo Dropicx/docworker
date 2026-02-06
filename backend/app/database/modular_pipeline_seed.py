@@ -228,12 +228,20 @@ def seed_modular_pipeline():
             laborwerte_id = laborwerte_result.scalar()
 
             pipeline_steps = [
+                # ==================== BILINGUAL UNIVERSAL STEPS (DE + EN) ====================
                 {
                     "name": "Medical Content Validation",
                     "description": "Validates if document contains medical content (Universal Branching Step)",
                     "order": 1,
                     "enabled": True,
-                    "prompt_template": "Analysiere den folgenden Text und bestimme, ob er medizinische Inhalte enthält.\n\nText:\n{input_text}\n\nAntworte NUR mit: MEDIZINISCH oder NICHT_MEDIZINISCH",
+                    "prompt_template": """{source_language_instruction}
+
+Analyze the following text and determine if it contains medical content.
+
+Text:
+{input_text}
+
+Respond ONLY with: MEDICAL or NON_MEDICAL""",
                     "selected_model_id": mistral_id,
                     "temperature": 0.3,
                     "max_tokens": 100,
@@ -244,11 +252,12 @@ def seed_modular_pipeline():
                     "is_branching_step": True,
                     "branching_field": "medical_validation",
                     "document_class_id": None,  # Universal step
+                    "source_language": None,  # Works for all languages
                     "ui_stage": "validation",
                     "stop_conditions": {
-                        "stop_on_values": ["NICHT_MEDIZINISCH"],
+                        "stop_on_values": ["NON_MEDICAL", "NICHT_MEDIZINISCH", "NOT_MEDICAL"],
                         "termination_reason": "Non-medical content detected",
-                        "termination_message": "Das hochgeladene Dokument enthält keinen medizinischen Inhalt. Bitte laden Sie ein medizinisches Dokument (z.B. Arztbrief, Befundbericht, Laborwerte) hoch.",
+                        "termination_message": "The uploaded document does not contain medical content. Please upload a medical document (e.g., doctor's letter, medical report, lab results).",
                     },
                 },
                 {
@@ -256,7 +265,17 @@ def seed_modular_pipeline():
                     "description": "Classifies document type (ARZTBRIEF, BEFUNDBERICHT, LABORWERTE) - Routes to class-specific pipeline",
                     "order": 2,
                     "enabled": True,
-                    "prompt_template": "Analysiere diesen medizinischen Text und bestimme, ob es sich um einen Arztbrief, einen Befundbericht oder Laborwerte handelt.\n\nText:\n{input_text}\n\nAntworte NUR mit dem erkannten Typ: ARZTBRIEF, BEFUNDBERICHT oder LABORWERTE",
+                    "prompt_template": """{source_language_instruction}
+
+Analyze this medical text and classify it as one of:
+- ARZTBRIEF: Doctor's letter, discharge summary, referral letter
+- BEFUNDBERICHT: Medical findings report, diagnostic report, imaging report
+- LABORWERTE: Laboratory results, blood tests, clinical measurements
+
+Text:
+{input_text}
+
+Respond ONLY with: ARZTBRIEF, BEFUNDBERICHT, or LABORWERTE""",
                     "selected_model_id": mistral_id,
                     "temperature": 0.3,
                     "max_tokens": 200,
@@ -267,17 +286,19 @@ def seed_modular_pipeline():
                     "is_branching_step": True,
                     "branching_field": "document_type",
                     "document_class_id": None,  # Universal step
+                    "source_language": None,  # Works for all languages
                     "ui_stage": "classification",
                 },
                 # NOTE: PII removal now happens LOCALLY via AdvancedPrivacyFilter
                 # BEFORE pipeline execution (GDPR-compliant, no PII sent to cloud)
-                # ==================== DOCUMENT-SPECIFIC TRANSLATION STEPS ====================
-                # These run ONLY for their specific document class
+                # ==================== GERMAN DOCUMENT-SPECIFIC TRANSLATION STEPS ====================
+                # These run ONLY for their specific document class AND German source documents
                 {
                     "name": "Vereinfachung Arztbrief",
-                    "description": "Patient-friendly translation for doctor's letters (ARZTBRIEF only)",
+                    "description": "Patient-friendly translation for doctor's letters (ARZTBRIEF, German input)",
                     "order": 10,
                     "enabled": True,
+                    "source_language": "de",  # German input documents only
                     "prompt_template": """Du bist ein erfahrener Medizinjournalist, der komplexe medizinische Arztbriefe für Patienten verständlich aufbereitet.
 
 DEINE AUFGABE:
@@ -333,9 +354,10 @@ Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare.""",
                 },
                 {
                     "name": "Vereinfachung Befundbericht",
-                    "description": "Patient-friendly translation for medical reports (BEFUNDBERICHT only)",
+                    "description": "Patient-friendly translation for medical reports (BEFUNDBERICHT, German input)",
                     "order": 10,
                     "enabled": True,
+                    "source_language": "de",  # German input documents only
                     "prompt_template": """Du bist ein erfahrener Radiologe und Medizinjournalist, der komplexe medizinische Befundberichte für Patienten verständlich erklärt.
 
 DEINE AUFGABE:
@@ -389,9 +411,10 @@ Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare.""",
                 },
                 {
                     "name": "Vereinfachung Laborwerte",
-                    "description": "Patient-friendly translation for lab results (LABORWERTE only)",
+                    "description": "Patient-friendly translation for lab results (LABORWERTE, German input)",
                     "order": 10,
                     "enabled": True,
+                    "source_language": "de",  # German input documents only
                     "prompt_template": """Du bist ein erfahrener Labormediziner und Gesundheitskommunikator, der Laborergebnisse für Patienten verständlich erklärt.
 
 DEINE AUFGABE:
@@ -433,6 +456,181 @@ LABORWERTE:
 {input_text}
 
 Gib nur die vereinfachte Version zurück, ohne einleitende Kommentare.""",
+                    "selected_model_id": llama_id,
+                    "temperature": 0.7,
+                    "max_tokens": 8192,
+                    "retry_on_failure": True,
+                    "max_retries": 2,
+                    "input_from_previous_step": True,
+                    "output_format": "markdown",
+                    "document_class_id": laborwerte_id,  # LABORWERTE only
+                    "ui_stage": "translation",
+                },
+                # ==================== ENGLISH DOCUMENT-SPECIFIC TRANSLATION STEPS ====================
+                # These run ONLY for their specific document class AND English source documents
+                {
+                    "name": "Simplification Discharge Letter (EN)",
+                    "description": "Patient-friendly translation for doctor's letters (ARZTBRIEF, English input)",
+                    "order": 10,
+                    "enabled": True,
+                    "source_language": "en",  # English input documents only
+                    "prompt_template": """You are an experienced medical journalist who makes complex medical discharge letters understandable for patients.
+
+YOUR TASK:
+Transform the following discharge letter into a patient-friendly version that medical laypeople can understand.
+
+GUIDELINES:
+
+1. STRUCTURE:
+   - Use clear headings with ## for main sections
+   - Organize into logical sections with appropriate emojis:
+     • 📋 Summary
+     • 🩺 Diagnoses
+     • 💊 Medications & Treatment
+     • ⚠️ Important Notes
+     • ✅ Next Steps
+   - Use bullet points for better readability
+
+2. LANGUAGE:
+   - Explain every medical term in parentheses or directly in the text
+   - Use simple, clear sentences
+   - For recommendations: Clearly distinguish between one-time diagnostics and ongoing treatment
+   - Write in a reassuring but informative tone
+
+3. VALUES & FINDINGS:
+   - For abnormal values: State the normal range for comparison (e.g., "Your value: 19 ng/ml – optimal would be over 30")
+   - Mark critical values with **bold** and ⚠️ or ❗
+   - For abnormalities, honestly state whether action is needed or just monitoring
+
+4. CONTENT:
+   - Keep ALL information - don't omit anything, don't add anything
+   - Transfer specific recommendations from the original verbatim (diet, lifestyle, medications)
+   - Explain what diagnoses may mean for daily life
+   - Write neutrally - NEVER "we", no contact details
+
+5. FORMAT:
+   - Output directly in Markdown (WITHOUT ```markdown code blocks!)
+   - Start DIRECTLY with ## 📋 Summary
+   - Use only ONE hash level per heading
+
+DISCHARGE LETTER:
+{input_text}
+
+Return only the simplified version, without introductory comments.""",
+                    "selected_model_id": llama_id,
+                    "temperature": 0.7,
+                    "max_tokens": 8192,
+                    "retry_on_failure": True,
+                    "max_retries": 2,
+                    "input_from_previous_step": True,
+                    "output_format": "markdown",
+                    "document_class_id": arztbrief_id,  # ARZTBRIEF only
+                    "ui_stage": "translation",
+                },
+                {
+                    "name": "Simplification Medical Report (EN)",
+                    "description": "Patient-friendly translation for medical reports (BEFUNDBERICHT, English input)",
+                    "order": 10,
+                    "enabled": True,
+                    "source_language": "en",  # English input documents only
+                    "prompt_template": """You are an experienced radiologist and medical journalist who explains complex medical findings reports to patients in an understandable way.
+
+YOUR TASK:
+Transform the following findings report into a patient-friendly version that medical laypeople can understand.
+
+GUIDELINES:
+
+1. STRUCTURE:
+   - Start with a brief summary of the main result (2-3 sentences)
+   - Organize by sections with appropriate emojis:
+     • 📋 Summary
+     • 🔬 What was examined?
+     • 🔍 What was found?
+     • 💡 What does this mean for you?
+     • ✅ Next Steps
+
+2. LANGUAGE:
+   - Translate technical terms into everyday language (e.g., "hepatomegaly" → "enlarged liver")
+   - Use comparisons for sizes ("about the size of a cherry")
+   - Clearly distinguish: Is something just for monitoring or does it need treatment?
+
+3. INTERPRETING FINDINGS:
+   - For abnormalities: Honestly say whether it's concerning or rather harmless
+   - For "probably benign": Explain that follow-up provides certainty
+   - Mark critical findings with **bold** and ⚠️ or ❗
+   - "Unremarkable" = normal, healthy – communicate this clearly
+
+4. CONTENT:
+   - Keep ALL information - don't omit anything, don't add anything
+   - Transfer recommendations from the original verbatim
+   - Write neutrally - NEVER "we", no contact details
+
+5. FORMAT:
+   - Output directly in Markdown (WITHOUT ```markdown code blocks!)
+   - Start DIRECTLY with ## 📋 Summary
+   - Use only ONE hash level per heading
+
+FINDINGS REPORT:
+{input_text}
+
+Return only the simplified version, without introductory comments.""",
+                    "selected_model_id": llama_id,
+                    "temperature": 0.7,
+                    "max_tokens": 8192,
+                    "retry_on_failure": True,
+                    "max_retries": 2,
+                    "input_from_previous_step": True,
+                    "output_format": "markdown",
+                    "document_class_id": befundbericht_id,  # BEFUNDBERICHT only
+                    "ui_stage": "translation",
+                },
+                {
+                    "name": "Simplification Lab Results (EN)",
+                    "description": "Patient-friendly translation for lab results (LABORWERTE, English input)",
+                    "order": 10,
+                    "enabled": True,
+                    "source_language": "en",  # English input documents only
+                    "prompt_template": """You are an experienced laboratory physician and health communicator who explains lab results to patients in an understandable way.
+
+YOUR TASK:
+Transform the following lab values into a patient-friendly explanation.
+
+GUIDELINES:
+
+1. STRUCTURE:
+   - Start with overall assessment (1-2 sentences)
+   - Organize by categories with emojis:
+     • 📋 Overall Overview
+     • 🩸 Blood Count
+     • 🫀 Cardiovascular
+     • 🫁 Liver & Kidneys
+     • ✅ Summary
+
+2. EXPLAIN EACH VALUE:
+   - **Your result** vs. **Normal range** (e.g., "Your value: 19 ng/ml – optimal would be over 30")
+   - For borderline values: Clearly state that it's at the edge
+   - Rating with symbol: ✅ Normal | ⚠️ Slightly abnormal | ❗ Significantly outside range
+   - Briefly explain what the value measures and why it's important
+
+3. HIGHLIGHT CRITICAL VALUES:
+   - Mark abnormal values with **bold** and ⚠️/❗
+   - For deviations: Name possible causes (without causing panic)
+   - Honestly assess: Action needed or just monitoring?
+
+4. CONTENT:
+   - Keep ALL values - don't omit anything, don't add anything
+   - Transfer specific recommendations verbatim (diet, lifestyle)
+   - Write neutrally - NEVER "we", no contact details
+
+5. FORMAT:
+   - Output directly in Markdown (WITHOUT ```markdown code blocks!)
+   - Start DIRECTLY with ## 📋 Your Lab Results
+   - Use only ONE hash level per heading
+
+LAB RESULTS:
+{input_text}
+
+Return only the simplified version, without introductory comments.""",
                     "selected_model_id": llama_id,
                     "temperature": 0.7,
                     "max_tokens": 8192,
@@ -672,14 +870,14 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                         retry_on_failure, max_retries, input_from_previous_step,
                         output_format, is_branching_step, branching_field, document_class_id,
                         post_branching, stop_conditions, required_context_variables,
-                        ui_stage, created_at, last_modified, modified_by
+                        source_language, ui_stage, created_at, last_modified, modified_by
                     ) VALUES (
                         :name, :description, :order, :enabled, :prompt_template,
                         :selected_model_id, :temperature, :max_tokens,
                         :retry_on_failure, :max_retries, :input_from_previous_step,
                         :output_format, :is_branching_step, :branching_field, :document_class_id,
                         :post_branching, :stop_conditions, :required_context_variables,
-                        :ui_stage, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
+                        :source_language, :ui_stage, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :modified_by
                     )
                 """),
                     {
@@ -696,6 +894,7 @@ Gib nur das finale Ergebnis im Markdown-Format zurück, ohne Kommentare oder Erk
                         )
                         if step.get("required_context_variables")
                         else None,
+                        "source_language": step.get("source_language", None),
                         "ui_stage": step.get("ui_stage", "translation"),
                         "modified_by": "system_seed",
                     },

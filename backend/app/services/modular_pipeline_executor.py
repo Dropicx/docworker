@@ -39,6 +39,13 @@ from app.services.prompt_guard import (
 
 logger = logging.getLogger(__name__)
 
+# Source language mappings for prompt context
+SOURCE_LANGUAGE_NAMES = {"de": "German", "en": "English"}
+SOURCE_LANGUAGE_INSTRUCTIONS = {
+    "de": "The following text is in German.",
+    "en": "The following text is in English.",
+}
+
 
 class ModularPipelineExecutor:
     """
@@ -105,40 +112,38 @@ class ModularPipelineExecutor:
             logger.error(f"❌ Failed to load pipeline steps: {e}")
             return []
 
-    def load_universal_steps(self) -> list[DynamicPipelineStepDB]:
+    def load_universal_steps(self, source_language: str = "de") -> list[DynamicPipelineStepDB]:
         """
         Load pre-branching universal pipeline steps (document_class_id = NULL, post_branching = FALSE).
         These steps run for all documents BEFORE document-specific processing.
-        Only ENABLED steps are returned (filtered by repository).
+        Only ENABLED steps are returned, filtered by source language.
+
+        Args:
+            source_language: Source language code ("de" or "en") for step routing
 
         Returns:
             List of pre-branching universal pipeline steps ordered by execution order
         """
         try:
-            # Get universal steps (already filtered for enabled by repository)
-            universal_steps = self.step_repository.get_universal_steps()
+            # Get steps filtered by source language (universal OR matching language)
+            all_steps = self.step_repository.get_steps_for_source_language(source_language)
 
             # DEBUG: Log what we got from repository
             logger.info(
-                f"🔍 DEBUG: Repository returned {len(universal_steps)} universal steps (document_class_id = NULL)"
+                f"🔍 DEBUG: Repository returned {len(all_steps)} steps for source_language='{source_language}'"
             )
-            for step in universal_steps:
-                logger.info(
-                    f"   - {step.name} (order={step.order}, post_branching={step.post_branching}, enabled={step.enabled})"
-                )
 
-            # Filter for pre-branching only (post_branching = False)
-            steps = [s for s in universal_steps if not s.post_branching]
+            # Filter for universal (document_class_id = NULL) and pre-branching only
+            steps = [
+                s for s in all_steps if s.document_class_id is None and not s.post_branching
+            ]
 
             logger.info(
-                f"📋 Loaded {len(steps)} pre-branching universal pipeline steps (after filtering post_branching=False)"
+                f"📋 Loaded {len(steps)} pre-branching universal pipeline steps for source_language='{source_language}'"
             )
-            if len(steps) == 0 and len(universal_steps) > 0:
+            if len(steps) == 0 and len(all_steps) > 0:
                 logger.warning(
-                    f"⚠️ ISSUE DETECTED: Repository returned {len(universal_steps)} universal steps but ALL have post_branching=True!"
-                )
-                logger.warning(
-                    "   Expected at least some steps with post_branching=False for pre-branching phase"
+                    f"⚠️ ISSUE DETECTED: Repository returned {len(all_steps)} steps but none are pre-branching universal!"
                 )
 
             return steps
@@ -146,42 +151,60 @@ class ModularPipelineExecutor:
             logger.error(f"❌ Failed to load universal pipeline steps: {e}")
             return []
 
-    def load_post_branching_steps(self) -> list[DynamicPipelineStepDB]:
+    def load_post_branching_steps(
+        self, source_language: str = "de"
+    ) -> list[DynamicPipelineStepDB]:
         """
         Load post-branching universal pipeline steps (document_class_id = NULL, post_branching = TRUE).
         These steps run for all documents AFTER document-specific processing.
-        Only ENABLED steps are returned (filtered by repository).
+        Only ENABLED steps are returned, filtered by source language.
+
+        Args:
+            source_language: Source language code ("de" or "en") for step routing
 
         Returns:
             List of post-branching universal pipeline steps ordered by execution order
         """
         try:
-            # Get post-branching steps (already filtered for enabled by repository)
-            steps = self.step_repository.get_post_branching_steps()
+            # Get steps filtered by source language
+            all_steps = self.step_repository.get_steps_for_source_language(source_language)
 
-            logger.info(f"📋 Loaded {len(steps)} post-branching universal pipeline steps")
+            # Filter for post-branching universal steps only
+            steps = [
+                s for s in all_steps if s.document_class_id is None and s.post_branching
+            ]
+
+            logger.info(
+                f"📋 Loaded {len(steps)} post-branching universal pipeline steps for source_language='{source_language}'"
+            )
             return steps
         except Exception as e:
             logger.error(f"❌ Failed to load post-branching pipeline steps: {e}")
             return []
 
-    def load_steps_by_document_class(self, document_class_id: int) -> list[DynamicPipelineStepDB]:
+    def load_steps_by_document_class(
+        self, document_class_id: int, source_language: str = "de"
+    ) -> list[DynamicPipelineStepDB]:
         """
         Load pipeline steps specific to a document class using repository pattern.
-        Only ENABLED steps are returned (filtered by repository).
+        Only ENABLED steps are returned, filtered by source language.
 
         Args:
             document_class_id: ID of the document class
+            source_language: Source language code ("de" or "en") for step routing
 
         Returns:
             List of document-specific pipeline steps ordered by execution order
         """
         try:
-            # Get document class steps (already filtered for enabled by repository)
-            steps = self.step_repository.get_steps_by_document_class(document_class_id)
+            # Get steps filtered by source language
+            all_steps = self.step_repository.get_steps_for_source_language(source_language)
+
+            # Filter for specific document class only
+            steps = [s for s in all_steps if s.document_class_id == document_class_id]
 
             logger.info(
-                f"📋 Loaded {len(steps)} enabled steps for document class ID {document_class_id}"
+                f"📋 Loaded {len(steps)} enabled steps for document class ID {document_class_id} (source_language='{source_language}')"
             )
             return steps
         except Exception as e:
@@ -595,11 +618,18 @@ class ModularPipelineExecutor:
                 step_name=step.name,
             )
 
+        # Inject source language context variables for bilingual prompts
+        source_lang = context.get("source_language", "de")
+        context["source_language_name"] = SOURCE_LANGUAGE_NAMES.get(source_lang, "German")
+        context["source_language_instruction"] = SOURCE_LANGUAGE_INSTRUCTIONS.get(
+            source_lang, SOURCE_LANGUAGE_INSTRUCTIONS["de"]
+        )
+
         # Prepare prompt with variable substitution (sanitized input)
         try:
             prompt = step.prompt_template.format(
                 input_text=sanitized_input,
-                **context,  # e.g., target_language
+                **context,  # e.g., target_language, source_language_name, source_language_instruction
             )
         except KeyError as e:
             error = f"Missing required variable in prompt template: {e}"
@@ -834,8 +864,12 @@ class ModularPipelineExecutor:
         logger.info(f"📋 Loaded job: {job.job_id}")
         job_id = job.job_id
 
-        # Load universal pipeline steps (document_class_id = NULL)
-        universal_steps = self.load_universal_steps()
+        # Get source language from context (default: German)
+        source_language = context.get("source_language", "de")
+        logger.info(f"🌐 Source language: {source_language}")
+
+        # Load universal pipeline steps filtered by source language
+        universal_steps = self.load_universal_steps(source_language=source_language)
         if not universal_steps:
             logger.warning("⚠️ No universal pipeline steps found, loading all steps as fallback")
             universal_steps = self.load_pipeline_steps()
@@ -983,9 +1017,10 @@ class ModularPipelineExecutor:
                             f"🎯 Document class branch: {branch_metadata['target_display_name']} (ID: {branch_metadata['target_id']})"
                         )
 
-                        # Load document class-specific steps
+                        # Load document class-specific steps filtered by source language
                         document_class_specific_steps = self.load_steps_by_document_class(
-                            branch_metadata["target_id"]
+                            branch_metadata["target_id"],
+                            source_language=source_language,
                         )
 
                         execution_metadata["branching_occurred"] = True
@@ -1210,7 +1245,7 @@ class ModularPipelineExecutor:
                         current_output = output
 
         # ==================== PHASE 3: POST-BRANCHING UNIVERSAL STEPS ====================
-        post_branching_steps = self.load_post_branching_steps()
+        post_branching_steps = self.load_post_branching_steps(source_language=source_language)
 
         if post_branching_steps:
             pre_phase3_completed = len(all_steps)

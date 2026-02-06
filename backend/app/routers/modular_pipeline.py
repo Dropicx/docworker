@@ -111,6 +111,9 @@ class PipelineStepRequest(BaseModel):
         "translation", pattern="^(ocr|validation|classification|translation|quality|formatting)$"
     )
 
+    # Source language routing (null = universal, "de" = German-only, "en" = English-only)
+    source_language: str | None = None
+
     @field_validator("prompt_template")
     @classmethod
     def validate_prompt(cls, v):
@@ -190,6 +193,9 @@ class PipelineStepResponse(BaseModel):
 
     # UI stage mapping
     ui_stage: str
+
+    # Source language routing (null = universal, "de" = German-only, "en" = English-only)
+    source_language: str | None
 
     # Pydantic V2 configuration
     model_config = ConfigDict(from_attributes=True)

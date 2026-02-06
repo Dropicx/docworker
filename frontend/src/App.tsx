@@ -40,6 +40,7 @@ function App() {
   const [languagesLoaded, setLanguagesLoaded] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [pendingLanguage, setPendingLanguage] = useState<string | null>(null);
+  const [pendingSourceLanguage, setPendingSourceLanguage] = useState<'de' | 'en'>('de');
   const [qualityGateError, setQualityGateError] = useState<QualityGateErrorDetails | null>(null);
 
   // Health check beim Start
@@ -88,9 +89,10 @@ function App() {
     };
   }, []);
 
-  const handleStartProcessing = (file: File, language: string | null) => {
+  const handleStartProcessing = (file: File, language: string | null, sourceLanguage: 'de' | 'en' = 'de') => {
     setPendingFile(file);
     setPendingLanguage(language);
+    setPendingSourceLanguage(sourceLanguage);
     setQualityGateError(null);
     setError(null);
     setAppState('processing');
@@ -148,6 +150,7 @@ function App() {
     setAppState('upload');
     setPendingFile(null);
     setPendingLanguage(null);
+    setPendingSourceLanguage('de');
     setTranslationResult(null);
     setError(null);
     setErrorMetadata(null);
@@ -158,6 +161,7 @@ function App() {
     setQualityGateError(errorDetails);
     setPendingFile(null);
     setPendingLanguage(null);
+    setPendingSourceLanguage('de');
     setAppState('upload');
   };
 
@@ -320,6 +324,7 @@ function App() {
                 <DocumentProcessor
                   file={pendingFile}
                   selectedLanguage={pendingLanguage}
+                  sourceLanguage={pendingSourceLanguage}
                   onComplete={handleProcessingComplete}
                   onError={handleProcessingError}
                   onCancel={handleProcessingCancel}

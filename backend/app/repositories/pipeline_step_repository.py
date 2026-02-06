@@ -125,6 +125,41 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
             .all()
         )
 
+    def get_steps_for_source_language(self, source_language: str) -> list[DynamicPipelineStepDB]:
+        """
+        Get enabled steps that apply to a specific source language.
+
+        Returns steps where source_language is NULL (universal) OR matches the given language.
+        Uses phase-aware ordering for proper execution sequence.
+
+        Args:
+            source_language: Source language code ("de" or "en")
+
+        Returns:
+            List of enabled steps for the source language, sorted by phase and order
+        """
+        from sqlalchemy import case, or_
+
+        # Define phase priority
+        phase_order = case(
+            (self.model.post_branching, 3),  # Post-branching last
+            (self.model.document_class_id.is_not(None), 2),  # Document-specific middle
+            else_=1,  # Pre-branching first
+        )
+
+        return (
+            self.db.query(self.model)
+            .filter(self.model.enabled == True)
+            .filter(
+                or_(
+                    self.model.source_language.is_(None),
+                    self.model.source_language == source_language,
+                )
+            )
+            .order_by(phase_order, self.model.order)
+            .all()
+        )
+
     def get_steps_by_document_class(self, document_class_id: int) -> list[DynamicPipelineStepDB]:
         """
         Get pipeline steps for a specific document class.
