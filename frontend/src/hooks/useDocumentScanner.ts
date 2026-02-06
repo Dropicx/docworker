@@ -341,13 +341,21 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
   }, [drawA4Guide]);
 
-  const captureFrame = useCallback((videoWidth?: number, videoHeight?: number) => {
+  const captureFrame = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const vw = videoWidth || video.videoWidth;
-    const vh = videoHeight || video.videoHeight;
-    if (!vw || !vh) return;
+    // Get actual video dimensions at capture time
+    const vw = video.videoWidth;
+    const vh = video.videoHeight;
+
+    console.log('Capture - video dimensions:', vw, 'x', vh);
+    console.log('Capture - client dimensions:', video.clientWidth, 'x', video.clientHeight);
+
+    if (!vw || !vh) {
+      console.error('Video dimensions not available');
+      return;
+    }
 
     stopDetectionLoop();
     setPhase('processing'); // Show processing state
@@ -358,47 +366,52 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
     const canvas = captureCanvasRef.current;
 
-    // With object-contain, the full video is visible
     // Calculate guide frame based on full video dimensions
     const guide = calculateA4GuideFrame(vw, vh);
+    console.log('Guide frame:', guide);
 
-    // Create temp canvas for full frame
-    const tempCanvas = document.createElement('canvas');
-    tempCanvas.width = vw;
-    tempCanvas.height = vh;
-    const tCtx = tempCanvas.getContext('2d')!;
-    tCtx.drawImage(video, 0, 0, vw, vh);
-
-    // Set output dimensions to A4 ratio
-    const outputWidth = Math.round(guide.width);
-    const outputHeight = Math.round(guide.height);
-    canvas.width = outputWidth;
-    canvas.height = outputHeight;
+    // Set canvas to full video size first, draw video
+    canvas.width = vw;
+    canvas.height = vh;
     const ctx = canvas.getContext('2d')!;
 
-    // Crop to guide frame region
-    ctx.drawImage(
-      tempCanvas,
+    // Draw full video frame
+    ctx.drawImage(video, 0, 0, vw, vh);
+
+    // Now crop to guide frame by creating a new canvas
+    const croppedCanvas = document.createElement('canvas');
+    const outputWidth = Math.round(guide.width);
+    const outputHeight = Math.round(guide.height);
+    croppedCanvas.width = outputWidth;
+    croppedCanvas.height = outputHeight;
+    const croppedCtx = croppedCanvas.getContext('2d')!;
+
+    // Copy the guide frame region
+    croppedCtx.drawImage(
+      canvas,
       guide.x, guide.y, guide.width, guide.height,
       0, 0, outputWidth, outputHeight
     );
+
+    // Update ref to cropped canvas
+    captureCanvasRef.current = croppedCanvas;
 
     // Pause video (keep stream alive for retake)
     video.pause();
 
     // Use setTimeout to allow UI to update before processing
     setTimeout(() => {
-      // Analyze image quality before enhancement
-      const qualityBefore = analyzeImageQuality(canvas);
+      const finalCanvas = captureCanvasRef.current!;
 
       // Apply image enhancement (contrast stretching, etc.)
-      enhanceImage(canvas);
+      enhanceImage(finalCanvas);
 
       // Analyze quality after enhancement
-      const quality = analyzeImageQuality(canvas);
+      const quality = analyzeImageQuality(finalCanvas);
       setImageQuality(quality);
 
-      const url = canvas.toDataURL('image/jpeg', 0.95);
+      const url = finalCanvas.toDataURL('image/jpeg', 0.95);
+      console.log('Captured image dimensions:', finalCanvas.width, 'x', finalCanvas.height);
       setCapturedImageUrl(url);
       setAutoProgress(0);
       clearOverlay();
@@ -524,7 +537,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
         if (progress >= 1) {
           // Auto-capture using the A4 guide frame
-          captureFrame(vw, vh);
+          captureFrame();
           return; // Stop loop
         }
       } else {
