@@ -21,7 +21,7 @@ const FRAME_INTERVAL = 1000 / DETECTION_FPS;
 const AUTO_CAPTURE_DELAY_MS = 2000; // 2 seconds to give user time to align
 const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
 const GUIDE_PADDING = 0.08; // 8% padding from edges
-const CORNER_BRACKET_LENGTH = 40; // Length of corner bracket arms in pixels
+const CORNER_BRACKET_LENGTH = 60; // Length of corner bracket arms in pixels
 
 export function useDocumentScanner(): UseDocumentScannerReturn {
   const [phase, setPhase] = useState<ScannerPhase>('initializing');
@@ -65,10 +65,10 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const drawA4Guide = useCallback((ctx: CanvasRenderingContext2D, videoWidth: number, videoHeight: number) => {
     const guide = calculateA4GuideFrame(videoWidth, videoHeight);
     const { x, y, width, height } = guide;
-    const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.1, height * 0.1);
+    const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.15, height * 0.15);
 
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 6;
     ctx.lineCap = 'round';
 
     // Top-left corner bracket
@@ -99,9 +99,9 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     ctx.lineTo(x, y + height - bracketLen);
     ctx.stroke();
 
-    // Draw small corner markers (circles)
+    // Draw corner markers (circles)
     ctx.fillStyle = '#ffffff';
-    const markerRadius = 6;
+    const markerRadius = 8;
     const corners = [
       { cx: x, cy: y },
       { cx: x + width, cy: y },
