@@ -431,7 +431,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         const color = isAligned ? '#22c55e' : '#ffffff';
 
         overlayCtx.strokeStyle = color;
-        overlayCtx.lineWidth = 6;
+        overlayCtx.lineWidth = 12;
         overlayCtx.lineCap = 'round';
 
         // Top-left corner bracket
