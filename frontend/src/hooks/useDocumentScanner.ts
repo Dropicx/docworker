@@ -246,6 +246,47 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     return isBright && hasContrast;
   }, []);
 
+  // Lightweight sharpness check for real-time detection (samples small region)
+  const checkSharpness = useCallback((
+    ctx: CanvasRenderingContext2D,
+    guideFrame: { x: number; y: number; width: number; height: number }
+  ): boolean => {
+    const sampleSize = 100; // Sample 100x100 pixel region from center
+    const sharpnessThreshold = 12; // Laplacian variance threshold (lower = more blur tolerance)
+
+    // Sample from center of guide frame
+    const centerX = Math.round(guideFrame.x + guideFrame.width / 2 - sampleSize / 2);
+    const centerY = Math.round(guideFrame.y + guideFrame.height / 2 - sampleSize / 2);
+
+    // Ensure we're within bounds
+    const clampedX = Math.max(0, centerX);
+    const clampedY = Math.max(0, centerY);
+
+    const imageData = ctx.getImageData(clampedX, clampedY, sampleSize, sampleSize);
+    const data = imageData.data;
+
+    // Convert to grayscale
+    const grayscale: number[] = [];
+    for (let i = 0; i < data.length; i += 4) {
+      grayscale.push((data[i] + data[i + 1] + data[i + 2]) / 3);
+    }
+
+    // Calculate Laplacian variance (blur detection)
+    let laplacianSum = 0;
+    for (let y = 1; y < sampleSize - 1; y++) {
+      for (let x = 1; x < sampleSize - 1; x++) {
+        const idx = y * sampleSize + x;
+        const laplacian = 4 * grayscale[idx] -
+          grayscale[idx - 1] - grayscale[idx + 1] -
+          grayscale[idx - sampleSize] - grayscale[idx + sampleSize];
+        laplacianSum += laplacian * laplacian;
+      }
+    }
+
+    const blurScore = Math.sqrt(laplacianSum / ((sampleSize - 2) * (sampleSize - 2)));
+    return blurScore >= sharpnessThreshold; // true = sharp, false = blurry
+  }, []);
+
   // Draw static A4 guide frame with corner brackets (fallback when no detection)
   const drawGuideFrame = useCallback((
     ctx: CanvasRenderingContext2D,
@@ -573,6 +614,24 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         );
       }
 
+      // Check sharpness (only when paper is detected)
+      let isSharp = false;
+      if (corners || isAlignedByBrightness) {
+        const guide = corners ? null : calculateA4GuideFrame(scaledW, scaledH);
+        const checkFrame = corners
+          ? {
+              x: Math.min(corners.topLeftCorner.x, corners.bottomLeftCorner.x),
+              y: Math.min(corners.topLeftCorner.y, corners.topRightCorner.y),
+              width: Math.max(corners.topRightCorner.x, corners.bottomRightCorner.x) -
+                     Math.min(corners.topLeftCorner.x, corners.bottomLeftCorner.x),
+              height: Math.max(corners.bottomLeftCorner.y, corners.bottomRightCorner.y) -
+                      Math.min(corners.topLeftCorner.y, corners.topRightCorner.y)
+            }
+          : { x: offsetX + guide!.x, y: offsetY + guide!.y, width: guide!.width, height: guide!.height };
+
+        isSharp = checkSharpness(ctx, checkFrame);
+      }
+
       // Track corner stability (only for OpenCV mode)
       if (corners && lastCornersRef.current) {
         const isStable = cornersAreSimilar(corners, lastCornersRef.current, CORNER_STABILITY_TOLERANCE);
@@ -592,12 +651,17 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
       // Draw overlay
       if (corners) {
-        // Draw detected document outline (green)
-        drawDetectedQuad(ctx, corners, offsetX, offsetY, '#22c55e');
+        // Draw detected document outline - green if sharp, yellow if blurry
+        const quadColor = isSharp ? '#22c55e' : '#eab308';
+        drawDetectedQuad(ctx, corners, offsetX, offsetY, quadColor);
       } else {
-        // Show static guide - green if brightness aligned, white if not
+        // Show static guide with color feedback
         const guide = calculateA4GuideFrame(scaledW, scaledH);
-        const guideColor = isAlignedByBrightness ? '#22c55e' : 'rgba(255, 255, 255, 0.5)';
+        const guideColor = !isAlignedByBrightness
+          ? 'rgba(255, 255, 255, 0.5)'  // White - no paper
+          : isSharp
+            ? '#22c55e'                  // Green - ready for capture
+            : '#eab308';                 // Yellow - paper detected but focusing
         drawGuideFrame(
           ctx,
           offsetX + guide.x,
@@ -608,11 +672,11 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         );
       }
 
-      // Auto-capture timer
-      // For OpenCV: require stability. For brightness: no stability needed (already validated)
-      const shouldCountdown = corners
+      // Auto-capture timer - require sharpness for countdown
+      // For OpenCV: require stability + sharpness. For brightness: require sharpness
+      const shouldCountdown = isSharp && (corners
         ? stableFramesRef.current >= STABLE_FRAMES_REQUIRED
-        : isAlignedByBrightness;
+        : isAlignedByBrightness);
 
       if (shouldCountdown) {
         if (!stableStartRef.current) {
@@ -636,7 +700,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     };
 
     rafRef.current = requestAnimationFrame(displayLoop);
-  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide, drawGuideFrame, drawDetectedQuad, cornersAreSimilar, getScanner]);
+  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide, checkSharpness, drawGuideFrame, drawDetectedQuad, cornersAreSimilar, getScanner]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');
