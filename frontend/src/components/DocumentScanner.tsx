@@ -151,10 +151,11 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
         )}
 
         {/* Video + overlay — always mounted to preserve stream, hidden when captured/processing */}
+        {/* Using object-contain so user sees exactly what will be captured (no zoom/crop) */}
         <video
           ref={videoRef as React.RefObject<HTMLVideoElement>}
           className={`absolute inset-0 w-full h-full bg-black ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
-          style={{ objectFit: 'cover' }}
+          style={{ objectFit: 'contain' }}
           playsInline
           autoPlay
           muted
@@ -162,7 +163,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
         <canvas
           ref={overlayCanvasRef as React.RefObject<HTMLCanvasElement>}
           className={`absolute inset-0 w-full h-full pointer-events-none ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
-          style={{ objectFit: 'cover' }}
+          style={{ objectFit: 'contain' }}
         />
 
         {/* Processing phase — show spinner while enhancing image */}

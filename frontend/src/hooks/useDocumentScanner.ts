@@ -358,23 +358,9 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
     const canvas = captureCanvasRef.current;
 
-    // Get container dimensions for visible area calculation
-    const containerWidth = video.clientWidth;
-    const containerHeight = video.clientHeight;
-
-    // Calculate visible area (what's shown after object-cover crop)
-    const visibleArea = calculateVisibleArea(vw, vh, containerWidth, containerHeight);
-
-    // Calculate guide frame relative to visible area
-    const guide = calculateA4GuideFrame(visibleArea.width, visibleArea.height);
-
-    // Adjust guide frame coordinates to full video coordinates
-    const adjustedGuide = {
-      x: visibleArea.x + guide.x,
-      y: visibleArea.y + guide.y,
-      width: guide.width,
-      height: guide.height
-    };
+    // With object-contain, the full video is visible
+    // Calculate guide frame based on full video dimensions
+    const guide = calculateA4GuideFrame(vw, vh);
 
     // Create temp canvas for full frame
     const tempCanvas = document.createElement('canvas');
@@ -384,16 +370,16 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     tCtx.drawImage(video, 0, 0, vw, vh);
 
     // Set output dimensions to A4 ratio
-    const outputWidth = Math.round(adjustedGuide.width);
-    const outputHeight = Math.round(adjustedGuide.height);
+    const outputWidth = Math.round(guide.width);
+    const outputHeight = Math.round(guide.height);
     canvas.width = outputWidth;
     canvas.height = outputHeight;
     const ctx = canvas.getContext('2d')!;
 
-    // Crop to adjusted guide frame region
+    // Crop to guide frame region
     ctx.drawImage(
       tempCanvas,
-      adjustedGuide.x, adjustedGuide.y, adjustedGuide.width, adjustedGuide.height,
+      guide.x, guide.y, guide.width, guide.height,
       0, 0, outputWidth, outputHeight
     );
 
@@ -418,7 +404,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       clearOverlay();
       setPhase('captured');
     }, 50);
-  }, [stopDetectionLoop, clearOverlay, calculateA4GuideFrame, calculateVisibleArea, analyzeImageQuality, enhanceImage]);
+  }, [stopDetectionLoop, clearOverlay, calculateA4GuideFrame, analyzeImageQuality, enhanceImage]);
 
   const startDetectionLoop = useCallback(() => {
     if (!processingCanvasRef.current) {
@@ -448,22 +434,9 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         return;
       }
 
-      // Get container (displayed) dimensions for object-cover calculation
-      const containerWidth = video.clientWidth;
-      const containerHeight = video.clientHeight;
-
-      // Calculate the visible portion of the video (what's actually shown after object-cover crop)
-      const visibleArea = calculateVisibleArea(vw, vh, containerWidth, containerHeight);
-
-      // Calculate guide frame relative to visible area
-      const guideFrame = calculateA4GuideFrame(visibleArea.width, visibleArea.height);
-      // Offset guide frame to account for visible area position
-      const adjustedGuideFrame = {
-        x: visibleArea.x + guideFrame.x,
-        y: visibleArea.y + guideFrame.y,
-        width: guideFrame.width,
-        height: guideFrame.height
-      };
+      // With object-contain, the full video is visible - no cropping needed
+      // Calculate guide frame based on full video dimensions
+      const guideFrame = calculateA4GuideFrame(vw, vh);
 
       // Draw video frame to processing canvas for edge analysis
       const pCanvas = processingCanvasRef.current!;
@@ -472,8 +445,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       const pCtx = pCanvas.getContext('2d')!;
       pCtx.drawImage(video, 0, 0, vw, vh);
 
-      // Check if paper is present inside the guide frame (using adjusted coordinates)
-      const isAligned = checkPaperInGuide(pCtx, adjustedGuideFrame, vw, vh);
+      // Check if paper is present inside the guide frame
+      const isAligned = checkPaperInGuide(pCtx, guideFrame, vw, vh);
 
       // Draw the A4 guide frame with color based on alignment
       const overlayCanvas = overlayCanvasRef.current;
@@ -484,8 +457,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         overlayCtx.clearRect(0, 0, vw, vh);
 
         // Draw guide frame - green when aligned, white when not
-        // Use adjusted guide frame (positioned within visible area)
-        const { x, y, width, height } = adjustedGuideFrame;
+        const { x, y, width, height } = guideFrame;
         const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.15, height * 0.15);
         const color = isAligned ? '#22c55e' : '#ffffff';
 
@@ -565,7 +537,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     };
 
     rafRef.current = requestAnimationFrame(detect);
-  }, [captureFrame, calculateA4GuideFrame, calculateVisibleArea, checkPaperInGuide]);
+  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');
