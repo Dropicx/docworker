@@ -60,20 +60,37 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
 
   if (!isOpen) return null;
 
+  // Calculate countdown seconds remaining
+  const countdownSeconds = documentAligned && autoProgress > 0
+    ? Math.ceil((1 - autoProgress) * 4)
+    : 0;
+
   const statusBadge = (() => {
     if (phase === 'scanning') {
       // Document aligned and counting down to capture
       if (documentAligned && autoProgress > 0) {
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/90 text-white backdrop-blur-sm">
-            {t('scanner.holdSteady')}
-          </span>
+          <div className="flex flex-col items-center gap-2">
+            <span className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-base font-bold bg-green-500 text-white shadow-lg animate-pulse">
+              <span className="w-6 h-6 flex items-center justify-center bg-white/20 rounded-full text-sm">
+                {countdownSeconds}
+              </span>
+              {t('scanner.holdSteady')}
+            </span>
+            {/* Progress bar */}
+            <div className="w-48 h-2 bg-white/30 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-green-400 transition-all duration-100 ease-linear"
+                style={{ width: `${autoProgress * 100}%` }}
+              />
+            </div>
+          </div>
         );
       }
-      // Document detected but not aligned with frame
+      // Document not detected or not aligned
       if (!documentAligned) {
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
+          <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-white/30 text-white backdrop-blur-sm">
             {t('scanner.alignWithFrame')}
           </span>
         );
