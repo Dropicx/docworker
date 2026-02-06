@@ -22,9 +22,8 @@ const FRAME_INTERVAL = 1000 / DETECTION_FPS;
 const AUTO_CAPTURE_DELAY_MS = 1500; // 1.5 seconds after alignment detected
 const PROCESSING_WIDTH = 640;
 const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
-const GUIDE_PADDING = 0.08; // 8% padding from edges
-const CORNER_BRACKET_LENGTH = 60; // Length of corner bracket arms in pixels
-const ALIGNMENT_TOLERANCE = 0.08; // 8% tolerance for corner alignment
+const GUIDE_PADDING = 0.15; // 15% padding from edges (more space from black bars)
+const CORNER_BRACKET_LENGTH = 50; // Length of corner bracket arms in pixels
 
 export function useDocumentScanner(): UseDocumentScannerReturn {
   const [phase, setPhase] = useState<ScannerPhase>('initializing');
@@ -66,61 +65,56 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     return { x, y, width: guideW, height: guideH };
   }, []);
 
-  // Check if paper edges are present along the guide frame borders
-  // by analyzing contrast/edges at the guide frame boundaries
-  const checkEdgesAtGuide = useCallback((
+  // Check if paper is present inside the guide frame by comparing
+  // average brightness inside vs outside the frame
+  const checkPaperInGuide = useCallback((
     ctx: CanvasRenderingContext2D,
     guideFrame: { x: number; y: number; width: number; height: number },
     canvasWidth: number,
     canvasHeight: number
   ): boolean => {
     const { x, y, width, height } = guideFrame;
-    const sampleCount = 10; // Number of sample points per edge
-    const edgeOffset = 5; // Pixels to sample inside/outside the guide
-    const contrastThreshold = 30; // Minimum brightness difference to detect edge
+    const sampleSize = 20; // Sample area size
+    const brightnessThreshold = 150; // Paper should be bright (white)
+    const contrastThreshold = 20; // Difference between inside and outside
 
-    // Sample points along each edge and check for contrast
-    const checkEdge = (
-      startX: number, startY: number,
-      endX: number, endY: number,
-      insideOffsetX: number, insideOffsetY: number
-    ): number => {
-      let edgeCount = 0;
-      for (let i = 0; i < sampleCount; i++) {
-        const t = i / (sampleCount - 1);
-        const px = Math.round(startX + t * (endX - startX));
-        const py = Math.round(startY + t * (endY - startY));
+    // Sample brightness at center of guide frame (should be paper = bright)
+    const centerX = Math.round(x + width / 2 - sampleSize / 2);
+    const centerY = Math.round(y + height / 2 - sampleSize / 2);
+    const centerData = ctx.getImageData(centerX, centerY, sampleSize, sampleSize).data;
+    let centerBrightness = 0;
+    for (let i = 0; i < centerData.length; i += 4) {
+      centerBrightness += (centerData[i] + centerData[i + 1] + centerData[i + 2]) / 3;
+    }
+    centerBrightness /= (sampleSize * sampleSize);
 
-        // Sample inside the guide
-        const insideX = Math.min(Math.max(px + insideOffsetX, 0), canvasWidth - 1);
-        const insideY = Math.min(Math.max(py + insideOffsetY, 0), canvasHeight - 1);
-        const insideData = ctx.getImageData(insideX, insideY, 1, 1).data;
-        const insideBrightness = (insideData[0] + insideData[1] + insideData[2]) / 3;
-
-        // Sample outside the guide
-        const outsideX = Math.min(Math.max(px - insideOffsetX, 0), canvasWidth - 1);
-        const outsideY = Math.min(Math.max(py - insideOffsetY, 0), canvasHeight - 1);
-        const outsideData = ctx.getImageData(outsideX, outsideY, 1, 1).data;
-        const outsideBrightness = (outsideData[0] + outsideData[1] + outsideData[2]) / 3;
-
-        // Check for contrast (paper inside should be brighter than background)
-        if (Math.abs(insideBrightness - outsideBrightness) > contrastThreshold) {
-          edgeCount++;
-        }
+    // Sample brightness outside the guide frame (corners of the video)
+    const outsideOffset = 10;
+    const sampleOutside = (sx: number, sy: number): number => {
+      const clampedX = Math.max(0, Math.min(sx, canvasWidth - sampleSize));
+      const clampedY = Math.max(0, Math.min(sy, canvasHeight - sampleSize));
+      const data = ctx.getImageData(clampedX, clampedY, sampleSize, sampleSize).data;
+      let brightness = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        brightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
       }
-      return edgeCount;
+      return brightness / (sampleSize * sampleSize);
     };
 
-    // Check all 4 edges
-    const topEdge = checkEdge(x, y, x + width, y, 0, edgeOffset);
-    const bottomEdge = checkEdge(x, y + height, x + width, y + height, 0, -edgeOffset);
-    const leftEdge = checkEdge(x, y, x, y + height, edgeOffset, 0);
-    const rightEdge = checkEdge(x + width, y, x + width, y + height, -edgeOffset, 0);
+    // Sample at corners outside the guide
+    const topLeftOut = sampleOutside(outsideOffset, outsideOffset);
+    const topRightOut = sampleOutside(canvasWidth - sampleSize - outsideOffset, outsideOffset);
+    const bottomLeftOut = sampleOutside(outsideOffset, canvasHeight - sampleSize - outsideOffset);
+    const bottomRightOut = sampleOutside(canvasWidth - sampleSize - outsideOffset, canvasHeight - sampleSize - outsideOffset);
+    const avgOutside = (topLeftOut + topRightOut + bottomLeftOut + bottomRightOut) / 4;
 
-    // Require at least 60% of sample points on each edge to show contrast
-    const threshold = sampleCount * 0.6;
-    return topEdge >= threshold && bottomEdge >= threshold &&
-           leftEdge >= threshold && rightEdge >= threshold;
+    // Paper detected if:
+    // 1. Center is bright enough (paper is white/light)
+    // 2. Center is brighter than outside (contrast with background)
+    const isBright = centerBrightness > brightnessThreshold;
+    const hasContrast = centerBrightness - avgOutside > contrastThreshold;
+
+    return isBright && hasContrast;
   }, []);
 
   // Draw A4 guide frame with corner brackets
@@ -295,8 +289,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       const pCtx = pCanvas.getContext('2d')!;
       pCtx.drawImage(video, 0, 0, vw, vh);
 
-      // Check if paper edges are present at the guide frame borders
-      const isAligned = checkEdgesAtGuide(pCtx, guideFrame, vw, vh);
+      // Check if paper is present inside the guide frame
+      const isAligned = checkPaperInGuide(pCtx, guideFrame, vw, vh);
 
       // Draw the A4 guide frame with color based on alignment
       const overlayCanvas = overlayCanvasRef.current;
@@ -387,7 +381,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     };
 
     rafRef.current = requestAnimationFrame(detect);
-  }, [captureFrame, calculateA4GuideFrame, checkEdgesAtGuide]);
+  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');
