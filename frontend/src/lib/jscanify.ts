@@ -406,36 +406,48 @@ export default class Scanner {
 
     const { topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner } = corners;
 
-    // Calculate the actual dimensions from the detected corners
-    // Top edge width
+    // Calculate detected dimensions to determine orientation (portrait vs landscape)
     const topWidth = distance(topLeftCorner, topRightCorner);
-    // Bottom edge width
     const bottomWidth = distance(bottomLeftCorner, bottomRightCorner);
-    // Left edge height
     const leftHeight = distance(topLeftCorner, bottomLeftCorner);
-    // Right edge height
     const rightHeight = distance(topRightCorner, bottomRightCorner);
 
-    // Use the average of opposite edges for more accurate dimensions
     const detectedWidth = (topWidth + bottomWidth) / 2;
     const detectedHeight = (leftHeight + rightHeight) / 2;
 
-    // Calculate aspect ratio from detected shape
-    const detectedAspectRatio = detectedWidth / detectedHeight;
+    // Use FIXED A4 aspect ratio instead of detected ratio
+    // A4 is 210mm x 297mm = 1:1.4142 (√2)
+    // This prevents distortion from inaccurate corner detection
+    const A4_RATIO = 1.4142; // 297/210
+    const isLandscape = detectedWidth > detectedHeight;
 
-    // Determine output dimensions that preserve the detected aspect ratio
-    // while fitting within maxWidth x maxHeight
+    // Determine output dimensions using fixed A4 ratio
     let outputWidth: number;
     let outputHeight: number;
 
-    if (detectedAspectRatio > maxWidth / maxHeight) {
-      // Width-constrained
-      outputWidth = maxWidth;
-      outputHeight = Math.round(maxWidth / detectedAspectRatio);
+    if (isLandscape) {
+      // Landscape: width > height, ratio = 1.4142
+      if (maxWidth / maxHeight > A4_RATIO) {
+        // Height-constrained
+        outputHeight = maxHeight;
+        outputWidth = Math.round(maxHeight * A4_RATIO);
+      } else {
+        // Width-constrained
+        outputWidth = maxWidth;
+        outputHeight = Math.round(maxWidth / A4_RATIO);
+      }
     } else {
-      // Height-constrained
-      outputHeight = maxHeight;
-      outputWidth = Math.round(maxHeight * detectedAspectRatio);
+      // Portrait: height > width, ratio = 0.707 (1/1.4142)
+      const portraitRatio = 1 / A4_RATIO;
+      if (maxWidth / maxHeight > portraitRatio) {
+        // Height-constrained
+        outputHeight = maxHeight;
+        outputWidth = Math.round(maxHeight * portraitRatio);
+      } else {
+        // Width-constrained
+        outputWidth = maxWidth;
+        outputHeight = Math.round(maxWidth / portraitRatio);
+      }
     }
 
     // Ensure minimum dimensions
