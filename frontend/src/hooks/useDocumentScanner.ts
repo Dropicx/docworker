@@ -52,6 +52,35 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const stableStartRef = useRef<number | null>(null);
   const phaseRef = useRef<ScannerPhase>('initializing');
 
+  // Calculate the visible crop area when using object-cover
+  // Returns the portion of the video that's actually visible on screen
+  const calculateVisibleArea = useCallback((
+    videoWidth: number,
+    videoHeight: number,
+    containerWidth: number,
+    containerHeight: number
+  ): { x: number; y: number; width: number; height: number } => {
+    const videoRatio = videoWidth / videoHeight;
+    const containerRatio = containerWidth / containerHeight;
+
+    let visibleWidth = videoWidth;
+    let visibleHeight = videoHeight;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    if (videoRatio > containerRatio) {
+      // Video is wider than container - crop left/right
+      visibleWidth = videoHeight * containerRatio;
+      offsetX = (videoWidth - visibleWidth) / 2;
+    } else {
+      // Video is taller than container - crop top/bottom
+      visibleHeight = videoWidth / containerRatio;
+      offsetY = (videoHeight - visibleHeight) / 2;
+    }
+
+    return { x: offsetX, y: offsetY, width: visibleWidth, height: visibleHeight };
+  }, []);
+
   // Analyze image quality (blur, brightness, contrast)
   const analyzeImageQuality = useCallback((canvas: HTMLCanvasElement): ImageQuality => {
     const ctx = canvas.getContext('2d')!;
@@ -329,8 +358,23 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
     const canvas = captureCanvasRef.current;
 
-    // Always crop to the A4 guide frame region - this is what the user aligned to
-    const guide = calculateA4GuideFrame(vw, vh);
+    // Get container dimensions for visible area calculation
+    const containerWidth = video.clientWidth;
+    const containerHeight = video.clientHeight;
+
+    // Calculate visible area (what's shown after object-cover crop)
+    const visibleArea = calculateVisibleArea(vw, vh, containerWidth, containerHeight);
+
+    // Calculate guide frame relative to visible area
+    const guide = calculateA4GuideFrame(visibleArea.width, visibleArea.height);
+
+    // Adjust guide frame coordinates to full video coordinates
+    const adjustedGuide = {
+      x: visibleArea.x + guide.x,
+      y: visibleArea.y + guide.y,
+      width: guide.width,
+      height: guide.height
+    };
 
     // Create temp canvas for full frame
     const tempCanvas = document.createElement('canvas');
@@ -340,16 +384,16 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     tCtx.drawImage(video, 0, 0, vw, vh);
 
     // Set output dimensions to A4 ratio
-    const outputWidth = Math.round(guide.width);
-    const outputHeight = Math.round(guide.height);
+    const outputWidth = Math.round(adjustedGuide.width);
+    const outputHeight = Math.round(adjustedGuide.height);
     canvas.width = outputWidth;
     canvas.height = outputHeight;
     const ctx = canvas.getContext('2d')!;
 
-    // Crop to guide frame region
+    // Crop to adjusted guide frame region
     ctx.drawImage(
       tempCanvas,
-      guide.x, guide.y, guide.width, guide.height,
+      adjustedGuide.x, adjustedGuide.y, adjustedGuide.width, adjustedGuide.height,
       0, 0, outputWidth, outputHeight
     );
 
@@ -374,7 +418,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       clearOverlay();
       setPhase('captured');
     }, 50);
-  }, [stopDetectionLoop, clearOverlay, calculateA4GuideFrame, analyzeImageQuality, enhanceImage]);
+  }, [stopDetectionLoop, clearOverlay, calculateA4GuideFrame, calculateVisibleArea, analyzeImageQuality, enhanceImage]);
 
   const startDetectionLoop = useCallback(() => {
     if (!processingCanvasRef.current) {
@@ -404,8 +448,22 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         return;
       }
 
-      // Calculate guide frame for this video size
-      const guideFrame = calculateA4GuideFrame(vw, vh);
+      // Get container (displayed) dimensions for object-cover calculation
+      const containerWidth = video.clientWidth;
+      const containerHeight = video.clientHeight;
+
+      // Calculate the visible portion of the video (what's actually shown after object-cover crop)
+      const visibleArea = calculateVisibleArea(vw, vh, containerWidth, containerHeight);
+
+      // Calculate guide frame relative to visible area
+      const guideFrame = calculateA4GuideFrame(visibleArea.width, visibleArea.height);
+      // Offset guide frame to account for visible area position
+      const adjustedGuideFrame = {
+        x: visibleArea.x + guideFrame.x,
+        y: visibleArea.y + guideFrame.y,
+        width: guideFrame.width,
+        height: guideFrame.height
+      };
 
       // Draw video frame to processing canvas for edge analysis
       const pCanvas = processingCanvasRef.current!;
@@ -414,8 +472,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       const pCtx = pCanvas.getContext('2d')!;
       pCtx.drawImage(video, 0, 0, vw, vh);
 
-      // Check if paper is present inside the guide frame
-      const isAligned = checkPaperInGuide(pCtx, guideFrame, vw, vh);
+      // Check if paper is present inside the guide frame (using adjusted coordinates)
+      const isAligned = checkPaperInGuide(pCtx, adjustedGuideFrame, vw, vh);
 
       // Draw the A4 guide frame with color based on alignment
       const overlayCanvas = overlayCanvasRef.current;
@@ -426,7 +484,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         overlayCtx.clearRect(0, 0, vw, vh);
 
         // Draw guide frame - green when aligned, white when not
-        const { x, y, width, height } = guideFrame;
+        // Use adjusted guide frame (positioned within visible area)
+        const { x, y, width, height } = adjustedGuideFrame;
         const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.15, height * 0.15);
         const color = isAligned ? '#22c55e' : '#ffffff';
 
@@ -506,7 +565,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     };
 
     rafRef.current = requestAnimationFrame(detect);
-  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide]);
+  }, [captureFrame, calculateA4GuideFrame, calculateVisibleArea, checkPaperInGuide]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');
@@ -515,20 +574,20 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     try {
       let stream: MediaStream;
       try {
-        // Request maximum resolution - 4K or higher if available
+        // Request high resolution without forcing aspect ratio - let device choose best fit
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
-            facingMode: 'environment',
-            width: { ideal: 4096, min: 1920 },
-            height: { ideal: 2160, min: 1080 },
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1920 },
+            height: { ideal: 1920 }, // Square ideal lets device pick best orientation
           },
           audio: false,
         });
       } catch {
-        // Fallback: try without min constraints
+        // Fallback: just request environment camera
         try {
           stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: 'environment', width: { ideal: 3840 }, height: { ideal: 2160 } },
+            video: { facingMode: 'environment' },
             audio: false,
           });
         } catch {

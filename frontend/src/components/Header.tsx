@@ -81,7 +81,6 @@ export const Header: React.FC<HeaderProps> = ({
   const formatServiceName = (name: string) => {
     const names: Record<string, string> = {
       mistral_ocr: 'Mistral OCR',
-      ovh_api: 'OVH API',
       worker: 'Worker',
       redis: 'Redis',
       filesystem: t('header.filesystem'),
@@ -122,7 +121,7 @@ export const Header: React.FC<HeaderProps> = ({
     }
 
     // Full dropdown for admin users
-    const keyServices = ['mistral_ocr', 'ovh_api', 'worker'];
+    const keyServices = ['mistral_ocr', 'worker'];
     const displayServices = keyServices.filter(s => health.services[s]);
 
     return (

@@ -82,11 +82,6 @@ async def health_check(request: Request = None):
         except Exception as e:
             services["worker"] = f"error: {str(e)[:50]}"
 
-        # OVH API prüfen
-        ovh_client = OVHClient()
-        ovh_connected, error_msg = await ovh_client.check_connection()
-        services["ovh_api"] = "healthy" if ovh_connected else f"error: {error_msg[:100]}"
-
         # Mistral OCR API prüfen
         mistral_key = os.getenv("MISTRAL_API_KEY")
         services["mistral_ocr"] = "configured" if mistral_key else "not_configured"
@@ -131,7 +126,7 @@ async def health_check(request: Request = None):
 
         # Gesamtstatus bestimmen - Worker und OCR sind kritisch!
         error_services = [name for name, status in services.items() if "error" in status]
-        critical_services = ["redis", "worker", "ovh_api"]
+        critical_services = ["redis", "worker"]
         critical_errors = [name for name in error_services if name in critical_services]
 
         if critical_errors:

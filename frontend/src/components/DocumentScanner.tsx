@@ -153,14 +153,16 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
         {/* Video + overlay — always mounted to preserve stream, hidden when captured/processing */}
         <video
           ref={videoRef as React.RefObject<HTMLVideoElement>}
-          className={`absolute inset-0 w-full h-full object-contain bg-black ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
+          className={`absolute inset-0 w-full h-full bg-black ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
+          style={{ objectFit: 'cover' }}
           playsInline
           autoPlay
           muted
         />
         <canvas
           ref={overlayCanvasRef as React.RefObject<HTMLCanvasElement>}
-          className={`absolute inset-0 w-full h-full object-contain pointer-events-none ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
+          className={`absolute inset-0 w-full h-full pointer-events-none ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
+          style={{ objectFit: 'cover' }}
         />
 
         {/* Processing phase — show spinner while enhancing image */}
