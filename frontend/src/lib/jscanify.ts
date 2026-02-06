@@ -51,12 +51,13 @@ function getCv(): any {
 }
 
 // Detection constants for document filtering
-const MIN_AREA_RATIO = 0.15;      // Contour must be at least 15% of frame (filters out small internal elements)
+const MIN_AREA_RATIO = 0.25;      // Paper must fill at least 25% of frame (filters tables)
 const MAX_AREA_RATIO = 0.98;      // Not full frame
 const EPSILON_FACTOR = 0.04;      // Polygon approximation tolerance (more lenient)
 const MIN_ASPECT_RATIO = 0.6;     // A4 portrait ~ 0.71, allow some tolerance
 const MAX_ASPECT_RATIO = 1.7;     // A4 landscape ~ 1.41, allow some tolerance
-const EDGE_MARGIN_RATIO = 0.15;   // How close contour should be to frame edges (15% of frame dimension)
+const CORNER_EDGE_MARGIN = 0.12;  // Corner must be within 12% of frame edge to count as "near edge"
+const MIN_CORNERS_NEAR_EDGE = 2;  // At least 2 corners must be near frame edges (paper, not table)
 
 export default class Scanner {
   /**
@@ -241,11 +242,9 @@ export default class Scanner {
     let bestContour: any = null;
     let bestScore = 0;
 
-    // Get frame dimensions for edge proximity scoring
+    // Get frame dimensions for corner proximity scoring
     const imgWidth = frameWidth || Math.sqrt(frameArea * 1.5); // Estimate if not provided
     const imgHeight = frameHeight || Math.sqrt(frameArea / 1.5);
-    const edgeMarginX = imgWidth * EDGE_MARGIN_RATIO;
-    const edgeMarginY = imgHeight * EDGE_MARGIN_RATIO;
 
     for (let i = 0; i < contours.size(); i++) {
       const contour = contours.get(i);
@@ -310,31 +309,58 @@ export default class Scanner {
         continue;
       }
 
+      // KEY FILTER: Check how many corners are near frame edges
+      // This is the critical difference between paper (corners near edges) and tables (floating in middle)
+      const cornerMarginX = imgWidth * CORNER_EDGE_MARGIN;
+      const cornerMarginY = imgHeight * CORNER_EDGE_MARGIN;
+
+      const allCorners = [
+        corners.topLeftCorner,
+        corners.topRightCorner,
+        corners.bottomLeftCorner,
+        corners.bottomRightCorner,
+      ];
+
+      let cornersNearEdge = 0;
+      for (const corner of allCorners) {
+        const nearLeft = corner.x < cornerMarginX;
+        const nearRight = corner.x > imgWidth - cornerMarginX;
+        const nearTop = corner.y < cornerMarginY;
+        const nearBottom = corner.y > imgHeight - cornerMarginY;
+
+        // Corner is "near edge" if it's close to at least one frame edge
+        if (nearLeft || nearRight || nearTop || nearBottom) {
+          cornersNearEdge++;
+        }
+      }
+
+      // REJECT if not enough corners are near frame edges
+      // Paper being scanned will have corners near edges; tables float in the middle
+      if (cornersNearEdge < MIN_CORNERS_NEAR_EDGE) {
+        approx.delete();
+        contour.delete();
+        continue;
+      }
+
       // Score components:
-      // 1. Area score (larger is better, but not the only factor)
+      // 1. Corner proximity score - more corners near edges = more likely to be paper
+      const cornerScore = cornersNearEdge / 4;
+
+      // 2. Area score - larger contours are preferred (paper fills more of frame than tables)
       const areaScore = area / frameArea;
 
-      // 2. Edge proximity score - paper should be near frame edges, not in the middle
-      // Check how close the bounding rect edges are to the frame edges
-      const leftDist = rect.x;
-      const topDist = rect.y;
-      const rightDist = imgWidth - (rect.x + rect.width);
-      const bottomDist = imgHeight - (rect.y + rect.height);
+      // 3. Centrality penalty - penalize contours centered in frame (tables)
+      // Paper corners should be spread toward edges, not clustered in center
+      const centerX = imgWidth / 2;
+      const centerY = imgHeight / 2;
+      const avgCornerDistFromCenter = allCorners.reduce((sum, c) => {
+        return sum + Math.hypot(c.x - centerX, c.y - centerY);
+      }, 0) / 4;
+      const maxPossibleDist = Math.hypot(centerX, centerY);
+      const spreadScore = avgCornerDistFromCenter / maxPossibleDist;
 
-      // Count how many edges are close to frame boundary
-      let edgesNearBoundary = 0;
-      if (leftDist < edgeMarginX) edgesNearBoundary++;
-      if (topDist < edgeMarginY) edgesNearBoundary++;
-      if (rightDist < edgeMarginX) edgesNearBoundary++;
-      if (bottomDist < edgeMarginY) edgesNearBoundary++;
-
-      // Edge score: reward contours with edges near frame boundary
-      // Paper typically has 2-4 edges near the frame boundary
-      const edgeScore = edgesNearBoundary / 4;
-
-      // Combined score: prioritize edge proximity, then area
-      // This ensures we pick the paper outline, not internal tables
-      const score = (edgeScore * 0.6) + (areaScore * 0.4);
+      // Combined score: heavily favor corners near edges and spread out
+      const score = (cornerScore * 0.5) + (areaScore * 0.25) + (spreadScore * 0.25);
 
       if (score > bestScore) {
         if (bestContour) bestContour.delete();
