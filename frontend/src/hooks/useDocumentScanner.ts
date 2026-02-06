@@ -455,40 +455,27 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         // Output at high resolution A4 size (2000x2828 = A4 ratio at 300dpi equivalent)
         const corrected = scanner.extractPaper(fullCanvas, 2000, 2828, videoCorners);
         finalCanvas = corrected || fullCanvas;
-      } else if (displayCanvas) {
-        // NO OpenCV: Extract guide region from DISPLAY CANVAS
-        // The display canvas already has the correctly rendered video (handles rotation/orientation)
-        const containerW = displayCanvas.width;
-        const containerH = displayCanvas.height;
+      } else {
+        // NO OpenCV: Extract guide region from VIDEO at full resolution
+        // Calculate guide frame in video coordinates (not display coordinates)
+        const guide = calculateA4GuideFrame(vw, vh);
 
-        // Get the scaled dimensions used for display
-        const displayScale = Math.min(containerW / vw, containerH / vh);
-        const scaledW = vw * displayScale;
-        const scaledH = vh * displayScale;
-        const offsetX = (containerW - scaledW) / 2;
-        const offsetY = (containerH - scaledH) / 2;
+        // Create high-resolution output canvas (A4 at ~200dpi equivalent)
+        const outputWidth = 1654;  // A4 width at 200dpi
+        const outputHeight = Math.round(outputWidth * A4_RATIO);  // 2339
 
-        // Calculate guide in display canvas coordinates
-        const guide = calculateA4GuideFrame(scaledW, scaledH);
-
-        // Extract from display canvas (correctly rendered, handles iPad rotation issues)
         const guideCanvas = document.createElement('canvas');
-        guideCanvas.width = Math.round(guide.width);
-        guideCanvas.height = Math.round(guide.height);
+        guideCanvas.width = outputWidth;
+        guideCanvas.height = outputHeight;
         const guideCtx = guideCanvas.getContext('2d')!;
+
+        // Extract from video at full resolution and scale to output size
         guideCtx.drawImage(
-          displayCanvas,
-          offsetX + guide.x, offsetY + guide.y, guide.width, guide.height,
-          0, 0, guideCanvas.width, guideCanvas.height
+          video,
+          guide.x, guide.y, guide.width, guide.height,
+          0, 0, outputWidth, outputHeight
         );
         finalCanvas = guideCanvas;
-      } else {
-        // Ultimate fallback: just use full video frame
-        const fullCanvas = document.createElement('canvas');
-        fullCanvas.width = vw;
-        fullCanvas.height = vh;
-        fullCanvas.getContext('2d')!.drawImage(video, 0, 0);
-        finalCanvas = fullCanvas;
       }
 
       // Enhance and analyze
