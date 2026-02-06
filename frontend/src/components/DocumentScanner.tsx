@@ -135,22 +135,18 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
           </div>
         )}
 
-        {/* Scanning phase — video + overlay */}
-        {(phase === 'scanning' || phase === 'initializing') && (
-          <>
-            <video
-              ref={videoRef as React.RefObject<HTMLVideoElement>}
-              className="absolute inset-0 w-full h-full object-cover"
-              playsInline
-              autoPlay
-              muted
-            />
-            <canvas
-              ref={overlayCanvasRef as React.RefObject<HTMLCanvasElement>}
-              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-            />
-          </>
-        )}
+        {/* Video + overlay — always mounted to preserve stream, hidden when captured */}
+        <video
+          ref={videoRef as React.RefObject<HTMLVideoElement>}
+          className={`absolute inset-0 w-full h-full object-cover ${phase === 'captured' ? 'hidden' : ''}`}
+          playsInline
+          autoPlay
+          muted
+        />
+        <canvas
+          ref={overlayCanvasRef as React.RefObject<HTMLCanvasElement>}
+          className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${phase === 'captured' ? 'hidden' : ''}`}
+        />
 
         {/* Captured phase — preview */}
         {phase === 'captured' && capturedImageUrl && (

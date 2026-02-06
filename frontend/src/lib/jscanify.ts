@@ -50,27 +50,25 @@ export default class Scanner {
     const gray = new cv.Mat();
     cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY);
 
-    // Apply Gaussian blur to reduce noise
+    // Apply stronger Gaussian blur to reduce noise and smooth out document content
     const blurred = new cv.Mat();
-    cv.GaussianBlur(gray, blurred, new cv.Size(5, 5), 0);
+    cv.GaussianBlur(gray, blurred, new cv.Size(7, 7), 0);
 
-    // Adaptive threshold for better edge detection in varying light
-    const thresh = new cv.Mat();
-    cv.adaptiveThreshold(blurred, thresh, 255, cv.ADAPTIVE_THRESH_GAUSSIAN_C, cv.THRESH_BINARY, 11, 2);
-
-    // Canny edge detection
+    // Canny edge detection directly on blurred grayscale (not on threshold)
     const edges = new cv.Mat();
-    cv.Canny(thresh, edges, 50, 150);
+    cv.Canny(blurred, edges, 75, 200);
 
-    // Dilate edges to connect broken lines
-    const kernel = cv.Mat.ones(3, 3, cv.CV_8U);
+    // Morphological closing (dilate then erode) to close gaps in paper outline
+    const kernel = cv.Mat.ones(5, 5, cv.CV_8U);
     const dilated = new cv.Mat();
+    const closed = new cv.Mat();
     cv.dilate(edges, dilated, kernel);
+    cv.erode(dilated, closed, kernel);
 
     // Find contours - use RETR_EXTERNAL for outer contours only
     const contours = new cv.MatVector();
     const hierarchy = new cv.Mat();
-    cv.findContours(dilated, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+    cv.findContours(closed, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
     // Score and filter candidates
     let bestContour: any = null;
@@ -114,10 +112,9 @@ export default class Scanner {
         continue;
       }
 
-      // Score: prioritize area, slight preference for A4-like aspect ratio (1.41)
+      // Score: prioritize larger area (paper should be biggest quadrilateral)
       const areaScore = area / frameArea;
-      const aspectScore = 1 - Math.abs(aspectRatio - 1.41) / 1.41;
-      const score = areaScore * 0.7 + aspectScore * 0.3;
+      const score = areaScore;
 
       if (score > bestScore) {
         if (bestContour) bestContour.delete();
@@ -133,10 +130,10 @@ export default class Scanner {
     // Cleanup
     gray.delete();
     blurred.delete();
-    thresh.delete();
     edges.delete();
     kernel.delete();
     dilated.delete();
+    closed.delete();
     contours.delete();
     hierarchy.delete();
 

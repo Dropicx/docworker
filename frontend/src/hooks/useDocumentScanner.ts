@@ -363,9 +363,17 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
     const video = videoRef.current;
     if (video && video.srcObject) {
-      video.play();
+      // Resume video playback and wait for it to be ready
+      video.play().then(() => {
+        // Video is playing, now set phase to trigger detection loop
+        setPhase('scanning');
+      }).catch(() => {
+        // If play fails, still try to set scanning phase
+        setPhase('scanning');
+      });
+    } else {
+      setPhase('scanning');
     }
-    setPhase('scanning');
   }, []);
 
   const cleanup = useCallback(() => {
