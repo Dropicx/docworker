@@ -403,7 +403,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
             </div>
           </div>
 
-          {/* Scan Button (mobile only) */}
+          {/* Scan Button (mobile only) - shown when no files selected */}
           {shouldShowScanner && selectedFiles.length === 0 && (
             <div className="flex justify-center">
               <button
@@ -413,6 +413,20 @@ const FileUpload: React.FC<FileUploadProps> = ({
               >
                 <ScanLine className="w-5 h-5" />
                 <span>{t('upload.scanDocument')}</span>
+              </button>
+            </div>
+          )}
+
+          {/* Scan More Button (mobile only) - shown when files are already selected */}
+          {shouldShowScanner && selectedFiles.length > 0 && (
+            <div className="flex justify-center">
+              <button
+                onClick={() => setScannerOpen(true)}
+                disabled={disabled}
+                className="flex items-center space-x-2 px-4 py-2.5 bg-white border-2 border-brand-500 text-brand-600 rounded-xl font-medium text-sm shadow-sm hover:bg-brand-50 active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ScanLine className="w-4 h-4" />
+                <span>{t('upload.scanMore')}</span>
               </button>
             </div>
           )}

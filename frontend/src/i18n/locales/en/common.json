@@ -41,6 +41,7 @@
     "supportedFormats": "Supported formats",
     "maxSize": "Max. 50 MB",
     "scanDocument": "Scan document",
+    "scanMore": "Scan more pages",
     "selectedFiles": "Selected files ({{count}})",
     "removeAll": "Remove all",
     "removeFile": "Remove file {{fileName}}",
