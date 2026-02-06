@@ -1,6 +1,6 @@
-import React, { useEffect, useCallback, useMemo } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, RotateCcw, Check, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { X, RotateCcw, Check, AlertCircle, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentScanner } from '../hooks/useDocumentScanner';
 import CaptureButton from './scanner/CaptureButton';
@@ -19,23 +19,13 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
     overlayCanvasRef,
     capturedImageUrl,
     autoProgress,
-    opencvReady,
     errorMessage,
-    qualityWarnings,
     startCamera,
     captureManual,
     confirmCapture,
     retake,
     cleanup,
   } = useDocumentScanner();
-
-  // Get the most severe quality warning to display
-  const primaryWarning = useMemo(() => {
-    if (qualityWarnings.length === 0) return null;
-    // Prioritize errors over warnings
-    const error = qualityWarnings.find(w => w.severity === 'error');
-    return error || qualityWarnings[0];
-  }, [qualityWarnings]);
 
   useEffect(() => {
     if (isOpen) {
@@ -70,33 +60,16 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
   if (!isOpen) return null;
 
   const statusBadge = (() => {
-    if (phase === 'scanning' && !opencvReady) {
-      return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/80 text-white backdrop-blur-sm">
-          {t('scanner.simpleMode')}
-        </span>
-      );
-    }
-    // Show quality warning if present (with appropriate color)
-    if (phase === 'scanning' && primaryWarning) {
-      const bgColor = primaryWarning.severity === 'error'
-        ? 'bg-red-500/90'
-        : 'bg-amber-500/90';
-      return (
-        <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium ${bgColor} text-white backdrop-blur-sm`}>
-          <AlertTriangle className="w-3.5 h-3.5" />
-          {t(primaryWarning.message)}
-        </span>
-      );
-    }
-    if (phase === 'scanning' && autoProgress > 0) {
-      return (
-        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/90 text-white backdrop-blur-sm">
-          {t('scanner.documentDetected')}
-        </span>
-      );
-    }
     if (phase === 'scanning') {
+      // Show progress indicator when auto-capture is counting down
+      if (autoProgress > 0) {
+        return (
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-500/90 text-white backdrop-blur-sm">
+            {t('scanner.holdSteady')}
+          </span>
+        );
+      }
+      // Default: prompt user to align document
       return (
         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
           {t('scanner.alignWithFrame')}

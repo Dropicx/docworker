@@ -1,15 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import Scanner, { QualityWarning, QualityResult } from '../lib/jscanify';
-import { useOpenCV } from './useOpenCV';
 
 export type ScannerPhase = 'initializing' | 'scanning' | 'captured' | 'error';
-
-interface CornerPoints {
-  topLeftCorner: { x: number; y: number };
-  topRightCorner: { x: number; y: number };
-  bottomLeftCorner: { x: number; y: number };
-  bottomRightCorner: { x: number; y: number };
-}
 
 interface UseDocumentScannerReturn {
   phase: ScannerPhase;
@@ -17,9 +8,7 @@ interface UseDocumentScannerReturn {
   overlayCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   capturedImageUrl: string | null;
   autoProgress: number;
-  opencvReady: boolean;
   errorMessage: string | null;
-  qualityWarnings: QualityWarning[];
   startCamera: () => Promise<void>;
   captureManual: () => void;
   confirmCapture: () => File | null;
@@ -29,75 +18,25 @@ interface UseDocumentScannerReturn {
 
 const DETECTION_FPS = 30;
 const FRAME_INTERVAL = 1000 / DETECTION_FPS;
-const AUTO_CAPTURE_DELAY_MS = 1000;
-const PROCESSING_WIDTH = 640;
-const STABILITY_THRESHOLD = 20; // px tolerance for corner movement
-const KALMAN_SMOOTHING = 0.3; // Smoothing factor for corner positions (0 = no smoothing, 1 = instant)
+const AUTO_CAPTURE_DELAY_MS = 2000; // 2 seconds to give user time to align
 const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
 const GUIDE_PADDING = 0.08; // 8% padding from edges
 const CORNER_BRACKET_LENGTH = 40; // Length of corner bracket arms in pixels
-
-function cornersStable(prev: CornerPoints | null, curr: CornerPoints | null): boolean {
-  if (!prev || !curr) return false;
-  const keys = ['topLeftCorner', 'topRightCorner', 'bottomLeftCorner', 'bottomRightCorner'] as const;
-  for (const key of keys) {
-    const dx = Math.abs(prev[key].x - curr[key].x);
-    const dy = Math.abs(prev[key].y - curr[key].y);
-    if (dx > STABILITY_THRESHOLD || dy > STABILITY_THRESHOLD) return false;
-  }
-  return true;
-}
-
-function smoothCorners(
-  current: CornerPoints,
-  previous: CornerPoints | null,
-  factor: number
-): CornerPoints {
-  if (!previous) return current;
-
-  const keys = ['topLeftCorner', 'topRightCorner', 'bottomLeftCorner', 'bottomRightCorner'] as const;
-  const smoothed: CornerPoints = {
-    topLeftCorner: { x: 0, y: 0 },
-    topRightCorner: { x: 0, y: 0 },
-    bottomLeftCorner: { x: 0, y: 0 },
-    bottomRightCorner: { x: 0, y: 0 },
-  };
-
-  for (const key of keys) {
-    smoothed[key] = {
-      x: previous[key].x + factor * (current[key].x - previous[key].x),
-      y: previous[key].y + factor * (current[key].y - previous[key].y),
-    };
-  }
-
-  return smoothed;
-}
 
 export function useDocumentScanner(): UseDocumentScannerReturn {
   const [phase, setPhase] = useState<ScannerPhase>('initializing');
   const [capturedImageUrl, setCapturedImageUrl] = useState<string | null>(null);
   const [autoProgress, setAutoProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [qualityWarnings, setQualityWarnings] = useState<QualityWarning[]>([]);
-
-  const { status: opencvStatus, loadOpenCV } = useOpenCV();
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
-  const scannerRef = useRef<Scanner | null>(null);
-  const processingCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const lastFrameTimeRef = useRef(0);
-  const lastCornersRef = useRef<CornerPoints | null>(null);
-  const smoothedCornersRef = useRef<CornerPoints | null>(null);
-  const lastQualityCheckRef = useRef<number>(0);
-  const qualityResultRef = useRef<QualityResult | null>(null);
   const stableStartRef = useRef<number | null>(null);
   const phaseRef = useRef<ScannerPhase>('initializing');
-
-  const opencvReady = opencvStatus === 'ready';
 
   // Calculate A4 guide frame dimensions for given video dimensions
   const calculateA4GuideFrame = useCallback((videoWidth: number, videoHeight: number) => {
@@ -181,48 +120,10 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     phaseRef.current = phase;
   }, [phase]);
 
-  // Start loading OpenCV immediately
-  useEffect(() => {
-    loadOpenCV();
-  }, [loadOpenCV]);
-
   const stopDetectionLoop = useCallback(() => {
     if (rafRef.current) {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = 0;
-    }
-  }, []);
-
-  const drawOverlayQuad = useCallback((ctx: CanvasRenderingContext2D, corners: CornerPoints, scale: number) => {
-    ctx.strokeStyle = '#22c55e';
-    ctx.lineWidth = 3;
-    ctx.lineJoin = 'round';
-
-    const pts = [
-      corners.topLeftCorner,
-      corners.topRightCorner,
-      corners.bottomRightCorner,
-      corners.bottomLeftCorner,
-    ];
-
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x * scale, pts[0].y * scale);
-    for (let i = 1; i < pts.length; i++) {
-      ctx.lineTo(pts[i].x * scale, pts[i].y * scale);
-    }
-    ctx.closePath();
-    ctx.stroke();
-
-    // Semi-transparent fill
-    ctx.fillStyle = 'rgba(34, 197, 94, 0.08)';
-    ctx.fill();
-
-    // Corner dots
-    ctx.fillStyle = '#22c55e';
-    for (const pt of pts) {
-      ctx.beginPath();
-      ctx.arc(pt.x * scale, pt.y * scale, 6, 0, Math.PI * 2);
-      ctx.fill();
     }
   }, []);
 
@@ -244,142 +145,6 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
   }, [drawA4Guide]);
 
-  const startDetectionLoop = useCallback(() => {
-    if (!scannerRef.current) {
-      try {
-        scannerRef.current = new Scanner();
-      } catch {
-        // jscanify init failed — continue without detection
-      }
-    }
-
-    if (!processingCanvasRef.current) {
-      processingCanvasRef.current = document.createElement('canvas');
-    }
-
-    const detect = (timestamp: number) => {
-      if (phaseRef.current !== 'scanning') return;
-
-      if (timestamp - lastFrameTimeRef.current < FRAME_INTERVAL) {
-        rafRef.current = requestAnimationFrame(detect);
-        return;
-      }
-      lastFrameTimeRef.current = timestamp;
-
-      const video = videoRef.current;
-      const scanner = scannerRef.current;
-      const cv = (window as any).cv;
-
-      if (!video || video.readyState < 2 || !scanner || !cv?.Mat) {
-        clearOverlay();
-        rafRef.current = requestAnimationFrame(detect);
-        return;
-      }
-
-      const vw = video.videoWidth;
-      const vh = video.videoHeight;
-      if (!vw || !vh) {
-        rafRef.current = requestAnimationFrame(detect);
-        return;
-      }
-
-      const scale = PROCESSING_WIDTH / vw;
-      const pw = PROCESSING_WIDTH;
-      const ph = Math.round(vh * scale);
-
-      const pCanvas = processingCanvasRef.current!;
-      pCanvas.width = pw;
-      pCanvas.height = ph;
-      const pCtx = pCanvas.getContext('2d')!;
-      pCtx.drawImage(video, 0, 0, pw, ph);
-
-      let corners: CornerPoints | null = null;
-      let mat: any = null;
-      let contour: any = null;
-
-      try {
-        mat = cv.imread(pCanvas);
-        contour = scanner.findPaperContour(mat);
-        if (contour) {
-          const pts = scanner.getCornerPoints(contour);
-          if (pts) corners = pts;
-        }
-
-        // Run quality check periodically (every 200ms) when corners detected
-        if (corners && mat && timestamp - lastQualityCheckRef.current > 200) {
-          lastQualityCheckRef.current = timestamp;
-          const qualityResult = scanner.checkQuality(mat, corners, pw, ph);
-          qualityResultRef.current = qualityResult;
-          setQualityWarnings(qualityResult.warnings);
-        }
-      } catch {
-        // Detection error — skip frame
-      } finally {
-        if (mat) mat.delete();
-        if (contour) contour.delete();
-      }
-
-      // Always prepare canvas and draw A4 guide frame first (persistent)
-      const overlayCanvas = overlayCanvasRef.current;
-      if (overlayCanvas) {
-        overlayCanvas.width = vw;
-        overlayCanvas.height = vh;
-        const overlayCtx = overlayCanvas.getContext('2d');
-        if (overlayCtx) {
-          overlayCtx.clearRect(0, 0, vw, vh);
-          // Draw A4 guide frame (always visible)
-          drawA4Guide(overlayCtx, vw, vh);
-
-          // Draw detected corners on top (when available)
-          if (corners) {
-            // Apply Kalman-like smoothing to reduce jitter in overlay
-            const smoothedCorners = smoothCorners(corners, smoothedCornersRef.current, KALMAN_SMOOTHING);
-            smoothedCornersRef.current = smoothedCorners;
-
-            // Draw overlay with smoothed corners for visual stability
-            drawOverlayQuad(overlayCtx, smoothedCorners, 1 / scale);
-          }
-        }
-      }
-
-      if (corners) {
-        // Check if quality is acceptable for auto-capture
-        const qualityOk = qualityResultRef.current?.isAcceptable ?? true;
-
-        if (cornersStable(lastCornersRef.current, corners) && qualityOk) {
-          if (!stableStartRef.current) {
-            stableStartRef.current = timestamp;
-          }
-          const elapsed = timestamp - stableStartRef.current;
-          const progress = Math.min(elapsed / AUTO_CAPTURE_DELAY_MS, 1);
-          setAutoProgress(progress);
-
-          if (progress >= 1) {
-            // Auto-capture
-            captureFrame(vw, vh);
-            return; // Stop loop
-          }
-        } else {
-          stableStartRef.current = timestamp;
-          setAutoProgress(0);
-        }
-        lastCornersRef.current = corners;
-      } else {
-        // No corners detected - guide is already drawn above
-        lastCornersRef.current = null;
-        smoothedCornersRef.current = null;
-        stableStartRef.current = null;
-        setAutoProgress(0);
-        setQualityWarnings([]);
-        qualityResultRef.current = null;
-      }
-
-      rafRef.current = requestAnimationFrame(detect);
-    };
-
-    rafRef.current = requestAnimationFrame(detect);
-  }, [drawOverlayQuad, drawA4Guide]);
-
   const captureFrame = useCallback((videoWidth?: number, videoHeight?: number) => {
     const video = videoRef.current;
     if (!video) return;
@@ -395,72 +160,30 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
 
     const canvas = captureCanvasRef.current;
-    const scanner = scannerRef.current;
-    const cv = (window as any).cv;
 
-    // Try perspective correction if OpenCV available
-    if (scanner && cv?.Mat) {
-      try {
-        // Use full-res frame for extraction
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = vw;
-        tempCanvas.height = vh;
-        const tCtx = tempCanvas.getContext('2d')!;
-        tCtx.drawImage(video, 0, 0, vw, vh);
+    // Always crop to the A4 guide frame region - this is what the user aligned to
+    const guide = calculateA4GuideFrame(vw, vh);
 
-        const result = scanner.extractPaper(tempCanvas, vw, vh);
-        if (!result) throw new Error('No paper detected');
-        canvas.width = result.width;
-        canvas.height = result.height;
-        const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(result, 0, 0);
-      } catch {
-        // Fallback: crop to A4 guide frame region
-        const guide = calculateA4GuideFrame(vw, vh);
+    // Create temp canvas for full frame
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = vw;
+    tempCanvas.height = vh;
+    const tCtx = tempCanvas.getContext('2d')!;
+    tCtx.drawImage(video, 0, 0, vw, vh);
 
-        // Create temp canvas for full frame
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = vw;
-        tempCanvas.height = vh;
-        const tCtx = tempCanvas.getContext('2d')!;
-        tCtx.drawImage(video, 0, 0, vw, vh);
+    // Set output dimensions to A4 ratio
+    const outputWidth = Math.round(guide.width);
+    const outputHeight = Math.round(guide.height);
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+    const ctx = canvas.getContext('2d')!;
 
-        // Set output dimensions to A4 ratio
-        const outputWidth = Math.round(guide.width);
-        const outputHeight = Math.round(guide.height);
-        canvas.width = outputWidth;
-        canvas.height = outputHeight;
-        const ctx = canvas.getContext('2d')!;
-
-        // Crop to guide frame region
-        ctx.drawImage(
-          tempCanvas,
-          guide.x, guide.y, guide.width, guide.height,
-          0, 0, outputWidth, outputHeight
-        );
-      }
-    } else {
-      // No OpenCV — crop to A4 guide frame region
-      const guide = calculateA4GuideFrame(vw, vh);
-
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = vw;
-      tempCanvas.height = vh;
-      const tCtx = tempCanvas.getContext('2d')!;
-      tCtx.drawImage(video, 0, 0, vw, vh);
-
-      const outputWidth = Math.round(guide.width);
-      const outputHeight = Math.round(guide.height);
-      canvas.width = outputWidth;
-      canvas.height = outputHeight;
-      const ctx = canvas.getContext('2d')!;
-
-      ctx.drawImage(
-        tempCanvas,
-        guide.x, guide.y, guide.width, guide.height,
-        0, 0, outputWidth, outputHeight
-      );
-    }
+    // Crop to guide frame region
+    ctx.drawImage(
+      tempCanvas,
+      guide.x, guide.y, guide.width, guide.height,
+      0, 0, outputWidth, outputHeight
+    );
 
     // Pause video (keep stream alive for retake)
     video.pause();
@@ -471,6 +194,63 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     clearOverlay();
     setPhase('captured');
   }, [stopDetectionLoop, clearOverlay, calculateA4GuideFrame]);
+
+  const startDetectionLoop = useCallback(() => {
+    const detect = (timestamp: number) => {
+      if (phaseRef.current !== 'scanning') return;
+
+      if (timestamp - lastFrameTimeRef.current < FRAME_INTERVAL) {
+        rafRef.current = requestAnimationFrame(detect);
+        return;
+      }
+      lastFrameTimeRef.current = timestamp;
+
+      const video = videoRef.current;
+
+      if (!video || video.readyState < 2) {
+        rafRef.current = requestAnimationFrame(detect);
+        return;
+      }
+
+      const vw = video.videoWidth;
+      const vh = video.videoHeight;
+      if (!vw || !vh) {
+        rafRef.current = requestAnimationFrame(detect);
+        return;
+      }
+
+      // Draw A4 guide frame - this is what the user aligns their document to
+      const overlayCanvas = overlayCanvasRef.current;
+      if (overlayCanvas) {
+        overlayCanvas.width = vw;
+        overlayCanvas.height = vh;
+        const overlayCtx = overlayCanvas.getContext('2d');
+        if (overlayCtx) {
+          overlayCtx.clearRect(0, 0, vw, vh);
+          drawA4Guide(overlayCtx, vw, vh);
+        }
+      }
+
+      // Auto-capture timer - starts when video is ready, captures after delay
+      if (!stableStartRef.current) {
+        stableStartRef.current = timestamp;
+      }
+
+      const elapsed = timestamp - stableStartRef.current;
+      const progress = Math.min(elapsed / AUTO_CAPTURE_DELAY_MS, 1);
+      setAutoProgress(progress);
+
+      if (progress >= 1) {
+        // Auto-capture using the A4 guide frame
+        captureFrame(vw, vh);
+        return; // Stop loop
+      }
+
+      rafRef.current = requestAnimationFrame(detect);
+    };
+
+    rafRef.current = requestAnimationFrame(detect);
+  }, [drawA4Guide, captureFrame]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');
@@ -521,11 +301,11 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
   // Start detection loop when phase transitions to scanning
   useEffect(() => {
-    if (phase === 'scanning' && opencvReady) {
+    if (phase === 'scanning') {
       startDetectionLoop();
     }
     return () => stopDetectionLoop();
-  }, [phase, opencvReady, startDetectionLoop, stopDetectionLoop]);
+  }, [phase, startDetectionLoop, stopDetectionLoop]);
 
   const captureManual = useCallback(() => {
     captureFrame();
@@ -552,12 +332,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const retake = useCallback(() => {
     setCapturedImageUrl(null);
     setAutoProgress(0);
-    setQualityWarnings([]);
-    lastCornersRef.current = null;
-    smoothedCornersRef.current = null;
     stableStartRef.current = null;
-    qualityResultRef.current = null;
-    lastQualityCheckRef.current = 0;
 
     const video = videoRef.current;
     if (video && video.srcObject) {
@@ -589,12 +364,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setCapturedImageUrl(null);
     setAutoProgress(0);
     setErrorMessage(null);
-    setQualityWarnings([]);
-    lastCornersRef.current = null;
-    smoothedCornersRef.current = null;
     stableStartRef.current = null;
-    qualityResultRef.current = null;
-    lastQualityCheckRef.current = 0;
     setPhase('initializing');
   }, [stopDetectionLoop]);
 
@@ -604,9 +374,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     overlayCanvasRef,
     capturedImageUrl,
     autoProgress,
-    opencvReady,
     errorMessage,
-    qualityWarnings,
     startCamera,
     captureManual,
     confirmCapture,
