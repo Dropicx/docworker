@@ -51,12 +51,12 @@ function getCv(): any {
 }
 
 // Detection constants for document filtering
-const MIN_AREA_RATIO = 0.25;      // Paper must fill at least 25% of frame (filters tables)
+const MIN_AREA_RATIO = 0.12;      // Paper must fill at least 12% of frame
 const MAX_AREA_RATIO = 0.98;      // Not full frame
 const EPSILON_FACTOR = 0.04;      // Polygon approximation tolerance (more lenient)
-const MIN_ASPECT_RATIO = 0.6;     // A4 portrait ~ 0.71, allow some tolerance
-const MAX_ASPECT_RATIO = 1.7;     // A4 landscape ~ 1.41, allow some tolerance
-const CORNER_EDGE_MARGIN = 0.12;  // Corner must be within 12% of frame edge to count as "near edge"
+const MIN_ASPECT_RATIO = 0.5;     // A4 portrait ~ 0.71, allow more tolerance
+const MAX_ASPECT_RATIO = 2.0;     // A4 landscape ~ 1.41, allow more tolerance
+const CORNER_EDGE_MARGIN = 0.25;  // Corner within 25% of frame edge counts as "near edge"
 const MIN_CORNERS_NEAR_EDGE = 2;  // At least 2 corners must be near frame edges (paper, not table)
 
 export default class Scanner {
@@ -98,7 +98,7 @@ export default class Scanner {
 
     // Canny edge detection with lower thresholds for white paper detection
     const edges = new cv.Mat();
-    cv.Canny(blurred, edges, 75, 200);
+    cv.Canny(blurred, edges, 50, 150);
 
     // Morphological closing with larger kernel to connect broken edges
     const kernel = cv.Mat.ones(7, 7, cv.CV_8U);
