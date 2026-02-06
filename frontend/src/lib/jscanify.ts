@@ -27,11 +27,12 @@ function getCv(): any {
 }
 
 // Detection constants for document filtering
-const MIN_AREA_RATIO = 0.05;      // Contour must be at least 5% of frame
+const MIN_AREA_RATIO = 0.15;      // Contour must be at least 15% of frame (filters out small internal elements)
 const MAX_AREA_RATIO = 0.98;      // Not full frame
 const EPSILON_FACTOR = 0.04;      // Polygon approximation tolerance (more lenient)
 const MIN_ASPECT_RATIO = 0.4;     // Allow portrait documents (A4 portrait ~ 0.71)
 const MAX_ASPECT_RATIO = 2.5;     // Allow various document sizes
+const EDGE_MARGIN_RATIO = 0.15;   // How close contour should be to frame edges (15% of frame dimension)
 
 export default class Scanner {
   /**
@@ -86,7 +87,7 @@ export default class Scanner {
     const hierarchy = new cv.Mat();
     cv.findContours(closed, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-    const bestContour = this.findBestQuadrilateral(contours, cv, minArea, maxArea, frameArea);
+    const bestContour = this.findBestQuadrilateral(contours, cv, minArea, maxArea, frameArea, img.cols, img.rows);
 
     // Cleanup
     gray.delete();
@@ -131,7 +132,7 @@ export default class Scanner {
     const hierarchy = new cv.Mat();
     cv.findContours(morphed, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
 
-    const bestContour = this.findBestQuadrilateral(contours, cv, minArea, maxArea, frameArea);
+    const bestContour = this.findBestQuadrilateral(contours, cv, minArea, maxArea, frameArea, img.cols, img.rows);
 
     // Cleanup
     gray.delete();
@@ -153,10 +154,18 @@ export default class Scanner {
     cv: any,
     minArea: number,
     maxArea: number,
-    frameArea: number
+    frameArea: number,
+    frameWidth?: number,
+    frameHeight?: number
   ): any | null {
     let bestContour: any = null;
     let bestScore = 0;
+
+    // Get frame dimensions for edge proximity scoring
+    const imgWidth = frameWidth || Math.sqrt(frameArea * 1.5); // Estimate if not provided
+    const imgHeight = frameHeight || Math.sqrt(frameArea / 1.5);
+    const edgeMarginX = imgWidth * EDGE_MARGIN_RATIO;
+    const edgeMarginY = imgHeight * EDGE_MARGIN_RATIO;
 
     for (let i = 0; i < contours.size(); i++) {
       const contour = contours.get(i);
@@ -199,9 +208,31 @@ export default class Scanner {
         continue;
       }
 
-      // Score: prioritize larger area (paper should be biggest quadrilateral)
+      // Score components:
+      // 1. Area score (larger is better, but not the only factor)
       const areaScore = area / frameArea;
-      const score = areaScore;
+
+      // 2. Edge proximity score - paper should be near frame edges, not in the middle
+      // Check how close the bounding rect edges are to the frame edges
+      const leftDist = rect.x;
+      const topDist = rect.y;
+      const rightDist = imgWidth - (rect.x + rect.width);
+      const bottomDist = imgHeight - (rect.y + rect.height);
+
+      // Count how many edges are close to frame boundary
+      let edgesNearBoundary = 0;
+      if (leftDist < edgeMarginX) edgesNearBoundary++;
+      if (topDist < edgeMarginY) edgesNearBoundary++;
+      if (rightDist < edgeMarginX) edgesNearBoundary++;
+      if (bottomDist < edgeMarginY) edgesNearBoundary++;
+
+      // Edge score: reward contours with edges near frame boundary
+      // Paper typically has 2-4 edges near the frame boundary
+      const edgeScore = edgesNearBoundary / 4;
+
+      // Combined score: prioritize edge proximity, then area
+      // This ensures we pick the paper outline, not internal tables
+      const score = (edgeScore * 0.6) + (areaScore * 0.4);
 
       if (score > bestScore) {
         if (bestContour) bestContour.delete();
@@ -219,12 +250,13 @@ export default class Scanner {
 
   /**
    * Extracts and perspective-corrects the detected paper region.
+   * Calculates proper output dimensions from detected corners to avoid distortion.
    * @returns HTMLCanvasElement with the corrected image, or null if no paper detected
    */
   extractPaper(
     image: HTMLCanvasElement,
-    resultWidth: number,
-    resultHeight: number,
+    maxWidth: number,
+    maxHeight: number,
     cornerPoints?: CornerPoints
   ): HTMLCanvasElement | null {
     const cv = getCv();
@@ -246,8 +278,44 @@ export default class Scanner {
 
     const { topLeftCorner, topRightCorner, bottomLeftCorner, bottomRightCorner } = corners;
 
+    // Calculate the actual dimensions from the detected corners
+    // Top edge width
+    const topWidth = distance(topLeftCorner, topRightCorner);
+    // Bottom edge width
+    const bottomWidth = distance(bottomLeftCorner, bottomRightCorner);
+    // Left edge height
+    const leftHeight = distance(topLeftCorner, bottomLeftCorner);
+    // Right edge height
+    const rightHeight = distance(topRightCorner, bottomRightCorner);
+
+    // Use the average of opposite edges for more accurate dimensions
+    const detectedWidth = (topWidth + bottomWidth) / 2;
+    const detectedHeight = (leftHeight + rightHeight) / 2;
+
+    // Calculate aspect ratio from detected shape
+    const detectedAspectRatio = detectedWidth / detectedHeight;
+
+    // Determine output dimensions that preserve the detected aspect ratio
+    // while fitting within maxWidth x maxHeight
+    let outputWidth: number;
+    let outputHeight: number;
+
+    if (detectedAspectRatio > maxWidth / maxHeight) {
+      // Width-constrained
+      outputWidth = maxWidth;
+      outputHeight = Math.round(maxWidth / detectedAspectRatio);
+    } else {
+      // Height-constrained
+      outputHeight = maxHeight;
+      outputWidth = Math.round(maxHeight * detectedAspectRatio);
+    }
+
+    // Ensure minimum dimensions
+    outputWidth = Math.max(outputWidth, 100);
+    outputHeight = Math.max(outputHeight, 100);
+
     const warpedDst = new cv.Mat();
-    const dsize = new cv.Size(resultWidth, resultHeight);
+    const dsize = new cv.Size(outputWidth, outputHeight);
 
     const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
       topLeftCorner.x, topLeftCorner.y,
@@ -258,9 +326,9 @@ export default class Scanner {
 
     const dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
       0, 0,
-      resultWidth, 0,
-      0, resultHeight,
-      resultWidth, resultHeight,
+      outputWidth, 0,
+      0, outputHeight,
+      outputWidth, outputHeight,
     ]);
 
     const M = cv.getPerspectiveTransform(srcTri, dstTri);
@@ -272,6 +340,7 @@ export default class Scanner {
     srcTri.delete();
     dstTri.delete();
     M.delete();
+    if (maxContour) maxContour.delete();
     return canvas;
   }
 
