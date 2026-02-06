@@ -198,6 +198,54 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     return { x, y, width: guideW, height: guideH };
   }, []);
 
+  // Check if paper is present inside the guide frame by comparing
+  // average brightness inside vs outside the frame (fallback when no OpenCV)
+  const checkPaperInGuide = useCallback((
+    ctx: CanvasRenderingContext2D,
+    guideFrame: { x: number; y: number; width: number; height: number },
+    canvasWidth: number,
+    canvasHeight: number
+  ): boolean => {
+    const { x, y, width, height } = guideFrame;
+    const sampleSize = 20;
+    const brightnessThreshold = 150;
+    const contrastThreshold = 20;
+
+    // Sample brightness at center of guide frame
+    const centerX = Math.round(x + width / 2 - sampleSize / 2);
+    const centerY = Math.round(y + height / 2 - sampleSize / 2);
+    const centerData = ctx.getImageData(centerX, centerY, sampleSize, sampleSize).data;
+    let centerBrightness = 0;
+    for (let i = 0; i < centerData.length; i += 4) {
+      centerBrightness += (centerData[i] + centerData[i + 1] + centerData[i + 2]) / 3;
+    }
+    centerBrightness /= (sampleSize * sampleSize);
+
+    // Sample brightness outside the guide frame (four corners of canvas)
+    const outsideOffset = 10;
+    const sampleOutside = (sx: number, sy: number): number => {
+      const clampedX = Math.max(0, Math.min(sx, canvasWidth - sampleSize));
+      const clampedY = Math.max(0, Math.min(sy, canvasHeight - sampleSize));
+      const data = ctx.getImageData(clampedX, clampedY, sampleSize, sampleSize).data;
+      let brightness = 0;
+      for (let i = 0; i < data.length; i += 4) {
+        brightness += (data[i] + data[i + 1] + data[i + 2]) / 3;
+      }
+      return brightness / (sampleSize * sampleSize);
+    };
+
+    const topLeftOut = sampleOutside(outsideOffset, outsideOffset);
+    const topRightOut = sampleOutside(canvasWidth - sampleSize - outsideOffset, outsideOffset);
+    const bottomLeftOut = sampleOutside(outsideOffset, canvasHeight - sampleSize - outsideOffset);
+    const bottomRightOut = sampleOutside(canvasWidth - sampleSize - outsideOffset, canvasHeight - sampleSize - outsideOffset);
+    const avgOutside = (topLeftOut + topRightOut + bottomLeftOut + bottomRightOut) / 4;
+
+    const isBright = centerBrightness > brightnessThreshold;
+    const hasContrast = centerBrightness - avgOutside > contrastThreshold;
+
+    return isBright && hasContrast;
+  }, []);
+
   // Draw static A4 guide frame with corner brackets (fallback when no detection)
   const drawGuideFrame = useCallback((
     ctx: CanvasRenderingContext2D,
@@ -315,6 +363,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
   const captureFrame = useCallback(() => {
     const video = videoRef.current;
+    const displayCanvas = displayCanvasRef.current;
     if (!video || !video.videoWidth || !video.videoHeight) return;
 
     const vw = video.videoWidth;
@@ -323,24 +372,24 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     // Get the detected corners at time of capture
     const displayCorners = detectedCornersRef.current;
     const scale = displayScaleRef.current;
+    const cv = (window as any).cv;
 
     stopDetectionLoop();
     setPhase('processing');
     video.pause();
 
-    // Step 1: Capture FULL video frame at native resolution
-    const fullCanvas = document.createElement('canvas');
-    fullCanvas.width = vw;
-    fullCanvas.height = vh;
-    const ctx = fullCanvas.getContext('2d')!;
-    ctx.drawImage(video, 0, 0);
-
     setTimeout(() => {
       let finalCanvas: HTMLCanvasElement;
       const scanner = getScanner();
-      const cv = (window as any).cv;
 
       if (displayCorners && cv?.Mat) {
+        // OpenCV path: capture full video frame, apply perspective transform
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = vw;
+        fullCanvas.height = vh;
+        const ctx = fullCanvas.getContext('2d')!;
+        ctx.drawImage(video, 0, 0);
+
         // Scale corners from display coordinates back to video coordinates
         const videoCorners: CornerPoints = {
           topLeftCorner: {
@@ -365,23 +414,40 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         // Output at high resolution A4 size (2000x2828 = A4 ratio at 300dpi equivalent)
         const corrected = scanner.extractPaper(fullCanvas, 2000, 2828, videoCorners);
         finalCanvas = corrected || fullCanvas;
-      } else if (cv?.Mat) {
-        // Fallback: try to detect from full frame
-        const corrected = scanner.extractPaper(fullCanvas, 2000, 2828);
-        finalCanvas = corrected || fullCanvas;
-      } else {
-        // No OpenCV: extract the guide region as fallback
-        const videoGuide = calculateA4GuideFrame(vw, vh);
+      } else if (displayCanvas) {
+        // NO OpenCV: Extract guide region from DISPLAY CANVAS
+        // The display canvas already has the correctly rendered video (handles rotation/orientation)
+        const containerW = displayCanvas.width;
+        const containerH = displayCanvas.height;
+
+        // Get the scaled dimensions used for display
+        const displayScale = Math.min(containerW / vw, containerH / vh);
+        const scaledW = vw * displayScale;
+        const scaledH = vh * displayScale;
+        const offsetX = (containerW - scaledW) / 2;
+        const offsetY = (containerH - scaledH) / 2;
+
+        // Calculate guide in display canvas coordinates
+        const guide = calculateA4GuideFrame(scaledW, scaledH);
+
+        // Extract from display canvas (correctly rendered, handles iPad rotation issues)
         const guideCanvas = document.createElement('canvas');
-        guideCanvas.width = Math.round(videoGuide.width);
-        guideCanvas.height = Math.round(videoGuide.height);
+        guideCanvas.width = Math.round(guide.width);
+        guideCanvas.height = Math.round(guide.height);
         const guideCtx = guideCanvas.getContext('2d')!;
         guideCtx.drawImage(
-          fullCanvas,
-          videoGuide.x, videoGuide.y, videoGuide.width, videoGuide.height,
+          displayCanvas,
+          offsetX + guide.x, offsetY + guide.y, guide.width, guide.height,
           0, 0, guideCanvas.width, guideCanvas.height
         );
         finalCanvas = guideCanvas;
+      } else {
+        // Ultimate fallback: just use full video frame
+        const fullCanvas = document.createElement('canvas');
+        fullCanvas.width = vw;
+        fullCanvas.height = vh;
+        fullCanvas.getContext('2d')!.drawImage(video, 0, 0);
+        finalCanvas = fullCanvas;
       }
 
       // Enhance and analyze
@@ -490,39 +556,63 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         }
       }
 
-      // Track corner stability
+      // FALLBACK: If no OpenCV or no corners detected, use brightness check
+      let isAlignedByBrightness = false;
+      if (!corners) {
+        const guide = calculateA4GuideFrame(scaledW, scaledH);
+        isAlignedByBrightness = checkPaperInGuide(
+          ctx,
+          {
+            x: offsetX + guide.x,
+            y: offsetY + guide.y,
+            width: guide.width,
+            height: guide.height
+          },
+          containerW,
+          containerH
+        );
+      }
+
+      // Track corner stability (only for OpenCV mode)
       if (corners && lastCornersRef.current) {
         const isStable = cornersAreSimilar(corners, lastCornersRef.current, CORNER_STABILITY_TOLERANCE);
         stableFramesRef.current = isStable ? stableFramesRef.current + 1 : 0;
-      } else if (!corners) {
+      } else if (corners) {
+        stableFramesRef.current = 1; // First detection
+      } else {
         stableFramesRef.current = 0;
       }
       lastCornersRef.current = corners;
 
-      // Update state refs
+      // Update state - aligned if OpenCV found corners OR brightness check passed
+      const isAligned = corners !== null || isAlignedByBrightness;
       detectedCornersRef.current = corners;
       setDetectedCorners(corners);
-      setDocumentAligned(corners !== null && stableFramesRef.current >= STABLE_FRAMES_REQUIRED);
+      setDocumentAligned(isAligned);
 
       // Draw overlay
       if (corners) {
         // Draw detected document outline (green)
         drawDetectedQuad(ctx, corners, offsetX, offsetY, '#22c55e');
       } else {
-        // Show static guide as hint when no document detected (white/dim)
+        // Show static guide - green if brightness aligned, white if not
         const guide = calculateA4GuideFrame(scaledW, scaledH);
+        const guideColor = isAlignedByBrightness ? '#22c55e' : 'rgba(255, 255, 255, 0.5)';
         drawGuideFrame(
           ctx,
           offsetX + guide.x,
           offsetY + guide.y,
           guide.width,
           guide.height,
-          'rgba(255, 255, 255, 0.5)'
+          guideColor
         );
       }
 
-      // Auto-capture timer (only when stable)
-      const shouldCountdown = corners && stableFramesRef.current >= STABLE_FRAMES_REQUIRED;
+      // Auto-capture timer
+      // For OpenCV: require stability. For brightness: no stability needed (already validated)
+      const shouldCountdown = corners
+        ? stableFramesRef.current >= STABLE_FRAMES_REQUIRED
+        : isAlignedByBrightness;
 
       if (shouldCountdown) {
         if (!stableStartRef.current) {
@@ -546,7 +636,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     };
 
     rafRef.current = requestAnimationFrame(displayLoop);
-  }, [captureFrame, calculateA4GuideFrame, drawGuideFrame, drawDetectedQuad, cornersAreSimilar, getScanner]);
+  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide, drawGuideFrame, drawDetectedQuad, cornersAreSimilar, getScanner]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');
