@@ -452,17 +452,17 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         };
 
         // Apply perspective transform using detected corners
-        // Output at high resolution A4 size (2000x2828 = A4 ratio at 300dpi equivalent)
-        const corrected = scanner.extractPaper(fullCanvas, 2000, 2828, videoCorners);
+        // Output at high resolution A4 size (2480x3508 = A4 at 300dpi)
+        const corrected = scanner.extractPaper(fullCanvas, 2480, 3508, videoCorners);
         finalCanvas = corrected || fullCanvas;
       } else {
         // NO OpenCV: Extract guide region from VIDEO at full resolution
         // Calculate guide frame in video coordinates (not display coordinates)
         const guide = calculateA4GuideFrame(vw, vh);
 
-        // Create high-resolution output canvas (A4 at ~200dpi equivalent)
-        const outputWidth = 1654;  // A4 width at 200dpi
-        const outputHeight = Math.round(outputWidth * A4_RATIO);  // 2339
+        // Create high-resolution output canvas (A4 at 300dpi)
+        const outputWidth = 2480;
+        const outputHeight = 3508;
 
         const guideCanvas = document.createElement('canvas');
         guideCanvas.width = outputWidth;
@@ -700,8 +700,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         stream = await navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'environment' },
-            width: { ideal: 1920 },
-            height: { ideal: 1920 },
+            width: { ideal: 3840 },
+            height: { ideal: 2160 },
           },
           audio: false,
         });
