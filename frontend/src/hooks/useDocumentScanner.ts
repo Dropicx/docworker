@@ -33,6 +33,9 @@ const AUTO_CAPTURE_DELAY_MS = 1000;
 const PROCESSING_WIDTH = 640;
 const STABILITY_THRESHOLD = 20; // px tolerance for corner movement
 const KALMAN_SMOOTHING = 0.3; // Smoothing factor for corner positions (0 = no smoothing, 1 = instant)
+const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
+const GUIDE_PADDING = 0.08; // 8% padding from edges
+const CORNER_BRACKET_LENGTH = 30; // Length of corner bracket arms in pixels
 
 function cornersStable(prev: CornerPoints | null, curr: CornerPoints | null): boolean {
   if (!prev || !curr) return false;
@@ -96,6 +99,83 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
   const opencvReady = opencvStatus === 'ready';
 
+  // Calculate A4 guide frame dimensions for given video dimensions
+  const calculateA4GuideFrame = useCallback((videoWidth: number, videoHeight: number) => {
+    const maxW = videoWidth * (1 - GUIDE_PADDING * 2);
+    const maxH = videoHeight * (1 - GUIDE_PADDING * 2);
+
+    let guideW: number, guideH: number;
+    // A4 is portrait (taller than wide), so height = width * A4_RATIO
+    if (maxH / maxW > A4_RATIO) {
+      // Width-constrained
+      guideW = maxW;
+      guideH = maxW * A4_RATIO;
+    } else {
+      // Height-constrained
+      guideH = maxH;
+      guideW = maxH / A4_RATIO;
+    }
+
+    const x = (videoWidth - guideW) / 2;
+    const y = (videoHeight - guideH) / 2;
+
+    return { x, y, width: guideW, height: guideH };
+  }, []);
+
+  // Draw A4 guide frame with corner brackets
+  const drawA4Guide = useCallback((ctx: CanvasRenderingContext2D, videoWidth: number, videoHeight: number) => {
+    const guide = calculateA4GuideFrame(videoWidth, videoHeight);
+    const { x, y, width, height } = guide;
+    const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.1, height * 0.1);
+
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+
+    // Top-left corner bracket
+    ctx.beginPath();
+    ctx.moveTo(x, y + bracketLen);
+    ctx.lineTo(x, y);
+    ctx.lineTo(x + bracketLen, y);
+    ctx.stroke();
+
+    // Top-right corner bracket
+    ctx.beginPath();
+    ctx.moveTo(x + width - bracketLen, y);
+    ctx.lineTo(x + width, y);
+    ctx.lineTo(x + width, y + bracketLen);
+    ctx.stroke();
+
+    // Bottom-right corner bracket
+    ctx.beginPath();
+    ctx.moveTo(x + width, y + height - bracketLen);
+    ctx.lineTo(x + width, y + height);
+    ctx.lineTo(x + width - bracketLen, y + height);
+    ctx.stroke();
+
+    // Bottom-left corner bracket
+    ctx.beginPath();
+    ctx.moveTo(x + bracketLen, y + height);
+    ctx.lineTo(x, y + height);
+    ctx.lineTo(x, y + height - bracketLen);
+    ctx.stroke();
+
+    // Draw small corner markers (circles)
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+    const markerRadius = 4;
+    const corners = [
+      { cx: x, cy: y },
+      { cx: x + width, cy: y },
+      { cx: x + width, cy: y + height },
+      { cx: x, cy: y + height },
+    ];
+    for (const corner of corners) {
+      ctx.beginPath();
+      ctx.arc(corner.cx, corner.cy, markerRadius, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }, [calculateA4GuideFrame]);
+
   // Keep phaseRef in sync with phase state
   useEffect(() => {
     phaseRef.current = phase;
@@ -113,16 +193,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
   }, []);
 
-  const drawOverlayQuad = useCallback((corners: CornerPoints, videoWidth: number, videoHeight: number, scale: number) => {
-    const canvas = overlayCanvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    canvas.width = videoWidth;
-    canvas.height = videoHeight;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+  const drawOverlayQuad = useCallback((ctx: CanvasRenderingContext2D, corners: CornerPoints, scale: number) => {
     ctx.strokeStyle = '#22c55e';
     ctx.lineWidth = 3;
     ctx.lineJoin = 'round';
@@ -155,12 +226,23 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
   }, []);
 
-  const clearOverlay = useCallback(() => {
+  const clearOverlay = useCallback((drawGuide: boolean = false, videoWidth?: number, videoHeight?: number) => {
     const canvas = overlayCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height);
-  }, []);
+    if (!ctx) return;
+
+    if (videoWidth && videoHeight) {
+      canvas.width = videoWidth;
+      canvas.height = videoHeight;
+    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw A4 guide frame if requested
+    if (drawGuide && videoWidth && videoHeight) {
+      drawA4Guide(ctx, videoWidth, videoHeight);
+    }
+  }, [drawA4Guide]);
 
   const startDetectionLoop = useCallback(() => {
     if (!scannerRef.current) {
@@ -237,14 +319,30 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         if (contour) contour.delete();
       }
 
+      // Always prepare canvas and draw A4 guide frame first (persistent)
+      const overlayCanvas = overlayCanvasRef.current;
+      if (overlayCanvas) {
+        overlayCanvas.width = vw;
+        overlayCanvas.height = vh;
+        const overlayCtx = overlayCanvas.getContext('2d');
+        if (overlayCtx) {
+          overlayCtx.clearRect(0, 0, vw, vh);
+          // Draw A4 guide frame (always visible)
+          drawA4Guide(overlayCtx, vw, vh);
+
+          // Draw detected corners on top (when available)
+          if (corners) {
+            // Apply Kalman-like smoothing to reduce jitter in overlay
+            const smoothedCorners = smoothCorners(corners, smoothedCornersRef.current, KALMAN_SMOOTHING);
+            smoothedCornersRef.current = smoothedCorners;
+
+            // Draw overlay with smoothed corners for visual stability
+            drawOverlayQuad(overlayCtx, smoothedCorners, 1 / scale);
+          }
+        }
+      }
+
       if (corners) {
-        // Apply Kalman-like smoothing to reduce jitter in overlay
-        const smoothedCorners = smoothCorners(corners, smoothedCornersRef.current, KALMAN_SMOOTHING);
-        smoothedCornersRef.current = smoothedCorners;
-
-        // Draw overlay with smoothed corners for visual stability
-        drawOverlayQuad(smoothedCorners, vw, vh, 1 / scale);
-
         // Check if quality is acceptable for auto-capture
         const qualityOk = qualityResultRef.current?.isAcceptable ?? true;
 
@@ -267,7 +365,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         }
         lastCornersRef.current = corners;
       } else {
-        clearOverlay();
+        // No corners detected - guide is already drawn above
         lastCornersRef.current = null;
         smoothedCornersRef.current = null;
         stableStartRef.current = null;
@@ -280,7 +378,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     };
 
     rafRef.current = requestAnimationFrame(detect);
-  }, [drawOverlayQuad, clearOverlay]);
+  }, [drawOverlayQuad, drawA4Guide]);
 
   const captureFrame = useCallback((videoWidth?: number, videoHeight?: number) => {
     const video = videoRef.current;
@@ -317,18 +415,51 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         const ctx = canvas.getContext('2d')!;
         ctx.drawImage(result, 0, 0);
       } catch {
-        // Fallback: raw frame (no paper detected or extraction failed)
-        canvas.width = vw;
-        canvas.height = vh;
+        // Fallback: crop to A4 guide frame region
+        const guide = calculateA4GuideFrame(vw, vh);
+
+        // Create temp canvas for full frame
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = vw;
+        tempCanvas.height = vh;
+        const tCtx = tempCanvas.getContext('2d')!;
+        tCtx.drawImage(video, 0, 0, vw, vh);
+
+        // Set output dimensions to A4 ratio
+        const outputWidth = Math.round(guide.width);
+        const outputHeight = Math.round(guide.height);
+        canvas.width = outputWidth;
+        canvas.height = outputHeight;
         const ctx = canvas.getContext('2d')!;
-        ctx.drawImage(video, 0, 0, vw, vh);
+
+        // Crop to guide frame region
+        ctx.drawImage(
+          tempCanvas,
+          guide.x, guide.y, guide.width, guide.height,
+          0, 0, outputWidth, outputHeight
+        );
       }
     } else {
-      // No OpenCV — raw frame
-      canvas.width = vw;
-      canvas.height = vh;
+      // No OpenCV — crop to A4 guide frame region
+      const guide = calculateA4GuideFrame(vw, vh);
+
+      const tempCanvas = document.createElement('canvas');
+      tempCanvas.width = vw;
+      tempCanvas.height = vh;
+      const tCtx = tempCanvas.getContext('2d')!;
+      tCtx.drawImage(video, 0, 0, vw, vh);
+
+      const outputWidth = Math.round(guide.width);
+      const outputHeight = Math.round(guide.height);
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
       const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(video, 0, 0, vw, vh);
+
+      ctx.drawImage(
+        tempCanvas,
+        guide.x, guide.y, guide.width, guide.height,
+        0, 0, outputWidth, outputHeight
+      );
     }
 
     // Pause video (keep stream alive for retake)
@@ -339,7 +470,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setAutoProgress(0);
     clearOverlay();
     setPhase('captured');
-  }, [stopDetectionLoop, clearOverlay]);
+  }, [stopDetectionLoop, clearOverlay, calculateA4GuideFrame]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');

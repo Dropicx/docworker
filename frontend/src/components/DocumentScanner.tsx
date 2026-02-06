@@ -99,7 +99,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
     if (phase === 'scanning') {
       return (
         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-white/20 text-white backdrop-blur-sm">
-          {t('scanner.searching')}
+          {t('scanner.alignWithFrame')}
         </span>
       );
     }

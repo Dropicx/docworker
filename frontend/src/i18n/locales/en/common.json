@@ -182,6 +182,7 @@
     "simpleMode": "Simple mode",
     "documentDetected": "Document detected!",
     "searching": "Searching for document...",
+    "alignWithFrame": "Align document with frame",
     "close": "Close",
     "starting": "Starting camera...",
     "error": "An error occurred.",
