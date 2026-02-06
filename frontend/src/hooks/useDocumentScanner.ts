@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
+import Scanner from '../lib/jscanify';
 
 export type ScannerPhase = 'initializing' | 'scanning' | 'captured' | 'processing' | 'error';
 
@@ -10,10 +11,18 @@ export interface ImageQuality {
   isAcceptable: boolean;
 }
 
+interface DisplayMapping {
+  offsetX: number;
+  offsetY: number;
+  scale: number;
+  scaledW: number;
+  scaledH: number;
+}
+
 interface UseDocumentScannerReturn {
   phase: ScannerPhase;
   videoRef: React.RefObject<HTMLVideoElement | null>;
-  overlayCanvasRef: React.RefObject<HTMLCanvasElement | null>;
+  displayCanvasRef: React.RefObject<HTMLCanvasElement | null>;
   capturedImageUrl: string | null;
   autoProgress: number;
   errorMessage: string | null;
@@ -29,7 +38,6 @@ interface UseDocumentScannerReturn {
 const DETECTION_FPS = 30;
 const FRAME_INTERVAL = 1000 / DETECTION_FPS;
 const AUTO_CAPTURE_DELAY_MS = 3000; // 3 seconds after alignment detected
-const PROCESSING_WIDTH = 640;
 const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
 const GUIDE_PADDING = 0.06; // 6% padding from edges
 const CORNER_BRACKET_LENGTH = 100; // Length of corner bracket arms in pixels
@@ -43,42 +51,22 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const [imageQuality, setImageQuality] = useState<ImageQuality | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
-  const processingCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const lastFrameTimeRef = useRef(0);
   const stableStartRef = useRef<number | null>(null);
   const phaseRef = useRef<ScannerPhase>('initializing');
+  const displayMappingRef = useRef<DisplayMapping>({ offsetX: 0, offsetY: 0, scale: 1, scaledW: 0, scaledH: 0 });
+  const scannerRef = useRef<Scanner | null>(null);
 
-  // Calculate the visible crop area when using object-cover
-  // Returns the portion of the video that's actually visible on screen
-  const calculateVisibleArea = useCallback((
-    videoWidth: number,
-    videoHeight: number,
-    containerWidth: number,
-    containerHeight: number
-  ): { x: number; y: number; width: number; height: number } => {
-    const videoRatio = videoWidth / videoHeight;
-    const containerRatio = containerWidth / containerHeight;
-
-    let visibleWidth = videoWidth;
-    let visibleHeight = videoHeight;
-    let offsetX = 0;
-    let offsetY = 0;
-
-    if (videoRatio > containerRatio) {
-      // Video is wider than container - crop left/right
-      visibleWidth = videoHeight * containerRatio;
-      offsetX = (videoWidth - visibleWidth) / 2;
-    } else {
-      // Video is taller than container - crop top/bottom
-      visibleHeight = videoWidth / containerRatio;
-      offsetY = (videoHeight - visibleHeight) / 2;
+  // Initialize jscanify scanner
+  const getScanner = useCallback(() => {
+    if (!scannerRef.current) {
+      scannerRef.current = new Scanner();
     }
-
-    return { x: offsetX, y: offsetY, width: visibleWidth, height: visibleHeight };
+    return scannerRef.current;
   }, []);
 
   // Analyze image quality (blur, brightness, contrast)
@@ -257,14 +245,19 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     return isBright && hasContrast;
   }, []);
 
-  // Draw A4 guide frame with corner brackets
-  const drawA4Guide = useCallback((ctx: CanvasRenderingContext2D, videoWidth: number, videoHeight: number) => {
-    const guide = calculateA4GuideFrame(videoWidth, videoHeight);
-    const { x, y, width, height } = guide;
+  // Draw A4 guide frame with corner brackets at specified position
+  const drawGuideFrame = useCallback((
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+    color: string = '#ffffff'
+  ) => {
     const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.15, height * 0.15);
 
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 12;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
     ctx.lineCap = 'round';
 
     // Top-left corner bracket
@@ -296,8 +289,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     ctx.stroke();
 
     // Draw corner markers (circles)
-    ctx.fillStyle = '#ffffff';
-    const markerRadius = 14;
+    ctx.fillStyle = color;
+    const markerRadius = 6;
     const corners = [
       { cx: x, cy: y },
       { cx: x + width, cy: y },
@@ -309,7 +302,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       ctx.arc(corner.cx, corner.cy, markerRadius, 0, Math.PI * 2);
       ctx.fill();
     }
-  }, [calculateA4GuideFrame]);
+  }, []);
 
   // Keep phaseRef in sync with phase state
   useEffect(() => {
@@ -323,34 +316,48 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
   }, []);
 
-  const clearOverlay = useCallback((drawGuide: boolean = false, videoWidth?: number, videoHeight?: number) => {
-    const canvas = overlayCanvasRef.current;
+  const clearDisplayCanvas = useCallback(() => {
+    const canvas = displayCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+  }, []);
 
-    if (videoWidth && videoHeight) {
-      canvas.width = videoWidth;
-      canvas.height = videoHeight;
+  // Apply perspective correction using jscanify if OpenCV is available
+  const applyPerspectiveCorrection = useCallback((canvas: HTMLCanvasElement): HTMLCanvasElement => {
+    const cv = (window as any).cv;
+    if (!cv?.Mat) {
+      console.log('OpenCV not available, skipping perspective correction');
+      return canvas;
     }
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw A4 guide frame if requested
-    if (drawGuide && videoWidth && videoHeight) {
-      drawA4Guide(ctx, videoWidth, videoHeight);
+    try {
+      const scanner = getScanner();
+
+      // Try to extract and correct the paper
+      const corrected = scanner.extractPaper(canvas, canvas.width, canvas.height);
+
+      if (corrected) {
+        console.log('Perspective correction applied');
+        return corrected;
+      }
+    } catch (err) {
+      console.warn('Perspective correction failed:', err);
     }
-  }, [drawA4Guide]);
+
+    return canvas;
+  }, [getScanner]);
 
   const captureFrame = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Get actual video dimensions at capture time
     const vw = video.videoWidth;
     const vh = video.videoHeight;
 
     console.log('Capture - video dimensions:', vw, 'x', vh);
-    console.log('Capture - client dimensions:', video.clientWidth, 'x', video.clientHeight);
 
     if (!vw || !vh) {
       console.error('Video dimensions not available');
@@ -358,174 +365,162 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
 
     stopDetectionLoop();
-    setPhase('processing'); // Show processing state
+    setPhase('processing');
 
-    if (!captureCanvasRef.current) {
-      captureCanvasRef.current = document.createElement('canvas');
-    }
+    // Get the display mapping to calculate correct capture region
+    const { scale, scaledW, scaledH } = displayMappingRef.current;
 
-    const canvas = captureCanvasRef.current;
+    // Calculate guide frame in SCALED (display) coordinates
+    const displayGuide = calculateA4GuideFrame(scaledW, scaledH);
 
-    // Calculate guide frame based on full video dimensions
-    const guide = calculateA4GuideFrame(vw, vh);
-    console.log('Guide frame:', guide);
+    // Map back to VIDEO coordinates for full-resolution capture
+    const videoGuide = {
+      x: displayGuide.x / scale,
+      y: displayGuide.y / scale,
+      width: displayGuide.width / scale,
+      height: displayGuide.height / scale
+    };
 
-    // Set canvas to full video size first, draw video
-    canvas.width = vw;
-    canvas.height = vh;
-    const ctx = canvas.getContext('2d')!;
+    console.log('Display guide:', displayGuide);
+    console.log('Video guide (mapped):', videoGuide);
 
-    // Draw full video frame
-    ctx.drawImage(video, 0, 0, vw, vh);
+    // Create capture canvas at full video resolution for the guide region
+    const captureCanvas = document.createElement('canvas');
+    const outputWidth = Math.round(videoGuide.width);
+    const outputHeight = Math.round(videoGuide.height);
+    captureCanvas.width = outputWidth;
+    captureCanvas.height = outputHeight;
+    const ctx = captureCanvas.getContext('2d')!;
 
-    // Now crop to guide frame by creating a new canvas
-    const croppedCanvas = document.createElement('canvas');
-    const outputWidth = Math.round(guide.width);
-    const outputHeight = Math.round(guide.height);
-    croppedCanvas.width = outputWidth;
-    croppedCanvas.height = outputHeight;
-    const croppedCtx = croppedCanvas.getContext('2d')!;
-
-    // Copy the guide frame region
-    croppedCtx.drawImage(
-      canvas,
-      guide.x, guide.y, guide.width, guide.height,
+    // Draw the guide frame region from video at full resolution
+    ctx.drawImage(
+      video,
+      videoGuide.x, videoGuide.y, videoGuide.width, videoGuide.height,
       0, 0, outputWidth, outputHeight
     );
-
-    // Update ref to cropped canvas
-    captureCanvasRef.current = croppedCanvas;
 
     // Pause video (keep stream alive for retake)
     video.pause();
 
-    // Use setTimeout to allow UI to update before processing
+    // Process asynchronously to allow UI update
     setTimeout(() => {
-      const finalCanvas = captureCanvasRef.current!;
+      // Apply perspective correction if available
+      let finalCanvas = applyPerspectiveCorrection(captureCanvas);
 
-      // Apply image enhancement (contrast stretching, etc.)
+      // Apply image enhancement
       enhanceImage(finalCanvas);
 
-      // Analyze quality after enhancement
+      // Analyze quality
       const quality = analyzeImageQuality(finalCanvas);
       setImageQuality(quality);
+
+      // Store for confirmation
+      captureCanvasRef.current = finalCanvas;
 
       const url = finalCanvas.toDataURL('image/jpeg', 0.95);
       console.log('Captured image dimensions:', finalCanvas.width, 'x', finalCanvas.height);
       setCapturedImageUrl(url);
       setAutoProgress(0);
-      clearOverlay();
+      clearDisplayCanvas();
       setPhase('captured');
     }, 50);
-  }, [stopDetectionLoop, clearOverlay, calculateA4GuideFrame, analyzeImageQuality, enhanceImage]);
+  }, [stopDetectionLoop, clearDisplayCanvas, calculateA4GuideFrame, analyzeImageQuality, enhanceImage, applyPerspectiveCorrection]);
 
   const startDetectionLoop = useCallback(() => {
-    if (!processingCanvasRef.current) {
-      processingCanvasRef.current = document.createElement('canvas');
-    }
-
-    const detect = (timestamp: number) => {
+    const displayLoop = (timestamp: number) => {
       if (phaseRef.current !== 'scanning') return;
 
       if (timestamp - lastFrameTimeRef.current < FRAME_INTERVAL) {
-        rafRef.current = requestAnimationFrame(detect);
+        rafRef.current = requestAnimationFrame(displayLoop);
         return;
       }
       lastFrameTimeRef.current = timestamp;
 
       const video = videoRef.current;
+      const displayCanvas = displayCanvasRef.current;
 
-      if (!video || video.readyState < 2) {
-        rafRef.current = requestAnimationFrame(detect);
+      if (!video || video.readyState < 2 || !displayCanvas) {
+        rafRef.current = requestAnimationFrame(displayLoop);
         return;
       }
 
-      const vw = video.videoWidth;
-      const vh = video.videoHeight;
-      if (!vw || !vh) {
-        rafRef.current = requestAnimationFrame(detect);
+      const videoW = video.videoWidth;
+      const videoH = video.videoHeight;
+      if (!videoW || !videoH) {
+        rafRef.current = requestAnimationFrame(displayLoop);
         return;
       }
 
-      // With object-contain, the full video is visible - no cropping needed
-      // Calculate guide frame based on full video dimensions
-      const guideFrame = calculateA4GuideFrame(vw, vh);
-
-      // Draw video frame to processing canvas for edge analysis
-      const pCanvas = processingCanvasRef.current!;
-      pCanvas.width = vw;
-      pCanvas.height = vh;
-      const pCtx = pCanvas.getContext('2d')!;
-      pCtx.drawImage(video, 0, 0, vw, vh);
-
-      // Check if paper is present inside the guide frame
-      const isAligned = checkPaperInGuide(pCtx, guideFrame, vw, vh);
-
-      // Draw the A4 guide frame with color based on alignment
-      const overlayCanvas = overlayCanvasRef.current;
-      const overlayCtx = overlayCanvas?.getContext('2d');
-      if (overlayCanvas && overlayCtx) {
-        overlayCanvas.width = vw;
-        overlayCanvas.height = vh;
-        overlayCtx.clearRect(0, 0, vw, vh);
-
-        // Draw guide frame - green when aligned, white when not
-        const { x, y, width, height } = guideFrame;
-        const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.15, height * 0.15);
-        const color = isAligned ? '#22c55e' : '#ffffff';
-
-        overlayCtx.strokeStyle = color;
-        overlayCtx.lineWidth = 12;
-        overlayCtx.lineCap = 'round';
-
-        // Top-left corner bracket
-        overlayCtx.beginPath();
-        overlayCtx.moveTo(x, y + bracketLen);
-        overlayCtx.lineTo(x, y);
-        overlayCtx.lineTo(x + bracketLen, y);
-        overlayCtx.stroke();
-
-        // Top-right corner bracket
-        overlayCtx.beginPath();
-        overlayCtx.moveTo(x + width - bracketLen, y);
-        overlayCtx.lineTo(x + width, y);
-        overlayCtx.lineTo(x + width, y + bracketLen);
-        overlayCtx.stroke();
-
-        // Bottom-right corner bracket
-        overlayCtx.beginPath();
-        overlayCtx.moveTo(x + width, y + height - bracketLen);
-        overlayCtx.lineTo(x + width, y + height);
-        overlayCtx.lineTo(x + width - bracketLen, y + height);
-        overlayCtx.stroke();
-
-        // Bottom-left corner bracket
-        overlayCtx.beginPath();
-        overlayCtx.moveTo(x + bracketLen, y + height);
-        overlayCtx.lineTo(x, y + height);
-        overlayCtx.lineTo(x, y + height - bracketLen);
-        overlayCtx.stroke();
-
-        // Corner markers
-        overlayCtx.fillStyle = color;
-        const markerRadius = 14;
-        const corners = [
-          { cx: x, cy: y },
-          { cx: x + width, cy: y },
-          { cx: x + width, cy: y + height },
-          { cx: x, cy: y + height },
-        ];
-        for (const corner of corners) {
-          overlayCtx.beginPath();
-          overlayCtx.arc(corner.cx, corner.cy, markerRadius, 0, Math.PI * 2);
-          overlayCtx.fill();
-        }
+      const ctx = displayCanvas.getContext('2d');
+      if (!ctx) {
+        rafRef.current = requestAnimationFrame(displayLoop);
+        return;
       }
+
+      // Get container dimensions from canvas client size
+      const containerW = displayCanvas.clientWidth;
+      const containerH = displayCanvas.clientHeight;
+
+      if (!containerW || !containerH) {
+        rafRef.current = requestAnimationFrame(displayLoop);
+        return;
+      }
+
+      // Calculate scale to fit video in container (like object-contain)
+      const scale = Math.min(containerW / videoW, containerH / videoH);
+      const scaledW = videoW * scale;
+      const scaledH = videoH * scale;
+      const offsetX = (containerW - scaledW) / 2;
+      const offsetY = (containerH - scaledH) / 2;
+
+      // Set canvas resolution to match container (for crisp rendering)
+      if (displayCanvas.width !== containerW || displayCanvas.height !== containerH) {
+        displayCanvas.width = containerW;
+        displayCanvas.height = containerH;
+      }
+
+      // Clear and draw black background (letterbox)
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, containerW, containerH);
+
+      // Draw video frame (centered with letterbox)
+      ctx.drawImage(video, offsetX, offsetY, scaledW, scaledH);
+
+      // Calculate guide frame in DISPLAY coordinates (within the scaled video area)
+      const guide = calculateA4GuideFrame(scaledW, scaledH);
+
+      // Check if paper is present using the displayed region
+      // Sample from the canvas at display coordinates
+      const isAligned = checkPaperInGuide(
+        ctx,
+        {
+          x: offsetX + guide.x,
+          y: offsetY + guide.y,
+          width: guide.width,
+          height: guide.height
+        },
+        containerW,
+        containerH
+      );
+
+      // Draw guide frame at DISPLAY coordinates (offset by video position)
+      const guideColor = isAligned ? '#22c55e' : '#ffffff';
+      drawGuideFrame(
+        ctx,
+        offsetX + guide.x,
+        offsetY + guide.y,
+        guide.width,
+        guide.height,
+        guideColor
+      );
+
+      // Store mapping for capture (so we can map back to video coordinates)
+      displayMappingRef.current = { offsetX, offsetY, scale, scaledW, scaledH };
 
       // Update alignment state
       setDocumentAligned(isAligned);
 
-      // Auto-capture timer - only runs when paper edges detected at guide frame
+      // Auto-capture timer
       if (isAligned) {
         if (!stableStartRef.current) {
           stableStartRef.current = timestamp;
@@ -536,21 +531,19 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         setAutoProgress(progress);
 
         if (progress >= 1) {
-          // Auto-capture using the A4 guide frame
           captureFrame();
-          return; // Stop loop
+          return;
         }
       } else {
-        // Reset timer when not aligned
         stableStartRef.current = null;
         setAutoProgress(0);
       }
 
-      rafRef.current = requestAnimationFrame(detect);
+      rafRef.current = requestAnimationFrame(displayLoop);
     };
 
-    rafRef.current = requestAnimationFrame(detect);
-  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide]);
+    rafRef.current = requestAnimationFrame(displayLoop);
+  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide, drawGuideFrame]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');
@@ -675,7 +668,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   return {
     phase,
     videoRef,
-    overlayCanvasRef,
+    displayCanvasRef,
     capturedImageUrl,
     autoProgress,
     errorMessage,

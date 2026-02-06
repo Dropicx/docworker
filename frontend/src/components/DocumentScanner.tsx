@@ -16,7 +16,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
   const {
     phase,
     videoRef,
-    overlayCanvasRef,
+    displayCanvasRef,
     capturedImageUrl,
     autoProgress,
     errorMessage,
@@ -150,20 +150,19 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
           </div>
         )}
 
-        {/* Video + overlay — always mounted to preserve stream, hidden when captured/processing */}
-        {/* Using object-contain so user sees exactly what will be captured (no zoom/crop) */}
+        {/* Hidden video element - only used for capturing stream, not displayed */}
         <video
           ref={videoRef as React.RefObject<HTMLVideoElement>}
-          className={`absolute inset-0 w-full h-full bg-black ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
-          style={{ objectFit: 'contain' }}
+          className="hidden"
           playsInline
           autoPlay
           muted
         />
+        {/* Unified display canvas - renders video + guide overlay together */}
+        {/* This ensures perfect alignment between what user sees and what gets captured */}
         <canvas
-          ref={overlayCanvasRef as React.RefObject<HTMLCanvasElement>}
-          className={`absolute inset-0 w-full h-full pointer-events-none ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
-          style={{ objectFit: 'contain' }}
+          ref={displayCanvasRef as React.RefObject<HTMLCanvasElement>}
+          className={`absolute inset-0 w-full h-full bg-black ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
         />
 
         {/* Processing phase — show spinner while enhancing image */}
