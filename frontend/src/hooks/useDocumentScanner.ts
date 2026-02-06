@@ -61,8 +61,14 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const lastFrameTimeRef = useRef(0);
   const lastCornersRef = useRef<CornerPoints | null>(null);
   const stableStartRef = useRef<number | null>(null);
+  const phaseRef = useRef<ScannerPhase>('initializing');
 
   const opencvReady = opencvStatus === 'ready';
+
+  // Keep phaseRef in sync with phase state
+  useEffect(() => {
+    phaseRef.current = phase;
+  }, [phase]);
 
   // Start loading OpenCV immediately
   useEffect(() => {
@@ -139,7 +145,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
 
     const detect = (timestamp: number) => {
-      if (phase !== 'scanning') return;
+      if (phaseRef.current !== 'scanning') return;
 
       if (timestamp - lastFrameTimeRef.current < FRAME_INTERVAL) {
         rafRef.current = requestAnimationFrame(detect);
@@ -224,7 +230,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     };
 
     rafRef.current = requestAnimationFrame(detect);
-  }, [phase, drawOverlayQuad, clearOverlay]);
+  }, [drawOverlayQuad, clearOverlay]);
 
   const captureFrame = useCallback((videoWidth?: number, videoHeight?: number) => {
     const video = videoRef.current;
