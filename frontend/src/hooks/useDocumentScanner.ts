@@ -334,7 +334,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     // Pause video (keep stream alive for retake)
     video.pause();
 
-    const url = canvas.toDataURL('image/jpeg', 0.95);
+    const url = canvas.toDataURL('image/jpeg', 0.98);
     setCapturedImageUrl(url);
     setAutoProgress(0);
     clearOverlay();
@@ -348,13 +348,26 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     try {
       let stream: MediaStream;
       try {
+        // Request maximum resolution - 4K or higher if available
         stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 } },
+          video: {
+            facingMode: 'environment',
+            width: { ideal: 4096, min: 1920 },
+            height: { ideal: 2160, min: 1080 },
+          },
           audio: false,
         });
       } catch {
-        // Fallback: any camera
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        // Fallback: try without min constraints
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: 'environment', width: { ideal: 3840 }, height: { ideal: 2160 } },
+            audio: false,
+          });
+        } catch {
+          // Final fallback: any camera
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
       }
 
       streamRef.current = stream;
@@ -392,7 +405,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     if (!canvas) return null;
 
     // Convert to blob synchronously via toDataURL
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.95);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.98);
     const byteString = atob(dataUrl.split(',')[1]);
     const mimeString = dataUrl.split(',')[0].split(':')[1].split(';')[0];
     const ab = new ArrayBuffer(byteString.length);
