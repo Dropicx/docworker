@@ -541,6 +541,52 @@ async def delete_step(
     return
 
 
+class DuplicateStepRequest(BaseModel):
+    """Request model for duplicating a pipeline step"""
+
+    new_name: str = Field(..., min_length=1, max_length=255)
+    source_language: str | None = Field(default=None, pattern="^(de|en)?$")
+
+
+@router.post("/steps/{step_id}/duplicate", response_model=PipelineStepResponse)
+async def duplicate_pipeline_step(
+    step_id: int,
+    request: DuplicateStepRequest,
+    db: Session = Depends(get_session),
+    current_user: UserDB = Depends(require_user_auth),
+    cache: CacheService = Depends(get_cache_service),
+):
+    """
+    Duplicate a pipeline step with a new name and optional source language.
+    The duplicated step is created as disabled.
+    Requires authentication.
+    """
+
+    step_repository = PipelineStepRepository(db)
+
+    try:
+        new_step = step_repository.duplicate_step(
+            step_id, request.new_name, request.source_language
+        )
+
+        if not new_step:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND, detail=f"Step {step_id} not found"
+            )
+
+        # Invalidate pipeline steps cache
+        await cache.delete_namespace(CacheService.NS_PIPELINE_STEPS)
+
+        logger.info(f"✅ Duplicated pipeline step {step_id} as '{request.new_name}' (ID: {new_step.id})")
+        return new_step
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"❌ Failed to duplicate pipeline step {step_id}: {e}")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e)) from e
+
+
 @router.post("/steps/reorder")
 async def reorder_steps(
     reorder_request: StepReorderRequest,

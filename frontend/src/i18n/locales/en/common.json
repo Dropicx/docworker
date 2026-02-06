@@ -390,5 +390,24 @@
     "no": "Norwegian",
     "da": "Danish",
     "tr": "Turkish"
+  },
+  "pipeline": {
+    "duplicateStep": "Duplicate step",
+    "duplicateStepTitle": "Duplicate Step",
+    "duplicateStepHint": "The copy will be created with all settings from the original step, but disabled.",
+    "newStepName": "New step name",
+    "copyOf": "Copy of {{name}}",
+    "duplicate": "Duplicate",
+    "duplicateSuccess": "Step duplicated successfully",
+    "nameRequired": "Name is required",
+    "sourceLanguage": "Source Language",
+    "universalLanguage": "Universal (all languages)",
+    "germanOnly": "German only (German input)",
+    "englishOnly": "English only (English input)"
+  },
+  "common": {
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete"
   }
 }

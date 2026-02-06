@@ -273,6 +273,31 @@ class PipelineApiService {
   }
 
   /**
+   * Duplicate a pipeline step with a new name and optional source language
+   */
+  async duplicateStep(
+    stepId: number,
+    newName: string,
+    sourceLanguage: string | null
+  ): Promise<PipelineStep> {
+    try {
+      const response = await axios.post<PipelineStep>(
+        `${PIPELINE_BASE_URL}/steps/${stepId}/duplicate`,
+        {
+          new_name: newName,
+          source_language: sourceLanguage || null,
+        },
+        { headers: this.getAuthHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      throw new Error(
+        extractErrorMessage(error as AxiosError, `Failed to duplicate step ${stepId}`)
+      );
+    }
+  }
+
+  /**
    * Reorder pipeline steps
    */
   async reorderSteps(stepIds: number[]): Promise<StepReorderResponse> {

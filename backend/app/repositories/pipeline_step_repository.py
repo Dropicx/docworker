@@ -308,13 +308,16 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         # Filter steps that have actual stop conditions (not None, not empty)
         return [step for step in steps if step.stop_conditions]
 
-    def duplicate_step(self, step_id: int, new_name: str) -> DynamicPipelineStepDB | None:
+    def duplicate_step(
+        self, step_id: int, new_name: str, source_language: str | None = None
+    ) -> DynamicPipelineStepDB | None:
         """
         Duplicate a pipeline step with a new name.
 
         Args:
             step_id: ID of the step to duplicate
             new_name: Name for the duplicated step
+            source_language: Optional source language for the new step (None = universal)
 
         Returns:
             New step instance or None if original not found
@@ -330,6 +333,7 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
             order=original.order + 1,  # Place after original
             enabled=False,  # Start disabled
             prompt_template=original.prompt_template,
+            system_prompt=original.system_prompt,
             selected_model_id=original.selected_model_id,
             temperature=original.temperature,
             max_tokens=original.max_tokens,
@@ -343,6 +347,8 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
             post_branching=original.post_branching,
             required_context_variables=original.required_context_variables,
             stop_conditions=original.stop_conditions,
+            ui_stage=original.ui_stage,
+            source_language=source_language,  # Use the provided source language
             modified_by="system_duplicate",
         )
 

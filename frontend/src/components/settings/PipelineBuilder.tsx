@@ -27,7 +27,9 @@ import {
   Shield,
   Sparkles,
   BookOpen,
+  Copy,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { pipelineApi } from '../../services/pipelineApi';
 import {
   OCRConfiguration,
@@ -39,8 +41,11 @@ import {
   DocumentClass,
 } from '../../types/pipeline';
 import StepEditorModal from './StepEditorModal';
+import DuplicateStepModal from './DuplicateStepModal';
 
 const PipelineBuilder: React.FC = () => {
+  const { t } = useTranslation();
+
   // OCR Configuration State
   const [ocrConfig, setOcrConfig] = useState<OCRConfiguration | null>(null);
   const [engines, setEngines] = useState<EngineStatusMap | null>(null);
@@ -65,6 +70,10 @@ const PipelineBuilder: React.FC = () => {
   // Step Editor Modal State
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingStep, setEditingStep] = useState<PipelineStep | null>(null);
+
+  // Duplicate Step Modal State
+  const [isDuplicateModalOpen, setIsDuplicateModalOpen] = useState(false);
+  const [stepToDuplicate, setStepToDuplicate] = useState<PipelineStep | null>(null);
 
   // UI State
   const [error, setError] = useState<string>('');
@@ -260,6 +269,20 @@ const PipelineBuilder: React.FC = () => {
   const handleEditStep = (step: PipelineStep) => {
     setEditingStep(step);
     setIsEditorOpen(true);
+  };
+
+  const handleOpenDuplicateModal = (step: PipelineStep) => {
+    setStepToDuplicate(step);
+    setIsDuplicateModalOpen(true);
+  };
+
+  const handleDuplicateStep = async (newName: string, sourceLanguage: string | null) => {
+    if (!stepToDuplicate) return;
+
+    await pipelineApi.duplicateStep(stepToDuplicate.id, newName, sourceLanguage);
+    await loadSteps();
+    setSuccess(t('pipeline.duplicateSuccess', 'Schritt erfolgreich dupliziert'));
+    setTimeout(() => setSuccess(''), 3000);
   };
 
   const handleDeleteStep = async (stepId: number) => {
@@ -843,15 +866,23 @@ const PipelineBuilder: React.FC = () => {
                       <button
                         onClick={() => handleEditStep(step)}
                         className="p-2 hover:bg-brand-100 rounded-lg transition-colors text-brand-600"
-                        title="Bearbeiten"
+                        title={t('common.edit', 'Bearbeiten')}
                       >
                         <Edit2 className="w-4 h-4" />
                       </button>
 
                       <button
+                        onClick={() => handleOpenDuplicateModal(step)}
+                        className="p-2 hover:bg-brand-100 rounded-lg transition-colors text-brand-600"
+                        title={t('pipeline.duplicateStep', 'Schritt duplizieren')}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </button>
+
+                      <button
                         onClick={() => handleDeleteStep(step.id)}
                         className="p-2 hover:bg-error-100 rounded-lg transition-colors text-error-600"
-                        title="Löschen"
+                        title={t('common.delete', 'Löschen')}
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -910,6 +941,19 @@ const PipelineBuilder: React.FC = () => {
             setSuccess('Schritt erfolgreich gespeichert!');
             setTimeout(() => setSuccess(''), 3000);
           }}
+        />
+      )}
+
+      {/* Duplicate Step Modal */}
+      {isDuplicateModalOpen && stepToDuplicate && (
+        <DuplicateStepModal
+          isOpen={isDuplicateModalOpen}
+          onClose={() => {
+            setIsDuplicateModalOpen(false);
+            setStepToDuplicate(null);
+          }}
+          originalStep={stepToDuplicate}
+          onDuplicate={handleDuplicateStep}
         />
       )}
     </div>
