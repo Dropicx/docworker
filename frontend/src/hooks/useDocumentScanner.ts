@@ -1,15 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import Scanner from '../lib/jscanify';
-import { useOpenCV } from './useOpenCV';
 
 export type ScannerPhase = 'initializing' | 'scanning' | 'captured' | 'error';
-
-interface CornerPoints {
-  topLeftCorner: { x: number; y: number };
-  topRightCorner: { x: number; y: number };
-  bottomLeftCorner: { x: number; y: number };
-  bottomRightCorner: { x: number; y: number };
-}
 
 interface UseDocumentScannerReturn {
   phase: ScannerPhase;
@@ -42,20 +33,15 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [documentAligned, setDocumentAligned] = useState(false);
 
-  const { status: opencvStatus, loadOpenCV } = useOpenCV();
-
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const rafRef = useRef<number>(0);
-  const scannerRef = useRef<Scanner | null>(null);
   const processingCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const captureCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const lastFrameTimeRef = useRef(0);
   const stableStartRef = useRef<number | null>(null);
   const phaseRef = useRef<ScannerPhase>('initializing');
-
-  const opencvReady = opencvStatus === 'ready';
 
   // Calculate A4 guide frame dimensions for given video dimensions
   const calculateA4GuideFrame = useCallback((videoWidth: number, videoHeight: number) => {
@@ -80,44 +66,61 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     return { x, y, width: guideW, height: guideH };
   }, []);
 
-  // Check if detected corners align with the A4 guide frame
-  const checkAlignment = useCallback((
-    corners: CornerPoints,
+  // Check if paper edges are present along the guide frame borders
+  // by analyzing contrast/edges at the guide frame boundaries
+  const checkEdgesAtGuide = useCallback((
+    ctx: CanvasRenderingContext2D,
     guideFrame: { x: number; y: number; width: number; height: number },
-    scale: number
+    canvasWidth: number,
+    canvasHeight: number
   ): boolean => {
-    // Scale corners from processing resolution to video resolution
-    const scaledCorners = {
-      topLeft: { x: corners.topLeftCorner.x * scale, y: corners.topLeftCorner.y * scale },
-      topRight: { x: corners.topRightCorner.x * scale, y: corners.topRightCorner.y * scale },
-      bottomRight: { x: corners.bottomRightCorner.x * scale, y: corners.bottomRightCorner.y * scale },
-      bottomLeft: { x: corners.bottomLeftCorner.x * scale, y: corners.bottomLeftCorner.y * scale },
+    const { x, y, width, height } = guideFrame;
+    const sampleCount = 10; // Number of sample points per edge
+    const edgeOffset = 5; // Pixels to sample inside/outside the guide
+    const contrastThreshold = 30; // Minimum brightness difference to detect edge
+
+    // Sample points along each edge and check for contrast
+    const checkEdge = (
+      startX: number, startY: number,
+      endX: number, endY: number,
+      insideOffsetX: number, insideOffsetY: number
+    ): number => {
+      let edgeCount = 0;
+      for (let i = 0; i < sampleCount; i++) {
+        const t = i / (sampleCount - 1);
+        const px = Math.round(startX + t * (endX - startX));
+        const py = Math.round(startY + t * (endY - startY));
+
+        // Sample inside the guide
+        const insideX = Math.min(Math.max(px + insideOffsetX, 0), canvasWidth - 1);
+        const insideY = Math.min(Math.max(py + insideOffsetY, 0), canvasHeight - 1);
+        const insideData = ctx.getImageData(insideX, insideY, 1, 1).data;
+        const insideBrightness = (insideData[0] + insideData[1] + insideData[2]) / 3;
+
+        // Sample outside the guide
+        const outsideX = Math.min(Math.max(px - insideOffsetX, 0), canvasWidth - 1);
+        const outsideY = Math.min(Math.max(py - insideOffsetY, 0), canvasHeight - 1);
+        const outsideData = ctx.getImageData(outsideX, outsideY, 1, 1).data;
+        const outsideBrightness = (outsideData[0] + outsideData[1] + outsideData[2]) / 3;
+
+        // Check for contrast (paper inside should be brighter than background)
+        if (Math.abs(insideBrightness - outsideBrightness) > contrastThreshold) {
+          edgeCount++;
+        }
+      }
+      return edgeCount;
     };
 
-    // Guide frame corners
-    const guideCorners = {
-      topLeft: { x: guideFrame.x, y: guideFrame.y },
-      topRight: { x: guideFrame.x + guideFrame.width, y: guideFrame.y },
-      bottomRight: { x: guideFrame.x + guideFrame.width, y: guideFrame.y + guideFrame.height },
-      bottomLeft: { x: guideFrame.x, y: guideFrame.y + guideFrame.height },
-    };
+    // Check all 4 edges
+    const topEdge = checkEdge(x, y, x + width, y, 0, edgeOffset);
+    const bottomEdge = checkEdge(x, y + height, x + width, y + height, 0, -edgeOffset);
+    const leftEdge = checkEdge(x, y, x, y + height, edgeOffset, 0);
+    const rightEdge = checkEdge(x + width, y, x + width, y + height, -edgeOffset, 0);
 
-    // Tolerance based on guide frame size
-    const tolerance = Math.max(guideFrame.width, guideFrame.height) * ALIGNMENT_TOLERANCE;
-
-    // Check if each detected corner is within tolerance of the guide corner
-    const checkCorner = (detected: { x: number; y: number }, guide: { x: number; y: number }) => {
-      const dx = Math.abs(detected.x - guide.x);
-      const dy = Math.abs(detected.y - guide.y);
-      return dx < tolerance && dy < tolerance;
-    };
-
-    return (
-      checkCorner(scaledCorners.topLeft, guideCorners.topLeft) &&
-      checkCorner(scaledCorners.topRight, guideCorners.topRight) &&
-      checkCorner(scaledCorners.bottomRight, guideCorners.bottomRight) &&
-      checkCorner(scaledCorners.bottomLeft, guideCorners.bottomLeft)
-    );
+    // Require at least 60% of sample points on each edge to show contrast
+    const threshold = sampleCount * 0.6;
+    return topEdge >= threshold && bottomEdge >= threshold &&
+           leftEdge >= threshold && rightEdge >= threshold;
   }, []);
 
   // Draw A4 guide frame with corner brackets
@@ -178,11 +181,6 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   useEffect(() => {
     phaseRef.current = phase;
   }, [phase]);
-
-  // Start loading OpenCV immediately
-  useEffect(() => {
-    loadOpenCV();
-  }, [loadOpenCV]);
 
   const stopDetectionLoop = useCallback(() => {
     if (rafRef.current) {
@@ -260,14 +258,6 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   }, [stopDetectionLoop, clearOverlay, calculateA4GuideFrame]);
 
   const startDetectionLoop = useCallback(() => {
-    if (!scannerRef.current) {
-      try {
-        scannerRef.current = new Scanner();
-      } catch {
-        // jscanify init failed — continue without detection
-      }
-    }
-
     if (!processingCanvasRef.current) {
       processingCanvasRef.current = document.createElement('canvas');
     }
@@ -282,8 +272,6 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       lastFrameTimeRef.current = timestamp;
 
       const video = videoRef.current;
-      const scanner = scannerRef.current;
-      const cv = (window as any).cv;
 
       if (!video || video.readyState < 2) {
         rafRef.current = requestAnimationFrame(detect);
@@ -300,85 +288,81 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       // Calculate guide frame for this video size
       const guideFrame = calculateA4GuideFrame(vw, vh);
 
-      // Always draw the A4 guide frame
+      // Draw video frame to processing canvas for edge analysis
+      const pCanvas = processingCanvasRef.current!;
+      pCanvas.width = vw;
+      pCanvas.height = vh;
+      const pCtx = pCanvas.getContext('2d')!;
+      pCtx.drawImage(video, 0, 0, vw, vh);
+
+      // Check if paper edges are present at the guide frame borders
+      const isAligned = checkEdgesAtGuide(pCtx, guideFrame, vw, vh);
+
+      // Draw the A4 guide frame with color based on alignment
       const overlayCanvas = overlayCanvasRef.current;
       const overlayCtx = overlayCanvas?.getContext('2d');
       if (overlayCanvas && overlayCtx) {
         overlayCanvas.width = vw;
         overlayCanvas.height = vh;
         overlayCtx.clearRect(0, 0, vw, vh);
-        drawA4Guide(overlayCtx, vw, vh);
-      }
 
-      // Run corner detection if OpenCV is available
-      let isAligned = false;
-      if (scanner && cv?.Mat) {
-        const scale = PROCESSING_WIDTH / vw;
-        const pw = PROCESSING_WIDTH;
-        const ph = Math.round(vh * scale);
+        // Draw guide frame - green when aligned, white when not
+        const { x, y, width, height } = guideFrame;
+        const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.15, height * 0.15);
+        const color = isAligned ? '#22c55e' : '#ffffff';
 
-        const pCanvas = processingCanvasRef.current!;
-        pCanvas.width = pw;
-        pCanvas.height = ph;
-        const pCtx = pCanvas.getContext('2d')!;
-        pCtx.drawImage(video, 0, 0, pw, ph);
+        overlayCtx.strokeStyle = color;
+        overlayCtx.lineWidth = 6;
+        overlayCtx.lineCap = 'round';
 
-        let mat: any = null;
-        let contour: any = null;
+        // Top-left corner bracket
+        overlayCtx.beginPath();
+        overlayCtx.moveTo(x, y + bracketLen);
+        overlayCtx.lineTo(x, y);
+        overlayCtx.lineTo(x + bracketLen, y);
+        overlayCtx.stroke();
 
-        try {
-          mat = cv.imread(pCanvas);
-          contour = scanner.findPaperContour(mat);
-          if (contour) {
-            const corners = scanner.getCornerPoints(contour);
-            if (corners) {
-              // Check if detected corners align with the guide frame
-              isAligned = checkAlignment(corners, guideFrame, 1 / scale);
+        // Top-right corner bracket
+        overlayCtx.beginPath();
+        overlayCtx.moveTo(x + width - bracketLen, y);
+        overlayCtx.lineTo(x + width, y);
+        overlayCtx.lineTo(x + width, y + bracketLen);
+        overlayCtx.stroke();
 
-              // Draw detected corners with color indicating alignment
-              if (overlayCtx) {
-                const color = isAligned ? '#22c55e' : '#f59e0b'; // green if aligned, amber if not
-                overlayCtx.strokeStyle = color;
-                overlayCtx.lineWidth = 3;
-                overlayCtx.lineJoin = 'round';
+        // Bottom-right corner bracket
+        overlayCtx.beginPath();
+        overlayCtx.moveTo(x + width, y + height - bracketLen);
+        overlayCtx.lineTo(x + width, y + height);
+        overlayCtx.lineTo(x + width - bracketLen, y + height);
+        overlayCtx.stroke();
 
-                const pts = [
-                  corners.topLeftCorner,
-                  corners.topRightCorner,
-                  corners.bottomRightCorner,
-                  corners.bottomLeftCorner,
-                ];
+        // Bottom-left corner bracket
+        overlayCtx.beginPath();
+        overlayCtx.moveTo(x + bracketLen, y + height);
+        overlayCtx.lineTo(x, y + height);
+        overlayCtx.lineTo(x, y + height - bracketLen);
+        overlayCtx.stroke();
 
-                overlayCtx.beginPath();
-                overlayCtx.moveTo(pts[0].x / scale, pts[0].y / scale);
-                for (let i = 1; i < pts.length; i++) {
-                  overlayCtx.lineTo(pts[i].x / scale, pts[i].y / scale);
-                }
-                overlayCtx.closePath();
-                overlayCtx.stroke();
-
-                // Corner dots
-                overlayCtx.fillStyle = color;
-                for (const pt of pts) {
-                  overlayCtx.beginPath();
-                  overlayCtx.arc(pt.x / scale, pt.y / scale, 6, 0, Math.PI * 2);
-                  overlayCtx.fill();
-                }
-              }
-            }
-          }
-        } catch {
-          // Detection error — skip frame
-        } finally {
-          if (mat) mat.delete();
-          if (contour) contour.delete();
+        // Corner markers
+        overlayCtx.fillStyle = color;
+        const markerRadius = 8;
+        const corners = [
+          { cx: x, cy: y },
+          { cx: x + width, cy: y },
+          { cx: x + width, cy: y + height },
+          { cx: x, cy: y + height },
+        ];
+        for (const corner of corners) {
+          overlayCtx.beginPath();
+          overlayCtx.arc(corner.cx, corner.cy, markerRadius, 0, Math.PI * 2);
+          overlayCtx.fill();
         }
       }
 
       // Update alignment state
       setDocumentAligned(isAligned);
 
-      // Auto-capture timer - only runs when document is aligned with guide frame
+      // Auto-capture timer - only runs when paper edges detected at guide frame
       if (isAligned) {
         if (!stableStartRef.current) {
           stableStartRef.current = timestamp;
@@ -403,7 +387,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     };
 
     rafRef.current = requestAnimationFrame(detect);
-  }, [drawA4Guide, captureFrame, calculateA4GuideFrame, checkAlignment]);
+  }, [captureFrame, calculateA4GuideFrame, checkEdgesAtGuide]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');
@@ -452,13 +436,13 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
   }, []);
 
-  // Start detection loop when phase transitions to scanning and OpenCV is ready
+  // Start detection loop when phase transitions to scanning
   useEffect(() => {
-    if (phase === 'scanning' && opencvReady) {
+    if (phase === 'scanning') {
       startDetectionLoop();
     }
     return () => stopDetectionLoop();
-  }, [phase, opencvReady, startDetectionLoop, stopDetectionLoop]);
+  }, [phase, startDetectionLoop, stopDetectionLoop]);
 
   const captureManual = useCallback(() => {
     captureFrame();
