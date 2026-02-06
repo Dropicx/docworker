@@ -353,6 +353,23 @@
     "seconds": "{{count}} Sek.",
     "minutesSeconds": "{{minutes}} Min. {{seconds}} Sek."
   },
+  "wizard": {
+    "step1Title": "Dokument hochladen",
+    "step2Title": "Dokumentsprache",
+    "step3Title": "Übersetzungsoptionen",
+    "step4Title": "Bestätigen & Starten",
+    "step1Label": "Hochladen",
+    "step2Label": "Sprache",
+    "step3Label": "Übersetzen",
+    "step4Label": "Bestätigen",
+    "next": "Weiter",
+    "back": "Zurück",
+    "summary": "Zusammenfassung",
+    "file": "Datei",
+    "sourceLanguage": "Dokumentsprache",
+    "targetLanguage": "Zielsprache",
+    "step3Hint": "Möchten Sie das Dokument zusätzlich in eine andere Sprache übersetzen?"
+  },
   "languages": {
     "de": "Deutsch",
     "en": "Englisch",

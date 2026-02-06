@@ -353,6 +353,23 @@
     "seconds": "{{count}} sec.",
     "minutesSeconds": "{{minutes}} min. {{seconds}} sec."
   },
+  "wizard": {
+    "step1Title": "Upload Document",
+    "step2Title": "Document Language",
+    "step3Title": "Translation Options",
+    "step4Title": "Confirm & Start",
+    "step1Label": "Upload",
+    "step2Label": "Language",
+    "step3Label": "Translate",
+    "step4Label": "Confirm",
+    "next": "Next",
+    "back": "Back",
+    "summary": "Summary",
+    "file": "File",
+    "sourceLanguage": "Document Language",
+    "targetLanguage": "Target Language",
+    "step3Hint": "Would you like to also translate the document to another language?"
+  },
   "languages": {
     "de": "German",
     "en": "English",
