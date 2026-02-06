@@ -62,7 +62,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
 
   // Calculate countdown seconds remaining
   const countdownSeconds = documentAligned && autoProgress > 0
-    ? Math.ceil((1 - autoProgress) * 4)
+    ? Math.ceil((1 - autoProgress) * 3)
     : 0;
 
   const statusBadge = (() => {

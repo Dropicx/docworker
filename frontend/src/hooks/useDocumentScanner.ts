@@ -19,11 +19,11 @@ interface UseDocumentScannerReturn {
 
 const DETECTION_FPS = 30;
 const FRAME_INTERVAL = 1000 / DETECTION_FPS;
-const AUTO_CAPTURE_DELAY_MS = 4000; // 4 seconds after alignment detected
+const AUTO_CAPTURE_DELAY_MS = 3000; // 3 seconds after alignment detected
 const PROCESSING_WIDTH = 640;
 const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
 const GUIDE_PADDING = 0.06; // 6% padding from edges
-const CORNER_BRACKET_LENGTH = 70; // Length of corner bracket arms in pixels
+const CORNER_BRACKET_LENGTH = 100; // Length of corner bracket arms in pixels
 
 export function useDocumentScanner(): UseDocumentScannerReturn {
   const [phase, setPhase] = useState<ScannerPhase>('initializing');
@@ -124,7 +124,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.15, height * 0.15);
 
     ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 8;
+    ctx.lineWidth = 12;
     ctx.lineCap = 'round';
 
     // Top-left corner bracket
@@ -157,7 +157,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
     // Draw corner markers (circles)
     ctx.fillStyle = '#ffffff';
-    const markerRadius = 10;
+    const markerRadius = 14;
     const corners = [
       { cx: x, cy: y },
       { cx: x + width, cy: y },
@@ -339,7 +339,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
         // Corner markers
         overlayCtx.fillStyle = color;
-        const markerRadius = 10;
+        const markerRadius = 14;
         const corners = [
           { cx: x, cy: y },
           { cx: x + width, cy: y },
