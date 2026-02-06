@@ -183,43 +183,49 @@ const FileUpload: React.FC<FileUploadProps> = ({
       </h3>
 
       {/* Progress indicator */}
-      <div className="flex items-center justify-center">
-        {[1, 2, 3, 4].map((step, index) => (
-          <div key={step} className="flex items-center">
-            <div className="flex flex-col items-center">
-              <div
-                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-                  step < currentStep
-                    ? 'bg-success-500 text-white'
-                    : step === currentStep
-                      ? 'bg-brand-500 text-white shadow-glow'
-                      : 'bg-neutral-200 text-neutral-500'
-                }`}
-              >
-                {step < currentStep ? (
-                  <Check className="w-4 h-4 sm:w-5 sm:h-5" />
-                ) : (
-                  step
-                )}
+      <nav aria-label={t('wizard.progressLabel')}>
+        <ol className="flex items-center justify-center">
+          {[1, 2, 3, 4].map((step, index) => (
+            <li key={step} className="flex items-center">
+              <div className="flex flex-col items-center">
+                <div
+                  aria-current={step === currentStep ? 'step' : undefined}
+                  aria-label={`${t('wizard.step')} ${step}: ${stepLabels[index]}${step < currentStep ? ` - ${t('wizard.completed')}` : ''}`}
+                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
+                    step < currentStep
+                      ? 'bg-success-500 text-white'
+                      : step === currentStep
+                        ? 'bg-brand-500 text-white shadow-glow'
+                        : 'bg-neutral-200 text-neutral-500'
+                  }`}
+                >
+                  {step < currentStep ? (
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+                  ) : (
+                    step
+                  )}
+                </div>
+                <span
+                  aria-hidden="true"
+                  className={`hidden sm:block mt-1 text-xs font-medium ${
+                    step <= currentStep ? 'text-primary-700' : 'text-neutral-400'
+                  }`}
+                >
+                  {stepLabels[index]}
+                </span>
               </div>
-              <span
-                className={`hidden sm:block mt-1 text-xs font-medium ${
-                  step <= currentStep ? 'text-primary-700' : 'text-neutral-400'
-                }`}
-              >
-                {stepLabels[index]}
-              </span>
-            </div>
-            {index < 3 && (
-              <div
-                className={`w-8 sm:w-12 h-1 mx-1 sm:mx-2 rounded-full transition-all duration-300 ${
-                  step < currentStep ? 'bg-success-500' : 'bg-neutral-200'
-                }`}
-              />
-            )}
-          </div>
-        ))}
-      </div>
+              {index < 3 && (
+                <div
+                  aria-hidden="true"
+                  className={`w-8 sm:w-12 h-1 mx-1 sm:mx-2 rounded-full transition-all duration-300 ${
+                    step < currentStep ? 'bg-success-500' : 'bg-neutral-200'
+                  }`}
+                />
+              )}
+            </li>
+          ))}
+        </ol>
+      </nav>
     </div>
   );
 
@@ -442,6 +448,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                       </div>
                       <button
                         onClick={() => removeFile(index)}
+                        aria-label={t('upload.removeFile', { fileName: file.name })}
                         className="flex-shrink-0 p-1 text-primary-400 hover:text-primary-600 transition-colors"
                       >
                         <X className="w-4 h-4" />
@@ -474,6 +481,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <button
                   type="button"
                   onClick={() => setSourceLanguage('de')}
+                  aria-pressed={sourceLanguage === 'de'}
                   className={`flex-1 max-w-[160px] px-6 py-4 rounded-xl font-medium transition-all flex flex-col items-center space-y-2 ${
                     sourceLanguage === 'de'
                       ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-400 shadow-md'
@@ -486,6 +494,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <button
                   type="button"
                   onClick={() => setSourceLanguage('en')}
+                  aria-pressed={sourceLanguage === 'en'}
                   className={`flex-1 max-w-[160px] px-6 py-4 rounded-xl font-medium transition-all flex flex-col items-center space-y-2 ${
                     sourceLanguage === 'en'
                       ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-400 shadow-md'
@@ -533,6 +542,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <div className="flex flex-wrap gap-2 sm:gap-3 justify-center">
                   <button
                     onClick={() => setSelectedLanguage(null)}
+                    aria-pressed={!selectedLanguage}
                     className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                       !selectedLanguage
                         ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-300 shadow-sm'
@@ -553,6 +563,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                             language.code === selectedLanguage ? null : language.code
                           )
                         }
+                        aria-pressed={selectedLanguage === language.code}
                         className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 ${
                           selectedLanguage === language.code
                             ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-300 shadow-sm'
@@ -565,6 +576,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
 
                   <button
                     onClick={() => setShowAllLanguages(!showAllLanguages)}
+                    aria-expanded={showAllLanguages}
                     className={`px-4 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 flex items-center space-x-1 ${
                       showAllLanguages
                         ? 'bg-brand-100 text-brand-700 ring-2 ring-brand-200'
@@ -589,6 +601,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-neutral-400" />
                           <input
                             type="text"
+                            id="language-search"
+                            aria-label={t('upload.searchLanguage')}
                             placeholder={t('upload.searchLanguage')}
                             value={languageSearchTerm}
                             onChange={e => setLanguageSearchTerm(e.target.value)}
@@ -642,7 +656,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                               lang.code.toLowerCase().includes(languageSearchTerm.toLowerCase())
                           ).length === 0 &&
                           languageSearchTerm && (
-                            <div className="text-center py-4 text-sm text-neutral-500">
+                            <div role="alert" aria-live="polite" className="text-center py-4 text-sm text-neutral-500">
                               {t('upload.noLanguagesFound', { term: languageSearchTerm })}
                             </div>
                           )}
@@ -664,6 +678,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     </span>
                     <button
                       onClick={() => setSelectedLanguage(null)}
+                      aria-label={t('upload.clearLanguageSelection')}
                       className="ml-auto text-brand-600 hover:text-brand-700 text-sm font-medium"
                     >
                       ✕
@@ -754,6 +769,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     <Link
                       to="/datenschutz"
                       target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${t('upload.privacyPolicy')} (${t('accessibility.opensInNewTab')})`}
                       className="text-brand-600 hover:text-brand-700 underline font-medium"
                     >
                       {t('upload.privacyPolicy')}
@@ -808,7 +825,14 @@ const FileUpload: React.FC<FileUploadProps> = ({
                   </span>
                 </span>
               </div>
-              <div className="mt-2 w-full bg-neutral-200 rounded-full h-2 overflow-hidden">
+              <div
+                role="progressbar"
+                aria-valuenow={Math.round(qualityGateError.details.confidence_score * 100)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={t('qualityGate.qualityScore')}
+                className="mt-2 w-full bg-neutral-200 rounded-full h-2 overflow-hidden"
+              >
                 <div
                   className="h-full bg-gradient-to-r from-amber-400 to-amber-600 rounded-full transition-all duration-500"
                   style={{ width: `${qualityGateError.details.confidence_score * 100}%` }}

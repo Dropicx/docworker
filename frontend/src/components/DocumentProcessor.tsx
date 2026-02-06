@@ -361,7 +361,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                   </p>
                 </div>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleCancel} title={t('processing.cancel')}>
+              <Button variant="ghost" size="icon" onClick={handleCancel} aria-label={t('processing.cancel')}>
                 <X className="w-5 h-5" />
               </Button>
             </div>
@@ -441,7 +441,7 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
             </div>
           </div>
 
-          <Button variant="ghost" size="icon" onClick={handleCancel} title={t('processing.cancelProcessing')}>
+          <Button variant="ghost" size="icon" onClick={handleCancel} aria-label={t('processing.cancelProcessing')}>
             <X className="w-5 h-5" />
           </Button>
         </div>
@@ -503,11 +503,29 @@ const DocumentProcessor: React.FC<DocumentProcessorProps> = ({
                 </div>
               </div>
 
-              <div className="progress-bar h-3">
+              <div
+                role="progressbar"
+                aria-valuenow={Math.round(displayedProgress)}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={t('processing.progress')}
+                className="progress-bar h-3"
+              >
                 <div
                   className={`progress-fill bg-gradient-to-r ${getProgressColor()} transition-none`}
                   style={{ width: `${displayedProgress}%` }}
                 />
+              </div>
+
+              {/* Screen reader live region for status updates */}
+              <div
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+                className="sr-only"
+              >
+                {t('processing.progress')}: {Math.round(displayedProgress)}%
+                {status?.current_step && ` - ${status.current_step}`}
               </div>
 
               {status?.current_step && (

@@ -169,10 +169,18 @@ function App() {
     const { t } = useTranslation();
     return (
       <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
+        {/* Skip to main content link for keyboard/screen reader users */}
+        <a
+          href="#main-content"
+          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:ring-2 focus:ring-brand-500"
+        >
+          {t('accessibility.skipToMain')}
+        </a>
+
         <Header health={health} onLogoClick={handleNewTranslation} />
 
         {/* Main Content */}
-        <main className="relative">
+        <main id="main-content" className="relative" tabIndex={-1}>
           {/* Subtle background gradient */}
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.08),transparent)]" />
 

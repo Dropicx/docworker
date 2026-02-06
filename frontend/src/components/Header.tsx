@@ -234,7 +234,7 @@ export const Header: React.FC<HeaderProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={handleSettingsClick}
-                  title={t('header.settings')}
+                  aria-label={t('header.settings')}
                   className="text-primary-600 hover:text-brand-600 hover:bg-brand-50"
                 >
                   <Settings className="w-5 h-5" />
@@ -243,7 +243,7 @@ export const Header: React.FC<HeaderProps> = ({
                   variant="ghost"
                   size="icon"
                   onClick={handleLogout}
-                  title={t('header.logout')}
+                  aria-label={t('header.logout')}
                   className="text-primary-600 hover:text-error-600 hover:bg-error-50"
                 >
                   <LogOut className="w-5 h-5" />

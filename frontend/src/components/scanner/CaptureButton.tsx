@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 interface CaptureButtonProps {
   onCapture: () => void;
@@ -10,6 +11,7 @@ const RADIUS = 36;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 const CaptureButton: React.FC<CaptureButtonProps> = ({ onCapture, autoProgress, disabled }) => {
+  const { t } = useTranslation();
   const dashOffset = CIRCUMFERENCE * (1 - autoProgress);
 
   return (
@@ -17,7 +19,7 @@ const CaptureButton: React.FC<CaptureButtonProps> = ({ onCapture, autoProgress, 
       onClick={onCapture}
       disabled={disabled}
       className="relative w-[80px] h-[80px] flex items-center justify-center focus:outline-none disabled:opacity-50"
-      aria-label="Foto aufnehmen"
+      aria-label={t('scanner.capture')}
     >
       {/* Progress ring */}
       <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 80 80">

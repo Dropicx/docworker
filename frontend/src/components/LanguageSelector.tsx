@@ -102,6 +102,9 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
           type="button"
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
+          aria-expanded={isOpen}
+          aria-haspopup="listbox"
+          aria-controls="language-listbox"
           className={`w-full px-4 py-3 text-left border rounded-xl transition-all duration-200 ${
             disabled
               ? 'bg-neutral-100 border-neutral-200 text-neutral-400 cursor-not-allowed'
@@ -139,7 +142,12 @@ const LanguageSelector: React.FC<LanguageSelectorProps> = ({
             <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
 
             {/* Dropdown */}
-            <div className="absolute top-full left-0 right-0 z-50 mt-2 bg-white border border-neutral-200 rounded-xl shadow-lg max-h-80 flex flex-col">
+            <div
+              id="language-listbox"
+              role="listbox"
+              aria-label={t('languageSelector.label')}
+              className="absolute top-full left-0 right-0 z-50 mt-2 bg-white border border-neutral-200 rounded-xl shadow-lg max-h-80 flex flex-col"
+            >
               {/* Search */}
               <div className="p-3 border-b border-neutral-100">
                 <div className="relative">

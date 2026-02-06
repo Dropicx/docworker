@@ -322,15 +322,21 @@ class PipelineStepRepository(BaseRepository[DynamicPipelineStepDB]):
         Returns:
             New step instance or None if original not found
         """
+        from sqlalchemy import func
+
         original = self.get(step_id)
         if not original:
             return None
+
+        # Get the maximum order value to avoid conflicts
+        max_order = self.db.query(func.max(self.model.order)).scalar() or 0
+        new_order = max_order + 1
 
         # Create new step with copied attributes
         return self.create(
             name=new_name,
             description=original.description,
-            order=original.order + 1,  # Place after original
+            order=new_order,  # Place at the end to avoid conflicts
             enabled=False,  # Start disabled
             prompt_template=original.prompt_template,
             system_prompt=original.system_prompt,

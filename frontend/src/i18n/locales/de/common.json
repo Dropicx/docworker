@@ -43,6 +43,8 @@
     "scanDocument": "Dokument scannen",
     "selectedFiles": "Ausgewählte Dateien ({{count}})",
     "removeAll": "Alle entfernen",
+    "removeFile": "Datei {{fileName}} entfernen",
+    "clearLanguageSelection": "Sprachauswahl löschen",
     "documentLanguage": "Sprache des Dokuments",
     "german": "Deutsch",
     "english": "Englisch",
@@ -184,7 +186,8 @@
     "error": "Ein Fehler ist aufgetreten.",
     "scannedDocument": "Gescanntes Dokument",
     "retake": "Wiederholen",
-    "use": "Verwenden"
+    "use": "Verwenden",
+    "capture": "Foto aufnehmen"
   },
   "feedback": {
     "title": "Wie war Ihre Übersetzung?",
@@ -368,7 +371,10 @@
     "file": "Datei",
     "sourceLanguage": "Dokumentsprache",
     "targetLanguage": "Zielsprache",
-    "step3Hint": "Möchten Sie das Dokument zusätzlich in eine andere Sprache übersetzen?"
+    "step3Hint": "Möchten Sie das Dokument zusätzlich in eine andere Sprache übersetzen?",
+    "progressLabel": "Fortschritt",
+    "step": "Schritt",
+    "completed": "abgeschlossen"
   },
   "languages": {
     "de": "Deutsch",
@@ -404,6 +410,10 @@
     "universalLanguage": "Universal (alle Sprachen)",
     "germanOnly": "Nur Deutsch (German input)",
     "englishOnly": "Nur Englisch (English input)"
+  },
+  "accessibility": {
+    "skipToMain": "Zum Hauptinhalt springen",
+    "opensInNewTab": "öffnet in neuem Tab"
   },
   "common": {
     "cancel": "Abbrechen",
