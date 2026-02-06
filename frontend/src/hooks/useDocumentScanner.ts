@@ -128,8 +128,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const { x, y, width, height } = guide;
     const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.1, height * 0.1);
 
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
 
     // Top-left corner bracket
@@ -161,8 +161,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     ctx.stroke();
 
     // Draw small corner markers (circles)
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-    const markerRadius = 4;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    const markerRadius = 5;
     const corners = [
       { cx: x, cy: y },
       { cx: x + width, cy: y },
