@@ -1,6 +1,14 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 
-export type ScannerPhase = 'initializing' | 'scanning' | 'captured' | 'error';
+export type ScannerPhase = 'initializing' | 'scanning' | 'captured' | 'processing' | 'error';
+
+export interface ImageQuality {
+  isBlurry: boolean;
+  blurScore: number;
+  brightness: number;
+  contrast: number;
+  isAcceptable: boolean;
+}
 
 interface UseDocumentScannerReturn {
   phase: ScannerPhase;
@@ -10,6 +18,7 @@ interface UseDocumentScannerReturn {
   autoProgress: number;
   errorMessage: string | null;
   documentAligned: boolean;
+  imageQuality: ImageQuality | null;
   startCamera: () => Promise<void>;
   captureManual: () => void;
   confirmCapture: () => File | null;
@@ -31,6 +40,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const [autoProgress, setAutoProgress] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [documentAligned, setDocumentAligned] = useState(false);
+  const [imageQuality, setImageQuality] = useState<ImageQuality | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -41,6 +51,107 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const lastFrameTimeRef = useRef(0);
   const stableStartRef = useRef<number | null>(null);
   const phaseRef = useRef<ScannerPhase>('initializing');
+
+  // Analyze image quality (blur, brightness, contrast)
+  const analyzeImageQuality = useCallback((canvas: HTMLCanvasElement): ImageQuality => {
+    const ctx = canvas.getContext('2d')!;
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    // Calculate brightness and contrast
+    let totalBrightness = 0;
+    let minBrightness = 255;
+    let maxBrightness = 0;
+    const grayscale: number[] = [];
+
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      grayscale.push(gray);
+      totalBrightness += gray;
+      minBrightness = Math.min(minBrightness, gray);
+      maxBrightness = Math.max(maxBrightness, gray);
+    }
+
+    const avgBrightness = totalBrightness / grayscale.length;
+    const contrast = maxBrightness - minBrightness;
+
+    // Calculate blur score using Laplacian variance approximation
+    // Higher score = sharper image, lower score = blurry
+    let laplacianSum = 0;
+    const width = canvas.width;
+    const height = canvas.height;
+
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const idx = y * width + x;
+        // Laplacian kernel: center * 4 - neighbors
+        const laplacian = 4 * grayscale[idx] -
+          grayscale[idx - 1] - grayscale[idx + 1] -
+          grayscale[idx - width] - grayscale[idx + width];
+        laplacianSum += laplacian * laplacian;
+      }
+    }
+
+    const blurScore = Math.sqrt(laplacianSum / ((width - 2) * (height - 2)));
+    const isBlurry = blurScore < 15; // Threshold for blur detection
+
+    // Image is acceptable if not too blurry and has decent contrast
+    const isAcceptable = !isBlurry && contrast > 50 && avgBrightness > 40 && avgBrightness < 220;
+
+    return {
+      isBlurry,
+      blurScore: Math.round(blurScore * 10) / 10,
+      brightness: Math.round(avgBrightness),
+      contrast: Math.round(contrast),
+      isAcceptable
+    };
+  }, []);
+
+  // Enhance image (auto-adjust brightness/contrast)
+  const enhanceImage = useCallback((canvas: HTMLCanvasElement): void => {
+    const ctx = canvas.getContext('2d')!;
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = imageData.data;
+
+    // Find min/max values for contrast stretching
+    let minVal = 255;
+    let maxVal = 0;
+
+    for (let i = 0; i < data.length; i += 4) {
+      const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      minVal = Math.min(minVal, gray);
+      maxVal = Math.max(maxVal, gray);
+    }
+
+    // Apply contrast stretching if needed
+    const range = maxVal - minVal;
+    if (range < 200 && range > 10) { // Only enhance if contrast is low
+      const scale = 255 / range;
+      for (let i = 0; i < data.length; i += 4) {
+        data[i] = Math.min(255, Math.max(0, (data[i] - minVal) * scale));     // R
+        data[i + 1] = Math.min(255, Math.max(0, (data[i + 1] - minVal) * scale)); // G
+        data[i + 2] = Math.min(255, Math.max(0, (data[i + 2] - minVal) * scale)); // B
+      }
+      ctx.putImageData(imageData, 0, 0);
+    }
+
+    // Slight sharpening using unsharp mask approximation
+    // (simplified version - applies a subtle sharpen)
+    const tempCanvas = document.createElement('canvas');
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = canvas.height;
+    const tempCtx = tempCanvas.getContext('2d')!;
+
+    // Draw slightly blurred version
+    tempCtx.filter = 'blur(1px)';
+    tempCtx.drawImage(canvas, 0, 0);
+    tempCtx.filter = 'none';
+
+    // Blend original with difference for sharpening
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.globalAlpha = 1;
+    ctx.drawImage(canvas, 0, 0);
+  }, []);
 
   // Calculate A4 guide frame dimensions for given video dimensions
   const calculateA4GuideFrame = useCallback((videoWidth: number, videoHeight: number) => {
@@ -210,6 +321,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     if (!vw || !vh) return;
 
     stopDetectionLoop();
+    setPhase('processing'); // Show processing state
 
     if (!captureCanvasRef.current) {
       captureCanvasRef.current = document.createElement('canvas');
@@ -244,12 +356,25 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     // Pause video (keep stream alive for retake)
     video.pause();
 
-    const url = canvas.toDataURL('image/jpeg', 0.98);
-    setCapturedImageUrl(url);
-    setAutoProgress(0);
-    clearOverlay();
-    setPhase('captured');
-  }, [stopDetectionLoop, clearOverlay, calculateA4GuideFrame]);
+    // Use setTimeout to allow UI to update before processing
+    setTimeout(() => {
+      // Analyze image quality before enhancement
+      const qualityBefore = analyzeImageQuality(canvas);
+
+      // Apply image enhancement (contrast stretching, etc.)
+      enhanceImage(canvas);
+
+      // Analyze quality after enhancement
+      const quality = analyzeImageQuality(canvas);
+      setImageQuality(quality);
+
+      const url = canvas.toDataURL('image/jpeg', 0.95);
+      setCapturedImageUrl(url);
+      setAutoProgress(0);
+      clearOverlay();
+      setPhase('captured');
+    }, 50);
+  }, [stopDetectionLoop, clearOverlay, calculateA4GuideFrame, analyzeImageQuality, enhanceImage]);
 
   const startDetectionLoop = useCallback(() => {
     if (!processingCanvasRef.current) {
@@ -464,6 +589,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setCapturedImageUrl(null);
     setAutoProgress(0);
     setDocumentAligned(false);
+    setImageQuality(null);
     stableStartRef.current = null;
 
     const video = videoRef.current;
@@ -497,6 +623,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setAutoProgress(0);
     setErrorMessage(null);
     setDocumentAligned(false);
+    setImageQuality(null);
     stableStartRef.current = null;
     setPhase('initializing');
   }, [stopDetectionLoop]);
@@ -509,6 +636,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     autoProgress,
     errorMessage,
     documentAligned,
+    imageQuality,
     startCamera,
     captureManual,
     confirmCapture,

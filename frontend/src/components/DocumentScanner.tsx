@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, RotateCcw, Check, AlertCircle, Loader2 } from 'lucide-react';
+import { X, RotateCcw, Check, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentScanner } from '../hooks/useDocumentScanner';
 import CaptureButton from './scanner/CaptureButton';
@@ -21,6 +21,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
     autoProgress,
     errorMessage,
     documentAligned,
+    imageQuality,
     startCamera,
     captureManual,
     confirmCapture,
@@ -149,27 +150,67 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
           </div>
         )}
 
-        {/* Video + overlay — always mounted to preserve stream, hidden when captured */}
+        {/* Video + overlay — always mounted to preserve stream, hidden when captured/processing */}
         <video
           ref={videoRef as React.RefObject<HTMLVideoElement>}
-          className={`absolute inset-0 w-full h-full object-cover ${phase === 'captured' ? 'hidden' : ''}`}
+          className={`absolute inset-0 w-full h-full object-cover ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
           playsInline
           autoPlay
           muted
         />
         <canvas
           ref={overlayCanvasRef as React.RefObject<HTMLCanvasElement>}
-          className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${phase === 'captured' ? 'hidden' : ''}`}
+          className={`absolute inset-0 w-full h-full object-cover pointer-events-none ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
         />
 
-        {/* Captured phase — preview */}
+        {/* Processing phase — show spinner while enhancing image */}
+        {phase === 'processing' && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white space-y-4">
+            <Loader2 className="w-12 h-12 animate-spin text-brand-400" />
+            <p className="text-base font-medium">{t('scanner.optimizing')}</p>
+          </div>
+        )}
+
+        {/* Captured phase — preview with quality info */}
         {phase === 'captured' && capturedImageUrl && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black">
-            <img
-              src={capturedImageUrl}
-              alt={t('scanner.scannedDocument')}
-              className="max-w-full max-h-full object-contain"
-            />
+          <div className="absolute inset-0 flex flex-col bg-black">
+            {/* Quality warning banner */}
+            {imageQuality && imageQuality.isBlurry && (
+              <div className="bg-amber-500/90 px-4 py-2 flex items-center justify-center gap-2 text-white text-sm font-medium">
+                <AlertTriangle className="w-4 h-4" />
+                {t('scanner.imageBlurry')}
+              </div>
+            )}
+            {/* Image preview */}
+            <div className="flex-1 flex items-center justify-center p-2">
+              <img
+                src={capturedImageUrl}
+                alt={t('scanner.scannedDocument')}
+                className="max-w-full max-h-full object-contain rounded-lg"
+              />
+            </div>
+            {/* Quality badge */}
+            {imageQuality && (
+              <div className="absolute bottom-20 left-1/2 -translate-x-1/2">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm ${
+                  imageQuality.isAcceptable
+                    ? 'bg-green-500/80 text-white'
+                    : 'bg-amber-500/80 text-white'
+                }`}>
+                  {imageQuality.isAcceptable ? (
+                    <>
+                      <Check className="w-3.5 h-3.5" />
+                      {t('scanner.goodQuality')}
+                    </>
+                  ) : (
+                    <>
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      {t('scanner.lowQuality')}
+                    </>
+                  )}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>
