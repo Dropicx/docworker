@@ -30,6 +30,243 @@ import {
 
 type AppState = 'upload' | 'processing' | 'result' | 'error';
 
+interface MainAppProps {
+  health: HealthCheck | null;
+  appState: AppState;
+  error: string | null;
+  errorMetadata: Record<string, unknown> | null;
+  qualityGateError: QualityGateErrorDetails | null;
+  translationResult: TranslationData | null;
+  pendingFile: File | null;
+  pendingLanguage: string | null;
+  pendingSourceLanguage: 'de' | 'en';
+  availableLanguages: SupportedLanguage[];
+  languagesLoaded: boolean;
+  onNewTranslation: () => void;
+  onStartProcessing: (file: File, language: string | null, sourceLanguage: 'de' | 'en') => void;
+  onUploadError: (errorMessage: string) => void;
+  onProcessingComplete: (processingId?: string) => Promise<void>;
+  onProcessingError: (errorMessage: string, metadata?: Record<string, unknown>) => void;
+  onProcessingCancel: () => void;
+  onQualityGateError: (errorDetails: QualityGateErrorDetails) => void;
+  onClearQualityGateError: () => void;
+}
+
+const MainApp: React.FC<MainAppProps> = ({
+  health,
+  appState,
+  error,
+  errorMetadata,
+  qualityGateError,
+  translationResult,
+  pendingFile,
+  pendingLanguage,
+  pendingSourceLanguage,
+  availableLanguages,
+  languagesLoaded,
+  onNewTranslation,
+  onStartProcessing,
+  onUploadError,
+  onProcessingComplete,
+  onProcessingError,
+  onProcessingCancel,
+  onQualityGateError,
+  onClearQualityGateError,
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
+      {/* Skip to main content link for keyboard/screen reader users */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:ring-2 focus:ring-brand-500"
+      >
+        {t('accessibility.skipToMain')}
+      </a>
+
+      <Header health={health} onLogoClick={onNewTranslation} />
+
+      {/* Main Content */}
+      <main id="main-content" className="relative" tabIndex={-1}>
+        {/* Subtle background gradient */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.08),transparent)]" />
+
+        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
+          {/* Error State */}
+          {appState === 'error' && (
+            <div className="animate-fade-in max-w-5xl mx-auto">
+              {errorMetadata?.isTermination ? (
+                <TerminationCard
+                  message={error || t('error.processingStopped')}
+                  reason={errorMetadata.reason as string | undefined}
+                  step={errorMetadata.step as string | undefined}
+                  onReset={onNewTranslation}
+                />
+              ) : (
+                <Card className="border-error-200/50 bg-gradient-to-br from-error-50/50 to-white shadow-medium">
+                  <CardContent className="p-6 sm:p-8">
+                    <div className="flex items-start space-x-4">
+                      <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-error-500 to-error-600 rounded-xl flex items-center justify-center">
+                        <AlertTriangle className="w-6 h-6 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h3 className="text-xl font-bold text-error-900 mb-2">
+                          {t('error.processingFailed')}
+                        </h3>
+                        <p className="text-error-700 mb-6 leading-relaxed">{error}</p>
+                        <Button variant="brand" onClick={onNewTranslation}>
+                          <Sparkles className="w-4 h-4" />
+                          {t('error.retry')}
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+
+          {/* Upload State */}
+          {appState === 'upload' && (
+            <div className="space-y-10 sm:space-y-14 lg:space-y-20">
+              {/* Hero Section — split layout on desktop */}
+              <div className="flex flex-col lg:flex-row lg:items-center lg:gap-12 xl:gap-16">
+                {/* Left: Heading + trust badges */}
+                <div className="lg:w-[55%] text-center lg:text-left space-y-5 sm:space-y-6 mb-8 lg:mb-0">
+                  <h2 className="text-hero bg-gradient-to-r from-primary-900 via-brand-700 to-accent-700 bg-clip-text text-transparent px-2 lg:px-0">
+                    {t('hero.title1')}
+                    <br className="hidden sm:block" />
+                    <span className="sm:hidden"> </span>
+                    <span className="bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">
+                      {t('hero.title2')}
+                    </span>
+                  </h2>
+                  <p className="text-lead max-w-xl mx-auto lg:mx-0 px-4 sm:px-0">
+                    {t('hero.description')}
+                  </p>
+
+                  {/* Trust badges */}
+                  <div className="flex flex-col sm:flex-row justify-center lg:justify-start items-center sm:items-start gap-2 sm:gap-6 text-xs sm:text-sm">
+                    <div className="flex items-center space-x-2 text-primary-600">
+                      <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
+                      <span className="font-medium">{t('hero.gdpr')}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-primary-600">
+                      <div className="w-2 h-2 bg-accent-500 rounded-full"></div>
+                      <span className="font-medium">{t('hero.ready')}</span>
+                    </div>
+                    <div className="flex items-center space-x-2 text-primary-600">
+                      <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
+                      <span className="font-medium">{t('hero.noStorage')}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Right: Upload component */}
+                <div className="lg:w-[45%]">
+                  <FileUpload
+                    onStartProcessing={onStartProcessing}
+                    onUploadError={onUploadError}
+                    availableLanguages={availableLanguages}
+                    languagesLoaded={languagesLoaded}
+                    qualityGateError={qualityGateError}
+                    onClearQualityGateError={onClearQualityGateError}
+                  />
+                </div>
+              </div>
+
+              {/* Feature Cards with shadcn Card */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
+                <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
+                  <CardHeader className="pb-2 sm:pb-3">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
+                      <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                      {t('features.privacyTitle')}
+                    </h3>
+                    <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                      {t('features.privacyDescription')}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
+                  <CardHeader className="pb-2 sm:pb-3">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
+                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                      {t('features.precisionTitle')}
+                    </h3>
+                    <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                      {t('features.precisionDescription')}
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 sm:col-span-2 lg:col-span-1">
+                  <CardHeader className="pb-2 sm:pb-3">
+                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
+                      <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                      {t('features.speedTitle')}
+                    </h3>
+                    <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                      {t('features.speedDescription')}
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* FAQ Section */}
+              <div className="mt-8 sm:mt-12 lg:mt-16">
+                <FAQ />
+              </div>
+            </div>
+          )}
+
+          {/* Processing State (unified upload → processing) */}
+          {appState === 'processing' && pendingFile && (
+            <div className="animate-fade-in max-w-5xl mx-auto">
+              <DocumentProcessor
+                file={pendingFile}
+                selectedLanguage={pendingLanguage}
+                sourceLanguage={pendingSourceLanguage}
+                onComplete={onProcessingComplete}
+                onError={onProcessingError}
+                onCancel={onProcessingCancel}
+                onQualityGateError={onQualityGateError}
+              />
+            </div>
+          )}
+
+          {/* Result State */}
+          {appState === 'result' && translationResult && (
+            <div className="animate-fade-in">
+              <TranslationResult
+                result={translationResult}
+                onNewTranslation={onNewTranslation}
+              />
+            </div>
+          )}
+        </div>
+      </main>
+
+      <Footer />
+      <CookieFreeBanner />
+    </div>
+  );
+};
+
 function App() {
   const [appState, setAppState] = useState<AppState>('upload');
   const [translationResult, setTranslationResult] = useState<TranslationData | null>(null);
@@ -165,204 +402,35 @@ function App() {
     setAppState('upload');
   };
 
-  const MainApp = () => {
-    const { t } = useTranslation();
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
-        {/* Skip to main content link for keyboard/screen reader users */}
-        <a
-          href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-[60] focus:bg-white focus:px-4 focus:py-2 focus:rounded-lg focus:shadow-lg focus:ring-2 focus:ring-brand-500"
-        >
-          {t('accessibility.skipToMain')}
-        </a>
-
-        <Header health={health} onLogoClick={handleNewTranslation} />
-
-        {/* Main Content */}
-        <main id="main-content" className="relative" tabIndex={-1}>
-          {/* Subtle background gradient */}
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,rgba(16,185,129,0.08),transparent)]" />
-
-          <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
-            {/* Error State */}
-            {appState === 'error' && (
-              <div className="animate-fade-in max-w-5xl mx-auto">
-                {errorMetadata?.isTermination ? (
-                  <TerminationCard
-                    message={error || t('error.processingStopped')}
-                    reason={errorMetadata.reason as string | undefined}
-                    step={errorMetadata.step as string | undefined}
-                    onReset={handleNewTranslation}
-                  />
-                ) : (
-                  <Card className="border-error-200/50 bg-gradient-to-br from-error-50/50 to-white shadow-medium">
-                    <CardContent className="p-6 sm:p-8">
-                      <div className="flex items-start space-x-4">
-                        <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-error-500 to-error-600 rounded-xl flex items-center justify-center">
-                          <AlertTriangle className="w-6 h-6 text-white" />
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-error-900 mb-2">
-                            {t('error.processingFailed')}
-                          </h3>
-                          <p className="text-error-700 mb-6 leading-relaxed">{error}</p>
-                          <Button variant="brand" onClick={handleNewTranslation}>
-                            <Sparkles className="w-4 h-4" />
-                            {t('error.retry')}
-                          </Button>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            )}
-
-            {/* Upload State */}
-            {appState === 'upload' && (
-              <div className="space-y-10 sm:space-y-14 lg:space-y-20">
-                {/* Hero Section — split layout on desktop */}
-                <div className="flex flex-col lg:flex-row lg:items-center lg:gap-12 xl:gap-16">
-                  {/* Left: Heading + trust badges */}
-                  <div className="lg:w-[55%] text-center lg:text-left space-y-5 sm:space-y-6 mb-8 lg:mb-0">
-                    <h2 className="text-hero bg-gradient-to-r from-primary-900 via-brand-700 to-accent-700 bg-clip-text text-transparent px-2 lg:px-0">
-                      {t('hero.title1')}
-                      <br className="hidden sm:block" />
-                      <span className="sm:hidden"> </span>
-                      <span className="bg-gradient-to-r from-brand-600 to-accent-600 bg-clip-text text-transparent">
-                        {t('hero.title2')}
-                      </span>
-                    </h2>
-                    <p className="text-lead max-w-xl mx-auto lg:mx-0 px-4 sm:px-0">
-                      {t('hero.description')}
-                    </p>
-
-                    {/* Trust badges */}
-                    <div className="flex flex-col sm:flex-row justify-center lg:justify-start items-center sm:items-start gap-2 sm:gap-6 text-xs sm:text-sm">
-                      <div className="flex items-center space-x-2 text-primary-600">
-                        <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                        <span className="font-medium">{t('hero.gdpr')}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-primary-600">
-                        <div className="w-2 h-2 bg-accent-500 rounded-full"></div>
-                        <span className="font-medium">{t('hero.ready')}</span>
-                      </div>
-                      <div className="flex items-center space-x-2 text-primary-600">
-                        <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                        <span className="font-medium">{t('hero.noStorage')}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right: Upload component */}
-                  <div className="lg:w-[45%]">
-                    <FileUpload
-                      onStartProcessing={handleStartProcessing}
-                      onUploadError={handleUploadError}
-                      availableLanguages={availableLanguages}
-                      languagesLoaded={languagesLoaded}
-                      qualityGateError={qualityGateError}
-                      onClearQualityGateError={() => setQualityGateError(null)}
-                    />
-                  </div>
-                </div>
-
-                {/* Feature Cards with shadcn Card */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                  <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
-                    <CardHeader className="pb-2 sm:pb-3">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
-                        <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                        {t('features.privacyTitle')}
-                      </h3>
-                      <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                        {t('features.privacyDescription')}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
-                    <CardHeader className="pb-2 sm:pb-3">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
-                        <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                        {t('features.precisionTitle')}
-                      </h3>
-                      <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                        {t('features.precisionDescription')}
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 sm:col-span-2 lg:col-span-1">
-                    <CardHeader className="pb-2 sm:pb-3">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
-                        <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                        {t('features.speedTitle')}
-                      </h3>
-                      <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                        {t('features.speedDescription')}
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* FAQ Section */}
-                <div className="mt-8 sm:mt-12 lg:mt-16">
-                  <FAQ />
-                </div>
-              </div>
-            )}
-
-            {/* Processing State (unified upload → processing) */}
-            {appState === 'processing' && pendingFile && (
-              <div className="animate-fade-in max-w-5xl mx-auto">
-                <DocumentProcessor
-                  file={pendingFile}
-                  selectedLanguage={pendingLanguage}
-                  sourceLanguage={pendingSourceLanguage}
-                  onComplete={handleProcessingComplete}
-                  onError={handleProcessingError}
-                  onCancel={handleProcessingCancel}
-                  onQualityGateError={handleQualityGateError}
-                />
-              </div>
-            )}
-
-            {/* Result State */}
-            {appState === 'result' && translationResult && (
-              <div className="animate-fade-in">
-                <TranslationResult
-                  result={translationResult}
-                  onNewTranslation={handleNewTranslation}
-                />
-              </div>
-            )}
-          </div>
-        </main>
-
-        <Footer />
-        <CookieFreeBanner />
-      </div>
-    );
-  };
-
   return (
     <AuthProvider>
       <Routes>
-        <Route path="/" element={<MainApp />} />
+        <Route
+          path="/"
+          element={
+            <MainApp
+              health={health}
+              appState={appState}
+              error={error}
+              errorMetadata={errorMetadata}
+              qualityGateError={qualityGateError}
+              translationResult={translationResult}
+              pendingFile={pendingFile}
+              pendingLanguage={pendingLanguage}
+              pendingSourceLanguage={pendingSourceLanguage}
+              availableLanguages={availableLanguages}
+              languagesLoaded={languagesLoaded}
+              onNewTranslation={handleNewTranslation}
+              onStartProcessing={handleStartProcessing}
+              onUploadError={handleUploadError}
+              onProcessingComplete={handleProcessingComplete}
+              onProcessingError={handleProcessingError}
+              onProcessingCancel={handleProcessingCancel}
+              onQualityGateError={handleQualityGateError}
+              onClearQualityGateError={() => setQualityGateError(null)}
+            />
+          }
+        />
         <Route path="/chat" element={<ChatPage />} />
         <Route path="/login" element={<Login />} />
         <Route
