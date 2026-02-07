@@ -172,6 +172,28 @@ class FeedbackApiService {
     });
     return this.handleResponse<FeedbackDetail>(response);
   }
+
+  /**
+   * Manually trigger AI analysis for a feedback entry (admin only)
+   * @param feedbackId - Feedback entry ID
+   */
+  async triggerAnalysis(feedbackId: number): Promise<{
+    status: string;
+    message?: string;
+    summary?: {
+      pii_issues: string[];
+      translation_issues: string[];
+      recommendations: string[];
+      overall_quality_score: number;
+    };
+    tokens_used?: number;
+  }> {
+    const response = await fetch(`${API_BASE}/admin/${feedbackId}/analyze`, {
+      method: 'POST',
+      headers: this.getHeaders(),
+    });
+    return this.handleResponse(response);
+  }
 }
 
 export const feedbackApi = new FeedbackApiService();

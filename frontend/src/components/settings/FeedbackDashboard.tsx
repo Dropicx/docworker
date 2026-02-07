@@ -211,6 +211,9 @@ const FeedbackDashboard: React.FC = () => {
   const [showContent, setShowContent] = useState(false);
   const [showAnalysisText, setShowAnalysisText] = useState(false);
 
+  // Analysis trigger state
+  const [analyzingId, setAnalyzingId] = useState<number | null>(null);
+
   const ITEMS_PER_PAGE = 10;
 
   // Update token when auth changes
@@ -285,6 +288,27 @@ const FeedbackDashboard: React.FC = () => {
       console.error('Failed to load feedback detail:', err);
     } finally {
       setLoadingDetail(false);
+    }
+  };
+
+  // Handle manual AI analysis trigger
+  const handleTriggerAnalysis = async (feedbackId: number, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAnalyzingId(feedbackId);
+
+    try {
+      await feedbackApi.triggerAnalysis(feedbackId);
+      // Refresh detail if expanded
+      if (expandedId === feedbackId) {
+        const detail = await feedbackApi.getFeedbackDetail(feedbackId);
+        setFeedbackDetail(detail);
+      }
+      // Refresh list to update status
+      await fetchEntries();
+    } catch (err) {
+      console.error('Analysis failed:', err);
+    } finally {
+      setAnalyzingId(null);
     }
   };
 
@@ -655,7 +679,41 @@ const FeedbackDashboard: React.FC = () => {
                                   ({entry.ai_analysis_quality_score}/10)
                                 </span>
                               )}
+                            {/* Retry button for FAILED/PENDING */}
+                            {(entry.ai_analysis_status === 'FAILED' ||
+                              entry.ai_analysis_status === 'PENDING') && (
+                              <button
+                                onClick={e => handleTriggerAnalysis(entry.id, e)}
+                                disabled={analyzingId === entry.id}
+                                className="ml-2 p-1 text-brand-600 hover:bg-brand-50 rounded disabled:opacity-50"
+                                title="Analyse starten"
+                              >
+                                {analyzingId === entry.id ? (
+                                  <Loader2 className="w-3 h-3 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="w-3 h-3" />
+                                )}
+                              </button>
+                            )}
                           </div>
+                        ) : entry.data_consent_given ? (
+                          <button
+                            onClick={e => handleTriggerAnalysis(entry.id, e)}
+                            disabled={analyzingId === entry.id}
+                            className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-brand-600 hover:text-brand-700 bg-brand-50 hover:bg-brand-100 rounded border border-brand-200 disabled:opacity-50"
+                          >
+                            {analyzingId === entry.id ? (
+                              <>
+                                <Loader2 className="w-3 h-3 animate-spin" />
+                                <span>Analysiere...</span>
+                              </>
+                            ) : (
+                              <>
+                                <Brain className="w-3 h-3" />
+                                <span>Analysieren</span>
+                              </>
+                            )}
+                          </button>
                         ) : (
                           <span className="text-primary-400 text-sm">-</span>
                         )}
@@ -888,27 +946,57 @@ const FeedbackDashboard: React.FC = () => {
                                     )}
 
                                     {feedbackDetail.ai_analysis_status === 'PENDING' && (
-                                      <div className="flex items-center space-x-2 text-primary-500">
-                                        <Clock className="w-4 h-4" />
-                                        <span className="text-sm">
-                                          Analyse wartet auf Ausführung
-                                        </span>
+                                      <div className="flex items-center justify-between">
+                                        <div className="flex items-center space-x-2 text-primary-500">
+                                          <Clock className="w-4 h-4" />
+                                          <span className="text-sm">
+                                            Analyse wartet auf Ausführung
+                                          </span>
+                                        </div>
+                                        <button
+                                          onClick={e => handleTriggerAnalysis(feedbackDetail.id, e)}
+                                          disabled={analyzingId === feedbackDetail.id}
+                                          className="flex items-center space-x-1 px-3 py-1.5 text-sm font-medium text-brand-600 bg-brand-50 hover:bg-brand-100 rounded border border-brand-200 disabled:opacity-50"
+                                        >
+                                          {analyzingId === feedbackDetail.id ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                          ) : (
+                                            <Brain className="w-4 h-4" />
+                                          )}
+                                          <span>Jetzt analysieren</span>
+                                        </button>
                                       </div>
                                     )}
 
                                     {feedbackDetail.ai_analysis_status === 'FAILED' &&
                                       feedbackDetail.ai_analysis_error && (
                                         <div className="bg-error-50 border border-error-200 rounded p-3">
-                                          <div className="flex items-start space-x-2">
-                                            <AlertCircle className="w-4 h-4 text-error-600 flex-shrink-0 mt-0.5" />
-                                            <div>
-                                              <p className="text-sm font-medium text-error-700">
-                                                Analyse fehlgeschlagen
-                                              </p>
-                                              <p className="text-xs text-error-600 mt-1">
-                                                {feedbackDetail.ai_analysis_error}
-                                              </p>
+                                          <div className="flex items-start justify-between">
+                                            <div className="flex items-start space-x-2">
+                                              <AlertCircle className="w-4 h-4 text-error-600 flex-shrink-0 mt-0.5" />
+                                              <div>
+                                                <p className="text-sm font-medium text-error-700">
+                                                  Analyse fehlgeschlagen
+                                                </p>
+                                                <p className="text-xs text-error-600 mt-1">
+                                                  {feedbackDetail.ai_analysis_error}
+                                                </p>
+                                              </div>
                                             </div>
+                                            <button
+                                              onClick={e =>
+                                                handleTriggerAnalysis(feedbackDetail.id, e)
+                                              }
+                                              disabled={analyzingId === feedbackDetail.id}
+                                              className="flex items-center space-x-1 px-2 py-1 text-xs font-medium text-error-600 hover:bg-error-100 rounded"
+                                            >
+                                              {analyzingId === feedbackDetail.id ? (
+                                                <Loader2 className="w-3 h-3 animate-spin" />
+                                              ) : (
+                                                <RefreshCw className="w-3 h-3" />
+                                              )}
+                                              <span>Erneut versuchen</span>
+                                            </button>
                                           </div>
                                         </div>
                                       )}

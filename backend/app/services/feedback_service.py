@@ -107,13 +107,7 @@ class FeedbackService:
             if not data_consent_given:
                 logger.info(f"Clearing content for {processing_id} - consent not given")
                 self.job_feedback_repo.clear_content_for_job(processing_id)
-            else:
-                # Consent given - trigger AI analysis if feature enabled
-                logger.info(f"Consent given for {processing_id}, triggering AI analysis...")
-                analysis_triggered = self._trigger_ai_analysis(feedback.id)
-                logger.info(
-                    f"AI analysis trigger result for feedback {feedback.id}: {analysis_triggered}"
-                )
+            # Note: AI analysis is now triggered manually by admin via FeedbackDashboard
 
         logger.info(
             f"Feedback submitted for {processing_id}: rating={overall_rating}, consent={data_consent_given}"
