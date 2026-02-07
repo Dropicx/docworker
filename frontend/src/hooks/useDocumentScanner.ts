@@ -137,9 +137,11 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
     const blurScore = Math.sqrt(laplacianSum / ((width - 2) * (height - 2)));
     // If low contrast (mostly uniform image like blank paper), can't reliably detect blur
-    const isBlurry = contrast > 20 ? blurScore < 5 : false;
+    // Use very low threshold (2) - modern cameras rarely produce truly blurry images
+    const isBlurry = contrast > 15 ? blurScore < 2 : false;
 
-    const isAcceptable = !isBlurry && contrast > 20 && avgBrightness > 30 && avgBrightness < 230;
+    // Be lenient - if we have some contrast and reasonable brightness, it's acceptable
+    const isAcceptable = !isBlurry && contrast > 15 && avgBrightness > 20 && avgBrightness < 240;
 
     return {
       isBlurry,
@@ -253,8 +255,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     guideFrame: { x: number; y: number; width: number; height: number }
   ): boolean => {
     const sampleSize = 100; // Sample 100x100 pixel region from center
-    const sharpnessThreshold = 5; // Laplacian variance threshold (lower = more blur tolerance)
-    const minContrast = 15; // Minimum contrast to perform blur check (skip uniform areas)
+    const sharpnessThreshold = 2; // Laplacian variance threshold (very low - modern cameras are sharp)
+    const minContrast = 10; // Minimum contrast to perform blur check (skip uniform areas)
 
     // Sample from center of guide frame
     const centerX = Math.round(guideFrame.x + guideFrame.width / 2 - sampleSize / 2);
