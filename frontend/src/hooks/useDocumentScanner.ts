@@ -136,9 +136,9 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
 
     const blurScore = Math.sqrt(laplacianSum / ((width - 2) * (height - 2)));
-    const isBlurry = blurScore < 15;
+    const isBlurry = blurScore < 8; // Lowered threshold - high-res images have different blur characteristics
 
-    const isAcceptable = !isBlurry && contrast > 50 && avgBrightness > 40 && avgBrightness < 220;
+    const isAcceptable = !isBlurry && contrast > 30 && avgBrightness > 30 && avgBrightness < 230;
 
     return {
       isBlurry,
@@ -294,12 +294,13 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     y: number,
     width: number,
     height: number,
-    color: string = '#ffffff'
+    color: string = '#ffffff',
+    dpr: number = 1
   ) => {
-    const bracketLen = Math.min(CORNER_BRACKET_LENGTH, width * 0.15, height * 0.15);
+    const bracketLen = Math.min(CORNER_BRACKET_LENGTH * dpr, width * 0.15, height * 0.15);
 
     ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 3 * dpr;
     ctx.lineCap = 'round';
 
     // Top-left corner bracket
@@ -337,7 +338,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     corners: CornerPoints,
     offsetX: number,
     offsetY: number,
-    color: string = '#22c55e'
+    color: string = '#22c55e',
+    dpr: number = 1
   ) => {
     const { topLeftCorner: tl, topRightCorner: tr,
             bottomLeftCorner: bl, bottomRightCorner: br } = corners;
@@ -354,7 +356,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
     // Draw quad outline
     ctx.strokeStyle = color;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 3 * dpr;
     ctx.beginPath();
     ctx.moveTo(tlX, tlY);
     ctx.lineTo(trX, trY);
@@ -367,7 +369,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     ctx.fillStyle = color;
     for (const [cx, cy] of [[tlX, tlY], [trX, trY], [blX, blY], [brX, brY]]) {
       ctx.beginPath();
-      ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+      ctx.arc(cx, cy, 8 * dpr, 0, Math.PI * 2);
       ctx.fill();
     }
   }, []);
@@ -531,25 +533,30 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         return;
       }
 
+      // Account for device pixel ratio for sharper rendering
+      const dpr = window.devicePixelRatio || 1;
+      const canvasW = Math.round(containerW * dpr);
+      const canvasH = Math.round(containerH * dpr);
+
       // Calculate scale to fit video in container (like object-contain)
       const scale = Math.min(containerW / videoW, containerH / videoH);
-      const scaledW = videoW * scale;
-      const scaledH = videoH * scale;
-      const offsetX = (containerW - scaledW) / 2;
-      const offsetY = (containerH - scaledH) / 2;
+      const scaledW = videoW * scale * dpr;
+      const scaledH = videoH * scale * dpr;
+      const offsetX = (canvasW - scaledW) / 2;
+      const offsetY = (canvasH - scaledH) / 2;
 
-      // Store scale for capture coordinate conversion
+      // Store scale for capture coordinate conversion (in CSS pixels, not canvas pixels)
       displayScaleRef.current = scale;
 
-      // Set canvas resolution to match container
-      if (displayCanvas.width !== containerW || displayCanvas.height !== containerH) {
-        displayCanvas.width = containerW;
-        displayCanvas.height = containerH;
+      // Set canvas resolution to match container * DPR for sharp rendering
+      if (displayCanvas.width !== canvasW || displayCanvas.height !== canvasH) {
+        displayCanvas.width = canvasW;
+        displayCanvas.height = canvasH;
       }
 
       // Clear and draw black background (letterbox)
       ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, containerW, containerH);
+      ctx.fillRect(0, 0, canvasW, canvasH);
 
       // Draw video frame (centered with letterbox)
       ctx.drawImage(video, offsetX, offsetY, scaledW, scaledH);
@@ -596,8 +603,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
             width: guide.width,
             height: guide.height
           },
-          containerW,
-          containerH
+          canvasW,
+          canvasH
         );
       }
 
@@ -640,7 +647,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       if (corners) {
         // Draw detected document outline - green if sharp, yellow if blurry
         const quadColor = isSharp ? '#22c55e' : '#eab308';
-        drawDetectedQuad(ctx, corners, offsetX, offsetY, quadColor);
+        drawDetectedQuad(ctx, corners, offsetX, offsetY, quadColor, dpr);
       } else {
         // Show static guide with color feedback
         const guide = calculateA4GuideFrame(scaledW, scaledH);
@@ -655,7 +662,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
           offsetY + guide.y,
           guide.width,
           guide.height,
-          guideColor
+          guideColor,
+          dpr
         );
       }
 
