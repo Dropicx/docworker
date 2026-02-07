@@ -760,6 +760,53 @@ export default class Scanner {
   }
 
   /**
+   * Highlights the detected paper in the image with a colored overlay.
+   * @param image Source image (HTMLCanvasElement, HTMLImageElement, etc.)
+   * @param options { color: string, thickness: number }
+   * @returns HTMLCanvasElement with highlighted paper, or null if no paper detected
+   */
+  highlightPaper(
+    image: HTMLCanvasElement | HTMLImageElement,
+    options: { color?: string; thickness?: number } = {}
+  ): HTMLCanvasElement | null {
+    const cv = getCv();
+    if (!cv?.Mat) return null;
+
+    const canvas = document.createElement('canvas');
+    const img = cv.imread(image);
+
+    canvas.width = img.cols;
+    canvas.height = img.rows;
+
+    const contour = this.findPaperContour(img);
+    if (!contour) {
+      img.delete();
+      return null;
+    }
+
+    const color = options.color || '#00FF00';
+    const thickness = options.thickness || 3;
+
+    // Parse hex color to BGR
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+
+    // Draw the contour on the image
+    const contours = new cv.MatVector();
+    contours.push_back(contour);
+    cv.drawContours(img, contours, 0, new cv.Scalar(b, g, r, 255), thickness);
+
+    cv.imshow(canvas, img);
+
+    img.delete();
+    contour.delete();
+    contours.delete();
+
+    return canvas;
+  }
+
+  /**
    * Perform comprehensive quality check on detected document.
    * @param img cv.Mat of the current frame
    * @param corners Detected corner points
