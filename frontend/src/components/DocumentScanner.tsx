@@ -139,15 +139,111 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
   })();
 
   const content = (
-    <div
-      className="fixed inset-0 z-[100] bg-black flex flex-col"
-      style={{
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-      }}
-    >
-      {/* Top bar */}
-      <div className="relative z-10 flex items-center justify-between px-4 py-3">
+    <div className="fixed inset-0 z-[100] bg-black">
+      {/* Hidden video element - only used for capturing stream, not displayed */}
+      <video
+        ref={videoRef as React.RefObject<HTMLVideoElement>}
+        className="hidden"
+        playsInline
+        autoPlay
+        muted
+      />
+
+      {/* Unified display canvas - fills entire screen */}
+      <canvas
+        ref={displayCanvasRef as React.RefObject<HTMLCanvasElement>}
+        className={`absolute inset-0 w-full h-full bg-black ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
+      />
+
+      {/* Initializing phase */}
+      {(phase === 'initializing' || opencvStatus === 'loading') && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-white space-y-4 z-20">
+          <Loader2 className="w-10 h-10 animate-spin text-white/80" />
+          <p className="text-sm text-white/70">
+            {opencvStatus === 'loading' ? t('scanner.loadingScanner', 'Loading scanner...') : t('scanner.starting')}
+          </p>
+        </div>
+      )}
+
+      {/* Error phase */}
+      {(phase === 'error' || opencvStatus === 'error') && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-white space-y-4 px-8 z-20">
+          <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+            <AlertCircle className="w-8 h-8 text-red-400" />
+          </div>
+          <p className="text-sm text-white/80 text-center leading-relaxed">
+            {opencvStatus === 'error'
+              ? t('scanner.loadError', 'Failed to load scanner. Please check your connection and try again.')
+              : (errorMessage || t('scanner.error'))}
+          </p>
+          <button
+            onClick={handleClose}
+            className="px-6 py-2.5 bg-white/20 backdrop-blur-sm rounded-lg text-white text-sm font-medium"
+          >
+            {t('scanner.close')}
+          </button>
+        </div>
+      )}
+
+      {/* Processing phase — show spinner while enhancing image */}
+      {phase === 'processing' && (
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white space-y-4 z-20">
+          <Loader2 className="w-12 h-12 animate-spin text-brand-400" />
+          <p className="text-base font-medium">{t('scanner.optimizing')}</p>
+        </div>
+      )}
+
+      {/* Captured phase — preview with quality info */}
+      {phase === 'captured' && capturedImageUrl && (
+        <div className="absolute inset-0 flex flex-col bg-black z-20">
+          {/* Quality warning banner */}
+          {imageQuality && imageQuality.isBlurry && (
+            <div
+              className="bg-amber-500/90 px-4 py-2 flex items-center justify-center gap-2 text-white text-sm font-medium"
+              style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 8px)' }}
+            >
+              <AlertTriangle className="w-4 h-4" />
+              {t('scanner.imageBlurry')}
+            </div>
+          )}
+          {/* Image preview */}
+          <div className="flex-1 min-h-0 flex items-center justify-center p-2">
+            <img
+              src={capturedImageUrl}
+              alt={t('scanner.scannedDocument')}
+              className="w-auto h-auto max-w-full max-h-full object-contain rounded-lg"
+            />
+          </div>
+          {/* Quality badge */}
+          {imageQuality && (
+            <div className="absolute bottom-20 left-1/2 -translate-x-1/2">
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm ${
+                imageQuality.isAcceptable
+                  ? 'bg-green-500/80 text-white'
+                  : 'bg-amber-500/80 text-white'
+              }`}>
+                {imageQuality.isAcceptable ? (
+                  <>
+                    <Check className="w-3.5 h-3.5" />
+                    {t('scanner.goodQuality')}
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="w-3.5 h-3.5" />
+                    {t('scanner.lowQuality')}
+                  </>
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Top bar - overlaid */}
+      <div
+        className="absolute top-0 left-0 right-0 z-30 flex items-center justify-between px-4 py-3"
+        style={{ paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)' }}
+      >
         <button
           onClick={handleClose}
           className="w-10 h-10 flex items-center justify-center rounded-full bg-black/40 backdrop-blur-sm text-white"
@@ -160,107 +256,11 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
         <div className="w-10" />
       </div>
 
-      {/* Main content area */}
-      <div className="flex-1 relative overflow-hidden">
-        {/* Initializing phase */}
-        {(phase === 'initializing' || opencvStatus === 'loading') && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-white space-y-4">
-            <Loader2 className="w-10 h-10 animate-spin text-white/80" />
-            <p className="text-sm text-white/70">
-              {opencvStatus === 'loading' ? t('scanner.loadingScanner', 'Loading scanner...') : t('scanner.starting')}
-            </p>
-          </div>
-        )}
-
-        {/* Error phase */}
-        {(phase === 'error' || opencvStatus === 'error') && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-white space-y-4 px-8">
-            <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
-              <AlertCircle className="w-8 h-8 text-red-400" />
-            </div>
-            <p className="text-sm text-white/80 text-center leading-relaxed">
-              {opencvStatus === 'error'
-                ? t('scanner.loadError', 'Failed to load scanner. Please check your connection and try again.')
-                : (errorMessage || t('scanner.error'))}
-            </p>
-            <button
-              onClick={handleClose}
-              className="px-6 py-2.5 bg-white/20 backdrop-blur-sm rounded-lg text-white text-sm font-medium"
-            >
-              {t('scanner.close')}
-            </button>
-          </div>
-        )}
-
-        {/* Hidden video element - only used for capturing stream, not displayed */}
-        <video
-          ref={videoRef as React.RefObject<HTMLVideoElement>}
-          className="hidden"
-          playsInline
-          autoPlay
-          muted
-        />
-        {/* Unified display canvas - renders video + guide overlay together */}
-        {/* This ensures perfect alignment between what user sees and what gets captured */}
-        <canvas
-          ref={displayCanvasRef as React.RefObject<HTMLCanvasElement>}
-          className={`absolute inset-0 w-full h-full bg-black ${phase === 'captured' || phase === 'processing' ? 'hidden' : ''}`}
-        />
-
-        {/* Processing phase — show spinner while enhancing image */}
-        {phase === 'processing' && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black text-white space-y-4">
-            <Loader2 className="w-12 h-12 animate-spin text-brand-400" />
-            <p className="text-base font-medium">{t('scanner.optimizing')}</p>
-          </div>
-        )}
-
-        {/* Captured phase — preview with quality info */}
-        {phase === 'captured' && capturedImageUrl && (
-          <div className="absolute inset-0 flex flex-col bg-black">
-            {/* Quality warning banner */}
-            {imageQuality && imageQuality.isBlurry && (
-              <div className="bg-amber-500/90 px-4 py-2 flex items-center justify-center gap-2 text-white text-sm font-medium">
-                <AlertTriangle className="w-4 h-4" />
-                {t('scanner.imageBlurry')}
-              </div>
-            )}
-            {/* Image preview */}
-            <div className="flex-1 min-h-0 flex items-center justify-center p-2">
-              <img
-                src={capturedImageUrl}
-                alt={t('scanner.scannedDocument')}
-                className="w-auto h-auto max-w-full max-h-full object-contain rounded-lg"
-              />
-            </div>
-            {/* Quality badge */}
-            {imageQuality && (
-              <div className="absolute bottom-20 left-1/2 -translate-x-1/2">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium backdrop-blur-sm ${
-                  imageQuality.isAcceptable
-                    ? 'bg-green-500/80 text-white'
-                    : 'bg-amber-500/80 text-white'
-                }`}>
-                  {imageQuality.isAcceptable ? (
-                    <>
-                      <Check className="w-3.5 h-3.5" />
-                      {t('scanner.goodQuality')}
-                    </>
-                  ) : (
-                    <>
-                      <AlertTriangle className="w-3.5 h-3.5" />
-                      {t('scanner.lowQuality')}
-                    </>
-                  )}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Bottom bar */}
-      <div className="relative z-10 px-4 py-4">
+      {/* Bottom bar - overlaid */}
+      <div
+        className="absolute bottom-0 left-0 right-0 z-30 px-4 py-4"
+        style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 16px)' }}
+      >
         {/* Scanning controls */}
         {phase === 'scanning' && (
           <div className="flex items-center justify-center">
