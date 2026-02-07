@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import Scanner, { CornerPoints, OrientationResult } from '../lib/jscanify';
+import Scanner, { CornerPoints, OrientationResult, QualityWarning } from '../lib/jscanify';
 
 export type ScannerPhase = 'initializing' | 'scanning' | 'captured' | 'processing' | 'error';
 
@@ -27,6 +27,7 @@ interface UseDocumentScannerReturn {
   imageQuality: ImageQuality | null;
   orientationUncertain: boolean;
   detectedOrientation: OrientationResult | null;
+  realtimeWarnings: QualityWarning[];
   startCamera: () => Promise<void>;
   captureManual: () => void;
   confirmCapture: () => File | null;
@@ -43,6 +44,8 @@ const GUIDE_PADDING = 0.06; // 6% padding from edges
 const CORNER_BRACKET_LENGTH = 100; // Length of corner bracket arms in pixels
 const STABLE_FRAMES_REQUIRED = 10; // ~330ms at 30fps for stability
 const CORNER_STABILITY_TOLERANCE = 15; // Pixel tolerance for corner stability
+const SMOOTHING_FACTOR = 0.4; // EMA smoothing for corners (higher = more responsive)
+const QUALITY_CHECK_INTERVAL = 5; // Check quality every N frames (~6 times/second at 30fps)
 
 export function useDocumentScanner(): UseDocumentScannerReturn {
   const [phase, setPhase] = useState<ScannerPhase>('initializing');
@@ -55,6 +58,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const [opencvReady, setOpencvReady] = useState(false);
   const [orientationUncertain, setOrientationUncertain] = useState(false);
   const [detectedOrientation, setDetectedOrientation] = useState<OrientationResult | null>(null);
+  const [realtimeWarnings, setRealtimeWarnings] = useState<QualityWarning[]>([]);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -71,6 +75,11 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const lastCornersRef = useRef<CornerPoints | null>(null);
   const stableFramesRef = useRef(0);
   const displayScaleRef = useRef(1);
+
+  // Smooth overlay tracking refs
+  const smoothedCornersRef = useRef<CornerPoints | null>(null);
+  const qualityCheckCounterRef = useRef(0);
+  const realtimeWarningsRef = useRef<QualityWarning[]>([]);
 
   // Check OpenCV availability on mount
   useEffect(() => {
@@ -100,6 +109,29 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       scannerRef.current = new Scanner();
     }
     return scannerRef.current;
+  }, []);
+
+  // Interpolate corners for smooth overlay tracking (EMA)
+  const interpolateCorners = useCallback((current: CornerPoints, target: CornerPoints): CornerPoints => {
+    const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+    return {
+      topLeftCorner: {
+        x: lerp(current.topLeftCorner.x, target.topLeftCorner.x, SMOOTHING_FACTOR),
+        y: lerp(current.topLeftCorner.y, target.topLeftCorner.y, SMOOTHING_FACTOR),
+      },
+      topRightCorner: {
+        x: lerp(current.topRightCorner.x, target.topRightCorner.x, SMOOTHING_FACTOR),
+        y: lerp(current.topRightCorner.y, target.topRightCorner.y, SMOOTHING_FACTOR),
+      },
+      bottomLeftCorner: {
+        x: lerp(current.bottomLeftCorner.x, target.bottomLeftCorner.x, SMOOTHING_FACTOR),
+        y: lerp(current.bottomLeftCorner.y, target.bottomLeftCorner.y, SMOOTHING_FACTOR),
+      },
+      bottomRightCorner: {
+        x: lerp(current.bottomRightCorner.x, target.bottomRightCorner.x, SMOOTHING_FACTOR),
+        y: lerp(current.bottomRightCorner.y, target.bottomRightCorner.y, SMOOTHING_FACTOR),
+      },
+    };
   }, []);
 
   // Analyze image quality (blur, brightness, contrast) - lenient blur detection
@@ -302,7 +334,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     ctx.stroke();
   }, []);
 
-  // Draw detected quad (green outline when document detected)
+  // Draw detected quad with semi-transparent fill and outline
   const drawDetectedQuad = useCallback((
     ctx: CanvasRenderingContext2D,
     corners: CornerPoints,
@@ -323,6 +355,16 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const blY = offsetY + bl.y;
     const brX = offsetX + br.x;
     const brY = offsetY + br.y;
+
+    // Draw semi-transparent fill (~15% opacity)
+    ctx.fillStyle = color + '26'; // hex 26 = 38/255 ≈ 15%
+    ctx.beginPath();
+    ctx.moveTo(tlX, tlY);
+    ctx.lineTo(trX, trY);
+    ctx.lineTo(brX, brY);
+    ctx.lineTo(blX, blY);
+    ctx.closePath();
+    ctx.fill();
 
     // Draw quad outline
     ctx.strokeStyle = color;
@@ -621,9 +663,45 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
       // Draw overlay - simplified to two states (detected vs not detected)
       if (corners) {
-        // Green when document detected via OpenCV
-        drawDetectedQuad(ctx, corners, offsetX, offsetY, '#22c55e', dpr);
+        // Smooth the corners for fluid overlay tracking
+        const smoothed = smoothedCornersRef.current
+          ? interpolateCorners(smoothedCornersRef.current, corners)
+          : corners;
+        smoothedCornersRef.current = smoothed;
+
+        // Run sampled quality check (every N frames for performance)
+        qualityCheckCounterRef.current++;
+        if (qualityCheckCounterRef.current >= QUALITY_CHECK_INTERVAL) {
+          qualityCheckCounterRef.current = 0;
+          try {
+            // Create a temporary canvas for quality analysis
+            const detectCanvas = document.createElement('canvas');
+            detectCanvas.width = scaledW;
+            detectCanvas.height = scaledH;
+            const detectCtx = detectCanvas.getContext('2d')!;
+            detectCtx.drawImage(video, 0, 0, scaledW, scaledH);
+            const cv = (window as any).cv;
+            if (cv?.Mat) {
+              const img = cv.imread(detectCanvas);
+              const scanner = getScanner();
+              const quality = scanner.checkQuality(img, corners, scaledW, scaledH);
+              realtimeWarningsRef.current = quality.warnings;
+              setRealtimeWarnings(quality.warnings);
+              img.delete();
+            }
+          } catch {
+            // Silently ignore quality check errors
+          }
+        }
+
+        // Green when document detected via OpenCV (use smoothed corners for drawing)
+        drawDetectedQuad(ctx, smoothed, offsetX, offsetY, '#22c55e', dpr);
       } else {
+        // Reset smoothing and quality warnings when document is lost
+        smoothedCornersRef.current = null;
+        qualityCheckCounterRef.current = 0;
+        realtimeWarningsRef.current = [];
+        setRealtimeWarnings([]);
         // Show static guide - green if brightness detected paper, white if not
         const guide = calculateA4GuideFrame(scaledW, scaledH);
         const guideColor = isAlignedByBrightness ? '#22c55e' : 'rgba(255, 255, 255, 0.5)';
@@ -638,10 +716,12 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         );
       }
 
-      // Auto-capture timer - no sharpness check (unreliable across devices)
-      // For OpenCV: require corner stability. For brightness fallback: just require alignment
+      // Auto-capture timer - quality-gated to prevent capture with severe issues
+      // For OpenCV: require corner stability AND no error-level warnings
+      // For brightness fallback: just require alignment
+      const hasNoErrors = realtimeWarningsRef.current.every(w => w.severity !== 'error');
       const shouldCountdown = corners
-        ? stableFramesRef.current >= STABLE_FRAMES_REQUIRED
+        ? stableFramesRef.current >= STABLE_FRAMES_REQUIRED && hasNoErrors
         : isAlignedByBrightness;
 
       if (shouldCountdown) {
@@ -666,7 +746,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     };
 
     rafRef.current = requestAnimationFrame(displayLoop);
-  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide, drawGuideFrame, drawDetectedQuad, cornersAreSimilar, getScanner]);
+  }, [captureFrame, calculateA4GuideFrame, checkPaperInGuide, drawGuideFrame, drawDetectedQuad, cornersAreSimilar, getScanner, interpolateCorners]);
 
   const startCamera = useCallback(async () => {
     setPhase('initializing');
@@ -752,10 +832,14 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setDetectedCorners(null);
     setOrientationUncertain(false);
     setDetectedOrientation(null);
+    setRealtimeWarnings([]);
     detectedCornersRef.current = null;
     lastCornersRef.current = null;
     stableFramesRef.current = 0;
     stableStartRef.current = null;
+    smoothedCornersRef.current = null;
+    qualityCheckCounterRef.current = 0;
+    realtimeWarningsRef.current = [];
 
     const video = videoRef.current;
     if (video && video.srcObject) {
@@ -810,10 +894,14 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setDetectedCorners(null);
     setOrientationUncertain(false);
     setDetectedOrientation(null);
+    setRealtimeWarnings([]);
     detectedCornersRef.current = null;
     lastCornersRef.current = null;
     stableFramesRef.current = 0;
     stableStartRef.current = null;
+    smoothedCornersRef.current = null;
+    qualityCheckCounterRef.current = 0;
+    realtimeWarningsRef.current = [];
     setPhase('initializing');
   }, [stopDetectionLoop]);
 
@@ -828,6 +916,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     imageQuality,
     orientationUncertain,
     detectedOrientation,
+    realtimeWarnings,
     startCamera,
     captureManual,
     confirmCapture,

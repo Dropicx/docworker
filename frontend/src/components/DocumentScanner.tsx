@@ -1,8 +1,9 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { X, RotateCcw, RotateCw, Check, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentScanner } from '../hooks/useDocumentScanner';
+import { QualityWarning } from '../lib/jscanify';
 import CaptureButton from './scanner/CaptureButton';
 
 interface DocumentScannerProps {
@@ -23,6 +24,7 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
     documentAligned,
     imageQuality,
     orientationUncertain,
+    realtimeWarnings,
     startCamera,
     captureManual,
     confirmCapture,
@@ -30,6 +32,17 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
     cleanup,
     rotatePreview,
   } = useDocumentScanner();
+
+  // Get highest priority warning for guidance display
+  // Priority order: tooSmall > incomplete > glare > blur > skew
+  const guidanceWarning = useMemo((): QualityWarning | null => {
+    if (realtimeWarnings.length === 0) return null;
+    const priorityOrder = ['tooSmall', 'incomplete', 'glare', 'blur', 'skew'];
+    const sorted = [...realtimeWarnings].sort((a, b) =>
+      priorityOrder.indexOf(a.type) - priorityOrder.indexOf(b.type)
+    );
+    return sorted[0];
+  }, [realtimeWarnings]);
 
   useEffect(() => {
     if (isOpen) {
@@ -88,6 +101,19 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
               />
             </div>
           </div>
+        );
+      }
+      // Document detected but has quality warnings - show guidance
+      if (documentAligned && guidanceWarning) {
+        return (
+          <span className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium backdrop-blur-sm ${
+            guidanceWarning.severity === 'error'
+              ? 'bg-red-500/90 text-white'
+              : 'bg-amber-500/90 text-white'
+          }`}>
+            <AlertTriangle className="w-4 h-4" />
+            {t(guidanceWarning.message)}
+          </span>
         );
       }
       // Document not detected or not aligned
