@@ -184,11 +184,11 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
               </div>
             )}
             {/* Image preview */}
-            <div className="flex-1 flex items-center justify-center p-2">
+            <div className="flex-1 min-h-0 flex items-center justify-center p-2">
               <img
                 src={capturedImageUrl}
                 alt={t('scanner.scannedDocument')}
-                className="max-w-full max-h-full object-contain rounded-lg"
+                className="w-auto h-auto max-w-full max-h-full object-contain rounded-lg"
               />
             </div>
             {/* Quality badge */}
