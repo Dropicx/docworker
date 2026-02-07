@@ -111,11 +111,13 @@ export const Header: React.FC<HeaderProps> = ({
           }
         >
           {isHealthy ? (
-            <Shield className="w-3 h-3 mr-1" />
+            <Shield className="w-3 h-3 sm:mr-1" />
           ) : (
-            <AlertTriangle className="w-3 h-3 mr-1" />
+            <AlertTriangle className="w-3 h-3 sm:mr-1" />
           )}
-          {isHealthy ? t('header.systemReady') : hasWarnings ? t('header.systemDegraded') : t('header.systemError')}
+          <span className="hidden sm:inline">
+            {isHealthy ? t('header.systemReady') : hasWarnings ? t('header.systemDegraded') : t('header.systemError')}
+          </span>
         </Badge>
       );
     }
@@ -145,11 +147,13 @@ export const Header: React.FC<HeaderProps> = ({
               }`}
             >
               {isHealthy ? (
-                <Shield className="w-3 h-3 mr-1" />
+                <Shield className="w-3 h-3 sm:mr-1" />
               ) : (
-                <AlertTriangle className="w-3 h-3 mr-1" />
+                <AlertTriangle className="w-3 h-3 sm:mr-1" />
               )}
-              {isHealthy ? t('header.systemReady') : hasWarnings ? t('header.systemDegraded') : t('header.systemError')}
+              <span className="hidden sm:inline">
+                {isHealthy ? t('header.systemReady') : hasWarnings ? t('header.systemDegraded') : t('header.systemError')}
+              </span>
             </Badge>
           </Button>
         </DropdownMenuTrigger>

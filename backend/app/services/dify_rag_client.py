@@ -242,20 +242,55 @@ class DifyRAGClient:
         )
 
     async def check_health(self) -> dict:
-        """Check health of Dify RAG service."""
+        """
+        Check health of Dify RAG service.
+
+        Dify doesn't have a standard /health endpoint, so we:
+        1. Check if the server is reachable (any HTTP response)
+        2. Optionally verify the API key works via /v1/parameters
+        """
         if not self.url:
             return {"status": "not_configured", "url": None}
 
         try:
-            async with httpx.AsyncClient(timeout=5.0) as client:
-                response = await client.get(f"{self.url}/health")
+            async with httpx.AsyncClient(timeout=5.0, follow_redirects=True) as client:
+                # First check: Is the server reachable?
+                # Dify root typically redirects to /apps, which is fine
+                response = await client.get(self.url)
 
-                if response.status_code == 200:
+                # Any successful response (2xx, 3xx) means server is up
+                if response.status_code < 400:
+                    # If we have an API key, verify it works
+                    if self.api_key:
+                        try:
+                            auth_response = await client.get(
+                                f"{self.url}/v1/parameters",
+                                headers={"Authorization": f"Bearer {self.api_key}"}
+                            )
+                            if auth_response.status_code == 200:
+                                return {
+                                    "status": "healthy",
+                                    "url": self.url,
+                                    "enabled": self.is_enabled,
+                                    "api_key_valid": True,
+                                }
+                            elif auth_response.status_code in (401, 403):
+                                return {
+                                    "status": "auth_error",
+                                    "url": self.url,
+                                    "enabled": self.is_enabled,
+                                    "error": "Invalid API key",
+                                }
+                        except Exception:
+                            # Auth check failed but server is up
+                            pass
+
                     return {
                         "status": "healthy",
                         "url": self.url,
                         "enabled": self.is_enabled,
                     }
+
                 return {
                     "status": "error",
                     "url": self.url,
