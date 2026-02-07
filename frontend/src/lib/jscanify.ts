@@ -33,6 +33,18 @@ export interface QualityResult {
   documentCoverage: number;
 }
 
+export interface OrientationResult {
+  rotation: 0 | 90 | 180 | 270;
+  confidence: number; // 0-1
+}
+
+export interface ExtractPaperResult {
+  canvas: HTMLCanvasElement;
+  appliedSkewCorrection: number;
+  detectedOrientation: OrientationResult;
+  orientationCorrected: boolean;
+}
+
 function distance(p1: Point, p2: Point): number {
   return Math.hypot(p1.x - p2.x, p1.y - p2.y);
 }
@@ -377,6 +389,357 @@ export default class Scanner {
   }
 
   /**
+   * Calculate residual skew using Hough Line Transform.
+   * Detects dominant horizontal lines in the corrected image.
+   * @param img cv.Mat to analyze
+   * @returns Skew angle in degrees (positive = clockwise tilt)
+   */
+  private calculateResidualSkew(img: any): number {
+    const cv = getCv();
+    if (!cv?.Mat) return 0;
+
+    let gray: any = null;
+    let edges: any = null;
+    let lines: any = null;
+
+    try {
+      // Convert to grayscale
+      gray = new cv.Mat();
+      if (img.channels() === 4) {
+        cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY);
+      } else if (img.channels() === 3) {
+        cv.cvtColor(img, gray, cv.COLOR_RGB2GRAY);
+      } else {
+        gray = img.clone();
+      }
+
+      // Canny edge detection
+      edges = new cv.Mat();
+      cv.Canny(gray, edges, 50, 150, 3);
+
+      // Detect lines using HoughLinesP
+      lines = new cv.Mat();
+      cv.HoughLinesP(edges, lines, 1, Math.PI / 180, 50, 50, 10);
+
+      if (lines.rows === 0) {
+        return 0;
+      }
+
+      // Collect angles of near-horizontal lines (within 30° of horizontal)
+      const angles: number[] = [];
+      for (let i = 0; i < lines.rows; i++) {
+        const x1 = lines.data32S[i * 4];
+        const y1 = lines.data32S[i * 4 + 1];
+        const x2 = lines.data32S[i * 4 + 2];
+        const y2 = lines.data32S[i * 4 + 3];
+
+        const angle = Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI);
+        // Only consider near-horizontal lines (within 30° of 0° or 180°)
+        if (Math.abs(angle) < 30 || Math.abs(angle) > 150) {
+          // Normalize to -30 to 30 range
+          const normalized = angle > 90 ? angle - 180 : (angle < -90 ? angle + 180 : angle);
+          angles.push(normalized);
+        }
+      }
+
+      if (angles.length === 0) {
+        return 0;
+      }
+
+      // Return median angle for robustness
+      angles.sort((a, b) => a - b);
+      const median = angles[Math.floor(angles.length / 2)];
+      return median;
+    } catch {
+      return 0;
+    } finally {
+      if (gray) gray.delete();
+      if (edges) edges.delete();
+      if (lines) lines.delete();
+    }
+  }
+
+  /**
+   * Apply rotation correction using affine transform.
+   * @param img cv.Mat to rotate
+   * @param angle Rotation angle in degrees (positive = counter-clockwise)
+   * @returns Rotated cv.Mat (caller must delete)
+   */
+  private applyRotation(img: any, angle: number): any {
+    const cv = getCv();
+    if (!cv?.Mat) return img.clone();
+
+    const center = new cv.Point(img.cols / 2, img.rows / 2);
+    const rotationMatrix = cv.getRotationMatrix2D(center, angle, 1.0);
+
+    const rotated = new cv.Mat();
+    const dsize = new cv.Size(img.cols, img.rows);
+    // Use white background (255,255,255,255) for the border
+    cv.warpAffine(
+      img,
+      rotated,
+      rotationMatrix,
+      dsize,
+      cv.INTER_LINEAR,
+      cv.BORDER_CONSTANT,
+      new cv.Scalar(255, 255, 255, 255)
+    );
+
+    rotationMatrix.delete();
+    return rotated;
+  }
+
+  /**
+   * Rotate image by 90, 180, or 270 degrees using cv.rotate().
+   * @param img cv.Mat to rotate
+   * @param degrees Rotation in degrees (90, 180, or 270)
+   * @returns Rotated cv.Mat (caller must delete)
+   */
+  private rotateImage90(img: any, degrees: number): any {
+    const cv = getCv();
+    if (!cv?.Mat) return img.clone();
+
+    const rotated = new cv.Mat();
+    switch (degrees) {
+      case 90:
+        cv.rotate(img, rotated, cv.ROTATE_90_CLOCKWISE);
+        break;
+      case 180:
+        cv.rotate(img, rotated, cv.ROTATE_180);
+        break;
+      case 270:
+        cv.rotate(img, rotated, cv.ROTATE_90_COUNTERCLOCKWISE);
+        break;
+      default:
+        return img.clone();
+    }
+    return rotated;
+  }
+
+  /**
+   * Score how well an image orientation matches expected document characteristics.
+   * Higher score = more likely correct orientation.
+   * @param gray Grayscale cv.Mat
+   * @param imgWidth Image width
+   * @param imgHeight Image height
+   * @returns Score from 0-1
+   */
+  private scoreOrientation(gray: any, imgWidth: number, imgHeight: number): number {
+    const cv = getCv();
+    if (!cv?.Mat) return 0;
+
+    let edges: any = null;
+    let sobelX: any = null;
+    let sobelY: any = null;
+    let magnitude: any = null;
+    let angle: any = null;
+    let lines: any = null;
+    let topROI: any = null;
+    let bottomROI: any = null;
+    let topEdges: any = null;
+    let bottomEdges: any = null;
+
+    try {
+      // 1. Edge Density Score (30%): top third should have more edges than bottom (headers/titles)
+      const thirdHeight = Math.floor(imgHeight / 3);
+
+      topROI = gray.roi(new cv.Rect(0, 0, imgWidth, thirdHeight));
+      bottomROI = gray.roi(new cv.Rect(0, imgHeight - thirdHeight, imgWidth, thirdHeight));
+
+      topEdges = new cv.Mat();
+      bottomEdges = new cv.Mat();
+      cv.Canny(topROI, topEdges, 50, 150);
+      cv.Canny(bottomROI, bottomEdges, 50, 150);
+
+      const topEdgeCount = cv.countNonZero(topEdges);
+      const bottomEdgeCount = cv.countNonZero(bottomEdges);
+      const totalEdges = topEdgeCount + bottomEdgeCount;
+      // Documents typically have more content at top (headers, titles)
+      const edgeDensityScore = totalEdges > 0 ? topEdgeCount / totalEdges : 0.5;
+
+      // 2. Gradient Direction Score (40%): text has strong horizontal gradients
+      sobelX = new cv.Mat();
+      sobelY = new cv.Mat();
+      cv.Sobel(gray, sobelX, cv.CV_64F, 1, 0, 3);
+      cv.Sobel(gray, sobelY, cv.CV_64F, 0, 1, 3);
+
+      magnitude = new cv.Mat();
+      angle = new cv.Mat();
+      cv.cartToPolar(sobelX, sobelY, magnitude, angle);
+
+      // Count horizontal vs vertical gradients
+      let horizontalGradients = 0;
+      let verticalGradients = 0;
+      const magThreshold = 30; // Ignore weak gradients
+
+      for (let i = 0; i < magnitude.rows; i++) {
+        for (let j = 0; j < magnitude.cols; j++) {
+          const mag = magnitude.doubleAt(i, j);
+          if (mag < magThreshold) continue;
+
+          const ang = angle.doubleAt(i, j) * (180 / Math.PI);
+          // Horizontal gradients: angle near 0° or 180° (from vertical edges in text)
+          if (ang < 45 || ang > 135) {
+            horizontalGradients++;
+          } else {
+            verticalGradients++;
+          }
+        }
+      }
+
+      const totalGradients = horizontalGradients + verticalGradients;
+      // Text produces more horizontal gradients (vertical letter strokes)
+      const gradientScore = totalGradients > 0 ? horizontalGradients / totalGradients : 0.5;
+
+      // 3. Line Detection Score (30%): text lines should be horizontal
+      edges = new cv.Mat();
+      cv.Canny(gray, edges, 50, 150);
+
+      lines = new cv.Mat();
+      cv.HoughLinesP(edges, lines, 1, Math.PI / 180, 50, 30, 10);
+
+      let horizontalLines = 0;
+      let verticalLines = 0;
+
+      for (let i = 0; i < lines.rows; i++) {
+        const x1 = lines.data32S[i * 4];
+        const y1 = lines.data32S[i * 4 + 1];
+        const x2 = lines.data32S[i * 4 + 2];
+        const y2 = lines.data32S[i * 4 + 3];
+
+        const lineAngle = Math.abs(Math.atan2(y2 - y1, x2 - x1) * (180 / Math.PI));
+        if (lineAngle < 20 || lineAngle > 160) {
+          horizontalLines++;
+        } else if (lineAngle > 70 && lineAngle < 110) {
+          verticalLines++;
+        }
+      }
+
+      const totalLines = horizontalLines + verticalLines;
+      const lineScore = totalLines > 0 ? horizontalLines / totalLines : 0.5;
+
+      // Combined score with weights
+      const score = (edgeDensityScore * 0.3) + (gradientScore * 0.4) + (lineScore * 0.3);
+      return score;
+    } catch {
+      return 0.5;
+    } finally {
+      if (edges) edges.delete();
+      if (sobelX) sobelX.delete();
+      if (sobelY) sobelY.delete();
+      if (magnitude) magnitude.delete();
+      if (angle) angle.delete();
+      if (lines) lines.delete();
+      if (topROI) topROI.delete();
+      if (bottomROI) bottomROI.delete();
+      if (topEdges) topEdges.delete();
+      if (bottomEdges) bottomEdges.delete();
+    }
+  }
+
+  /**
+   * Detect the correct orientation of a document image.
+   * Tests all 4 rotations and returns the most likely correct one.
+   * @param img cv.Mat to analyze
+   * @returns OrientationResult with rotation and confidence
+   */
+  detectOrientation(img: any): OrientationResult {
+    const cv = getCv();
+    if (!cv?.Mat) {
+      return { rotation: 0, confidence: 0 };
+    }
+
+    let gray: any = null;
+    let rotated90: any = null;
+    let rotated180: any = null;
+    let rotated270: any = null;
+    let gray90: any = null;
+    let gray180: any = null;
+    let gray270: any = null;
+
+    try {
+      // Convert to grayscale once
+      gray = new cv.Mat();
+      if (img.channels() === 4) {
+        cv.cvtColor(img, gray, cv.COLOR_RGBA2GRAY);
+      } else if (img.channels() === 3) {
+        cv.cvtColor(img, gray, cv.COLOR_RGB2GRAY);
+      } else {
+        gray = img.clone();
+      }
+
+      // Score original orientation (0°)
+      const score0 = this.scoreOrientation(gray, img.cols, img.rows);
+
+      // Score 90° rotation
+      rotated90 = this.rotateImage90(img, 90);
+      gray90 = new cv.Mat();
+      if (rotated90.channels() === 4) {
+        cv.cvtColor(rotated90, gray90, cv.COLOR_RGBA2GRAY);
+      } else if (rotated90.channels() === 3) {
+        cv.cvtColor(rotated90, gray90, cv.COLOR_RGB2GRAY);
+      } else {
+        gray90 = rotated90.clone();
+      }
+      const score90 = this.scoreOrientation(gray90, rotated90.cols, rotated90.rows);
+
+      // Score 180° rotation
+      rotated180 = this.rotateImage90(img, 180);
+      gray180 = new cv.Mat();
+      if (rotated180.channels() === 4) {
+        cv.cvtColor(rotated180, gray180, cv.COLOR_RGBA2GRAY);
+      } else if (rotated180.channels() === 3) {
+        cv.cvtColor(rotated180, gray180, cv.COLOR_RGB2GRAY);
+      } else {
+        gray180 = rotated180.clone();
+      }
+      const score180 = this.scoreOrientation(gray180, rotated180.cols, rotated180.rows);
+
+      // Score 270° rotation
+      rotated270 = this.rotateImage90(img, 270);
+      gray270 = new cv.Mat();
+      if (rotated270.channels() === 4) {
+        cv.cvtColor(rotated270, gray270, cv.COLOR_RGBA2GRAY);
+      } else if (rotated270.channels() === 3) {
+        cv.cvtColor(rotated270, gray270, cv.COLOR_RGB2GRAY);
+      } else {
+        gray270 = rotated270.clone();
+      }
+      const score270 = this.scoreOrientation(gray270, rotated270.cols, rotated270.rows);
+
+      // Find best and second-best scores
+      const scores: Array<{ rotation: 0 | 90 | 180 | 270; score: number }> = [
+        { rotation: 0, score: score0 },
+        { rotation: 90, score: score90 },
+        { rotation: 180, score: score180 },
+        { rotation: 270, score: score270 },
+      ];
+      scores.sort((a, b) => b.score - a.score);
+
+      const best = scores[0];
+      const secondBest = scores[1];
+
+      // Confidence = relative difference between best and second-best
+      const confidence = best.score > 0 ? (best.score - secondBest.score) / best.score : 0;
+
+      return {
+        rotation: best.rotation,
+        confidence: Math.min(1, Math.max(0, confidence)),
+      };
+    } catch {
+      return { rotation: 0, confidence: 0 };
+    } finally {
+      if (gray) gray.delete();
+      if (rotated90) rotated90.delete();
+      if (rotated180) rotated180.delete();
+      if (rotated270) rotated270.delete();
+      if (gray90) gray90.delete();
+      if (gray180) gray180.delete();
+      if (gray270) gray270.delete();
+    }
+  }
+
+  /**
    * Extracts and perspective-corrects the detected paper region.
    * Calculates proper output dimensions from detected corners to avoid distortion.
    * @returns HTMLCanvasElement with the corrected image, or null if no paper detected
@@ -386,7 +749,7 @@ export default class Scanner {
     maxWidth: number,
     maxHeight: number,
     cornerPoints?: CornerPoints
-  ): HTMLCanvasElement | null {
+  ): ExtractPaperResult | null {
     const cv = getCv();
     const canvas = document.createElement('canvas');
     const img = cv.imread(image);
@@ -454,7 +817,7 @@ export default class Scanner {
     outputWidth = Math.max(outputWidth, 100);
     outputHeight = Math.max(outputHeight, 100);
 
-    const warpedDst = new cv.Mat();
+    let warpedDst = new cv.Mat();
     const dsize = new cv.Size(outputWidth, outputHeight);
 
     const srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
@@ -473,6 +836,29 @@ export default class Scanner {
 
     const M = cv.getPerspectiveTransform(srcTri, dstTri);
     cv.warpPerspective(img, warpedDst, M, dsize, cv.INTER_LINEAR, cv.BORDER_CONSTANT, new cv.Scalar());
+
+    // Track corrections applied
+    let appliedSkewCorrection = 0;
+    let orientationCorrected = false;
+
+    // 1. Auto-straighten small skew (0.5° - 15°)
+    const residualSkew = this.calculateResidualSkew(warpedDst);
+    if (Math.abs(residualSkew) > 0.5 && Math.abs(residualSkew) < 15) {
+      const straightened = this.applyRotation(warpedDst, -residualSkew);
+      warpedDst.delete();
+      warpedDst = straightened;
+      appliedSkewCorrection = residualSkew;
+    }
+
+    // 2. Detect and correct 90/180/270 degree rotation
+    const orientation = this.detectOrientation(warpedDst);
+    if (orientation.rotation !== 0 && orientation.confidence > 0.6) {
+      const oriented = this.rotateImage90(warpedDst, orientation.rotation);
+      warpedDst.delete();
+      warpedDst = oriented;
+      orientationCorrected = true;
+    }
+
     cv.imshow(canvas, warpedDst);
 
     img.delete();
@@ -481,7 +867,47 @@ export default class Scanner {
     dstTri.delete();
     M.delete();
     if (maxContour) maxContour.delete();
-    return canvas;
+
+    return {
+      canvas,
+      appliedSkewCorrection,
+      detectedOrientation: orientation,
+      orientationCorrected,
+    };
+  }
+
+  /**
+   * Rotate a canvas by a specified angle (for manual rotation).
+   * @param canvas Source canvas to rotate
+   * @param degrees Rotation in degrees (90, -90, or 180)
+   * @returns New canvas with rotated image
+   */
+  rotateCanvas(canvas: HTMLCanvasElement, degrees: 90 | -90 | 180): HTMLCanvasElement {
+    const cv = getCv();
+    if (!cv?.Mat) {
+      // Fallback: return a copy using Canvas API
+      const result = document.createElement('canvas');
+      const isRightAngle = degrees === 90 || degrees === -90;
+      result.width = isRightAngle ? canvas.height : canvas.width;
+      result.height = isRightAngle ? canvas.width : canvas.height;
+      const ctx = result.getContext('2d')!;
+      ctx.translate(result.width / 2, result.height / 2);
+      ctx.rotate((degrees * Math.PI) / 180);
+      ctx.drawImage(canvas, -canvas.width / 2, -canvas.height / 2);
+      return result;
+    }
+
+    const img = cv.imread(canvas);
+    const normalizedDegrees = degrees === -90 ? 270 : degrees;
+    const rotated = this.rotateImage90(img, normalizedDegrees as 90 | 180 | 270);
+
+    const resultCanvas = document.createElement('canvas');
+    cv.imshow(resultCanvas, rotated);
+
+    img.delete();
+    rotated.delete();
+
+    return resultCanvas;
   }
 
   /**

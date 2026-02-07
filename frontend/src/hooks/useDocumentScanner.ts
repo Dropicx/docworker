@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
-import Scanner, { CornerPoints } from '../lib/jscanify';
+import Scanner, { CornerPoints, OrientationResult } from '../lib/jscanify';
 
 export type ScannerPhase = 'initializing' | 'scanning' | 'captured' | 'processing' | 'error';
 
@@ -25,11 +25,14 @@ interface UseDocumentScannerReturn {
   errorMessage: string | null;
   documentAligned: boolean;
   imageQuality: ImageQuality | null;
+  orientationUncertain: boolean;
+  detectedOrientation: OrientationResult | null;
   startCamera: () => Promise<void>;
   captureManual: () => void;
   confirmCapture: () => File | null;
   retake: () => void;
   cleanup: () => void;
+  rotatePreview: (degrees: 90 | -90 | 180) => void;
 }
 
 const DETECTION_FPS = 30;
@@ -50,6 +53,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const [imageQuality, setImageQuality] = useState<ImageQuality | null>(null);
   const [detectedCorners, setDetectedCorners] = useState<CornerPoints | null>(null);
   const [opencvReady, setOpencvReady] = useState(false);
+  const [orientationUncertain, setOrientationUncertain] = useState(false);
+  const [detectedOrientation, setDetectedOrientation] = useState<OrientationResult | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const displayCanvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -420,8 +425,23 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
         // Apply perspective transform using detected corners
         // Output at high resolution A4 size (2480x3508 = A4 at 300dpi)
-        const corrected = scanner.extractPaper(fullCanvas, 2480, 3508, videoCorners);
-        finalCanvas = corrected || fullCanvas;
+        // Now also applies skew correction and orientation detection
+        const result = scanner.extractPaper(fullCanvas, 2480, 3508, videoCorners);
+        if (result) {
+          finalCanvas = result.canvas;
+          // Store orientation info and flag uncertainty for UI
+          setDetectedOrientation(result.detectedOrientation);
+          // Show rotation buttons if orientation was detected but confidence is low-moderate
+          // or if orientation was corrected (user might want to verify)
+          setOrientationUncertain(
+            (result.detectedOrientation.rotation !== 0 && result.detectedOrientation.confidence < 0.7) ||
+            (result.orientationCorrected && result.detectedOrientation.confidence < 0.8)
+          );
+        } else {
+          finalCanvas = fullCanvas;
+          setDetectedOrientation(null);
+          setOrientationUncertain(false);
+        }
       } else {
         // NO OpenCV: Extract guide region from VIDEO at full resolution
         // Calculate guide frame in video coordinates (not display coordinates)
@@ -443,6 +463,9 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
           0, 0, outputWidth, outputHeight
         );
         finalCanvas = guideCanvas;
+        // No orientation detection in fallback mode
+        setDetectedOrientation(null);
+        setOrientationUncertain(false);
       }
 
       // Enhance and analyze
@@ -721,6 +744,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setDocumentAligned(false);
     setImageQuality(null);
     setDetectedCorners(null);
+    setOrientationUncertain(false);
+    setDetectedOrientation(null);
     detectedCornersRef.current = null;
     lastCornersRef.current = null;
     stableFramesRef.current = 0;
@@ -737,6 +762,27 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       setPhase('scanning');
     }
   }, []);
+
+  const rotatePreview = useCallback((degrees: 90 | -90 | 180) => {
+    const currentCanvas = captureCanvasRef.current;
+    if (!currentCanvas) return;
+
+    const scanner = getScanner();
+    const rotatedCanvas = scanner.rotateCanvas(currentCanvas, degrees);
+
+    // Update the captured canvas reference
+    captureCanvasRef.current = rotatedCanvas;
+
+    // Re-analyze image quality on rotated image
+    const quality = analyzeImageQuality(rotatedCanvas);
+    setImageQuality(quality);
+
+    // Update the preview URL
+    setCapturedImageUrl(rotatedCanvas.toDataURL('image/jpeg', 0.95));
+
+    // Clear uncertainty since user manually rotated
+    setOrientationUncertain(false);
+  }, [getScanner, analyzeImageQuality]);
 
   const cleanup = useCallback(() => {
     stopDetectionLoop();
@@ -756,6 +802,8 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setDocumentAligned(false);
     setImageQuality(null);
     setDetectedCorners(null);
+    setOrientationUncertain(false);
+    setDetectedOrientation(null);
     detectedCornersRef.current = null;
     lastCornersRef.current = null;
     stableFramesRef.current = 0;
@@ -772,10 +820,13 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     errorMessage,
     documentAligned,
     imageQuality,
+    orientationUncertain,
+    detectedOrientation,
     startCamera,
     captureManual,
     confirmCapture,
     retake,
     cleanup,
+    rotatePreview,
   };
 }

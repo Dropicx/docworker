@@ -1,6 +1,6 @@
 import React, { useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { X, RotateCcw, Check, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
+import { X, RotateCcw, RotateCw, Check, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentScanner } from '../hooks/useDocumentScanner';
 import CaptureButton from './scanner/CaptureButton';
@@ -22,11 +22,13 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
     errorMessage,
     documentAligned,
     imageQuality,
+    orientationUncertain,
     startCamera,
     captureManual,
     confirmCapture,
     retake,
     cleanup,
+    rotatePreview,
   } = useDocumentScanner();
 
   useEffect(() => {
@@ -231,25 +233,48 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
 
         {/* Captured controls */}
         {phase === 'captured' && (
-          <div className="flex items-center justify-center space-x-6">
-            <button
-              onClick={retake}
-              className="flex flex-col items-center space-y-1 text-white"
-            >
-              <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <RotateCcw className="w-5 h-5" />
+          <div className="flex flex-col items-center space-y-4">
+            {/* Rotation controls - show when orientation is uncertain or always for manual adjustment */}
+            {orientationUncertain && (
+              <div className="flex items-center space-x-3 mb-2">
+                <span className="text-white/70 text-xs">{t('scanner.rotateImage')}</span>
+                <button
+                  onClick={() => rotatePreview(-90)}
+                  className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white"
+                  aria-label={t('scanner.rotateLeft')}
+                >
+                  <RotateCcw className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => rotatePreview(90)}
+                  className="w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white"
+                  aria-label={t('scanner.rotateRight')}
+                >
+                  <RotateCw className="w-4 h-4" />
+                </button>
               </div>
-              <span className="text-xs">{t('scanner.retake')}</span>
-            </button>
-            <button
-              onClick={handleConfirm}
-              className="flex flex-col items-center space-y-1 text-white"
-            >
-              <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
-                <Check className="w-5 h-5" />
-              </div>
-              <span className="text-xs">{t('scanner.use')}</span>
-            </button>
+            )}
+            {/* Main action buttons */}
+            <div className="flex items-center justify-center space-x-6">
+              <button
+                onClick={retake}
+                className="flex flex-col items-center space-y-1 text-white"
+              >
+                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center">
+                  <RotateCcw className="w-5 h-5" />
+                </div>
+                <span className="text-xs">{t('scanner.retake')}</span>
+              </button>
+              <button
+                onClick={handleConfirm}
+                className="flex flex-col items-center space-y-1 text-white"
+              >
+                <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+                  <Check className="w-5 h-5" />
+                </div>
+                <span className="text-xs">{t('scanner.use')}</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

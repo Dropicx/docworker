@@ -198,7 +198,10 @@
     "straightenDocument": "Straighten document",
     "avoidGlare": "Avoid glare",
     "moveCloser": "Move closer",
-    "alignWithGuides": "Keep document in frame"
+    "alignWithGuides": "Keep document in frame",
+    "rotateImage": "Rotate if needed:",
+    "rotateLeft": "Rotate left",
+    "rotateRight": "Rotate right"
   },
   "feedback": {
     "title": "How was your translation?",

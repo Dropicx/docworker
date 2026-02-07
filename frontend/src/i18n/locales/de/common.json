@@ -198,7 +198,10 @@
     "straightenDocument": "Dokument gerade ausrichten",
     "avoidGlare": "Blendung vermeiden",
     "moveCloser": "Näher herangehen",
-    "alignWithGuides": "Dokument im Rahmen halten"
+    "alignWithGuides": "Dokument im Rahmen halten",
+    "rotateImage": "Bei Bedarf drehen:",
+    "rotateLeft": "Nach links drehen",
+    "rotateRight": "Nach rechts drehen"
   },
   "feedback": {
     "title": "Wie war Ihre Übersetzung?",
