@@ -354,6 +354,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
     return <FileText className="w-8 h-8 text-primary-500" />;
   };
 
+  const handleUploadAreaClick = useCallback(() => {
+    if (fileInputRef.current && !disabled) {
+      fileInputRef.current.click();
+    }
+  }, [disabled]);
+
   return (
     <div className="space-y-6">
       {/* Document Scanner Overlay - always available */}
@@ -381,6 +387,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
           {/* Upload Area */}
           <div
             {...getRootProps()}
+            onClick={handleUploadAreaClick}
             className={`upload-area ${selectedFiles.length > 0 ? 'py-6 sm:py-8' : ''} ${isDragActive ? 'dragover' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <input {...getInputProps()} ref={fileInputRef} />
