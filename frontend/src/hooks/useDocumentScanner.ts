@@ -137,11 +137,11 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
     const blurScore = Math.sqrt(laplacianSum / ((width - 2) * (height - 2)));
 
-    // Lenient blur detection - only flag truly blurry images
-    // Threshold of 1.5 catches severe blur while allowing normal tablet captures
-    // Skip blur check entirely for low-contrast images (blank paper, uniform areas)
-    const canMeasureBlur = contrast > 30;
-    const isBlurry = canMeasureBlur && blurScore < 1.5;
+    // Blur detection - threshold of 4 catches blurry images
+    // Higher blurScore = sharper image, lower = blurrier
+    // Skip blur check for very low-contrast images (blank paper) where it's unreliable
+    const canMeasureBlur = contrast > 25;
+    const isBlurry = canMeasureBlur && blurScore < 4;
 
     // Accept image if not severely blurry and has reasonable brightness/contrast
     const isAcceptable = !isBlurry && contrast > 20 && avgBrightness > 20 && avgBrightness < 240;
