@@ -136,9 +136,10 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
 
     const blurScore = Math.sqrt(laplacianSum / ((width - 2) * (height - 2)));
-    const isBlurry = blurScore < 5; // Lowered threshold - tablets/high-res cameras have different characteristics
+    // If low contrast (mostly uniform image like blank paper), can't reliably detect blur
+    const isBlurry = contrast > 20 ? blurScore < 5 : false;
 
-    const isAcceptable = !isBlurry && contrast > 30 && avgBrightness > 30 && avgBrightness < 230;
+    const isAcceptable = !isBlurry && contrast > 20 && avgBrightness > 30 && avgBrightness < 230;
 
     return {
       isBlurry,
@@ -253,6 +254,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   ): boolean => {
     const sampleSize = 100; // Sample 100x100 pixel region from center
     const sharpnessThreshold = 5; // Laplacian variance threshold (lower = more blur tolerance)
+    const minContrast = 15; // Minimum contrast to perform blur check (skip uniform areas)
 
     // Sample from center of guide frame
     const centerX = Math.round(guideFrame.x + guideFrame.width / 2 - sampleSize / 2);
@@ -265,10 +267,21 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const imageData = ctx.getImageData(clampedX, clampedY, sampleSize, sampleSize);
     const data = imageData.data;
 
-    // Convert to grayscale
+    // Convert to grayscale and check contrast
     const grayscale: number[] = [];
+    let minVal = 255, maxVal = 0;
     for (let i = 0; i < data.length; i += 4) {
-      grayscale.push((data[i] + data[i + 1] + data[i + 2]) / 3);
+      const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      grayscale.push(gray);
+      minVal = Math.min(minVal, gray);
+      maxVal = Math.max(maxVal, gray);
+    }
+
+    // If the sampled area is uniform (blank paper), assume it's sharp
+    // We can't detect blur on a featureless area
+    const contrast = maxVal - minVal;
+    if (contrast < minContrast) {
+      return true; // Assume sharp - can't measure blur on uniform area
     }
 
     // Calculate Laplacian variance (blur detection)
