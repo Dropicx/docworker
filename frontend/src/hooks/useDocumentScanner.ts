@@ -38,14 +38,14 @@ interface UseDocumentScannerReturn {
 
 const DETECTION_FPS = 15; // Reduced from 30 for better mobile performance
 const FRAME_INTERVAL = 1000 / DETECTION_FPS;
-const AUTO_CAPTURE_DELAY_MS = 2500; // 2.5 seconds after stable detection
+const AUTO_CAPTURE_DELAY_MS = 3000; // 3 seconds after stable detection
 const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
 const GUIDE_PADDING = 0.06; // 6% padding from edges
 const CORNER_BRACKET_LENGTH = 100; // Length of corner bracket arms in pixels
-const STABLE_FRAMES_REQUIRED = 5; // ~333ms at 15fps for stability (reduced from 10)
-const CORNER_STABILITY_TOLERANCE = 20; // Pixel tolerance for corner stability (increased for smoother tracking)
-const SMOOTHING_FACTOR = 0.35; // EMA smoothing for corners (slightly lower for smoother motion)
-const QUALITY_CHECK_INTERVAL = 15; // Check quality every N frames (~1/second at 15fps)
+const STABLE_FRAMES_REQUIRED = 8; // ~533ms at 15fps for stability
+const CORNER_STABILITY_TOLERANCE = 15; // Pixel tolerance for corner stability
+const SMOOTHING_FACTOR = 0.4; // EMA smoothing for corners (higher = more responsive)
+const QUALITY_CHECK_INTERVAL = 10; // Check quality every N frames (~1.5/second at 15fps)
 
 export function useDocumentScanner(): UseDocumentScannerReturn {
   const [phase, setPhase] = useState<ScannerPhase>('initializing');
@@ -590,8 +590,9 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       const offsetX = (canvasW - scaledW) / 2;
       const offsetY = (canvasH - scaledH) / 2;
 
-      // Store scale for capture coordinate conversion (in CSS pixels, not canvas pixels)
-      displayScaleRef.current = scale;
+      // Store scale for capture coordinate conversion
+      // Must include DPR since corners are detected in canvas coordinates (which include DPR)
+      displayScaleRef.current = scale * dpr;
 
       // Set canvas resolution to match container * DPR for sharp rendering
       if (displayCanvas.width !== canvasW || displayCanvas.height !== canvasH) {
@@ -616,17 +617,17 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
           // Reuse detection canvas (create once, resize as needed)
           if (!detectCanvasRef.current) {
             detectCanvasRef.current = document.createElement('canvas');
-            detectCtxRef.current = detectCanvasRef.current.getContext('2d');
           }
           const detectCanvas = detectCanvasRef.current;
-          const detectCtx = detectCtxRef.current!;
 
-          // Resize only if dimensions changed
+          // Resize only if dimensions changed (also refreshes context)
           if (detectCanvas.width !== scaledW || detectCanvas.height !== scaledH) {
             detectCanvas.width = scaledW;
             detectCanvas.height = scaledH;
+            detectCtxRef.current = detectCanvas.getContext('2d');
           }
 
+          const detectCtx = detectCtxRef.current || detectCanvas.getContext('2d')!;
           detectCtx.drawImage(video, 0, 0, scaledW, scaledH);
 
           detectionImg = cv.imread(detectCanvas);
