@@ -38,13 +38,15 @@ interface UseDocumentScannerReturn {
 
 const DETECTION_FPS = 15; // Reduced from 30 for better mobile performance
 const FRAME_INTERVAL = 1000 / DETECTION_FPS;
-const AUTO_CAPTURE_DELAY_MS = 3000; // 3 seconds after stable detection
+const AUTO_CAPTURE_DELAY_MS = 2500; // 2.5 seconds after stable detection
 const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
 const GUIDE_PADDING = 0.06; // 6% padding from edges
 const CORNER_BRACKET_LENGTH = 100; // Length of corner bracket arms in pixels
-const STABLE_FRAMES_REQUIRED = 8; // ~533ms at 15fps for stability
-const CORNER_STABILITY_TOLERANCE = 15; // Pixel tolerance for corner stability
-const SMOOTHING_FACTOR = 0.4; // EMA smoothing for corners (higher = more responsive)
+const STABILITY_THRESHOLD = 0.7; // Need 70% stability score to start countdown
+const CORNER_STABILITY_TOLERANCE = 25; // Pixel tolerance for corner stability (increased for jitter)
+const SMOOTHING_FACTOR = 0.3; // EMA smoothing for corners (lower = smoother tracking)
+const STABILITY_DECAY = 0.85; // How fast stability score decays on unstable frame
+const STABILITY_GAIN = 0.15; // How fast stability score increases on stable frame
 const QUALITY_CHECK_INTERVAL = 10; // Check quality every N frames (~1.5/second at 15fps)
 
 export function useDocumentScanner(): UseDocumentScannerReturn {
@@ -72,8 +74,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
 
   // Corner detection state refs
   const detectedCornersRef = useRef<CornerPoints | null>(null);
-  const lastCornersRef = useRef<CornerPoints | null>(null);
-  const stableFramesRef = useRef(0);
+  const stabilityScoreRef = useRef(0); // 0-1 score, replaces binary stable frame counting
   const displayScaleRef = useRef(1);
 
   // Smooth overlay tracking refs
@@ -666,17 +667,6 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         );
       }
 
-      // Track corner stability (only for OpenCV mode)
-      if (corners && lastCornersRef.current) {
-        const isStable = cornersAreSimilar(corners, lastCornersRef.current, CORNER_STABILITY_TOLERANCE);
-        stableFramesRef.current = isStable ? stableFramesRef.current + 1 : 0;
-      } else if (corners) {
-        stableFramesRef.current = 1; // First detection
-      } else {
-        stableFramesRef.current = 0;
-      }
-      lastCornersRef.current = corners;
-
       // Update state - aligned if OpenCV found corners OR brightness check passed
       const isAligned = corners !== null || isAlignedByBrightness;
       detectedCornersRef.current = corners;
@@ -690,6 +680,19 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
           ? interpolateCorners(smoothedCornersRef.current, corners)
           : corners;
         smoothedCornersRef.current = smoothed;
+
+        // Track stability by comparing raw corners to smoothed corners
+        // This is more stable than frame-to-frame comparison since smoothed corners
+        // represent the "expected" position and raw corners are the noisy measurement
+        const isStable = cornersAreSimilar(corners, smoothed, CORNER_STABILITY_TOLERANCE);
+
+        // Gradual stability score instead of binary reset
+        // Score increases slowly when stable, decays slowly when unstable
+        if (isStable) {
+          stabilityScoreRef.current = Math.min(1, stabilityScoreRef.current + STABILITY_GAIN);
+        } else {
+          stabilityScoreRef.current = Math.max(0, stabilityScoreRef.current * STABILITY_DECAY);
+        }
 
         // Run sampled quality check (every N frames for performance)
         // Reuse the already-loaded detectionImg to avoid creating another Mat
@@ -719,8 +722,9 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
           try { detectionImg.delete(); } catch { /* ignore */ }
         }
 
-        // Reset smoothing and quality warnings when document is lost
+        // Reset smoothing, stability, and quality warnings when document is lost
         smoothedCornersRef.current = null;
+        stabilityScoreRef.current = 0;
         qualityCheckCounterRef.current = 0;
         realtimeWarningsRef.current = [];
         setRealtimeWarnings([]);
@@ -738,11 +742,10 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         );
       }
 
-      // Auto-capture timer - only require stability, not quality perfection
-      // Quality warnings are shown to user but don't block capture
-      // (user can always manually capture or adjust if they see warnings)
+      // Auto-capture timer - require stability score above threshold
+      // Uses gradual score that's tolerant of occasional jitter
       const shouldCountdown = corners
-        ? stableFramesRef.current >= STABLE_FRAMES_REQUIRED
+        ? stabilityScoreRef.current >= STABILITY_THRESHOLD
         : isAlignedByBrightness;
 
       if (shouldCountdown) {
@@ -855,8 +858,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setDetectedOrientation(null);
     setRealtimeWarnings([]);
     detectedCornersRef.current = null;
-    lastCornersRef.current = null;
-    stableFramesRef.current = 0;
+    stabilityScoreRef.current = 0;
     stableStartRef.current = null;
     smoothedCornersRef.current = null;
     qualityCheckCounterRef.current = 0;
@@ -921,8 +923,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     setDetectedOrientation(null);
     setRealtimeWarnings([]);
     detectedCornersRef.current = null;
-    lastCornersRef.current = null;
-    stableFramesRef.current = 0;
+    stabilityScoreRef.current = 0;
     stableStartRef.current = null;
     smoothedCornersRef.current = null;
     qualityCheckCounterRef.current = 0;
