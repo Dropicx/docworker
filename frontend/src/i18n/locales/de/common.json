@@ -288,7 +288,8 @@
     "terms": "Nutzungsbedingungen",
     "admin": "Admin",
     "copyright": "HealthLingo. Alle Rechte vorbehalten.",
-    "madeIn": "Mit {{heart}} in Deutschland entwickelt"
+    "madeWith": "Mit",
+    "madeInLocation": "in Deutschland entwickelt"
   },
   "cookieFree": {
     "title": "Keine Cookies!",

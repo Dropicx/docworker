@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
             >
               <Link to="/impressum">{t('footer.impressum')}</Link>
             </Button>
-            <Separator orientation="vertical" className="hidden sm:block h-4" />
+            <Separator orientation="vertical" className="hidden sm:block h-4 bg-primary-300" />
             <Button
               variant="link"
               asChild
@@ -28,7 +28,7 @@ const Footer: React.FC = () => {
             >
               <Link to="/datenschutz">{t('footer.privacy')}</Link>
             </Button>
-            <Separator orientation="vertical" className="hidden sm:block h-4" />
+            <Separator orientation="vertical" className="hidden sm:block h-4 bg-primary-300" />
             <Button
               variant="link"
               asChild
@@ -36,7 +36,7 @@ const Footer: React.FC = () => {
             >
               <Link to="/nutzungsbedingungen">{t('footer.terms')}</Link>
             </Button>
-            <Separator orientation="vertical" className="hidden sm:block h-4" />
+            <Separator orientation="vertical" className="hidden sm:block h-4 bg-primary-300" />
             <Button
               variant="link"
               asChild
@@ -46,16 +46,14 @@ const Footer: React.FC = () => {
             </Button>
           </div>
 
-          <Separator className="w-48" />
+          <Separator className="w-48 bg-primary-200" />
 
           <div className="text-center space-y-2">
             <p className="text-xs text-primary-500">
               &copy; {new Date().getFullYear()} {t('footer.copyright')}
             </p>
             <p className="text-xs text-primary-400 flex items-center justify-center gap-1">
-              {t('footer.madeIn', { heart: '' }).split('{{heart}}')[0]}
-              <Heart className="w-3 h-3 text-red-500 fill-current" />
-              {t('footer.madeIn', { heart: '' }).split('{{heart}}')[1] || ''}
+              {t('footer.madeWith')} <Heart className="w-3 h-3 text-red-500 fill-current" /> {t('footer.madeInLocation')}
             </p>
           </div>
         </div>
