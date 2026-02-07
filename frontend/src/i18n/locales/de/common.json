@@ -201,7 +201,9 @@
     "alignWithGuides": "Dokument im Rahmen halten",
     "rotateImage": "Bei Bedarf drehen:",
     "rotateLeft": "Nach links drehen",
-    "rotateRight": "Nach rechts drehen"
+    "rotateRight": "Nach rechts drehen",
+    "loadingScanner": "Scanner wird geladen...",
+    "loadError": "Scanner konnte nicht geladen werden. Bitte überprüfen Sie Ihre Verbindung und versuchen Sie es erneut."
   },
   "feedback": {
     "title": "Wie war Ihre Übersetzung?",

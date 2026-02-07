@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, RotateCcw, RotateCw, Check, AlertCircle, Loader2, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useDocumentScanner } from '../hooks/useDocumentScanner';
+import { useOpenCV } from '../hooks/useOpenCV';
 import { QualityWarning } from '../lib/jscanify';
 import CaptureButton from './scanner/CaptureButton';
 
@@ -14,6 +15,7 @@ interface DocumentScannerProps {
 
 const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, onClose }) => {
   const { t } = useTranslation();
+  const { status: opencvStatus, loadOpenCV } = useOpenCV();
   const {
     phase,
     videoRef,
@@ -44,12 +46,20 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
     return sorted[0];
   }, [realtimeWarnings]);
 
+  // Load OpenCV when scanner opens
   useEffect(() => {
     if (isOpen) {
+      loadOpenCV();
+    }
+  }, [isOpen, loadOpenCV]);
+
+  // Start camera only after OpenCV is ready
+  useEffect(() => {
+    if (isOpen && opencvStatus === 'ready') {
       startCamera();
     }
     return () => cleanup();
-  }, [isOpen, startCamera, cleanup]);
+  }, [isOpen, opencvStatus, startCamera, cleanup]);
 
   // Lock body scroll when open
   useEffect(() => {
@@ -153,21 +163,25 @@ const DocumentScanner: React.FC<DocumentScannerProps> = ({ isOpen, onCapture, on
       {/* Main content area */}
       <div className="flex-1 relative overflow-hidden">
         {/* Initializing phase */}
-        {phase === 'initializing' && (
+        {(phase === 'initializing' || opencvStatus === 'loading') && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white space-y-4">
             <Loader2 className="w-10 h-10 animate-spin text-white/80" />
-            <p className="text-sm text-white/70">{t('scanner.starting')}</p>
+            <p className="text-sm text-white/70">
+              {opencvStatus === 'loading' ? t('scanner.loadingScanner', 'Loading scanner...') : t('scanner.starting')}
+            </p>
           </div>
         )}
 
         {/* Error phase */}
-        {phase === 'error' && (
+        {(phase === 'error' || opencvStatus === 'error') && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-white space-y-4 px-8">
             <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
               <AlertCircle className="w-8 h-8 text-red-400" />
             </div>
             <p className="text-sm text-white/80 text-center leading-relaxed">
-              {errorMessage || t('scanner.error')}
+              {opencvStatus === 'error'
+                ? t('scanner.loadError', 'Failed to load scanner. Please check your connection and try again.')
+                : (errorMessage || t('scanner.error'))}
             </p>
             <button
               onClick={handleClose}

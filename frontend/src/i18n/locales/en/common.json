@@ -201,7 +201,9 @@
     "alignWithGuides": "Keep document in frame",
     "rotateImage": "Rotate if needed:",
     "rotateLeft": "Rotate left",
-    "rotateRight": "Rotate right"
+    "rotateRight": "Rotate right",
+    "loadingScanner": "Loading scanner...",
+    "loadError": "Failed to load scanner. Please check your connection and try again."
   },
   "feedback": {
     "title": "How was your translation?",
