@@ -136,7 +136,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     }
 
     const blurScore = Math.sqrt(laplacianSum / ((width - 2) * (height - 2)));
-    const isBlurry = blurScore < 8; // Lowered threshold - high-res images have different blur characteristics
+    const isBlurry = blurScore < 5; // Lowered threshold - tablets/high-res cameras have different characteristics
 
     const isAcceptable = !isBlurry && contrast > 30 && avgBrightness > 30 && avgBrightness < 230;
 
@@ -252,7 +252,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     guideFrame: { x: number; y: number; width: number; height: number }
   ): boolean => {
     const sampleSize = 100; // Sample 100x100 pixel region from center
-    const sharpnessThreshold = 12; // Laplacian variance threshold (lower = more blur tolerance)
+    const sharpnessThreshold = 5; // Laplacian variance threshold (lower = more blur tolerance)
 
     // Sample from center of guide frame
     const centerX = Math.round(guideFrame.x + guideFrame.width / 2 - sampleSize / 2);
