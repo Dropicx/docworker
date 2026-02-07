@@ -274,8 +274,8 @@ export const Header: React.FC<HeaderProps> = ({
 
           {/* Right side: Language switcher, Health indicator & User menu */}
           <div className="flex items-center space-x-4">
-            <LanguageSwitcher />
             {renderHealthIndicator()}
+            <LanguageSwitcher />
 
             {/* User Menu */}
             {isAuthenticated && (
