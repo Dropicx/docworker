@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import {
   Upload,
@@ -197,6 +197,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const privacyCheckboxRef = useRef<HTMLDivElement>(null);
   const { shouldShowScanner } = useMobileDetect();
+
+  // Sync document source language with UI language changes
+  useEffect(() => {
+    const newSourceLang = i18n.language?.substring(0, 2) === 'en' ? 'en' : 'de';
+    setSourceLanguage(newSourceLang);
+  }, [i18n.language]);
 
   const qualityGateError = externalQualityGateError || null;
 
