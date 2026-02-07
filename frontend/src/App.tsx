@@ -146,21 +146,6 @@ const MainApp: React.FC<MainAppProps> = ({
                     {t('hero.description')}
                   </p>
 
-                  {/* Trust badges */}
-                  <div className="flex flex-col sm:flex-row justify-center lg:justify-start items-center sm:items-start gap-2 sm:gap-6 text-xs sm:text-sm">
-                    <div className="flex items-center space-x-2 text-primary-600">
-                      <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                      <span className="font-medium">{t('hero.gdpr')}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-primary-600">
-                      <div className="w-2 h-2 bg-accent-500 rounded-full"></div>
-                      <span className="font-medium">{t('hero.ready')}</span>
-                    </div>
-                    <div className="flex items-center space-x-2 text-primary-600">
-                      <div className="w-2 h-2 bg-brand-500 rounded-full"></div>
-                      <span className="font-medium">{t('hero.noStorage')}</span>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Right: Upload component */}

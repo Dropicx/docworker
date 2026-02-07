@@ -25,11 +25,11 @@
   },
   "features": {
     "privacyTitle": "Privacy first",
-    "privacyDescription": "No storage of your data. All information is automatically deleted after translation.",
+    "privacyDescription": "Your data is only stored during processing, never used for AI training, and automatically deleted immediately after translation.",
     "precisionTitle": "Medically precise",
-    "precisionDescription": "Specifically developed for medical terminology and documents. Precise translations without information loss.",
-    "speedTitle": "Lightning fast",
-    "speedDescription": "Receive an easy-to-understand translation of your medical documents in seconds."
+    "precisionDescription": "Powered by AI optimized for medical terminology. Accurate translations that preserve clinical meaning.",
+    "speedTitle": "Fast processing",
+    "speedDescription": "Receive a clear, easy-to-understand translation of your medical documents within seconds."
   },
   "upload": {
     "title": "Upload documents",

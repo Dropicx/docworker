@@ -981,14 +981,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
         </div>
       )}
 
-      {/* Success State (if needed) */}
-      {!validationError && selectedFiles.length === 0 && (
-        <div className="text-center">
-          <p className="text-xs text-primary-500">
-            {t('upload.gdprNotice')}
-          </p>
-        </div>
-      )}
     </div>
   );
 };

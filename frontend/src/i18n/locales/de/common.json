@@ -24,12 +24,12 @@
     "noStorage": "Keine Speicherung"
   },
   "features": {
-    "privacyTitle": "Datenschutz first",
-    "privacyDescription": "Keine Speicherung Ihrer Daten. Alle Informationen werden nach der Übersetzung automatisch gelöscht.",
+    "privacyTitle": "Datenschutz zuerst",
+    "privacyDescription": "Ihre Daten werden nur während der Verarbeitung gespeichert, nie für KI-Training verwendet und direkt nach der Übersetzung automatisch gelöscht.",
     "precisionTitle": "Medizinisch präzise",
-    "precisionDescription": "Speziell für medizinische Fachbegriffe und Dokumente entwickelt. Präzise Übersetzungen ohne Informationsverlust.",
-    "speedTitle": "Blitzschnell",
-    "speedDescription": "Erhalten Sie in wenigen Sekunden eine verständliche Übersetzung Ihrer medizinischen Dokumente."
+    "precisionDescription": "Unterstützt durch KI, die für medizinische Fachbegriffe optimiert ist. Präzise Übersetzungen, die die klinische Bedeutung bewahren.",
+    "speedTitle": "Schnelle Verarbeitung",
+    "speedDescription": "Erhalten Sie innerhalb weniger Sekunden eine klare, verständliche Übersetzung Ihrer medizinischen Dokumente."
   },
   "upload": {
     "title": "Dokumente hochladen",
