@@ -319,6 +319,9 @@
     "scrollToShort": "Guidelines",
     "notAvailable": "Guidelines not available"
   },
+  "languageSwitcher": {
+    "changeLanguage": "Change language"
+  },
   "languageSelector": {
     "label": "Translation (optional)",
     "loading": "Loading languages...",

@@ -120,9 +120,15 @@ export const Header: React.FC<HeaderProps> = ({
       );
     }
 
-    // Full dropdown for admin users
-    const keyServices = ['mistral_ocr', 'worker'];
-    const displayServices = keyServices.filter(s => health.services[s]);
+    // Full dropdown for admin users - show all services for better debugging
+    const allServices = Object.keys(health.services);
+
+    // Separate services by status for better organization
+    const errorServices = allServices.filter(s => health.services[s]?.startsWith('error'));
+    const warningServices = allServices.filter(s => health.services[s] === 'not_configured');
+    const healthyServices = allServices.filter(s =>
+      !health.services[s]?.startsWith('error') && health.services[s] !== 'not_configured'
+    );
 
     return (
       <DropdownMenu>
@@ -147,41 +153,94 @@ export const Header: React.FC<HeaderProps> = ({
             </Badge>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuContent align="end" className="w-80">
           <DropdownMenuLabel>
             <div>
               <p className="text-sm font-semibold">{t('header.systemStatus')}</p>
               <p className="text-xs text-neutral-500 font-normal">{t('header.ocrAndAi')}</p>
             </div>
           </DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          {displayServices.map(serviceName => {
-            const serviceStatus = health.services[serviceName];
-            return (
-              <DropdownMenuItem
-                key={serviceName}
-                className="flex items-center justify-between cursor-default"
-              >
-                <span className="text-sm text-neutral-700">{formatServiceName(serviceName)}</span>
-                <div className="flex items-center space-x-2">
-                  <span className={`text-sm font-medium ${getServiceColor(serviceStatus)}`}>
-                    {getServiceIcon(serviceStatus)}
-                  </span>
-                  <span className="text-xs text-neutral-500">
-                    {serviceStatus === 'healthy' || serviceStatus === 'configured'
-                      ? 'OK'
-                      : serviceStatus === 'not_configured'
-                        ? t('header.notConfigured')
-                        : serviceStatus.startsWith('error')
-                          ? t('header.error')
-                          : serviceStatus.includes('active')
-                            ? serviceStatus.match(/\d+/)?.[0] + ' ' + t('header.active')
-                            : serviceStatus}
-                  </span>
-                </div>
-              </DropdownMenuItem>
-            );
-          })}
+
+          {/* Error Services - shown first with full details */}
+          {errorServices.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs text-error-600 font-medium">
+                Problems ({errorServices.length})
+              </DropdownMenuLabel>
+              {errorServices.map(serviceName => {
+                const serviceStatus = health.services[serviceName];
+                const errorDetail = serviceStatus.replace('error: ', '');
+                return (
+                  <DropdownMenuItem
+                    key={serviceName}
+                    className="flex flex-col items-start cursor-default py-2"
+                  >
+                    <div className="flex items-center space-x-2 w-full">
+                      <span className="text-error-600 font-medium">✗</span>
+                      <span className="text-sm font-medium text-neutral-800">{formatServiceName(serviceName)}</span>
+                    </div>
+                    <p className="text-xs text-error-600 mt-1 ml-5 break-all">
+                      {errorDetail}
+                    </p>
+                  </DropdownMenuItem>
+                );
+              })}
+            </>
+          )}
+
+          {/* Warning Services */}
+          {warningServices.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs text-warning-600 font-medium">
+                Warnings ({warningServices.length})
+              </DropdownMenuLabel>
+              {warningServices.map(serviceName => (
+                <DropdownMenuItem
+                  key={serviceName}
+                  className="flex items-center justify-between cursor-default"
+                >
+                  <div className="flex items-center space-x-2">
+                    <span className="text-warning-600">○</span>
+                    <span className="text-sm text-neutral-700">{formatServiceName(serviceName)}</span>
+                  </div>
+                  <span className="text-xs text-warning-600">{t('header.notConfigured')}</span>
+                </DropdownMenuItem>
+              ))}
+            </>
+          )}
+
+          {/* Healthy Services - collapsed view */}
+          {healthyServices.length > 0 && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel className="text-xs text-success-600 font-medium">
+                Healthy ({healthyServices.length})
+              </DropdownMenuLabel>
+              {healthyServices.map(serviceName => {
+                const serviceStatus = health.services[serviceName];
+                return (
+                  <DropdownMenuItem
+                    key={serviceName}
+                    className="flex items-center justify-between cursor-default"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-success-600">✓</span>
+                      <span className="text-sm text-neutral-700">{formatServiceName(serviceName)}</span>
+                    </div>
+                    <span className="text-xs text-neutral-500">
+                      {serviceStatus === 'healthy' || serviceStatus === 'configured'
+                        ? 'OK'
+                        : serviceStatus.includes('active')
+                          ? serviceStatus.match(/\d+/)?.[0] + ' ' + t('header.active')
+                          : serviceStatus}
+                    </span>
+                  </DropdownMenuItem>
+                );
+              })}
+            </>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
     );
