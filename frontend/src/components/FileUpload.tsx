@@ -35,6 +35,139 @@ interface FileUploadProps {
   onClearQualityGateError?: () => void;
 }
 
+// ============================================================================
+// Extracted Components (at module level to prevent re-creation on each render)
+// ============================================================================
+
+interface WizardProgressProps {
+  currentStep: 1 | 2 | 3 | 4;
+  stepLabels: string[];
+  stepTitles: string[];
+  progressLabel: string;
+  stepText: string;
+  completedText: string;
+}
+
+const WizardProgress: React.FC<WizardProgressProps> = ({
+  currentStep,
+  stepLabels,
+  stepTitles,
+  progressLabel,
+  stepText,
+  completedText,
+}) => (
+  <div className="mb-6">
+    {/* Step title */}
+    <h3 className="text-center text-lg font-semibold text-primary-900 mb-4">
+      {stepTitles[currentStep - 1]}
+    </h3>
+
+    {/* Progress indicator */}
+    <nav aria-label={progressLabel}>
+      <ol className="flex items-center justify-center">
+        {[1, 2, 3, 4].map((step, index) => (
+          <li key={step} className="flex items-center">
+            <div className="flex flex-col items-center">
+              <div
+                aria-current={step === currentStep ? 'step' : undefined}
+                aria-label={`${stepText} ${step}: ${stepLabels[index]}${step < currentStep ? ` - ${completedText}` : ''}`}
+                className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
+                  step < currentStep
+                    ? 'bg-success-500 text-white'
+                    : step === currentStep
+                      ? 'bg-brand-500 text-white shadow-glow'
+                      : 'bg-neutral-200 text-neutral-500'
+                }`}
+              >
+                {step < currentStep ? (
+                  <Check className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
+                ) : (
+                  step
+                )}
+              </div>
+              <span
+                aria-hidden="true"
+                className={`hidden sm:block mt-1 text-xs font-medium ${
+                  step <= currentStep ? 'text-primary-700' : 'text-neutral-400'
+                }`}
+              >
+                {stepLabels[index]}
+              </span>
+            </div>
+            {index < 3 && (
+              <div
+                aria-hidden="true"
+                className={`w-8 sm:w-12 h-1 mx-1 sm:mx-2 rounded-full transition-all duration-300 ${
+                  step < currentStep ? 'bg-success-500' : 'bg-neutral-200'
+                }`}
+              />
+            )}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  </div>
+);
+
+interface NavigationButtonsProps {
+  showBack?: boolean;
+  showNext?: boolean;
+  nextLabel?: string;
+  backLabel: string;
+  defaultNextLabel: string;
+  onNext: () => void;
+  onBack: () => void;
+  nextDisabled?: boolean;
+  nextVariant?: 'primary' | 'success';
+}
+
+const NavigationButtons: React.FC<NavigationButtonsProps> = ({
+  showBack = true,
+  showNext = true,
+  nextLabel,
+  backLabel,
+  defaultNextLabel,
+  onNext,
+  onBack,
+  nextDisabled = false,
+  nextVariant = 'primary',
+}) => (
+  <div className="flex justify-between items-center mt-6 pt-4 border-t border-neutral-100">
+    {showBack ? (
+      <button
+        onClick={onBack}
+        className="flex items-center space-x-2 px-4 py-2 text-primary-600 hover:text-primary-700 hover:bg-neutral-50 rounded-lg transition-all"
+      >
+        <ChevronLeft className="w-4 h-4" />
+        <span>{backLabel}</span>
+      </button>
+    ) : (
+      <div />
+    )}
+    {showNext && (
+      <button
+        onClick={onNext}
+        disabled={nextDisabled}
+        className={`flex items-center space-x-2 px-6 py-2.5 rounded-lg font-medium transition-all ${
+          nextDisabled
+            ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
+            : nextVariant === 'success'
+              ? 'bg-success-500 hover:bg-success-600 text-white shadow-md hover:shadow-lg'
+              : 'bg-brand-500 hover:bg-brand-600 text-white shadow-md hover:shadow-lg'
+        }`}
+      >
+        <span>{nextLabel || defaultNextLabel}</span>
+        {nextVariant !== 'success' && <ChevronRight className="w-4 h-4" />}
+        {nextVariant === 'success' && <Play className="w-4 h-4" />}
+      </button>
+    )}
+  </div>
+);
+
+// ============================================================================
+// Main FileUpload Component
+// ============================================================================
+
 const FileUpload: React.FC<FileUploadProps> = ({
   onStartProcessing,
   onUploadError,
@@ -163,7 +296,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     noKeyboard: false,
   });
 
-  // Wizard step titles
+  // Wizard step labels and titles for WizardProgress component
   const stepLabels = [
     t('wizard.step1Label'),
     t('wizard.step2Label'),
@@ -171,63 +304,12 @@ const FileUpload: React.FC<FileUploadProps> = ({
     t('wizard.step4Label'),
   ];
 
-  // Wizard Progress Indicator
-  const WizardProgress = () => (
-    <div className="mb-6">
-      {/* Step title */}
-      <h3 className="text-center text-lg font-semibold text-primary-900 mb-4">
-        {currentStep === 1 && t('wizard.step1Title')}
-        {currentStep === 2 && t('wizard.step2Title')}
-        {currentStep === 3 && t('wizard.step3Title')}
-        {currentStep === 4 && t('wizard.step4Title')}
-      </h3>
-
-      {/* Progress indicator */}
-      <nav aria-label={t('wizard.progressLabel')}>
-        <ol className="flex items-center justify-center">
-          {[1, 2, 3, 4].map((step, index) => (
-            <li key={step} className="flex items-center">
-              <div className="flex flex-col items-center">
-                <div
-                  aria-current={step === currentStep ? 'step' : undefined}
-                  aria-label={`${t('wizard.step')} ${step}: ${stepLabels[index]}${step < currentStep ? ` - ${t('wizard.completed')}` : ''}`}
-                  className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-sm font-semibold transition-all duration-300 ${
-                    step < currentStep
-                      ? 'bg-success-500 text-white'
-                      : step === currentStep
-                        ? 'bg-brand-500 text-white shadow-glow'
-                        : 'bg-neutral-200 text-neutral-500'
-                  }`}
-                >
-                  {step < currentStep ? (
-                    <Check className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
-                  ) : (
-                    step
-                  )}
-                </div>
-                <span
-                  aria-hidden="true"
-                  className={`hidden sm:block mt-1 text-xs font-medium ${
-                    step <= currentStep ? 'text-primary-700' : 'text-neutral-400'
-                  }`}
-                >
-                  {stepLabels[index]}
-                </span>
-              </div>
-              {index < 3 && (
-                <div
-                  aria-hidden="true"
-                  className={`w-8 sm:w-12 h-1 mx-1 sm:mx-2 rounded-full transition-all duration-300 ${
-                    step < currentStep ? 'bg-success-500' : 'bg-neutral-200'
-                  }`}
-                />
-              )}
-            </li>
-          ))}
-        </ol>
-      </nav>
-    </div>
-  );
+  const stepTitles = [
+    t('wizard.step1Title'),
+    t('wizard.step2Title'),
+    t('wizard.step3Title'),
+    t('wizard.step4Title'),
+  ];
 
   // Selection Summary for Step 4
   const SelectionSummary = () => (
@@ -262,56 +344,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
     </div>
   );
 
-  // Navigation buttons component
-  const NavigationButtons = ({
-    showBack = true,
-    showNext = true,
-    nextLabel,
-    onNext,
-    onBack,
-    nextDisabled = false,
-    nextVariant = 'primary',
-  }: {
-    showBack?: boolean;
-    showNext?: boolean;
-    nextLabel?: string;
-    onNext?: () => void;
-    onBack?: () => void;
-    nextDisabled?: boolean;
-    nextVariant?: 'primary' | 'success';
-  }) => (
-    <div className="flex justify-between items-center mt-6 pt-4 border-t border-neutral-100">
-      {showBack ? (
-        <button
-          onClick={onBack || (() => setCurrentStep((prev) => (prev > 1 ? (prev - 1) as 1 | 2 | 3 | 4 : prev)))}
-          className="flex items-center space-x-2 px-4 py-2 text-primary-600 hover:text-primary-700 hover:bg-neutral-50 rounded-lg transition-all"
-        >
-          <ChevronLeft className="w-4 h-4" />
-          <span>{t('wizard.back')}</span>
-        </button>
-      ) : (
-        <div />
-      )}
-      {showNext && (
-        <button
-          onClick={onNext || (() => setCurrentStep((prev) => (prev < 4 ? (prev + 1) as 1 | 2 | 3 | 4 : prev)))}
-          disabled={nextDisabled}
-          className={`flex items-center space-x-2 px-6 py-2.5 rounded-lg font-medium transition-all ${
-            nextDisabled
-              ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed'
-              : nextVariant === 'success'
-                ? 'bg-success-500 hover:bg-success-600 text-white shadow-md hover:shadow-lg'
-                : 'bg-brand-500 hover:bg-brand-600 text-white shadow-md hover:shadow-lg'
-          }`}
-        >
-          <span>{nextLabel || t('wizard.next')}</span>
-          {nextVariant !== 'success' && <ChevronRight className="w-4 h-4" />}
-          {nextVariant === 'success' && <Play className="w-4 h-4" />}
-        </button>
-      )}
-    </div>
-  );
-
   const getFileIcon = (fileName: string) => {
     const extension = fileName.split('.').pop()?.toLowerCase();
     if (extension === 'pdf') {
@@ -320,12 +352,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
       return <Image className="w-8 h-8 text-accent-500" />;
     }
     return <FileText className="w-8 h-8 text-primary-500" />;
-  };
-
-  const handleClick = () => {
-    if (fileInputRef.current && !disabled) {
-      fileInputRef.current.click();
-    }
   };
 
   return (
@@ -338,7 +364,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
       />
 
       {/* Wizard Progress Indicator - shown when files are selected */}
-      {selectedFiles.length > 0 && <WizardProgress />}
+      {selectedFiles.length > 0 && (
+        <WizardProgress
+          currentStep={currentStep}
+          stepLabels={stepLabels}
+          stepTitles={stepTitles}
+          progressLabel={t('wizard.progressLabel')}
+          stepText={t('wizard.step')}
+          completedText={t('wizard.completed')}
+        />
+      )}
 
       {/* Step 1: Upload Document */}
       {(currentStep === 1 || selectedFiles.length === 0) && (
@@ -346,7 +381,6 @@ const FileUpload: React.FC<FileUploadProps> = ({
           {/* Upload Area */}
           <div
             {...getRootProps()}
-            onClick={handleClick}
             className={`upload-area ${selectedFiles.length > 0 ? 'py-6 sm:py-8' : ''} ${isDragActive ? 'dragover' : ''} ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
           >
             <input {...getInputProps()} ref={fileInputRef} />
@@ -474,6 +508,9 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <NavigationButtons
                   showBack={false}
                   showNext={selectedFiles.length > 0}
+                  backLabel={t('wizard.back')}
+                  defaultNextLabel={t('wizard.next')}
+                  onBack={() => setCurrentStep(1)}
                   onNext={() => setCurrentStep(2)}
                 />
               </div>
@@ -524,6 +561,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
             <NavigationButtons
               showBack={true}
               showNext={true}
+              backLabel={t('wizard.back')}
+              defaultNextLabel={t('wizard.next')}
               onBack={() => setCurrentStep(1)}
               onNext={() => setCurrentStep(3)}
             />
@@ -711,6 +750,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
             <NavigationButtons
               showBack={true}
               showNext={true}
+              backLabel={t('wizard.back')}
+              defaultNextLabel={t('wizard.next')}
               onBack={() => setCurrentStep(2)}
               onNext={() => setCurrentStep(4)}
             />
@@ -797,6 +838,8 @@ const FileUpload: React.FC<FileUploadProps> = ({
               <NavigationButtons
                 showBack={true}
                 showNext={true}
+                backLabel={t('wizard.back')}
+                defaultNextLabel={t('wizard.next')}
                 onBack={() => setCurrentStep(3)}
                 onNext={handleStartProcessing}
                 nextLabel={t('upload.startProcessing')}
