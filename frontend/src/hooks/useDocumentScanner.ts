@@ -97,7 +97,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     return scannerRef.current;
   }, []);
 
-  // Analyze image quality (brightness, contrast only - blur detection removed as unreliable across devices)
+  // Analyze image quality (blur, brightness, contrast) - lenient blur detection
   const analyzeImageQuality = useCallback((canvas: HTMLCanvasElement): ImageQuality => {
     const ctx = canvas.getContext('2d')!;
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -107,23 +107,48 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     let totalBrightness = 0;
     let minBrightness = 255;
     let maxBrightness = 0;
+    const grayscale: number[] = [];
 
     for (let i = 0; i < data.length; i += 4) {
       const gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+      grayscale.push(gray);
       totalBrightness += gray;
       minBrightness = Math.min(minBrightness, gray);
       maxBrightness = Math.max(maxBrightness, gray);
     }
 
-    const avgBrightness = totalBrightness / (data.length / 4);
+    const avgBrightness = totalBrightness / grayscale.length;
     const contrast = maxBrightness - minBrightness;
 
-    // Simple quality check - no blur detection (unreliable across devices)
-    const isAcceptable = contrast > 20 && avgBrightness > 20 && avgBrightness < 240;
+    // Calculate blur score using Laplacian variance approximation
+    let laplacianSum = 0;
+    const width = canvas.width;
+    const height = canvas.height;
+
+    for (let y = 1; y < height - 1; y++) {
+      for (let x = 1; x < width - 1; x++) {
+        const idx = y * width + x;
+        const laplacian = 4 * grayscale[idx] -
+          grayscale[idx - 1] - grayscale[idx + 1] -
+          grayscale[idx - width] - grayscale[idx + width];
+        laplacianSum += laplacian * laplacian;
+      }
+    }
+
+    const blurScore = Math.sqrt(laplacianSum / ((width - 2) * (height - 2)));
+
+    // Lenient blur detection - only flag truly blurry images
+    // Threshold of 1.5 catches severe blur while allowing normal tablet captures
+    // Skip blur check entirely for low-contrast images (blank paper, uniform areas)
+    const canMeasureBlur = contrast > 30;
+    const isBlurry = canMeasureBlur && blurScore < 1.5;
+
+    // Accept image if not severely blurry and has reasonable brightness/contrast
+    const isAcceptable = !isBlurry && contrast > 20 && avgBrightness > 20 && avgBrightness < 240;
 
     return {
-      isBlurry: false, // Always false - blur detection removed
-      blurScore: 100,  // Dummy value - blur detection removed
+      isBlurry,
+      blurScore: Math.round(blurScore * 10) / 10,
       brightness: Math.round(avgBrightness),
       contrast: Math.round(contrast),
       isAcceptable
