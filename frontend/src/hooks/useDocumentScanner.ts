@@ -356,8 +356,13 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     const brX = offsetX + br.x;
     const brY = offsetY + br.y;
 
-    // Draw semi-transparent fill (~15% opacity)
-    ctx.fillStyle = color + '26'; // hex 26 = 38/255 ≈ 15%
+    // Parse hex color to RGB for rgba() fill (better browser compatibility)
+    const r = parseInt(color.slice(1, 3), 16);
+    const g = parseInt(color.slice(3, 5), 16);
+    const b = parseInt(color.slice(5, 7), 16);
+
+    // Draw semi-transparent fill (25% opacity)
+    ctx.fillStyle = `rgba(${r}, ${g}, ${b}, 0.25)`;
     ctx.beginPath();
     ctx.moveTo(tlX, tlY);
     ctx.lineTo(trX, trY);
