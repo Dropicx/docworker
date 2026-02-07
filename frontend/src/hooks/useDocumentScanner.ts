@@ -428,6 +428,11 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         // Now also applies skew correction and orientation detection
         const result = scanner.extractPaper(fullCanvas, 2480, 3508, videoCorners);
         if (result) {
+          console.log('[useDocumentScanner] Extract result:', {
+            skewCorrection: result.appliedSkewCorrection,
+            orientation: result.detectedOrientation,
+            orientationCorrected: result.orientationCorrected
+          });
           finalCanvas = result.canvas;
           // Store orientation info and flag uncertainty for UI
           setDetectedOrientation(result.detectedOrientation);
@@ -438,6 +443,7 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
             (result.orientationCorrected && result.detectedOrientation.confidence < 0.8)
           );
         } else {
+          console.log('[useDocumentScanner] Extract returned null');
           finalCanvas = fullCanvas;
           setDetectedOrientation(null);
           setOrientationUncertain(false);

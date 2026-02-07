@@ -449,8 +449,10 @@ export default class Scanner {
       // Return median angle for robustness
       angles.sort((a, b) => a - b);
       const median = angles[Math.floor(angles.length / 2)];
+      console.log('[Scanner] Skew analysis: found', lines.rows, 'lines,', angles.length, 'near-horizontal, median angle:', median.toFixed(2) + '°');
       return median;
-    } catch {
+    } catch (err) {
+      console.error('[Scanner] calculateResidualSkew error:', err);
       return 0;
     } finally {
       if (gray) gray.delete();
@@ -519,6 +521,7 @@ export default class Scanner {
   /**
    * Score how well an image orientation matches expected document characteristics.
    * Higher score = more likely correct orientation.
+   * Uses edge density and line detection (skips gradient analysis for performance).
    * @param gray Grayscale cv.Mat
    * @param imgWidth Image width
    * @param imgHeight Image height
@@ -529,10 +532,6 @@ export default class Scanner {
     if (!cv?.Mat) return 0;
 
     let edges: any = null;
-    let sobelX: any = null;
-    let sobelY: any = null;
-    let magnitude: any = null;
-    let angle: any = null;
     let lines: any = null;
     let topROI: any = null;
     let bottomROI: any = null;
@@ -540,7 +539,7 @@ export default class Scanner {
     let bottomEdges: any = null;
 
     try {
-      // 1. Edge Density Score (30%): top third should have more edges than bottom (headers/titles)
+      // 1. Edge Density Score (50%): top third should have more edges than bottom (headers/titles)
       const thirdHeight = Math.floor(imgHeight / 3);
 
       topROI = gray.roi(new cv.Rect(0, 0, imgWidth, thirdHeight));
@@ -557,41 +556,7 @@ export default class Scanner {
       // Documents typically have more content at top (headers, titles)
       const edgeDensityScore = totalEdges > 0 ? topEdgeCount / totalEdges : 0.5;
 
-      // 2. Gradient Direction Score (40%): text has strong horizontal gradients
-      sobelX = new cv.Mat();
-      sobelY = new cv.Mat();
-      cv.Sobel(gray, sobelX, cv.CV_64F, 1, 0, 3);
-      cv.Sobel(gray, sobelY, cv.CV_64F, 0, 1, 3);
-
-      magnitude = new cv.Mat();
-      angle = new cv.Mat();
-      cv.cartToPolar(sobelX, sobelY, magnitude, angle);
-
-      // Count horizontal vs vertical gradients
-      let horizontalGradients = 0;
-      let verticalGradients = 0;
-      const magThreshold = 30; // Ignore weak gradients
-
-      for (let i = 0; i < magnitude.rows; i++) {
-        for (let j = 0; j < magnitude.cols; j++) {
-          const mag = magnitude.doubleAt(i, j);
-          if (mag < magThreshold) continue;
-
-          const ang = angle.doubleAt(i, j) * (180 / Math.PI);
-          // Horizontal gradients: angle near 0° or 180° (from vertical edges in text)
-          if (ang < 45 || ang > 135) {
-            horizontalGradients++;
-          } else {
-            verticalGradients++;
-          }
-        }
-      }
-
-      const totalGradients = horizontalGradients + verticalGradients;
-      // Text produces more horizontal gradients (vertical letter strokes)
-      const gradientScore = totalGradients > 0 ? horizontalGradients / totalGradients : 0.5;
-
-      // 3. Line Detection Score (30%): text lines should be horizontal
+      // 2. Line Detection Score (50%): text lines should be horizontal
       edges = new cv.Mat();
       cv.Canny(gray, edges, 50, 150);
 
@@ -618,17 +583,14 @@ export default class Scanner {
       const totalLines = horizontalLines + verticalLines;
       const lineScore = totalLines > 0 ? horizontalLines / totalLines : 0.5;
 
-      // Combined score with weights
-      const score = (edgeDensityScore * 0.3) + (gradientScore * 0.4) + (lineScore * 0.3);
+      // Combined score with weights (simplified: 50% edge density, 50% line detection)
+      const score = (edgeDensityScore * 0.5) + (lineScore * 0.5);
       return score;
-    } catch {
+    } catch (err) {
+      console.error('[Scanner] scoreOrientation error:', err);
       return 0.5;
     } finally {
       if (edges) edges.delete();
-      if (sobelX) sobelX.delete();
-      if (sobelY) sobelY.delete();
-      if (magnitude) magnitude.delete();
-      if (angle) angle.delete();
       if (lines) lines.delete();
       if (topROI) topROI.delete();
       if (bottomROI) bottomROI.delete();
@@ -714,6 +676,7 @@ export default class Scanner {
         { rotation: 180, score: score180 },
         { rotation: 270, score: score270 },
       ];
+      console.log('[Scanner] Orientation scores:', scores.map(s => `${s.rotation}°: ${s.score.toFixed(3)}`).join(', '));
       scores.sort((a, b) => b.score - a.score);
 
       const best = scores[0];
@@ -721,12 +684,14 @@ export default class Scanner {
 
       // Confidence = relative difference between best and second-best
       const confidence = best.score > 0 ? (best.score - secondBest.score) / best.score : 0;
+      console.log('[Scanner] Best orientation:', best.rotation + '° with confidence', confidence.toFixed(3));
 
       return {
         rotation: best.rotation,
         confidence: Math.min(1, Math.max(0, confidence)),
       };
-    } catch {
+    } catch (err) {
+      console.error('[Scanner] detectOrientation error:', err);
       return { rotation: 0, confidence: 0 };
     } finally {
       if (gray) gray.delete();
@@ -843,7 +808,9 @@ export default class Scanner {
 
     // 1. Auto-straighten small skew (0.5° - 15°)
     const residualSkew = this.calculateResidualSkew(warpedDst);
+    console.log('[Scanner] Residual skew detected:', residualSkew.toFixed(2) + '°');
     if (Math.abs(residualSkew) > 0.5 && Math.abs(residualSkew) < 15) {
+      console.log('[Scanner] Applying skew correction:', -residualSkew.toFixed(2) + '°');
       const straightened = this.applyRotation(warpedDst, -residualSkew);
       warpedDst.delete();
       warpedDst = straightened;
@@ -852,7 +819,9 @@ export default class Scanner {
 
     // 2. Detect and correct 90/180/270 degree rotation
     const orientation = this.detectOrientation(warpedDst);
+    console.log('[Scanner] Orientation detection:', orientation);
     if (orientation.rotation !== 0 && orientation.confidence > 0.6) {
+      console.log('[Scanner] Applying rotation correction:', orientation.rotation + '°');
       const oriented = this.rotateImage90(warpedDst, orientation.rotation);
       warpedDst.delete();
       warpedDst = oriented;
