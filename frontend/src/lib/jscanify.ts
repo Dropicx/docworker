@@ -1224,12 +1224,13 @@ export default class Scanner {
     const isComplete = this.checkCompleteness(corners, frameWidth, frameHeight);
     const documentCoverage = this.calculateDocumentCoverage(corners, frameWidth, frameHeight);
 
-    // Check blur (score < 100 is too blurry)
-    if (blurScore < 100) {
+    // Check blur (score < 50 is too blurry for mobile cameras)
+    // Raised threshold to reduce false positives on mobile devices
+    if (blurScore < 50) {
       warnings.push({
         type: 'blur',
         message: 'scanner.holdSteady',
-        severity: blurScore < 50 ? 'error' : 'warning',
+        severity: blurScore < 25 ? 'error' : 'warning',
       });
     }
 
@@ -1242,12 +1243,13 @@ export default class Scanner {
       });
     }
 
-    // Check glare (> 5% overexposed is problematic)
-    if (glarePercentage > 5) {
+    // Check glare (> 10% overexposed is problematic)
+    // Raised threshold to reduce false positives on white paper
+    if (glarePercentage > 10) {
       warnings.push({
         type: 'glare',
         message: 'scanner.avoidGlare',
-        severity: glarePercentage > 15 ? 'error' : 'warning',
+        severity: glarePercentage > 25 ? 'error' : 'warning',
       });
     }
 

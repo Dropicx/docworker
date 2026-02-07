@@ -36,16 +36,16 @@ interface UseDocumentScannerReturn {
   rotatePreview: (degrees: 90 | -90 | 180) => void;
 }
 
-const DETECTION_FPS = 30;
+const DETECTION_FPS = 15; // Reduced from 30 for better mobile performance
 const FRAME_INTERVAL = 1000 / DETECTION_FPS;
-const AUTO_CAPTURE_DELAY_MS = 3000; // 3 seconds after stable detection
+const AUTO_CAPTURE_DELAY_MS = 2500; // 2.5 seconds after stable detection
 const A4_RATIO = 1.4142; // A4 aspect ratio (height/width)
 const GUIDE_PADDING = 0.06; // 6% padding from edges
 const CORNER_BRACKET_LENGTH = 100; // Length of corner bracket arms in pixels
-const STABLE_FRAMES_REQUIRED = 10; // ~330ms at 30fps for stability
-const CORNER_STABILITY_TOLERANCE = 15; // Pixel tolerance for corner stability
-const SMOOTHING_FACTOR = 0.4; // EMA smoothing for corners (higher = more responsive)
-const QUALITY_CHECK_INTERVAL = 5; // Check quality every N frames (~6 times/second at 30fps)
+const STABLE_FRAMES_REQUIRED = 5; // ~333ms at 15fps for stability (reduced from 10)
+const CORNER_STABILITY_TOLERANCE = 20; // Pixel tolerance for corner stability (increased for smoother tracking)
+const SMOOTHING_FACTOR = 0.35; // EMA smoothing for corners (slightly lower for smoother motion)
+const QUALITY_CHECK_INTERVAL = 15; // Check quality every N frames (~1/second at 15fps)
 
 export function useDocumentScanner(): UseDocumentScannerReturn {
   const [phase, setPhase] = useState<ScannerPhase>('initializing');
@@ -80,6 +80,10 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
   const smoothedCornersRef = useRef<CornerPoints | null>(null);
   const qualityCheckCounterRef = useRef(0);
   const realtimeWarningsRef = useRef<QualityWarning[]>([]);
+
+  // Reusable detection canvas (avoids creating new canvas every frame)
+  const detectCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const detectCtxRef = useRef<CanvasRenderingContext2D | null>(null);
 
   // Check OpenCV availability on mount
   useEffect(() => {
@@ -605,30 +609,42 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
       // Real-time document detection using OpenCV
       let corners: CornerPoints | null = null;
       const cv = (window as any).cv;
+      let detectionImg: any = null; // Keep reference for quality check reuse
 
       if (cv?.Mat) {
         try {
-          // Create a temporary canvas at scaled size for detection
-          // (detecting on display-sized canvas is faster)
-          const detectCanvas = document.createElement('canvas');
-          detectCanvas.width = scaledW;
-          detectCanvas.height = scaledH;
-          const detectCtx = detectCanvas.getContext('2d')!;
+          // Reuse detection canvas (create once, resize as needed)
+          if (!detectCanvasRef.current) {
+            detectCanvasRef.current = document.createElement('canvas');
+            detectCtxRef.current = detectCanvasRef.current.getContext('2d');
+          }
+          const detectCanvas = detectCanvasRef.current;
+          const detectCtx = detectCtxRef.current!;
+
+          // Resize only if dimensions changed
+          if (detectCanvas.width !== scaledW || detectCanvas.height !== scaledH) {
+            detectCanvas.width = scaledW;
+            detectCanvas.height = scaledH;
+          }
+
           detectCtx.drawImage(video, 0, 0, scaledW, scaledH);
 
-          const img = cv.imread(detectCanvas);
+          detectionImg = cv.imread(detectCanvas);
           const scanner = getScanner();
-          const contour = scanner.findPaperContour(img);
+          const contour = scanner.findPaperContour(detectionImg);
 
           if (contour) {
             // Get corners in display coordinates (from scaled canvas)
             corners = scanner.getCornerPoints(contour);
             contour.delete();
           }
-          img.delete();
         } catch (err) {
           // OpenCV error - fall back to no detection
           corners = null;
+          if (detectionImg) {
+            try { detectionImg.delete(); } catch { /* ignore */ }
+            detectionImg = null;
+          }
         }
       }
 
@@ -675,33 +691,33 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         smoothedCornersRef.current = smoothed;
 
         // Run sampled quality check (every N frames for performance)
+        // Reuse the already-loaded detectionImg to avoid creating another Mat
         qualityCheckCounterRef.current++;
-        if (qualityCheckCounterRef.current >= QUALITY_CHECK_INTERVAL) {
+        if (qualityCheckCounterRef.current >= QUALITY_CHECK_INTERVAL && detectionImg) {
           qualityCheckCounterRef.current = 0;
           try {
-            // Create a temporary canvas for quality analysis
-            const detectCanvas = document.createElement('canvas');
-            detectCanvas.width = scaledW;
-            detectCanvas.height = scaledH;
-            const detectCtx = detectCanvas.getContext('2d')!;
-            detectCtx.drawImage(video, 0, 0, scaledW, scaledH);
-            const cv = (window as any).cv;
-            if (cv?.Mat) {
-              const img = cv.imread(detectCanvas);
-              const scanner = getScanner();
-              const quality = scanner.checkQuality(img, corners, scaledW, scaledH);
-              realtimeWarningsRef.current = quality.warnings;
-              setRealtimeWarnings(quality.warnings);
-              img.delete();
-            }
+            const scanner = getScanner();
+            const quality = scanner.checkQuality(detectionImg, corners, scaledW, scaledH);
+            realtimeWarningsRef.current = quality.warnings;
+            setRealtimeWarnings(quality.warnings);
           } catch {
             // Silently ignore quality check errors
           }
         }
 
+        // Clean up the detection Mat now that we're done with it
+        if (detectionImg) {
+          try { detectionImg.delete(); } catch { /* ignore */ }
+        }
+
         // Green when document detected via OpenCV (use smoothed corners for drawing)
         drawDetectedQuad(ctx, smoothed, offsetX, offsetY, '#22c55e', dpr);
       } else {
+        // Clean up the detection Mat if it was created
+        if (detectionImg) {
+          try { detectionImg.delete(); } catch { /* ignore */ }
+        }
+
         // Reset smoothing and quality warnings when document is lost
         smoothedCornersRef.current = null;
         qualityCheckCounterRef.current = 0;
@@ -721,12 +737,11 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
         );
       }
 
-      // Auto-capture timer - quality-gated to prevent capture with severe issues
-      // For OpenCV: require corner stability AND no error-level warnings
-      // For brightness fallback: just require alignment
-      const hasNoErrors = realtimeWarningsRef.current.every(w => w.severity !== 'error');
+      // Auto-capture timer - only require stability, not quality perfection
+      // Quality warnings are shown to user but don't block capture
+      // (user can always manually capture or adjust if they see warnings)
       const shouldCountdown = corners
-        ? stableFramesRef.current >= STABLE_FRAMES_REQUIRED && hasNoErrors
+        ? stableFramesRef.current >= STABLE_FRAMES_REQUIRED
         : isAlignedByBrightness;
 
       if (shouldCountdown) {
@@ -890,6 +905,10 @@ export function useDocumentScanner(): UseDocumentScannerReturn {
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+
+    // Clean up reusable detection canvas
+    detectCanvasRef.current = null;
+    detectCtxRef.current = null;
 
     setCapturedImageUrl(null);
     setAutoProgress(0);
