@@ -398,6 +398,11 @@ NEW_TERMS = [
     "Pathologie",
     "Pathologisch",
     "Pathologische",
+    # ==================== OCR TYPO FIXES (2025-02) ====================
+    # Common OCR errors that get misclassified as entities
+    # "Nächliche" is OCR typo of "Nächtliche" (nocturnal) - misclassified as LOCATION
+    "Nächliche",
+    "nächliche",  # lowercase variant
 ]
 
 
