@@ -2802,6 +2802,20 @@ class PIIFilter:
                 if ent_lower in preserved_locations:
                     continue
 
+                # Fast-path for temporal medical adjectives (commonly misclassified as LOC)
+                # SpaCy's German NER frequently misidentifies these adjectives as LOCATION
+                temporal_medical_adjectives = {
+                    'nächtlich', 'nächtliche', 'nächtlicher', 'nächtlichen', 'nächtliches',
+                    'paroxysmal', 'paroxysmale', 'paroxysmaler', 'paroxysmalen',
+                    'intermittierend', 'intermittierende', 'intermittierender', 'intermittierenden',
+                    'persistierend', 'persistierende', 'persistierender', 'persistierenden',
+                    'progredient', 'progrediente', 'progredienter', 'progredienten',
+                    'rezidivierend', 'rezidivierende', 'rezidivierender', 'rezidivierenden',
+                }
+                if ent_lower in temporal_medical_adjectives:
+                    logger.debug(f"Preserved temporal medical adjective (fast-path): {ent.text}")
+                    continue
+
                 # Skip if it's a medical term (SpaCy often misclassifies medical abbreviations as LOC)
                 if self._is_medical_term(ent.text, custom_terms):
                     if custom_terms and ent_lower in custom_terms:

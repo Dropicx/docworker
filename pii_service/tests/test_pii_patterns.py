@@ -757,5 +757,62 @@ class TestPlaceholderCleanup:
         assert "placeholder_fixes" in metadata
 
 
+class TestTemporalMedicalAdjectivesPreserved:
+    """Tests that temporal medical adjectives are NOT replaced as locations.
+
+    SpaCy's German NER model often misclassifies German temporal/medical adjectives
+    like 'nächtliche' (nightly/nocturnal) as LOCATION entities.
+    """
+
+    def test_naechtliche_dyspnoe_not_removed_as_location(self, pii_filter):
+        """Test that 'nächtliche Dyspnoe' is NOT removed as location.
+
+        SpaCy's German NER often misclassifies 'nächtliche' (nightly/nocturnal)
+        as a LOCATION entity. This must be preserved as it's a medical adjective.
+        Production bug from 2026-02-08: 'Nächtliche Dyspnoe' became '[LOCATION] Dyspnoe'.
+        """
+        text = "Nächtliche Dyspnoe wird verneint."
+        cleaned, metadata = pii_filter.remove_pii(text, language="de")
+
+        assert "Nächtliche" in cleaned or "nächtliche" in cleaned.lower(), \
+            f"'nächtliche' was incorrectly removed: {cleaned}"
+        assert "[LOCATION]" not in cleaned, \
+            f"[LOCATION] placeholder found where 'nächtliche' should be: {cleaned}"
+
+    @pytest.mark.parametrize("input_text,must_contain", [
+        # Nächtliche variants (the original bug)
+        ("Nächtliche Dyspnoe wird berichtet.", "Nächtliche"),
+        ("nächtliche Beschwerden", "nächtliche"),
+        ("Nächtlicher Husten vorhanden", "Nächtlicher"),
+
+        # Paroxysmal variants
+        ("Paroxysmale Tachykardie dokumentiert.", "Paroxysmale"),
+        ("paroxysmales Vorhofflimmern", "paroxysmales"),
+
+        # Intermittierend variants
+        ("Intermittierende Claudicatio vorhanden.", "Intermittierende"),
+        ("intermittierender Schmerz", "intermittierender"),
+
+        # Persistierend variants
+        ("Persistierende Beschwerden seit Wochen.", "Persistierende"),
+        ("persistierendes Fieber", "persistierendes"),
+
+        # Progredient variants
+        ("Progrediente Verschlechterung beobachtet.", "Progrediente"),
+        ("progredienter Verlauf", "progredienter"),
+
+        # Rezidivierend variants
+        ("Rezidivierende Infekte dokumentiert.", "Rezidivierende"),
+        ("rezidivierender Herpes", "rezidivierender"),
+    ])
+    def test_temporal_medical_adjectives_preserved(self, pii_filter, input_text, must_contain):
+        """Test all temporal medical adjectives are preserved and not replaced as locations."""
+        cleaned, _ = pii_filter.remove_pii(input_text, language="de")
+        assert must_contain in cleaned, \
+            f"Temporal adjective '{must_contain}' was incorrectly removed from: {input_text} -> {cleaned}"
+        assert "[LOCATION]" not in cleaned, \
+            f"[LOCATION] false positive in: {input_text} -> {cleaned}"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
