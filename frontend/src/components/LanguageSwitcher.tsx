@@ -1,40 +1,31 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { ChevronDown, Check } from 'lucide-react';
 
-// Flag SVG components for reuse
-const GermanFlag = ({ size = 20 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true">
-    <clipPath id="flagClipDe">
-      <circle cx="10" cy="10" r="10" />
-    </clipPath>
-    <g clipPath="url(#flagClipDe)">
-      <rect y="0" width="20" height="7" fill="#000" />
-      <rect y="7" width="20" height="6" fill="#D00" />
-      <rect y="13" width="20" height="7" fill="#FFCE00" />
-    </g>
-  </svg>
-);
-
-const EnglishFlag = ({ size = 20 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 20 20" aria-hidden="true">
-    <clipPath id="flagClipEn">
-      <circle cx="10" cy="10" r="10" />
-    </clipPath>
-    <g clipPath="url(#flagClipEn)">
-      <rect width="20" height="20" fill="#012169" />
-      <path d="M0,0 L20,20 M20,0 L0,20" stroke="#fff" strokeWidth="3" />
-      <path d="M0,0 L20,20 M20,0 L0,20" stroke="#C8102E" strokeWidth="1.5" />
-      <path d="M10,0 V20 M0,10 H20" stroke="#fff" strokeWidth="5" />
-      <path d="M10,0 V20 M0,10 H20" stroke="#C8102E" strokeWidth="3" />
-    </g>
-  </svg>
-);
+// UI Languages configuration
+// Using globe icon (🌍) for Arabic and Farsi to stay neutral across diverse communities
+const UI_LANGUAGES = [
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'en', name: 'English', flag: '🇬🇧' },
+  { code: 'uk', name: 'Українська', flag: '🇺🇦' },
+  { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+  { code: 'pl', name: 'Polski', flag: '🇵🇱' },
+  { code: 'ro', name: 'Română', flag: '🇷🇴' },
+  { code: 'ar', name: 'العربية', flag: '🌍', rtl: true },
+  { code: 'fa', name: 'فارسی/دری', flag: '🌍', rtl: true },
+  { code: 'fr', name: 'Français', flag: '🇫🇷' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'es', name: 'Español', flag: '🇪🇸' },
+  { code: 'tr', name: 'Türkçe', flag: '🇹🇷' },
+];
 
 const LanguageSwitcher: React.FC = () => {
   const { i18n, t } = useTranslation();
   const currentLang = i18n.language?.substring(0, 2) || 'de';
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const currentLanguage = UI_LANGUAGES.find(l => l.code === currentLang) || UI_LANGUAGES[0];
 
   const handleChange = (lang: string) => {
     i18n.changeLanguage(lang);
@@ -55,68 +46,60 @@ const LanguageSwitcher: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen]);
 
-  const CurrentFlag = currentLang === 'de' ? GermanFlag : EnglishFlag;
-  const OtherFlag = currentLang === 'de' ? EnglishFlag : GermanFlag;
-  const otherLang = currentLang === 'de' ? 'en' : 'de';
-  const otherLangLabel = currentLang === 'de' ? 'English' : 'Deutsch';
+  // Close dropdown on escape key
+  useEffect(() => {
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    };
+
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscape);
+    }
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen]);
 
   return (
-    <>
-      {/* Mobile: Single flag with dropdown */}
-      <div className="sm:hidden relative" ref={dropdownRef}>
-        <button
-          onClick={() => setIsOpen(!isOpen)}
-          aria-expanded={isOpen}
-          aria-haspopup="true"
-          aria-label={t('languageSwitcher.changeLanguage')}
-          className="w-9 h-9 rounded-full flex items-center justify-center bg-white/80 shadow-sm border border-neutral-200 transition-all duration-200 hover:shadow-md active:scale-95"
-        >
-          <CurrentFlag size={22} />
-        </button>
+    <div className="relative" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        aria-label={t('languageSwitcher.changeLanguage')}
+        className="flex items-center space-x-2 px-3 py-2 rounded-lg bg-white/80 shadow-sm border border-neutral-200 hover:shadow-md transition-all duration-200"
+      >
+        <span className="text-xl" aria-hidden="true">{currentLanguage.flag}</span>
+        <span className="text-sm font-medium text-primary-700 hidden sm:inline">{currentLanguage.name}</span>
+        <ChevronDown className={`w-4 h-4 text-primary-500 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+      </button>
 
-        {/* Dropdown */}
-        {isOpen && (
-          <div className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden z-50 animate-scale-in">
+      {isOpen && (
+        <div
+          role="listbox"
+          aria-label={t('languageSwitcher.selectLanguage')}
+          className="absolute right-0 top-full mt-2 bg-white rounded-xl shadow-lg border border-neutral-200 overflow-hidden z-50 min-w-[180px] animate-scale-in"
+        >
+          {UI_LANGUAGES.map(lang => (
             <button
-              onClick={() => handleChange(otherLang)}
-              className="flex items-center space-x-2 px-3 py-2.5 hover:bg-neutral-50 transition-colors w-full"
-              aria-label={otherLangLabel}
+              key={lang.code}
+              role="option"
+              aria-selected={currentLang === lang.code}
+              onClick={() => handleChange(lang.code)}
+              className={`flex items-center space-x-3 w-full px-4 py-2.5 hover:bg-neutral-50 transition-colors ${
+                currentLang === lang.code ? 'bg-brand-50 text-brand-700' : 'text-primary-700'
+              }`}
             >
-              <OtherFlag size={22} />
-              <span className="text-sm font-medium text-primary-700">{otherLangLabel}</span>
+              <span className="text-xl" aria-hidden="true">{lang.flag}</span>
+              <span className="text-sm font-medium flex-1 text-left">{lang.name}</span>
+              {currentLang === lang.code && (
+                <Check className="w-4 h-4 text-brand-600" aria-hidden="true" />
+              )}
             </button>
-          </div>
-        )}
-      </div>
-
-      {/* Desktop: Side-by-side flags */}
-      <div className="hidden sm:flex items-center space-x-1">
-        <button
-          onClick={() => handleChange('de')}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
-            currentLang === 'de'
-              ? 'ring-2 ring-brand-500 ring-offset-1 scale-110'
-              : 'opacity-60 hover:opacity-100 hover:scale-105'
-          }`}
-          aria-label="Deutsch"
-          aria-pressed={currentLang === 'de'}
-        >
-          <GermanFlag />
-        </button>
-        <button
-          onClick={() => handleChange('en')}
-          className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-200 ${
-            currentLang === 'en'
-              ? 'ring-2 ring-brand-500 ring-offset-1 scale-110'
-              : 'opacity-60 hover:opacity-100 hover:scale-105'
-          }`}
-          aria-label="English"
-          aria-pressed={currentLang === 'en'}
-        >
-          <EnglishFlag />
-        </button>
-      </div>
-    </>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 

@@ -1,0 +1,445 @@
+{
+  "header": {
+    "subtitle": "Comprendere i documenti",
+    "systemReady": "Sistema pronto",
+    "systemDegraded": "Funzionamento limitato",
+    "systemError": "Errore di sistema",
+    "systemStatus": "Stato del sistema",
+    "ocrAndAi": "Servizi OCR e IA",
+    "notConfigured": "Non configurato",
+    "error": "Errore",
+    "active": "attivo",
+    "settings": "Impostazioni",
+    "logout": "Esci",
+    "filesystem": "File system",
+    "imageProcessing": "Elaborazione immagini",
+    "pdfProcessing": "Elaborazione PDF"
+  },
+  "hero": {
+    "title1": "Documenti medici",
+    "title2": "semplificati",
+    "description": "Trasforma lettere e referti medici complessi in un linguaggio facile da capire. Veloce, sicuro e conforme al GDPR.",
+    "gdpr": "100% GDPR",
+    "ready": "Accesso immediato",
+    "noStorage": "Nessuna memorizzazione dei dati"
+  },
+  "features": {
+    "privacyTitle": "Privacy prima di tutto",
+    "privacyDescription": "I tuoi dati vengono memorizzati solo durante l'elaborazione, mai utilizzati per l'addestramento dell'IA, e automaticamente eliminati dopo la traduzione.",
+    "precisionTitle": "Precisione medica",
+    "precisionDescription": "Alimentato da IA ottimizzata per la terminologia medica. Traduzioni accurate che preservano il significato clinico.",
+    "speedTitle": "Elaborazione veloce",
+    "speedDescription": "Ricevi una traduzione chiara e comprensibile dei tuoi documenti medici in pochi secondi."
+  },
+  "upload": {
+    "title": "Carica documenti",
+    "titleDragActive": "Rilascia i file qui",
+    "titleAddMore": "Aggiungi altri file",
+    "descriptionDragActive": "Rilascia i file per aggiungerli",
+    "descriptionAddMore": "Trascina altri file qui o clicca per selezionare",
+    "description": "Trascina i file qui o clicca per selezionare",
+    "supportedFormats": "Formati supportati",
+    "maxSize": "Max. 50 MB",
+    "scanDocument": "Scansiona documento",
+    "scanMore": "Scansiona altre pagine",
+    "selectedFiles": "File selezionati ({{count}})",
+    "removeAll": "Rimuovi tutti",
+    "removeFile": "Rimuovi file {{fileName}}",
+    "clearLanguageSelection": "Cancella selezione lingua",
+    "documentLanguage": "Lingua del documento",
+    "german": "Tedesco",
+    "english": "Inglese",
+    "documentLanguageHint": "Seleziona la lingua del tuo documento medico",
+    "translationOptional": "Traduzione (opzionale)",
+    "simplifyOnly": "Solo semplificazione",
+    "moreLanguages": "Altre lingue",
+    "more": "Altro",
+    "searchLanguage": "Cerca lingua...",
+    "noLanguagesFound": "Nessuna lingua trovata per \"{{term}}\"",
+    "languagesAvailable": "{{count}} lingue disponibili",
+    "selected": "Selezionato:",
+    "translationHintSelected": "Il documento verrà prima semplificato e poi tradotto nella lingua selezionata.",
+    "translationHintOptional": "Opzionale: seleziona una lingua per tradurre anche il risultato semplificato.",
+    "privacyConfirmed": "Privacy confermata",
+    "pleaseConfirm": "Per favore conferma",
+    "privacyConsentPrefix": "Ho letto la",
+    "privacyPolicy": "Informativa sulla privacy",
+    "privacyConsentSuffix": "e acconsento al trattamento dei miei documenti. Comprendo che i miei dati saranno trattati in conformità con il GDPR e automaticamente eliminati dopo la traduzione.",
+    "startProcessing": "Avvia elaborazione",
+    "gdprNotice": "I tuoi dati sono trattati in conformità con il GDPR e non vengono memorizzati",
+    "uploadFailed": "Caricamento fallito"
+  },
+  "qualityGate": {
+    "title": "Qualità dell'immagine troppo bassa",
+    "description": "La qualità del tuo documento è troppo bassa per un'elaborazione affidabile.",
+    "qualityScore": "Punteggio qualità:",
+    "required": "richiesto",
+    "detectedIssues": "Problemi rilevati:",
+    "improvementTips": "Come migliorare la qualità:",
+    "retakePhoto": "Scatta una nuova foto",
+    "issues": {
+      "poor_image_quality": "Scarsa qualità dell'immagine",
+      "significant_blur_detected": "Sfocatura significativa rilevata",
+      "low_blur_detection": "Immagine sfocata",
+      "low_contrast": "Basso contrasto",
+      "poor_lighting": "Illuminazione scarsa",
+      "document_too_small": "Documento troppo piccolo",
+      "text_density_low": "Troppo poco testo riconosciuto",
+      "has_blur": "L'immagine è sfocata",
+      "has_low_contrast": "Il contrasto è troppo basso"
+    }
+  },
+  "processing": {
+    "uploading": "Caricamento file",
+    "starting": "Avvio elaborazione...",
+    "pleaseWait": "Attendere prego",
+    "cancel": "Annulla",
+    "ready": "Pronto",
+    "connecting": "Stabilendo connessione...",
+    "transferring": "Trasferimento file...",
+    "almostDone": "Quasi finito...",
+    "qualityCheck": "Controllo qualità...",
+    "preparing": "Preparazione elaborazione...",
+    "aiProcessing": "Elaborazione IA",
+    "analyzing": "Il tuo documento è in fase di analisi e traduzione",
+    "cancelProcessing": "Annulla elaborazione",
+    "connectionLabel": "Connessione...",
+    "activeLabel": "Attivo",
+    "progress": "Progresso",
+    "processingFor": "In elaborazione da {{time}}",
+    "stepsTitle": "Fasi di elaborazione",
+    "processingId": "ID elaborazione:",
+    "completed": "Traduzione completata!",
+    "completedDescription": "Il tuo documento è stato tradotto con successo in un linguaggio facile da capire. Caricamento risultati...",
+    "uploadFailed": "Caricamento fallito",
+    "timeoutError": "La connessione al server sta richiedendo più tempo del previsto. Verifica la connessione Internet e riprova.",
+    "processingFailed": "Elaborazione fallita",
+    "steps": {
+      "ocr": "Estrazione testo (OCR)",
+      "validation": "Validazione medica",
+      "privacy": "Filtro privacy",
+      "simplification": "Semplificazione IA",
+      "quality": "Controllo qualità",
+      "finalization": "Finalizzazione"
+    },
+    "stepMessages": {
+      "extracting_text": [
+        "Scansione documento...",
+        "Riconoscimento caratteri...",
+        "Analisi struttura testo..."
+      ],
+      "translating": [
+        "Identificazione termini medici...",
+        "Traduzione in linguaggio semplice...",
+        "Verifica coerenza..."
+      ],
+      "language_translating": [
+        "Ottimizzazione traduzione...",
+        "Verifica grammatica...",
+        "Regolazione formattazione..."
+      ]
+    }
+  },
+  "result": {
+    "title": "Traduzione completata",
+    "descriptionWithLanguage": "Il tuo documento è stato semplificato e tradotto",
+    "descriptionSimplified": "Il tuo documento è stato tradotto in un linguaggio facile da capire",
+    "guidelines": {
+      "title": "Linee guida mediche",
+      "searching": "Ricerca raccomandazioni AWMF pertinenti...",
+      "appearBelow": "I risultati appariranno sotto in questa pagina",
+      "found": "Linee guida trovate",
+      "available": "Raccomandazioni AWMF pertinenti disponibili",
+      "viewNow": "Visualizza ora",
+      "notFound": "Nessuna linea guida corrispondente",
+      "notFoundDescription": "Nessuna raccomandazione AWMF trovata per questo tipo di documento"
+    },
+    "targetLanguage": "Lingua di destinazione",
+    "tabSimplified": "Semplificato (tedesco)",
+    "translationTitle": "Traduzione ({{lang}})",
+    "documentIn": "Il tuo documento in {{lang}}",
+    "createdAt": "Traduzione creata il:",
+    "tagline": "HealthLingo - Comprendere i documenti medici",
+    "processedIn": "Elaborato in",
+    "processingId": "ID elaborazione:",
+    "copy": "Copia",
+    "copied": "Copiato!",
+    "downloadPdf": "Come PDF",
+    "originalText": "Testo originale",
+    "show": "Mostra",
+    "hide": "Nascondi",
+    "showOriginalHint": "Clicca \"Mostra\" per vedere il testo originale",
+    "newTranslation": "Traduci nuovo documento",
+    "pdfExportFailed": "Esportazione PDF fallita. Riprova.",
+    "pdfTitleTranslation": "Traduzione ({{lang}})",
+    "pdfTitleSimplified": "Traduzione in linguaggio semplice"
+  },
+  "disclaimer": {
+    "title": "Avviso importante",
+    "text": "Questa traduzione è stata generata automaticamente ed è solo a scopo informativo. Non sostituisce la consulenza medica professionale, la diagnosi o il trattamento. Consulta sempre il tuo medico o altri operatori sanitari qualificati per qualsiasi domanda."
+  },
+  "scanner": {
+    "simpleMode": "Modalità semplice",
+    "documentDetected": "Documento rilevato!",
+    "searching": "Ricerca documento...",
+    "alignWithFrame": "Allinea il documento con la cornice",
+    "close": "Chiudi",
+    "starting": "Avvio fotocamera...",
+    "error": "Si è verificato un errore.",
+    "scannedDocument": "Documento scansionato",
+    "retake": "Ripeti",
+    "use": "Usa",
+    "capture": "Scatta foto",
+    "holdSteady": "Tieni fermo",
+    "optimizing": "Ottimizzazione immagine...",
+    "imageBlurry": "L'immagine sembra sfocata - considera di rifare",
+    "goodQuality": "Buona qualità",
+    "lowQuality": "Bassa qualità",
+    "straightenDocument": "Raddrizza il documento",
+    "avoidGlare": "Evita i riflessi",
+    "moveCloser": "Avvicinati",
+    "alignWithGuides": "Mantieni il documento nella cornice",
+    "rotateImage": "Ruota se necessario:",
+    "rotateLeft": "Ruota a sinistra",
+    "rotateRight": "Ruota a destra",
+    "loadingScanner": "Caricamento scanner...",
+    "loadError": "Impossibile caricare lo scanner. Verifica la connessione e riprova."
+  },
+  "feedback": {
+    "title": "Com'è stata la tua traduzione?",
+    "subtitle": "La tua opinione ci aiuta a migliorare",
+    "overallRating": "Valutazione complessiva",
+    "detailedOptional": "Valutazione dettagliata (opzionale)",
+    "clarity": "Chiarezza",
+    "accuracy": "Precisione",
+    "formatting": "Formattazione",
+    "speed": "Velocità",
+    "commentOptional": "Commento (opzionale)",
+    "commentPlaceholder": "Condividi i tuoi pensieri...",
+    "consent": "Acconsento che i miei dati vengano utilizzati per migliorare il sistema.",
+    "ratingRequired": "Fornisci una valutazione complessiva.",
+    "consentRequired": "Acconsenti all'utilizzo dei dati.",
+    "submitError": "Impossibile inviare il feedback.",
+    "submitting": "Invio...",
+    "submit": "Invia feedback",
+    "privacyNote": "Senza consenso, il contenuto del tuo documento non verrà memorizzato.",
+    "alreadyReceived": "Feedback già ricevuto",
+    "alreadyReceivedDescription": "Grazie! Hai già fornito feedback per questa traduzione.",
+    "thankYou": "Grazie!",
+    "thankYouDescription": "Il tuo feedback ci aiuta a migliorare il servizio.",
+    "starLabel": "{{count}} stella",
+    "starLabel_plural": "{{count}} stelle"
+  },
+  "faq": {
+    "title": "Domande frequenti",
+    "subtitle": "Tutto quello che devi sapere su HealthLingo e l'elaborazione sicura dei tuoi documenti medici",
+    "contactUs": "Altre domande?",
+    "contactLink": "Contattaci",
+    "items": {
+      "0": {
+        "question": "Dove vengono elaborati i miei dati e quanto sono sicuri?",
+        "answer": "HealthLingo è ospitato su Railway.app, un provider certificato SOC 2 Type I con piena conformità GDPR. I server sono situati nell'UE e Railway offre un Accordo per il Trattamento dei Dati (DPA) secondo l'articolo 28 del GDPR. L'elaborazione IA avviene tramite OVH AI Endpoints in data center europei (certificati ISO 27001, 27017, 27018, 27701). OVH garantisce che i tuoi dati non vengono MAI utilizzati per l'addestramento dei modelli IA."
+      },
+      "1": {
+        "question": "I miei dati medici vengono memorizzati o utilizzati per l'addestramento IA?",
+        "answer": "No, assolutamente no. HealthLingo non memorizza alcun dato in modo permanente. OVH AI Endpoints ha una rigorosa politica di non addestramento: i dati dei clienti non vengono mai memorizzati o utilizzati per l'addestramento dei modelli. Dopo la traduzione, tutti i documenti, testi e informazioni personali vengono automaticamente e irreversibilmente eliminati."
+      },
+      "2": {
+        "question": "Quanto tempo richiede la traduzione?",
+        "answer": "La maggior parte dei documenti viene tradotta in 10-30 secondi. La durata esatta dipende dalla lunghezza e complessità del documento. I documenti scansionati potrebbero richiedere un po' più di tempo poiché devono prima essere elaborati tramite OCR (riconoscimento testo)."
+      },
+      "3": {
+        "question": "Quali formati di file sono supportati?",
+        "answer": "HealthLingo supporta file PDF (sia con testo incorporato che documenti scansionati) e file immagine (JPG, PNG, JPEG). La dimensione massima del file è 10 MB. I documenti multi-pagina vengono elaborati completamente."
+      },
+      "4": {
+        "question": "In quali lingue si può tradurre?",
+        "answer": "Oltre alla semplificazione in tedesco comprensibile, supportiamo traduzioni in 19 lingue accuratamente selezionate ottimalmente supportate da {{model}}: inglese, francese, spagnolo, italiano, portoghese, olandese, russo, cinese, giapponese, coreano, arabo, hindi, polacco, ceco, svedese, norvegese e danese."
+      },
+      "5": {
+        "question": "Cosa succede ai dati personali nel documento?",
+        "answer": "I dati personali come nomi, indirizzi, date di nascita e numeri di assicurazione vengono rilevati automaticamente e sostituiti con segnaposto (ad es. [NOME RIMOSSO]). Questo protegge la tua privacy preservando completamente tutte le informazioni mediche."
+      },
+      "6": {
+        "question": "Quali certificazioni di sicurezza hanno i servizi utilizzati?",
+        "answer": "Railway.app è certificato SOC 2 Type I e offre accordi per il trattamento dei dati conformi al GDPR. OVH Cloud possiede certificazioni complete: ISO/IEC 27001 (sicurezza delle informazioni), ISO/IEC 27017 (sicurezza cloud), ISO/IEC 27018 (privacy nel cloud) e ISO/IEC 27701 (gestione della privacy)."
+      },
+      "7": {
+        "question": "La traduzione è medicalmente accurata?",
+        "answer": "HealthLingo utilizza tecnologie IA avanzate specificamente addestrate per testi medici. Le traduzioni sono molto precise ma non sostituiscono la consulenza medica professionale. Per decisioni mediche importanti, consulta sempre il tuo medico."
+      },
+      "8": {
+        "question": "Posso scaricare la traduzione?",
+        "answer": "Sì, puoi scaricare la versione tradotta come file PDF. Il PDF contiene la traduzione completa in un formato leggibile con data e ora. Puoi anche copiare il testo direttamente negli appunti."
+      },
+      "9": {
+        "question": "HealthLingo funziona con i documenti scansionati?",
+        "answer": "Sì! HealthLingo ha un riconoscimento testo avanzato (OCR) con ottimizzazione speciale per i documenti medici tedeschi. Anche note scritte a mano, tabelle e documenti scansionati male vengono riconosciuti ed elaborati in modo affidabile."
+      },
+      "10": {
+        "question": "Il servizio è davvero gratuito?",
+        "answer": "Sì, HealthLingo è completamente gratuito. Non ci sono costi nascosti, registrazione o limite al numero di traduzioni. Il nostro obiettivo è rendere le informazioni mediche accessibili a tutti."
+      }
+    }
+  },
+  "footer": {
+    "impressum": "Note legali",
+    "privacy": "Informativa sulla privacy",
+    "terms": "Termini di utilizzo",
+    "admin": "Admin",
+    "copyright": "HealthLingo. Tutti i diritti riservati.",
+    "madeWith": "Fatto con",
+    "madeInLocation": "in Germania"
+  },
+  "cookieFree": {
+    "title": "Nessun cookie!",
+    "description": "HealthLingo non utilizza cookie e non memorizza dati di tracciamento.",
+    "closeBanner": "Chiudi banner"
+  },
+  "termination": {
+    "title": "Elaborazione interrotta",
+    "technicalDetails": "Dettagli tecnici",
+    "step": "Fase:",
+    "reason": "Motivo:",
+    "uploadNew": "Carica nuovo documento",
+    "hint": "Nota",
+    "hintText": "Questo strumento è specificamente progettato per documenti medici, come:",
+    "doctorLetters": "Lettere del medico e dimissioni",
+    "reports": "Referti medici e diagnosi",
+    "labResults": "Risultati di laboratorio e analisi"
+  },
+  "guidelinesSection": {
+    "title": "Raccomandazioni delle linee guida",
+    "subtitle": "Basate sulle linee guida AWMF",
+    "notAvailable": "Raccomandazioni delle linee guida non disponibili",
+    "notAvailableDefault": "Impossibile recuperare le linee guida AWMF.",
+    "retry": "Riprova",
+    "sources": "Fonti utilizzate",
+    "documentFallback": "Documento {{index}}",
+    "disclaimer": "Queste raccomandazioni si basano sulle linee guida ufficiali tedesche per il trattamento (AWMF) e sono solo a scopo informativo. Non sostituiscono una consulenza personale con il medico."
+  },
+  "guidelinesIndicator": {
+    "loading": "Caricamento linee guida...",
+    "loadingShort": "Caricamento...",
+    "scrollTo": "Vai alle raccomandazioni delle linee guida",
+    "scrollToShort": "Linee guida",
+    "notAvailable": "Linee guida non disponibili"
+  },
+  "languageSwitcher": {
+    "changeLanguage": "Cambia lingua"
+  },
+  "languageSelector": {
+    "label": "Traduzione (opzionale)",
+    "loading": "Caricamento lingue...",
+    "loadError": "Impossibile caricare le lingue",
+    "retry": "Riprova",
+    "placeholder": "Seleziona lingua (opzionale)",
+    "searchPlaceholder": "Cerca lingua...",
+    "noTranslation": "Nessuna traduzione",
+    "popularLanguages": "Lingue popolari",
+    "allLanguages": "Tutte le lingue",
+    "noResults": "Nessuna lingua trovata per \"{{term}}\"",
+    "hint": "Opzionale: seleziona una lingua per tradurre anche il risultato semplificato."
+  },
+  "login": {
+    "title": "Accesso amministratore",
+    "description": "Accedi per accedere alle funzionalità di amministrazione",
+    "email": "Indirizzo email",
+    "emailPlaceholder": "tua@email.com",
+    "password": "Password",
+    "passwordPlaceholder": "La tua password",
+    "submit": "Accedi",
+    "submitting": "Accesso...",
+    "loading": "Caricamento...",
+    "sessionExpired": "La tua sessione è scaduta. Accedi di nuovo.",
+    "failed": "Accesso fallito",
+    "backToHome": "Torna alla home",
+    "noAccess": "Nessun accesso?",
+    "contactAdmin": "Contatta l'amministratore per creare un account."
+  },
+  "error": {
+    "processingFailed": "Elaborazione fallita",
+    "processingStopped": "Elaborazione interrotta",
+    "unknownError": "Si è verificato un errore sconosciuto",
+    "retry": "Riprova"
+  },
+  "status": {
+    "extracting_text": "Estrazione testo",
+    "translating": "Traduzione",
+    "language_translating": "Traduzione linguistica",
+    "completed": "Completato",
+    "error": "Errore",
+    "pending": "In attesa",
+    "processing": "In elaborazione"
+  },
+  "time": {
+    "seconds": "{{count}} sec.",
+    "minutesSeconds": "{{minutes}} min. {{seconds}} sec."
+  },
+  "wizard": {
+    "step1Title": "Carica documento",
+    "step2Title": "Lingua del documento",
+    "step3Title": "Opzioni di traduzione",
+    "step4Title": "Conferma e avvia",
+    "step1Label": "Carica",
+    "step2Label": "Lingua",
+    "step3Label": "Traduci",
+    "step4Label": "Conferma",
+    "next": "Avanti",
+    "back": "Indietro",
+    "summary": "Riepilogo",
+    "file": "File",
+    "sourceLanguage": "Lingua del documento",
+    "targetLanguage": "Lingua di destinazione",
+    "step3Hint": "Vuoi anche tradurre il documento in un'altra lingua?",
+    "progressLabel": "Progresso",
+    "step": "Fase",
+    "completed": "completato"
+  },
+  "languages": {
+    "de": "Tedesco",
+    "en": "Inglese",
+    "fr": "Francese",
+    "es": "Spagnolo",
+    "it": "Italiano",
+    "pt": "Portoghese",
+    "nl": "Olandese",
+    "pl": "Polacco",
+    "ru": "Russo",
+    "zh": "Cinese",
+    "ja": "Giapponese",
+    "ko": "Coreano",
+    "ar": "Arabo",
+    "hi": "Hindi",
+    "cs": "Ceco",
+    "sv": "Svedese",
+    "no": "Norvegese",
+    "da": "Danese",
+    "tr": "Turco",
+    "uk": "Ucraino",
+    "fa": "Farsi"
+  },
+  "pipeline": {
+    "duplicateStep": "Duplica fase",
+    "duplicateStepTitle": "Duplica fase",
+    "duplicateStepHint": "La copia verrà creata con tutte le impostazioni della fase originale, ma disabilitata.",
+    "newStepName": "Nuovo nome fase",
+    "copyOf": "Copia di {{name}}",
+    "duplicate": "Duplica",
+    "duplicateSuccess": "Fase duplicata con successo",
+    "nameRequired": "Il nome è obbligatorio",
+    "sourceLanguage": "Lingua di origine",
+    "universalLanguage": "Universale (tutte le lingue)",
+    "germanOnly": "Solo tedesco (input tedesco)",
+    "englishOnly": "Solo inglese (input inglese)"
+  },
+  "accessibility": {
+    "skipToMain": "Vai al contenuto principale",
+    "opensInNewTab": "si apre in una nuova scheda"
+  },
+  "common": {
+    "cancel": "Annulla",
+    "edit": "Modifica",
+    "delete": "Elimina"
+  }
+}

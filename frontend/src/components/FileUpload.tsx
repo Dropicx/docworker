@@ -196,6 +196,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const privacyCheckboxRef = useRef<HTMLDivElement>(null);
+  const hasInitializedTargetLanguage = useRef(false);
   const { shouldShowScanner } = useMobileDetect();
 
   // Sync document source language with UI language changes
@@ -203,6 +204,27 @@ const FileUpload: React.FC<FileUploadProps> = ({
     const newSourceLang = i18n.language?.substring(0, 2) === 'en' ? 'en' : 'de';
     setSourceLanguage(newSourceLang);
   }, [i18n.language]);
+
+  // Pre-select target language based on UI language for migrant users
+  useEffect(() => {
+    // Only run once when availableLanguages are loaded and no selection made yet
+    if (availableLanguages.length > 0 && selectedLanguage === null && !hasInitializedTargetLanguage.current) {
+      const uiLang = i18n.language?.substring(0, 2);
+
+      // Map UI languages to their translation targets
+      // DE/EN users: don't pre-select (they're reading German docs, may want simplify only)
+      // Other languages: pre-select their language as target
+      const migrantLanguages = ['uk', 'ru', 'ar', 'fa', 'fr', 'it', 'es', 'tr', 'pl', 'ro'];
+
+      if (uiLang && migrantLanguages.includes(uiLang)) {
+        const targetLang = availableLanguages.find(l => l.code === uiLang);
+        if (targetLang) {
+          setSelectedLanguage(uiLang);
+          hasInitializedTargetLanguage.current = true;
+        }
+      }
+    }
+  }, [availableLanguages, i18n.language, selectedLanguage]);
 
   const qualityGateError = externalQualityGateError || null;
 

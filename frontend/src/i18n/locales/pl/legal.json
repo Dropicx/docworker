@@ -1,0 +1,238 @@
+{
+  "datenschutz": {
+    "pageTitle": "Polityka prywatności",
+    "section1": {
+      "title": "1. Prywatność w skrócie",
+      "generalTitle": "Informacje ogólne",
+      "generalText": "Poniższe informacje zawierają prosty przegląd tego, co dzieje się z Twoimi danymi osobowymi podczas odwiedzania tej strony internetowej. Dane osobowe to wszelkie dane, które mogą być użyte do Twojej osobistej identyfikacji.",
+      "dataCollectionTitle": "Gromadzenie danych na tej stronie",
+      "responsibleText": "Przetwarzanie danych na tej stronie jest przeprowadzane przez operatora strony. Jego dane kontaktowe można znaleźć w informacjach prawnych tej strony.",
+      "responsibleQuestion": "Kto odpowiada za gromadzenie danych na tej stronie?",
+      "anonymousTitle": "Anonimowe korzystanie z naszej usługi",
+      "anonymousText": "Nasza usługa tłumaczeniowa działa całkowicie anonimowo. Nie potrzebujesz konta użytkownika i nie musisz się rejestrować, aby tłumaczyć dokumenty. Nie przechowujemy żadnych danych osobowych użytkowników końcowych. Twoje dokumenty są przetwarzane bez powiązania z tożsamością osobistą.",
+      "howCollectQuestion": "Jak gromadzimy Twoje dane?",
+      "howCollectText": "Jedyne dane, które gromadzimy, to dokumenty przesyłane do tłumaczenia. Są one przechowywane tylko tymczasowo na czas przetwarzania. Nie gromadzimy żadnych innych danych osobowych od Ciebie.",
+      "purposeQuestion": "Do czego wykorzystujemy Twoje dane?",
+      "purposeText": "Przesłane dokumenty są przetwarzane wyłącznie w celach tłumaczeniowych. Po zakończeniu przetwarzania wszystkie dane są automatycznie usuwane. Nie ma trwałego przechowywania, udostępniania osobom trzecim ani wykorzystywania do innych celów.",
+      "rightsQuestion": "Jakie masz prawa dotyczące swoich danych?",
+      "rightsText": "Ponieważ nie przechowujemy danych osobowych użytkowników końcowych, a przetwarzanie jest całkowicie anonimowe, większość praw RODO (takich jak dostęp, sprostowanie, usunięcie) nie ma zastosowania. Twoje dokumenty są automatycznie usuwane po przetworzeniu, więc nie ma danych, które mogłyby zostać ujawnione."
+    },
+    "section2": {
+      "title": "2. Informacje ogólne i obowiązkowe ujawnienia",
+      "privacyTitle": "Ochrona danych",
+      "privacyText": "Operatorzy tych stron bardzo poważnie traktują ochronę Twoich danych osobowych. Traktujemy Twoje dane osobowe poufnie i zgodnie z ustawowymi przepisami o ochronie danych oraz niniejszą polityką prywatności.",
+      "responsibleTitle": "Informacja o podmiocie odpowiedzialnym",
+      "responsibleText": "Podmiot odpowiedzialny za przetwarzanie danych na tej stronie jest podany w informacjach prawnych. Podmiot odpowiedzialny to osoba fizyczna lub prawna, która samodzielnie lub wspólnie z innymi określa cele i sposoby przetwarzania danych osobowych.",
+      "storageTitle": "Okres przechowywania",
+      "storageText": "Przesłane dokumenty i ich tłumaczenia są przechowywane tylko tymczasowo na czas przetwarzania. Standardowy okres przechowywania wynosi 24 godziny po zakończeniu przetwarzania (konfigurowalny, może być zmniejszony do 0 godzin). Po tym okresie wszystkie dane są automatycznie i całkowicie usuwane:",
+      "storageItems": [
+        "Przesłany dokument oryginalny",
+        "Wyodrębnione teksty (po usunięciu danych osobowych)",
+        "Wyniki tłumaczenia",
+        "Wszystkie metadane przetwarzania",
+        "Adresy IP (dla logowania bezpieczeństwa)"
+      ],
+      "storageNote": "Ten krótki okres przechowywania pozwala pobrać tłumaczenie, jednocześnie maksymalizując ochronę danych. Po usunięciu danych nie można ich odzyskać. Automatyczne usuwanie jest wykonywane przez zaplanowane zadania czyszczące, które działają co godzinę.",
+      "sslTitle": "Szyfrowanie SSL/TLS",
+      "sslText": "Ze względów bezpieczeństwa i w celu ochrony transmisji poufnych treści, takich jak dokumenty medyczne, które nam przesyłasz, ta strona używa szyfrowania SSL/TLS. Możesz rozpoznać szyfrowane połączenie po zmianie paska adresu przeglądarki z \"http://\" na \"https://\" i ikonie kłódki w pasku przeglądarki."
+    },
+    "section3": {
+      "title": "3. Gromadzenie danych na tej stronie",
+      "cookiesTitle": "Pliki cookie",
+      "cookiesText1": "Nie używamy plików cookie.",
+      "cookiesText2": "Nasza usługa działa całkowicie bez plików cookie. Nie używamy plików cookie śledzących, analitycznych ani marketingowych. Jest to również transparentnie komunikowane poprzez nasz baner informujący o braku plików cookie na stronie.",
+      "cookiesText3": "Jedynym lokalnym magazynem, którego używamy, jest localStorage przeglądarki do zapisania Twojej preferencji dotyczącej banera informacyjnego o plikach cookie (czy zamknąłeś baner). Ta informacja jest przechowywana tylko lokalnie w Twojej przeglądarce i nie jest przesyłana na nasz serwer.",
+      "cookiesText4": "Ponieważ nie używamy plików cookie, nie jest wymagana zgoda na pliki cookie. Nasza usługa szanuje Twoją prywatność od samego początku i całkowicie rezygnuje z plików cookie śledzących i analitycznych.",
+      "serverLogsTitle": "Pliki dzienników serwera",
+      "serverLogsText": "Dostawca tych stron automatycznie zbiera i przechowuje informacje w tak zwanych plikach dzienników serwera, które Twoja przeglądarka automatycznie do nas przesyła. Są to:",
+      "serverLogsItems": [
+        "Typ i wersja przeglądarki",
+        "Używany system operacyjny",
+        "URL strony odsyłającej",
+        "Nazwa hosta komputera uzyskującego dostęp",
+        "Czas żądania serwera",
+        "Adres IP"
+      ],
+      "serverLogsNote": "Te dane nie są łączone z innymi źródłami danych.",
+      "medicalTitle": "Przetwarzanie dokumentów medycznych",
+      "medicalText": "Podczas korzystania z naszej usługi tłumaczenia dokumentów medycznych obowiązują następujące środki ochrony danych:",
+      "medicalItems": [
+        "Automatyczne usuwanie danych osobowych: Przed przetworzeniem przez systemy AI informacje osobowe (imiona, adresy, numery telefonów, daty urodzenia, numery ubezpieczenia) są automatycznie usuwane z dokumentów. Odbywa się to lokalnie na naszych serwerach przy użyciu spaCy NER (Named Entity Recognition) i specjalnych wzorców dla niemieckich dokumentów medycznych.",
+        "Tymczasowe przechowywanie: Dokumenty są przechowywane tylko tymczasowo na czas przetwarzania (maksymalnie 24 godziny)",
+        "Automatyczne usuwanie: Po zakończeniu tłumaczenia wszystkie dane są automatycznie i całkowicie usuwane",
+        "Brak trwałego przechowywania: Nie ma trwałego przechowywania dokumentów ani tłumaczeń",
+        "Brak udostępniania: Brak udostępniania danych osobom trzecim (z wyjątkiem dostawcy AI OVH do tłumaczenia, gdzie przesyłane są tylko teksty oczyszczone z danych osobowych)",
+        "Szyfrowana transmisja: Wszystkie dane są przesyłane w formie zaszyfrowanej przez HTTPS/TLS",
+        "Szyfrowanie w spoczynku: Konta administratorów (nie dla użytkowników końcowych) używają zaszyfrowanego przechowywania adresów e-mail i nazwisk. Szyfrowanie zawartości dokumentów jest planowane (patrz plan techniczny).",
+        "Brak plików cookie: Nasza usługa nie używa plików cookie i nie przechowuje żadnych danych śledzących. Jest to transparentnie komunikowane poprzez baner informujący o braku plików cookie na stronie."
+      ]
+    },
+    "section4": {
+      "title": "4. Twoje prawa",
+      "intro": "Ponieważ nasza usługa działa całkowicie anonimowo i nie przechowujemy danych osobowych użytkowników końcowych, większość praw RODO nie ma bezpośredniego zastosowania w tym kontekście. Twoje dokumenty są automatycznie usuwane po przetworzeniu, więc nie ma danych, które mogłyby zostać ujawnione.",
+      "accessTitle": "Prawo dostępu",
+      "accessText": "Ponieważ nie przechowujemy danych osobowych użytkowników końcowych, a przetwarzanie jest anonimowe, nie możemy udzielić informacji o przechowywanych danych, ponieważ takie dane nie istnieją. Jeśli masz pytania dotyczące ochrony danych, możesz się z nami skontaktować w każdej chwili (patrz kontakt w informacjach prawnych).",
+      "deletionTitle": "Prawo do usunięcia",
+      "deletionText": "Twoje przesłane dokumenty są automatycznie usuwane po 24 godzinach (lub wcześniej). Ręczne usuwanie nie jest wymagane, ponieważ usuwanie odbywa się automatycznie. Jeśli chcesz natychmiastowego usunięcia, możesz się z nami skontaktować.",
+      "restrictionTitle": "Prawo do ograniczenia przetwarzania",
+      "restrictionText": "Możesz anulować przetwarzanie swoich dokumentów w dowolnym momencie, kończąc przetwarzanie przed zakończeniem tłumaczenia. W takim przypadku dane są natychmiast usuwane.",
+      "portabilityTitle": "Prawo do przenoszenia danych",
+      "portabilityText": "Ponieważ nie przechowujemy danych osobowych użytkowników końcowych, nie ma danych, które mogłyby zostać przeniesione. Możesz pobrać wyniki tłumaczenia bezpośrednio po przetworzeniu.",
+      "complaintTitle": "Prawo do złożenia skargi do organu nadzorczego",
+      "complaintText": "W przypadku naruszeń RODO masz prawo złożyć skargę do organu nadzorczego, szczególnie w państwie członkowskim Twojego miejsca zamieszkania, miejsca pracy lub miejsca domniemanego naruszenia."
+    },
+    "section5": {
+      "title": "5. Szczególne uwagi dotyczące ochrony danych zdrowotnych",
+      "intro": "Ponieważ nasza usługa umożliwia przetwarzanie dokumentów medycznych, które mogą zawierać dane zdrowotne, szczególnie zwracamy uwagę, że:",
+      "items": [
+        "Dane zdrowotne należą do szczególnych kategorii danych osobowych zgodnie z art. 9 RODO",
+        "Przetwarzamy te dane wyłącznie w celach tłumaczeniowych i tylko za Twoją wyraźną zgodą (poprzez zaakceptowanie polityki prywatności podczas przesyłania)",
+        "Przetwarzanie jest całkowicie anonimowe - nie są przechowywane żadne dane osobowe użytkowników końcowych",
+        "Przed przetwarzaniem przez AI wszystkie informacje osobowe (imiona, adresy, numery telefonów itp.) są automatycznie usuwane",
+        "Stosowane są specjalne środki techniczne i organizacyjne w celu ochrony tych danych (szyfrowanie, krótki okres przechowywania, automatyczne usuwanie)",
+        "Wszystkie dane są automatycznie i całkowicie usuwane po maksymalnie 24 godzinach"
+      ]
+    },
+    "section6": {
+      "title": "6. Kontakt i zapytania dotyczące ochrony danych",
+      "text": "W przypadku pytań dotyczących ochrony danych lub w celu skorzystania ze swoich praw możesz się z nami skontaktować w każdej chwili. Dane kontaktowe można znaleźć w",
+      "impressumLink": "Informacjach prawnych",
+      "responsibleLabel": "Podmiot odpowiedzialny:",
+      "responsibleText": "Podmiot odpowiedzialny za przetwarzanie danych jest podany w informacjach prawnych tej strony."
+    },
+    "section7": {
+      "title": "7. Podmioty trzecie i przetwarzanie danych",
+      "intro": "Korzystamy z następujących zewnętrznych dostawców w celu świadczenia naszej usługi:",
+      "items": [
+        "OVH Cloud (UE): Do tłumaczenia opartego na AI. Do OVH przesyłane są tylko teksty oczyszczone z danych osobowych. Przetwarzanie danych odbywa się wyłącznie w UE.",
+        "Railway (UE): Do hostingu aplikacji i bazy danych. Railway posiada certyfikat SOC 2 Type I i oferuje Umowy o Przetwarzaniu Danych zgodne z RODO.",
+        "PostgreSQL: Jako system bazy danych. Baza danych jest hostowana w UE."
+      ],
+      "note": "Całe przetwarzanie danych odbywa się wyłącznie na terenie UE. Nie ma międzynarodowych transferów danych."
+    },
+    "lastUpdated": "Ostatnia aktualizacja:"
+  },
+  "impressum": {
+    "pageTitle": "Informacje prawne",
+    "section1": {
+      "title": "Informacje zgodnie z § 5 TMG",
+      "name": "[Twoje imię lub nazwa firmy]",
+      "address": "[Twój adres]",
+      "city": "[Kod pocztowy i miasto]",
+      "country": "Niemcy"
+    },
+    "contact": {
+      "title": "Kontakt",
+      "phone": "Telefon: [Twój numer telefonu]",
+      "email": "E-mail: [Twój adres e-mail]",
+      "website": "Strona internetowa: [Adres URL Twojej strony]"
+    },
+    "register": {
+      "title": "Wpis do rejestru",
+      "text": "Wpis do rejestru handlowego.",
+      "court": "Sąd rejestrowy: [Twój sąd rejestrowy]",
+      "number": "Numer rejestracyjny: [Twój numer rejestracyjny]"
+    },
+    "tax": {
+      "title": "NIP UE",
+      "text": "Numer identyfikacji podatkowej VAT zgodnie z § 27 a ustawy o VAT:",
+      "number": "[Twój NIP UE]"
+    },
+    "profession": {
+      "title": "Oznaczenie zawodu i przepisy zawodowe",
+      "designation": "Oznaczenie zawodu: [Twoje oznaczenie zawodu]",
+      "chamber": "Właściwa izba: [Twoja właściwa izba]",
+      "grantedIn": "Przyznane w: Niemcy",
+      "regulations": "Obowiązują następujące przepisy zawodowe: [Odpowiednie przepisy]"
+    },
+    "responsible": {
+      "title": "Odpowiedzialny za treść zgodnie z § 55 ust. 2 RStV",
+      "name": "[Imię i nazwisko osoby odpowiedzialnej]",
+      "address": "[Adres]",
+      "city": "[Kod pocztowy i miasto]"
+    },
+    "disclaimer": {
+      "title": "Wyłączenie odpowiedzialności",
+      "contentTitle": "Odpowiedzialność za treść",
+      "contentText": "Treści naszych stron zostały stworzone z najwyższą starannością. Nie możemy jednak zagwarantować dokładności, kompletności ani aktualności treści. Jako dostawca usług jesteśmy odpowiedzialni za własne treści na tych stronach zgodnie z ogólnymi przepisami prawa zgodnie z § 7 ust. 1 TMG.",
+      "linksTitle": "Odpowiedzialność za linki",
+      "linksText": "Nasza oferta zawiera linki do zewnętrznych stron internetowych osób trzecich, na których treść nie mamy wpływu. Dlatego nie możemy przyjąć żadnej odpowiedzialności za treści osób trzecich. Za treść linkowanych stron odpowiada zawsze ich dostawca lub operator.",
+      "copyrightTitle": "Prawa autorskie",
+      "copyrightText": "Treści i dzieła stworzone przez operatorów strony na tych stronach podlegają niemieckiemu prawu autorskiemu. Reprodukcja, edycja, dystrybucja i wszelkiego rodzaju wykorzystanie wykraczające poza granice prawa autorskiego wymaga pisemnej zgody odpowiedniego autora lub twórcy."
+    },
+    "lastUpdated": "Ostatnia aktualizacja:"
+  },
+  "nutzungsbedingungen": {
+    "pageTitle": "Warunki użytkowania",
+    "section1": {
+      "title": "§ 1 Zakres",
+      "p1": "(1) Niniejsze warunki użytkowania dotyczą korzystania z usługi tłumaczenia dokumentów medycznych (zwanej dalej \"Usługą\") na tej stronie internetowej.",
+      "p2": "(2) Korzystając z Usługi, zgadzasz się na niniejsze warunki użytkowania. Jeśli nie zgadzasz się z tymi warunkami, nie korzystaj z naszej Usługi."
+    },
+    "section2": {
+      "title": "§ 2 Opis usługi",
+      "p1": "(1) Nasza Usługa zapewnia automatyczne tłumaczenie dokumentów medycznych na uproszczony, łatwy do zrozumienia język, a także na inne języki.",
+      "p2": "(2) Tłumaczenia są tworzone przez sztuczną inteligencję i są przeznaczone wyłącznie do informacji i lepszego zrozumienia treści medycznych.",
+      "p3": "(3) Tłumaczenia nie zastępują profesjonalnej porady medycznej, diagnozy ani leczenia."
+    },
+    "section3": {
+      "title": "§ 3 Warunki użytkowania",
+      "p1": "(1) Usługa może być używana wyłącznie do celów osobistych, niekomercyjnych.",
+      "p2": "(2) Zgadzasz się używać Usługi wyłącznie do celów zgodnych z prawem i nie przesyłać treści, które:",
+      "items": [
+        "Naruszają prawa osób trzecich",
+        "Naruszają obowiązujące prawo",
+        "Zawierają złośliwe oprogramowanie lub złośliwy kod",
+        "Mogą zakłócić funkcjonowanie Usługi"
+      ],
+      "p3": "(3) Systematyczne odpytywanie lub wyodrębnianie danych jest zabronione."
+    },
+    "section4": {
+      "title": "§ 4 Wyłączenie odpowiedzialności medycznej",
+      "warning": "WAŻNA INFORMACJA: Dostarczane tłumaczenia NIE są poradą medyczną!",
+      "p1": "(1) Tłumaczenia są automatycznie tworzone przez sztuczną inteligencję i mogą zawierać błędy, nieścisłości lub nieporozumienia.",
+      "p2": "(2) Tłumaczenia nigdy nie mogą być używane jako podstawa do decyzji medycznych.",
+      "p3": "(3) W przypadku pytań lub problemów medycznych zawsze skonsultuj się z wykwalifikowanym lekarzem lub pracownikiem służby zdrowia.",
+      "p4": "(4) W nagłych przypadkach natychmiast skontaktuj się ze służbami ratunkowymi (112) lub udaj się do najbliższego szpitalnego oddziału ratunkowego.",
+      "p5": "(5) Nigdy nie polegaj wyłącznie na tłumaczeniach tej Usługi przy podejmowaniu decyzji zdrowotnych."
+    },
+    "section5": {
+      "title": "§ 5 Ograniczenie odpowiedzialności",
+      "p1": "(1) Nie ponosimy odpowiedzialności za dokładność, kompletność ani aktualność tłumaczeń.",
+      "p2": "(2) Wszelka odpowiedzialność za szkody wynikające bezpośrednio lub pośrednio z korzystania z Usługi jest wykluczona w zakresie dozwolonym przez prawo.",
+      "p3": "(3) Nie dotyczy to szkód wynikających z uszkodzenia życia, ciała lub zdrowia, ani innych szkód wynikających z umyślnego lub rażąco niedbałego naruszenia obowiązków."
+    },
+    "section6": {
+      "title": "§ 6 Ochrona danych",
+      "p1": "(1) Przetwarzanie danych osobowych odbywa się zgodnie z naszą Polityką prywatności.",
+      "p2": "(2) Przesłane dokumenty są przechowywane tylko tymczasowo na czas przetwarzania, a następnie są automatycznie usuwane.",
+      "p3": "(3) Nie ma trwałego przechowywania ani udostępniania Twoich dokumentów osobom trzecim."
+    },
+    "section7": {
+      "title": "§ 7 Własność intelektualna",
+      "p1": "(1) Wszystkie prawa do strony internetowej i Usługi, w tym prawa autorskie, prawa do znaków towarowych i inne prawa własności intelektualnej, pozostają przy nas.",
+      "p2": "(2) Korzystanie z Usługi nie przyznaje Ci żadnych praw do naszej własności intelektualnej, z wyjątkiem praw wyraźnie przyznanych w niniejszych warunkach użytkowania."
+    },
+    "section8": {
+      "title": "§ 8 Dostępność",
+      "p1": "(1) Dążymy do wysokiej dostępności Usługi, ale nie możemy jej zagwarantować.",
+      "p2": "(2) Zastrzegamy sobie prawo do modyfikacji, przerywania lub zaprzestania świadczenia Usługi w dowolnym momencie.",
+      "p3": "(3) Prace konserwacyjne będą ogłaszane z wyprzedzeniem, jeśli to możliwe."
+    },
+    "section9": {
+      "title": "§ 9 Zmiany warunków użytkowania",
+      "p1": "(1) Zastrzegamy sobie prawo do zmiany niniejszych warunków użytkowania w dowolnym momencie.",
+      "p2": "(2) Zmiany będą publikowane na tej stronie. Kontynuowanie korzystania z Usługi po opublikowaniu zmian oznacza akceptację zmienionych warunków."
+    },
+    "section10": {
+      "title": "§ 10 Prawo właściwe i jurysdykcja",
+      "p1": "(1) Stosuje się prawo Republiki Federalnej Niemiec, z wyłączeniem Konwencji ONZ o umowach międzynarodowej sprzedaży towarów.",
+      "p2": "(2) Miejscem jurysdykcji dla wszystkich sporów wynikających z lub w związku z niniejszymi warunkami użytkowania jest, w zakresie dozwolonym przez prawo, [Twoja jurysdykcja]."
+    },
+    "section11": {
+      "title": "§ 11 Klauzula salwatoryjna",
+      "text": "Jeśli poszczególne postanowienia niniejszych warunków użytkowania są lub staną się nieważne lub niewykonalne, ważność pozostałych postanowień pozostaje nienaruszona."
+    },
+    "lastUpdated": "Ostatnia aktualizacja:"
+  }
+}

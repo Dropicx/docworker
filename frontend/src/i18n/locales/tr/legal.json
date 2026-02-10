@@ -1,0 +1,238 @@
+{
+  "datenschutz": {
+    "pageTitle": "Gizlilik Politikası",
+    "section1": {
+      "title": "1. Gizlilik Bir Bakışta",
+      "generalTitle": "Genel Bilgiler",
+      "generalText": "Aşağıdaki notlar, bu web sitesini ziyaret ettiğinizde kişisel verilerinize ne olduğuna dair basit bir genel bakış sağlar. Kişisel veriler, sizi kişisel olarak tanımlamak için kullanılabilecek herhangi bir veridir.",
+      "dataCollectionTitle": "Bu Web Sitesinde Veri Toplama",
+      "responsibleText": "Bu web sitesindeki veri işleme, web sitesi operatörü tarafından gerçekleştirilir. İletişim bilgileri bu web sitesinin yasal bilgilerinde bulunabilir.",
+      "responsibleQuestion": "Bu web sitesinde veri toplamadan kim sorumlu?",
+      "anonymousTitle": "Hizmetimizin Anonim Kullanımı",
+      "anonymousText": "Çeviri hizmetimiz tamamen anonim olarak çalışır. Belgeleri çevirmek için kullanıcı hesabına veya kayıt olmanıza gerek yoktur. Son kullanıcılardan herhangi bir kişisel veri saklamıyoruz. Belgeleriniz kişisel kimlikle ilişkilendirilmeden işlenir.",
+      "howCollectQuestion": "Verilerinizi nasıl topluyoruz?",
+      "howCollectText": "Topladığımız tek veri, çeviri için yüklediğiniz belgelerdir. Bunlar yalnızca işleme süresince geçici olarak saklanır. Sizden başka hiçbir kişisel veri toplamıyoruz.",
+      "purposeQuestion": "Verilerinizi ne için kullanıyoruz?",
+      "purposeText": "Yüklenen belgeler yalnızca çeviri amaçları için işlenir. İşleme tamamlandıktan sonra tüm veriler otomatik olarak silinir. Kalıcı depolama, üçüncü taraflarla paylaşım veya başka amaçlar için kullanım yoktur.",
+      "rightsQuestion": "Verilerinizle ilgili haklarınız nelerdir?",
+      "rightsText": "Son kullanıcılardan kişisel veri saklamadığımız ve işleme tamamen anonim olduğu için, GDPR haklarının çoğu (erişim, düzeltme, silme gibi) uygulanmaz. Belgeleriniz işlemeden sonra otomatik olarak silinir, bu nedenle açıklanacak veri yoktur."
+    },
+    "section2": {
+      "title": "2. Genel Bilgiler ve Zorunlu Açıklamalar",
+      "privacyTitle": "Veri Koruma",
+      "privacyText": "Bu sayfaların operatörleri kişisel verilerinizin korunmasını çok ciddiye almaktadır. Kişisel verilerinizi gizli tutarak ve yasal veri koruma düzenlemelerine ve bu gizlilik politikasına uygun olarak işliyoruz.",
+      "responsibleTitle": "Sorumlu Kuruluş Hakkında Not",
+      "responsibleText": "Bu web sitesindeki veri işlemeden sorumlu kuruluş yasal bilgilerde belirtilmiştir. Sorumlu kuruluş, tek başına veya başkalarıyla birlikte kişisel verilerin işlenmesinin amaçlarını ve araçlarını belirleyen gerçek veya tüzel kişidir.",
+      "storageTitle": "Saklama Süresi",
+      "storageText": "Yüklenen belgeler ve çevirileri yalnızca işleme süresince geçici olarak saklanır. Standart saklama süresi, işleme tamamlandıktan sonra 24 saattir (yapılandırılabilir, 0 saate kadar azaltılabilir). Bu sürenin ardından tüm veriler otomatik ve tamamen silinir:",
+      "storageItems": [
+        "Yüklenen orijinal belge",
+        "Çıkarılan metinler (kişisel verilerin kaldırılmasından sonra)",
+        "Çeviri sonuçları",
+        "Tüm işleme meta verileri",
+        "IP adresleri (güvenlik kaydı için)"
+      ],
+      "storageNote": "Bu kısa saklama süresi, veri korumasını en üst düzeye çıkarırken çevirinizi indirmenize olanak tanır. Silmeden sonra veriler kurtarılamaz. Otomatik silme, saatte bir çalışan zamanlanmış temizleme görevleri tarafından gerçekleştirilir.",
+      "sslTitle": "SSL/TLS Şifreleme",
+      "sslText": "Güvenlik nedenleriyle ve bize gönderdiğiniz tıbbi belgeler gibi gizli içeriklerin iletimini korumak için bu site SSL/TLS şifreleme kullanmaktadır. Şifreli bir bağlantıyı, tarayıcı adres çubuğunun \"http://\"den \"https://\"ye değişmesinden ve tarayıcı çubuğundaki kilit simgesinden anlayabilirsiniz."
+    },
+    "section3": {
+      "title": "3. Bu Web Sitesinde Veri Toplama",
+      "cookiesTitle": "Çerezler",
+      "cookiesText1": "Çerez kullanmıyoruz.",
+      "cookiesText2": "Hizmetimiz tamamen çerezsiz çalışır. İzleme çerezleri, analitik çerezler veya pazarlama çerezleri kullanmıyoruz. Bu, web sitesindeki çerezsiz bildirim başlığımız aracılığıyla şeffaf bir şekilde iletilmektedir.",
+      "cookiesText3": "Kullandığımız tek yerel depolama, çerez başlığı tercihinizi (başlığı kapatıp kapatmadığınızı) kaydetmek için tarayıcı localStorage'dır. Bu bilgi yalnızca tarayıcınızda yerel olarak saklanır ve sunucumuza iletilmez.",
+      "cookiesText4": "Çerez kullanmadığımız için çerez onayı gerekmez. Hizmetimiz başından itibaren gizliliğinize saygı duyar ve izleme ile analitik çerezlerden tamamen vazgeçer.",
+      "serverLogsTitle": "Sunucu Günlük Dosyaları",
+      "serverLogsText": "Bu sayfaların sağlayıcısı, tarayıcınızın bize otomatik olarak ilettiği bilgileri sunucu günlük dosyalarında otomatik olarak toplar ve saklar. Bunlar:",
+      "serverLogsItems": [
+        "Tarayıcı türü ve sürümü",
+        "Kullanılan işletim sistemi",
+        "Yönlendiren URL",
+        "Erişen bilgisayarın ana bilgisayar adı",
+        "Sunucu isteğinin zamanı",
+        "IP adresi"
+      ],
+      "serverLogsNote": "Bu veriler diğer veri kaynaklarıyla birleştirilmez.",
+      "medicalTitle": "Tıbbi Belgelerin İşlenmesi",
+      "medicalText": "Tıbbi belgeler için çeviri hizmetimizi kullanırken aşağıdaki veri koruma önlemleri uygulanır:",
+      "medicalItems": [
+        "Kişisel verilerin otomatik kaldırılması: Yapay zeka sistemleri tarafından işlenmeden önce, kişisel bilgiler (isimler, adresler, telefonlar, doğum tarihleri, sigorta numaraları) belgelerden otomatik olarak kaldırılır.",
+        "Geçici depolama: Belgeler yalnızca işleme süresince geçici olarak saklanır (maksimum 24 saat)",
+        "Otomatik silme: Çeviri tamamlandıktan sonra tüm veriler otomatik ve tamamen silinir",
+        "Kalıcı depolama yok: Belgelerin veya çevirilerin kalıcı olarak saklanması yoktur",
+        "Paylaşım yok: Üçüncü taraflarla veri paylaşımı yoktur (çeviri için yapay zeka sağlayıcısı OVH hariç, yalnızca kişisel verilerden temizlenmiş metinler iletilir)",
+        "Şifreli iletim: Tüm veriler HTTPS/TLS üzerinden şifrelenmiş olarak iletilir",
+        "Durağan şifreleme: Yönetici hesapları (son kullanıcılar için değil) e-posta adresleri ve isimler için şifreli depolama kullanır.",
+        "Çerez yok: Hizmetimiz çerez kullanmaz ve izleme verisi saklamaz."
+      ]
+    },
+    "section4": {
+      "title": "4. Haklarınız",
+      "intro": "Hizmetimiz tamamen anonim çalıştığı ve son kullanıcılardan kişisel veri saklamadığı için, GDPR haklarının çoğu bu bağlamda doğrudan uygulanmaz. Belgeleriniz işlemeden sonra otomatik olarak silinir, bu nedenle açıklanacak veri yoktur.",
+      "accessTitle": "Erişim Hakkı",
+      "accessText": "Son kullanıcılardan kişisel veri saklamadığımız ve işleme anonim olduğu için, böyle bir veri mevcut olmadığından saklanan veriler hakkında bilgi sağlayamayız. Veri koruma hakkında sorularınız varsa, her zaman bizimle iletişime geçebilirsiniz (yasal bilgilerdeki iletişime bakın).",
+      "deletionTitle": "Silme Hakkı",
+      "deletionText": "Yüklediğiniz belgeler 24 saat sonra (veya daha önce) otomatik olarak silinir. Silme otomatik olarak gerçekleştiği için manuel silme gerekmez. Anında silme isterseniz bizimle iletişime geçebilirsiniz.",
+      "restrictionTitle": "İşlemeyi Kısıtlama Hakkı",
+      "restrictionText": "Çeviri tamamlanmadan önce işlemeyi sonlandırarak belgelerinizin işlenmesini istediğiniz zaman iptal edebilirsiniz. Bu durumda veriler hemen silinir.",
+      "portabilityTitle": "Veri Taşınabilirliği Hakkı",
+      "portabilityText": "Son kullanıcılardan kişisel veri saklamadığımız için aktarılacak veri yoktur. Çeviri sonuçlarını işlemeden hemen sonra indirebilirsiniz.",
+      "complaintTitle": "Denetim Makamına Şikayet Hakkı",
+      "complaintText": "GDPR ihlalleri durumunda, özellikle mutat ikametgahınızın, iş yerinizin veya iddia edilen ihlalin gerçekleştiği yerin bulunduğu üye devlette bir denetim makamına şikayette bulunma hakkınız vardır."
+    },
+    "section5": {
+      "title": "5. Sağlık Verilerinin Korunması Hakkında Özel Notlar",
+      "intro": "Hizmetimiz sağlık verisi içerebilecek tıbbi belgelerin işlenmesine izin verdiğinden, özellikle şunları belirtiyoruz:",
+      "items": [
+        "Sağlık verileri GDPR Madde 9 kapsamında özel kişisel veri kategorilerine aittir",
+        "Bu verileri yalnızca çeviri amaçları için ve yalnızca açık onayınızla (yükleme sırasında gizlilik politikasını kabul ederek) işliyoruz",
+        "İşleme tamamen anonimdir - son kullanıcılardan hiçbir kişisel veri saklanmaz",
+        "Yapay zeka işlemesinden önce tüm kişisel bilgiler (isimler, adresler, telefonlar vb.) otomatik olarak kaldırılır",
+        "Bu verileri korumak için özel teknik ve organizasyonel önlemler alınır (şifreleme, kısa saklama süresi, otomatik silme)",
+        "Tüm veriler en fazla 24 saat sonra otomatik ve tamamen silinir"
+      ]
+    },
+    "section6": {
+      "title": "6. İletişim ve Veri Koruma Sorguları",
+      "text": "Veri koruma hakkında sorularınız veya haklarınızı kullanmak için her zaman bizimle iletişime geçebilirsiniz. İletişim bilgileri şurada bulunabilir:",
+      "impressumLink": "Yasal Bilgiler",
+      "responsibleLabel": "Sorumlu Kuruluş:",
+      "responsibleText": "Veri işlemeden sorumlu kuruluş bu web sitesinin yasal bilgilerinde belirtilmiştir."
+    },
+    "section7": {
+      "title": "7. Üçüncü Taraflar ve Veri İşleme",
+      "intro": "Hizmetimizi sunmak için aşağıdaki üçüncü taraf sağlayıcıları kullanıyoruz:",
+      "items": [
+        "OVH Cloud (AB): Yapay zeka destekli çeviri için. Yalnızca kişisel verilerden temizlenmiş metinler OVH'ye iletilir. Veri işleme yalnızca AB içinde gerçekleşir.",
+        "Railway (AB): Uygulama ve veritabanı barındırma için. Railway SOC 2 Tip I sertifikalıdır ve GDPR uyumlu veri işleme sözleşmeleri sunar.",
+        "PostgreSQL: Veritabanı sistemi olarak. Veritabanı AB'de barındırılmaktadır."
+      ],
+      "note": "Tüm veri işleme yalnızca AB içinde gerçekleşir. Uluslararası veri transferi yapılmaz."
+    },
+    "lastUpdated": "Son güncelleme:"
+  },
+  "impressum": {
+    "pageTitle": "Yasal Bilgiler",
+    "section1": {
+      "title": "§ 5 TMG'ye göre bilgiler",
+      "name": "[Adınız veya şirket adınız]",
+      "address": "[Adresiniz]",
+      "city": "[Posta kodu ve şehir]",
+      "country": "Almanya"
+    },
+    "contact": {
+      "title": "İletişim",
+      "phone": "Telefon: [Telefon numaranız]",
+      "email": "E-posta: [E-posta adresiniz]",
+      "website": "Web sitesi: [Web sitenizin URL'si]"
+    },
+    "register": {
+      "title": "Sicil Kaydı",
+      "text": "Ticaret siciline kayıt.",
+      "court": "Sicil mahkemesi: [Sicil mahkemeniz]",
+      "number": "Sicil numarası: [Sicil numaranız]"
+    },
+    "tax": {
+      "title": "KDV Kimlik No",
+      "text": "KDV Kanunu § 27 a'ya göre KDV kimlik numarası:",
+      "number": "[KDV kimlik numaranız]"
+    },
+    "profession": {
+      "title": "Mesleki Unvan ve Mesleki Düzenlemeler",
+      "designation": "Mesleki unvan: [Mesleki unvanınız]",
+      "chamber": "Sorumlu oda: [Sorumlu odanız]",
+      "grantedIn": "Verildiği yer: Almanya",
+      "regulations": "Aşağıdaki mesleki düzenlemeler geçerlidir: [İlgili düzenlemeler]"
+    },
+    "responsible": {
+      "title": "§ 55 Fıkra 2 RStV'ye göre içerikten sorumlu",
+      "name": "[Sorumlu kişinin adı]",
+      "address": "[Adres]",
+      "city": "[Posta kodu ve şehir]"
+    },
+    "disclaimer": {
+      "title": "Sorumluluk Reddi",
+      "contentTitle": "İçerik Sorumluluğu",
+      "contentText": "Sayfalarımızın içerikleri büyük özenle oluşturulmuştur. Ancak içeriğin doğruluğunu, eksiksizliğini veya güncelliğini garanti edemeyiz. Hizmet sağlayıcı olarak, § 7 Fıkra 1 TMG'ye göre genel yasalar uyarınca bu sayfalardaki kendi içeriğimizden sorumluyuz.",
+      "linksTitle": "Bağlantılar için Sorumluluk",
+      "linksText": "Teklifimiz, içerikleri üzerinde hiçbir etkimiz olmayan harici üçüncü taraf web sitelerine bağlantılar içermektedir. Bu nedenle, bu üçüncü taraf içeriği için herhangi bir sorumluluk kabul edemeyiz. Bağlantılı sayfaların ilgili sağlayıcısı veya operatörü, bağlantılı sayfaların içeriğinden her zaman sorumludur.",
+      "copyrightTitle": "Telif Hakkı",
+      "copyrightText": "Bu sayfalarda site operatörleri tarafından oluşturulan içerik ve eserler Alman telif hakkı yasasına tabidir. Çoğaltma, düzenleme, dağıtım ve telif hakkı yasasının sınırları dışındaki her türlü kullanım, ilgili yazarın veya yaratıcının yazılı onayını gerektirir."
+    },
+    "lastUpdated": "Son güncelleme:"
+  },
+  "nutzungsbedingungen": {
+    "pageTitle": "Kullanım Koşulları",
+    "section1": {
+      "title": "§ 1 Kapsam",
+      "p1": "(1) Bu kullanım koşulları, bu web sitesindeki tıbbi belge çeviri hizmetinin (bundan sonra \"Hizmet\" olarak anılacaktır) kullanımına uygulanır.",
+      "p2": "(2) Hizmeti kullanarak bu kullanım koşullarını kabul etmiş olursunuz. Bu koşulları kabul etmiyorsanız, lütfen Hizmetimizi kullanmayın."
+    },
+    "section2": {
+      "title": "§ 2 Hizmet Açıklaması",
+      "p1": "(1) Hizmetimiz, tıbbi belgelerin basitleştirilmiş, anlaşılması kolay bir dile ve diğer dillere otomatik çevirisini sağlar.",
+      "p2": "(2) Çeviriler yapay zeka tarafından oluşturulur ve yalnızca bilgi ve tıbbi içeriğin daha iyi anlaşılması amacıyla tasarlanmıştır.",
+      "p3": "(3) Çeviriler profesyonel tıbbi tavsiye, teşhis veya tedavinin yerini almaz."
+    },
+    "section3": {
+      "title": "§ 3 Kullanım Koşulları",
+      "p1": "(1) Hizmet yalnızca kişisel, ticari olmayan amaçlar için kullanılabilir.",
+      "p2": "(2) Hizmeti yalnızca yasal amaçlar için kullanmayı ve şu tür içerikleri yüklememeyi kabul ediyorsunuz:",
+      "items": [
+        "Üçüncü tarafların haklarını ihlal eden",
+        "Yürürlükteki yasayı ihlal eden",
+        "Kötü amaçlı yazılım veya zararlı kod içeren",
+        "Hizmetin işlevselliğini bozabilecek"
+      ],
+      "p3": "(3) Sistematik sorgulama veya veri çıkarma yasaktır."
+    },
+    "section4": {
+      "title": "§ 4 Tıbbi Sorumluluk Reddi",
+      "warning": "ÖNEMLİ UYARI: Sağlanan çeviriler tıbbi tavsiye olarak anlaşılmamalıdır!",
+      "p1": "(1) Çeviriler yapay zeka tarafından otomatik olarak oluşturulur ve hatalar, yanlışlıklar veya yanlış anlamalar içerebilir.",
+      "p2": "(2) Çeviriler asla tıbbi kararlar için temel olarak kullanılmamalıdır.",
+      "p3": "(3) Tıbbi sorular veya sorunlar için her zaman nitelikli bir doktora veya sağlık uzmanına danışın.",
+      "p4": "(4) Acil bir durumda derhal acil servisleri (112) arayın veya en yakın acil servise gidin.",
+      "p5": "(5) Sağlıkla ilgili kararlar için asla yalnızca bu Hizmetin çevirilerine güvenmeyin."
+    },
+    "section5": {
+      "title": "§ 5 Sorumluluk Sınırlaması",
+      "p1": "(1) Çevirilerin doğruluğu, eksiksizliği veya güncelliği için hiçbir sorumluluk kabul etmiyoruz.",
+      "p2": "(2) Hizmetin kullanımından doğrudan veya dolaylı olarak kaynaklanan hasarlar için herhangi bir sorumluluk, yasaların izin verdiği ölçüde hariç tutulur.",
+      "p3": "(3) Bu, hayata, vücuda veya sağlığa verilen zararlardan veya kasıtlı ya da ağır ihmalkar görev ihlalinden kaynaklanan diğer hasarlar için geçerli değildir."
+    },
+    "section6": {
+      "title": "§ 6 Veri Koruma",
+      "p1": "(1) Kişisel verilerin işlenmesi Gizlilik Politikamıza uygun olarak gerçekleştirilir.",
+      "p2": "(2) Yüklenen belgeler yalnızca işleme süresince geçici olarak saklanır ve ardından otomatik olarak silinir.",
+      "p3": "(3) Belgelerinizin kalıcı olarak saklanması veya üçüncü taraflarla paylaşılması yoktur."
+    },
+    "section7": {
+      "title": "§ 7 Fikri Mülkiyet",
+      "p1": "(1) Telif hakları, marka hakları ve diğer fikri mülkiyet hakları dahil olmak üzere web sitesi ve Hizmet üzerindeki tüm haklar bize aittir.",
+      "p2": "(2) Hizmetin kullanımı, bu kullanım koşullarında açıkça verilen haklar dışında fikri mülkiyetimiz üzerinde herhangi bir hak vermez."
+    },
+    "section8": {
+      "title": "§ 8 Kullanılabilirlik",
+      "p1": "(1) Hizmetin yüksek kullanılabilirliği için çaba gösteriyoruz ancak bunu garanti edemeyiz.",
+      "p2": "(2) Hizmeti herhangi bir zamanda değiştirme, kesintiye uğratma veya durdurma hakkını saklı tutuyoruz.",
+      "p3": "(3) Bakım çalışmaları mümkün olduğunda önceden duyurulacaktır."
+    },
+    "section9": {
+      "title": "§ 9 Kullanım Koşullarındaki Değişiklikler",
+      "p1": "(1) Bu kullanım koşullarını herhangi bir zamanda değiştirme hakkını saklı tutuyoruz.",
+      "p2": "(2) Değişiklikler bu sayfada yayınlanacaktır. Değişikliklerin yayınlanmasından sonra Hizmetin sürekli kullanımı, değiştirilen koşulların kabul edilmesi anlamına gelir."
+    },
+    "section10": {
+      "title": "§ 10 Uygulanacak Hukuk ve Yargı Yetkisi",
+      "p1": "(1) Uluslararası Mal Satımına İlişkin Sözleşmeler Hakkında Birleşmiş Milletler Antlaşması hariç olmak üzere Almanya Federal Cumhuriyeti hukuku uygulanır.",
+      "p2": "(2) Bu kullanım koşullarından veya bunlarla bağlantılı olarak ortaya çıkan tüm anlaşmazlıklar için yargı yeri, yasaların izin verdiği ölçüde [Yargı yeriniz]'dir."
+    },
+    "section11": {
+      "title": "§ 11 Bölünebilirlik Maddesi",
+      "text": "Bu kullanım koşullarının bireysel hükümleri geçersiz veya uygulanamaz hale gelirse, kalan hükümlerin geçerliliği bundan etkilenmez."
+    },
+    "lastUpdated": "Son güncelleme:"
+  }
+}

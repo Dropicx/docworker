@@ -1,0 +1,445 @@
+{
+  "header": {
+    "subtitle": "Belgeleri anlayın",
+    "systemReady": "Sistem hazır",
+    "systemDegraded": "Sınırlı çalışma",
+    "systemError": "Sistem hatası",
+    "systemStatus": "Sistem durumu",
+    "ocrAndAi": "OCR ve Yapay Zeka Hizmetleri",
+    "notConfigured": "Yapılandırılmamış",
+    "error": "Hata",
+    "active": "aktif",
+    "settings": "Ayarlar",
+    "logout": "Çıkış yap",
+    "filesystem": "Dosya sistemi",
+    "imageProcessing": "Görüntü işleme",
+    "pdfProcessing": "PDF işleme"
+  },
+  "hero": {
+    "title1": "Tıbbi belgeler",
+    "title2": "kolaylaştırıldı",
+    "description": "Karmaşık tıbbi mektupları ve raporları anlaşılması kolay bir dile dönüştürün. Hızlı, güvenli ve GDPR uyumlu.",
+    "gdpr": "%100 GDPR",
+    "ready": "Anında erişim",
+    "noStorage": "Veri depolama yok"
+  },
+  "features": {
+    "privacyTitle": "Önce gizlilik",
+    "privacyDescription": "Verileriniz yalnızca işleme sırasında saklanır, asla yapay zeka eğitimi için kullanılmaz ve çeviri sonrasında otomatik olarak silinir.",
+    "precisionTitle": "Tıbbi hassasiyet",
+    "precisionDescription": "Tıbbi terminoloji için optimize edilmiş yapay zeka ile desteklenmektedir. Klinik anlamı koruyan doğru çeviriler.",
+    "speedTitle": "Hızlı işleme",
+    "speedDescription": "Tıbbi belgelerinizin net, anlaşılır çevirisini saniyeler içinde alın."
+  },
+  "upload": {
+    "title": "Belge yükle",
+    "titleDragActive": "Dosyaları buraya bırakın",
+    "titleAddMore": "Daha fazla dosya ekle",
+    "descriptionDragActive": "Eklemek için dosyaları bırakın",
+    "descriptionAddMore": "Daha fazla dosya sürükleyin veya seçmek için tıklayın",
+    "description": "Dosyaları buraya sürükleyin veya seçmek için tıklayın",
+    "supportedFormats": "Desteklenen formatlar",
+    "maxSize": "Maks. 50 MB",
+    "scanDocument": "Belge tara",
+    "scanMore": "Daha fazla sayfa tara",
+    "selectedFiles": "Seçili dosyalar ({{count}})",
+    "removeAll": "Tümünü kaldır",
+    "removeFile": "{{fileName}} dosyasını kaldır",
+    "clearLanguageSelection": "Dil seçimini temizle",
+    "documentLanguage": "Belge dili",
+    "german": "Almanca",
+    "english": "İngilizce",
+    "documentLanguageHint": "Tıbbi belgenizin dilini seçin",
+    "translationOptional": "Çeviri (isteğe bağlı)",
+    "simplifyOnly": "Yalnızca sadeleştir",
+    "moreLanguages": "Daha fazla dil",
+    "more": "Daha fazla",
+    "searchLanguage": "Dil ara...",
+    "noLanguagesFound": "\"{{term}}\" için dil bulunamadı",
+    "languagesAvailable": "{{count}} dil mevcut",
+    "selected": "Seçili:",
+    "translationHintSelected": "Belge önce sadeleştirilecek, ardından seçilen dile çevrilecektir.",
+    "translationHintOptional": "İsteğe bağlı: Sadeleştirilmiş sonucu çevirmek için bir dil seçin.",
+    "privacyConfirmed": "Gizlilik onaylandı",
+    "pleaseConfirm": "Lütfen onaylayın",
+    "privacyConsentPrefix": "",
+    "privacyPolicy": "Gizlilik Politikası",
+    "privacyConsentSuffix": "'nı okudum ve belgelerimin işlenmesini kabul ediyorum. Verilerimin GDPR uyumlu olarak işleneceğini ve çeviriden sonra otomatik olarak silineceğini anlıyorum.",
+    "startProcessing": "İşlemeye başla",
+    "gdprNotice": "Verileriniz GDPR uyumlu olarak işlenir ve saklanmaz",
+    "uploadFailed": "Yükleme başarısız"
+  },
+  "qualityGate": {
+    "title": "Görüntü kalitesi çok düşük",
+    "description": "Belgenizin kalitesi güvenilir işleme için çok düşük.",
+    "qualityScore": "Kalite puanı:",
+    "required": "gerekli",
+    "detectedIssues": "Tespit edilen sorunlar:",
+    "improvementTips": "Kaliteyi nasıl artırabilirsiniz:",
+    "retakePhoto": "Yeni fotoğraf çekin",
+    "issues": {
+      "poor_image_quality": "Düşük görüntü kalitesi",
+      "significant_blur_detected": "Önemli bulanıklık tespit edildi",
+      "low_blur_detection": "Bulanık görüntü",
+      "low_contrast": "Düşük kontrast",
+      "poor_lighting": "Zayıf aydınlatma",
+      "document_too_small": "Belge çok küçük",
+      "text_density_low": "Çok az metin algılandı",
+      "has_blur": "Görüntü bulanık",
+      "has_low_contrast": "Kontrast çok düşük"
+    }
+  },
+  "processing": {
+    "uploading": "Dosya yükleniyor",
+    "starting": "İşlem başlatılıyor...",
+    "pleaseWait": "Lütfen bekleyin",
+    "cancel": "İptal",
+    "ready": "Hazır",
+    "connecting": "Bağlantı kuruluyor...",
+    "transferring": "Dosya aktarılıyor...",
+    "almostDone": "Neredeyse bitti...",
+    "qualityCheck": "Kalite kontrolü...",
+    "preparing": "İşleme hazırlanıyor...",
+    "aiProcessing": "Yapay Zeka İşleme",
+    "analyzing": "Belgeniz analiz ediliyor ve çevriliyor",
+    "cancelProcessing": "İşlemeyi iptal et",
+    "connectionLabel": "Bağlanıyor...",
+    "activeLabel": "Aktif",
+    "progress": "İlerleme",
+    "processingFor": "{{time}} süredir işleniyor",
+    "stepsTitle": "İşleme adımları",
+    "processingId": "İşlem ID'si:",
+    "completed": "Çeviri tamamlandı!",
+    "completedDescription": "Belgeniz anlaşılması kolay bir dile başarıyla çevrildi. Sonuçlar yükleniyor...",
+    "uploadFailed": "Yükleme başarısız",
+    "timeoutError": "Sunucu bağlantısı beklenenden uzun sürüyor. İnternet bağlantınızı kontrol edin ve tekrar deneyin.",
+    "processingFailed": "İşleme başarısız",
+    "steps": {
+      "ocr": "Metin çıkarma (OCR)",
+      "validation": "Tıbbi doğrulama",
+      "privacy": "Gizlilik filtresi",
+      "simplification": "Yapay zeka sadeleştirmesi",
+      "quality": "Kalite kontrolü",
+      "finalization": "Tamamlama"
+    },
+    "stepMessages": {
+      "extracting_text": [
+        "Belge taranıyor...",
+        "Karakterler tanınıyor...",
+        "Metin yapısı analiz ediliyor..."
+      ],
+      "translating": [
+        "Tıbbi terimler belirleniyor...",
+        "Basit dile çevriliyor...",
+        "Tutarlılık kontrol ediliyor..."
+      ],
+      "language_translating": [
+        "Çeviri optimize ediliyor...",
+        "Dilbilgisi kontrol ediliyor...",
+        "Biçimlendirme ayarlanıyor..."
+      ]
+    }
+  },
+  "result": {
+    "title": "Çeviri tamamlandı",
+    "descriptionWithLanguage": "Belgeniz sadeleştirildi ve çevrildi",
+    "descriptionSimplified": "Belgeniz anlaşılması kolay bir dile çevrildi",
+    "guidelines": {
+      "title": "Tıbbi kılavuzlar",
+      "searching": "İlgili AWMF önerileri aranıyor...",
+      "appearBelow": "Sonuçlar bu sayfanın altında görünecek",
+      "found": "Kılavuzlar bulundu",
+      "available": "İlgili AWMF önerileri mevcut",
+      "viewNow": "Şimdi görüntüle",
+      "notFound": "Eşleşen kılavuz bulunamadı",
+      "notFoundDescription": "Bu belge türü için AWMF önerisi bulunamadı"
+    },
+    "targetLanguage": "Hedef dil",
+    "tabSimplified": "Sadeleştirilmiş (Almanca)",
+    "translationTitle": "Çeviri ({{lang}})",
+    "documentIn": "Belgeniz {{lang}} dilinde",
+    "createdAt": "Çeviri oluşturulma tarihi:",
+    "tagline": "HealthLingo - Tıbbi belgeleri anlayın",
+    "processedIn": "İşleme süresi",
+    "processingId": "İşlem ID'si:",
+    "copy": "Kopyala",
+    "copied": "Kopyalandı!",
+    "downloadPdf": "PDF olarak",
+    "originalText": "Orijinal metin",
+    "show": "Göster",
+    "hide": "Gizle",
+    "showOriginalHint": "Orijinal metni görmek için \"Göster\"e tıklayın",
+    "newTranslation": "Yeni belge çevir",
+    "pdfExportFailed": "PDF dışa aktarma başarısız. Lütfen tekrar deneyin.",
+    "pdfTitleTranslation": "Çeviri ({{lang}})",
+    "pdfTitleSimplified": "Basit dile çeviri"
+  },
+  "disclaimer": {
+    "title": "Önemli uyarı",
+    "text": "Bu çeviri otomatik olarak oluşturulmuştur ve yalnızca bilgilendirme amaçlıdır. Profesyonel tıbbi tavsiye, teşhis veya tedavinin yerini almaz. Herhangi bir sorunuz için daima doktorunuza veya nitelikli sağlık uzmanlarına danışın."
+  },
+  "scanner": {
+    "simpleMode": "Basit mod",
+    "documentDetected": "Belge tespit edildi!",
+    "searching": "Belge aranıyor...",
+    "alignWithFrame": "Belgeyi çerçeveyle hizalayın",
+    "close": "Kapat",
+    "starting": "Kamera başlatılıyor...",
+    "error": "Bir hata oluştu.",
+    "scannedDocument": "Taranan belge",
+    "retake": "Yeniden çek",
+    "use": "Kullan",
+    "capture": "Fotoğraf çek",
+    "holdSteady": "Sabit tutun",
+    "optimizing": "Görüntü optimize ediliyor...",
+    "imageBlurry": "Görüntü bulanık görünüyor - yeniden çekmeyi düşünün",
+    "goodQuality": "İyi kalite",
+    "lowQuality": "Düşük kalite",
+    "straightenDocument": "Belgeyi düzeltin",
+    "avoidGlare": "Yansımadan kaçının",
+    "moveCloser": "Daha yaklaşın",
+    "alignWithGuides": "Belgeyi çerçeve içinde tutun",
+    "rotateImage": "Gerekirse döndürün:",
+    "rotateLeft": "Sola döndür",
+    "rotateRight": "Sağa döndür",
+    "loadingScanner": "Tarayıcı yükleniyor...",
+    "loadError": "Tarayıcı yüklenemedi. Bağlantınızı kontrol edin ve tekrar deneyin."
+  },
+  "feedback": {
+    "title": "Çeviriniz nasıldı?",
+    "subtitle": "Görüşleriniz bize gelişmemizde yardımcı oluyor",
+    "overallRating": "Genel değerlendirme",
+    "detailedOptional": "Detaylı değerlendirme (isteğe bağlı)",
+    "clarity": "Netlik",
+    "accuracy": "Doğruluk",
+    "formatting": "Biçimlendirme",
+    "speed": "Hız",
+    "commentOptional": "Yorum (isteğe bağlı)",
+    "commentPlaceholder": "Düşüncelerinizi paylaşın...",
+    "consent": "Verilerimin sistemi geliştirmek için kullanılmasını kabul ediyorum.",
+    "ratingRequired": "Lütfen genel bir değerlendirme yapın.",
+    "consentRequired": "Lütfen veri kullanımını kabul edin.",
+    "submitError": "Geri bildirim gönderilemedi.",
+    "submitting": "Gönderiliyor...",
+    "submit": "Geri bildirim gönder",
+    "privacyNote": "Onay olmadan belge içeriğiniz saklanmayacaktır.",
+    "alreadyReceived": "Geri bildirim zaten alındı",
+    "alreadyReceivedDescription": "Teşekkürler! Bu çeviri için zaten geri bildirim verdiniz.",
+    "thankYou": "Teşekkürler!",
+    "thankYouDescription": "Geri bildiriminiz hizmeti geliştirmemize yardımcı oluyor.",
+    "starLabel": "{{count}} yıldız",
+    "starLabel_plural": "{{count}} yıldız"
+  },
+  "faq": {
+    "title": "Sıkça Sorulan Sorular",
+    "subtitle": "HealthLingo ve tıbbi belgelerinizin güvenli işlenmesi hakkında bilmeniz gereken her şey",
+    "contactUs": "Daha fazla sorunuz mu var?",
+    "contactLink": "Bizimle iletişime geçin",
+    "items": {
+      "0": {
+        "question": "Verilerim nerede işleniyor ve ne kadar güvenli?",
+        "answer": "HealthLingo, tam GDPR uyumluluğuna sahip SOC 2 Tip I sertifikalı bir sağlayıcı olan Railway.app üzerinde barındırılmaktadır. Sunucular AB'de bulunmaktadır ve Railway, GDPR Madde 28'e göre Veri İşleme Sözleşmesi (DPA) sunmaktadır. Yapay zeka işleme, Avrupa veri merkezlerinde OVH AI Endpoints aracılığıyla gerçekleştirilmektedir (ISO 27001, 27017, 27018, 27701 sertifikalı). OVH, verilerinizin ASLA yapay zeka modeli eğitimi için kullanılmayacağını garanti eder."
+      },
+      "1": {
+        "question": "Tıbbi verilerim saklanıyor mu veya yapay zeka eğitimi için kullanılıyor mu?",
+        "answer": "Hayır, kesinlikle hayır. HealthLingo hiçbir veriyi kalıcı olarak saklamaz. OVH AI Endpoints'in katı bir eğitim yapmama politikası vardır: müşteri verileri asla saklanmaz veya model eğitimi için kullanılmaz. Çeviriden sonra tüm belgeler, metinler ve kişisel bilgiler otomatik ve geri dönüşümsüz olarak silinir."
+      },
+      "2": {
+        "question": "Çeviri ne kadar sürer?",
+        "answer": "Çoğu belge 10-30 saniye içinde çevrilir. Kesin süre belgenin uzunluğuna ve karmaşıklığına bağlıdır. Taranmış belgeler önce OCR (metin tanıma) ile işlenmesi gerektiğinden biraz daha uzun sürebilir."
+      },
+      "3": {
+        "question": "Hangi dosya formatları destekleniyor?",
+        "answer": "HealthLingo, PDF dosyalarını (hem gömülü metinli hem de taranmış belgeler) ve görüntü dosyalarını (JPG, PNG, JPEG) destekler. Maksimum dosya boyutu 10 MB'tır. Çok sayfalı belgeler tamamen işlenir."
+      },
+      "4": {
+        "question": "Hangi dillere çeviri yapılabilir?",
+        "answer": "Anlaşılır Almancaya sadeleştirmenin yanı sıra, {{model}} tarafından optimum desteklenen 19 özenle seçilmiş dile çeviri destekliyoruz: İngilizce, Fransızca, İspanyolca, İtalyanca, Portekizce, Felemenkçe, Rusça, Çince, Japonca, Korece, Arapça, Hintçe, Lehçe, Çekçe, İsveççe, Norveççe ve Danca."
+      },
+      "5": {
+        "question": "Belgedeki kişisel verilere ne oluyor?",
+        "answer": "İsimler, adresler, doğum tarihleri ve sigorta numaraları gibi kişisel veriler otomatik olarak tespit edilir ve yer tutucularla değiştirilir (örneğin, [İSİM KALDIRILDI]). Bu, gizliliğinizi korurken tüm tıbbi bilgileri tamamen korur."
+      },
+      "6": {
+        "question": "Kullanılan hizmetlerin hangi güvenlik sertifikaları var?",
+        "answer": "Railway.app SOC 2 Tip I sertifikalıdır ve GDPR uyumlu veri işleme sözleşmeleri sunar. OVH Cloud kapsamlı sertifikalara sahiptir: ISO/IEC 27001 (bilgi güvenliği), ISO/IEC 27017 (bulut güvenliği), ISO/IEC 27018 (bulutta gizlilik) ve ISO/IEC 27701 (gizlilik yönetimi)."
+      },
+      "7": {
+        "question": "Çeviri tıbbi olarak doğru mu?",
+        "answer": "HealthLingo, özellikle tıbbi metinler için eğitilmiş gelişmiş yapay zeka teknolojileri kullanır. Çeviriler çok doğrudur ancak profesyonel tıbbi tavsiyenin yerini almaz. Önemli tıbbi kararlar için her zaman doktorunuza danışın."
+      },
+      "8": {
+        "question": "Çeviriyi indirebilir miyim?",
+        "answer": "Evet, çevrilmiş versiyonu PDF dosyası olarak indirebilirsiniz. PDF, tarih ve saatle birlikte okunabilir formatta tam çeviriyi içerir. Metni doğrudan panoya da kopyalayabilirsiniz."
+      },
+      "9": {
+        "question": "HealthLingo taranmış belgelerle çalışıyor mu?",
+        "answer": "Evet! HealthLingo, Almanca tıbbi belgeler için özel optimizasyona sahip gelişmiş metin tanıma (OCR) özelliğine sahiptir. El yazısı notlar, tablolar ve kötü taranmış belgeler bile güvenilir şekilde tanınır ve işlenir."
+      },
+      "10": {
+        "question": "Hizmet gerçekten ücretsiz mi?",
+        "answer": "Evet, HealthLingo tamamen ücretsizdir. Gizli maliyet, kayıt veya çeviri sayısı sınırı yoktur. Amacımız tıbbi bilgiyi herkes için erişilebilir kılmaktır."
+      }
+    }
+  },
+  "footer": {
+    "impressum": "Yasal Bilgiler",
+    "privacy": "Gizlilik Politikası",
+    "terms": "Kullanım Koşulları",
+    "admin": "Yönetici",
+    "copyright": "HealthLingo. Tüm hakları saklıdır.",
+    "madeWith": "İle yapıldı",
+    "madeInLocation": "Almanya'da"
+  },
+  "cookieFree": {
+    "title": "Çerez yok!",
+    "description": "HealthLingo çerez kullanmaz ve izleme verisi saklamaz.",
+    "closeBanner": "Başlığı kapat"
+  },
+  "termination": {
+    "title": "İşleme durduruldu",
+    "technicalDetails": "Teknik detaylar",
+    "step": "Adım:",
+    "reason": "Neden:",
+    "uploadNew": "Yeni belge yükle",
+    "hint": "Not",
+    "hintText": "Bu araç özellikle tıbbi belgeler için tasarlanmıştır, örneğin:",
+    "doctorLetters": "Doktor mektupları ve taburcu özetleri",
+    "reports": "Tıbbi raporlar ve teşhisler",
+    "labResults": "Laboratuvar sonuçları ve testler"
+  },
+  "guidelinesSection": {
+    "title": "Kılavuz önerileri",
+    "subtitle": "AWMF kılavuzlarına dayalı",
+    "notAvailable": "Kılavuz önerileri mevcut değil",
+    "notAvailableDefault": "AWMF kılavuzları alınamadı.",
+    "retry": "Tekrar dene",
+    "sources": "Kullanılan kaynaklar",
+    "documentFallback": "Belge {{index}}",
+    "disclaimer": "Bu öneriler resmi Alman tedavi kılavuzlarına (AWMF) dayanmaktadır ve yalnızca bilgilendirme amaçlıdır. Doktorunuzla kişisel danışmanın yerini almaz."
+  },
+  "guidelinesIndicator": {
+    "loading": "Kılavuzlar yükleniyor...",
+    "loadingShort": "Yükleniyor...",
+    "scrollTo": "Kılavuz önerilerine git",
+    "scrollToShort": "Kılavuzlar",
+    "notAvailable": "Kılavuzlar mevcut değil"
+  },
+  "languageSwitcher": {
+    "changeLanguage": "Dili değiştir"
+  },
+  "languageSelector": {
+    "label": "Çeviri (isteğe bağlı)",
+    "loading": "Diller yükleniyor...",
+    "loadError": "Diller yüklenemedi",
+    "retry": "Tekrar dene",
+    "placeholder": "Dil seçin (isteğe bağlı)",
+    "searchPlaceholder": "Dil ara...",
+    "noTranslation": "Çeviri yok",
+    "popularLanguages": "Popüler diller",
+    "allLanguages": "Tüm diller",
+    "noResults": "\"{{term}}\" için dil bulunamadı",
+    "hint": "İsteğe bağlı: Sadeleştirilmiş sonucu çevirmek için bir dil seçin."
+  },
+  "login": {
+    "title": "Yönetici girişi",
+    "description": "Yönetici özelliklerine erişmek için giriş yapın",
+    "email": "E-posta adresi",
+    "emailPlaceholder": "sizin@email.com",
+    "password": "Şifre",
+    "passwordPlaceholder": "Şifreniz",
+    "submit": "Giriş yap",
+    "submitting": "Giriş yapılıyor...",
+    "loading": "Yükleniyor...",
+    "sessionExpired": "Oturumunuz sona erdi. Lütfen tekrar giriş yapın.",
+    "failed": "Giriş başarısız",
+    "backToHome": "Ana sayfaya dön",
+    "noAccess": "Erişiminiz yok mu?",
+    "contactAdmin": "Hesap oluşturmak için yöneticinize başvurun."
+  },
+  "error": {
+    "processingFailed": "İşleme başarısız",
+    "processingStopped": "İşleme durduruldu",
+    "unknownError": "Bilinmeyen bir hata oluştu",
+    "retry": "Tekrar dene"
+  },
+  "status": {
+    "extracting_text": "Metin çıkarılıyor",
+    "translating": "Çevriliyor",
+    "language_translating": "Dil çevirisi",
+    "completed": "Tamamlandı",
+    "error": "Hata",
+    "pending": "Bekliyor",
+    "processing": "İşleniyor"
+  },
+  "time": {
+    "seconds": "{{count}} sn.",
+    "minutesSeconds": "{{minutes}} dk. {{seconds}} sn."
+  },
+  "wizard": {
+    "step1Title": "Belge yükle",
+    "step2Title": "Belge dili",
+    "step3Title": "Çeviri seçenekleri",
+    "step4Title": "Onayla ve başlat",
+    "step1Label": "Yükle",
+    "step2Label": "Dil",
+    "step3Label": "Çevir",
+    "step4Label": "Onayla",
+    "next": "İleri",
+    "back": "Geri",
+    "summary": "Özet",
+    "file": "Dosya",
+    "sourceLanguage": "Belge dili",
+    "targetLanguage": "Hedef dil",
+    "step3Hint": "Belgeyi başka bir dile de çevirmek ister misiniz?",
+    "progressLabel": "İlerleme",
+    "step": "Adım",
+    "completed": "tamamlandı"
+  },
+  "languages": {
+    "de": "Almanca",
+    "en": "İngilizce",
+    "fr": "Fransızca",
+    "es": "İspanyolca",
+    "it": "İtalyanca",
+    "pt": "Portekizce",
+    "nl": "Felemenkçe",
+    "pl": "Lehçe",
+    "ru": "Rusça",
+    "zh": "Çince",
+    "ja": "Japonca",
+    "ko": "Korece",
+    "ar": "Arapça",
+    "hi": "Hintçe",
+    "cs": "Çekçe",
+    "sv": "İsveççe",
+    "no": "Norveççe",
+    "da": "Danca",
+    "tr": "Türkçe",
+    "uk": "Ukraynaca",
+    "fa": "Farsça"
+  },
+  "pipeline": {
+    "duplicateStep": "Adımı kopyala",
+    "duplicateStepTitle": "Adımı kopyala",
+    "duplicateStepHint": "Kopya, orijinal adımın tüm ayarlarıyla oluşturulacak ancak devre dışı olacaktır.",
+    "newStepName": "Yeni adım adı",
+    "copyOf": "{{name}} kopyası",
+    "duplicate": "Kopyala",
+    "duplicateSuccess": "Adım başarıyla kopyalandı",
+    "nameRequired": "İsim gerekli",
+    "sourceLanguage": "Kaynak dil",
+    "universalLanguage": "Evrensel (tüm diller)",
+    "germanOnly": "Yalnızca Almanca (Almanca giriş)",
+    "englishOnly": "Yalnızca İngilizce (İngilizce giriş)"
+  },
+  "accessibility": {
+    "skipToMain": "Ana içeriğe atla",
+    "opensInNewTab": "yeni sekmede açılır"
+  },
+  "common": {
+    "cancel": "İptal",
+    "edit": "Düzenle",
+    "delete": "Sil"
+  }
+}

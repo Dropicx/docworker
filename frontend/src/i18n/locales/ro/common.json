@@ -1,0 +1,447 @@
+{
+  "header": {
+    "subtitle": "Înțelegeți documentele",
+    "systemReady": "Sistem pregătit",
+    "systemDegraded": "Degradat",
+    "systemError": "Eroare de sistem",
+    "systemStatus": "Starea sistemului",
+    "ocrAndAi": "Servicii OCR și AI",
+    "notConfigured": "Neconfigurat",
+    "error": "Eroare",
+    "active": "activ",
+    "settings": "Setări",
+    "logout": "Deconectare",
+    "filesystem": "Sistem de fișiere",
+    "imageProcessing": "Procesarea imaginilor",
+    "pdfProcessing": "Procesarea PDF"
+  },
+  "hero": {
+    "title1": "Documente medicale",
+    "title2": "simplificate",
+    "description": "Transformați scrisorile medicale complexe și rapoartele în limbaj ușor de înțeles. Rapid, sigur și conform cu GDPR.",
+    "gdpr": "100% GDPR",
+    "ready": "Acces instant",
+    "noStorage": "Fără stocare de date"
+  },
+  "features": {
+    "privacyTitle": "Confidențialitatea pe primul loc",
+    "privacyDescription": "Datele dvs. sunt stocate doar în timpul procesării, nu sunt folosite niciodată pentru antrenarea AI și sunt șterse automat imediat după traducere.",
+    "precisionTitle": "Precizie medicală",
+    "precisionDescription": "Alimentat de AI optimizat pentru terminologie medicală. Traduceri precise care păstrează semnificația clinică.",
+    "speedTitle": "Procesare rapidă",
+    "speedDescription": "Primiți o traducere clară și ușor de înțeles a documentelor medicale în câteva secunde."
+  },
+  "upload": {
+    "title": "Încărcați documente",
+    "titleDragActive": "Eliberați fișierele aici",
+    "titleAddMore": "Adăugați mai multe fișiere",
+    "descriptionDragActive": "Eliberați fișierele pentru a le adăuga",
+    "descriptionAddMore": "Trageți mai multe fișiere aici sau atingeți pentru a selecta",
+    "description": "Trageți fișierele aici sau atingeți pentru a selecta",
+    "supportedFormats": "Formate acceptate",
+    "maxSize": "Max. 50 MB",
+    "scanDocument": "Scanați documentul",
+    "scanMore": "Scanați mai multe pagini",
+    "selectedFiles": "Fișiere selectate ({{count}})",
+    "removeAll": "Eliminați toate",
+    "removeFile": "Eliminați fișierul {{fileName}}",
+    "clearLanguageSelection": "Ștergeți selecția limbii",
+    "documentLanguage": "Limba documentului",
+    "german": "Germană",
+    "english": "Engleză",
+    "documentLanguageHint": "Selectați limba documentului medical",
+    "translationOptional": "Traducere (opțional)",
+    "simplifyOnly": "Doar simplificare",
+    "moreLanguages": "Mai multe limbi",
+    "more": "Mai mult",
+    "searchLanguage": "Căutați limba...",
+    "noLanguagesFound": "Nu s-au găsit limbi pentru \"{{term}}\"",
+    "languagesAvailable": "{{count}} limbi disponibile",
+    "selected": "Selectat:",
+    "translationHintSelected": "Documentul va fi mai întâi simplificat și apoi tradus în limba selectată.",
+    "translationHintOptional": "Opțional: Selectați o limbă pentru a traduce suplimentar rezultatul simplificat.",
+    "privacyConfirmed": "Confidențialitate confirmată",
+    "pleaseConfirm": "Vă rugăm să confirmați",
+    "privacyConsentPrefix": "Am citit",
+    "privacyPolicy": "Politica de confidențialitate",
+    "privacyConsentSuffix": "și sunt de acord cu procesarea documentelor mele. Înțeleg că datele mele vor fi procesate în conformitate cu GDPR și șterse automat după traducere.",
+    "startProcessing": "Începeți procesarea",
+    "gdprNotice": "Datele dvs. sunt procesate conform GDPR și nu sunt stocate",
+    "uploadFailed": "Încărcarea a eșuat"
+  },
+  "qualityGate": {
+    "title": "Calitatea imaginii prea scăzută",
+    "description": "Calitatea documentului dvs. este prea scăzută pentru procesare fiabilă.",
+    "qualityScore": "Scor de calitate:",
+    "required": "necesar",
+    "detectedIssues": "Probleme detectate:",
+    "improvementTips": "Cum să îmbunătățiți calitatea:",
+    "retakePhoto": "Faceți o nouă fotografie",
+    "issues": {
+      "poor_image_quality": "Calitate slabă a imaginii",
+      "significant_blur_detected": "Estompare semnificativă detectată",
+      "low_blur_detection": "Imagine neclară",
+      "low_contrast": "Contrast scăzut",
+      "poor_lighting": "Iluminare slabă",
+      "document_too_small": "Document prea mic",
+      "text_density_low": "Prea puțin text recognoscibil",
+      "has_blur": "Imaginea este neclară",
+      "has_low_contrast": "Contrastul este prea scăzut"
+    }
+  },
+  "processing": {
+    "uploading": "Se încarcă fișierul",
+    "starting": "Se începe procesarea...",
+    "pleaseWait": "Vă rugăm să așteptați un moment",
+    "cancel": "Anulare",
+    "ready": "Gata",
+    "connecting": "Se stabilește conexiunea...",
+    "transferring": "Se transferă fișierul...",
+    "almostDone": "Aproape gata...",
+    "qualityCheck": "Verificare calitate...",
+    "preparing": "Se pregătește procesarea...",
+    "aiProcessing": "Procesare AI",
+    "analyzing": "Documentul dvs. este analizat și tradus",
+    "cancelProcessing": "Anulați procesarea",
+    "connectionLabel": "Se conectează...",
+    "activeLabel": "Activ",
+    "progress": "Progres",
+    "processingFor": "Procesare de {{time}}",
+    "stepsTitle": "Etapele procesării",
+    "processingId": "ID procesare:",
+    "completed": "Traducere finalizată!",
+    "completedDescription": "Documentul dvs. a fost tradus cu succes în limbaj ușor de înțeles. Se încarcă rezultatele...",
+    "uploadFailed": "Încărcarea a eșuat",
+    "timeoutError": "Conexiunea cu serverul durează mai mult decât era de așteptat. Verificați conexiunea la internet și încercați din nou.",
+    "processingFailed": "Procesarea a eșuat",
+    "steps": {
+      "ocr": "Extragerea textului (OCR)",
+      "validation": "Validare medicală",
+      "privacy": "Filtru de confidențialitate",
+      "simplification": "Simplificare AI",
+      "quality": "Verificare calitate",
+      "finalization": "Finalizare"
+    },
+    "stepMessages": {
+      "extracting_text": [
+        "Se scanează documentul...",
+        "Se recunosc caracterele...",
+        "Se analizează structura textului..."
+      ],
+      "translating": [
+        "Se identifică termenii medicali...",
+        "Se traduce în limbaj simplu...",
+        "Se verifică coerența..."
+      ],
+      "language_translating": [
+        "Se optimizează traducerea...",
+        "Se verifică gramatica...",
+        "Se ajustează formatarea..."
+      ]
+    }
+  },
+  "result": {
+    "title": "Traducere finalizată",
+    "descriptionWithLanguage": "Documentul dvs. a fost simplificat și tradus",
+    "descriptionSimplified": "Documentul dvs. a fost tradus în limbaj ușor de înțeles",
+    "guidelines": {
+      "title": "Ghiduri medicale",
+      "searching": "Se caută recomandări AWMF relevante...",
+      "appearBelow": "Rezultatele vor apărea mai jos pe această pagină",
+      "found": "Ghiduri găsite",
+      "available": "Recomandări AWMF relevante disponibile",
+      "viewNow": "Vizualizați acum",
+      "notFound": "Nu s-au găsit ghiduri potrivite",
+      "notFoundDescription": "Nu s-au găsit recomandări AWMF pentru acest tip de document"
+    },
+    "targetLanguage": "Limba țintă",
+    "tabSimplified": "Simplificat (germană)",
+    "translationTitle": "Traducere ({{lang}})",
+    "documentIn": "Documentul dvs. în {{lang}}",
+    "createdAt": "Traducere creată la:",
+    "tagline": "HealthLingo - Înțelegerea documentelor medicale",
+    "processedIn": "Procesat în",
+    "processingId": "ID procesare:",
+    "copy": "Copiază",
+    "copied": "Copiat!",
+    "downloadPdf": "Ca PDF",
+    "originalText": "Text original",
+    "show": "Afișează",
+    "hide": "Ascunde",
+    "showOriginalHint": "Faceți clic pe \"Afișează\" pentru a vedea textul original",
+    "newTranslation": "Traduceți un document nou",
+    "pdfExportFailed": "Exportul PDF a eșuat. Vă rugăm să încercați din nou.",
+    "pdfTitleTranslation": "Traducere ({{lang}})",
+    "pdfTitleSimplified": "Traducere în limbaj simplu"
+  },
+  "disclaimer": {
+    "title": "Notificare importantă",
+    "text": "Această traducere a fost generată automat și este doar în scop informativ. Nu înlocuiește sfatul medical profesional, diagnosticul sau tratamentul. Consultați întotdeauna medicul sau alți furnizori de servicii medicale calificați pentru orice întrebări."
+  },
+  "scanner": {
+    "simpleMode": "Mod simplu",
+    "documentDetected": "Document detectat!",
+    "searching": "Se caută documentul...",
+    "alignWithFrame": "Aliniați documentul cu cadrul",
+    "close": "Închide",
+    "starting": "Se pornește camera...",
+    "error": "A apărut o eroare.",
+    "scannedDocument": "Document scanat",
+    "retake": "Refaceți",
+    "use": "Utilizați",
+    "capture": "Fotografiați",
+    "holdSteady": "Țineți stabil",
+    "optimizing": "Se optimizează imaginea...",
+    "imageBlurry": "Imaginea pare neclară - luați în considerare refacerea",
+    "goodQuality": "Calitate bună",
+    "lowQuality": "Calitate scăzută",
+    "straightenDocument": "Îndreptați documentul",
+    "avoidGlare": "Evitați reflexiile",
+    "moveCloser": "Apropiați-vă",
+    "alignWithGuides": "Mențineți documentul în cadru",
+    "rotateImage": "Rotiți dacă este necesar:",
+    "rotateLeft": "Rotiți la stânga",
+    "rotateRight": "Rotiți la dreapta",
+    "loadingScanner": "Se încarcă scanerul...",
+    "loadError": "Nu s-a putut încărca scanerul. Verificați conexiunea și încercați din nou."
+  },
+  "feedback": {
+    "title": "Cum a fost traducerea dvs.?",
+    "subtitle": "Opinia dvs. ne ajută să ne îmbunătățim",
+    "overallRating": "Evaluare generală",
+    "detailedOptional": "Evaluare detaliată (opțional)",
+    "clarity": "Claritate",
+    "accuracy": "Acuratețe",
+    "formatting": "Formatare",
+    "speed": "Viteză",
+    "commentOptional": "Comentariu (opțional)",
+    "commentPlaceholder": "Împărtășiți-ne gândurile dvs...",
+    "consent": "Sunt de acord ca datele mele să fie folosite pentru îmbunătățirea sistemului.",
+    "ratingRequired": "Vă rugăm să oferiți o evaluare generală.",
+    "consentRequired": "Vă rugăm să acceptați utilizarea datelor.",
+    "submitError": "Feedback-ul nu a putut fi trimis.",
+    "submitting": "Se trimite...",
+    "submit": "Trimiteți feedback",
+    "privacyNote": "Fără consimțământ, conținutul documentului nu va fi stocat.",
+    "alreadyReceived": "Feedback deja primit",
+    "alreadyReceivedDescription": "Vă mulțumim! Ați oferit deja feedback pentru această traducere.",
+    "thankYou": "Vă mulțumim!",
+    "thankYouDescription": "Feedback-ul dvs. ne ajută să îmbunătățim serviciul.",
+    "starLabel": "{{count}} stea",
+    "starLabel_plural": "{{count}} stele"
+  },
+  "faq": {
+    "title": "Întrebări frecvente",
+    "subtitle": "Tot ce trebuie să știți despre HealthLingo și procesarea sigură a documentelor medicale",
+    "contactUs": "Aveți mai multe întrebări?",
+    "contactLink": "Contactați-ne",
+    "items": {
+      "0": {
+        "question": "Unde sunt procesate datele mele și cât de sigure sunt?",
+        "answer": "HealthLingo este găzduit pe Railway.app, un furnizor certificat SOC 2 Type I cu conformitate completă GDPR. Serverele sunt situate în UE și Railway oferă un Acord de Procesare a Datelor (DPA) conform articolului 28 GDPR. Procesarea AI se face prin OVH AI Endpoints în centre de date europene (certificate ISO 27001, 27017, 27018, 27701). OVH garantează că datele dvs. NU sunt NICIODATĂ folosite pentru antrenarea modelelor AI - toate cererile sunt anonimizate și șterse imediat după procesare."
+      },
+      "1": {
+        "question": "Datele mele medicale sunt stocate sau folosite pentru antrenarea AI?",
+        "answer": "Nu, absolut nu. HealthLingo nu stochează permanent nicio dată. OVH AI Endpoints are o politică strictă de non-antrenare: datele clienților nu sunt niciodată stocate sau folosite pentru antrenarea modelelor. După traducere, toate documentele, textele și informațiile personale sunt șterse automat și ireversibil. Modelele AI NU învață din datele dvs. - fiecare cerere este izolată și nu lasă urme."
+      },
+      "2": {
+        "question": "Cât durează traducerea?",
+        "answer": "Majoritatea documentelor sunt traduse în 10-30 de secunde. Durata exactă depinde de lungimea și complexitatea documentului. Documentele scanate pot dura puțin mai mult deoarece trebuie mai întâi procesate prin OCR (recunoașterea textului)."
+      },
+      "3": {
+        "question": "Ce formate de fișiere sunt acceptate?",
+        "answer": "HealthLingo acceptă fișiere PDF (atât cu text încorporat, cât și documente scanate), precum și fișiere imagine (JPG, PNG, JPEG). Dimensiunea maximă a fișierului este de 10 MB. Documentele cu mai multe pagini sunt procesate complet."
+      },
+      "4": {
+        "question": "În ce limbi se poate traduce?",
+        "answer": "Pe lângă simplificarea în germană ușor de înțeles, acceptăm traduceri în 19 limbi atent selectate, optim suportate de {{model}}: engleză, franceză, spaniolă, italiană, portugheză, olandeză, rusă, chineză, japoneză, coreeană, arabă, hindi, poloneză, cehă, suedeză, norvegiană și daneză. Traducerea urmează întotdeauna un proces în doi pași: mai întâi simplificarea, apoi traducerea precisă."
+      },
+      "5": {
+        "question": "Ce se întâmplă cu datele personale din document?",
+        "answer": "Datele personale precum numele, adresele, datele de naștere și numerele de asigurare sunt detectate automat și înlocuite cu substituenți (de ex. [NUME ELIMINAT]). Aceasta vă protejează confidențialitatea în timp ce toate informațiile medicale sunt păstrate complet. Anonimizarea are loc local înainte ca datele să fie trimise către punctele finale AI."
+      },
+      "6": {
+        "question": "Ce certificări de securitate au serviciile utilizate?",
+        "answer": "Railway.app este certificat SOC 2 Type I (Type II urmând în 2025) și oferă Acorduri de Procesare a Datelor conforme cu GDPR. OVH Cloud deține certificări cuprinzătoare: ISO/IEC 27001 (securitatea informațiilor), ISO/IEC 27017 (securitatea cloud), ISO/IEC 27018 (confidențialitatea în cloud) și ISO/IEC 27701 (managementul confidențialității). Ambii furnizori sunt supuși legii europene și garantează că datele dvs. nu părăsesc UE."
+      },
+      "7": {
+        "question": "Traducerea este precisă din punct de vedere medical?",
+        "answer": "HealthLingo folosește tehnologie AI avansată antrenată special pentru texte medicale. Traducerile sunt foarte precise, dar nu înlocuiesc sfatul medical profesional. Pentru decizii medicale importante, ar trebui să consultați întotdeauna medicul."
+      },
+      "8": {
+        "question": "Pot descărca traducerea?",
+        "answer": "Da, puteți descărca versiunea tradusă ca fișier PDF. PDF-ul conține traducerea completă într-un format lizibil cu data și marca temporală. De asemenea, puteți copia textul direct în clipboard."
+      },
+      "9": {
+        "question": "HealthLingo funcționează cu documente scanate?",
+        "answer": "Da! HealthLingo are recunoaștere avansată a textului (OCR) cu optimizare specială pentru documentele medicale germane. Chiar și notele scrise de mână, tabelele și documentele scanate slab sunt recunoscute și procesate în mod fiabil."
+      },
+      "10": {
+        "question": "Serviciul este cu adevărat gratuit?",
+        "answer": "Da, HealthLingo este complet gratuit de utilizat. Nu există costuri ascunse, nu este necesară înregistrarea și nu există limită pentru numărul de traduceri. Scopul nostru este de a face informațiile medicale accesibile tuturor."
+      }
+    }
+  },
+  "footer": {
+    "impressum": "Mențiuni legale",
+    "privacy": "Politica de confidențialitate",
+    "terms": "Termeni de utilizare",
+    "admin": "Admin",
+    "copyright": "HealthLingo. Toate drepturile rezervate.",
+    "madeWith": "Realizat cu",
+    "madeInLocation": "în Germania"
+  },
+  "cookieFree": {
+    "title": "Fără cookie-uri!",
+    "description": "HealthLingo nu folosește cookie-uri și nu stochează date de urmărire.",
+    "closeBanner": "Închide banner"
+  },
+  "termination": {
+    "title": "Procesare oprită",
+    "technicalDetails": "Detalii tehnice",
+    "step": "Pas:",
+    "reason": "Motiv:",
+    "uploadNew": "Încărcați document nou",
+    "hint": "Notă",
+    "hintText": "Acest instrument este special conceput pentru documente medicale, cum ar fi:",
+    "doctorLetters": "Scrisori medicale și externări",
+    "reports": "Rapoarte medicale și diagnostice",
+    "labResults": "Rezultate de laborator și analize"
+  },
+  "guidelinesSection": {
+    "title": "Recomandări ghiduri",
+    "subtitle": "Bazat pe ghidurile AWMF",
+    "notAvailable": "Recomandările ghidurilor nu sunt disponibile",
+    "notAvailableDefault": "Ghidurile AWMF nu au putut fi recuperate.",
+    "retry": "Încercați din nou",
+    "sources": "Surse utilizate",
+    "documentFallback": "Document {{index}}",
+    "disclaimer": "Aceste recomandări se bazează pe ghidurile oficiale germane de tratament (AWMF) și sunt doar în scop informativ. Nu înlocuiesc o consultație personală cu medicul dvs."
+  },
+  "guidelinesIndicator": {
+    "loading": "Se încarcă ghidurile...",
+    "loadingShort": "Se încarcă...",
+    "scrollTo": "Accesați recomandările ghidurilor",
+    "scrollToShort": "Ghiduri",
+    "notAvailable": "Ghiduri indisponibile"
+  },
+  "languageSwitcher": {
+    "changeLanguage": "Schimbați limba",
+    "selectLanguage": "Selectați limba"
+  },
+  "languageSelector": {
+    "label": "Traducere (opțional)",
+    "loading": "Se încarcă limbile...",
+    "loadError": "Limbile nu au putut fi încărcate",
+    "retry": "Încercați din nou",
+    "placeholder": "Selectați limba (opțional)",
+    "searchPlaceholder": "Căutați limba...",
+    "noTranslation": "Fără traducere",
+    "popularLanguages": "Limbi populare",
+    "allLanguages": "Toate limbile",
+    "noResults": "Nu s-au găsit limbi pentru \"{{term}}\"",
+    "hint": "Opțional: Selectați o limbă pentru a traduce suplimentar rezultatul simplificat."
+  },
+  "login": {
+    "title": "Autentificare administrator",
+    "description": "Conectați-vă pentru a accesa funcțiile de administrare",
+    "email": "Adresa de email",
+    "emailPlaceholder": "adresa@email.com",
+    "password": "Parola",
+    "passwordPlaceholder": "Parola dvs.",
+    "submit": "Conectare",
+    "submitting": "Se conectează...",
+    "loading": "Se încarcă...",
+    "sessionExpired": "Sesiunea dvs. a expirat. Vă rugăm să vă conectați din nou.",
+    "failed": "Autentificarea a eșuat",
+    "backToHome": "Înapoi la pagina principală",
+    "noAccess": "Nu aveți acces?",
+    "contactAdmin": "Contactați administratorul pentru a crea un cont."
+  },
+  "error": {
+    "processingFailed": "Procesarea a eșuat",
+    "processingStopped": "Procesarea a fost oprită",
+    "unknownError": "A apărut o eroare necunoscută",
+    "retry": "Încercați din nou"
+  },
+  "status": {
+    "extracting_text": "Extragerea textului",
+    "translating": "Traducere",
+    "language_translating": "Traducere lingvistică",
+    "completed": "Finalizat",
+    "error": "Eroare",
+    "pending": "În așteptare",
+    "processing": "Procesare"
+  },
+  "time": {
+    "seconds": "{{count}} sec.",
+    "minutesSeconds": "{{minutes}} min. {{seconds}} sec."
+  },
+  "wizard": {
+    "step1Title": "Încărcați documentul",
+    "step2Title": "Limba documentului",
+    "step3Title": "Opțiuni de traducere",
+    "step4Title": "Confirmați și începeți",
+    "step1Label": "Încărcare",
+    "step2Label": "Limbă",
+    "step3Label": "Traducere",
+    "step4Label": "Confirmare",
+    "next": "Înainte",
+    "back": "Înapoi",
+    "summary": "Rezumat",
+    "file": "Fișier",
+    "sourceLanguage": "Limba documentului",
+    "targetLanguage": "Limba țintă",
+    "step3Hint": "Doriți să traduceți documentul și într-o altă limbă?",
+    "progressLabel": "Progres",
+    "step": "Pas",
+    "completed": "finalizat"
+  },
+  "languages": {
+    "de": "Germană",
+    "en": "Engleză",
+    "fr": "Franceză",
+    "es": "Spaniolă",
+    "it": "Italiană",
+    "pt": "Portugheză",
+    "nl": "Olandeză",
+    "pl": "Poloneză",
+    "ru": "Rusă",
+    "zh": "Chineză",
+    "ja": "Japoneză",
+    "ko": "Coreeană",
+    "ar": "Arabă",
+    "hi": "Hindi",
+    "cs": "Cehă",
+    "sv": "Suedeză",
+    "no": "Norvegiană",
+    "da": "Daneză",
+    "tr": "Turcă",
+    "uk": "Ucraineană",
+    "fa": "Persană",
+    "ro": "Română"
+  },
+  "pipeline": {
+    "duplicateStep": "Duplicați pasul",
+    "duplicateStepTitle": "Duplicați pasul",
+    "duplicateStepHint": "Copia va fi creată cu toate setările din pasul original, dar dezactivată.",
+    "newStepName": "Numele noului pas",
+    "copyOf": "Copie a {{name}}",
+    "duplicate": "Duplicați",
+    "duplicateSuccess": "Pas duplicat cu succes",
+    "nameRequired": "Numele este obligatoriu",
+    "sourceLanguage": "Limba sursă",
+    "universalLanguage": "Universal (toate limbile)",
+    "germanOnly": "Doar germană (intrare germană)",
+    "englishOnly": "Doar engleză (intrare engleză)"
+  },
+  "accessibility": {
+    "skipToMain": "Salt la conținutul principal",
+    "opensInNewTab": "se deschide într-o filă nouă"
+  },
+  "common": {
+    "cancel": "Anulare",
+    "edit": "Editare",
+    "delete": "Ștergere"
+  }
+}

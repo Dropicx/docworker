@@ -1,0 +1,238 @@
+{
+  "datenschutz": {
+    "pageTitle": "Política de privacidad",
+    "section1": {
+      "title": "1. Privacidad en resumen",
+      "generalTitle": "Información general",
+      "generalText": "Las siguientes notas proporcionan una visión general simple de lo que sucede con tus datos personales cuando visitas este sitio web. Los datos personales son cualquier dato que pueda usarse para identificarte personalmente.",
+      "dataCollectionTitle": "Recopilación de datos en este sitio web",
+      "responsibleText": "El procesamiento de datos en este sitio web es realizado por el operador del sitio web. Sus datos de contacto se pueden encontrar en el aviso legal de este sitio web.",
+      "responsibleQuestion": "¿Quién es responsable de la recopilación de datos en este sitio web?",
+      "anonymousTitle": "Uso anónimo de nuestro servicio",
+      "anonymousText": "Nuestro servicio de traducción funciona de forma completamente anónima. No necesitas una cuenta de usuario y no necesitas registrarte para traducir documentos. No almacenamos datos personales de los usuarios finales. Tus documentos se procesan sin asociarse a una identidad personal.",
+      "howCollectQuestion": "¿Cómo recopilamos tus datos?",
+      "howCollectText": "Los únicos datos que recopilamos son los documentos que subes para traducción. Estos solo se almacenan temporalmente durante el procesamiento. No recopilamos otros datos personales tuyos.",
+      "purposeQuestion": "¿Para qué usamos tus datos?",
+      "purposeText": "Los documentos subidos se procesan exclusivamente para fines de traducción. Después de completar el procesamiento, todos los datos se eliminan automáticamente. No hay almacenamiento permanente, ni se comparte con terceros ni se usa para otros fines.",
+      "rightsQuestion": "¿Qué derechos tienes respecto a tus datos?",
+      "rightsText": "Dado que no almacenamos datos personales de los usuarios finales y el procesamiento es completamente anónimo, la mayoría de los derechos del RGPD (como acceso, rectificación, eliminación) no son aplicables. Tus documentos se eliminan automáticamente después del procesamiento, por lo que no hay datos que revelar."
+    },
+    "section2": {
+      "title": "2. Información general y divulgaciones obligatorias",
+      "privacyTitle": "Protección de datos",
+      "privacyText": "Los operadores de estas páginas toman muy en serio la protección de tus datos personales. Tratamos tus datos personales de forma confidencial y de acuerdo con las regulaciones legales de protección de datos y esta política de privacidad.",
+      "responsibleTitle": "Nota sobre la entidad responsable",
+      "responsibleText": "La entidad responsable del procesamiento de datos en este sitio web se indica en el aviso legal. La entidad responsable es la persona física o jurídica que, sola o conjuntamente con otros, determina los fines y medios del procesamiento de datos personales.",
+      "storageTitle": "Duración del almacenamiento",
+      "storageText": "Los documentos subidos y sus traducciones solo se almacenan temporalmente durante el procesamiento. El período de almacenamiento estándar es de 24 horas después de completar el procesamiento (configurable, puede reducirse a 0 horas). Después de este período, todos los datos se eliminan automática y completamente:",
+      "storageItems": [
+        "El documento original subido",
+        "Los textos extraídos (después de eliminar datos personales)",
+        "Los resultados de la traducción",
+        "Todos los metadatos de procesamiento",
+        "Direcciones IP (para registro de seguridad)"
+      ],
+      "storageNote": "Este corto período de almacenamiento te permite descargar tu traducción mientras maximiza la protección de datos. Después de la eliminación, los datos no pueden recuperarse. La eliminación automática se realiza mediante tareas de limpieza programadas que se ejecutan cada hora.",
+      "sslTitle": "Cifrado SSL/TLS",
+      "sslText": "Por razones de seguridad y para proteger la transmisión de contenido confidencial, como los documentos médicos que nos envías, este sitio utiliza cifrado SSL/TLS. Puedes reconocer una conexión cifrada por el cambio de la barra de direcciones del navegador de \"http://\" a \"https://\" y el icono del candado en la barra del navegador."
+    },
+    "section3": {
+      "title": "3. Recopilación de datos en este sitio web",
+      "cookiesTitle": "Cookies",
+      "cookiesText1": "No utilizamos cookies.",
+      "cookiesText2": "Nuestro servicio funciona completamente sin cookies. No utilizamos cookies de seguimiento, análisis o marketing. Esto también se comunica de forma transparente a través de nuestro banner sin cookies en el sitio web.",
+      "cookiesText3": "El único almacenamiento local que utilizamos es el localStorage del navegador para guardar tu preferencia sobre el banner de cookies (si has cerrado el banner). Esta información solo se almacena localmente en tu navegador y no se transmite a nuestro servidor.",
+      "cookiesText4": "Dado que no utilizamos cookies, no se requiere consentimiento de cookies. Nuestro servicio respeta tu privacidad desde el principio y renuncia completamente a las cookies de seguimiento y análisis.",
+      "serverLogsTitle": "Archivos de registro del servidor",
+      "serverLogsText": "El proveedor de estas páginas recopila y almacena automáticamente información en los llamados archivos de registro del servidor, que tu navegador nos transmite automáticamente. Estos son:",
+      "serverLogsItems": [
+        "Tipo y versión del navegador",
+        "Sistema operativo utilizado",
+        "URL de referencia",
+        "Nombre del host del ordenador que accede",
+        "Hora de la solicitud al servidor",
+        "Dirección IP"
+      ],
+      "serverLogsNote": "Estos datos no se fusionan con otras fuentes de datos.",
+      "medicalTitle": "Procesamiento de documentos médicos",
+      "medicalText": "Al utilizar nuestro servicio de traducción para documentos médicos, se aplican las siguientes medidas de protección de datos:",
+      "medicalItems": [
+        "Eliminación automática de datos personales: Antes del procesamiento por sistemas de IA, la información personal (nombres, direcciones, teléfonos, fechas de nacimiento, números de seguro) se elimina automáticamente de los documentos.",
+        "Almacenamiento temporal: Los documentos solo se almacenan temporalmente durante el procesamiento (máximo 24 horas)",
+        "Eliminación automática: Después de completar la traducción, todos los datos se eliminan automática y completamente",
+        "Sin almacenamiento permanente: No hay almacenamiento permanente de documentos o traducciones",
+        "Sin compartir: No se comparten datos con terceros (excepto con el proveedor de IA OVH para la traducción, donde solo se transmiten textos limpiados de datos personales)",
+        "Transmisión cifrada: Todos los datos se transmiten cifrados a través de HTTPS/TLS",
+        "Cifrado en reposo: Las cuentas de administrador (no para usuarios finales) utilizan almacenamiento cifrado para direcciones de correo electrónico y nombres.",
+        "Sin cookies: Nuestro servicio no utiliza cookies y no almacena datos de seguimiento."
+      ]
+    },
+    "section4": {
+      "title": "4. Tus derechos",
+      "intro": "Dado que nuestro servicio funciona de forma completamente anónima y no almacenamos datos personales de los usuarios finales, la mayoría de los derechos del RGPD no son directamente aplicables en este contexto. Tus documentos se eliminan automáticamente después del procesamiento, por lo que no hay datos que revelar.",
+      "accessTitle": "Derecho de acceso",
+      "accessText": "Dado que no almacenamos datos personales de los usuarios finales y el procesamiento es anónimo, no podemos proporcionar información sobre los datos almacenados ya que dichos datos no existen. Si tienes preguntas sobre la protección de datos, puedes contactarnos en cualquier momento (ver contacto en el aviso legal).",
+      "deletionTitle": "Derecho de supresión",
+      "deletionText": "Tus documentos subidos se eliminan automáticamente después de 24 horas (o antes). No se requiere eliminación manual ya que la eliminación ocurre automáticamente. Si deseas la eliminación inmediata, puedes contactarnos.",
+      "restrictionTitle": "Derecho a la limitación del tratamiento",
+      "restrictionText": "Puedes cancelar el procesamiento de tus documentos en cualquier momento terminando el procesamiento antes de que se complete la traducción. En este caso, los datos se eliminan inmediatamente.",
+      "portabilityTitle": "Derecho a la portabilidad de los datos",
+      "portabilityText": "Dado que no almacenamos datos personales de los usuarios finales, no hay datos que transferir. Puedes descargar los resultados de la traducción directamente después del procesamiento.",
+      "complaintTitle": "Derecho a presentar una reclamación ante una autoridad de control",
+      "complaintText": "En caso de infracciones del RGPD, tienes derecho a presentar una reclamación ante una autoridad de control, particularmente en el estado miembro de tu residencia habitual, tu lugar de trabajo o el lugar de la supuesta infracción."
+    },
+    "section5": {
+      "title": "5. Notas especiales sobre la protección de datos de salud",
+      "intro": "Dado que nuestro servicio permite el procesamiento de documentos médicos que pueden contener datos de salud, notamos específicamente:",
+      "items": [
+        "Los datos de salud pertenecen a las categorías especiales de datos personales según el art. 9 del RGPD",
+        "Procesamos estos datos exclusivamente para fines de traducción y solo con tu consentimiento explícito (al aceptar la política de privacidad al subir)",
+        "El procesamiento es completamente anónimo - no se almacenan datos personales de los usuarios finales",
+        "Antes del procesamiento de IA, toda la información personal (nombres, direcciones, teléfonos, etc.) se elimina automáticamente",
+        "Se toman medidas técnicas y organizativas especiales para proteger estos datos (cifrado, corta duración de almacenamiento, eliminación automática)",
+        "Todos los datos se eliminan automática y completamente después de un máximo de 24 horas"
+      ]
+    },
+    "section6": {
+      "title": "6. Contacto y consultas de protección de datos",
+      "text": "Para preguntas sobre protección de datos o para ejercer tus derechos, puedes contactarnos en cualquier momento. Los datos de contacto se encuentran en el",
+      "impressumLink": "Aviso legal",
+      "responsibleLabel": "Entidad responsable:",
+      "responsibleText": "La entidad responsable del procesamiento de datos se indica en el aviso legal de este sitio web."
+    },
+    "section7": {
+      "title": "7. Terceros y procesamiento de datos",
+      "intro": "Utilizamos los siguientes proveedores externos para proporcionar nuestro servicio:",
+      "items": [
+        "OVH Cloud (UE): Para traducción impulsada por IA. Solo los textos limpiados de datos personales se transmiten a OVH. El procesamiento de datos tiene lugar exclusivamente en la UE.",
+        "Railway (UE): Para el alojamiento de la aplicación y la base de datos. Railway tiene certificación SOC 2 Tipo I y ofrece acuerdos de procesamiento de datos conformes con el RGPD.",
+        "PostgreSQL: Como sistema de base de datos. La base de datos está alojada en la UE."
+      ],
+      "note": "Todo el procesamiento de datos tiene lugar exclusivamente dentro de la UE. No se realizan transferencias internacionales de datos."
+    },
+    "lastUpdated": "Última actualización:"
+  },
+  "impressum": {
+    "pageTitle": "Aviso legal",
+    "section1": {
+      "title": "Información según § 5 TMG",
+      "name": "[Tu nombre o nombre de la empresa]",
+      "address": "[Tu dirección]",
+      "city": "[Código postal y ciudad]",
+      "country": "Alemania"
+    },
+    "contact": {
+      "title": "Contacto",
+      "phone": "Teléfono: [Tu número de teléfono]",
+      "email": "Correo electrónico: [Tu dirección de correo electrónico]",
+      "website": "Sitio web: [URL de tu sitio web]"
+    },
+    "register": {
+      "title": "Inscripción registral",
+      "text": "Inscripción en el registro mercantil.",
+      "court": "Juzgado de registro: [Tu juzgado de registro]",
+      "number": "Número de registro: [Tu número de registro]"
+    },
+    "tax": {
+      "title": "NIF-IVA",
+      "text": "Número de identificación del IVA según § 27 a de la Ley del IVA:",
+      "number": "[Tu NIF-IVA]"
+    },
+    "profession": {
+      "title": "Designación profesional y regulaciones profesionales",
+      "designation": "Designación profesional: [Tu designación profesional]",
+      "chamber": "Cámara responsable: [Tu cámara responsable]",
+      "grantedIn": "Otorgado en: Alemania",
+      "regulations": "Se aplican las siguientes regulaciones profesionales: [Regulaciones pertinentes]"
+    },
+    "responsible": {
+      "title": "Responsable del contenido según § 55 párr. 2 RStV",
+      "name": "[Nombre del responsable]",
+      "address": "[Dirección]",
+      "city": "[Código postal y ciudad]"
+    },
+    "disclaimer": {
+      "title": "Descargo de responsabilidad",
+      "contentTitle": "Responsabilidad por el contenido",
+      "contentText": "Los contenidos de nuestras páginas han sido creados con el mayor cuidado. Sin embargo, no podemos garantizar la exactitud, integridad o actualidad del contenido. Como proveedor de servicios, somos responsables de nuestro propio contenido en estas páginas de acuerdo con las leyes generales según § 7 párr. 1 TMG.",
+      "linksTitle": "Responsabilidad por los enlaces",
+      "linksText": "Nuestra oferta contiene enlaces a sitios web externos de terceros sobre cuyo contenido no tenemos influencia. Por lo tanto, no podemos aceptar ninguna responsabilidad por este contenido de terceros. El proveedor u operador respectivo de las páginas enlazadas es siempre responsable del contenido de las páginas enlazadas.",
+      "copyrightTitle": "Derechos de autor",
+      "copyrightText": "El contenido y las obras creados por los operadores del sitio en estas páginas están sujetos a la ley alemana de derechos de autor. La reproducción, edición, distribución y cualquier tipo de explotación fuera de los límites de la ley de derechos de autor requieren el consentimiento escrito del autor o creador respectivo."
+    },
+    "lastUpdated": "Última actualización:"
+  },
+  "nutzungsbedingungen": {
+    "pageTitle": "Términos de uso",
+    "section1": {
+      "title": "§ 1 Ámbito de aplicación",
+      "p1": "(1) Estos términos de uso se aplican al uso del servicio de traducción de documentos médicos (en adelante denominado \"Servicio\") en este sitio web.",
+      "p2": "(2) Al utilizar el Servicio, aceptas estos términos de uso. Si no estás de acuerdo con estos términos, por favor no utilices nuestro Servicio."
+    },
+    "section2": {
+      "title": "§ 2 Descripción del servicio",
+      "p1": "(1) Nuestro Servicio proporciona traducción automatizada de documentos médicos a un lenguaje simplificado y fácil de entender, así como a otros idiomas.",
+      "p2": "(2) Las traducciones son creadas por inteligencia artificial y están destinadas únicamente para información y mejor comprensión del contenido médico.",
+      "p3": "(3) Las traducciones no reemplazan el consejo médico profesional, el diagnóstico o el tratamiento."
+    },
+    "section3": {
+      "title": "§ 3 Condiciones de uso",
+      "p1": "(1) El Servicio solo puede utilizarse para fines personales y no comerciales.",
+      "p2": "(2) Aceptas utilizar el Servicio solo para fines legales y no subir contenido que:",
+      "items": [
+        "Viole los derechos de terceros",
+        "Viole la ley aplicable",
+        "Contenga malware o código malicioso",
+        "Pueda afectar la funcionalidad del Servicio"
+      ],
+      "p3": "(3) La consulta o extracción sistemática de datos está prohibida."
+    },
+    "section4": {
+      "title": "§ 4 Descargo de responsabilidad médico",
+      "warning": "AVISO IMPORTANTE: ¡Las traducciones proporcionadas NO deben entenderse como consejo médico!",
+      "p1": "(1) Las traducciones son creadas automáticamente por inteligencia artificial y pueden contener errores, inexactitudes o malentendidos.",
+      "p2": "(2) Las traducciones nunca deben usarse como base para decisiones médicas.",
+      "p3": "(3) Para preguntas o problemas médicos, consulta siempre a un médico calificado o profesional de la salud.",
+      "p4": "(4) En caso de emergencia, contacta inmediatamente a los servicios de emergencia (112) o ve a la sala de emergencias más cercana.",
+      "p5": "(5) Nunca confíes únicamente en las traducciones de este Servicio para decisiones relacionadas con la salud."
+    },
+    "section5": {
+      "title": "§ 5 Limitación de responsabilidad",
+      "p1": "(1) No asumimos ninguna responsabilidad por la exactitud, integridad o actualidad de las traducciones.",
+      "p2": "(2) Cualquier responsabilidad por daños que surjan directa o indirectamente del uso del Servicio queda excluida en la medida permitida por la ley.",
+      "p3": "(3) Esto no se aplica a los daños derivados de lesiones a la vida, el cuerpo o la salud, o a otros daños basados en incumplimiento intencional o gravemente negligente del deber."
+    },
+    "section6": {
+      "title": "§ 6 Protección de datos",
+      "p1": "(1) El procesamiento de datos personales se realiza de acuerdo con nuestra Política de privacidad.",
+      "p2": "(2) Los documentos subidos solo se almacenan temporalmente durante el procesamiento y luego se eliminan automáticamente.",
+      "p3": "(3) No hay almacenamiento permanente ni se comparten tus documentos con terceros."
+    },
+    "section7": {
+      "title": "§ 7 Propiedad intelectual",
+      "p1": "(1) Todos los derechos sobre el sitio web y el Servicio, incluidos los derechos de autor, derechos de marca y otros derechos de propiedad intelectual, nos pertenecen.",
+      "p2": "(2) El uso del Servicio no te otorga ningún derecho sobre nuestra propiedad intelectual, excepto los derechos expresamente otorgados en estos términos de uso."
+    },
+    "section8": {
+      "title": "§ 8 Disponibilidad",
+      "p1": "(1) Nos esforzamos por una alta disponibilidad del Servicio pero no podemos garantizarla.",
+      "p2": "(2) Nos reservamos el derecho de modificar, interrumpir o descontinuar el Servicio en cualquier momento.",
+      "p3": "(3) Los trabajos de mantenimiento se anunciarán con antelación cuando sea posible."
+    },
+    "section9": {
+      "title": "§ 9 Cambios en los términos de uso",
+      "p1": "(1) Nos reservamos el derecho de cambiar estos términos de uso en cualquier momento.",
+      "p2": "(2) Los cambios se publicarán en esta página. El uso continuado del Servicio después de la publicación de los cambios constituye la aceptación de los términos modificados."
+    },
+    "section10": {
+      "title": "§ 10 Ley aplicable y jurisdicción",
+      "p1": "(1) Se aplica la ley de la República Federal de Alemania, excluyendo la Convención de las Naciones Unidas sobre Contratos de Compraventa Internacional de Mercaderías.",
+      "p2": "(2) El lugar de jurisdicción para todas las disputas que surjan de o en conexión con estos términos de uso es, en la medida permitida por la ley, [Tu jurisdicción]."
+    },
+    "section11": {
+      "title": "§ 11 Cláusula de salvaguardia",
+      "text": "Si disposiciones individuales de estos términos de uso son o se vuelven inválidas o inaplicables, la validez de las disposiciones restantes no se verá afectada."
+    },
+    "lastUpdated": "Última actualización:"
+  }
+}

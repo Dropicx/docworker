@@ -1,0 +1,238 @@
+{
+  "datenschutz": {
+    "pageTitle": "Politica de confidențialitate",
+    "section1": {
+      "title": "1. Confidențialitatea pe scurt",
+      "generalTitle": "Informații generale",
+      "generalText": "Următoarele note oferă o prezentare simplă a ceea ce se întâmplă cu datele dvs. personale când vizitați acest site web. Datele personale sunt orice date care pot fi utilizate pentru a vă identifica personal.",
+      "dataCollectionTitle": "Colectarea datelor pe acest site",
+      "responsibleText": "Procesarea datelor pe acest site web este efectuată de operatorul site-ului. Datele de contact pot fi găsite în mențiunile legale ale acestui site.",
+      "responsibleQuestion": "Cine este responsabil pentru colectarea datelor pe acest site?",
+      "anonymousTitle": "Utilizarea anonimă a serviciului nostru",
+      "anonymousText": "Serviciul nostru de traducere funcționează complet anonim. Nu aveți nevoie de un cont de utilizator și nu trebuie să vă înregistrați pentru a traduce documente. Nu stocăm date personale de la utilizatorii finali. Documentele dvs. sunt procesate fără a fi asociate cu o identitate personală.",
+      "howCollectQuestion": "Cum colectăm datele dvs.?",
+      "howCollectText": "Singurele date pe care le colectăm sunt documentele pe care le încărcați pentru traducere. Acestea sunt stocate doar temporar pe durata procesării. Nu colectăm alte date personale de la dvs.",
+      "purposeQuestion": "Pentru ce folosim datele dvs.?",
+      "purposeText": "Documentele încărcate sunt procesate exclusiv în scopuri de traducere. După finalizarea procesării, toate datele sunt șterse automat. Nu există stocare permanentă, partajare cu terți sau utilizare în alte scopuri.",
+      "rightsQuestion": "Ce drepturi aveți privind datele dvs.?",
+      "rightsText": "Deoarece nu stocăm date personale de la utilizatorii finali și procesarea este complet anonimă, majoritatea drepturilor GDPR (cum ar fi accesul, rectificarea, ștergerea) nu sunt aplicabile. Documentele dvs. sunt șterse automat după procesare, deci nu există date care ar putea fi divulgate."
+    },
+    "section2": {
+      "title": "2. Informații generale și divulgări obligatorii",
+      "privacyTitle": "Protecția datelor",
+      "privacyText": "Operatorii acestor pagini iau foarte în serios protecția datelor dvs. personale. Tratăm datele dvs. personale confidențial și în conformitate cu reglementările legale privind protecția datelor și cu această politică de confidențialitate.",
+      "responsibleTitle": "Notă privind entitatea responsabilă",
+      "responsibleText": "Entitatea responsabilă pentru procesarea datelor pe acest site web este menționată în mențiunile legale. Entitatea responsabilă este persoana fizică sau juridică care, singură sau împreună cu alții, determină scopurile și mijloacele de procesare a datelor personale.",
+      "storageTitle": "Durata stocării",
+      "storageText": "Documentele încărcate și traducerile lor sunt stocate doar temporar pe durata procesării. Perioada standard de stocare este de 24 de ore după finalizarea procesării (configurabil, poate fi redusă la 0 ore). După această perioadă, toate datele sunt șterse automat și complet:",
+      "storageItems": [
+        "Documentul original încărcat",
+        "Textele extrase (după eliminarea PII)",
+        "Rezultatele traducerii",
+        "Toate metadatele de procesare",
+        "Adresele IP (pentru jurnalizarea securității)"
+      ],
+      "storageNote": "Această perioadă scurtă de stocare vă permite să descărcați traducerea în timp ce maximizează protecția datelor. După ștergere, datele nu pot fi recuperate. Ștergerea automată este efectuată de sarcinile de curățare programate care rulează la fiecare oră.",
+      "sslTitle": "Criptare SSL/TLS",
+      "sslText": "Din motive de securitate și pentru a proteja transmiterea conținutului confidențial, cum ar fi documentele medicale pe care ni le trimiteți, acest site utilizează criptare SSL/TLS. Puteți recunoaște o conexiune criptată după bara de adrese a browserului care se schimbă de la \"http://\" la \"https://\" și pictograma lacătului din bara browserului."
+    },
+    "section3": {
+      "title": "3. Colectarea datelor pe acest site",
+      "cookiesTitle": "Cookie-uri",
+      "cookiesText1": "Nu folosim cookie-uri.",
+      "cookiesText2": "Serviciul nostru funcționează complet fără cookie-uri. Nu folosim cookie-uri de urmărire, cookie-uri de analiză sau cookie-uri de marketing. Acest lucru este comunicat transparent și prin bannerul nostru fără cookie-uri de pe site.",
+      "cookiesText3": "Singura stocare locală pe care o folosim este localStorage-ul browserului pentru a salva preferința dvs. pentru bannerul de notificare cookie (dacă ați închis bannerul). Această informație este stocată doar local în browserul dvs. și nu este transmisă serverului nostru.",
+      "cookiesText4": "Deoarece nu folosim cookie-uri, nu este necesar consimțământul pentru cookie-uri. Serviciul nostru vă respectă confidențialitatea de la început și renunță complet la cookie-urile de urmărire și analiză.",
+      "serverLogsTitle": "Fișiere jurnal server",
+      "serverLogsText": "Furnizorul acestor pagini colectează și stochează automat informații în așa-numitele fișiere jurnal server, pe care browserul dvs. le transmite automat către noi. Acestea sunt:",
+      "serverLogsItems": [
+        "Tipul și versiunea browserului",
+        "Sistemul de operare utilizat",
+        "URL-ul de referință",
+        "Numele gazdei computerului care accesează",
+        "Ora solicitării serverului",
+        "Adresa IP"
+      ],
+      "serverLogsNote": "Aceste date nu sunt combinate cu alte surse de date.",
+      "medicalTitle": "Procesarea documentelor medicale",
+      "medicalText": "Când folosiți serviciul nostru de traducere pentru documente medicale, se aplică următoarele măsuri de protecție a datelor:",
+      "medicalItems": [
+        "Eliminarea automată a PII: Înainte de procesarea de către sistemele AI, informațiile personale (nume, adrese, numere de telefon, date de naștere, numere de asigurare) sunt eliminate automat din documente. Aceasta se face local pe serverele noastre folosind spaCy NER (Named Entity Recognition) și modele speciale pentru documentele medicale germane.",
+        "Stocare temporară: Documentele sunt stocate doar temporar pe durata procesării (maximum 24 de ore)",
+        "Ștergere automată: După finalizarea traducerii, toate datele sunt șterse automat și complet",
+        "Fără stocare permanentă: Nu există stocare permanentă a documentelor sau traducerilor",
+        "Fără partajare: Nu se partajează date cu terți (cu excepția furnizorului AI OVH pentru traducere, unde sunt transmise doar texte curățate de PII)",
+        "Transmisie criptată: Toate datele sunt transmise criptat prin HTTPS/TLS",
+        "Criptare în repaus: Conturile de administrator (nu pentru utilizatorii finali) folosesc stocare criptată pentru adresele de email și numele. Criptarea conținutului documentelor este planificată (a se vedea foaia de parcurs tehnică).",
+        "Fără cookie-uri: Serviciul nostru nu folosește cookie-uri și nu stochează date de urmărire. Acest lucru este comunicat transparent prin bannerul fără cookie-uri de pe site."
+      ]
+    },
+    "section4": {
+      "title": "4. Drepturile dvs.",
+      "intro": "Deoarece serviciul nostru funcționează complet anonim și nu stocăm date personale de la utilizatorii finali, majoritatea drepturilor GDPR nu sunt direct aplicabile în acest context. Documentele dvs. sunt șterse automat după procesare, deci nu există date care ar putea fi divulgate.",
+      "accessTitle": "Dreptul de acces",
+      "accessText": "Deoarece nu stocăm date personale de la utilizatorii finali și procesarea este anonimă, nu putem furniza informații despre datele stocate deoarece astfel de date nu există. Dacă aveți întrebări despre protecția datelor, ne puteți contacta oricând (a se vedea contactul în mențiunile legale).",
+      "deletionTitle": "Dreptul la ștergere",
+      "deletionText": "Documentele dvs. încărcate sunt șterse automat după 24 de ore (sau mai devreme). Nu este necesară ștergerea manuală deoarece ștergerea are loc automat. Dacă doriți ștergerea imediată, ne puteți contacta.",
+      "restrictionTitle": "Dreptul la restricționarea procesării",
+      "restrictionText": "Puteți anula procesarea documentelor dvs. oricând, încheiind procesarea înainte ca traducerea să fie completă. În acest caz, datele sunt șterse imediat.",
+      "portabilityTitle": "Dreptul la portabilitatea datelor",
+      "portabilityText": "Deoarece nu stocăm date personale de la utilizatorii finali, nu există date care ar putea fi transferate. Puteți descărca rezultatele traducerii direct după procesare.",
+      "complaintTitle": "Dreptul de a depune o plângere la o autoritate de supraveghere",
+      "complaintText": "În cazul încălcărilor GDPR, aveți dreptul de a depune o plângere la o autoritate de supraveghere, în special în statul membru al reședinței dvs. obișnuite, locul de muncă sau locul presupusei încălcări."
+    },
+    "section5": {
+      "title": "5. Note speciale privind protecția datelor de sănătate",
+      "intro": "Deoarece serviciul nostru permite procesarea documentelor medicale care pot conține date de sănătate, observăm în mod specific că:",
+      "items": [
+        "Datele de sănătate aparțin categoriilor speciale de date personale conform Art. 9 GDPR",
+        "Procesăm aceste date exclusiv în scopuri de traducere și numai cu consimțământul dvs. explicit (prin acceptarea politicii de confidențialitate la încărcare)",
+        "Procesarea este complet anonimă - nu sunt stocate date personale de la utilizatorii finali",
+        "Înainte de procesarea AI, toate informațiile personale (nume, adrese, numere de telefon etc.) sunt eliminate automat",
+        "Sunt luate măsuri tehnice și organizaționale speciale pentru protejarea acestor date (criptare, durată scurtă de stocare, ștergere automată)",
+        "Toate datele sunt șterse automat și complet după maximum 24 de ore"
+      ]
+    },
+    "section6": {
+      "title": "6. Contact și întrebări privind protecția datelor",
+      "text": "Pentru întrebări despre protecția datelor sau pentru a vă exercita drepturile, ne puteți contacta oricând. Datele de contact pot fi găsite în",
+      "impressumLink": "Mențiunile legale",
+      "responsibleLabel": "Entitate responsabilă:",
+      "responsibleText": "Entitatea responsabilă pentru procesarea datelor este menționată în mențiunile legale ale acestui site."
+    },
+    "section7": {
+      "title": "7. Terți și procesarea datelor",
+      "intro": "Folosim următorii furnizori terți pentru a livra serviciul nostru:",
+      "items": [
+        "OVH Cloud (UE): Pentru traducere alimentată de AI. Doar textele curățate de PII sunt transmise către OVH. Procesarea datelor are loc exclusiv în UE.",
+        "Railway (UE): Pentru găzduirea aplicației și a bazei de date. Railway este certificat SOC 2 Type I și oferă Acorduri de Procesare a Datelor conforme cu GDPR.",
+        "PostgreSQL: Ca sistem de baze de date. Baza de date este găzduită în UE."
+      ],
+      "note": "Toată procesarea datelor are loc exclusiv în UE. Nu au loc transferuri internaționale de date."
+    },
+    "lastUpdated": "Ultima actualizare:"
+  },
+  "impressum": {
+    "pageTitle": "Mențiuni legale",
+    "section1": {
+      "title": "Informații conform § 5 TMG",
+      "name": "[Numele sau denumirea companiei dvs.]",
+      "address": "[Adresa dvs.]",
+      "city": "[Codul poștal și orașul]",
+      "country": "Germania"
+    },
+    "contact": {
+      "title": "Contact",
+      "phone": "Telefon: [Numărul dvs. de telefon]",
+      "email": "Email: [Adresa dvs. de email]",
+      "website": "Site web: [URL-ul site-ului dvs.]"
+    },
+    "register": {
+      "title": "Înregistrare",
+      "text": "Înregistrare în registrul comerțului.",
+      "court": "Instanța de înregistrare: [Instanța dvs. de înregistrare]",
+      "number": "Număr de înregistrare: [Numărul dvs. de înregistrare]"
+    },
+    "tax": {
+      "title": "ID TVA",
+      "text": "Număr de identificare TVA conform § 27 a din Legea TVA:",
+      "number": "[ID-ul dvs. TVA]"
+    },
+    "profession": {
+      "title": "Denumirea profesiei și reglementări profesionale",
+      "designation": "Denumirea profesiei: [Denumirea profesiei dvs.]",
+      "chamber": "Camera responsabilă: [Camera dvs. responsabilă]",
+      "grantedIn": "Acordat în: Germania",
+      "regulations": "Se aplică următoarele reglementări profesionale: [Reglementări relevante]"
+    },
+    "responsible": {
+      "title": "Responsabil pentru conținut conform § 55 Para. 2 RStV",
+      "name": "[Numele persoanei responsabile]",
+      "address": "[Adresa]",
+      "city": "[Codul poștal și orașul]"
+    },
+    "disclaimer": {
+      "title": "Exonerare de răspundere",
+      "contentTitle": "Răspunderea pentru conținut",
+      "contentText": "Conținuturile paginilor noastre au fost create cu cea mai mare grijă. Cu toate acestea, nu putem garanta acuratețea, completitudinea sau actualitatea conținutului. Ca furnizor de servicii, suntem responsabili pentru propriul nostru conținut de pe aceste pagini în conformitate cu legile generale conform § 7 Para. 1 TMG.",
+      "linksTitle": "Răspunderea pentru linkuri",
+      "linksText": "Oferta noastră conține linkuri către site-uri web externe ale terților asupra cărora nu avem nicio influență. Prin urmare, nu putem accepta nicio răspundere pentru acest conținut al terților. Furnizorul sau operatorul respectiv al paginilor linkuite este întotdeauna responsabil pentru conținutul paginilor linkuite.",
+      "copyrightTitle": "Drepturi de autor",
+      "copyrightText": "Conținutul și lucrările create de operatorii site-ului pe aceste pagini sunt supuse legii germane a drepturilor de autor. Reproducerea, editarea, distribuirea și orice fel de exploatare dincolo de limitele legii drepturilor de autor necesită consimțământul scris al autorului sau creatorului respectiv."
+    },
+    "lastUpdated": "Ultima actualizare:"
+  },
+  "nutzungsbedingungen": {
+    "pageTitle": "Termeni de utilizare",
+    "section1": {
+      "title": "§ 1 Domeniu de aplicare",
+      "p1": "(1) Acești termeni de utilizare se aplică utilizării serviciului de traducere a documentelor medicale (denumit în continuare \"Serviciul\") pe acest site web.",
+      "p2": "(2) Prin utilizarea Serviciului, sunteți de acord cu acești termeni de utilizare. Dacă nu sunteți de acord cu acești termeni, vă rugăm să nu folosiți Serviciul nostru."
+    },
+    "section2": {
+      "title": "§ 2 Descrierea serviciului",
+      "p1": "(1) Serviciul nostru oferă traducerea automată a documentelor medicale în limbaj simplificat, ușor de înțeles, precum și în alte limbi.",
+      "p2": "(2) Traducerile sunt create de inteligență artificială și sunt destinate exclusiv informării și unei mai bune înțelegeri a conținutului medical.",
+      "p3": "(3) Traducerile nu înlocuiesc sfatul medical profesional, diagnosticul sau tratamentul."
+    },
+    "section3": {
+      "title": "§ 3 Termeni de utilizare",
+      "p1": "(1) Serviciul poate fi utilizat doar în scopuri personale, necomerciale.",
+      "p2": "(2) Sunteți de acord să utilizați Serviciul doar în scopuri legale și să nu încărcați conținut care:",
+      "items": [
+        "Încalcă drepturile terților",
+        "Încalcă legea aplicabilă",
+        "Conține malware sau cod rău intenționat",
+        "Ar putea afecta funcționalitatea Serviciului"
+      ],
+      "p3": "(3) Interogarea sau extragerea sistematică a datelor este interzisă."
+    },
+    "section4": {
+      "title": "§ 4 Exonerare medicală",
+      "warning": "NOTIFICARE IMPORTANTĂ: Traducerile furnizate NU trebuie înțelese ca sfat medical!",
+      "p1": "(1) Traducerile sunt create automat de inteligență artificială și pot conține erori, inexactități sau neînțelegeri.",
+      "p2": "(2) Traducerile nu trebuie folosite niciodată ca bază pentru decizii medicale.",
+      "p3": "(3) Pentru întrebări sau probleme medicale, consultați întotdeauna un medic calificat sau un furnizor de servicii medicale.",
+      "p4": "(4) În caz de urgență, contactați imediat serviciile de urgență (112) sau mergeți la cea mai apropiată cameră de urgență.",
+      "p5": "(5) Nu vă bazați niciodată exclusiv pe traducerile acestui Serviciu pentru decizii legate de sănătate."
+    },
+    "section5": {
+      "title": "§ 5 Limitarea răspunderii",
+      "p1": "(1) Nu ne asumăm nicio răspundere pentru acuratețea, completitudinea sau actualitatea traducerilor.",
+      "p2": "(2) Orice răspundere pentru daune care decurg direct sau indirect din utilizarea Serviciului este exclusă în măsura permisă de lege.",
+      "p3": "(3) Aceasta nu se aplică daunelor rezultate din vătămarea vieții, corpului sau sănătății, sau altor daune bazate pe încălcarea intenționată sau grav neglijentă a obligațiilor."
+    },
+    "section6": {
+      "title": "§ 6 Protecția datelor",
+      "p1": "(1) Procesarea datelor personale se efectuează în conformitate cu Politica noastră de confidențialitate.",
+      "p2": "(2) Documentele încărcate sunt stocate doar temporar pe durata procesării și sunt apoi șterse automat.",
+      "p3": "(3) Nu există stocare permanentă sau partajare a documentelor dvs. cu terți."
+    },
+    "section7": {
+      "title": "§ 7 Proprietate intelectuală",
+      "p1": "(1) Toate drepturile asupra site-ului web și Serviciului, inclusiv drepturile de autor, drepturile de marcă și alte drepturi de proprietate intelectuală, rămân la noi.",
+      "p2": "(2) Utilizarea Serviciului nu vă acordă niciun drept asupra proprietății noastre intelectuale, cu excepția drepturilor acordate expres în acești termeni de utilizare."
+    },
+    "section8": {
+      "title": "§ 8 Disponibilitate",
+      "p1": "(1) Ne străduim pentru o disponibilitate ridicată a Serviciului, dar nu o putem garanta.",
+      "p2": "(2) Ne rezervăm dreptul de a modifica, întrerupe sau întrerupe Serviciul în orice moment.",
+      "p3": "(3) Lucrările de întreținere vor fi anunțate în avans acolo unde este posibil."
+    },
+    "section9": {
+      "title": "§ 9 Modificări ale termenilor de utilizare",
+      "p1": "(1) Ne rezervăm dreptul de a modifica acești termeni de utilizare în orice moment.",
+      "p2": "(2) Modificările vor fi publicate pe această pagină. Utilizarea continuă a Serviciului după publicarea modificărilor constituie acceptarea termenilor modificați."
+    },
+    "section10": {
+      "title": "§ 10 Legea aplicabilă și jurisdicția",
+      "p1": "(1) Se aplică legea Republicii Federale Germania, excluzând Convenția ONU privind contractele de vânzare internațională de mărfuri.",
+      "p2": "(2) Locul de jurisdicție pentru toate disputele care decurg din sau în legătură cu acești termeni de utilizare este, în măsura permisă de lege, [Jurisdicția dvs.]."
+    },
+    "section11": {
+      "title": "§ 11 Clauza de separabilitate",
+      "text": "În cazul în care prevederi individuale ale acestor termeni de utilizare sunt sau devin invalide sau inaplicabile, valabilitatea prevederilor rămase rămâne neafectată."
+    },
+    "lastUpdated": "Ultima actualizare:"
+  }
+}
