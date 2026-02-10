@@ -73,15 +73,15 @@ const Datenschutz: React.FC = () => {
               </p>
 
               <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
-                {t('datenschutz.section2.responsiblePartyTitle')}
+                {t('datenschutz.section2.responsibleTitle')}
               </h3>
               <p className="mb-4">
-                {t('datenschutz.section2.responsiblePartyText')}
+                {t('datenschutz.section2.responsibleText')}
               </p>
 
-              <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">{t('datenschutz.section2.storageDurationTitle')}</h3>
+              <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">{t('datenschutz.section2.storageTitle')}</h3>
               <p className="mb-4">
-                {t('datenschutz.section2.storageDurationText')}
+                {t('datenschutz.section2.storageText')}
               </p>
               <ul className="list-disc list-inside mb-4 ml-4">
                 {(t('datenschutz.section2.storageItems', { returnObjects: true }) as string[]).map((item, i) => (
@@ -89,7 +89,7 @@ const Datenschutz: React.FC = () => {
                 ))}
               </ul>
               <p className="mb-4">
-                {t('datenschutz.section2.storageDurationNote')}
+                {t('datenschutz.section2.storageNote')}
               </p>
 
               <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
@@ -187,6 +187,20 @@ const Datenschutz: React.FC = () => {
 
             <section>
               <h2 className="text-xl font-semibold text-primary-900 mb-3">
+                {t('datenschutz.section5.title')}
+              </h2>
+              <p className="mb-4">
+                {t('datenschutz.section5.intro')}
+              </p>
+              <ul className="list-disc list-inside mb-4 ml-4">
+                {(t('datenschutz.section5.items', { returnObjects: true }) as string[]).map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold text-primary-900 mb-3">
                 {t('datenschutz.section6.title')}
               </h2>
               <p className="mb-4">
@@ -211,7 +225,7 @@ const Datenschutz: React.FC = () => {
                 {t('datenschutz.section7.title')}
               </h2>
               <p className="mb-4">
-                {t('datenschutz.section7.text')}
+                {t('datenschutz.section7.intro')}
               </p>
               <ul className="list-disc list-inside mb-4 ml-4">
                 {(t('datenschutz.section7.items', { returnObjects: true }) as string[]).map((item, i) => (
@@ -223,18 +237,26 @@ const Datenschutz: React.FC = () => {
               </p>
             </section>
 
-            <section>
-              <h2 className="text-xl font-semibold text-primary-900 mb-3">
-                {t('datenschutz.section5.title')}
+            <section className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg">
+              <h2 className="text-xl font-semibold text-amber-900 mb-3">
+                {t('datenschutz.section7a.title')}
               </h2>
-              <p className="mb-4">
-                {t('datenschutz.section5.text')}
+              <p className="mb-4 text-primary-700">
+                {t('datenschutz.section7a.intro')}
               </p>
-              <ul className="list-disc list-inside mb-4 ml-4">
-                {(t('datenschutz.section5.items', { returnObjects: true }) as string[]).map((item, i) => (
+              <div className="bg-amber-100 border border-amber-300 rounded p-3 mb-4">
+                <p className="font-bold text-amber-900">
+                  ⚠️ {t('datenschutz.section7a.warning')}
+                </p>
+              </div>
+              <ul className="list-disc list-inside mb-4 ml-4 text-primary-700">
+                {(t('datenschutz.section7a.items', { returnObjects: true }) as string[]).map((item, i) => (
                   <li key={i}>{item}</li>
                 ))}
               </ul>
+              <p className="text-sm text-amber-800 italic">
+                {t('datenschutz.section7a.consent')}
+              </p>
             </section>
 
             <section className="pt-4 border-t border-primary-200">
