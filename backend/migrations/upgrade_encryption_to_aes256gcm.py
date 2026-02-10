@@ -69,6 +69,14 @@ def is_fernet_encrypted(value: str | bytes | None) -> bool:
             value = value.decode("utf-8")
         except UnicodeDecodeError:
             return False
+    # Debug: check what the encryptor sees
+    try:
+        import base64
+        decoded = base64.urlsafe_b64decode(value)
+        first_byte = decoded[0] if decoded else None
+        print(f"    [DEBUG] is_fernet check: first_byte=0x{first_byte:02X if first_byte is not None else 'None'}, expected=0x80")
+    except Exception as e:
+        print(f"    [DEBUG] is_fernet check: base64 decode failed: {e}")
     return encryptor.is_legacy_fernet(value)
 
 
@@ -138,21 +146,32 @@ def migrate_binary_field(value: str | bytes | None, dry_run: bool = False) -> tu
         Tuple of (new_value, status)
     """
     if value is None:
+        print("    [DEBUG] Binary field is None")
         return None, "skipped_null"
 
     # Convert bytes to string for processing (bytea columns return bytes)
     original_value = value
+    print(f"    [DEBUG] Binary field type: {type(value).__name__}, length: {len(value)}")
     if isinstance(value, bytes):
+        print(f"    [DEBUG] First 20 bytes hex: {value[:20].hex()}")
+        print(f"    [DEBUG] First 20 bytes repr: {value[:20]!r}")
         try:
             value = value.decode("utf-8")
-        except UnicodeDecodeError:
-            print(f"    Warning: Could not decode bytea field as UTF-8")
+            print(f"    [DEBUG] Decoded to string, first 30 chars: {value[:30]}")
+        except UnicodeDecodeError as e:
+            print(f"    Warning: Could not decode bytea field as UTF-8: {e}")
             return original_value, "skipped_plaintext"
 
-    if is_aes256gcm_encrypted(value):
+    is_aes = is_aes256gcm_encrypted(value)
+    is_fernet = is_fernet_encrypted(value)
+    print(f"    [DEBUG] is_aes256gcm: {is_aes}, is_fernet: {is_fernet}")
+
+    if is_aes:
+        print("    [DEBUG] Skipping - already AES-256-GCM")
         return original_value, "skipped_already_migrated"
 
-    if not is_fernet_encrypted(value):
+    if not is_fernet:
+        print(f"    [DEBUG] Skipping - not detected as Fernet. Value starts with: {value[:30]}")
         return original_value, "skipped_plaintext"
 
     if dry_run:
