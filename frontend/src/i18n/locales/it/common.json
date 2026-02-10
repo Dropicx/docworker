@@ -66,7 +66,7 @@
     "privacyPolicy": "Informativa sulla privacy",
     "privacyConsentAnd": "e i",
     "termsOfUse": "Termini di utilizzo",
-    "privacyConsentSuffix": "e acconsento espressamente al trattamento dei miei documenti medici ai sensi dell'Art. 9(2)(a) del GDPR. I miei dati saranno automaticamente eliminati dopo la traduzione.",
+    "privacyConsentSuffix": "e acconsento espressamente al trattamento dei miei documenti medici ai sensi dell'Art. 6(1)(b) del GDPR (esecuzione del contratto) e dell'Art. 9(2)(a) del GDPR (dati sanitari). I miei dati saranno eliminati dai sistemi attivi immediatamente dopo l'elaborazione, in ogni caso entro 1 ora.",
     "startProcessing": "Avvia elaborazione",
     "gdprNotice": "I tuoi dati sono trattati in conformità con il GDPR e non vengono memorizzati",
     "uploadFailed": "Caricamento fallito"
@@ -324,7 +324,7 @@
       },
       "6": {
         "question": "Come sono protetti tecnicamente i miei dati?",
-        "answer": "Tutti i dati vengono memorizzati con crittografia forte e trasmessi tramite connessioni sicure. HealthLingo non usa cookie né tracciamento. I nostri fornitori di server sono certificati secondo standard di sicurezza internazionali. Tutta l'elaborazione dei dati avviene in Europa o con garanzie europee di protezione dei dati."
+        "answer": "Tutti i dati vengono crittografati a riposo con AES-256-GCM, lo stato dell'arte attuale nella sicurezza dei dati. Tutte le trasmissioni utilizzano connessioni sicure HTTPS/TLS. HealthLingo non usa cookie né tracciamento. I nostri fornitori di server sono certificati secondo standard di sicurezza internazionali. Tutta l'elaborazione dei dati avviene in Europa."
       },
       "7": {
         "question": "La traduzione è medicalmente accurata?",

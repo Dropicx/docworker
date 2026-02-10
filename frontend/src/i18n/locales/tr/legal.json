@@ -39,10 +39,11 @@
     "section3": {
       "title": "3. Bu Web Sitesinde Veri Toplama",
       "cookiesTitle": "Çerezler",
-      "cookiesText1": "Çerez kullanmıyoruz.",
-      "cookiesText2": "Hizmetimiz tamamen çerezsiz çalışır. İzleme çerezleri, analitik çerezler veya pazarlama çerezleri kullanmıyoruz. Bu, web sitesindeki çerezsiz bildirim başlığımız aracılığıyla şeffaf bir şekilde iletilmektedir.",
-      "cookiesText3": "Kullandığımız tek yerel depolama, çerez başlığı tercihinizi (başlığı kapatıp kapatmadığınızı) kaydetmek için tarayıcı localStorage'dır. Bu bilgi yalnızca tarayıcınızda yerel olarak saklanır ve sunucumuza iletilmez.",
-      "cookiesText4": "Çerez kullanmadığımız için çerez onayı gerekmez. Hizmetimiz başından itibaren gizliliğinize saygı duyar ve izleme ile analitik çerezlerden tamamen vazgeçer.",
+      "cookiesText1": "Pazarlama, analitik veya izleme çerezleri kullanmıyoruz. Hizmetimiz yalnızca web sitesinin işlevselliği için gerekli olan kesinlikle gerekli çerezleri kullanır.",
+      "cookiesText2": "Tercih ettiğiniz dil ayarını saklamak için bir çerez ayarlıyoruz. Bu çerez (\"i18next\") seçtiğiniz dili saklar, böylece bir sonraki ziyaretinizde web sitesi otomatik olarak tercih ettiğiniz dilde görüntülenir. Bu çerez kişisel veri içermez ve tamamen işlevseldir.",
+      "cookiesText3": "Cloudflare, yapılandırmaya bağlı olarak web sitemizi siber saldırılardan korumak ve hizmetimizin bütünlüğünü sağlamak için kesinlikle gerekli güvenlik çerezleri ayarlayabilir. Bu çerezler yalnızca güvenlik amaçlı kullanılır ve reklam amaçlı kişisel veri içermez.",
+      "cookiesText4": "Ayrıca, çerez başlığı tercihinizi (başlığı kapatıp kapatmadığınızı) kaydetmek için tarayıcı localStorage kullanıyoruz. Bu bilgi yalnızca tarayıcınızda yerel olarak saklanır ve sunucumuza iletilmez.",
+      "cookiesText5": "Yalnızca kesinlikle gerekli çerezleri kullandığımız için, yürürlükteki yasalara göre onay gerekmez. Bu çerezler hizmetin sunulması için zorunludur.",
       "serverLogsTitle": "Sunucu Günlük Dosyaları",
       "serverLogsText": "Bu sayfaların sağlayıcısı, tarayıcınızın bize otomatik olarak ilettiği bilgileri sunucu günlük dosyalarında otomatik olarak toplar ve saklar. Bunlar:",
       "serverLogsItems": [
@@ -64,7 +65,7 @@
         "Paylaşım yok: Üçüncü taraflarla veri paylaşımı yoktur (OCR ve çeviri için Mistral AI (Fransa) ve kişisel verilerin kaldırılması için Hetzner (Almanya) hariç. Çeviri için yalnızca kişisel verilerden temizlenmiş metinler iletilir)",
         "Şifreli iletim: Tüm veriler HTTPS/TLS üzerinden şifrelenmiş olarak iletilir",
         "Durağan şifreleme: Yüklenen tüm belgeler AES-256-GCM ile şifrelenir ve veritabanında saklanır. Yönetici hesapları ayrıca e-posta adresleri ve isimler için şifreli depolama kullanır.",
-        "Çerez yok: Hizmetimiz çerez kullanmaz ve izleme verisi saklamaz."
+        "İzleme çerezi yok: Hizmetimiz pazarlama, analitik veya izleme çerezleri kullanmaz. Yalnızca dil ayarları ve güvenlik için kesinlikle gerekli çerezler kullanılır."
       ]
     },
     "section4": {

@@ -39,10 +39,11 @@
     "section3": {
       "title": "3. Raccolta dati su questo sito web",
       "cookiesTitle": "Cookie",
-      "cookiesText1": "Non utilizziamo cookie.",
-      "cookiesText2": "Il nostro servizio funziona completamente senza cookie. Non utilizziamo cookie di tracciamento, analisi o marketing. Questo viene anche comunicato in modo trasparente attraverso il nostro banner senza cookie sul sito web.",
-      "cookiesText3": "L'unica memoria locale che utilizziamo è il localStorage del browser per salvare la tua preferenza per il banner dei cookie (se hai chiuso il banner). Queste informazioni vengono memorizzate solo localmente nel tuo browser e non vengono trasmesse al nostro server.",
-      "cookiesText4": "Poiché non utilizziamo cookie, non è richiesto alcun consenso ai cookie. Il nostro servizio rispetta la tua privacy fin dall'inizio e rinuncia completamente ai cookie di tracciamento e analisi.",
+      "cookiesText1": "Non utilizziamo cookie di marketing, analisi o tracciamento. Il nostro servizio utilizza solo cookie strettamente necessari richiesti per la funzionalità del sito web.",
+      "cookiesText2": "Impostiamo un cookie per memorizzare la tua impostazione della lingua preferita. Questo cookie (\"i18next\") memorizza la lingua selezionata in modo che il sito web venga visualizzato automaticamente nella tua lingua preferita alla prossima visita. Questo cookie non contiene dati personali ed è puramente funzionale.",
+      "cookiesText3": "Cloudflare può impostare cookie di sicurezza strettamente necessari a seconda della configurazione per proteggere il nostro sito web da attacchi informatici e garantire l'integrità del nostro servizio. Questi cookie vengono utilizzati esclusivamente per scopi di sicurezza e non contengono dati personali a scopo pubblicitario.",
+      "cookiesText4": "Inoltre, utilizziamo il localStorage del browser per salvare la tua preferenza per il banner dei cookie (se hai chiuso il banner). Queste informazioni vengono memorizzate solo localmente nel tuo browser e non vengono trasmesse al nostro server.",
+      "cookiesText5": "Poiché utilizziamo solo cookie strettamente necessari, non è richiesto alcun consenso ai sensi della legge applicabile. Questi cookie sono essenziali per la fornitura del servizio.",
       "serverLogsTitle": "File di log del server",
       "serverLogsText": "Il provider di queste pagine raccoglie e memorizza automaticamente informazioni nei cosiddetti file di log del server, che il tuo browser ci trasmette automaticamente. Questi sono:",
       "serverLogsItems": [
@@ -64,7 +65,7 @@
         "Nessuna condivisione: Nessuna condivisione di dati con terze parti (tranne Mistral AI (Francia) per OCR e traduzione, e Hetzner (Germania) per la rimozione dei dati personali. Solo i testi ripuliti dai dati personali vengono trasmessi per la traduzione)",
         "Trasmissione crittografata: Tutti i dati vengono trasmessi crittografati tramite HTTPS/TLS",
         "Crittografia a riposo: Tutti i documenti caricati sono crittografati con AES-256-GCM e memorizzati nel database. Gli account amministratore utilizzano inoltre la memorizzazione crittografata per indirizzi email e nomi.",
-        "Nessun cookie: Il nostro servizio non utilizza cookie e non memorizza dati di tracciamento."
+        "Nessun cookie di tracciamento: Il nostro servizio non utilizza cookie di marketing, analisi o tracciamento. Vengono utilizzati solo cookie strettamente necessari per le impostazioni della lingua e la sicurezza."
       ]
     },
     "section4": {

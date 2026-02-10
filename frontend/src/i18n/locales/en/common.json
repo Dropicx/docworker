@@ -67,7 +67,7 @@
     "privacyPolicy": "Privacy Policy",
     "privacyConsentAnd": "and the",
     "termsOfUse": "Terms of Use",
-    "privacyConsentSuffix": "and I explicitly consent to the processing of my medical documents in accordance with GDPR Article 9(2)(a). My data will be automatically deleted after translation.",
+    "privacyConsentSuffix": "and I explicitly consent to the processing of my medical documents in accordance with GDPR Article 6(1)(b) (contract performance) and Article 9(2)(a) (health data). My data will be deleted from active systems immediately after processing, in any case within 1 hour.",
     "startProcessing": "Start processing",
     "gdprNotice": "Your data is processed GDPR-compliant and not stored",
     "uploadFailed": "Upload failed",
@@ -225,7 +225,7 @@
     "privacyPolicy": "Privacy Policy",
     "consentAnd": "and the",
     "termsOfUse": "Terms of Use",
-    "consentSuffix": "and I consent to my feedback and the associated document contents being used for quality improvement.",
+    "consentSuffix": "and I consent in accordance with GDPR Article 6(1)(a) to my feedback and the associated document contents being used for quality improvement.",
     "ratingRequired": "Please provide an overall rating.",
     "consentRequired": "Please agree to the data usage.",
     "submitError": "Feedback could not be sent.",
@@ -302,7 +302,7 @@
     "items": {
       "0": {
         "question": "Where is my data processed and how secure is it?",
-        "answer": "Your documents are processed exclusively on secure servers in Europe. We only work with providers that meet strict European data protection standards. All our partners have signed data protection agreements in accordance with European privacy regulations."
+        "answer": "Your documents are processed predominantly on secure servers in Europe (Germany and France). For security and network services, we use Cloudflare (USA), secured by EU Standard Contractual Clauses and the EU-US Data Privacy Framework. All our partners have signed GDPR-compliant data protection agreements."
       },
       "1": {
         "question": "Is my medical data stored or used for AI training?",
@@ -326,7 +326,7 @@
       },
       "6": {
         "question": "How is my data technically protected?",
-        "answer": "All data is stored with strong encryption and transmitted over secure connections. HealthLingo uses no cookies and no tracking. Our server providers are certified according to international security standards. All data processing takes place in Europe or with European data protection guarantees."
+        "answer": "All data is encrypted at rest using AES-256-GCM – the current state-of-the-art in data security. All transmissions use secure HTTPS/TLS connections. HealthLingo uses no marketing or tracking cookies, only strictly necessary cookies for language settings. Document processing takes place predominantly in the EU (Germany, France), with network security via Cloudflare (USA, secured by SCCs)."
       },
       "7": {
         "question": "Is the translation medically accurate?",

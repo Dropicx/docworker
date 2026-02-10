@@ -66,7 +66,7 @@
     "privacyPolicy": "Politica de confidențialitate",
     "privacyConsentAnd": "și",
     "termsOfUse": "Termenii de utilizare",
-    "privacyConsentSuffix": "și îmi dau consimțământul expres pentru procesarea documentelor mele medicale în conformitate cu Art. 9(2)(a) GDPR. Datele mele vor fi șterse automat după traducere.",
+    "privacyConsentSuffix": "și îmi dau consimțământul expres pentru procesarea documentelor mele medicale în conformitate cu Art. 6(1)(b) GDPR (executarea contractului) și Art. 9(2)(a) GDPR (date de sănătate). Datele mele vor fi șterse din sistemele active imediat după procesare, în orice caz în termen de 1 oră.",
     "startProcessing": "Începeți procesarea",
     "gdprNotice": "Datele dvs. sunt procesate conform GDPR și nu sunt stocate",
     "uploadFailed": "Încărcarea a eșuat"
@@ -324,7 +324,7 @@
       },
       "6": {
         "question": "Cum sunt protejate tehnic datele mele?",
-        "answer": "Toate datele sunt stocate cu criptare puternică și transmise prin conexiuni sigure. HealthLingo nu folosește cookie-uri sau urmărire. Furnizorii noștri de servere sunt certificați conform standardelor internaționale de securitate. Toată procesarea datelor are loc în Europa sau cu garanții europene de protecție a datelor."
+        "answer": "Toate datele sunt criptate în repaus folosind AES-256-GCM – standardul actual de securitate a datelor. Toate transmisiile folosesc conexiuni securizate HTTPS/TLS. HealthLingo nu folosește cookie-uri sau urmărire. Furnizorii noștri de servere sunt certificați conform standardelor internaționale de securitate. Toată procesarea datelor are loc în Europa."
       },
       "7": {
         "question": "Traducerea este precisă din punct de vedere medical?",

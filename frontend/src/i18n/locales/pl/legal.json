@@ -39,10 +39,11 @@
     "section3": {
       "title": "3. Gromadzenie danych na tej stronie",
       "cookiesTitle": "Pliki cookie",
-      "cookiesText1": "Nie używamy plików cookie.",
-      "cookiesText2": "Nasza usługa działa całkowicie bez plików cookie. Nie używamy plików cookie śledzących, analitycznych ani marketingowych. Jest to również transparentnie komunikowane poprzez nasz baner informujący o braku plików cookie na stronie.",
-      "cookiesText3": "Jedynym lokalnym magazynem, którego używamy, jest localStorage przeglądarki do zapisania Twojej preferencji dotyczącej banera informacyjnego o plikach cookie (czy zamknąłeś baner). Ta informacja jest przechowywana tylko lokalnie w Twojej przeglądarce i nie jest przesyłana na nasz serwer.",
-      "cookiesText4": "Ponieważ nie używamy plików cookie, nie jest wymagana zgoda na pliki cookie. Nasza usługa szanuje Twoją prywatność od samego początku i całkowicie rezygnuje z plików cookie śledzących i analitycznych.",
+      "cookiesText1": "Nie używamy plików cookie marketingowych, analitycznych ani śledzących. Nasza usługa wykorzystuje wyłącznie ściśle niezbędne pliki cookie wymagane do funkcjonowania strony internetowej.",
+      "cookiesText2": "Ustawiamy plik cookie do przechowywania preferowanego ustawienia języka. Ten plik cookie (\"i18next\") przechowuje wybrany przez Ciebie język, dzięki czemu strona internetowa będzie automatycznie wyświetlana w preferowanym języku przy następnej wizycie. Ten plik cookie nie zawiera danych osobowych i jest czysto funkcjonalny.",
+      "cookiesText3": "Cloudflare może ustawiać ściśle niezbędne pliki cookie bezpieczeństwa w zależności od konfiguracji, aby chronić naszą stronę internetową przed cyberatakami i zapewnić integralność naszej usługi. Te pliki cookie są używane wyłącznie w celach bezpieczeństwa i nie zawierają danych osobowych do celów reklamowych.",
+      "cookiesText4": "Dodatkowo używamy localStorage przeglądarki do zapisania Twojej preferencji dotyczącej banera informacyjnego o plikach cookie (czy zamknąłeś baner). Ta informacja jest przechowywana tylko lokalnie w Twojej przeglądarce i nie jest przesyłana na nasz serwer.",
+      "cookiesText5": "Ponieważ używamy wyłącznie ściśle niezbędnych plików cookie, zgoda nie jest wymagana zgodnie z obowiązującym prawem. Te pliki cookie są niezbędne do świadczenia usługi.",
       "serverLogsTitle": "Pliki dzienników serwera",
       "serverLogsText": "Dostawca tych stron automatycznie zbiera i przechowuje informacje w tak zwanych plikach dzienników serwera, które Twoja przeglądarka automatycznie do nas przesyła. Są to:",
       "serverLogsItems": [
@@ -64,7 +65,7 @@
         "Brak udostępniania: Brak udostępniania danych osobom trzecim (z wyjątkiem Mistral AI (Francja) dla OCR i tłumaczenia oraz Hetzner (Niemcy) dla usuwania danych osobowych. Do tłumaczenia przesyłane są tylko teksty oczyszczone z danych osobowych)",
         "Szyfrowana transmisja: Wszystkie dane są przesyłane w formie zaszyfrowanej przez HTTPS/TLS",
         "Szyfrowanie w spoczynku: Wszystkie przesłane dokumenty są szyfrowane za pomocą AES-256-GCM i przechowywane w bazie danych. Konta administratorów dodatkowo używają zaszyfrowanego przechowywania adresów e-mail i nazwisk.",
-        "Brak plików cookie: Nasza usługa nie używa plików cookie i nie przechowuje żadnych danych śledzących. Jest to transparentnie komunikowane poprzez baner informujący o braku plików cookie na stronie."
+        "Brak plików cookie śledzących: Nasza usługa nie używa plików cookie marketingowych, analitycznych ani śledzących. Używane są tylko ściśle niezbędne pliki cookie do ustawień języka i bezpieczeństwa."
       ]
     },
     "section4": {

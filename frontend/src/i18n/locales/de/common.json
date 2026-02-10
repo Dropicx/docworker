@@ -67,7 +67,7 @@
     "privacyPolicy": "Datenschutzerklärung",
     "privacyConsentAnd": "und die",
     "termsOfUse": "Nutzungsbedingungen",
-    "privacyConsentSuffix": "gelesen und willige ausdrücklich in die Verarbeitung meiner medizinischen Dokumente gemäß Art. 9 Abs. 2 lit. a DSGVO ein. Meine Daten werden nach der Übersetzung automatisch gelöscht.",
+    "privacyConsentSuffix": "gelesen und willige ausdrücklich in die Verarbeitung meiner medizinischen Dokumente gemäß Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) und Art. 9 Abs. 2 lit. a DSGVO (Gesundheitsdaten) ein. Meine Daten werden unmittelbar nach der Verarbeitung aus aktiven Systemen gelöscht, in jedem Fall innerhalb von 1 Stunde.",
     "startProcessing": "Verarbeitung starten",
     "gdprNotice": "Ihre Daten werden DSGVO-konform verarbeitet und nicht gespeichert",
     "uploadFailed": "Upload fehlgeschlagen",
@@ -225,7 +225,7 @@
     "privacyPolicy": "Datenschutzerklärung",
     "consentAnd": "und die",
     "termsOfUse": "Nutzungsbedingungen",
-    "consentSuffix": "gelesen und willige ein, dass mein Feedback sowie die zugehörigen Dokumentinhalte zur Qualitätsverbesserung verwendet werden dürfen.",
+    "consentSuffix": "gelesen und willige gemäß Art. 6 Abs. 1 lit. a DSGVO ein, dass mein Feedback sowie die zugehörigen Dokumentinhalte zur Qualitätsverbesserung verwendet werden dürfen.",
     "ratingRequired": "Bitte geben Sie eine Gesamtbewertung ab.",
     "consentRequired": "Bitte stimmen Sie der Datenverwendung zu.",
     "submitError": "Feedback konnte nicht gesendet werden.",
@@ -302,11 +302,11 @@
     "items": {
       "0": {
         "question": "Wo werden meine Daten verarbeitet?",
-        "answer": "Ihre Dokumente werden ausschließlich auf sicheren Servern in Europa verarbeitet. Wir arbeiten nur mit Anbietern zusammen, die strenge europäische Datenschutzstandards erfüllen. Mit allen Partnern haben wir Datenschutzverträge gemäß der europäischen Datenschutz-Grundverordnung abgeschlossen."
+        "answer": "Ihre Dokumente werden überwiegend auf sicheren Servern in Europa (Deutschland und Frankreich) verarbeitet. Für Sicherheits- und Netzwerkdienste nutzen wir Cloudflare (USA), abgesichert durch EU-Standardvertragsklauseln und das EU-US Data Privacy Framework. Mit allen Partnern haben wir Datenschutzverträge gemäß DSGVO abgeschlossen."
       },
       "1": {
         "question": "Wie lange werden meine Daten gespeichert?",
-        "answer": "Ihre Dokumente werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen. Spätestens nach 1 Stunde werden alle Daten unwiderruflich entfernt. Falls Sie uns freiwillig Feedback geben, werden diese anonymisierten Bewertungen maximal 90 Tage aufbewahrt. Es erfolgt keine dauerhafte Speicherung Ihrer Dokumente."
+        "answer": "Ihre Dokumente werden unmittelbar nach der Verarbeitung aus aktiven Systemen gelöscht, in jedem Fall innerhalb von 1 Stunde. Falls Sie uns freiwillig Feedback geben, werden diese anonymisierten Bewertungen maximal 90 Tage aufbewahrt. Es erfolgt keine dauerhafte Speicherung Ihrer Dokumente."
       },
       "2": {
         "question": "Wie lange dauert die Übersetzung?",
@@ -326,7 +326,7 @@
       },
       "6": {
         "question": "Wie sind meine Daten technisch geschützt?",
-        "answer": "Alle Daten werden stark verschlüsselt gespeichert und über sichere Verbindungen übertragen. HealthLingo verwendet keine Cookies und kein Tracking. Unsere Server-Anbieter sind nach internationalen Sicherheitsstandards zertifiziert. Die gesamte Datenverarbeitung erfolgt in Europa oder mit europäischen Datenschutzgarantien."
+        "answer": "Alle Daten werden mit AES-256-GCM verschlüsselt gespeichert – dem aktuellen Stand der Technik für Datensicherheit. Die Übertragung erfolgt über sichere HTTPS/TLS-Verbindungen. HealthLingo verwendet keine Marketing- oder Tracking-Cookies, nur technisch notwendige Cookies für Spracheinstellungen. Die Dokumentenverarbeitung erfolgt überwiegend in der EU (Deutschland, Frankreich), Netzwerk-Sicherheit über Cloudflare (USA, abgesichert durch SCCs)."
       },
       "7": {
         "question": "Ist die Übersetzung medizinisch verbindlich?",
@@ -350,7 +350,7 @@
       },
       "12": {
         "question": "Wann genau werden meine Daten gelöscht?",
-        "answer": "Die Löschung erfolgt automatisch, wenn Sie die Ergebnisseite verlassen. Gelöscht werden: Ihr Originaldokument, die erkannten Texte und die Übersetzung. Wenn Sie die Seite nicht aktiv verlassen, werden nach 1 Stunde alle Daten automatisch entfernt. Einzige Ausnahme: Freiwilliges Feedback wird 90 Tage gespeichert."
+        "answer": "Ihre Daten werden spätestens 1 Stunde nach der Verarbeitung automatisch und unwiderruflich aus unseren aktiven Systemen gelöscht. Gelöscht werden: Ihr Originaldokument, die erkannten Texte und die Übersetzung. Einzige Ausnahme: Freiwilliges Feedback wird maximal 90 Tage gespeichert."
       },
       "13": {
         "question": "Was sollte ich über die Texterkennung wissen?",

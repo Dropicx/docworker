@@ -7,12 +7,15 @@ DocTranslator implements **field-level encryption at rest** for all personally i
 **Encrypted Fields:**
 - User `email` (PII)
 - User `full_name` (PII)
+- User feedback `comment` (may contain health data references)
+- User feedback `ai_analysis_text` (may contain medical excerpts)
 - System settings marked with `is_encrypted=True`
 - `PipelineJobDB.file_content` (Binary PDF/image files)
+- `PipelineJobDB.original_text`, `translated_text`, `language_translated_text`, `ocr_markdown`, `guidelines_text`
 - `PipelineStepExecutionDB.input_text` (OCR extracted text)
 - `PipelineStepExecutionDB.output_text` (AI processed text)
 
-**Encryption Method:** AES-128-CBC via Fernet (Python cryptography library)
+**Encryption Method:** AES-256-GCM (Authenticated Encryption with Associated Data)
 
 **Key Features:**
 - ✅ Transparent encryption (zero service layer code changes)
@@ -20,6 +23,8 @@ DocTranslator implements **field-level encryption at rest** for all personally i
 - ✅ Key rotation support with zero-downtime
 - ✅ Performance optimized (<1ms overhead per operation)
 - ✅ Enable/disable toggle for development
+- ✅ AEAD (Authenticated Encryption) - tamper detection built-in
+- ✅ GDPR "Stand der Technik" (state of the art) compliant
 
 ---
 
@@ -39,7 +44,7 @@ DocTranslator implements **field-level encryption at rest** for all personally i
 │            Repository Layer (Encryption Mixin)               │
 │  ┌──────────────────────────────────────────────────────┐  │
 │  │ 1. Generate searchable hash (SHA-256)                │  │
-│  │ 2. Encrypt email → base64(Fernet.encrypt(...))       │  │
+│  │ 2. Encrypt email → base64(AES-256-GCM.encrypt(...))  │  │
 │  │ 3. Store: email=encrypted, email_searchable=hash     │  │
 │  └──────────────────────────────────────────────────────┘  │
 └─────────────────────────┬───────────────────────────────────┘
@@ -47,9 +52,9 @@ DocTranslator implements **field-level encryption at rest** for all personally i
 ┌─────────────────────────▼───────────────────────────────────┐
 │                      Database (PostgreSQL)                   │
 │  ┌──────────────────────────────────────────────────────┐  │
-│  │ email: "gAAAAABk..." (encrypted, 150+ chars)         │  │
+│  │ email: "rg..." (AES-256-GCM encrypted, base64)       │  │
 │  │ email_searchable: "82888cec35..." (SHA-256 hash)     │  │
-│  │ encryption_version: 1 (key version tracking)         │  │
+│  │ encryption_version: 2 (key version tracking)         │  │
 │  └──────────────────────────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
 ```
@@ -58,9 +63,9 @@ DocTranslator implements **field-level encryption at rest** for all personally i
 
 **1. FieldEncryptor** (`app/core/encryption.py`)
 - Singleton encryption service
-- Fernet symmetric encryption with base64 encoding
+- AES-256-GCM authenticated encryption with base64 encoding
 - Searchable hash generation (SHA-256)
-- Key rotation support
+- Key rotation support (Fernet legacy → AES-256-GCM migration)
 
 **2. EncryptedRepositoryMixin** (`app/repositories/base_repository.py`)
 - Transparent encryption/decryption
@@ -97,9 +102,11 @@ user_service.create_user(email="patient@hospital.de", full_name="Max Müller")
    email_searchable = SHA256("patient@hospital.de")
    → "82888cec35d445b5d7fd90845b996f05ec7fe94a65f9aa685a9b05c259f2fbd7"
 
-2. Encrypt fields:
-   email_encrypted = Fernet.encrypt("patient@hospital.de")
-   → "gAAAAABkAhgEaY5itnRfx0SlLdMvxxYpSrr-S..."
+2. Encrypt fields (AES-256-GCM):
+   nonce = random_12_bytes()
+   ciphertext, tag = AES_GCM.encrypt(key, nonce, "patient@hospital.de")
+   email_encrypted = base64("rg" + version + nonce + tag + ciphertext)
+   → "rgAQ..."  # "rg" prefix identifies AES-256-GCM
 
 3. Store in database:
    INSERT INTO users (
@@ -108,9 +115,9 @@ user_service.create_user(email="patient@hospital.de", full_name="Max Müller")
      full_name,
      full_name_searchable
    ) VALUES (
-     'gAAAAABkAhgE...',  -- encrypted
+     'rgAQ...',           -- AES-256-GCM encrypted
      '82888cec35...',     -- hash
-     'gAAAAABkAhgF...',  -- encrypted
+     'rgAQ...',           -- AES-256-GCM encrypted
      'a7f4d8e2bc...'      -- hash
    )
 ```
@@ -129,8 +136,11 @@ user = user_repo.get_by_email("patient@hospital.de")
    SELECT * FROM users
    WHERE email_searchable = '82888cec35...'
 
-3. Decrypt result:
-   email_decrypted = Fernet.decrypt("gAAAAABkAhgE...")
+3. Decrypt result (AES-256-GCM):
+   # Detect format by prefix: "rg" = AES-256-GCM, "gAAAA" = legacy Fernet
+   raw = base64_decode("rgAQ...")
+   nonce, tag, ciphertext = parse(raw)
+   email_decrypted = AES_GCM.decrypt(key, nonce, ciphertext, tag)
    → "patient@hospital.de"
 
 4. Return to service:
@@ -147,10 +157,13 @@ job = job_repo.get_by_processing_id("processing-123")
 1. Query database:
    SELECT * FROM pipeline_jobs WHERE processing_id = 'processing-123'
 
-2. Detect binary field and decrypt:
+2. Detect binary field and decrypt (AES-256-GCM):
    encrypted_str = db_job.file_content.decode("utf-8")
-   base64_str = Fernet.decrypt(encrypted_str)
-   binary_data = base64.b64decode(base64_str)
+   # First base64-decode to get encrypted binary
+   raw = base64_decode(encrypted_str)
+   nonce, tag, ciphertext = parse(raw)
+   base64_content = AES_GCM.decrypt(key, nonce, ciphertext, tag)
+   binary_data = base64.b64decode(base64_content)
    → b'%PDF-1.4...'
 
 3. Return to service:
@@ -183,17 +196,17 @@ SELECT * FROM users WHERE email_searchable = SHA256('patient@hospital.de')
 
 ### Production Setup
 
-**1. Generate Encryption Key**
+**1. Generate Encryption Key (AES-256-GCM)**
 ```bash
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
-# Output: WR_RE1Ortnd5jq_92lrZkuI0YswP9FTuQCn_AZ9qf4c=
+python -c "from app.core.encryption import FieldEncryptor; print(FieldEncryptor.generate_key())"
+# Output: base64-encoded 256-bit key
 ```
 
 **2. Store in Railway**
 1. Go to Railway project → Variables
 2. Add variable:
    ```
-   ENCRYPTION_KEY=WR_RE1Ortnd5jq_92lrZkuI0YswP9FTuQCn_AZ9qf4c=
+   ENCRYPTION_KEY=<your_256_bit_key_here>
    ```
 3. **CRITICAL:** Store backup in 3 secure locations:
    - Railway environment variables (primary)
@@ -205,6 +218,20 @@ python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().d
 # Optional: Explicitly enable (default is true)
 ENCRYPTION_ENABLED=true
 ```
+
+### Legacy Migration (Fernet → AES-256-GCM)
+
+If you have data encrypted with legacy Fernet (AES-128-CBC), set the legacy key for automatic migration:
+
+```bash
+# Set legacy Fernet key for decryption during migration
+ENCRYPTION_KEY_FERNET_LEGACY=<your_old_fernet_key>
+
+# New AES-256-GCM key
+ENCRYPTION_KEY=<your_new_aes256_key>
+```
+
+The migration runs automatically on startup via `upgrade_encryption_to_aes256gcm.py`.
 
 ### Key Rotation
 
@@ -275,7 +302,7 @@ CREATE TABLE pipeline_jobs (
 
   -- Encrypted document content
   file_content BYTEA NOT NULL,  -- ENCRYPTED (binary PDF/image files)
-  -- Note: Encrypted content stored as UTF-8 bytes of base64-encoded Fernet token
+  -- Note: Encrypted content stored as UTF-8 bytes of base64-encoded AES-256-GCM ciphertext
 
   -- Non-encrypted fields
   job_id VARCHAR(255) NOT NULL UNIQUE,
@@ -330,8 +357,8 @@ CREATE TABLE system_settings (
 ### Initial Deployment (New System)
 
 ```bash
-# 1. Generate and store encryption key
-ENCRYPTION_KEY=$(python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+# 1. Generate and store encryption key (AES-256-GCM)
+ENCRYPTION_KEY=$(python -c "from app.core.encryption import FieldEncryptor; print(FieldEncryptor.generate_key())")
 
 # 2. Set environment variables
 export ENCRYPTION_KEY="$ENCRYPTION_KEY"
@@ -395,12 +422,12 @@ echo "ENCRYPTION_KEY=<your_key_here>" >> .env
 
 ### Issue: "Encryption failed: Invalid key"
 
-**Cause:** Invalid Fernet key format
+**Cause:** Invalid key format or length
 
 **Solution:**
 ```bash
-# Generate a NEW valid key
-python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())"
+# Generate a NEW valid AES-256-GCM key
+python -c "from app.core.encryption import FieldEncryptor; print(FieldEncryptor.generate_key())"
 
 # Use the output as ENCRYPTION_KEY
 ```
@@ -585,22 +612,31 @@ pytest tests/repositories/test_encrypted_repository.py -v
 
 ## Compliance
 
-### GDPR Article 32
+### GDPR Article 32 - "Stand der Technik" (State of the Art)
 
 **Requirement:** "Appropriate technical and organizational measures to ensure a level of security appropriate to the risk"
 
 **Implementation:**
-- ✅ Encryption of personal data (email, full_name)
+- ✅ AES-256-GCM encryption (GDPR "Stand der Technik" compliant)
+- ✅ Encryption of all personal data (email, full_name, comments, medical text)
+- ✅ Encryption of health data (Art. 9 DSGVO special categories)
 - ✅ Pseudonymization via searchable hashes
 - ✅ Ability to restore access (key backup)
 - ✅ Regular testing of security measures (automated tests)
+- ✅ Authenticated encryption prevents tampering (GCM mode)
+
+**Why AES-256-GCM?**
+- 256-bit key length (vs. 128-bit in Fernet/AES-128-CBC)
+- Galois/Counter Mode provides authentication (AEAD)
+- Recommended by BSI (German Federal Office for Information Security)
+- Meets NIST standards for sensitive data protection
 
 ### HIPAA (if applicable)
 
 **Requirement:** "Encryption and Decryption" (164.312(a)(2)(iv))
 
 **Implementation:**
-- ✅ Encryption at rest for ePHI
+- ✅ Encryption at rest for ePHI using AES-256-GCM
 - ✅ Addressable implementation specification
 - ✅ Documented key management procedures
 
@@ -612,6 +648,7 @@ pytest tests/repositories/test_encrypted_repository.py -v
 |------|-----------|-------------|
 | 2025-10-29 | `add_encryption_search_fields.py` | Added searchable hash columns |
 | 2025-10-29 | `encrypt_existing_user_data.py` | Encrypted existing user PII |
+| 2026-02-10 | `upgrade_encryption_to_aes256gcm.py` | Upgraded from Fernet (AES-128-CBC) to AES-256-GCM |
 
 ---
 
@@ -657,8 +694,24 @@ def get_by_field(self, field_value: str):
     return self._decrypt_entity(entity)
 ```
 
+### Identifying Encryption Format
+
+```python
+from app.core.encryption import encryptor
+
+value = "rgAQ..."  # Value from database
+
+# Check encryption format
+if encryptor.is_aes256gcm(value):
+    print("AES-256-GCM encrypted")
+elif encryptor.is_legacy_fernet(value):
+    print("Legacy Fernet encrypted - will be migrated on next access")
+else:
+    print("Plaintext or unknown format")
+```
+
 ---
 
-**Last Updated:** 2025-10-29
-**Version:** 1.0
-**Status:** Production Ready
+**Last Updated:** 2026-02-10
+**Version:** 2.0
+**Status:** Production Ready (AES-256-GCM)

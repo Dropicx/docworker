@@ -66,7 +66,7 @@
     "privacyPolicy": "Gizlilik Politikası",
     "privacyConsentAnd": "ve",
     "termsOfUse": "Kullanım Koşulları",
-    "privacyConsentSuffix": "'nı okudum ve tıbbi belgelerimin GDPR Madde 9(2)(a) uyarınca işlenmesine açıkça onay veriyorum. Verilerim çeviriden sonra otomatik olarak silinecektir.",
+    "privacyConsentSuffix": "'nı okudum ve tıbbi belgelerimin GDPR Madde 6(1)(b) (sözleşme ifası) ve Madde 9(2)(a) (sağlık verileri) uyarınca işlenmesine açıkça onay veriyorum. Verilerim işlemden hemen sonra aktif sistemlerden silinecek, her halükarda 1 saat içinde.",
     "startProcessing": "İşlemeye başla",
     "gdprNotice": "Verileriniz GDPR uyumlu olarak işlenir ve saklanmaz",
     "uploadFailed": "Yükleme başarısız"
@@ -324,7 +324,7 @@
       },
       "6": {
         "question": "Verilerim teknik olarak nasıl korunuyor?",
-        "answer": "Tüm veriler güçlü şifreleme ile saklanır ve güvenli bağlantılar üzerinden iletilir. HealthLingo çerez veya izleme kullanmaz. Sunucu sağlayıcılarımız uluslararası güvenlik standartlarına göre sertifikalıdır. Tüm veri işleme Avrupa'da veya Avrupa veri koruma güvenceleriyle gerçekleşir."
+        "answer": "Tüm veriler AES-256-GCM ile şifrelenerek saklanır – veri güvenliğinde güncel en yüksek standart. Tüm iletimler güvenli HTTPS/TLS bağlantıları kullanır. HealthLingo çerez veya izleme kullanmaz. Sunucu sağlayıcılarımız uluslararası güvenlik standartlarına göre sertifikalıdır. Tüm veri işleme Avrupa'da gerçekleşir."
       },
       "7": {
         "question": "Çeviri tıbbi olarak doğru mu?",

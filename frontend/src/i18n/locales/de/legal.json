@@ -78,7 +78,7 @@
         }
       ],
       "storageTitle": "Speicherdauer",
-      "storageText": "Hochgeladene Dokumente und deren Übersetzungen werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen. Falls Sie die Seite nicht aktiv verlassen, werden die Daten spätestens nach 1 Stunde automatisch gelöscht. Diese Frist ermöglicht es Ihnen, uns optionales Feedback zu Ihrer Übersetzung zu geben. Folgende Daten werden bereinigt:",
+      "storageText": "Hochgeladene Dokumente und deren Übersetzungen werden unmittelbar nach Abschluss der Verarbeitung aus aktiven Systemen gelöscht, in jedem Fall jedoch spätestens innerhalb von 1 Stunde. Diese Frist ermöglicht es Ihnen, uns optionales Feedback zu Ihrer Übersetzung zu geben. Folgende Daten werden bereinigt:",
       "storageItems": [
         "Das hochgeladene Originaldokument",
         "Die extrahierten Texte (nach PII-Entfernung)",
@@ -86,7 +86,7 @@
         "Verarbeitungsmetadaten mit personenbezogenen Daten",
         "IP-Adressen"
       ],
-      "storageNote": "Diese sofortige Löschung bei Verlassen der Seite maximiert Ihren Datenschutz. Nach der Löschung sind die Daten nicht mehr wiederherstellbar.",
+      "storageNote": "Diese kurze Speicherfrist maximiert Ihren Datenschutz. Nach der Löschung aus aktiven Systemen sind die Daten nicht mehr wiederherstellbar.",
       "storageRetainedTitle": "Aufbewahrte anonyme Daten",
       "storageRetainedText": "Zur Verbesserung unseres Dienstes und zur Kostenüberwachung behalten wir ausschließlich anonyme, aggregierte Nutzungsstatistiken (z.B. Token-Anzahl, Verarbeitungskosten, verwendete KI-Modelle). Diese Daten enthalten keine personenbezogenen Informationen und können nicht zu Ihnen zurückverfolgt werden.",
       "voluntaryTitle": "Freiwilligkeit der Datenbereitstellung",
@@ -97,9 +97,11 @@
     "section3": {
       "title": "3. Datenerfassung auf dieser Website",
       "cookiesTitle": "Cookies",
-      "cookiesText": "Wir verwenden keine Cookies. Unser Dienst funktioniert vollständig ohne Cookies. Wir setzen weder Tracking-Cookies noch Analyse-Cookies noch Marketing-Cookies ein. Dies wird auch durch unser Cookie-freies Hinweis-Banner auf der Website transparent kommuniziert.",
-      "cookiesLocalStorage": "Die einzige lokale Speicherung, die wir verwenden, ist der Browser-LocalStorage, um Ihre Präferenz für das Cookie-Hinweis-Banner zu speichern (ob Sie das Banner geschlossen haben). Diese Information wird nur lokal in Ihrem Browser gespeichert und nicht an unseren Server übertragen.",
-      "cookiesConsentNote": "Da wir keine Cookies verwenden, ist keine Cookie-Einwilligung erforderlich.",
+      "cookiesText": "Wir verwenden keine Marketing-, Analyse- oder Tracking-Cookies. Unser Dienst setzt ausschließlich technisch notwendige Cookies ein, die für die Funktion der Website erforderlich sind.",
+      "cookiesLanguage": "Wir setzen einen Cookie zur Speicherung Ihrer bevorzugten Spracheinstellung. Dieser Cookie (\"i18next\") speichert Ihre gewählte Sprache, damit die Website bei Ihrem nächsten Besuch automatisch in der von Ihnen bevorzugten Sprache angezeigt wird. Dieser Cookie enthält keine personenbezogenen Daten und ist rein funktional.",
+      "cookiesCloudflare": "Cloudflare kann abhängig von der Konfiguration technisch notwendige Sicherheits-Cookies setzen, um unsere Website vor Cyberangriffen zu schützen und die Integrität des Dienstes zu gewährleisten. Diese Cookies dienen ausschließlich der Sicherheit und enthalten keine personenbezogenen Daten zu Werbezwecken.",
+      "cookiesLocalStorage": "Zusätzlich nutzen wir den Browser-LocalStorage, um Ihre Präferenz für das Cookie-Hinweis-Banner zu speichern (ob Sie das Banner geschlossen haben). Diese Information wird nur lokal in Ihrem Browser gespeichert und nicht an unseren Server übertragen.",
+      "cookiesConsentNote": "Da wir ausschließlich technisch notwendige Cookies verwenden, ist gemäß § 25 Abs. 2 Nr. 2 TDDDG (ehemals TTDSG) keine Einwilligung erforderlich. Diese Cookies sind für die Bereitstellung des Dienstes unbedingt erforderlich.",
       "serverLogsTitle": "Server-Log-Dateien",
       "serverLogsText": "Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten Server-Log-Dateien, die Ihr Browser automatisch an uns übermittelt. Dies sind:",
       "serverLogsItems": [
@@ -125,7 +127,7 @@
         },
         {
           "title": "Automatische Löschung",
-          "text": "Nach Abschluss der Übersetzung bzw. beim Verlassen der Ergebnisseite werden alle personenbezogenen Daten automatisch gelöscht. Lediglich anonyme Nutzungsstatistiken bleiben erhalten."
+          "text": "Nach Abschluss der Übersetzung werden alle personenbezogenen Daten unmittelbar aus aktiven Systemen gelöscht, in jedem Fall innerhalb von 1 Stunde. Lediglich anonyme Nutzungsstatistiken bleiben erhalten."
         },
         {
           "title": "Keine dauerhafte Speicherung",
@@ -144,8 +146,8 @@
           "text": "Alle hochgeladenen Dokumente werden mit AES-256-GCM verschlüsselt in der Datenbank gespeichert. Administratorkonten verwenden zusätzlich verschlüsselte Speicherung für E-Mail-Adressen und Namen."
         },
         {
-          "title": "Keine Cookies",
-          "text": "Unser Dienst verwendet keine Cookies und speichert keine Tracking-Daten."
+          "title": "Keine Tracking-Cookies",
+          "text": "Unser Dienst verwendet keine Marketing-, Analyse- oder Tracking-Cookies. Es werden nur technisch notwendige Cookies für Spracheinstellungen und Sicherheit eingesetzt."
         },
         {
           "title": "Datenverarbeitung vorwiegend in der EU",
@@ -163,9 +165,9 @@
           "explanation": "Die Verarbeitung ist erforderlich, um den zwischen Ihnen und uns geschlossenen Nutzungsvertrag über die Bereitstellung digitaler Inhalte (§§ 327 ff. BGB) zu erfüllen."
         },
         {
-          "activity": "Verarbeitung von Gesundheitsdaten",
-          "basis": "Art. 9 Abs. 2 lit. a DSGVO (ausdrückliche Einwilligung)",
-          "explanation": "Die Verarbeitung besonderer Kategorien personenbezogener Daten erfolgt ausschließlich auf Grundlage Ihrer ausdrücklichen und separaten Einwilligung (siehe Abschnitt 9 – Ihre Einwilligung)."
+          "activity": "Verarbeitung von Gesundheitsdaten (medizinische Dokumente)",
+          "basis": "Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) + Art. 9 Abs. 2 lit. a DSGVO (ausdrückliche Einwilligung)",
+          "explanation": "Die Verarbeitung erfolgt zur Erfüllung des Übersetzungsvertrags (Art. 6). Da medizinische Dokumente regelmäßig Gesundheitsdaten enthalten, ist zusätzlich Ihre ausdrückliche Einwilligung nach Art. 9 DSGVO erforderlich (siehe Abschnitt 9 – Ihre Einwilligung)."
         },
         {
           "activity": "Server-Logdaten",
@@ -186,8 +188,8 @@
         "Gesundheitsdaten gehören zu den besonderen Kategorien personenbezogener Daten nach Art. 9 DSGVO.",
         "Wir verarbeiten diese Daten ausschließlich zum Zweck der Übersetzung und nur nach Ihrer ausdrücklichen und separaten Einwilligung (siehe Abschnitt 9).",
         "Vor der KI-Verarbeitung werden alle personenbezogenen Informationen (Namen, Adressen, Telefonnummern, etc.) automatisch entfernt.",
-        "Es werden besondere technische und organisatorische Maßnahmen zum Schutz dieser Daten getroffen (Verschlüsselung, kurze Speicherdauer, automatische Löschung, EU-only Verarbeitung).",
-        "Alle Daten werden beim Verlassen der Ergebnisseite automatisch gelöscht (spätestens nach 1 Stunde als Sicherheitsfallback).",
+        "Es werden besondere technische und organisatorische Maßnahmen zum Schutz dieser Daten getroffen (Verschlüsselung, kurze Speicherdauer, automatische Löschung).",
+        "Alle Daten werden unmittelbar nach der Verarbeitung aus aktiven Systemen gelöscht, in jedem Fall innerhalb von 1 Stunde.",
         "Die Übersetzungsergebnisse dienen ausschließlich Ihrer Information und ersetzen nicht die ärztliche Aufklärung und Beratung. Es findet keine Prüfung, Diagnose oder Therapieempfehlung statt."
       ]
     },
@@ -221,11 +223,11 @@
         "legalBasis": "Art. 28 DSGVO (Auftragsverarbeitungsvertrag)."
       },
       "railway": {
-        "title": "Railway (EU)",
-        "address": "Railway Corporation",
-        "purpose": "Hosting der Anwendung und der verschlüsselten PostgreSQL-Datenbank. Railway ist SOC 2 Type I zertifiziert und bietet DSGVO-konforme Data Processing Agreements.",
+        "title": "Railway (USA mit EU-Datenverarbeitung)",
+        "address": "Railway Corporation, San Francisco, CA, USA",
+        "purpose": "Hosting der Anwendung und der verschlüsselten PostgreSQL-Datenbank in der EU-Region. Railway ist SOC 2 Type I zertifiziert und bietet DSGVO-konforme Data Processing Agreements.",
         "legalBasis": "Art. 28 DSGVO (Auftragsverarbeitungsvertrag).",
-        "thirdCountryNote": "[Hinweis: Railway ist ein US-Unternehmen. Prüfen Sie, ob technisch und vertraglich ein US-Zugriff ausgeschlossen ist. Falls nicht, ergänzen Sie entsprechende Formulierungen zu Drittlandtransfer und EU-Standardvertragsklauseln.]"
+        "thirdCountryTransfer": "Railway ist ein US-Unternehmen. Der Datenzugriff aus den USA kann nicht vollständig ausgeschlossen werden. Die Datenübertragung ist durch EU-Standardvertragsklauseln (SCCs) gemäß Art. 46 Abs. 2 lit. c DSGVO abgesichert."
       },
       "dpaNote": "Mit allen genannten Drittanbietern bestehen Auftragsverarbeitungsverträge (AVV) gemäß Art. 28 DSGVO, die den Schutz Ihrer Daten nach europäischen Datenschutzstandards gewährleisten. Diese Verträge verpflichten unsere Partner zur Einhaltung strenger Datenschutzanforderungen und zur ausschließlichen Verarbeitung nach unseren Weisungen."
     },
@@ -261,8 +263,8 @@
         "points": [
           "vor der automatischen PII-Entfernung mein Dokument zunächst zur Texterkennung (OCR) an Mistral AI (Frankreich/EU) übertragen wird,",
           "die automatische PII-Entfernung keine 100%ige Erkennung aller personenbezogenen Daten garantieren kann,",
-          "die Verarbeitung meiner Dokumente und Gesundheitsdaten ausschließlich innerhalb der EU stattfindet (Netzwerk-Metadaten werden durch Cloudflare verarbeitet, siehe Abschnitt 6),",
-          "meine Daten nach der Verarbeitung (spätestens nach 1 Stunde) automatisch gelöscht werden."
+          "die Verarbeitung meiner Dokumente überwiegend innerhalb der EU stattfindet, wobei Netzwerk-Metadaten durch Cloudflare (USA) verarbeitet werden können, abgesichert durch EU-Standardvertragsklauseln (siehe Abschnitt 6),",
+          "meine Daten unmittelbar nach der Verarbeitung aus aktiven Systemen gelöscht werden, in jedem Fall innerhalb von 1 Stunde."
         ],
         "checkbox": "Ja, ich willige ein.",
         "required": true
@@ -278,7 +280,6 @@
       "withdrawalText": "Jede dieser Einwilligungen kann von Ihnen jederzeit mit Wirkung für die Zukunft widerrufen werden. Der Widerruf kann erfolgen durch:",
       "withdrawalMethods": [
         "Abbrechen des Verarbeitungsprozesses",
-        "Schließen des Browsers bzw. Verlassen der Ergebnisseite",
         "Kontaktaufnahme mit uns per E-Mail an [E-Mail-Adresse]"
       ],
       "withdrawalNote": "Der Widerruf berührt nicht die Rechtmäßigkeit der aufgrund der Einwilligung bis zum Widerruf erfolgten Verarbeitung. Nach dem Widerruf werden alle Ihre Daten umgehend gelöscht.",
@@ -292,7 +293,7 @@
       "rectificationTitle": "Recht auf Berichtigung (Art. 16 DSGVO)",
       "rectificationText": "Sie haben das Recht, die Berichtigung unrichtiger personenbezogener Daten zu verlangen.",
       "deletionTitle": "Recht auf Löschung (Art. 17 DSGVO)",
-      "deletionText": "Ihre hochgeladenen Dokumente werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen. Es ist keine manuelle Löschung erforderlich. Sollten Sie Feedback mit Einwilligung abgegeben haben, können Sie die Löschung Ihrer Daten jederzeit durch Kontaktaufnahme mit uns anfordern.",
+      "deletionText": "Ihre hochgeladenen Dokumente werden unmittelbar nach der Verarbeitung aus aktiven Systemen gelöscht, in jedem Fall innerhalb von 1 Stunde. Es ist keine manuelle Löschung erforderlich. Sollten Sie Feedback mit Einwilligung abgegeben haben, können Sie die Löschung Ihrer Daten jederzeit durch Kontaktaufnahme mit uns anfordern.",
       "restrictionTitle": "Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)",
       "restrictionText": "Sie können jederzeit die Verarbeitung Ihrer Dokumente abbrechen, indem Sie den Verarbeitungsprozess beenden, bevor die Übersetzung abgeschlossen ist. In diesem Fall werden die Daten sofort gelöscht.",
       "portabilityTitle": "Recht auf Datenübertragbarkeit (Art. 20 DSGVO)",
@@ -327,7 +328,7 @@
         "Automatische Löschung aller personenbezogenen Daten nach der Verarbeitung",
         "Automatische PII-Entfernung vor der KI-Verarbeitung",
         "Ausschließliche Datenverarbeitung innerhalb der EU",
-        "Keine Verwendung von Cookies oder Tracking-Technologien",
+        "Keine Verwendung von Marketing-, Analyse- oder Tracking-Cookies (nur technisch notwendige Cookies für Spracheinstellungen und Sicherheit)",
         "Regelmäßige Überprüfung der Sicherheitsmaßnahmen"
       ]
     },
@@ -500,7 +501,7 @@
           "Übersetzung medizinischer Fachsprache in patientenfreundliche, verständliche Sprache (Deutsch)",
           "Übersetzung in weitere Zielsprachen (Englisch, Französisch, Spanisch, Italienisch, Portugiesisch, Niederländisch, Polnisch)",
           "Automatische Entfernung personenbezogener Daten (PII-Entfernung) vor der KI-Verarbeitung",
-          "Medizinische Validierung und Faktenprüfung der Übersetzungen",
+          "Automatisierte Plausibilitäts- und Konsistenzprüfung der Übersetzung (kein Ersatz für ärztliche Beratung)",
           "Download der Übersetzungsergebnisse"
         ],
         "note": "Der Service ist technisch so programmiert, dass die Übersetzung der Dokumente vollautomatisch funktioniert. Die Informationen aus dem Originaldokument werden dabei nicht medizinisch bewertet, interpretiert oder ergänzt, sondern ausschließlich maschinell übersetzt."
@@ -704,18 +705,18 @@
     },
     "section15": {
       "title": "§ 15 Freistellung",
-      "p1": "(1) Der Nutzer stellt den Anbieter von sämtlichen Ansprüchen Dritter frei, die aufgrund einer Verletzung ihrer Rechte durch den Nutzer geltend gemacht werden.",
-      "p2": "(2) Der Nutzer übernimmt die Kosten der Rechtsverteidigung des Anbieters.",
-      "p3": "(3) Dies gilt nicht, wenn der Nutzer die Rechtsverletzung nicht zu vertreten hat.",
-      "p4": "(4) Der Nutzer ist verpflichtet, den Anbieter bei Inanspruchnahme durch Dritte unverzüglich zu informieren."
+      "p1": "(1) Der Nutzer stellt den Anbieter von Ansprüchen Dritter frei, die aufgrund einer schuldhaften Verletzung ihrer Rechte durch den Nutzer geltend gemacht werden, insbesondere durch das Hochladen von Dokumenten ohne entsprechende Berechtigung.",
+      "p2": "(2) Der Nutzer ersetzt dem Anbieter die erforderlichen Kosten einer angemessenen Rechtsverteidigung.",
+      "p3": "(3) Die Freistellungspflicht entfällt, soweit der Nutzer die Rechtsverletzung nicht zu vertreten hat.",
+      "p4": "(4) Der Nutzer ist verpflichtet, den Anbieter bei Inanspruchnahme durch Dritte unverzüglich zu informieren und bei der Rechtsverteidigung zu unterstützen."
     },
     "section16": {
       "title": "§ 16 Datenschutz",
       "p1": "(1) Der Schutz Ihrer personenbezogenen Daten ist uns besonders wichtig. Die Verarbeitung erfolgt gemäß DSGVO und BDSG.",
       "p2": "(2) Unsere vollständige Datenschutzerklärung finden Sie unter dem Menüpunkt \"Datenschutz\" auf unserer Website.",
       "p3": "(3) Für die Nutzung des Dienstes ist eine ausdrückliche Einwilligung zur Verarbeitung von Gesundheitsdaten erforderlich.",
-      "p4": "(4) Ihre Dokumente werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen, spätestens nach 1 Stunde.",
-      "p5": "(5) Die Datenverarbeitung erfolgt ausschließlich innerhalb der Europäischen Union.",
+      "p4": "(4) Ihre Dokumente werden spätestens 1 Stunde nach der Verarbeitung automatisch und unwiderruflich aus unseren aktiven Systemen gelöscht. Details zur Löschung sowie zu technischen Protokolldaten finden Sie in unserer Datenschutzerklärung.",
+      "p5": "(5) Die Verarbeitung Ihrer Dokumente erfolgt innerhalb der Europäischen Union. Für Sicherheitsdienste (CDN, DDoS-Schutz) setzen wir Cloudflare ein, wodurch eine Übertragung von Verbindungsdaten in die USA erfolgen kann. Details und Rechtsgrundlagen finden Sie in unserer Datenschutzerklärung (Abschnitt 6).",
       "p6": "(6) Ohne Ihre Einwilligung werden personenbezogene Daten nicht für Werbung genutzt.",
       "linkText": "Zur vollständigen Datenschutzerklärung"
     },
@@ -765,7 +766,7 @@
       "p1": "(1) Der Anbieter behält sich vor, diese AGB jederzeit mit Wirkung für die Zukunft zu ändern.",
       "p2": "(2) Änderungen werden durch Veröffentlichung auf dieser Seite wirksam.",
       "p3": "(3) Bei wesentlichen Änderungen wird der Anbieter Sie durch einen Hinweis auf der Website informieren.",
-      "p4": "(4) Die fortgesetzte Nutzung des Dienstes nach Inkrafttreten gilt als Zustimmung.",
+      "p4": "(4) Bei wesentlichen Änderungen werden Sie vor der nächsten Nutzung aufgefordert, die neuen AGB aktiv zu bestätigen. Ohne diese Bestätigung ist eine weitere Nutzung nicht möglich.",
       "p5": "(5) Es gelten die AGB in ihrer zum Zeitpunkt der Nutzung gültigen Fassung."
     },
     "section20": {
@@ -777,7 +778,7 @@
     },
     "section21": {
       "title": "§ 21 Außergerichtliche Streitbeilegung",
-      "p1": "(1) Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung bereit: https://ec.europa.eu/consumers/odr",
+      "p1": "(1) Die EU-Plattform zur Online-Streitbeilegung (ODR) wurde am 20. Juli 2025 eingestellt. Für die außergerichtliche Streitbeilegung können Sie sich an die Allgemeine Verbraucherschlichtungsstelle des Zentrums für Schlichtung e.V. wenden: www.verbraucher-schlichter.de",
       "p2": "(2) Zur Teilnahme an einem Streitbeilegungsverfahren sind wir weder bereit noch verpflichtet.",
       "p3": "(3) Unsere E-Mail-Adresse finden Sie im Impressum sowie unter § 24 dieser AGB."
     },
