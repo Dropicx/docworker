@@ -47,6 +47,60 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logger.info("🔧 Logging configured for Railway deployment")
 
+
+async def run_encryption_migration():
+    """
+    Run encryption migration from Fernet (AES-128) to AES-256-GCM.
+    Only runs if ENCRYPTION_KEY_FERNET_LEGACY is set.
+    Idempotent - safe to run on every startup.
+    """
+    import subprocess
+
+    # Debug: Log encryption environment variables
+    encryption_key = os.getenv("ENCRYPTION_KEY")
+    legacy_key = os.getenv("ENCRYPTION_KEY_FERNET_LEGACY")
+    encryption_enabled = os.getenv("ENCRYPTION_ENABLED", "true")
+
+    logger.info("🔑 Encryption Environment Check:")
+    logger.info(f"   ENCRYPTION_KEY: {'✅ Set (' + str(len(encryption_key)) + ' chars)' if encryption_key else '❌ NOT SET'}")
+    logger.info(f"   ENCRYPTION_KEY_FERNET_LEGACY: {'✅ Set (' + str(len(legacy_key)) + ' chars)' if legacy_key else '❌ NOT SET'}")
+    logger.info(f"   ENCRYPTION_ENABLED: {encryption_enabled}")
+
+    if not legacy_key:
+        logger.info("ℹ️ No ENCRYPTION_KEY_FERNET_LEGACY set, skipping migration")
+        return
+
+    logger.info("🔐 Running encryption migration (Fernet → AES-256-GCM)...")
+
+    try:
+        # Run migration script as subprocess
+        result = subprocess.run(
+            ["python", "migrations/upgrade_encryption_to_aes256gcm.py"],
+            capture_output=True,
+            text=True,
+            cwd="/app" if os.path.exists("/app") else os.getcwd(),
+            timeout=300,  # 5 minute timeout
+        )
+
+        # Log output
+        if result.stdout:
+            for line in result.stdout.strip().split("\n"):
+                logger.info(f"   {line}")
+
+        if result.returncode == 0:
+            logger.info("✅ Encryption migration completed successfully")
+        else:
+            logger.warning(f"⚠️ Migration exited with code {result.returncode}")
+            if result.stderr:
+                for line in result.stderr.strip().split("\n"):
+                    logger.error(f"   {line}")
+
+    except subprocess.TimeoutExpired:
+        logger.error("❌ Migration timed out after 5 minutes")
+    except Exception as e:
+        logger.error(f"❌ Migration failed: {e}")
+
+
 # Rate limiting (disabled in test/development)
 limiter = Limiter(
     key_func=get_remote_address,
@@ -86,6 +140,9 @@ async def lifespan(app: FastAPI):
                 logger.error("❌ Database initialization failed")
         except Exception as e:
             logger.error(f"❌ Database initialization error: {e}")
+
+        # Run encryption migration if legacy key is set (Fernet → AES-256-GCM)
+        await run_encryption_migration()
 
     # Initialize Redis cache (skip in test environment)
     cache_service = None
