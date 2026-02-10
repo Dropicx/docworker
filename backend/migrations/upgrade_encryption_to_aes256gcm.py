@@ -100,20 +100,24 @@ def is_aes256gcm_encrypted(value: str | bytes | memoryview | None) -> bool:
     return encryptor.is_aes256gcm(value)
 
 
-def migrate_text_field(value: str | None, dry_run: bool = False) -> tuple[str | None, str]:
+def migrate_text_field(
+    value: str | None, dry_run: bool = False, encrypt_plaintext: bool = False
+) -> tuple[str | None, str]:
     """
-    Migrate a text field from Fernet to AES-256-GCM.
+    Migrate a text field from Fernet to AES-256-GCM, optionally encrypting plaintext.
 
     Args:
         value: Encrypted field value
         dry_run: If True, don't actually encrypt
+        encrypt_plaintext: If True, also encrypt plaintext values (for GDPR compliance)
 
     Returns:
         Tuple of (new_value, status) where status is one of:
-        - "migrated": Successfully migrated
+        - "migrated": Successfully migrated from Fernet
+        - "migrated_plaintext": Successfully encrypted plaintext
         - "skipped_already_migrated": Already AES-256-GCM
         - "skipped_null": Null value
-        - "skipped_plaintext": Appears to be plaintext (not encrypted)
+        - "skipped_plaintext": Appears to be plaintext (not encrypted, and encrypt_plaintext=False)
         - "error": Migration failed
     """
     if value is None:
@@ -122,20 +126,33 @@ def migrate_text_field(value: str | None, dry_run: bool = False) -> tuple[str | 
     if is_aes256gcm_encrypted(value):
         return value, "skipped_already_migrated"
 
-    if not is_fernet_encrypted(value):
-        return value, "skipped_plaintext"
+    if is_fernet_encrypted(value):
+        if dry_run:
+            return value, "migrated"
 
-    if dry_run:
-        return value, "migrated"
+        try:
+            # Decrypt with Fernet, re-encrypt with AES-256-GCM
+            decrypted = encryptor.decrypt_field(value)
+            encrypted = encryptor.encrypt_field(decrypted)
+            return encrypted, "migrated"
+        except Exception as e:
+            print(f"    Error migrating Fernet field: {e}")
+            return value, "error"
 
-    try:
-        # Decrypt with Fernet, re-encrypt with AES-256-GCM
-        decrypted = encryptor.decrypt_field(value)
-        encrypted = encryptor.encrypt_field(decrypted)
-        return encrypted, "migrated"
-    except Exception as e:
-        print(f"    Error migrating field: {e}")
-        return value, "error"
+    # Value is plaintext (not Fernet, not AES-256-GCM)
+    if encrypt_plaintext and value and isinstance(value, str) and len(value.strip()) > 0:
+        if dry_run:
+            return value, "migrated_plaintext"
+
+        try:
+            # Encrypt plaintext directly with AES-256-GCM
+            encrypted = encryptor.encrypt_field(value)
+            return encrypted, "migrated_plaintext"
+        except Exception as e:
+            print(f"    Error encrypting plaintext field: {e}")
+            return value, "error"
+
+    return value, "skipped_plaintext"
 
 
 def migrate_binary_field(value: str | bytes | None, dry_run: bool = False) -> tuple[str | bytes | None, str]:
@@ -206,7 +223,11 @@ def migrate_binary_field(value: str | bytes | None, dry_run: bool = False) -> tu
 
 
 def migrate_users_table(conn, batch_size: int, dry_run: bool) -> dict:
-    """Migrate users table (email, full_name)."""
+    """Migrate users table (email, full_name).
+
+    Encrypts both Fernet-encrypted and plaintext values for GDPR compliance.
+    Users created before encryption was enabled will have plaintext email/full_name.
+    """
     stats = {"migrated": 0, "skipped": 0, "errors": 0}
 
     print("\n📋 Migrating users table...")
@@ -234,19 +255,26 @@ def migrate_users_table(conn, batch_size: int, dry_run: bool) -> dict:
         batch_errors = 0
 
         for user_id, email, full_name in batch:
-            new_email, email_status = migrate_text_field(email, dry_run)
-            new_full_name, name_status = migrate_text_field(full_name, dry_run)
+            # encrypt_plaintext=True to handle users created before encryption was enabled
+            new_email, email_status = migrate_text_field(email, dry_run, encrypt_plaintext=True)
+            new_full_name, name_status = migrate_text_field(full_name, dry_run, encrypt_plaintext=True)
 
-            # Track stats for email
-            if email_status == "migrated":
+            # Track stats for email (primary identifier)
+            if email_status in ("migrated", "migrated_plaintext"):
                 batch_migrated += 1
+                if email_status == "migrated_plaintext":
+                    print(f"\n      🔐 Encrypting plaintext email for user {user_id}")
             elif email_status == "error":
                 batch_errors += 1
             else:
                 batch_skipped += 1
 
             # Update if anything was migrated
-            if not dry_run and (email_status == "migrated" or name_status == "migrated"):
+            needs_update = email_status in ("migrated", "migrated_plaintext") or name_status in (
+                "migrated",
+                "migrated_plaintext",
+            )
+            if not dry_run and needs_update:
                 conn.execute(
                     text(
                         """
@@ -419,7 +447,11 @@ def migrate_pipeline_step_executions_table(conn, batch_size: int, dry_run: bool)
 
 
 def migrate_user_feedback_table(conn, batch_size: int, dry_run: bool) -> dict:
-    """Migrate user_feedback table (ai_analysis_text)."""
+    """Migrate user_feedback table (ai_analysis_text, comment).
+
+    The comment field may contain health/medical references from users and must be encrypted
+    for GDPR Art. 9 (health data) and Art. 32 (encryption) compliance.
+    """
     stats = {"migrated": 0, "skipped": 0, "errors": 0}
 
     print("\n📋 Migrating user_feedback table...")
@@ -432,8 +464,10 @@ def migrate_user_feedback_table(conn, batch_size: int, dry_run: bool) -> dict:
     if total == 0:
         return stats
 
-    # Fetch all feedback
-    result = conn.execute(text("SELECT id, ai_analysis_text FROM user_feedback ORDER BY id"))
+    # Fetch all feedback - include comment field for encryption
+    result = conn.execute(
+        text("SELECT id, ai_analysis_text, comment FROM user_feedback ORDER BY id")
+    )
     feedbacks = result.fetchall()
 
     for i in range(0, len(feedbacks), batch_size):
@@ -446,26 +480,47 @@ def migrate_user_feedback_table(conn, batch_size: int, dry_run: bool) -> dict:
         batch_skipped = 0
         batch_errors = 0
 
-        for feedback_id, ai_analysis_text in batch:
-            new_value, status = migrate_text_field(ai_analysis_text, dry_run)
+        for feedback_id, ai_analysis_text, comment in batch:
+            # Migrate ai_analysis_text (existing Fernet -> AES-256-GCM)
+            new_analysis, analysis_status = migrate_text_field(ai_analysis_text, dry_run)
 
-            if status == "migrated":
+            # Migrate comment (encrypt_plaintext=True since comments were stored as plaintext)
+            new_comment, comment_status = migrate_text_field(
+                comment, dry_run, encrypt_plaintext=True
+            )
+
+            # Track stats - count if either field was migrated
+            if analysis_status in ("migrated", "migrated_plaintext") or comment_status in (
+                "migrated",
+                "migrated_plaintext",
+            ):
                 batch_migrated += 1
-            elif status == "error":
+                if comment_status == "migrated_plaintext":
+                    print(f"\n      🔐 Encrypting plaintext comment for feedback {feedback_id}")
+            elif analysis_status == "error" or comment_status == "error":
                 batch_errors += 1
             else:
                 batch_skipped += 1
 
-            if not dry_run and status == "migrated":
+            # Update if anything was migrated
+            needs_update = (
+                analysis_status in ("migrated", "migrated_plaintext")
+                or comment_status in ("migrated", "migrated_plaintext")
+            )
+            if not dry_run and needs_update:
                 conn.execute(
                     text(
                         """
                         UPDATE user_feedback
-                        SET ai_analysis_text = :ai_analysis_text
+                        SET ai_analysis_text = :ai_analysis_text, comment = :comment
                         WHERE id = :id
                     """
                     ),
-                    {"ai_analysis_text": new_value, "id": feedback_id},
+                    {
+                        "ai_analysis_text": new_analysis,
+                        "comment": new_comment,
+                        "id": feedback_id,
+                    },
                 )
 
         stats["migrated"] += batch_migrated

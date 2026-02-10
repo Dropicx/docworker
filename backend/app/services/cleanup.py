@@ -76,7 +76,8 @@ async def cleanup_temp_files():
         1. System temp files (1 hour retention)
         2. In-memory processing store (30 minute retention)
         3. Database pipeline jobs (24 hour retention, configurable)
-        4. Python garbage collection
+        4. Expired refresh tokens (GDPR Art. 5(1)(e) storage limitation)
+        5. Python garbage collection
 
         **Error Handling**:
         Exceptions logged but don't propagate - cleanup continues.
@@ -101,12 +102,16 @@ async def cleanup_temp_files():
         # Cleanup old database jobs
         jobs_removed = await cleanup_old_database_jobs()
 
+        # Cleanup expired refresh tokens (GDPR Art. 5(1)(e) storage limitation)
+        tokens_removed = await cleanup_expired_refresh_tokens()
+
         # Garbage Collection
         gc.collect()
 
-        if files_removed > 0 or items_removed > 0 or jobs_removed > 0:
+        if files_removed > 0 or items_removed > 0 or jobs_removed > 0 or tokens_removed > 0:
             logger.info(
-                f"🧹 Cleanup: {files_removed} files, {items_removed} memory items, {jobs_removed} database jobs removed"
+                f"🧹 Cleanup: {files_removed} files, {items_removed} memory items, "
+                f"{jobs_removed} database jobs, {tokens_removed} expired tokens removed"
             )
 
         return files_removed
@@ -346,6 +351,53 @@ async def cleanup_old_database_jobs():
     except Exception as e:
         logger.error(f"❌ Database cleanup error: {e}")
         return jobs_removed
+
+
+async def cleanup_expired_refresh_tokens() -> int:
+    """Delete expired refresh tokens for GDPR Art. 5(1)(e) storage limitation compliance.
+
+    Removes refresh tokens that have passed their expiration date. These tokens
+    are no longer usable for authentication and should not be retained.
+
+    Returns:
+        int: Number of expired tokens deleted
+
+    Note:
+        **GDPR Compliance**:
+        Art. 5(1)(e) requires that personal data be kept for no longer than necessary.
+        Expired tokens serve no purpose and must be deleted promptly.
+
+        **What Gets Deleted**:
+        - Tokens where expires_at < current time
+        - Both revoked and non-revoked expired tokens
+
+        **Error Handling**:
+        Exceptions logged but don't propagate - cleanup continues.
+        Returns 0 on error to allow monitoring without disruption.
+    """
+    tokens_removed = 0
+
+    try:
+        from app.database.connection import get_db_session
+        from app.repositories.refresh_token_repository import RefreshTokenRepository
+
+        db = next(get_db_session())
+
+        try:
+            refresh_token_repo = RefreshTokenRepository(db)
+            tokens_removed = refresh_token_repo.cleanup_expired_tokens()
+
+            if tokens_removed > 0:
+                logger.info(f"🔐 Cleaned up {tokens_removed} expired refresh tokens")
+
+            return tokens_removed
+
+        finally:
+            db.close()
+
+    except Exception as e:
+        logger.error(f"❌ Refresh token cleanup error: {e}")
+        return tokens_removed
 
 
 async def cleanup_orphaned_step_executions(db=None):

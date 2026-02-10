@@ -33,8 +33,8 @@ class FeedbackRepository(EncryptedRepositoryMixin, BaseRepository[UserFeedbackDB
     Encrypted fields: ai_analysis_text
     """
 
-    # Define fields to encrypt (ai_analysis_text may contain medical document excerpts)
-    encrypted_fields = ["ai_analysis_text"]
+    # Define fields to encrypt (ai_analysis_text and comment may contain medical document excerpts)
+    encrypted_fields = ["ai_analysis_text", "comment"]
 
     def __init__(self, db: Session):
         """
