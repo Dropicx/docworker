@@ -1,52 +1,105 @@
 {
   "datenschutz": {
     "pageTitle": "Datenschutzerklärung",
+    "websiteName": "healthlingo.de",
     "section1": {
       "title": "1. Datenschutz auf einen Blick",
       "generalTitle": "Allgemeine Hinweise",
       "generalText": "Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.",
-      "dataCollectionTitle": "Datenerfassung auf dieser Website",
-      "responsibleText": "Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber. Dessen Kontaktdaten können Sie dem Impressum dieser Website entnehmen.",
       "responsibleQuestion": "Wer ist verantwortlich für die Datenerfassung auf dieser Website?",
-      "anonymousTitle": "Anonyme Nutzung unseres Dienstes",
-      "anonymousText": "Unser Übersetzungsdienst funktioniert vollständig anonym. Sie benötigen kein Benutzerkonto und müssen sich nicht registrieren, um Dokumente zu übersetzen. Wir speichern keine personenbezogenen Daten von Endnutzern. Die Verarbeitung Ihrer Dokumente erfolgt ohne Zuordnung zu einer persönlichen Identität.",
+      "responsibleIntro": "Die Datenverarbeitung auf dieser Website erfolgt durch:",
+      "responsibleName": "[Vorname Nachname / Firmenname]",
+      "responsibleAddress": "[Straße und Hausnummer]",
+      "responsibleCity": "[PLZ Ort]",
+      "responsibleEmail": "E-Mail: [E-Mail-Adresse]",
+      "responsiblePhone": "Telefon: [Telefonnummer]",
+      "dpoTitle": "Datenschutzbeauftragter",
+      "dpoText": "[Falls ein DSB bestellt ist, hier Name und Kontaktdaten einfügen. Falls kein DSB erforderlich ist, diesen Abschnitt entfernen.]",
+      "dpoName": "[Name des Datenschutzbeauftragten]",
+      "dpoEmail": "E-Mail: [DSB E-Mail-Adresse]",
+      "serviceTitle": "Nutzung unseres Dienstes",
+      "serviceText": "Unser Übersetzungsdienst funktioniert mit minimaler Datenerhebung. Sie benötigen kein Benutzerkonto und müssen sich nicht registrieren, um Dokumente zu übersetzen. Wir speichern keine personenbezogenen Daten von Endnutzern über die Verarbeitungsdauer hinaus. Die Verarbeitung Ihrer Dokumente erfolgt ohne Zuordnung zu einer persönlichen Identität.",
       "howCollectQuestion": "Wie erfassen wir Ihre Daten?",
-      "howCollectText": "Die einzigen Daten, die wir erheben, sind die Dokumente, die Sie zur Übersetzung hochladen. Diese werden ausschließlich für die Dauer der Verarbeitung temporär gespeichert. Wir erfassen keine weiteren personenbezogenen Daten von Ihnen.",
+      "howCollectText": "Die einzigen Daten, die wir aktiv erheben, sind die Dokumente, die Sie zur Übersetzung hochladen. Darüber hinaus werden automatisch technische Daten erfasst (wie Ihre IP-Adresse), die für den Betrieb der Website technisch erforderlich sind. Diese werden nach maximal 1 Stunde gelöscht.",
       "purposeQuestion": "Wofür nutzen wir Ihre Daten?",
-      "purposeText": "Die hochgeladenen Dokumente werden ausschließlich zum Zweck der Übersetzung verarbeitet. Nach Abschluss der Verarbeitung werden alle personenbezogenen Daten automatisch gelöscht. Lediglich anonyme Nutzungsstatistiken (Token-Anzahl, Kosten) werden zur Dienstverbesserung aufbewahrt. Es erfolgt keine Weitergabe an Dritte und keine Nutzung für andere Zwecke.",
+      "purposeText": "Die hochgeladenen Dokumente werden ausschließlich zum Zweck der Übersetzung verarbeitet. Nach Abschluss der Verarbeitung werden alle personenbezogenen Daten automatisch gelöscht. Lediglich anonyme Nutzungsstatistiken (Token-Anzahl, Kosten) werden zur Dienstverbesserung aufbewahrt. Es erfolgt keine Weitergabe an Dritte zu eigenen Zwecken und keine Nutzung als KI-Trainingsdaten.",
       "rightsQuestion": "Welche Rechte haben Sie bezüglich Ihrer Daten?",
-      "rightsText": "Da wir keine personenbezogenen Daten von Endnutzern speichern und die Verarbeitung vollständig anonym erfolgt, sind die meisten DSGVO-Rechte (wie Auskunft, Berichtigung, Löschung) nicht anwendbar. Ihre Dokumente werden automatisch nach der Verarbeitung gelöscht, sodass keine Daten mehr vorhanden sind, über die Auskunft erteilt werden könnte.",
-      "voluntaryTitle": "Freiwilligkeit der Datenbereitstellung",
-      "voluntaryText": "Die Bereitstellung Ihrer Dokumente ist freiwillig. Ohne das Hochladen eines Dokuments kann unser Übersetzungsdienst jedoch nicht genutzt werden. Sie entscheiden selbst, welche Dokumente Sie zur Übersetzung einreichen."
+      "rightsText": "Sie haben jederzeit das Recht auf Auskunft über Herkunft, Empfänger und Zweck Ihrer gespeicherten personenbezogenen Daten. Sie haben ferner ein Recht auf Berichtigung, Einschränkung der Verarbeitung oder Löschung dieser Daten. Hierzu sowie zu weiteren Fragen zum Thema Datenschutz können Sie sich jederzeit an uns wenden. Ferner steht Ihnen ein Beschwerderecht bei der zuständigen Aufsichtsbehörde zu."
     },
     "section2": {
       "title": "2. Allgemeine Hinweise und Pflichtinformationen",
       "privacyTitle": "Datenschutz",
       "privacyText": "Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst. Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend den gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.",
-      "responsibleTitle": "Hinweis zur verantwortlichen Stelle",
-      "responsibleText": "Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist im Impressum angegeben. Verantwortliche Stelle ist die natürliche oder juristische Person, die allein oder gemeinsam mit anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten entscheidet.",
+      "responsibleTitle": "Verantwortliche Stelle",
+      "responsibleIntro": "Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:",
+      "responsibleName": "[Vorname Nachname / Firmenname]",
+      "responsibleAddress": "[Straße und Hausnummer]",
+      "responsibleCity": "[PLZ Ort]",
+      "responsibleEmail": "E-Mail: [E-Mail-Adresse]",
+      "responsiblePhone": "Telefon: [Telefonnummer]",
+      "responsibleNote": "Verantwortliche Stelle ist die natürliche oder juristische Person, die allein oder gemeinsam mit anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten (z. B. Namen, E-Mail-Adressen o. Ä.) entscheidet.",
+      "supervisoryTitle": "Zuständige Aufsichtsbehörde",
+      "supervisoryName": "Landesbeauftragte/r für Datenschutz und Informationsfreiheit [Bundesland]",
+      "supervisoryAddress": "[Adresse]",
+      "supervisoryEmail": "[E-Mail]",
+      "supervisoryPhone": "[Telefon]",
+      "definitionsTitle": "Begriffsbestimmungen",
+      "definitionsIntro": "Nach dem Vorbild des Art. 4 DSGVO liegen dieser Datenschutzerklärung folgende Begriffsbestimmungen zugrunde:",
+      "definitions": [
+        {
+          "term": "Personenbezogene Daten",
+          "article": "Art. 4 Nr. 1 DSGVO",
+          "definition": "sind alle Informationen, die sich auf eine identifizierte oder identifizierbare Person beziehen."
+        },
+        {
+          "term": "Verarbeiten",
+          "article": "Art. 4 Nr. 2 DSGVO",
+          "definition": "ist jeder Vorgang, bei dem mit personenbezogenen Daten umgegangen wird, gleich ob mit oder ohne Hilfe automatisierter Verfahren."
+        },
+        {
+          "term": "Verantwortliche/r",
+          "article": "Art. 4 Nr. 7 DSGVO",
+          "definition": "ist die natürliche oder juristische Person, die allein oder gemeinsam mit anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten entscheidet."
+        },
+        {
+          "term": "Auftragsverarbeiter/in",
+          "article": "Art. 4 Nr. 8 DSGVO",
+          "definition": "ist eine natürliche oder juristische Person, die personenbezogene Daten im Auftrag des Verantwortlichen verarbeitet."
+        },
+        {
+          "term": "Einwilligung",
+          "article": "Art. 4 Nr. 11 DSGVO",
+          "definition": "bezeichnet jede freiwillig für den bestimmten Fall, in informierter Weise und unmissverständlich abgegebene Willensbekundung, mit der die betroffene Person zu verstehen gibt, dass sie mit der Verarbeitung der sie betreffenden personenbezogenen Daten einverstanden ist."
+        },
+        {
+          "term": "Gesundheitsdaten",
+          "article": "Art. 4 Nr. 15 DSGVO",
+          "definition": "sind personenbezogene Daten, die sich auf die körperliche oder geistige Gesundheit einer natürlichen Person beziehen und aus denen Informationen über deren Gesundheitszustand hervorgehen."
+        }
+      ],
       "storageTitle": "Speicherdauer",
-      "storageText": "Hochgeladene Dokumente und deren Übersetzungen werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen. Falls Sie die Seite nicht aktiv verlassen, werden die Daten spätestens nach 1 Stunde automatisch gelöscht. Diese Frist ermöglicht es Ihnen, uns Feedback zu Ihrer Übersetzung zu geben. Folgende Daten werden bereinigt:",
+      "storageText": "Hochgeladene Dokumente und deren Übersetzungen werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen. Falls Sie die Seite nicht aktiv verlassen, werden die Daten spätestens nach 1 Stunde automatisch gelöscht. Diese Frist ermöglicht es Ihnen, uns optionales Feedback zu Ihrer Übersetzung zu geben. Folgende Daten werden bereinigt:",
       "storageItems": [
         "Das hochgeladene Originaldokument",
         "Die extrahierten Texte (nach PII-Entfernung)",
         "Die Übersetzungsergebnisse",
         "Verarbeitungsmetadaten mit personenbezogenen Daten",
-        "IP-Adressen (für Sicherheitsprotokollierung)"
+        "IP-Adressen"
       ],
+      "storageNote": "Diese sofortige Löschung bei Verlassen der Seite maximiert Ihren Datenschutz. Nach der Löschung sind die Daten nicht mehr wiederherstellbar.",
       "storageRetainedTitle": "Aufbewahrte anonyme Daten",
       "storageRetainedText": "Zur Verbesserung unseres Dienstes und zur Kostenüberwachung behalten wir ausschließlich anonyme, aggregierte Nutzungsstatistiken (z.B. Token-Anzahl, Verarbeitungskosten, verwendete KI-Modelle). Diese Daten enthalten keine personenbezogenen Informationen und können nicht zu Ihnen zurückverfolgt werden.",
-      "storageNote": "Diese sofortige Löschung bei Verlassen der Seite maximiert Ihren Datenschutz. Nach der Löschung sind die Daten nicht mehr wiederherstellbar. Als zusätzliche Sicherheit werden Daten, die nicht durch das Verlassen der Seite gelöscht wurden (z.B. bei Verbindungsabbruch), spätestens nach 1 Stunde automatisch entfernt. Die 1-Stunden-Frist dient dazu, Ihnen Zeit für die optionale Feedbackabgabe zu geben.",
+      "voluntaryTitle": "Freiwilligkeit der Datenbereitstellung",
+      "voluntaryText": "Die Bereitstellung Ihrer Dokumente ist freiwillig. Ohne das Hochladen eines Dokuments kann unser Übersetzungsdienst jedoch nicht genutzt werden. Sie entscheiden selbst, welche Dokumente Sie zur Übersetzung einreichen. Es besteht keine gesetzliche oder vertragliche Verpflichtung zur Bereitstellung personenbezogener Daten.",
       "sslTitle": "SSL- bzw. TLS-Verschlüsselung",
       "sslText": "Diese Seite nutzt aus Sicherheitsgründen und zum Schutz der Übertragung vertraulicher Inhalte, wie zum Beispiel medizinischer Dokumente, die Sie an uns senden, eine SSL- bzw. TLS-Verschlüsselung. Eine verschlüsselte Verbindung erkennen Sie daran, dass die Adresszeile des Browsers von \"http://\" auf \"https://\" wechselt und an dem Schloss-Symbol in Ihrer Browserzeile."
     },
     "section3": {
       "title": "3. Datenerfassung auf dieser Website",
       "cookiesTitle": "Cookies",
-      "cookiesText1": "Wir verwenden keine Cookies.",
-      "cookiesText2": "Unser Dienst funktioniert vollständig ohne Cookies. Wir setzen weder Tracking-Cookies noch Analyse-Cookies noch Marketing-Cookies. Dies wird auch durch unser Cookie-freies Hinweis-Banner auf der Website transparent kommuniziert.",
-      "cookiesText3": "Die einzige lokale Speicherung, die wir verwenden, ist der Browser-LocalStorage, um Ihre Präferenz für das Cookie-Hinweis-Banner zu speichern (ob Sie das Banner geschlossen haben). Diese Information wird nur lokal in Ihrem Browser gespeichert und nicht an unseren Server übertragen.",
-      "cookiesText4": "Da wir keine Cookies verwenden, ist keine Cookie-Einwilligung erforderlich. Unser Dienst respektiert Ihre Privatsphäre von Anfang an und verzichtet vollständig auf Tracking und Analyse-Cookies.",
+      "cookiesText": "Wir verwenden keine Cookies. Unser Dienst funktioniert vollständig ohne Cookies. Wir setzen weder Tracking-Cookies noch Analyse-Cookies noch Marketing-Cookies ein. Dies wird auch durch unser Cookie-freies Hinweis-Banner auf der Website transparent kommuniziert.",
+      "cookiesLocalStorage": "Die einzige lokale Speicherung, die wir verwenden, ist der Browser-LocalStorage, um Ihre Präferenz für das Cookie-Hinweis-Banner zu speichern (ob Sie das Banner geschlossen haben). Diese Information wird nur lokal in Ihrem Browser gespeichert und nicht an unseren Server übertragen.",
+      "cookiesConsentNote": "Da wir keine Cookies verwenden, ist keine Cookie-Einwilligung erforderlich.",
       "serverLogsTitle": "Server-Log-Dateien",
       "serverLogsText": "Der Provider der Seiten erhebt und speichert automatisch Informationen in so genannten Server-Log-Dateien, die Ihr Browser automatisch an uns übermittelt. Dies sind:",
       "serverLogsItems": [
@@ -57,111 +110,227 @@
         "Uhrzeit der Serveranfrage",
         "IP-Adresse"
       ],
-      "serverLogsNote": "Eine Zusammenführung dieser Daten mit anderen Datenquellen wird nicht vorgenommen.",
-      "serverLogsLegalBasis": "Die Verarbeitung von Server-Logdaten (IP-Adressen, Browserinformationen) erfolgt auf Grundlage unseres berechtigten Interesses an der Sicherheit und Stabilität unserer Dienste gemäß Art. 6 Abs. 1 lit. f DSGVO. Die Logdaten werden nach maximal 1 Stunde automatisch gelöscht.",
+      "serverLogsNote": "Eine Zusammenführung dieser Daten mit anderen Datenquellen wird nicht vorgenommen. Die Verarbeitung von Server-Logdaten erfolgt auf Grundlage unseres berechtigten Interesses an der Sicherheit und Stabilität unserer Dienste gemäß Art. 6 Abs. 1 lit. f DSGVO. Die Logdaten werden nach maximal 1 Stunde automatisch gelöscht.",
+      "serverLogsObjection": "Ihr Widerspruchsrecht: Sie haben das Recht, aus Gründen, die sich aus Ihrer besonderen Situation ergeben, jederzeit gegen die Verarbeitung Ihrer personenbezogenen Daten auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO Widerspruch einzulegen (Art. 21 DSGVO). Richten Sie Ihren Widerspruch bitte an die oben genannten Kontaktdaten.",
       "medicalTitle": "Verarbeitung medizinischer Dokumente",
       "medicalText": "Bei der Nutzung unseres Übersetzungsdienstes für medizinische Dokumente gelten folgende Datenschutzmaßnahmen:",
       "medicalItems": [
-        "Automatische PII-Entfernung: Vor der Verarbeitung durch KI-Systeme werden personenbezogene Informationen (Namen, Adressen, Telefonnummern, Geburtsdaten, Versicherungsnummern) automatisch aus den Dokumenten entfernt. Dies erfolgt lokal auf unseren Servern mit Hilfe von spaCy NER (Natural Entity Recognition) und speziellen Mustern für deutsche medizinische Dokumente.",
-        "Temporäre Speicherung: Dokumente werden nur für die Dauer der Verarbeitung (maximal 1 Stunde) temporär gespeichert, um Ihnen Zeit für die Feedbackabgabe zu geben",
-        "Automatische Löschung: Nach Abschluss der Übersetzung werden alle personenbezogenen Daten automatisch gelöscht (anonyme Nutzungsstatistiken bleiben erhalten)",
-        "Keine dauerhafte Speicherung: Es erfolgt keine dauerhafte Speicherung von Dokumenten oder Übersetzungen",
-        "Keine Weitergabe: Keine Weitergabe der Daten an Dritte (außer an Mistral AI (Frankreich) für OCR und Übersetzung sowie Hetzner (Deutschland) für die PII-Entfernung. Für die Übersetzung werden nur PII-bereinigte Texte übertragen)",
-        "Verschlüsselte Übertragung: Alle Daten werden über HTTPS/TLS verschlüsselt übertragen",
-        "Verschlüsselung bei Speicherung: Alle hochgeladenen Dokumente werden mit AES-128 (Fernet) verschlüsselt in der Datenbank gespeichert. Administratorkonten verwenden zusätzlich verschlüsselte Speicherung für E-Mail-Adressen und Namen.",
-        "Keine Cookies: Unser Dienst verwendet keine Cookies und speichert keine Tracking-Daten. Dies wird durch ein Cookie-freies Hinweis-Banner auf der Website transparent kommuniziert."
+        {
+          "title": "Automatische PII-Entfernung",
+          "text": "Vor der Verarbeitung durch KI-Systeme werden personenbezogene Informationen (Namen, Adressen, Telefonnummern, Geburtsdaten, Versicherungsnummern) automatisch aus den Dokumenten entfernt. Dies erfolgt lokal auf unseren Servern mit Hilfe von spaCy NER (Natural Entity Recognition) und speziellen Mustern für deutsche medizinische Dokumente."
+        },
+        {
+          "title": "Temporäre Speicherung",
+          "text": "Dokumente werden nur für die Dauer der Verarbeitung (maximal 1 Stunde) temporär gespeichert."
+        },
+        {
+          "title": "Automatische Löschung",
+          "text": "Nach Abschluss der Übersetzung bzw. beim Verlassen der Ergebnisseite werden alle personenbezogenen Daten automatisch gelöscht. Lediglich anonyme Nutzungsstatistiken bleiben erhalten."
+        },
+        {
+          "title": "Keine dauerhafte Speicherung",
+          "text": "Es erfolgt keine dauerhafte Speicherung von Dokumenten oder Übersetzungen."
+        },
+        {
+          "title": "Keine Nutzung als Trainingsdaten",
+          "text": "Ihre Dokumente und Übersetzungen werden nicht als Trainingsdaten für KI-Modelle verwendet."
+        },
+        {
+          "title": "Verschlüsselte Übertragung",
+          "text": "Alle Daten werden über HTTPS/TLS verschlüsselt übertragen."
+        },
+        {
+          "title": "Verschlüsselung bei Speicherung",
+          "text": "Alle hochgeladenen Dokumente werden mit AES-256 verschlüsselt in der Datenbank gespeichert. Administratorkonten verwenden zusätzlich verschlüsselte Speicherung für E-Mail-Adressen und Namen."
+        },
+        {
+          "title": "Keine Cookies",
+          "text": "Unser Dienst verwendet keine Cookies und speichert keine Tracking-Daten."
+        },
+        {
+          "title": "Keine Drittlandtransfers",
+          "text": "Die gesamte Datenverarbeitung erfolgt ausschließlich innerhalb der EU (Deutschland und Frankreich)."
+        }
       ]
     },
     "section4": {
-      "title": "4. Ihre Rechte",
-      "intro": "Da unser Dienst vollständig anonym funktioniert und wir keine personenbezogenen Daten von Endnutzern speichern, sind die meisten DSGVO-Rechte in diesem Kontext nicht direkt anwendbar. Ihre Dokumente werden automatisch nach der Verarbeitung gelöscht, sodass keine Daten mehr vorhanden sind, über die Auskunft erteilt werden könnte.",
-      "accessTitle": "Auskunftsrecht",
-      "accessText": "Da wir keine personenbezogenen Daten von Endnutzern speichern und die Verarbeitung anonym erfolgt, können wir keine Auskunft über gespeicherte Daten erteilen, da keine solchen Daten existieren. Falls Sie Fragen zum Thema Datenschutz haben, können Sie sich jederzeit an uns wenden (siehe Kontakt im Impressum).",
-      "deletionTitle": "Recht auf Löschung",
-      "deletionText": "Ihre hochgeladenen Dokumente werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen. Es ist keine manuelle Löschung erforderlich. Sollten Sie Feedback mit Einwilligung abgegeben haben, können Sie die Löschung Ihrer Daten jederzeit durch Kontaktaufnahme mit uns anfordern.",
-      "restrictionTitle": "Recht auf Einschränkung der Verarbeitung",
-      "restrictionText": "Sie können jederzeit die Verarbeitung Ihrer Dokumente abbrechen, indem Sie den Verarbeitungsprozess beenden, bevor die Übersetzung abgeschlossen ist. In diesem Fall werden die Daten sofort gelöscht.",
-      "portabilityTitle": "Recht auf Datenübertragbarkeit",
-      "portabilityText": "Da wir keine personenbezogenen Daten von Endnutzern speichern, gibt es keine Daten, die übertragen werden könnten. Die Übersetzungsergebnisse können Sie direkt nach der Verarbeitung herunterladen.",
-      "complaintTitle": "Beschwerderecht bei einer Aufsichtsbehörde",
-      "complaintText": "Im Falle von Verstößen gegen die DSGVO steht Ihnen ein Beschwerderecht bei einer Aufsichtsbehörde zu, insbesondere in dem Mitgliedstaat Ihres gewöhnlichen Aufenthalts, Ihres Arbeitsplatzes oder des Orts des mutmaßlichen Verstoßes.",
-      "withdrawalTitle": "Recht auf Widerruf der Einwilligung",
-      "withdrawalText": "Soweit die Verarbeitung auf Ihrer Einwilligung beruht (insbesondere bei Gesundheitsdaten nach Art. 9 Abs. 2 lit. a DSGVO), können Sie diese Einwilligung jederzeit widerrufen. Der Widerruf kann durch Abbrechen des Verarbeitungsprozesses, Schließen des Browsers oder durch Kontaktaufnahme mit uns erfolgen. Der Widerruf berührt nicht die Rechtmäßigkeit der aufgrund der Einwilligung bis zum Widerruf erfolgten Verarbeitung. Nach dem Widerruf werden alle Ihre Daten umgehend gelöscht."
+      "title": "4. Rechtsgrundlagen der Verarbeitung",
+      "intro": "Für die verschiedenen Verarbeitungstätigkeiten stützen wir uns auf folgende Rechtsgrundlagen:",
+      "legalBases": [
+        {
+          "activity": "Dokumentenverarbeitung (ohne Gesundheitsdaten)",
+          "basis": "Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung)",
+          "explanation": "Die Verarbeitung ist erforderlich, um den zwischen Ihnen und uns geschlossenen Nutzungsvertrag über die Bereitstellung digitaler Inhalte (§§ 327 ff. BGB) zu erfüllen."
+        },
+        {
+          "activity": "Verarbeitung von Gesundheitsdaten",
+          "basis": "Art. 9 Abs. 2 lit. a DSGVO (ausdrückliche Einwilligung)",
+          "explanation": "Die Verarbeitung besonderer Kategorien personenbezogener Daten erfolgt ausschließlich auf Grundlage Ihrer ausdrücklichen und separaten Einwilligung (siehe Abschnitt 9 – Ihre Einwilligung)."
+        },
+        {
+          "activity": "Server-Logdaten",
+          "basis": "Art. 6 Abs. 1 lit. f DSGVO (berechtigte Interessen)",
+          "explanation": "Die Verarbeitung ist zur Gewährleistung der Sicherheit und Stabilität unserer Dienste erforderlich."
+        },
+        {
+          "activity": "Feedback (optional)",
+          "basis": "Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)",
+          "explanation": "Die Verarbeitung Ihrer Feedbackdaten erfolgt auf Grundlage Ihrer freiwilligen Einwilligung."
+        }
+      ]
     },
     "section5": {
       "title": "5. Besondere Hinweise zum Gesundheitsdatenschutz",
       "intro": "Da unser Dienst die Verarbeitung medizinischer Dokumente ermöglicht, die möglicherweise Gesundheitsdaten enthalten, weisen wir besonders darauf hin:",
       "items": [
-        "Gesundheitsdaten gehören zu den besonderen Kategorien personenbezogener Daten nach Art. 9 DSGVO",
-        "Wir verarbeiten diese Daten ausschließlich zum Zweck der Übersetzung und nur nach Ihrer ausdrücklichen Einwilligung (durch das Akzeptieren der Datenschutzerklärung beim Hochladen)",
-        "Die Verarbeitung erfolgt vollständig anonym - es werden keine personenbezogenen Daten von Endnutzern gespeichert",
-        "Vor der KI-Verarbeitung werden alle personenbezogenen Informationen (Namen, Adressen, Telefonnummern, etc.) automatisch entfernt",
-        "Es werden besondere technische und organisatorische Maßnahmen zum Schutz dieser Daten getroffen (Verschlüsselung, kurze Speicherdauer, automatische Löschung)",
-        "Alle Daten werden beim Verlassen der Ergebnisseite automatisch gelöscht (spätestens nach 1 Stunde als Sicherheitsfallback für die Feedbackabgabe)"
+        "Gesundheitsdaten gehören zu den besonderen Kategorien personenbezogener Daten nach Art. 9 DSGVO.",
+        "Wir verarbeiten diese Daten ausschließlich zum Zweck der Übersetzung und nur nach Ihrer ausdrücklichen und separaten Einwilligung (siehe Abschnitt 9).",
+        "Vor der KI-Verarbeitung werden alle personenbezogenen Informationen (Namen, Adressen, Telefonnummern, etc.) automatisch entfernt.",
+        "Es werden besondere technische und organisatorische Maßnahmen zum Schutz dieser Daten getroffen (Verschlüsselung, kurze Speicherdauer, automatische Löschung, EU-only Verarbeitung).",
+        "Alle Daten werden beim Verlassen der Ergebnisseite automatisch gelöscht (spätestens nach 1 Stunde als Sicherheitsfallback).",
+        "Die Übersetzungsergebnisse dienen ausschließlich Ihrer Information und ersetzen nicht die ärztliche Aufklärung und Beratung. Es findet keine Prüfung, Diagnose oder Therapieempfehlung statt."
       ]
     },
     "section6": {
-      "title": "6. Kontakt und Datenschutzanfragen",
-      "text": "Bei Fragen zum Datenschutz oder zur Ausübung Ihrer Rechte können Sie sich jederzeit an uns wenden. Die Kontaktdaten finden Sie im",
-      "impressumLink": "Impressum",
-      "responsibleLabel": "Verantwortliche Stelle:",
-      "responsibleText": "Die verantwortliche Stelle für die Datenverarbeitung ist im Impressum dieser Website angegeben."
-    },
-    "section7": {
-      "title": "7. Drittparteien und Datenverarbeitung",
-      "intro": "Für die Bereitstellung unseres Dienstes nutzen wir folgende Drittanbieter:",
-      "items": [
-        "Mistral AI (Frankreich/EU): Für die KI-gestützte Texterkennung (OCR) und Übersetzung. Für die Übersetzung werden nur PII-bereinigte Texte an Mistral AI übertragen. Die Datenverarbeitung erfolgt in Frankreich innerhalb der EU. Hinweis: Bei der OCR-Verarbeitung wird das unbearbeitete Dokument an Mistral AI übertragen, bevor die PII-Entfernung erfolgen kann.",
-        "Hetzner (Deutschland/EU): Für die PII-Entfernung (Entfernung personenbezogener Daten) und als Fallback-OCR-Dienst (PaddleOCR). Die Server befinden sich in Deutschland.",
-        "Railway (EU): Für das Hosting der Anwendung und der verschlüsselten PostgreSQL-Datenbank. Railway ist SOC 2 Type I zertifiziert und bietet DSGVO-konforme Data Processing Agreements."
-      ],
-      "note": "Alle Datenverarbeitung erfolgt ausschließlich innerhalb der EU (Frankreich und Deutschland). Es finden keine internationalen Datenübertragungen statt.",
+      "title": "6. Drittparteien und Datenverarbeitung",
+      "intro": "Für die Bereitstellung unseres Dienstes nutzen wir folgende Drittanbieter. Die gesamte Datenverarbeitung erfolgt ausschließlich innerhalb der Europäischen Union.",
+      "mistral": {
+        "title": "Mistral AI (Frankreich/EU)",
+        "address": "Mistral AI, 15 rue des Halles, 75001 Paris, Frankreich",
+        "purpose": "KI-gestützte Texterkennung (OCR) und Übersetzung. Für die Übersetzung werden nur PII-bereinigte Texte an Mistral AI übertragen.",
+        "ocrNote": "Wichtiger Hinweis zur OCR: Bei der OCR-Verarbeitung wird das unbearbeitete Dokument an Mistral AI übertragen, bevor die PII-Entfernung erfolgen kann. Dieser Umstand ist in der separaten Einwilligungserklärung (Abschnitt 9) ausdrücklich abgedeckt.",
+        "legalBasis": "Art. 28 DSGVO (Auftragsverarbeitungsvertrag). Datenverarbeitung erfolgt in Frankreich innerhalb der EU."
+      },
+      "hetzner": {
+        "title": "Hetzner (Deutschland/EU)",
+        "address": "Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Deutschland",
+        "purpose": "PII-Entfernung (Entfernung personenbezogener Daten) und Fallback-OCR-Dienst (PaddleOCR). Die Server befinden sich in Deutschland.",
+        "legalBasis": "Art. 28 DSGVO (Auftragsverarbeitungsvertrag)."
+      },
+      "railway": {
+        "title": "Railway (EU)",
+        "address": "Railway Corporation",
+        "purpose": "Hosting der Anwendung und der verschlüsselten PostgreSQL-Datenbank. Railway ist SOC 2 Type I zertifiziert und bietet DSGVO-konforme Data Processing Agreements.",
+        "legalBasis": "Art. 28 DSGVO (Auftragsverarbeitungsvertrag).",
+        "thirdCountryNote": "[Hinweis: Railway ist ein US-Unternehmen. Prüfen Sie, ob technisch und vertraglich ein US-Zugriff ausgeschlossen ist. Falls nicht, ergänzen Sie entsprechende Formulierungen zu Drittlandtransfer und EU-Standardvertragsklauseln.]"
+      },
       "dpaNote": "Mit allen genannten Drittanbietern bestehen Auftragsverarbeitungsverträge (AVV) gemäß Art. 28 DSGVO, die den Schutz Ihrer Daten nach europäischen Datenschutzstandards gewährleisten. Diese Verträge verpflichten unsere Partner zur Einhaltung strenger Datenschutzanforderungen und zur ausschließlichen Verarbeitung nach unseren Weisungen."
     },
-    "section7a": {
-      "title": "7a. Wichtiger Hinweis zur Entfernung personenbezogener Daten",
-      "intro": "Bitte beachten Sie folgenden wichtigen Hinweis zur automatischen Entfernung personenbezogener Daten (PII):",
+    "section7": {
+      "title": "7. Wichtiger Hinweis zur Entfernung personenbezogener Daten",
       "warning": "KEINE GARANTIE FÜR VOLLSTÄNDIGE PII-ENTFERNUNG",
-      "items": [
-        "Die automatische Entfernung personenbezogener Daten ist ein Best-Effort-Verfahren. Wir können NICHT garantieren, dass alle personenbezogenen Daten zu 100% erkannt und entfernt werden.",
-        "Trotz fortschrittlicher Technologien (spaCy NER, Microsoft Presidio, Regex-Mustererkennung) können ungewöhnliche Namensformate, handschriftliche Notizen oder atypische Dokumentstrukturen dazu führen, dass personenbezogene Daten nicht erkannt werden.",
-        "WICHTIG: Bei der OCR-Verarbeitung wird Ihr Dokument zunächst an Mistral AI (Frankreich) übertragen, BEVOR die PII-Entfernung erfolgen kann. Erst nach der Texterkennung werden personenbezogene Daten entfernt.",
-        "Vor dem Hochladen empfehlen wir dringend, offensichtliche personenbezogene Daten wie Namen, Adressen, Geburtsdaten und Versicherungsnummern manuell zu schwärzen oder zu entfernen.",
-        "Medizinische Fachbegriffe, Diagnosen und Befunde werden bewusst NICHT entfernt, da sie für die Übersetzung erforderlich sind."
-      ],
-      "consent": "Mit dem Hochladen Ihrer Dokumente und dem Akzeptieren der Datenschutzerklärung bestätigen Sie, dass Sie diesen Hinweis verstanden haben und akzeptieren, dass die PII-Entfernung nicht zu 100% garantiert werden kann."
+      "warningText": "Die automatische Entfernung personenbezogener Daten ist ein Best-Effort-Verfahren. Wir können nicht garantieren, dass alle personenbezogenen Daten zu 100 % erkannt und entfernt werden.",
+      "limitationsText": "Trotz fortschrittlicher Technologien (spaCy NER, Microsoft Presidio, Regex-Mustererkennung) können ungewöhnliche Namensformate, handschriftliche Notizen oder atypische Dokumentstrukturen dazu führen, dass personenbezogene Daten nicht erkannt werden.",
+      "ocrWarning": "Wichtig: Bei der OCR-Verarbeitung wird Ihr Dokument zunächst an Mistral AI (Frankreich) übertragen, BEVOR die PII-Entfernung erfolgen kann. Erst nach der Texterkennung werden personenbezogene Daten entfernt.",
+      "recommendation": "Vor dem Hochladen empfehlen wir dringend, offensichtliche personenbezogene Daten wie Namen, Adressen, Geburtsdaten und Versicherungsnummern manuell zu schwärzen oder zu entfernen.",
+      "medicalTermsNote": "Medizinische Fachbegriffe, Diagnosen und Befunde werden bewusst nicht entfernt, da sie für die Übersetzung erforderlich sind.",
+      "consent": "Mit dem Hochladen Ihrer Dokumente und der Erteilung Ihrer ausdrücklichen Einwilligung (Abschnitt 9) bestätigen Sie, dass Sie diesen Hinweis verstanden haben und akzeptieren, dass die PII-Entfernung nicht zu 100 % garantiert werden kann."
     },
     "section8": {
       "title": "8. Automatisierte Verarbeitung und künstliche Intelligenz",
       "intro": "Unser Dienst verwendet künstliche Intelligenz (KI) für die Texterkennung (OCR) und Übersetzung Ihrer Dokumente. Wir möchten Sie über folgende wichtige Punkte informieren:",
       "items": [
-        "Die KI wird ausschließlich für technische Aufgaben (Texterkennung, Übersetzung) eingesetzt, NICHT für Entscheidungen, die Sie betreffen.",
-        "Es findet KEINE automatisierte Entscheidungsfindung im Sinne von Art. 22 DSGVO statt, die rechtliche Wirkung entfaltet oder Sie in ähnlicher Weise erheblich beeinträchtigt.",
-        "Es erfolgt KEIN Profiling - die KI analysiert keine persönlichen Merkmale, Vorlieben oder Verhaltensweisen.",
+        "Die KI wird ausschließlich für technische Aufgaben (Texterkennung, Übersetzung) eingesetzt, nicht für Entscheidungen, die Sie betreffen.",
+        "Es findet keine automatisierte Entscheidungsfindung im Sinne von Art. 22 DSGVO statt, die rechtliche Wirkung entfaltet oder Sie in ähnlicher Weise erheblich beeinträchtigt.",
+        "Es erfolgt kein Profiling – die KI analysiert keine persönlichen Merkmale, Vorlieben oder Verhaltensweisen.",
         "Sie behalten jederzeit die volle Kontrolle: Sie entscheiden, welche Dokumente hochgeladen werden, und können den Prozess jederzeit abbrechen.",
-        "Die Übersetzungsergebnisse dienen ausschließlich Ihrer Information und haben keine rechtlichen oder medizinischen Auswirkungen."
-      ],
-      "note": "Die verwendeten KI-Modelle (Mistral AI) werden von europäischen Anbietern betrieben und unterliegen der DSGVO. Die Modelle wurden nicht mit Ihren Daten trainiert und werden es auch nicht."
+        "Die Übersetzungsergebnisse dienen ausschließlich Ihrer Information und haben keine rechtlichen oder medizinischen Auswirkungen.",
+        "Die verwendeten KI-Modelle (Mistral AI) werden von europäischen Anbietern betrieben und unterliegen der DSGVO. Die Modelle wurden nicht mit Ihren Daten trainiert und werden es auch nicht."
+      ]
     },
     "section9": {
-      "title": "9. Feedback und Nutzerbewertungen",
+      "title": "9. Ihre Einwilligung",
+      "intro": "Die Gesundheitsdaten, die Sie uns bei der Nutzung von healthlingo.de mitteilen, sind besonders sensible personenbezogene Daten. Sie unterliegen einem besonderen Schutz nach Art. 9 DSGVO und dürfen insbesondere nicht ohne Ihre ausdrückliche Einwilligung verarbeitet werden.",
+      "consentRequest": "Wir bitten Sie daher um folgende separate Einwilligungserklärungen:",
+      "consent1": {
+        "title": "Einwilligung 1 – Verarbeitung von Gesundheitsdaten (erforderlich)",
+        "text": "Ich willige ausdrücklich ein, dass healthlingo.de meine gegebenenfalls in den hochgeladenen Dokumenten enthaltenen Gesundheitsdaten zum Zweck der Übersetzung verarbeiten darf. Mir ist bewusst, dass:",
+        "points": [
+          "vor der automatischen PII-Entfernung mein Dokument zunächst zur Texterkennung (OCR) an Mistral AI (Frankreich/EU) übertragen wird,",
+          "die automatische PII-Entfernung keine 100%ige Erkennung aller personenbezogenen Daten garantieren kann,",
+          "die gesamte Datenverarbeitung ausschließlich innerhalb der EU stattfindet,",
+          "meine Daten nach der Verarbeitung (spätestens nach 1 Stunde) automatisch gelöscht werden."
+        ],
+        "checkbox": "Ja, ich willige ein.",
+        "required": true
+      },
+      "consent2": {
+        "title": "Einwilligung 2 – Feedback und Qualitätsverbesserung (optional)",
+        "text": "Ich willige ein, dass mein Feedback und die zugehörigen anonymisierten Übersetzungsdaten für maximal 90 Tage zum Zweck der Qualitätsverbesserung gespeichert werden dürfen.",
+        "checkbox": "Ja, ich willige ein.",
+        "required": false
+      },
+      "consentNote": "Hinweis: Einwilligung 1 ist Voraussetzung für die Nutzung des Dienstes. Einwilligung 2 ist freiwillig und kann unabhängig erteilt oder verweigert werden. Jede Einwilligung kann jederzeit mit Wirkung für die Zukunft widerrufen werden.",
+      "withdrawalTitle": "Widerruf der Einwilligung",
+      "withdrawalText": "Jede dieser Einwilligungen kann von Ihnen jederzeit mit Wirkung für die Zukunft widerrufen werden. Der Widerruf kann erfolgen durch:",
+      "withdrawalMethods": [
+        "Abbrechen des Verarbeitungsprozesses",
+        "Schließen des Browsers bzw. Verlassen der Ergebnisseite",
+        "Kontaktaufnahme mit uns per E-Mail an [E-Mail-Adresse]"
+      ],
+      "withdrawalNote": "Der Widerruf berührt nicht die Rechtmäßigkeit der aufgrund der Einwilligung bis zum Widerruf erfolgten Verarbeitung. Nach dem Widerruf werden alle Ihre Daten umgehend gelöscht.",
+      "withdrawalConsequence": "Widerrufen Sie Einwilligung 1, können Sie healthlingo.de nicht mehr nutzen, da die Verarbeitung von Gesundheitsdaten Voraussetzung für die Erbringung unserer Dienstleistung ist."
+    },
+    "section10": {
+      "title": "10. Ihre Rechte",
+      "intro": "In Bezug auf Ihre bei uns verarbeiteten Daten haben Sie folgende Rechte:",
+      "accessTitle": "Recht auf Auskunft (Art. 15 DSGVO)",
+      "accessText": "Da wir keine personenbezogenen Daten von Endnutzern über die Verarbeitungsdauer hinaus speichern, können wir nach Abschluss der Verarbeitung keine Auskunft über gespeicherte Daten erteilen, da keine solchen Daten existieren. Während der Verarbeitung haben Sie das Recht, Auskunft über Ihre verarbeiteten Daten zu verlangen.",
+      "rectificationTitle": "Recht auf Berichtigung (Art. 16 DSGVO)",
+      "rectificationText": "Sie haben das Recht, die Berichtigung unrichtiger personenbezogener Daten zu verlangen.",
+      "deletionTitle": "Recht auf Löschung (Art. 17 DSGVO)",
+      "deletionText": "Ihre hochgeladenen Dokumente werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen. Es ist keine manuelle Löschung erforderlich. Sollten Sie Feedback mit Einwilligung abgegeben haben, können Sie die Löschung Ihrer Daten jederzeit durch Kontaktaufnahme mit uns anfordern.",
+      "restrictionTitle": "Recht auf Einschränkung der Verarbeitung (Art. 18 DSGVO)",
+      "restrictionText": "Sie können jederzeit die Verarbeitung Ihrer Dokumente abbrechen, indem Sie den Verarbeitungsprozess beenden, bevor die Übersetzung abgeschlossen ist. In diesem Fall werden die Daten sofort gelöscht.",
+      "portabilityTitle": "Recht auf Datenübertragbarkeit (Art. 20 DSGVO)",
+      "portabilityText": "Die Übersetzungsergebnisse können Sie direkt nach der Verarbeitung herunterladen.",
+      "objectionTitle": "Recht auf Widerspruch (Art. 21 DSGVO)",
+      "objectionText": "Soweit die Verarbeitung auf einem berechtigten Interesse (Art. 6 Abs. 1 lit. f DSGVO) beruht, haben Sie das Recht, aus Gründen, die sich aus Ihrer besonderen Situation ergeben, jederzeit Widerspruch gegen die Verarbeitung einzulegen. Dies betrifft insbesondere die Verarbeitung von Server-Logdaten.",
+      "withdrawalTitle": "Recht auf Widerruf der Einwilligung",
+      "withdrawalText": "Soweit die Verarbeitung auf Ihrer Einwilligung beruht (insbesondere bei Gesundheitsdaten nach Art. 9 Abs. 2 lit. a DSGVO), können Sie diese Einwilligung jederzeit widerrufen. Details finden Sie in Abschnitt 9.",
+      "complaintTitle": "Beschwerderecht bei einer Aufsichtsbehörde",
+      "complaintText": "Im Falle von Verstößen gegen die DSGVO steht Ihnen ein Beschwerderecht bei einer Aufsichtsbehörde zu, insbesondere in dem Mitgliedstaat Ihres gewöhnlichen Aufenthalts, Ihres Arbeitsplatzes oder des Orts des mutmaßlichen Verstoßes."
+    },
+    "section11": {
+      "title": "11. Feedback und Nutzerbewertungen",
       "intro": "Auf der Ergebnisseite haben Sie die Möglichkeit, uns freiwillig Feedback zu Ihrer Übersetzung zu geben. Bei der Abgabe von Feedback werden folgende Daten erfasst:",
       "dataCollected": [
-        "Ihre Gesamtbewertung (1-5 Sterne)",
+        "Ihre Gesamtbewertung (1–5 Sterne)",
         "Optionale Detailbewertungen (Verständlichkeit, Genauigkeit, Formatierung, Geschwindigkeit)",
         "Ihr optionaler Kommentar (maximal 2000 Zeichen)",
         "Ihre IP-Adresse",
         "Zeitpunkt der Feedbackabgabe"
       ],
-      "consentTitle": "Einwilligung zur Qualitätsverbesserung",
-      "consentText": "Die Abgabe von Feedback erfordert Ihre ausdrückliche Einwilligung zur Speicherung Ihrer Übersetzungsdaten für Qualitätsverbesserungszwecke. Ohne diese Einwilligung kann kein Feedback abgegeben werden.",
-      "retentionTitle": "Speicherdauer",
-      "retentionWithConsent": "Ausnahme bei Feedback: Wenn Sie Feedback mit Einwilligung zur Qualitätsverbesserung abgeben, werden Ihr Feedback und die zugehörigen Übersetzungsdaten für maximal 90 Tage gespeichert. Ohne Feedbackabgabe werden Ihre Daten sofort beim Verlassen der Ergebnisseite gelöscht. Sie können Ihre Einwilligung jederzeit widerrufen, woraufhin die Daten umgehend gelöscht werden.",
-      "legalBasis": "Die Verarbeitung Ihrer Feedbackdaten erfolgt auf Grundlage Ihrer Einwilligung gemäß Art. 6 Abs. 1 lit. a DSGVO. Bei der optionalen Qualitätsverbesserung erfolgt die Verarbeitung ebenfalls auf Grundlage Ihrer ausdrücklichen Einwilligung.",
-      "note": "Bitte beachten Sie: In Ihrem Kommentar sollten Sie keine personenbezogenen Daten (Namen, Adressen, Versicherungsnummern etc.) angeben. Solche Daten werden nicht automatisch entfernt und werden zusammen mit Ihrem Feedback gespeichert."
+      "consentNote": "Die Abgabe von Feedback erfordert Ihre separate Einwilligung (Einwilligung 2, Abschnitt 9). Ohne diese Einwilligung kann kein Feedback abgegeben werden.",
+      "retentionTitle": "Speicherdauer bei Feedback",
+      "retentionText": "Wenn Sie Feedback mit Einwilligung zur Qualitätsverbesserung abgeben, werden Ihr Feedback und die zugehörigen anonymisierten Übersetzungsdaten für maximal 90 Tage gespeichert. Sie können Ihre Einwilligung jederzeit widerrufen, woraufhin die Daten umgehend gelöscht werden.",
+      "warning": "Bitte beachten Sie: In Ihrem Kommentar sollten Sie keine personenbezogenen Daten (Namen, Adressen, Versicherungsnummern etc.) angeben. Solche Daten werden nicht automatisch entfernt und werden zusammen mit Ihrem Feedback gespeichert."
     },
-    "policyUpdatesTitle": "Aktualisierung dieser Datenschutzerklärung",
-    "policyUpdatesText": "Wir überprüfen und aktualisieren diese Datenschutzerklärung regelmäßig, um rechtliche Anforderungen zu erfüllen und Änderungen unserer Dienste widerzuspiegeln. Bei wesentlichen Änderungen werden wir Sie durch einen deutlichen Hinweis auf unserer Website informieren. Wir empfehlen Ihnen, diese Seite regelmäßig zu besuchen, um über aktuelle Datenschutzpraktiken informiert zu bleiben.",
+    "section12": {
+      "title": "12. Datensicherheit",
+      "intro": "Um Ihre personenbezogenen Daten zu schützen, haben wir gemäß Art. 32 DSGVO angemessene technische und organisatorische Sicherheitsmaßnahmen getroffen. Diese umfassen insbesondere:",
+      "measures": [
+        "Verschlüsselung aller Daten bei Übertragung (HTTPS/TLS) und Speicherung (AES-256)",
+        "Automatische Löschung aller personenbezogenen Daten nach der Verarbeitung",
+        "Automatische PII-Entfernung vor der KI-Verarbeitung",
+        "Ausschließliche Datenverarbeitung innerhalb der EU",
+        "Keine Verwendung von Cookies oder Tracking-Technologien",
+        "Regelmäßige Überprüfung der Sicherheitsmaßnahmen"
+      ]
+    },
+    "section13": {
+      "title": "13. Kontakt und Datenschutzanfragen",
+      "text": "Bei Fragen zum Datenschutz oder zur Ausübung Ihrer Rechte können Sie sich jederzeit an uns wenden:",
+      "contactName": "[Vorname Nachname / Firmenname]",
+      "contactEmail": "E-Mail: [E-Mail-Adresse]",
+      "contactAddress": "[ggf. Postadresse]",
+      "responseNote": "Bitte geben Sie genau an, welche Daten betroffen sind und welches Recht Sie ausüben möchten. Wir werden auf Ihr Verlangen so schnell wie möglich, spätestens jedoch innerhalb eines Monats, reagieren."
+    },
+    "section14": {
+      "title": "14. Aktualisierung dieser Datenschutzerklärung",
+      "text": "Wir überprüfen und aktualisieren diese Datenschutzerklärung regelmäßig, um rechtliche Anforderungen zu erfüllen und Änderungen unserer Dienste widerzuspiegeln. Bei wesentlichen Änderungen werden wir Sie durch einen deutlichen Hinweis auf unserer Website informieren. Wir empfehlen Ihnen, diese Seite regelmäßig zu besuchen, um über aktuelle Datenschutzpraktiken informiert zu bleiben.",
+      "versionNote": "Die aktuelle Version finden Sie immer auf unserer Website."
+    },
     "lastUpdated": "Stand:"
   },
   "impressum": {
