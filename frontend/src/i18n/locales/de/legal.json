@@ -148,8 +148,8 @@
           "text": "Unser Dienst verwendet keine Cookies und speichert keine Tracking-Daten."
         },
         {
-          "title": "Keine Drittlandtransfers",
-          "text": "Die gesamte Datenverarbeitung erfolgt ausschließlich innerhalb der EU (Deutschland und Frankreich)."
+          "title": "Datenverarbeitung vorwiegend in der EU",
+          "text": "Die Verarbeitung Ihrer Dokumente erfolgt ausschließlich innerhalb der EU (Deutschland und Frankreich). Für CDN- und Sicherheitsdienste (Cloudflare) kann eine Datenübertragung in die USA erfolgen, die durch EU-Standardvertragsklauseln und das EU-US Data Privacy Framework abgesichert ist (siehe Abschnitt 6)."
         }
       ]
     },
@@ -193,7 +193,20 @@
     },
     "section6": {
       "title": "6. Drittparteien und Datenverarbeitung",
-      "intro": "Für die Bereitstellung unseres Dienstes nutzen wir folgende Drittanbieter. Die gesamte Datenverarbeitung erfolgt ausschließlich innerhalb der Europäischen Union.",
+      "intro": "Für die Bereitstellung unseres Dienstes nutzen wir folgende Drittanbieter. Die Datenverarbeitung erfolgt überwiegend innerhalb der Europäischen Union. Für den CDN- und Sicherheitsdienst (Cloudflare) kann eine Datenübertragung in die USA erfolgen, die durch geeignete Garantien abgesichert ist.",
+      "cloudflare": {
+        "title": "Cloudflare (USA/Global)",
+        "address": "Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA",
+        "purpose": "Der Schutz Ihrer sensiblen Gesundheitsdaten hat für uns höchste Priorität. Wir nutzen Cloudflare als Content Delivery Network (CDN) und für DNS-Dienste mit aktiviertem Proxy, um unsere Website und Ihre Daten vor Cyberangriffen zu schützen. Cloudflare bietet DDoS-Schutz, Web Application Firewall (WAF) und Performance-Optimierung.",
+        "importance": "Der Einsatz von Cloudflare ist für uns essentiell, um die Verfügbarkeit und Sicherheit unseres Dienstes zu gewährleisten. Angesichts der sensiblen Natur medizinischer Dokumente ist ein professioneller Schutz vor Hackerangriffen, Bot-Attacken und anderen Bedrohungen unverzichtbar.",
+        "dataProcessed": "Bei jedem Zugriff auf unsere Website werden folgende Daten durch Cloudflare verarbeitet: IP-Adresse, aufgerufene URL, HTTP-Header (Browser, Betriebssystem, Referrer), Zeitstempel der Anfrage, übertragene Datenmenge.",
+        "security": "Cloudflare analysiert den Datenverkehr zur Erkennung und Abwehr von Angriffen (DDoS, Bot-Attacken, SQL-Injection). Dies dient dem Schutz unserer Infrastruktur und Ihrer Daten.",
+        "legalBasis": "Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Sicherheit und Verfügbarkeit unserer Website).",
+        "thirdCountryTransfer": "Cloudflare ist ein US-Unternehmen. Die Datenübertragung in die USA erfolgt auf Grundlage von EU-Standardvertragsklauseln (SCCs) gemäß Art. 46 Abs. 2 lit. c DSGVO sowie dem EU-US Data Privacy Framework. Cloudflare ist unter dem Data Privacy Framework zertifiziert.",
+        "retention": "Cloudflare speichert Logdaten für maximal 24 Stunden zu Sicherheitszwecken. Wir haben keinen Zugriff auf diese Logs.",
+        "dpaNote": "Mit Cloudflare besteht ein Data Processing Addendum (DPA) gemäß Art. 28 DSGVO.",
+        "optOut": "Da Cloudflare für die Sicherheit und Erreichbarkeit unserer Website essentiell ist, ist eine Nutzung ohne Cloudflare nicht möglich. Die Verarbeitung erfolgt auf Grundlage unseres berechtigten Interesses."
+      },
       "mistral": {
         "title": "Mistral AI (Frankreich/EU)",
         "address": "Mistral AI, 15 rue des Halles, 75001 Paris, Frankreich",
@@ -248,7 +261,7 @@
         "points": [
           "vor der automatischen PII-Entfernung mein Dokument zunächst zur Texterkennung (OCR) an Mistral AI (Frankreich/EU) übertragen wird,",
           "die automatische PII-Entfernung keine 100%ige Erkennung aller personenbezogenen Daten garantieren kann,",
-          "die gesamte Datenverarbeitung ausschließlich innerhalb der EU stattfindet,",
+          "die Verarbeitung meiner Dokumente und Gesundheitsdaten ausschließlich innerhalb der EU stattfindet (Netzwerk-Metadaten werden durch Cloudflare verarbeitet, siehe Abschnitt 6),",
           "meine Daten nach der Verarbeitung (spätestens nach 1 Stunde) automatisch gelöscht werden."
         ],
         "checkbox": "Ja, ich willige ein.",
