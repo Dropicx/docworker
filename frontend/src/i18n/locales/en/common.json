@@ -261,24 +261,24 @@
       "tiers": {
         "best": {
           "label": "Best Quality",
-          "title": "PDF with embedded text",
-          "description": "Digital doctor's letters, email attachments",
-          "result": "Perfect text recognition, fastest results"
+          "title": "Use PDF files with embedded text",
+          "description": "For example digital doctor's letters or email attachments. This gives the most reliable text recognition.",
+          "result": "Fastest processing and best text recognition."
         },
         "great": {
           "label": "Very Good",
-          "title": "Use smartphone scanner",
-          "description": "Use your smartphone's built-in scanner function for optimal results",
-          "result": "Automatic perspective correction & sharpening"
+          "title": "Use your smartphone's scanner function",
+          "description": "This automatically straightens and sharpens the document – ideal for photos of paper.",
+          "result": "Perspective correction and sharpening with no extra effort."
         },
         "good": {
           "label": "Good",
-          "title": "Regular photo (with our tips)",
-          "description": "Our built-in scanner optimizes your image automatically",
+          "title": "Regular photo – with these tips",
+          "description": "Our scanner optimizes the image. For good recognition, remember:",
           "tips": [
             "Good lighting, no shadows",
-            "Document flat on table",
-            "Camera directly above document"
+            "Place the document flat on a table",
+            "Hold the camera as straight above as possible"
           ]
         }
       }

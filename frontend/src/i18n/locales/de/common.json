@@ -261,24 +261,24 @@
       "tiers": {
         "best": {
           "label": "Beste Qualität",
-          "title": "PDF mit eingebettetem Text",
-          "description": "Digitale Arztbriefe, E-Mail-Anhänge",
-          "result": "Perfekte Texterkennung, schnellstes Ergebnis"
+          "title": "Nutzen Sie PDF-Dateien mit eingebettetem Text",
+          "description": "Zum Beispiel digitale Arztbriefe oder E-Mail-Anhänge. So wird der Text am zuverlässigsten erkannt.",
+          "result": "Schnellste Verarbeitung und beste Texterkennung."
         },
         "great": {
           "label": "Sehr gut",
-          "title": "Smartphone-Scanner verwenden",
-          "description": "Nutzen Sie die eingebaute Scanner-Funktion Ihres Smartphones für optimale Ergebnisse",
-          "result": "Automatische Perspektivkorrektur & Schärfe"
+          "title": "Nutzen Sie die Scanner-Funktion Ihres Smartphones",
+          "description": "Damit wird das Dokument automatisch begradigt und geschärft – ideal für Fotos von Papier.",
+          "result": "Perspektivkorrektur und Schärfe ohne Zutun."
         },
         "good": {
           "label": "Gut",
-          "title": "Normales Foto (mit unseren Tipps)",
-          "description": "Unser eingebauter Scanner optimiert Ihr Bild automatisch",
+          "title": "Normales Foto – mit diesen Tipps",
+          "description": "Unser Scanner optimiert das Bild. Wichtig für gute Erkennung:",
           "tips": [
-            "Gute Beleuchtung, kein Schatten",
-            "Dokument flach auf Tisch",
-            "Kamera direkt über dem Dokument"
+            "Gute Beleuchtung, keine Schatten",
+            "Dokument flach auf den Tisch legen",
+            "Kamera möglichst senkrecht von oben"
           ]
         }
       }
