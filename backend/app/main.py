@@ -73,12 +73,22 @@ async def run_encryption_migration():
     logger.info("🔐 Running encryption migration (Fernet → AES-256-GCM)...")
 
     try:
+        # Get the backend directory (parent of 'app' directory)
+        backend_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        migration_script = os.path.join(backend_dir, "migrations", "upgrade_encryption_to_aes256gcm.py")
+
+        logger.info(f"   Migration script path: {migration_script}")
+
+        if not os.path.exists(migration_script):
+            logger.error(f"❌ Migration script not found at {migration_script}")
+            return
+
         # Run migration script as subprocess
         result = subprocess.run(
-            ["python", "migrations/upgrade_encryption_to_aes256gcm.py"],
+            ["python", migration_script],
             capture_output=True,
             text=True,
-            cwd="/app" if os.path.exists("/app") else os.getcwd(),
+            cwd=backend_dir,
             timeout=300,  # 5 minute timeout
         )
 
