@@ -58,13 +58,29 @@ DATABASE_URL = os.getenv(
 )
 
 
-def is_fernet_encrypted(value: str | None) -> bool:
+def is_fernet_encrypted(value: str | bytes | None) -> bool:
     """Check if a value is encrypted with legacy Fernet."""
+    if value is None:
+        return False
+    # Handle bytes from bytea columns - convert to string first
+    if isinstance(value, bytes):
+        try:
+            value = value.decode("utf-8")
+        except UnicodeDecodeError:
+            return False
     return encryptor.is_legacy_fernet(value)
 
 
-def is_aes256gcm_encrypted(value: str | None) -> bool:
+def is_aes256gcm_encrypted(value: str | bytes | None) -> bool:
     """Check if a value is already encrypted with AES-256-GCM."""
+    if value is None:
+        return False
+    # Handle bytes from bytea columns - convert to string first
+    if isinstance(value, bytes):
+        try:
+            value = value.decode("utf-8")
+        except UnicodeDecodeError:
+            return False
     return encryptor.is_aes256gcm(value)
 
 
@@ -106,14 +122,15 @@ def migrate_text_field(value: str | None, dry_run: bool = False) -> tuple[str | 
         return value, "error"
 
 
-def migrate_binary_field(value: str | None, dry_run: bool = False) -> tuple[str | None, str]:
+def migrate_binary_field(value: str | bytes | None, dry_run: bool = False) -> tuple[str | bytes | None, str]:
     """
     Migrate a binary field from Fernet to AES-256-GCM.
 
-    Binary fields are stored as base64-encoded encrypted strings.
+    Binary fields are stored as base64-encoded encrypted strings in bytea columns.
+    SQLAlchemy returns bytea columns as bytes, so we need to handle both.
 
     Args:
-        value: Encrypted binary field value
+        value: Encrypted binary field value (str or bytes from bytea column)
         dry_run: If True, don't actually encrypt
 
     Returns:
@@ -122,23 +139,37 @@ def migrate_binary_field(value: str | None, dry_run: bool = False) -> tuple[str 
     if value is None:
         return None, "skipped_null"
 
+    # Convert bytes to string for processing (bytea columns return bytes)
+    original_value = value
+    if isinstance(value, bytes):
+        try:
+            value = value.decode("utf-8")
+        except UnicodeDecodeError:
+            print(f"    Warning: Could not decode bytea field as UTF-8")
+            return original_value, "skipped_plaintext"
+
     if is_aes256gcm_encrypted(value):
-        return value, "skipped_already_migrated"
+        return original_value, "skipped_already_migrated"
 
     if not is_fernet_encrypted(value):
-        return value, "skipped_plaintext"
+        return original_value, "skipped_plaintext"
 
     if dry_run:
-        return value, "migrated"
+        return original_value, "migrated"
 
     try:
         # Decrypt binary with Fernet, re-encrypt with AES-256-GCM
         decrypted_bytes = encryptor.decrypt_binary_field(value)
         encrypted = encryptor.encrypt_binary_field(decrypted_bytes)
+        # Return as bytes for bytea column if original was bytes
+        if isinstance(original_value, bytes) and encrypted:
+            return encrypted.encode("utf-8"), "migrated"
         return encrypted, "migrated"
     except Exception as e:
         print(f"    Error migrating binary field: {e}")
-        return value, "error"
+        import traceback
+        traceback.print_exc()
+        return original_value, "error"
 
 
 def migrate_users_table(conn, batch_size: int, dry_run: bool) -> dict:

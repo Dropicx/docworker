@@ -17,6 +17,8 @@ import {
   Globe,
   ScanLine,
   Check,
+  Sun,
+  Square,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
@@ -193,6 +195,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [privacyAccepted, setPrivacyAccepted] = useState(false);
   const [scannerOpen, setScannerOpen] = useState(false);
+  const [tipsExpanded, setTipsExpanded] = useState(false);
   const [currentStep, setCurrentStep] = useState<1 | 2 | 3 | 4>(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const privacyCheckboxRef = useRef<HTMLDivElement>(null);
@@ -483,6 +486,42 @@ const FileUpload: React.FC<FileUploadProps> = ({
                 <ScanLine className="w-7 h-7" />
                 <span>{t('upload.scanDocument')}</span>
               </button>
+            </div>
+          )}
+
+          {/* Tipps — collapsible, integrated into upload area */}
+          {(currentStep === 1 || selectedFiles.length === 0) && (
+            <div className="mt-4 rounded-xl border border-neutral-200 bg-white shadow-sm overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setTipsExpanded((prev) => !prev)}
+                aria-expanded={tipsExpanded}
+                className="w-full flex items-center justify-between px-4 py-3 text-left text-sm font-medium text-primary-700 hover:bg-neutral-50 transition-colors"
+              >
+                <span>{t('upload.tipsTitle')}</span>
+                <ChevronDown
+                  className={`w-4 h-4 text-primary-500 transition-transform duration-200 ${tipsExpanded ? 'rotate-180' : ''}`}
+                />
+              </button>
+              {tipsExpanded && (
+                <div className="border-t border-neutral-100 px-4 py-3 space-y-2 bg-neutral-50/50">
+                  {[
+                    { icon: FileText, key: 'pdf' },
+                    { icon: Smartphone, key: 'scanner' },
+                    { icon: Sun, key: 'light' },
+                    { icon: Square, key: 'flat' },
+                    { icon: AlertCircle, key: 'privacy' },
+                  ].map(({ icon: Icon, key: tipKey }) => (
+                    <div
+                      key={tipKey}
+                      className="flex items-start gap-2.5 text-sm text-primary-600"
+                    >
+                      <Icon className="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5" />
+                      <span>{t(`howItWorks.proTips.tips.${tipKey}`)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 

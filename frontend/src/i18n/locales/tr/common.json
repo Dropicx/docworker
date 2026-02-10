@@ -299,48 +299,48 @@
     "contactLink": "Bizimle iletişime geçin",
     "items": {
       "0": {
-        "question": "Verilerim nerede işleniyor ve ne kadar güvenli?",
-        "answer": "HealthLingo, tam GDPR uyumluluğuna sahip SOC 2 Tip I sertifikalı bir sağlayıcı olan Railway.app üzerinde barındırılmaktadır. Sunucular AB'de bulunmaktadır ve Railway, GDPR Madde 28'e göre Veri İşleme Sözleşmesi (DPA) sunmaktadır. Yapay zeka işleme, Avrupa veri merkezlerinde OVH AI Endpoints aracılığıyla gerçekleştirilmektedir (ISO 27001, 27017, 27018, 27701 sertifikalı). OVH, verilerinizin ASLA yapay zeka modeli eğitimi için kullanılmayacağını garanti eder."
+        "question": "Verilerim nerede işleniyor ve güvende mi?",
+        "answer": "Belgeleriniz yalnızca Avrupa'daki güvenli sunucularda işlenmektedir. Yalnızca katı Avrupa veri koruma standartlarını karşılayan sağlayıcılarla çalışıyoruz. Tüm ortaklarımız Avrupa düzenlemelerine uygun veri koruma anlaşmaları imzalamıştır."
       },
       "1": {
         "question": "Tıbbi verilerim saklanıyor mu veya yapay zeka eğitimi için kullanılıyor mu?",
-        "answer": "Hayır, kesinlikle hayır. HealthLingo hiçbir veriyi kalıcı olarak saklamaz. OVH AI Endpoints'in katı bir eğitim yapmama politikası vardır: müşteri verileri asla saklanmaz veya model eğitimi için kullanılmaz. Çeviriden sonra tüm belgeler, metinler ve kişisel bilgiler otomatik ve geri dönüşümsüz olarak silinir."
+        "answer": "Hayır, kesinlikle hayır. HealthLingo hiçbir veriyi kalıcı olarak saklamaz. Belgeleriniz çeviriden sonra otomatik olarak silinir. Yapay zeka verilerinizden öğrenmiyor - her istek ayrı olarak işlenir ve iz bırakmaz."
       },
       "2": {
         "question": "Çeviri ne kadar sürer?",
-        "answer": "Çoğu belge 10-30 saniye içinde çevrilir. Kesin süre belgenin uzunluğuna ve karmaşıklığına bağlıdır. Taranmış belgeler önce OCR (metin tanıma) ile işlenmesi gerektiğinden biraz daha uzun sürebilir."
+        "answer": "Çoğu belge 10-30 saniye içinde çevrilir. Kesin süre belgenizin uzunluğuna ve karmaşıklığına bağlıdır. Taranmış veya fotoğraflanmış belgeler, metnin önce tanınması gerektiğinden biraz daha uzun sürebilir."
       },
       "3": {
         "question": "Hangi dosya formatları destekleniyor?",
-        "answer": "HealthLingo, PDF dosyalarını (hem gömülü metinli hem de taranmış belgeler) ve görüntü dosyalarını (JPG, PNG, JPEG) destekler. Maksimum dosya boyutu 10 MB'tır. Çok sayfalı belgeler tamamen işlenir."
+        "answer": "PDF dosyaları ve resimler yükleyebilirsiniz. JPEG, PNG ve benzeri yaygın görüntü formatları desteklenmektedir. Maksimum dosya boyutu 100 MB'tır. Çok sayfalı belgeler tamamen işlenir."
       },
       "4": {
         "question": "Hangi dillere çeviri yapılabilir?",
-        "answer": "Anlaşılır Almancaya sadeleştirmenin yanı sıra, {{model}} tarafından optimum desteklenen 19 özenle seçilmiş dile çeviri destekliyoruz: İngilizce, Fransızca, İspanyolca, İtalyanca, Portekizce, Felemenkçe, Rusça, Çince, Japonca, Korece, Arapça, Hintçe, Lehçe, Çekçe, İsveççe, Norveççe ve Danca."
+        "answer": "Anlaşılır Almancaya sadeleştirmenin yanı sıra, 19 farklı dile çeviri sunuyoruz: İngilizce, Fransızca, İspanyolca, İtalyanca, Portekizce, Felemenkçe, Rusça, Çince, Japonca, Korece, Arapça, Hintçe, Lehçe, Çekçe, İsveççe, Norveççe ve Danca. Çeviri iki aşamada yapılır: önce metin sadeleştirilir, sonra seçilen dile çevrilir."
       },
       "5": {
         "question": "Belgedeki kişisel verilere ne oluyor?",
-        "answer": "İsimler, adresler, doğum tarihleri ve sigorta numaraları gibi kişisel veriler otomatik olarak tespit edilir ve yer tutucularla değiştirilir (örneğin, [İSİM KALDIRILDI]). Bu, gizliliğinizi korurken tüm tıbbi bilgileri tamamen korur."
+        "answer": "İsimler, adresler, doğum tarihleri ve sigorta numaraları gibi kişisel veriler otomatik olarak tespit edilir ve işaretleyicilerle değiştirilir. ÖNEMLİ: Bu otomatik tespit çok iyi çalışır ancak her zaman tüm verileri bulamayabilir. Bu nedenle yüklemeden önce özellikle hassas verileri kendiniz karalamanızı öneririz."
       },
       "6": {
-        "question": "Kullanılan hizmetlerin hangi güvenlik sertifikaları var?",
-        "answer": "Railway.app SOC 2 Tip I sertifikalıdır ve GDPR uyumlu veri işleme sözleşmeleri sunar. OVH Cloud kapsamlı sertifikalara sahiptir: ISO/IEC 27001 (bilgi güvenliği), ISO/IEC 27017 (bulut güvenliği), ISO/IEC 27018 (bulutta gizlilik) ve ISO/IEC 27701 (gizlilik yönetimi)."
+        "question": "Verilerim teknik olarak nasıl korunuyor?",
+        "answer": "Tüm veriler güçlü şifreleme ile saklanır ve güvenli bağlantılar üzerinden iletilir. HealthLingo çerez veya izleme kullanmaz. Sunucu sağlayıcılarımız uluslararası güvenlik standartlarına göre sertifikalıdır. Tüm veri işleme Avrupa'da veya Avrupa veri koruma güvenceleriyle gerçekleşir."
       },
       "7": {
         "question": "Çeviri tıbbi olarak doğru mu?",
-        "answer": "HealthLingo, özellikle tıbbi metinler için eğitilmiş gelişmiş yapay zeka teknolojileri kullanır. Çeviriler çok doğrudur ancak profesyonel tıbbi tavsiyenin yerini almaz. Önemli tıbbi kararlar için her zaman doktorunuza danışın."
+        "answer": "ÖNEMLİ: Çeviriler tıbbi tavsiye DEĞİLDİR ve doktorunuzla görüşmenin yerini tutmaz. HealthLingo teşhis koymaz ve tedavi önerileri vermez. Çeviriler yalnızca belgelerinizi daha iyi anlamanıza yardımcı olur. Tıbbi sorularınız için her zaman doktorunuza danışın. Acil durumlarda hemen acil servisleri arayın."
       },
       "8": {
         "question": "Çeviriyi indirebilir miyim?",
-        "answer": "Evet, çevrilmiş versiyonu PDF dosyası olarak indirebilirsiniz. PDF, tarih ve saatle birlikte okunabilir formatta tam çeviriyi içerir. Metni doğrudan panoya da kopyalayabilirsiniz."
+        "answer": "Evet, çevrilmiş versiyonu PDF dosyası olarak indirebilirsiniz. PDF, tarih ve saatle birlikte kolay okunabilir formatta tam çeviriyi içerir. Metni doğrudan da kopyalayabilirsiniz."
       },
       "9": {
         "question": "HealthLingo taranmış belgelerle çalışıyor mu?",
-        "answer": "Evet! HealthLingo, Almanca tıbbi belgeler için özel optimizasyona sahip gelişmiş metin tanıma (OCR) özelliğine sahiptir. El yazısı notlar, tablolar ve kötü taranmış belgeler bile güvenilir şekilde tanınır ve işlenir."
+        "answer": "Evet! HealthLingo taranmış belgelerden ve fotoğraflardan metin tanıyabilir. El yazısı notlar, tablolar ve okunması zor belgeler bile güvenilir şekilde işlenir. Metin tanıma özellikle Almanca tıbbi belgeler için optimize edilmiştir."
       },
       "10": {
         "question": "Hizmet gerçekten ücretsiz mi?",
-        "answer": "Evet, HealthLingo tamamen ücretsizdir. Gizli maliyet, kayıt veya çeviri sayısı sınırı yoktur. Amacımız tıbbi bilgiyi herkes için erişilebilir kılmaktır."
+        "answer": "Evet, HealthLingo tamamen ücretsizdir. Gizli maliyet yoktur ve kayıt gerekmez. Hizmet kişisel kullanım içindir. Ticari kullanım için lütfen bizimle iletişime geçin."
       }
     }
   },

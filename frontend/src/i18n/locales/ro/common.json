@@ -299,48 +299,48 @@
     "contactLink": "Contactați-ne",
     "items": {
       "0": {
-        "question": "Unde sunt procesate datele mele și cât de sigure sunt?",
-        "answer": "HealthLingo este găzduit pe Railway.app, un furnizor certificat SOC 2 Type I cu conformitate completă GDPR. Serverele sunt situate în UE și Railway oferă un Acord de Procesare a Datelor (DPA) conform articolului 28 GDPR. Procesarea AI se face prin OVH AI Endpoints în centre de date europene (certificate ISO 27001, 27017, 27018, 27701). OVH garantează că datele dvs. NU sunt NICIODATĂ folosite pentru antrenarea modelelor AI - toate cererile sunt anonimizate și șterse imediat după procesare."
+        "question": "Unde sunt procesate datele mele și sunt în siguranță?",
+        "answer": "Documentele dvs. sunt procesate exclusiv pe servere sigure în Europa. Lucrăm doar cu furnizori care respectă standardele stricte europene de protecție a datelor. Toți partenerii noștri au semnat acorduri de protecție a datelor în conformitate cu reglementările europene."
       },
       "1": {
-        "question": "Datele mele medicale sunt stocate sau folosite pentru antrenarea AI?",
-        "answer": "Nu, absolut nu. HealthLingo nu stochează permanent nicio dată. OVH AI Endpoints are o politică strictă de non-antrenare: datele clienților nu sunt niciodată stocate sau folosite pentru antrenarea modelelor. După traducere, toate documentele, textele și informațiile personale sunt șterse automat și ireversibil. Modelele AI NU învață din datele dvs. - fiecare cerere este izolată și nu lasă urme."
+        "question": "Datele mele medicale sunt stocate sau folosite pentru antrenarea inteligenței artificiale?",
+        "answer": "Nu, absolut nu. HealthLingo nu stochează permanent nicio dată. Documentele dvs. sunt șterse automat după traducere. Inteligența artificială NU învață din datele dvs. - fiecare cerere este procesată separat și nu lasă urme."
       },
       "2": {
         "question": "Cât durează traducerea?",
-        "answer": "Majoritatea documentelor sunt traduse în 10-30 de secunde. Durata exactă depinde de lungimea și complexitatea documentului. Documentele scanate pot dura puțin mai mult deoarece trebuie mai întâi procesate prin OCR (recunoașterea textului)."
+        "answer": "Majoritatea documentelor sunt traduse în 10-30 de secunde. Durata exactă depinde de lungimea și complexitatea documentului dvs. Documentele scanate sau fotografiate pot dura puțin mai mult deoarece textul trebuie mai întâi recunoscut."
       },
       "3": {
         "question": "Ce formate de fișiere sunt acceptate?",
-        "answer": "HealthLingo acceptă fișiere PDF (atât cu text încorporat, cât și documente scanate), precum și fișiere imagine (JPG, PNG, JPEG). Dimensiunea maximă a fișierului este de 10 MB. Documentele cu mai multe pagini sunt procesate complet."
+        "answer": "Puteți încărca fișiere PDF și imagini. Sunt acceptate formatele comune de imagine precum JPEG, PNG și altele similare. Dimensiunea maximă a fișierului este de 100 MB. Documentele cu mai multe pagini sunt procesate complet."
       },
       "4": {
         "question": "În ce limbi se poate traduce?",
-        "answer": "Pe lângă simplificarea în germană ușor de înțeles, acceptăm traduceri în 19 limbi atent selectate, optim suportate de {{model}}: engleză, franceză, spaniolă, italiană, portugheză, olandeză, rusă, chineză, japoneză, coreeană, arabă, hindi, poloneză, cehă, suedeză, norvegiană și daneză. Traducerea urmează întotdeauna un proces în doi pași: mai întâi simplificarea, apoi traducerea precisă."
+        "answer": "Pe lângă simplificarea în germană ușor de înțeles, oferim traduceri în alte 19 limbi, inclusiv: engleză, franceză, spaniolă, italiană, portugheză, olandeză, rusă, chineză, japoneză, coreeană, arabă, hindi, poloneză, cehă, suedeză, norvegiană și daneză. Traducerea se face în doi pași: mai întâi textul este simplificat, apoi tradus în limba aleasă."
       },
       "5": {
         "question": "Ce se întâmplă cu datele personale din document?",
-        "answer": "Datele personale precum numele, adresele, datele de naștere și numerele de asigurare sunt detectate automat și înlocuite cu substituenți (de ex. [NUME ELIMINAT]). Aceasta vă protejează confidențialitatea în timp ce toate informațiile medicale sunt păstrate complet. Anonimizarea are loc local înainte ca datele să fie trimise către punctele finale AI."
+        "answer": "Datele personale precum numele, adresele, datele de naștere și numerele de asigurare sunt detectate automat și înlocuite cu marcaje. IMPORTANT: Această detectare automată funcționează foarte bine, dar nu poate găsi întotdeauna toate datele. Vă recomandăm să mascați singuri datele deosebit de sensibile înainte de încărcare."
       },
       "6": {
-        "question": "Ce certificări de securitate au serviciile utilizate?",
-        "answer": "Railway.app este certificat SOC 2 Type I (Type II urmând în 2025) și oferă Acorduri de Procesare a Datelor conforme cu GDPR. OVH Cloud deține certificări cuprinzătoare: ISO/IEC 27001 (securitatea informațiilor), ISO/IEC 27017 (securitatea cloud), ISO/IEC 27018 (confidențialitatea în cloud) și ISO/IEC 27701 (managementul confidențialității). Ambii furnizori sunt supuși legii europene și garantează că datele dvs. nu părăsesc UE."
+        "question": "Cum sunt protejate tehnic datele mele?",
+        "answer": "Toate datele sunt stocate cu criptare puternică și transmise prin conexiuni sigure. HealthLingo nu folosește cookie-uri sau urmărire. Furnizorii noștri de servere sunt certificați conform standardelor internaționale de securitate. Toată procesarea datelor are loc în Europa sau cu garanții europene de protecție a datelor."
       },
       "7": {
         "question": "Traducerea este precisă din punct de vedere medical?",
-        "answer": "HealthLingo folosește tehnologie AI avansată antrenată special pentru texte medicale. Traducerile sunt foarte precise, dar nu înlocuiesc sfatul medical profesional. Pentru decizii medicale importante, ar trebui să consultați întotdeauna medicul."
+        "answer": "IMPORTANT: Traducerile NU sunt sfaturi medicale și nu înlocuiesc o conversație cu medicul dvs. HealthLingo nu pune diagnostice și nu oferă recomandări de tratament. Traducerile vă ajută doar să înțelegeți mai bine documentele. Pentru întrebări medicale, consultați întotdeauna medicul. În caz de urgență, sunați imediat serviciile de urgență."
       },
       "8": {
         "question": "Pot descărca traducerea?",
-        "answer": "Da, puteți descărca versiunea tradusă ca fișier PDF. PDF-ul conține traducerea completă într-un format lizibil cu data și marca temporală. De asemenea, puteți copia textul direct în clipboard."
+        "answer": "Da, puteți descărca versiunea tradusă ca fișier PDF. PDF-ul conține traducerea completă într-un format ușor de citit cu data și ora. Puteți de asemenea copia textul direct."
       },
       "9": {
         "question": "HealthLingo funcționează cu documente scanate?",
-        "answer": "Da! HealthLingo are recunoaștere avansată a textului (OCR) cu optimizare specială pentru documentele medicale germane. Chiar și notele scrise de mână, tabelele și documentele scanate slab sunt recunoscute și procesate în mod fiabil."
+        "answer": "Da! HealthLingo poate recunoaște textul din documente scanate și fotografii. Chiar și notele scrise de mână, tabelele și documentele greu de citit sunt procesate în mod fiabil. Recunoașterea textului este optimizată special pentru documentele medicale germane."
       },
       "10": {
         "question": "Serviciul este cu adevărat gratuit?",
-        "answer": "Da, HealthLingo este complet gratuit de utilizat. Nu există costuri ascunse, nu este necesară înregistrarea și nu există limită pentru numărul de traduceri. Scopul nostru este de a face informațiile medicale accesibile tuturor."
+        "answer": "Da, HealthLingo este complet gratuit. Nu există costuri ascunse și nu este necesară înregistrarea. Serviciul este destinat utilizării personale. Pentru utilizare comercială, vă rugăm să ne contactați."
       }
     }
   },

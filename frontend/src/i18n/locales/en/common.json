@@ -69,7 +69,8 @@
     "privacyConsentSuffix": "and agree to the processing of my documents. I understand that my data will be processed in compliance with GDPR and automatically deleted after translation.",
     "startProcessing": "Start processing",
     "gdprNotice": "Your data is processed GDPR-compliant and not stored",
-    "uploadFailed": "Upload failed"
+    "uploadFailed": "Upload failed",
+    "tipsTitle": "Tips"
   },
   "qualityGate": {
     "title": "Image quality too low",
@@ -300,47 +301,47 @@
     "items": {
       "0": {
         "question": "Where is my data processed and how secure is it?",
-        "answer": "HealthLingo is hosted on Railway.app, a SOC 2 Type I certified provider with full GDPR compliance. Servers are located in the EU and Railway offers a Data Processing Agreement (DPA) per GDPR Article 28. AI processing is done via OVH AI Endpoints in European data centers (ISO 27001, 27017, 27018, 27701 certified). OVH guarantees that your data is NEVER used for AI model training - all requests are anonymized and deleted immediately after processing."
+        "answer": "Your documents are processed exclusively on secure servers in Europe. We only work with providers that meet strict European data protection standards. All our partners have signed data protection agreements in accordance with European privacy regulations."
       },
       "1": {
         "question": "Is my medical data stored or used for AI training?",
-        "answer": "No, absolutely not. HealthLingo does not permanently store any data. OVH AI Endpoints has a strict no-training policy: customer data is never stored or used for model training. After translation, all documents, texts and personal information are automatically and irreversibly deleted. The AI models do NOT learn from your data - each request is isolated and leaves no trace."
+        "answer": "No, absolutely not. HealthLingo does not permanently store any data. Your documents are automatically deleted after translation. The AI does NOT learn from your data - each request is processed separately and leaves no trace."
       },
       "2": {
         "question": "How long does the translation take?",
-        "answer": "Most documents are translated within 10-30 seconds. The exact duration depends on the length and complexity of the document. Scanned documents may take slightly longer as they first need to be processed via OCR (text recognition)."
+        "answer": "Most documents are translated within 10-30 seconds. The exact duration depends on the length and complexity of your document. Scanned or photographed documents may take slightly longer as the text needs to be recognized first."
       },
       "3": {
         "question": "Which file formats are supported?",
-        "answer": "HealthLingo supports PDF files (both with embedded text and scanned documents) as well as image files (JPG, PNG, JPEG). The maximum file size is 10 MB. Multi-page documents are fully processed."
+        "answer": "You can upload PDF files and images. Common image formats like JPEG, PNG and similar are supported. The maximum file size is 100 MB. Multi-page documents are fully processed."
       },
       "4": {
         "question": "Which languages can be translated to?",
-        "answer": "In addition to simplification into understandable German, we support translations into 19 carefully selected languages optimally supported by {{model}}: English, French, Spanish, Italian, Portuguese, Dutch, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Polish, Czech, Swedish, Norwegian and Danish. Translation always follows a two-step process: first simplification, then precise translation."
+        "answer": "In addition to simplification into understandable German, we offer translations into 19 other languages, including: English, French, Spanish, Italian, Portuguese, Dutch, Russian, Chinese, Japanese, Korean, Arabic, Hindi, Polish, Czech, Swedish, Norwegian and Danish. Translation happens in two steps: first the text is simplified, then translated into your chosen language."
       },
       "5": {
         "question": "What happens to personal data in the document?",
-        "answer": "Personal data such as names, addresses, dates of birth and insurance numbers are automatically detected and replaced with placeholders (e.g. [NAME REMOVED]). This protects your privacy while all medical information is fully preserved. Anonymization happens locally before data is sent to the AI endpoints."
+        "answer": "Personal data such as names, addresses, dates of birth and insurance numbers are automatically detected and replaced with placeholders. IMPORTANT: This automatic detection works very well but cannot always find all data. We therefore recommend blacking out particularly sensitive data yourself before uploading."
       },
       "6": {
-        "question": "What security certifications do the services used have?",
-        "answer": "Railway.app is SOC 2 Type I certified (Type II following in 2025) and offers GDPR-compliant Data Processing Agreements. OVH Cloud holds comprehensive certifications: ISO/IEC 27001 (information security), ISO/IEC 27017 (cloud security), ISO/IEC 27018 (privacy in the cloud) and ISO/IEC 27701 (privacy management). Both providers are subject to European law and guarantee that your data does not leave the EU."
+        "question": "How is my data technically protected?",
+        "answer": "All data is stored with strong encryption and transmitted over secure connections. HealthLingo uses no cookies and no tracking. Our server providers are certified according to international security standards. All data processing takes place in Europe or with European data protection guarantees."
       },
       "7": {
         "question": "Is the translation medically accurate?",
-        "answer": "HealthLingo uses advanced AI technology specifically trained for medical texts. The translations are very precise but do not replace professional medical advice. For important medical decisions, you should always consult your doctor."
+        "answer": "IMPORTANT: The translations are NOT medical advice and do not replace a conversation with your doctor. HealthLingo does not make diagnoses or give treatment recommendations. The translations only help you understand your documents better. For medical questions, always consult your doctor. In emergencies, call emergency services immediately."
       },
       "8": {
         "question": "Can I download the translation?",
-        "answer": "Yes, you can download the translated version as a PDF file. The PDF contains the complete translation in a readable format with date and timestamp. You can also copy the text directly to the clipboard."
+        "answer": "Yes, you can download the translated version as a PDF file. The PDF contains the complete translation in an easy-to-read format with date and time. You can also copy the text directly."
       },
       "9": {
         "question": "Does HealthLingo work with scanned documents?",
-        "answer": "Yes! HealthLingo has advanced text recognition (OCR) with special optimization for German medical documents. Even handwritten notes, tables and poorly scanned documents are reliably recognized and processed."
+        "answer": "Yes! HealthLingo can recognize text from scanned documents and photos. Even handwritten notes, tables and hard-to-read documents are processed reliably. The text recognition is specially optimized for German medical documents."
       },
       "10": {
         "question": "Is the service really free?",
-        "answer": "Yes, HealthLingo is completely free to use. There are no hidden costs, no registration and no limit on the number of translations. Our goal is to make medical information accessible to everyone."
+        "answer": "Yes, HealthLingo is completely free. There are no hidden costs and no registration required. The service is intended for personal use. For business use, please contact us."
       }
     }
   },

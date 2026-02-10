@@ -162,6 +162,9 @@ const MainApp: React.FC<MainAppProps> = ({
                 </div>
               </div>
 
+              {/* How It Works Section */}
+              <HowItWorks />
+
               {/* Feature Cards with shadcn Card */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
@@ -212,9 +215,6 @@ const MainApp: React.FC<MainAppProps> = ({
                   </CardContent>
                 </Card>
               </div>
-
-              {/* How It Works Section */}
-              <HowItWorks />
 
               {/* FAQ Section */}
               <div className="mt-8 sm:mt-12 lg:mt-16">
