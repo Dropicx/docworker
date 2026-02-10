@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -31,11 +30,32 @@ const Datenschutz: React.FC = () => {
       <main className="flex-1">
         <div className="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-12">
           <h1 className="text-3xl font-bold text-primary-900 mb-2">{t('datenschutz.pageTitle')}</h1>
-          <p className="text-lg text-primary-600 mb-8">{t('datenschutz.websiteName')}</p>
+          <p className="text-lg text-primary-600 mb-6">{t('datenschutz.websiteName')}</p>
+
+          {/* Table of Contents */}
+          <nav className="mb-8 pb-6 border-b border-gray-200">
+            <h2 className="text-sm font-semibold text-primary-900 mb-3 uppercase tracking-wide">Inhalt</h2>
+            <ol className="grid grid-cols-1 md:grid-cols-2 gap-1 text-sm">
+              <li><a href="#section1" className="text-primary-600 hover:text-primary-900 hover:underline">1. Datenschutz auf einen Blick</a></li>
+              <li><a href="#section2" className="text-primary-600 hover:text-primary-900 hover:underline">2. Allgemeine Hinweise und Pflichtinformationen</a></li>
+              <li><a href="#section3" className="text-primary-600 hover:text-primary-900 hover:underline">3. Datenerfassung auf dieser Website</a></li>
+              <li><a href="#section4" className="text-primary-600 hover:text-primary-900 hover:underline">4. Rechtsgrundlagen der Verarbeitung</a></li>
+              <li><a href="#section5" className="text-primary-600 hover:text-primary-900 hover:underline">5. Gesundheitsdatenschutz</a></li>
+              <li><a href="#section6" className="text-primary-600 hover:text-primary-900 hover:underline">6. Drittparteien und Datenverarbeitung</a></li>
+              <li><a href="#section7" className="text-primary-600 hover:text-primary-900 hover:underline">7. Hinweis zur PII-Entfernung</a></li>
+              <li><a href="#section8" className="text-primary-600 hover:text-primary-900 hover:underline">8. Automatisierte Verarbeitung und KI</a></li>
+              <li><a href="#section9" className="text-primary-600 hover:text-primary-900 hover:underline">9. Ihre Einwilligung</a></li>
+              <li><a href="#section10" className="text-primary-600 hover:text-primary-900 hover:underline">10. Ihre Rechte</a></li>
+              <li><a href="#section11" className="text-primary-600 hover:text-primary-900 hover:underline">11. Feedback und Nutzerbewertungen</a></li>
+              <li><a href="#section12" className="text-primary-600 hover:text-primary-900 hover:underline">12. Datensicherheit</a></li>
+              <li><a href="#section13" className="text-primary-600 hover:text-primary-900 hover:underline">13. Kontakt und Datenschutzanfragen</a></li>
+              <li><a href="#section14" className="text-primary-600 hover:text-primary-900 hover:underline">14. Aktualisierung dieser Erklärung</a></li>
+            </ol>
+          </nav>
 
           <div className="space-y-8 text-primary-700">
             {/* Section 1: Datenschutz auf einen Blick */}
-            <section>
+            <section id="section1">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section1.title')}
               </h2>
@@ -49,7 +69,7 @@ const Datenschutz: React.FC = () => {
                 {t('datenschutz.section1.responsibleQuestion')}
               </h3>
               <p className="mb-2">{t('datenschutz.section1.responsibleIntro')}</p>
-              <div className="bg-gray-50 p-4 rounded-lg mb-4 border-l-4 border-primary-300">
+              <div className="mb-4 ml-4">
                 <p className="font-semibold">{t('datenschutz.section1.responsibleName')}</p>
                 <p>{t('datenschutz.section1.responsibleAddress')}</p>
                 <p>{t('datenschutz.section1.responsibleCity')}</p>
@@ -60,9 +80,7 @@ const Datenschutz: React.FC = () => {
               <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
                 {t('datenschutz.section1.dpoTitle')}
               </h3>
-              <div className="bg-amber-50 p-4 rounded-lg mb-4 border-l-4 border-amber-400">
-                <p className="text-sm text-amber-800">{t('datenschutz.section1.dpoText')}</p>
-              </div>
+              <p className="mb-4 text-sm italic">{t('datenschutz.section1.dpoText')}</p>
 
               <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
                 {t('datenschutz.section1.serviceTitle')}
@@ -88,8 +106,10 @@ const Datenschutz: React.FC = () => {
               </p>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 2: Allgemeine Hinweise und Pflichtinformationen */}
-            <section>
+            <section id="section2">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section2.title')}
               </h2>
@@ -103,19 +123,19 @@ const Datenschutz: React.FC = () => {
                 {t('datenschutz.section2.responsibleTitle')}
               </h3>
               <p className="mb-2">{t('datenschutz.section2.responsibleIntro')}</p>
-              <div className="bg-gray-50 p-4 rounded-lg mb-4 border-l-4 border-primary-300">
+              <div className="mb-4 ml-4">
                 <p className="font-semibold">{t('datenschutz.section2.responsibleName')}</p>
                 <p>{t('datenschutz.section2.responsibleAddress')}</p>
                 <p>{t('datenschutz.section2.responsibleCity')}</p>
                 <p>{t('datenschutz.section2.responsibleEmail')}</p>
                 <p>{t('datenschutz.section2.responsiblePhone')}</p>
               </div>
-              <p className="mb-4 text-sm text-primary-600">{t('datenschutz.section2.responsibleNote')}</p>
+              <p className="mb-4 text-sm">{t('datenschutz.section2.responsibleNote')}</p>
 
               <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
                 {t('datenschutz.section2.supervisoryTitle')}
               </h3>
-              <div className="bg-gray-50 p-4 rounded-lg mb-4 border-l-4 border-primary-300">
+              <div className="mb-4 ml-4">
                 <p className="font-semibold">{t('datenschutz.section2.supervisoryName')}</p>
                 <p>{t('datenschutz.section2.supervisoryAddress')}</p>
                 <p>{t('datenschutz.section2.supervisoryEmail')}</p>
@@ -126,13 +146,11 @@ const Datenschutz: React.FC = () => {
                 {t('datenschutz.section2.definitionsTitle')}
               </h3>
               <p className="mb-4">{t('datenschutz.section2.definitionsIntro')}</p>
-              <div className="space-y-3 mb-4">
+              <div className="space-y-2 mb-4 ml-4">
                 {(t('datenschutz.section2.definitions', { returnObjects: true }) as Definition[]).map((def, i) => (
-                  <div key={i} className="bg-gray-50 p-3 rounded">
-                    <p>
-                      <strong>"{def.term}"</strong> ({def.article}) {def.definition}
-                    </p>
-                  </div>
+                  <p key={i}>
+                    <strong>„{def.term}"</strong> ({def.article}) {def.definition}
+                  </p>
                 ))}
               </div>
 
@@ -150,9 +168,7 @@ const Datenschutz: React.FC = () => {
               <h4 className="font-semibold text-primary-800 mt-4 mb-2">
                 {t('datenschutz.section2.storageRetainedTitle')}
               </h4>
-              <p className="mb-4 bg-blue-50 p-3 rounded border-l-4 border-blue-400">
-                {t('datenschutz.section2.storageRetainedText')}
-              </p>
+              <p className="mb-4">{t('datenschutz.section2.storageRetainedText')}</p>
 
               <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
                 {t('datenschutz.section2.voluntaryTitle')}
@@ -165,8 +181,10 @@ const Datenschutz: React.FC = () => {
               <p className="mb-4">{t('datenschutz.section2.sslText')}</p>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 3: Datenerfassung auf dieser Website */}
-            <section>
+            <section id="section3">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section3.title')}
               </h2>
@@ -188,7 +206,7 @@ const Datenschutz: React.FC = () => {
                 ))}
               </ul>
               <p className="mb-4">{t('datenschutz.section3.serverLogsNote')}</p>
-              <p className="mb-4 bg-amber-50 p-3 rounded border-l-4 border-amber-400">
+              <p className="mb-4">
                 <strong>Widerspruchsrecht:</strong> {t('datenschutz.section3.serverLogsObjection')}
               </p>
 
@@ -196,36 +214,36 @@ const Datenschutz: React.FC = () => {
                 {t('datenschutz.section3.medicalTitle')}
               </h3>
               <p className="mb-4">{t('datenschutz.section3.medicalText')}</p>
-              <div className="space-y-3 mb-4">
+              <ul className="list-disc list-inside mb-4 ml-4 space-y-2">
                 {(t('datenschutz.section3.medicalItems', { returnObjects: true }) as MedicalItem[]).map((item, i) => (
-                  <div key={i} className="bg-gray-50 p-3 rounded border-l-4 border-green-400">
-                    <p><strong>{item.title}:</strong> {item.text}</p>
-                  </div>
+                  <li key={i}><strong>{item.title}:</strong> {item.text}</li>
                 ))}
-              </div>
+              </ul>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 4: Rechtsgrundlagen der Verarbeitung */}
-            <section>
+            <section id="section4">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section4.title')}
               </h2>
               <p className="mb-4">{t('datenschutz.section4.intro')}</p>
               <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-200 rounded-lg mb-4">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900 border-b">Verarbeitungstätigkeit</th>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900 border-b">Rechtsgrundlage</th>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900 border-b">Erläuterung</th>
+                <table className="min-w-full border border-gray-300 mb-4">
+                  <thead>
+                    <tr className="border-b border-gray-300">
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900">Verarbeitungstätigkeit</th>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900">Rechtsgrundlage</th>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900">Erläuterung</th>
                     </tr>
                   </thead>
                   <tbody>
                     {(t('datenschutz.section4.legalBases', { returnObjects: true }) as LegalBasis[]).map((basis, i) => (
-                      <tr key={i} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                        <td className="px-4 py-2 text-sm border-b">{basis.activity}</td>
-                        <td className="px-4 py-2 text-sm border-b font-medium">{basis.basis}</td>
-                        <td className="px-4 py-2 text-sm border-b">{basis.explanation}</td>
+                      <tr key={i} className="border-b border-gray-200">
+                        <td className="px-4 py-2 text-sm">{basis.activity}</td>
+                        <td className="px-4 py-2 text-sm font-medium">{basis.basis}</td>
+                        <td className="px-4 py-2 text-sm">{basis.explanation}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -233,8 +251,10 @@ const Datenschutz: React.FC = () => {
               </div>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 5: Besondere Hinweise zum Gesundheitsdatenschutz */}
-            <section>
+            <section id="section5">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section5.title')}
               </h2>
@@ -246,78 +266,80 @@ const Datenschutz: React.FC = () => {
               </ul>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 6: Drittparteien und Datenverarbeitung */}
-            <section>
+            <section id="section6">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section6.title')}
               </h2>
               <p className="mb-4">{t('datenschutz.section6.intro')}</p>
 
               {/* Cloudflare */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-4 border-l-4 border-orange-400">
-                <h4 className="font-semibold text-primary-900 mb-2">{t('datenschutz.section6.cloudflare.title')}</h4>
+              <div className="mb-6">
+                <h4 className="font-semibold text-primary-900 mb-1">{t('datenschutz.section6.cloudflare.title')}</h4>
                 <p className="text-sm text-primary-600 mb-2">{t('datenschutz.section6.cloudflare.address')}</p>
                 <p className="mb-2"><strong>Zweck:</strong> {t('datenschutz.section6.cloudflare.purpose')}</p>
-                <p className="mb-3 bg-blue-100 p-2 rounded text-sm">{t('datenschutz.section6.cloudflare.importance')}</p>
+                <p className="mb-2">{t('datenschutz.section6.cloudflare.importance')}</p>
                 <p className="mb-2"><strong>Verarbeitete Daten:</strong> {t('datenschutz.section6.cloudflare.dataProcessed')}</p>
                 <p className="mb-2"><strong>Sicherheit:</strong> {t('datenschutz.section6.cloudflare.security')}</p>
                 <p className="mb-2"><strong>Rechtsgrundlage:</strong> {t('datenschutz.section6.cloudflare.legalBasis')}</p>
-                <p className="mb-2 bg-amber-100 p-2 rounded text-sm"><strong>Drittlandtransfer:</strong> {t('datenschutz.section6.cloudflare.thirdCountryTransfer')}</p>
+                <p className="mb-2"><strong>Drittlandtransfer:</strong> {t('datenschutz.section6.cloudflare.thirdCountryTransfer')}</p>
                 <p className="mb-2"><strong>Speicherdauer:</strong> {t('datenschutz.section6.cloudflare.retention')}</p>
                 <p className="text-sm">{t('datenschutz.section6.cloudflare.dpaNote')}</p>
               </div>
 
               {/* Mistral AI */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-4 border-l-4 border-blue-400">
-                <h4 className="font-semibold text-primary-900 mb-2">{t('datenschutz.section6.mistral.title')}</h4>
+              <div className="mb-6">
+                <h4 className="font-semibold text-primary-900 mb-1">{t('datenschutz.section6.mistral.title')}</h4>
                 <p className="text-sm text-primary-600 mb-2">{t('datenschutz.section6.mistral.address')}</p>
                 <p className="mb-2"><strong>Zweck:</strong> {t('datenschutz.section6.mistral.purpose')}</p>
-                <p className="mb-2 bg-amber-100 p-2 rounded text-sm">{t('datenschutz.section6.mistral.ocrNote')}</p>
+                <p className="mb-2"><strong>Wichtiger Hinweis zur OCR:</strong> {t('datenschutz.section6.mistral.ocrNote')}</p>
                 <p className="text-sm">{t('datenschutz.section6.mistral.legalBasis')}</p>
               </div>
 
               {/* Hetzner */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-4 border-l-4 border-green-400">
-                <h4 className="font-semibold text-primary-900 mb-2">{t('datenschutz.section6.hetzner.title')}</h4>
+              <div className="mb-6">
+                <h4 className="font-semibold text-primary-900 mb-1">{t('datenschutz.section6.hetzner.title')}</h4>
                 <p className="text-sm text-primary-600 mb-2">{t('datenschutz.section6.hetzner.address')}</p>
                 <p className="mb-2"><strong>Zweck:</strong> {t('datenschutz.section6.hetzner.purpose')}</p>
                 <p className="text-sm">{t('datenschutz.section6.hetzner.legalBasis')}</p>
               </div>
 
               {/* Railway */}
-              <div className="bg-gray-50 p-4 rounded-lg mb-4 border-l-4 border-purple-400">
-                <h4 className="font-semibold text-primary-900 mb-2">{t('datenschutz.section6.railway.title')}</h4>
+              <div className="mb-6">
+                <h4 className="font-semibold text-primary-900 mb-1">{t('datenschutz.section6.railway.title')}</h4>
                 <p className="text-sm text-primary-600 mb-2">{t('datenschutz.section6.railway.address')}</p>
                 <p className="mb-2"><strong>Zweck:</strong> {t('datenschutz.section6.railway.purpose')}</p>
                 <p className="mb-2">{t('datenschutz.section6.railway.legalBasis')}</p>
-                <p className="text-sm bg-amber-100 p-2 rounded">{t('datenschutz.section6.railway.thirdCountryNote')}</p>
+                <p className="text-sm italic">{t('datenschutz.section6.railway.thirdCountryNote')}</p>
               </div>
 
-              <p className="mb-4 bg-blue-50 p-3 rounded border-l-4 border-blue-400">
-                {t('datenschutz.section6.dpaNote')}
-              </p>
+              <p className="mb-4">{t('datenschutz.section6.dpaNote')}</p>
             </section>
+
+            <hr className="border-gray-200" />
 
             {/* Section 7: Wichtiger Hinweis zur PII-Entfernung */}
-            <section className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg">
-              <h2 className="text-xl font-semibold text-amber-900 mb-3">
+            <section id="section7">
+              <h2 className="text-xl font-semibold text-primary-900 mb-3">
                 {t('datenschutz.section7.title')}
               </h2>
-              <div className="bg-amber-100 border border-amber-300 rounded p-3 mb-4">
-                <p className="font-bold text-amber-900">
-                  {t('datenschutz.section7.warning')}
-                </p>
-              </div>
+              <p className="mb-4 font-semibold">
+                ⚠️ {t('datenschutz.section7.warning')}
+              </p>
               <p className="mb-4">{t('datenschutz.section7.warningText')}</p>
               <p className="mb-4">{t('datenschutz.section7.limitationsText')}</p>
-              <p className="mb-4 font-semibold">{t('datenschutz.section7.ocrWarning')}</p>
+              <p className="mb-4"><strong>Wichtig:</strong> {t('datenschutz.section7.ocrWarning')}</p>
               <p className="mb-4">{t('datenschutz.section7.recommendation')}</p>
               <p className="mb-4">{t('datenschutz.section7.medicalTermsNote')}</p>
-              <p className="text-sm text-amber-800 italic">{t('datenschutz.section7.consent')}</p>
+              <p className="text-sm italic">{t('datenschutz.section7.consent')}</p>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 8: Automatisierte Verarbeitung und KI */}
-            <section>
+            <section id="section8">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section8.title')}
               </h2>
@@ -329,8 +351,10 @@ const Datenschutz: React.FC = () => {
               </ul>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 9: Ihre Einwilligung */}
-            <section className="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+            <section id="section9">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section9.title')}
               </h2>
@@ -338,7 +362,7 @@ const Datenschutz: React.FC = () => {
               <p className="mb-4 font-semibold">{t('datenschutz.section9.consentRequest')}</p>
 
               {/* Consent 1 */}
-              <div className="bg-white p-4 rounded-lg mb-4 border border-blue-200">
+              <div className="mb-6 ml-4">
                 <h4 className="font-semibold text-primary-900 mb-2">{t('datenschutz.section9.consent1.title')}</h4>
                 <p className="mb-2">{t('datenschutz.section9.consent1.text')}</p>
                 <ul className="list-disc list-inside mb-4 ml-4 space-y-1">
@@ -346,14 +370,14 @@ const Datenschutz: React.FC = () => {
                     <li key={i}>{point}</li>
                   ))}
                 </ul>
-                <p className="font-medium text-green-700">☐ {t('datenschutz.section9.consent1.checkbox')}</p>
+                <p className="font-medium">☐ {t('datenschutz.section9.consent1.checkbox')}</p>
               </div>
 
               {/* Consent 2 */}
-              <div className="bg-white p-4 rounded-lg mb-4 border border-blue-200">
+              <div className="mb-6 ml-4">
                 <h4 className="font-semibold text-primary-900 mb-2">{t('datenschutz.section9.consent2.title')}</h4>
                 <p className="mb-2">{t('datenschutz.section9.consent2.text')}</p>
-                <p className="font-medium text-green-700">☐ {t('datenschutz.section9.consent2.checkbox')}</p>
+                <p className="font-medium">☐ {t('datenschutz.section9.consent2.checkbox')}</p>
               </div>
 
               <p className="mb-4 text-sm">{t('datenschutz.section9.consentNote')}</p>
@@ -366,11 +390,13 @@ const Datenschutz: React.FC = () => {
                 ))}
               </ul>
               <p className="mb-4">{t('datenschutz.section9.withdrawalNote')}</p>
-              <p className="text-sm bg-amber-100 p-2 rounded">{t('datenschutz.section9.withdrawalConsequence')}</p>
+              <p className="text-sm">{t('datenschutz.section9.withdrawalConsequence')}</p>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 10: Ihre Rechte */}
-            <section>
+            <section id="section10">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section10.title')}
               </h2>
@@ -401,8 +427,10 @@ const Datenschutz: React.FC = () => {
               <p className="mb-4">{t('datenschutz.section10.complaintText')}</p>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 11: Feedback und Nutzerbewertungen */}
-            <section>
+            <section id="section11">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section11.title')}
               </h2>
@@ -417,13 +445,15 @@ const Datenschutz: React.FC = () => {
               <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">{t('datenschutz.section11.retentionTitle')}</h3>
               <p className="mb-4">{t('datenschutz.section11.retentionText')}</p>
 
-              <p className="mb-4 text-sm bg-amber-50 p-3 rounded border-l-4 border-amber-500">
-                {t('datenschutz.section11.warning')}
+              <p className="mb-4 text-sm">
+                <strong>Hinweis:</strong> {t('datenschutz.section11.warning')}
               </p>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 12: Datensicherheit */}
-            <section>
+            <section id="section12">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section12.title')}
               </h2>
@@ -435,13 +465,15 @@ const Datenschutz: React.FC = () => {
               </ul>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 13: Kontakt und Datenschutzanfragen */}
-            <section>
+            <section id="section13">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section13.title')}
               </h2>
               <p className="mb-4">{t('datenschutz.section13.text')}</p>
-              <div className="bg-gray-50 p-4 rounded-lg mb-4 border-l-4 border-primary-300">
+              <div className="mb-4 ml-4">
                 <p className="font-semibold">{t('datenschutz.section13.contactName')}</p>
                 <p>{t('datenschutz.section13.contactEmail')}</p>
                 <p>{t('datenschutz.section13.contactAddress')}</p>
@@ -449,8 +481,10 @@ const Datenschutz: React.FC = () => {
               <p className="mb-4">{t('datenschutz.section13.responseNote')}</p>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Section 14: Aktualisierung dieser Datenschutzerklärung */}
-            <section className="pt-4 border-t border-primary-200">
+            <section id="section14">
               <h2 className="text-xl font-semibold text-primary-900 mb-4">
                 {t('datenschutz.section14.title')}
               </h2>
@@ -458,8 +492,10 @@ const Datenschutz: React.FC = () => {
               <p className="mb-4 text-sm">{t('datenschutz.section14.versionNote')}</p>
             </section>
 
+            <hr className="border-gray-200" />
+
             {/* Last Updated */}
-            <section className="pt-4 border-t border-primary-200">
+            <section>
               <p className="text-sm text-primary-600">
                 {t('datenschutz.lastUpdated')}{' '}
                 {new Date().toLocaleDateString(i18n.language === 'de' ? 'de-DE' : 'en-US', {
