@@ -60,6 +60,12 @@ const Datenschutz: React.FC = () => {
                 <br />
                 {t('datenschutz.section1.rightsText')}
               </p>
+
+              <p className="mb-4">
+                <strong>{t('datenschutz.section1.voluntaryTitle')}</strong>
+                <br />
+                {t('datenschutz.section1.voluntaryText')}
+              </p>
             </section>
 
             <section>
@@ -130,6 +136,9 @@ const Datenschutz: React.FC = () => {
               <p className="mb-4">
                 {t('datenschutz.section3.serverLogsNote')}
               </p>
+              <p className="mb-4">
+                {t('datenschutz.section3.serverLogsLegalBasis')}
+              </p>
 
               <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
                 {t('datenschutz.section3.medicalTitle')}
@@ -183,6 +192,13 @@ const Datenschutz: React.FC = () => {
               <p className="mb-4">
                 {t('datenschutz.section4.complaintText')}
               </p>
+
+              <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
+                {t('datenschutz.section4.withdrawalTitle')}
+              </h3>
+              <p className="mb-4">
+                {t('datenschutz.section4.withdrawalText')}
+              </p>
             </section>
 
             <section>
@@ -235,6 +251,9 @@ const Datenschutz: React.FC = () => {
               <p className="mb-4">
                 {t('datenschutz.section7.note')}
               </p>
+              <p className="mb-4">
+                {t('datenschutz.section7.dpaNote')}
+              </p>
             </section>
 
             <section className="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-r-lg">
@@ -256,6 +275,32 @@ const Datenschutz: React.FC = () => {
               </ul>
               <p className="text-sm text-amber-800 italic">
                 {t('datenschutz.section7a.consent')}
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold text-primary-900 mb-3">
+                {t('datenschutz.section8.title')}
+              </h2>
+              <p className="mb-4">
+                {t('datenschutz.section8.intro')}
+              </p>
+              <ul className="list-disc list-inside mb-4 ml-4">
+                {(t('datenschutz.section8.items', { returnObjects: true }) as string[]).map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+              <p className="mb-4 text-sm bg-blue-50 p-3 rounded border-l-4 border-blue-500">
+                {t('datenschutz.section8.note')}
+              </p>
+            </section>
+
+            <section className="pt-4 border-t border-primary-200">
+              <h3 className="text-lg font-semibold text-primary-800 mb-2">
+                {t('datenschutz.policyUpdatesTitle')}
+              </h3>
+              <p className="mb-4">
+                {t('datenschutz.policyUpdatesText')}
               </p>
             </section>
 

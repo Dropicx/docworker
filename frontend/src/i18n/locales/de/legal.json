@@ -15,7 +15,9 @@
       "purposeQuestion": "Wofür nutzen wir Ihre Daten?",
       "purposeText": "Die hochgeladenen Dokumente werden ausschließlich zum Zweck der Übersetzung verarbeitet. Nach Abschluss der Verarbeitung werden alle Daten automatisch gelöscht. Es erfolgt keine dauerhafte Speicherung, keine Weitergabe an Dritte und keine Nutzung für andere Zwecke.",
       "rightsQuestion": "Welche Rechte haben Sie bezüglich Ihrer Daten?",
-      "rightsText": "Da wir keine personenbezogenen Daten von Endnutzern speichern und die Verarbeitung vollständig anonym erfolgt, sind die meisten DSGVO-Rechte (wie Auskunft, Berichtigung, Löschung) nicht anwendbar. Ihre Dokumente werden automatisch nach der Verarbeitung gelöscht, sodass keine Daten mehr vorhanden sind, über die Auskunft erteilt werden könnte."
+      "rightsText": "Da wir keine personenbezogenen Daten von Endnutzern speichern und die Verarbeitung vollständig anonym erfolgt, sind die meisten DSGVO-Rechte (wie Auskunft, Berichtigung, Löschung) nicht anwendbar. Ihre Dokumente werden automatisch nach der Verarbeitung gelöscht, sodass keine Daten mehr vorhanden sind, über die Auskunft erteilt werden könnte.",
+      "voluntaryTitle": "Freiwilligkeit der Datenbereitstellung",
+      "voluntaryText": "Die Bereitstellung Ihrer Dokumente ist freiwillig. Ohne das Hochladen eines Dokuments kann unser Übersetzungsdienst jedoch nicht genutzt werden. Sie entscheiden selbst, welche Dokumente Sie zur Übersetzung einreichen."
     },
     "section2": {
       "title": "2. Allgemeine Hinweise und Pflichtinformationen",
@@ -54,6 +56,7 @@
         "IP-Adresse"
       ],
       "serverLogsNote": "Eine Zusammenführung dieser Daten mit anderen Datenquellen wird nicht vorgenommen.",
+      "serverLogsLegalBasis": "Die Verarbeitung von Server-Logdaten (IP-Adressen, Browserinformationen) erfolgt auf Grundlage unseres berechtigten Interesses an der Sicherheit und Stabilität unserer Dienste gemäß Art. 6 Abs. 1 lit. f DSGVO. Die Logdaten werden nach maximal 24 Stunden automatisch gelöscht.",
       "medicalTitle": "Verarbeitung medizinischer Dokumente",
       "medicalText": "Bei der Nutzung unseres Übersetzungsdienstes für medizinische Dokumente gelten folgende Datenschutzmaßnahmen:",
       "medicalItems": [
@@ -79,7 +82,9 @@
       "portabilityTitle": "Recht auf Datenübertragbarkeit",
       "portabilityText": "Da wir keine personenbezogenen Daten von Endnutzern speichern, gibt es keine Daten, die übertragen werden könnten. Die Übersetzungsergebnisse können Sie direkt nach der Verarbeitung herunterladen.",
       "complaintTitle": "Beschwerderecht bei einer Aufsichtsbehörde",
-      "complaintText": "Im Falle von Verstößen gegen die DSGVO steht Ihnen ein Beschwerderecht bei einer Aufsichtsbehörde zu, insbesondere in dem Mitgliedstaat Ihres gewöhnlichen Aufenthalts, Ihres Arbeitsplatzes oder des Orts des mutmaßlichen Verstoßes."
+      "complaintText": "Im Falle von Verstößen gegen die DSGVO steht Ihnen ein Beschwerderecht bei einer Aufsichtsbehörde zu, insbesondere in dem Mitgliedstaat Ihres gewöhnlichen Aufenthalts, Ihres Arbeitsplatzes oder des Orts des mutmaßlichen Verstoßes.",
+      "withdrawalTitle": "Recht auf Widerruf der Einwilligung",
+      "withdrawalText": "Soweit die Verarbeitung auf Ihrer Einwilligung beruht (insbesondere bei Gesundheitsdaten nach Art. 9 Abs. 2 lit. a DSGVO), können Sie diese Einwilligung jederzeit widerrufen. Der Widerruf kann durch Abbrechen des Verarbeitungsprozesses, Schließen des Browsers oder durch Kontaktaufnahme mit uns erfolgen. Der Widerruf berührt nicht die Rechtmäßigkeit der aufgrund der Einwilligung bis zum Widerruf erfolgten Verarbeitung. Nach dem Widerruf werden alle Ihre Daten umgehend gelöscht."
     },
     "section5": {
       "title": "5. Besondere Hinweise zum Gesundheitsdatenschutz",
@@ -108,7 +113,8 @@
         "Hetzner (Deutschland/EU): Für die PII-Entfernung (Entfernung personenbezogener Daten) und als Fallback-OCR-Dienst (PaddleOCR). Die Server befinden sich in Deutschland.",
         "Railway (EU): Für das Hosting der Anwendung und der verschlüsselten PostgreSQL-Datenbank. Railway ist SOC 2 Type I zertifiziert und bietet DSGVO-konforme Data Processing Agreements."
       ],
-      "note": "Alle Datenverarbeitung erfolgt ausschließlich innerhalb der EU (Frankreich und Deutschland). Es finden keine internationalen Datenübertragungen statt."
+      "note": "Alle Datenverarbeitung erfolgt ausschließlich innerhalb der EU (Frankreich und Deutschland). Es finden keine internationalen Datenübertragungen statt.",
+      "dpaNote": "Mit allen genannten Drittanbietern bestehen Auftragsverarbeitungsverträge (AVV) gemäß Art. 28 DSGVO, die den Schutz Ihrer Daten nach europäischen Datenschutzstandards gewährleisten. Diese Verträge verpflichten unsere Partner zur Einhaltung strenger Datenschutzanforderungen und zur ausschließlichen Verarbeitung nach unseren Weisungen."
     },
     "section7a": {
       "title": "7a. Wichtiger Hinweis zur Entfernung personenbezogener Daten",
@@ -123,6 +129,20 @@
       ],
       "consent": "Mit dem Hochladen Ihrer Dokumente und dem Akzeptieren der Datenschutzerklärung bestätigen Sie, dass Sie diesen Hinweis verstanden haben und akzeptieren, dass die PII-Entfernung nicht zu 100% garantiert werden kann."
     },
+    "section8": {
+      "title": "8. Automatisierte Verarbeitung und künstliche Intelligenz",
+      "intro": "Unser Dienst verwendet künstliche Intelligenz (KI) für die Texterkennung (OCR) und Übersetzung Ihrer Dokumente. Wir möchten Sie über folgende wichtige Punkte informieren:",
+      "items": [
+        "Die KI wird ausschließlich für technische Aufgaben (Texterkennung, Übersetzung) eingesetzt, NICHT für Entscheidungen, die Sie betreffen.",
+        "Es findet KEINE automatisierte Entscheidungsfindung im Sinne von Art. 22 DSGVO statt, die rechtliche Wirkung entfaltet oder Sie in ähnlicher Weise erheblich beeinträchtigt.",
+        "Es erfolgt KEIN Profiling - die KI analysiert keine persönlichen Merkmale, Vorlieben oder Verhaltensweisen.",
+        "Sie behalten jederzeit die volle Kontrolle: Sie entscheiden, welche Dokumente hochgeladen werden, und können den Prozess jederzeit abbrechen.",
+        "Die Übersetzungsergebnisse dienen ausschließlich Ihrer Information und haben keine rechtlichen oder medizinischen Auswirkungen."
+      ],
+      "note": "Die verwendeten KI-Modelle (Mistral AI) werden von europäischen Anbietern betrieben und unterliegen der DSGVO. Die Modelle wurden nicht mit Ihren Daten trainiert und werden es auch nicht."
+    },
+    "policyUpdatesTitle": "Aktualisierung dieser Datenschutzerklärung",
+    "policyUpdatesText": "Wir überprüfen und aktualisieren diese Datenschutzerklärung regelmäßig, um rechtliche Anforderungen zu erfüllen und Änderungen unserer Dienste widerzuspiegeln. Bei wesentlichen Änderungen werden wir Sie durch einen deutlichen Hinweis auf unserer Website informieren. Wir empfehlen Ihnen, diese Seite regelmäßig zu besuchen, um über aktuelle Datenschutzpraktiken informiert zu bleiben.",
     "lastUpdated": "Stand:"
   },
   "impressum": {
