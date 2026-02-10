@@ -1,51 +1,52 @@
 {
   "datenschutz": {
     "pageTitle": "Informativa sulla privacy",
+    "websiteName": "healthlingo.de",
     "section1": {
-      "title": "1. Privacy in sintesi",
+      "title": "1. Protezione dei dati in sintesi",
       "generalTitle": "Informazioni generali",
-      "generalText": "Le seguenti note forniscono una semplice panoramica di cosa succede ai tuoi dati personali quando visiti questo sito web. I dati personali sono tutti i dati che possono essere utilizzati per identificarti personalmente.",
-      "dataCollectionTitle": "Raccolta dati su questo sito web",
-      "responsibleText": "Il trattamento dei dati su questo sito web è effettuato dall'operatore del sito web. I suoi recapiti si trovano nelle note legali di questo sito web.",
+      "generalText": "Le seguenti note forniscono una panoramica semplice di cosa succede ai suoi dati personali quando visita questo sito web. I dati personali sono tutti i dati con cui può essere identificato personalmente.",
       "responsibleQuestion": "Chi è responsabile della raccolta dati su questo sito web?",
-      "anonymousTitle": "Utilizzo anonimo del nostro servizio",
-      "anonymousText": "Il nostro servizio di traduzione funziona in modo completamente anonimo. Non hai bisogno di un account utente e non devi registrarti per tradurre documenti. Non memorizziamo dati personali degli utenti finali. I tuoi documenti vengono elaborati senza essere associati a un'identità personale.",
-      "howCollectQuestion": "Come raccogliamo i tuoi dati?",
-      "howCollectText": "Gli unici dati che raccogliamo sono i documenti che carichi per la traduzione. Questi vengono memorizzati temporaneamente solo per la durata dell'elaborazione. Non raccogliamo altri dati personali da te.",
-      "purposeQuestion": "Per cosa utilizziamo i tuoi dati?",
-      "purposeText": "I documenti caricati vengono elaborati esclusivamente per scopi di traduzione. Al termine dell'elaborazione, tutti i dati vengono automaticamente eliminati. Non c'è memorizzazione permanente, condivisione con terze parti o utilizzo per altri scopi.",
-      "rightsQuestion": "Quali diritti hai riguardo ai tuoi dati?",
-      "rightsText": "Poiché non memorizziamo dati personali degli utenti finali e l'elaborazione è completamente anonima, la maggior parte dei diritti GDPR (come accesso, rettifica, cancellazione) non sono applicabili. I tuoi documenti vengono automaticamente eliminati dopo l'elaborazione, quindi non ci sono dati da divulgare."
+      "responsibleIntro": "Il trattamento dei dati su questo sito web è effettuato da:",
+      "responsibleName": "[Nome Cognome / Nome dell'azienda]",
+      "responsibleAddress": "[Via e numero civico]",
+      "responsibleCity": "[CAP Città]",
+      "responsibleEmail": "E-mail: [Indirizzo e-mail]",
+      "responsiblePhone": "Telefono: [Numero di telefono]",
+      "serviceTitle": "Utilizzo del nostro servizio",
+      "serviceText": "Il nostro servizio di traduzione funziona con una raccolta minima di dati. Non ha bisogno di un account utente e non deve registrarsi per tradurre documenti. Non memorizziamo dati personali degli utenti finali oltre la durata dell'elaborazione. I suoi documenti vengono elaborati senza essere associati a un'identità personale.",
+      "howCollectQuestion": "Come raccogliamo i suoi dati?",
+      "howCollectText": "Gli unici dati che raccogliamo attivamente sono i documenti che carica per la traduzione. Inoltre, vengono raccolti automaticamente dati tecnici (come il suo indirizzo IP) che sono tecnicamente necessari per il funzionamento del sito web. Questi vengono eliminati dopo 1 ora al massimo.",
+      "purposeQuestion": "Per cosa utilizziamo i suoi dati?",
+      "purposeText": "I documenti caricati vengono elaborati esclusivamente per scopi di traduzione. Al termine dell'elaborazione, tutti i dati personali vengono automaticamente eliminati. Solo statistiche di utilizzo anonime (numero di token, costi) vengono conservate per migliorare il servizio. Non c'è trasmissione a terzi per i propri scopi né utilizzo come dati di addestramento IA.",
+      "rightsQuestion": "Quali diritti ha riguardo ai suoi dati?",
+      "rightsText": "Ha diritto in qualsiasi momento di ottenere informazioni sull'origine, i destinatari e lo scopo dei suoi dati personali memorizzati. Ha inoltre il diritto di richiedere la rettifica, la limitazione del trattamento o la cancellazione di questi dati. Per questo e per qualsiasi altra domanda sulla protezione dei dati, può contattarci in qualsiasi momento. Ha inoltre il diritto di presentare un reclamo all'autorità di controllo competente."
     },
     "section2": {
       "title": "2. Informazioni generali e divulgazioni obbligatorie",
       "privacyTitle": "Protezione dei dati",
-      "privacyText": "Gli operatori di queste pagine prendono molto seriamente la protezione dei tuoi dati personali. Trattiamo i tuoi dati personali in modo riservato e in conformità con le normative legali sulla protezione dei dati e questa informativa sulla privacy.",
-      "responsibleTitle": "Nota sull'entità responsabile",
-      "responsibleText": "L'entità responsabile per il trattamento dei dati su questo sito web è indicata nelle note legali. L'entità responsabile è la persona fisica o giuridica che da sola o insieme ad altri determina le finalità e i mezzi del trattamento dei dati personali.",
-      "storageTitle": "Durata della memorizzazione",
-      "storageText": "I documenti caricati e le loro traduzioni vengono memorizzati temporaneamente solo per la durata dell'elaborazione. Il periodo di memorizzazione standard è di 24 ore dopo il completamento dell'elaborazione (configurabile, può essere ridotto a 0 ore). Dopo questo periodo, tutti i dati vengono automaticamente e completamente eliminati:",
+      "privacyText": "Gli operatori di queste pagine prendono molto seriamente la protezione dei suoi dati personali. Trattiamo i suoi dati personali in modo riservato e in conformità con le normative legali sulla protezione dei dati e questa informativa sulla privacy.",
+      "storageTitle": "Durata della conservazione",
+      "storageText": "I documenti caricati e le loro traduzioni vengono eliminati dai sistemi attivi immediatamente dopo il completamento dell'elaborazione, in ogni caso entro 1 ora. Questo periodo le consente di fornirci un feedback opzionale sulla sua traduzione. Vengono eliminati i seguenti dati:",
       "storageItems": [
         "Il documento originale caricato",
-        "I testi estratti (dopo la rimozione dei dati personali)",
+        "I testi estratti (dopo la rimozione dei PII)",
         "I risultati della traduzione",
-        "Tutti i metadati di elaborazione",
-        "Indirizzi IP (per la registrazione di sicurezza)"
+        "I metadati di elaborazione contenenti dati personali",
+        "Gli indirizzi IP"
       ],
-      "storageNote": "Questo breve periodo di memorizzazione ti consente di scaricare la traduzione massimizzando la protezione dei dati. Dopo l'eliminazione, i dati non possono essere recuperati. L'eliminazione automatica viene eseguita da attività di pulizia pianificate che vengono eseguite ogni ora.",
+      "storageNote": "Questo breve periodo di conservazione massimizza la sua protezione dei dati. Dopo l'eliminazione dai sistemi attivi, i dati non sono più recuperabili.",
       "sslTitle": "Crittografia SSL/TLS",
-      "sslText": "Per motivi di sicurezza e per proteggere la trasmissione di contenuti riservati, come i documenti medici che ci invii, questo sito utilizza la crittografia SSL/TLS. Puoi riconoscere una connessione crittografata dal cambio della barra degli indirizzi del browser da \"http://\" a \"https://\" e dall'icona del lucchetto nella barra del browser."
+      "sslText": "Questo sito utilizza la crittografia SSL o TLS per motivi di sicurezza e per proteggere la trasmissione di contenuti riservati, come i documenti medici che ci invia. Può riconoscere una connessione crittografata dal cambiamento della barra degli indirizzi del browser da \"http://\" a \"https://\" e dal simbolo del lucchetto nella barra del browser."
     },
     "section3": {
       "title": "3. Raccolta dati su questo sito web",
       "cookiesTitle": "Cookie",
-      "cookiesText1": "Non utilizziamo cookie di marketing, analisi o tracciamento. Il nostro servizio utilizza solo cookie strettamente necessari richiesti per la funzionalità del sito web.",
-      "cookiesText2": "Impostiamo un cookie per memorizzare la tua impostazione della lingua preferita. Questo cookie (\"i18next\") memorizza la lingua selezionata in modo che il sito web venga visualizzato automaticamente nella tua lingua preferita alla prossima visita. Questo cookie non contiene dati personali ed è puramente funzionale.",
-      "cookiesText3": "Cloudflare può impostare cookie di sicurezza strettamente necessari a seconda della configurazione per proteggere il nostro sito web da attacchi informatici e garantire l'integrità del nostro servizio. Questi cookie vengono utilizzati esclusivamente per scopi di sicurezza e non contengono dati personali a scopo pubblicitario.",
-      "cookiesText4": "Inoltre, utilizziamo il localStorage del browser per salvare la tua preferenza per il banner dei cookie (se hai chiuso il banner). Queste informazioni vengono memorizzate solo localmente nel tuo browser e non vengono trasmesse al nostro server.",
-      "cookiesText5": "Poiché utilizziamo solo cookie strettamente necessari, non è richiesto alcun consenso ai sensi della legge applicabile. Questi cookie sono essenziali per la fornitura del servizio.",
+      "cookiesText": "Non utilizziamo cookie di marketing, analisi o tracciamento. Il nostro servizio utilizza esclusivamente cookie tecnicamente necessari che sono richiesti per il funzionamento del sito web.",
+      "cookiesLanguage": "Impostiamo un cookie per salvare la sua preferenza di lingua. Questo cookie (\"i18next\") memorizza la lingua selezionata in modo che il sito web venga visualizzato automaticamente nella sua lingua preferita alla prossima visita. Questo cookie non contiene dati personali ed è puramente funzionale.",
+      "cookiesCloudflare": "Cloudflare può impostare cookie di sicurezza tecnicamente necessari a seconda della configurazione per proteggere il nostro sito web dagli attacchi informatici e garantire l'integrità del servizio. Questi cookie servono esclusivamente per la sicurezza e non contengono dati personali a scopo pubblicitario.",
       "serverLogsTitle": "File di log del server",
-      "serverLogsText": "Il provider di queste pagine raccoglie e memorizza automaticamente informazioni nei cosiddetti file di log del server, che il tuo browser ci trasmette automaticamente. Questi sono:",
+      "serverLogsText": "Il provider di queste pagine raccoglie e memorizza automaticamente informazioni nei cosiddetti file di log del server che il suo browser ci trasmette automaticamente. Questi sono:",
       "serverLogsItems": [
         "Tipo e versione del browser",
         "Sistema operativo utilizzato",
@@ -54,75 +55,127 @@
         "Ora della richiesta al server",
         "Indirizzo IP"
       ],
-      "serverLogsNote": "Questi dati non vengono uniti ad altre fonti di dati.",
+      "serverLogsNote": "Questi dati non vengono uniti ad altre fonti di dati. Il trattamento dei dati di log del server si basa sul nostro legittimo interesse alla sicurezza e stabilità dei nostri servizi ai sensi dell'Art. 6(1)(f) del GDPR. I dati di log vengono automaticamente eliminati dopo 1 ora al massimo.",
       "medicalTitle": "Trattamento di documenti medici",
-      "medicalText": "Quando utilizzi il nostro servizio di traduzione per documenti medici, si applicano le seguenti misure di protezione dei dati:",
+      "medicalText": "Quando utilizza il nostro servizio di traduzione per documenti medici, si applicano le seguenti misure di protezione dei dati:",
       "medicalItems": [
-        "Rimozione automatica dei dati personali: Prima dell'elaborazione da parte dei sistemi IA, le informazioni personali (nomi, indirizzi, telefoni, date di nascita, numeri di assicurazione) vengono automaticamente rimosse dai documenti.",
-        "Memorizzazione temporanea: I documenti vengono memorizzati temporaneamente solo per la durata dell'elaborazione (massimo 24 ore)",
-        "Eliminazione automatica: Al termine della traduzione, tutti i dati vengono automaticamente e completamente eliminati",
-        "Nessuna memorizzazione permanente: Non c'è memorizzazione permanente di documenti o traduzioni",
-        "Nessuna condivisione: Nessuna condivisione di dati con terze parti (tranne Mistral AI (Francia) per OCR e traduzione, e Hetzner (Germania) per la rimozione dei dati personali. Solo i testi ripuliti dai dati personali vengono trasmessi per la traduzione)",
-        "Trasmissione crittografata: Tutti i dati vengono trasmessi crittografati tramite HTTPS/TLS",
-        "Crittografia a riposo: Tutti i documenti caricati sono crittografati con AES-256-GCM e memorizzati nel database. Gli account amministratore utilizzano inoltre la memorizzazione crittografata per indirizzi email e nomi.",
-        "Nessun cookie di tracciamento: Il nostro servizio non utilizza cookie di marketing, analisi o tracciamento. Vengono utilizzati solo cookie strettamente necessari per le impostazioni della lingua e la sicurezza."
+        {
+          "title": "Rimozione automatica dei PII",
+          "text": "Prima dell'elaborazione da parte dei sistemi IA, le informazioni personali (nomi, indirizzi, numeri di telefono, date di nascita, numeri di assicurazione) vengono automaticamente rimosse dai documenti."
+        },
+        {
+          "title": "Memorizzazione temporanea",
+          "text": "I documenti vengono memorizzati temporaneamente solo per la durata dell'elaborazione (massimo 1 ora)."
+        },
+        {
+          "title": "Eliminazione automatica",
+          "text": "Al termine della traduzione, tutti i dati personali vengono eliminati dai sistemi attivi immediatamente, in ogni caso entro 1 ora."
+        },
+        {
+          "title": "Nessuna memorizzazione permanente",
+          "text": "Non c'è memorizzazione permanente di documenti o traduzioni."
+        },
+        {
+          "title": "Nessun utilizzo come dati di addestramento",
+          "text": "I suoi documenti e traduzioni non vengono utilizzati come dati di addestramento per modelli IA."
+        },
+        {
+          "title": "Trasmissione crittografata",
+          "text": "Tutti i dati vengono trasmessi crittografati tramite HTTPS/TLS."
+        },
+        {
+          "title": "Crittografia a riposo",
+          "text": "Tutti i documenti caricati vengono crittografati con AES-256-GCM e memorizzati nel database."
+        },
+        {
+          "title": "Nessun cookie di tracciamento",
+          "text": "Il nostro servizio non utilizza cookie di marketing, analisi o tracciamento. Vengono utilizzati solo cookie tecnicamente necessari per le impostazioni della lingua e la sicurezza."
+        },
+        {
+          "title": "Elaborazione dei dati principalmente nell'UE",
+          "text": "L'elaborazione dei suoi documenti avviene esclusivamente all'interno dell'UE (Germania e Francia). Per i servizi CDN e di sicurezza (Cloudflare), può verificarsi un trasferimento di dati negli USA, protetto da clausole contrattuali tipo dell'UE e dal Quadro di Protezione dei Dati UE-USA (vedere sezione 6)."
+        }
       ]
     },
     "section4": {
-      "title": "4. I tuoi diritti",
-      "intro": "Poiché il nostro servizio funziona in modo completamente anonimo e non memorizziamo dati personali degli utenti finali, la maggior parte dei diritti GDPR non sono direttamente applicabili in questo contesto. I tuoi documenti vengono automaticamente eliminati dopo l'elaborazione, quindi non ci sono dati da divulgare.",
-      "accessTitle": "Diritto di accesso",
-      "accessText": "Poiché non memorizziamo dati personali degli utenti finali e l'elaborazione è anonima, non possiamo fornire informazioni sui dati memorizzati poiché tali dati non esistono. Se hai domande sulla protezione dei dati, puoi contattarci in qualsiasi momento (vedi contatto nelle note legali).",
-      "deletionTitle": "Diritto alla cancellazione",
-      "deletionText": "I tuoi documenti caricati vengono automaticamente eliminati dopo 24 ore (o prima). Non è richiesta la cancellazione manuale poiché la cancellazione avviene automaticamente. Se desideri la cancellazione immediata, puoi contattarci.",
-      "restrictionTitle": "Diritto alla limitazione del trattamento",
-      "restrictionText": "Puoi annullare l'elaborazione dei tuoi documenti in qualsiasi momento terminando l'elaborazione prima del completamento della traduzione. In questo caso, i dati vengono eliminati immediatamente.",
-      "portabilityTitle": "Diritto alla portabilità dei dati",
-      "portabilityText": "Poiché non memorizziamo dati personali degli utenti finali, non ci sono dati da trasferire. Puoi scaricare i risultati della traduzione direttamente dopo l'elaborazione.",
-      "complaintTitle": "Diritto di presentare un reclamo a un'autorità di controllo",
-      "complaintText": "In caso di violazioni del GDPR, hai il diritto di presentare un reclamo a un'autorità di controllo, in particolare nello stato membro della tua residenza abituale, del tuo luogo di lavoro o del luogo della presunta violazione."
+      "title": "4. Basi giuridiche del trattamento",
+      "intro": "Per le diverse attività di trattamento, ci basiamo sulle seguenti basi giuridiche:",
+      "legalBases": [
+        {
+          "activity": "Trattamento di documenti (senza dati sanitari)",
+          "basis": "Art. 6(1)(b) GDPR (esecuzione del contratto)",
+          "explanation": "Il trattamento è necessario per l'esecuzione del contratto concluso tra lei e noi relativo alla fornitura di contenuti digitali (§§ 327 e ss. BGB)."
+        },
+        {
+          "activity": "Trattamento di dati sanitari (documenti medici)",
+          "basis": "Art. 6(1)(b) GDPR (esecuzione del contratto) + Art. 9(2)(a) GDPR (consenso esplicito)",
+          "explanation": "Il trattamento viene effettuato per l'esecuzione del contratto di traduzione (Art. 6). Poiché i documenti medici contengono regolarmente dati sanitari, è richiesto anche il suo consenso esplicito ai sensi dell'Art. 9 GDPR (vedere sezione 9 – Il suo consenso)."
+        },
+        {
+          "activity": "Dati di log del server",
+          "basis": "Art. 6(1)(f) GDPR (interessi legittimi)",
+          "explanation": "Il trattamento è necessario per garantire la sicurezza e la stabilità dei nostri servizi."
+        },
+        {
+          "activity": "Feedback (opzionale)",
+          "basis": "Art. 6(1)(a) GDPR (consenso)",
+          "explanation": "Il trattamento dei suoi dati di feedback si basa sul suo consenso volontario."
+        }
+      ]
     },
     "section5": {
       "title": "5. Note speciali sulla protezione dei dati sanitari",
       "intro": "Poiché il nostro servizio consente l'elaborazione di documenti medici che possono contenere dati sanitari, notiamo specificamente:",
       "items": [
-        "I dati sanitari appartengono alle categorie particolari di dati personali ai sensi dell'art. 9 GDPR",
-        "Elaboriamo questi dati esclusivamente per scopi di traduzione e solo con il tuo consenso esplicito (accettando l'informativa sulla privacy al momento del caricamento)",
-        "L'elaborazione è completamente anonima - nessun dato personale degli utenti finali viene memorizzato",
-        "Prima dell'elaborazione IA, tutte le informazioni personali (nomi, indirizzi, telefoni, ecc.) vengono automaticamente rimosse",
-        "Vengono adottate misure tecniche e organizzative speciali per proteggere questi dati (crittografia, breve durata di memorizzazione, eliminazione automatica)",
-        "Tutti i dati vengono automaticamente e completamente eliminati dopo un massimo di 24 ore"
+        "I dati sanitari appartengono alle categorie particolari di dati personali ai sensi dell'Art. 9 GDPR.",
+        "Trattiamo questi dati esclusivamente per scopi di traduzione e solo dopo il suo consenso esplicito e separato (vedere sezione 9).",
+        "Prima dell'elaborazione IA, tutte le informazioni personali (nomi, indirizzi, numeri di telefono, ecc.) vengono automaticamente rimosse.",
+        "Vengono adottate misure tecniche e organizzative speciali per proteggere questi dati (crittografia, breve durata di conservazione, eliminazione automatica).",
+        "Tutti i dati vengono eliminati dai sistemi attivi immediatamente dopo l'elaborazione, in ogni caso entro 1 ora.",
+        "I risultati della traduzione servono esclusivamente per la sua informazione e non sostituiscono la consulenza e l'assistenza medica. Non viene effettuato alcun esame, diagnosi o raccomandazione terapeutica."
       ]
     },
     "section6": {
-      "title": "6. Contatti e richieste sulla protezione dei dati",
-      "text": "Per domande sulla protezione dei dati o per esercitare i tuoi diritti, puoi contattarci in qualsiasi momento. I recapiti si trovano nelle",
-      "impressumLink": "Note legali",
-      "responsibleLabel": "Entità responsabile:",
-      "responsibleText": "L'entità responsabile per il trattamento dei dati è indicata nelle note legali di questo sito web."
+      "title": "6. Terze parti ed elaborazione dei dati",
+      "intro": "Per fornire il nostro servizio, utilizziamo i seguenti fornitori esterni. L'elaborazione dei dati avviene principalmente all'interno dell'Unione Europea. Per il servizio CDN e di sicurezza (Cloudflare), può verificarsi un trasferimento di dati negli USA, protetto da garanzie adeguate.",
+      "cloudflare": {
+        "title": "Cloudflare (USA/Globale)",
+        "address": "Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA",
+        "purpose": "La protezione dei suoi dati sanitari sensibili è la nostra massima priorità. Utilizziamo Cloudflare come rete di distribuzione dei contenuti (CDN) e per servizi DNS con proxy attivato per proteggere il nostro sito web e i suoi dati dagli attacchi informatici.",
+        "legalBasis": "Art. 6(1)(f) GDPR (interesse legittimo alla sicurezza e disponibilità del nostro sito web).",
+        "thirdCountryTransfer": "Cloudflare è un'azienda statunitense. Il trasferimento di dati negli USA avviene sulla base delle clausole contrattuali tipo dell'UE (CCT) ai sensi dell'Art. 46(2)(c) GDPR e del Quadro di Protezione dei Dati UE-USA. Cloudflare è certificato nel Data Privacy Framework."
+      },
+      "mistral": {
+        "title": "Mistral AI (Francia/UE)",
+        "address": "Mistral AI, 15 rue des Halles, 75001 Parigi, Francia",
+        "purpose": "Riconoscimento del testo (OCR) e traduzione assistiti da IA. Per la traduzione, solo i testi ripuliti dai PII vengono trasmessi a Mistral AI.",
+        "ocrNote": "Nota importante sull'OCR: Durante l'elaborazione OCR, il documento non elaborato viene trasmesso a Mistral AI prima che possa avvenire la rimozione dei PII.",
+        "legalBasis": "Art. 28 GDPR (contratto di responsabile del trattamento). L'elaborazione dei dati avviene in Francia all'interno dell'UE."
+      },
+      "hetzner": {
+        "title": "Hetzner (Germania/UE)",
+        "address": "Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Germania",
+        "purpose": "Rimozione dei PII (rimozione dei dati personali) e servizio OCR di backup (PaddleOCR). I server sono situati in Germania.",
+        "legalBasis": "Art. 28 GDPR (contratto di responsabile del trattamento)."
+      },
+      "railway": {
+        "title": "Railway (USA con elaborazione dati UE)",
+        "address": "Railway Corporation, San Francisco, CA, USA",
+        "purpose": "Hosting dell'applicazione e del database PostgreSQL crittografato nella regione UE. Railway è certificato SOC 2 Type I e offre accordi di trattamento dei dati conformi al GDPR.",
+        "legalBasis": "Art. 28 GDPR (contratto di responsabile del trattamento).",
+        "thirdCountryTransfer": "Railway è un'azienda statunitense. L'accesso ai dati dagli USA non può essere completamente escluso. Il trasferimento di dati è protetto da clausole contrattuali tipo dell'UE (CCT) ai sensi dell'Art. 46(2)(c) GDPR."
+      },
+      "dpaNote": "Esistono contratti di responsabile del trattamento (DPA) ai sensi dell'Art. 28 GDPR con tutti i fornitori esterni menzionati, che garantiscono la protezione dei suoi dati secondo gli standard europei di protezione dei dati."
     },
     "section7": {
-      "title": "7. Terze parti ed elaborazione dei dati",
-      "intro": "Utilizziamo i seguenti fornitori terzi per fornire il nostro servizio:",
-      "items": [
-        "Mistral AI (Francia/UE): Per il riconoscimento del testo (OCR) e la traduzione alimentati da IA. Solo i testi ripuliti dai dati personali vengono trasmessi a Mistral AI per la traduzione. L'elaborazione dei dati avviene in Francia all'interno dell'UE. Nota: Durante l'elaborazione OCR, il documento non elaborato viene trasmesso a Mistral AI prima che possa avvenire la rimozione dei dati personali.",
-        "Hetzner (Germania/UE): Per la rimozione dei dati personali e come servizio OCR di backup (PaddleOCR). I server sono situati in Germania.",
-        "Railway (UE): Per l'hosting dell'applicazione e del database PostgreSQL crittografato. Railway è certificato SOC 2 Type I e offre accordi per il trattamento dei dati conformi al GDPR."
-      ],
-      "note": "Tutta l'elaborazione dei dati avviene esclusivamente all'interno dell'UE (Francia e Germania). Non avvengono trasferimenti internazionali di dati."
-    },
-    "section7a": {
-      "title": "7a. Avviso importante sulla rimozione dei dati personali",
-      "intro": "Si prega di notare le seguenti informazioni importanti sulla rimozione automatica delle informazioni di identificazione personale (PII):",
+      "title": "7. Nota importante sulla rimozione dei dati personali",
       "warning": "NESSUNA GARANZIA DI RIMOZIONE COMPLETA DEI PII",
-      "items": [
-        "La rimozione automatica delle informazioni personali è un processo al meglio delle nostre capacità. NON possiamo garantire che tutti i dati personali vengano rilevati e rimossi al 100%.",
-        "Nonostante le tecnologie avanzate (spaCy NER, Microsoft Presidio, pattern matching regex), formati di nomi insoliti, note scritte a mano o strutture di documenti atipiche possono far passare inosservati alcuni dati personali.",
-        "IMPORTANTE: Durante l'elaborazione OCR, il tuo documento viene prima trasmesso a Mistral AI (Francia) PRIMA che possa avvenire la rimozione dei PII. I dati personali vengono rimossi solo dopo il riconoscimento del testo.",
-        "Prima del caricamento, raccomandiamo vivamente di oscurare o rimuovere manualmente i dati personali evidenti come nomi, indirizzi, date di nascita e numeri di assicurazione.",
-        "I termini medici, le diagnosi e i risultati deliberatamente NON vengono rimossi in quanto sono necessari per la traduzione."
-      ],
-      "consent": "Caricando i tuoi documenti e accettando l'informativa sulla privacy, confermi di aver compreso questo avviso e di accettare che la rimozione dei PII non può essere garantita al 100%."
+      "warningText": "La rimozione automatica dei dati personali è un processo al meglio delle nostre capacità. Non possiamo garantire che tutti i dati personali vengano riconosciuti e rimossi al 100%.",
+      "limitationsText": "Nonostante le tecnologie avanzate (spaCy NER, Microsoft Presidio, corrispondenza di pattern regex), formati di nomi insoliti, note scritte a mano o strutture di documenti atipiche possono far passare inosservati alcuni dati personali.",
+      "ocrWarning": "Importante: Durante l'elaborazione OCR, il suo documento viene prima trasmesso a Mistral AI (Francia) PRIMA che possa avvenire la rimozione dei PII. I dati personali vengono rimossi solo dopo il riconoscimento del testo.",
+      "recommendation": "Prima del caricamento, raccomandiamo vivamente di oscurare o rimuovere manualmente i dati personali evidenti come nomi, indirizzi, date di nascita e numeri di assicurazione.",
+      "medicalTermsNote": "I termini medici, le diagnosi e i risultati deliberatamente NON vengono rimossi in quanto sono necessari per la traduzione.",
+      "consent": "Caricando i suoi documenti e dando il suo consenso esplicito (sezione 9), conferma di aver compreso questa nota e di accettare che la rimozione dei PII non può essere garantita al 100%."
     },
     "lastUpdated": "Ultimo aggiornamento:"
   },
@@ -130,122 +183,117 @@
     "pageTitle": "Note legali",
     "section1": {
       "title": "Informazioni ai sensi del § 5 TMG",
-      "name": "[Il tuo nome o nome dell'azienda]",
-      "address": "[Il tuo indirizzo]",
+      "name": "[Il suo nome o nome dell'azienda]",
+      "address": "[Il suo indirizzo]",
       "city": "[CAP e città]",
       "country": "Germania"
     },
     "contact": {
       "title": "Contatto",
-      "phone": "Telefono: [Il tuo numero di telefono]",
-      "email": "Email: [Il tuo indirizzo email]",
-      "website": "Sito web: [URL del tuo sito web]"
+      "phone": "Telefono: [Il suo numero di telefono]",
+      "email": "E-mail: [Il suo indirizzo e-mail]",
+      "website": "Sito web: [URL del suo sito web]"
     },
     "register": {
       "title": "Iscrizione al registro",
       "text": "Iscrizione al registro delle imprese.",
-      "court": "Tribunale di registrazione: [Il tuo tribunale di registrazione]",
-      "number": "Numero di registrazione: [Il tuo numero di registrazione]"
+      "court": "Tribunale di registrazione: [Il suo tribunale di registrazione]",
+      "number": "Numero di registrazione: [Il suo numero di registrazione]"
     },
     "tax": {
       "title": "Partita IVA",
       "text": "Numero di identificazione IVA ai sensi del § 27 a della legge sull'IVA:",
-      "number": "[La tua partita IVA]"
-    },
-    "profession": {
-      "title": "Titolo professionale e regolamenti professionali",
-      "designation": "Titolo professionale: [Il tuo titolo professionale]",
-      "chamber": "Camera responsabile: [La tua camera responsabile]",
-      "grantedIn": "Concesso in: Germania",
-      "regulations": "Si applicano i seguenti regolamenti professionali: [Regolamenti pertinenti]"
-    },
-    "responsible": {
-      "title": "Responsabile dei contenuti ai sensi del § 55 comma 2 RStV",
-      "name": "[Nome del responsabile]",
-      "address": "[Indirizzo]",
-      "city": "[CAP e città]"
+      "number": "[La sua partita IVA]"
     },
     "disclaimer": {
       "title": "Esclusione di responsabilità",
       "contentTitle": "Responsabilità per i contenuti",
-      "contentText": "I contenuti delle nostre pagine sono stati creati con la massima cura. Tuttavia, non possiamo garantire l'accuratezza, completezza o attualità dei contenuti. Come fornitore di servizi, siamo responsabili dei nostri contenuti su queste pagine secondo le leggi generali ai sensi del § 7 comma 1 TMG.",
+      "contentText": "I contenuti delle nostre pagine sono stati creati con la massima cura. Tuttavia, non possiamo garantire l'accuratezza, completezza o attualità dei contenuti.",
       "linksTitle": "Responsabilità per i link",
-      "linksText": "La nostra offerta contiene link a siti web esterni di terze parti sui cui contenuti non abbiamo alcuna influenza. Pertanto, non possiamo accettare alcuna responsabilità per questi contenuti di terze parti. Il rispettivo fornitore o operatore delle pagine collegate è sempre responsabile dei contenuti delle pagine collegate.",
+      "linksText": "La nostra offerta contiene link a siti web esterni di terze parti sui cui contenuti non abbiamo alcuna influenza. Pertanto, non possiamo accettare alcuna responsabilità per questi contenuti di terze parti.",
       "copyrightTitle": "Copyright",
-      "copyrightText": "I contenuti e le opere creati dagli operatori del sito su queste pagine sono soggetti alla legge tedesca sul copyright. La riproduzione, modifica, distribuzione e qualsiasi tipo di sfruttamento al di fuori dei limiti della legge sul copyright richiedono il consenso scritto del rispettivo autore o creatore."
+      "copyrightText": "I contenuti e le opere creati dagli operatori del sito su queste pagine sono soggetti alla legge tedesca sul copyright."
     },
     "lastUpdated": "Ultimo aggiornamento:"
   },
   "nutzungsbedingungen": {
-    "pageTitle": "Termini di utilizzo",
-    "section1": {
-      "title": "§ 1 Ambito di applicazione",
-      "p1": "(1) Questi termini di utilizzo si applicano all'uso del servizio di traduzione di documenti medici (di seguito denominato \"Servizio\") su questo sito web.",
-      "p2": "(2) Utilizzando il Servizio, accetti questi termini di utilizzo. Se non accetti questi termini, ti preghiamo di non utilizzare il nostro Servizio."
-    },
-    "section2": {
-      "title": "§ 2 Descrizione del servizio",
-      "p1": "(1) Il nostro Servizio fornisce la traduzione automatizzata di documenti medici in un linguaggio semplificato e facile da capire, nonché in altre lingue.",
-      "p2": "(2) Le traduzioni sono create dall'intelligenza artificiale e sono destinate esclusivamente all'informazione e alla migliore comprensione dei contenuti medici.",
-      "p3": "(3) Le traduzioni non sostituiscono la consulenza medica professionale, la diagnosi o il trattamento."
-    },
-    "section3": {
-      "title": "§ 3 Condizioni di utilizzo",
-      "p1": "(1) Il Servizio può essere utilizzato solo per scopi personali e non commerciali.",
-      "p2": "(2) Accetti di utilizzare il Servizio solo per scopi legali e di non caricare contenuti che:",
+    "pageTitle": "Termini e condizioni generali di utilizzo",
+    "websiteName": "healthlingo.de",
+    "medicalDisclaimer": "Si prega di notare: Nell'ambito di questo servizio non vengono effettuate né verificate diagnosi mediche o psicoterapeutiche e non vengono fornite raccomandazioni terapeutiche. Il nostro servizio non sostituisce la consulenza e l'assistenza medica. Per qualsiasi domanda concreta su una diagnosi, una malattia o un trattamento, si prega di consultare sempre un medico qualificato.",
+    "tableOfContents": {
+      "title": "Indice",
       "items": [
-        "Violano i diritti di terzi",
-        "Violano la legge applicabile",
-        "Contengono malware o codice dannoso",
-        "Potrebbero compromettere la funzionalità del Servizio"
-      ],
-      "p3": "(3) L'interrogazione sistematica o l'estrazione di dati è vietata."
+        "§ 1 Ambito di applicazione e oggetto del contratto",
+        "§ 2 Definizioni",
+        "§ 3 Conclusione del contratto",
+        "§ 4 Descrizione delle prestazioni",
+        "§ 5 Condizioni di utilizzo",
+        "§ 6 Diritti di utilizzo",
+        "§ 7 Obblighi dell'utente",
+        "§ 8 Uso vietato",
+        "§ 9 Esclusione di responsabilità medica",
+        "§ 10 Nota sulla rimozione dei PII",
+        "§ 11 Proprietà intellettuale e copyright",
+        "§ 12 Disponibilità e requisiti tecnici",
+        "§ 13 Garanzia",
+        "§ 14 Limitazione di responsabilità",
+        "§ 15 Manleva",
+        "§ 16 Protezione dei dati",
+        "§ 17 Diritto di recesso del consumatore",
+        "§ 18 Risoluzione del contratto",
+        "§ 19 Modifiche ai termini di utilizzo",
+        "§ 20 Legge applicabile e giurisdizione",
+        "§ 21 Risoluzione extragiudiziale delle controversie",
+        "§ 22 Compensazione e ritenzione",
+        "§ 23 Clausola di salvaguardia",
+        "§ 24 Contatto"
+      ]
     },
     "section4": {
-      "title": "§ 4 Avvertenza medica",
-      "warning": "AVVISO IMPORTANTE: Le traduzioni fornite NON devono essere intese come consulenza medica!",
-      "p1": "(1) Le traduzioni sono create automaticamente dall'intelligenza artificiale e possono contenere errori, imprecisioni o fraintendimenti.",
-      "p2": "(2) Le traduzioni non devono mai essere utilizzate come base per decisioni mediche.",
-      "p3": "(3) Per domande o problemi medici, consulta sempre un medico qualificato o un operatore sanitario.",
-      "p4": "(4) In caso di emergenza, contatta immediatamente i servizi di emergenza (112) o recati al pronto soccorso più vicino.",
-      "p5": "(5) Non fare mai affidamento esclusivamente sulle traduzioni di questo Servizio per decisioni relative alla salute."
+      "title": "§ 4 Descrizione delle prestazioni",
+      "subsection1": {
+        "title": "4.1 Oggetto del contratto e funzioni principali",
+        "intro": "healthlingo.de è un servizio online che le consente di tradurre documenti medici in un linguaggio comprensibile. L'obiettivo è metterla in grado, come paziente informato, di comprendere le informazioni che le vengono comunicate in un documento medico. Il servizio comprende:",
+        "items": [
+          "Riconoscimento automatico del testo (OCR) per i documenti caricati tramite IA",
+          "Traduzione del linguaggio medico specialistico in un linguaggio comprensibile per i pazienti (tedesco)",
+          "Traduzione in altre lingue di destinazione (inglese, francese, spagnolo, italiano, portoghese, olandese, polacco)",
+          "Verifica automatizzata della plausibilità e coerenza della traduzione (non sostituisce la consulenza medica)",
+          "Download dei risultati della traduzione"
+        ],
+        "note": "Il servizio è tecnicamente programmato in modo che la traduzione dei documenti funzioni in modo completamente automatico. Le informazioni del documento originale non vengono valutate, interpretate o integrate dal punto di vista medico, ma solo tradotte automaticamente."
+      }
     },
-    "section5": {
-      "title": "§ 5 Limitazione di responsabilità",
-      "p1": "(1) Non assumiamo alcuna responsabilità per l'accuratezza, completezza o attualità delle traduzioni.",
-      "p2": "(2) Qualsiasi responsabilità per danni derivanti direttamente o indirettamente dall'uso del Servizio è esclusa nella misura consentita dalla legge.",
-      "p3": "(3) Ciò non si applica ai danni derivanti da lesioni alla vita, al corpo o alla salute, o ad altri danni basati su violazione intenzionale o gravemente negligente del dovere."
+    "section15": {
+      "title": "§ 15 Manleva",
+      "p1": "(1) L'utente manleva il fornitore da pretese di terzi fatte valere a causa di una violazione colpevole dei loro diritti da parte dell'utente, in particolare mediante il caricamento di documenti senza la relativa autorizzazione.",
+      "p2": "(2) L'utente rimborsa al fornitore i costi necessari di una ragionevole difesa legale.",
+      "p3": "(3) L'obbligo di manleva non si applica nella misura in cui l'utente non è responsabile della violazione.",
+      "p4": "(4) L'utente è tenuto a informare immediatamente il fornitore in caso di reclami di terzi e ad assisterlo nella difesa legale."
     },
-    "section6": {
-      "title": "§ 6 Protezione dei dati",
-      "p1": "(1) Il trattamento dei dati personali viene effettuato in conformità con la nostra Informativa sulla privacy.",
-      "p2": "(2) I documenti caricati vengono memorizzati temporaneamente solo per la durata dell'elaborazione e vengono poi automaticamente eliminati.",
-      "p3": "(3) Non c'è memorizzazione permanente o condivisione dei tuoi documenti con terze parti."
+    "section16": {
+      "title": "§ 16 Protezione dei dati",
+      "p1": "(1) La protezione dei suoi dati personali è particolarmente importante per noi. Il trattamento avviene in conformità con il GDPR e il BDSG.",
+      "p2": "(2) La nostra informativa sulla privacy completa è disponibile al punto di menu \"Protezione dei dati\" sul nostro sito web.",
+      "p3": "(3) L'utilizzo del servizio richiede un consenso esplicito al trattamento dei dati sanitari.",
+      "p4": "(4) I suoi documenti vengono automaticamente e irrevocabilmente eliminati dai nostri sistemi attivi al massimo entro 1 ora dall'elaborazione. I dettagli sull'eliminazione e sui dati di protocollo tecnico si trovano nella nostra informativa sulla privacy.",
+      "p5": "(5) L'elaborazione dei suoi documenti avviene all'interno dell'Unione Europea. Per i servizi di sicurezza (CDN, protezione DDoS), utilizziamo Cloudflare, il che può comportare un trasferimento di dati di connessione negli USA. I dettagli e le basi giuridiche si trovano nella nostra informativa sulla privacy (sezione 6).",
+      "p6": "(6) Senza il suo consenso, i dati personali non verranno utilizzati per scopi pubblicitari.",
+      "linkText": "All'informativa sulla privacy completa"
     },
-    "section7": {
-      "title": "§ 7 Proprietà intellettuale",
-      "p1": "(1) Tutti i diritti sul sito web e sul Servizio, inclusi i diritti d'autore, i diritti sui marchi e altri diritti di proprietà intellettuale, rimangono a noi.",
-      "p2": "(2) L'utilizzo del Servizio non ti concede alcun diritto sulla nostra proprietà intellettuale, ad eccezione dei diritti espressamente concessi in questi termini di utilizzo."
+    "section19": {
+      "title": "§ 19 Modifiche ai termini di utilizzo",
+      "p1": "(1) Il fornitore si riserva il diritto di modificare questi CGU in qualsiasi momento con effetto per il futuro.",
+      "p2": "(2) Le modifiche entrano in vigore con la loro pubblicazione su questa pagina.",
+      "p3": "(3) In caso di modifiche sostanziali, il fornitore la informerà con un avviso sul sito web.",
+      "p4": "(4) In caso di modifiche sostanziali, le verrà chiesto di confermare attivamente i nuovi CGU prima del prossimo utilizzo. Senza questa conferma, un ulteriore utilizzo non è possibile.",
+      "p5": "(5) Si applicano i CGU nella versione in vigore al momento dell'utilizzo."
     },
-    "section8": {
-      "title": "§ 8 Disponibilità",
-      "p1": "(1) Ci sforziamo per un'alta disponibilità del Servizio ma non possiamo garantirla.",
-      "p2": "(2) Ci riserviamo il diritto di modificare, interrompere o cessare il Servizio in qualsiasi momento.",
-      "p3": "(3) I lavori di manutenzione saranno annunciati in anticipo ove possibile."
-    },
-    "section9": {
-      "title": "§ 9 Modifiche ai termini di utilizzo",
-      "p1": "(1) Ci riserviamo il diritto di modificare questi termini di utilizzo in qualsiasi momento.",
-      "p2": "(2) Le modifiche saranno pubblicate su questa pagina. L'uso continuato del Servizio dopo la pubblicazione delle modifiche costituisce accettazione dei termini modificati."
-    },
-    "section10": {
-      "title": "§ 10 Legge applicabile e giurisdizione",
-      "p1": "(1) Si applica la legge della Repubblica Federale di Germania, esclusa la Convenzione delle Nazioni Unite sui contratti di vendita internazionale di merci.",
-      "p2": "(2) Il foro competente per tutte le controversie derivanti da o in connessione con questi termini di utilizzo è, nella misura consentita dalla legge, [La tua giurisdizione]."
-    },
-    "section11": {
-      "title": "§ 11 Clausola di salvaguardia",
-      "text": "Se singole disposizioni di questi termini di utilizzo sono o diventano invalide o inapplicabili, la validità delle restanti disposizioni rimane inalterata."
+    "section21": {
+      "title": "§ 21 Risoluzione extragiudiziale delle controversie",
+      "p1": "(1) La piattaforma di risoluzione delle controversie online (ODR) dell'UE è stata dismessa il 20 luglio 2025. Per la risoluzione extragiudiziale delle controversie, può rivolgersi al Centro Generale di Mediazione dei Consumatori: www.verbraucher-schlichter.de",
+      "p2": "(2) Non siamo disposti né tenuti a partecipare a una procedura di risoluzione delle controversie.",
+      "p3": "(3) Il nostro indirizzo e-mail si trova nelle note legali così come nel § 24 di questi CGU."
     },
     "lastUpdated": "Ultimo aggiornamento:"
   }

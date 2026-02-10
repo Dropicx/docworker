@@ -368,9 +368,10 @@
     "madeInLocation": "in Deutschland entwickelt"
   },
   "cookieFree": {
-    "title": "Keine Cookies!",
-    "description": "HealthLingo verwendet keine Cookies und speichert keine Tracking-Daten.",
-    "closeBanner": "Banner schließen"
+    "title": "Technisch notwendige Cookies",
+    "description": "Wir verwenden ausschließlich technisch notwendige Cookies für Spracheinstellungen und Sicherheit. Keine Tracking- oder Marketing-Cookies.",
+    "privacyLink": "Datenschutzerklärung",
+    "accept": "Akzeptieren"
   },
   "termination": {
     "title": "Verarbeitung gestoppt",

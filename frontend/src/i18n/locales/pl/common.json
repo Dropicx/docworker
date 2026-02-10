@@ -24,6 +24,7 @@
     "noStorage": "Brak przechowywania danych"
   },
   "features": {
+    "heading": "Trzy dobre powody",
     "privacyTitle": "Prywatność przede wszystkim",
     "privacyDescription": "Twoje dane są przechowywane tylko podczas przetwarzania, nigdy nie są wykorzystywane do trenowania AI i są automatycznie usuwane natychmiast po tłumaczeniu.",
     "precisionTitle": "Precyzja medyczna",
@@ -69,7 +70,8 @@
     "privacyConsentSuffix": "i wyrażam wyraźną zgodę na przetwarzanie moich dokumentów medycznych zgodnie z Art. 6 ust. 1 lit. b RODO (wykonanie umowy) i Art. 9 ust. 2 lit. a RODO (dane dotyczące zdrowia). Moje dane zostaną usunięte z aktywnych systemów natychmiast po przetworzeniu, w każdym przypadku w ciągu 1 godziny.",
     "startProcessing": "Rozpocznij przetwarzanie",
     "gdprNotice": "Twoje dane są przetwarzane zgodnie z RODO i nie są przechowywane",
-    "uploadFailed": "Przesyłanie nie powiodło się"
+    "uploadFailed": "Przesyłanie nie powiodło się",
+    "tipsTitle": "Wskazówki"
   },
   "qualityGate": {
     "title": "Jakość obrazu zbyt niska",
@@ -223,7 +225,7 @@
     "privacyPolicy": "Politykę prywatności",
     "consentAnd": "i",
     "termsOfUse": "Warunki użytkowania",
-    "consentSuffix": "i wyrażam zgodę na wykorzystanie mojej opinii oraz powiązanych treści dokumentów do poprawy jakości.",
+    "consentSuffix": "i wyrażam zgodę zgodnie z art. 6 ust. 1 lit. a RODO na wykorzystanie mojej opinii oraz powiązanych treści dokumentów do poprawy jakości.",
     "ratingRequired": "Proszę podać ocenę ogólną.",
     "consentRequired": "Proszę wyrazić zgodę na wykorzystanie danych.",
     "submitError": "Nie udało się wysłać opinii.",
@@ -299,12 +301,12 @@
     "contactLink": "Skontaktuj się z nami",
     "items": {
       "0": {
-        "question": "Gdzie są przetwarzane moje dane i czy są bezpieczne?",
-        "answer": "Twoje dokumenty są przetwarzane wyłącznie na bezpiecznych serwerach w Europie. Współpracujemy tylko z dostawcami, którzy spełniają surowe europejskie standardy ochrony danych. Wszyscy nasi partnerzy podpisali umowy o ochronie danych zgodnie z europejskimi przepisami."
+        "question": "Gdzie są przetwarzane moje dane?",
+        "answer": "Twoje dokumenty są przetwarzane głównie na bezpiecznych serwerach w Europie (Niemcy i Francja). Do usług bezpieczeństwa i sieci używamy Cloudflare (USA), zabezpieczonego standardowymi klauzulami umownymi UE oraz Ramami Ochrony Prywatności UE-USA. Ze wszystkimi partnerami zawarliśmy umowy o ochronie danych zgodnie z RODO."
       },
       "1": {
-        "question": "Czy moje dane medyczne są przechowywane lub wykorzystywane do szkolenia sztucznej inteligencji?",
-        "answer": "Nie, absolutnie nie. HealthLingo nie przechowuje żadnych danych na stałe. Twoje dokumenty są automatycznie usuwane po tłumaczeniu. Sztuczna inteligencja NIE uczy się z Twoich danych - każde żądanie jest przetwarzane oddzielnie i nie pozostawia śladów."
+        "question": "Jak długo są przechowywane moje dane?",
+        "answer": "Twoje dokumenty są usuwane z aktywnych systemów natychmiast po przetworzeniu, w każdym przypadku w ciągu 1 godziny. Jeśli dobrowolnie przekażesz nam opinię, te zanonimizowane oceny są przechowywane maksymalnie przez 90 dni. Nie ma trwałego przechowywania Twoich dokumentów."
       },
       "2": {
         "question": "Jak długo trwa tłumaczenie?",
@@ -324,7 +326,7 @@
       },
       "6": {
         "question": "Jak moje dane są chronione technicznie?",
-        "answer": "Wszystkie dane są szyfrowane w spoczynku przy użyciu AES-256-GCM – aktualnego standardu bezpieczeństwa danych. Wszystkie transmisje wykorzystują bezpieczne połączenia HTTPS/TLS. HealthLingo nie używa plików cookie ani śledzenia. Nasi dostawcy serwerów są certyfikowani zgodnie z międzynarodowymi standardami bezpieczeństwa. Całe przetwarzanie danych odbywa się w Europie."
+        "answer": "Wszystkie dane są szyfrowane w spoczynku przy użyciu AES-256-GCM – aktualnego standardu bezpieczeństwa danych. Wszystkie transmisje wykorzystują bezpieczne połączenia HTTPS/TLS. HealthLingo nie używa plików cookie marketingowych ani śledzących, tylko niezbędne technicznie pliki cookie do ustawień języka. Przetwarzanie dokumentów odbywa się głównie w UE (Niemcy, Francja), bezpieczeństwo sieci przez Cloudflare (USA, zabezpieczone przez SCC)."
       },
       "7": {
         "question": "Czy tłumaczenie jest medycznie dokładne?",
@@ -341,6 +343,18 @@
       "10": {
         "question": "Czy usługa jest naprawdę bezpłatna?",
         "answer": "Tak, HealthLingo jest całkowicie bezpłatne. Nie ma ukrytych kosztów ani wymogu rejestracji. Usługa jest przeznaczona do użytku osobistego. W przypadku użytku komercyjnego prosimy o kontakt."
+      },
+      "11": {
+        "question": "Jakie mam prawa?",
+        "answer": "Masz 14-dniowe prawo do odstąpienia od umowy oraz wszystkie prawa wynikające z Ogólnego Rozporządzenia o Ochronie Danych: dostęp do danych, sprostowanie i usunięcie. Usunięcie następuje automatycznie po zakończeniu korzystania. Możesz w każdej chwili wycofać każdą zgodę - po prostu anulując, zamykając przeglądarkę lub wysyłając do nas e-mail."
+      },
+      "12": {
+        "question": "Kiedy dokładnie moje dane są usuwane?",
+        "answer": "Twoje dane są automatycznie i nieodwołalnie usuwane z naszych aktywnych systemów najpóźniej 1 godzinę po przetworzeniu. Usuwane są: Twój oryginalny dokument, rozpoznane teksty i tłumaczenie. Jedyny wyjątek: Dobrowolna opinia jest przechowywana maksymalnie przez 90 dni."
+      },
+      "13": {
+        "question": "Co powinienem wiedzieć o rozpoznawaniu tekstu?",
+        "answer": "W przypadku zeskanowanych lub sfotografowanych dokumentów tekst musi być najpierw rozpoznany, zanim można usunąć dane osobowe. Ponieważ automatyczne rozpoznawanie nie jest doskonałe, zalecamy: Zamazuj wrażliwe dane, takie jak imiona i adresy, samodzielnie przed przesłaniem dokumentu."
       }
     }
   },
@@ -354,9 +368,10 @@
     "madeInLocation": "w Niemczech"
   },
   "cookieFree": {
-    "title": "Bez ciasteczek!",
-    "description": "HealthLingo nie używa ciasteczek i nie przechowuje żadnych danych śledzących.",
-    "closeBanner": "Zamknij baner"
+    "title": "Tylko niezbędne pliki cookie",
+    "description": "Używamy wyłącznie ściśle niezbędnych plików cookie do ustawień językowych i bezpieczeństwa. Brak plików cookie śledzących lub marketingowych.",
+    "privacyLink": "Polityka prywatności",
+    "accept": "Akceptuję"
   },
   "termination": {
     "title": "Przetwarzanie zatrzymane",

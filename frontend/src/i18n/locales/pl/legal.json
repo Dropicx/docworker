@@ -24,7 +24,7 @@
       "responsibleTitle": "Informacja o podmiocie odpowiedzialnym",
       "responsibleText": "Podmiot odpowiedzialny za przetwarzanie danych na tej stronie jest podany w informacjach prawnych. Podmiot odpowiedzialny to osoba fizyczna lub prawna, która samodzielnie lub wspólnie z innymi określa cele i sposoby przetwarzania danych osobowych.",
       "storageTitle": "Okres przechowywania",
-      "storageText": "Przesłane dokumenty i ich tłumaczenia są przechowywane tylko tymczasowo na czas przetwarzania. Standardowy okres przechowywania wynosi 24 godziny po zakończeniu przetwarzania (konfigurowalny, może być zmniejszony do 0 godzin). Po tym okresie wszystkie dane są automatycznie i całkowicie usuwane:",
+      "storageText": "Przesłane dokumenty i ich tłumaczenia są usuwane z aktywnych systemów natychmiast po zakończeniu przetwarzania, w każdym przypadku w ciągu 1 godziny. Ten okres pozwala na przekazanie nam opcjonalnej opinii o tłumaczeniu. Usuwane są następujące dane:",
       "storageItems": [
         "Przesłany dokument oryginalny",
         "Wyodrębnione teksty (po usunięciu danych osobowych)",
@@ -32,7 +32,7 @@
         "Wszystkie metadane przetwarzania",
         "Adresy IP (dla logowania bezpieczeństwa)"
       ],
-      "storageNote": "Ten krótki okres przechowywania pozwala pobrać tłumaczenie, jednocześnie maksymalizując ochronę danych. Po usunięciu danych nie można ich odzyskać. Automatyczne usuwanie jest wykonywane przez zaplanowane zadania czyszczące, które działają co godzinę.",
+      "storageNote": "Ten krótki okres przechowywania maksymalizuje Twoją prywatność. Po usunięciu z aktywnych systemów danych nie można odzyskać.",
       "sslTitle": "Szyfrowanie SSL/TLS",
       "sslText": "Ze względów bezpieczeństwa i w celu ochrony transmisji poufnych treści, takich jak dokumenty medyczne, które nam przesyłasz, ta strona używa szyfrowania SSL/TLS. Możesz rozpoznać szyfrowane połączenie po zmianie paska adresu przeglądarki z \"http://\" na \"https://\" i ikonie kłódki w pasku przeglądarki."
     },
@@ -59,7 +59,7 @@
       "medicalText": "Podczas korzystania z naszej usługi tłumaczenia dokumentów medycznych obowiązują następujące środki ochrony danych:",
       "medicalItems": [
         "Automatyczne usuwanie danych osobowych: Przed przetworzeniem przez systemy AI informacje osobowe (imiona, adresy, numery telefonów, daty urodzenia, numery ubezpieczenia) są automatycznie usuwane z dokumentów. Odbywa się to lokalnie na naszych serwerach przy użyciu spaCy NER (Named Entity Recognition) i specjalnych wzorców dla niemieckich dokumentów medycznych.",
-        "Tymczasowe przechowywanie: Dokumenty są przechowywane tylko tymczasowo na czas przetwarzania (maksymalnie 24 godziny)",
+        "Tymczasowe przechowywanie: Dokumenty są przechowywane tylko tymczasowo na czas przetwarzania (maksymalnie 1 godzinę)",
         "Automatyczne usuwanie: Po zakończeniu tłumaczenia wszystkie dane są automatycznie i całkowicie usuwane",
         "Brak trwałego przechowywania: Nie ma trwałego przechowywania dokumentów ani tłumaczeń",
         "Brak udostępniania: Brak udostępniania danych osobom trzecim (z wyjątkiem Mistral AI (Francja) dla OCR i tłumaczenia oraz Hetzner (Niemcy) dla usuwania danych osobowych. Do tłumaczenia przesyłane są tylko teksty oczyszczone z danych osobowych)",
@@ -74,7 +74,7 @@
       "accessTitle": "Prawo dostępu",
       "accessText": "Ponieważ nie przechowujemy danych osobowych użytkowników końcowych, a przetwarzanie jest anonimowe, nie możemy udzielić informacji o przechowywanych danych, ponieważ takie dane nie istnieją. Jeśli masz pytania dotyczące ochrony danych, możesz się z nami skontaktować w każdej chwili (patrz kontakt w informacjach prawnych).",
       "deletionTitle": "Prawo do usunięcia",
-      "deletionText": "Twoje przesłane dokumenty są automatycznie usuwane po 24 godzinach (lub wcześniej). Ręczne usuwanie nie jest wymagane, ponieważ usuwanie odbywa się automatycznie. Jeśli chcesz natychmiastowego usunięcia, możesz się z nami skontaktować.",
+      "deletionText": "Twoje przesłane dokumenty są usuwane z aktywnych systemów natychmiast po przetworzeniu, w każdym przypadku w ciągu 1 godziny. Ręczne usuwanie nie jest wymagane. Jeśli przekazałeś opinię ze zgodą, możesz poprosić o usunięcie swoich danych, kontaktując się z nami.",
       "restrictionTitle": "Prawo do ograniczenia przetwarzania",
       "restrictionText": "Możesz anulować przetwarzanie swoich dokumentów w dowolnym momencie, kończąc przetwarzanie przed zakończeniem tłumaczenia. W takim przypadku dane są natychmiast usuwane.",
       "portabilityTitle": "Prawo do przenoszenia danych",
@@ -91,7 +91,7 @@
         "Przetwarzanie jest całkowicie anonimowe - nie są przechowywane żadne dane osobowe użytkowników końcowych",
         "Przed przetwarzaniem przez AI wszystkie informacje osobowe (imiona, adresy, numery telefonów itp.) są automatycznie usuwane",
         "Stosowane są specjalne środki techniczne i organizacyjne w celu ochrony tych danych (szyfrowanie, krótki okres przechowywania, automatyczne usuwanie)",
-        "Wszystkie dane są automatycznie i całkowicie usuwane po maksymalnie 24 godzinach"
+        "Wszystkie dane są usuwane z aktywnych systemów natychmiast po przetworzeniu, w każdym przypadku w ciągu 1 godziny"
       ]
     },
     "section6": {

@@ -24,7 +24,7 @@
       "responsibleTitle": "Sorumlu Kuruluş Hakkında Not",
       "responsibleText": "Bu web sitesindeki veri işlemeden sorumlu kuruluş yasal bilgilerde belirtilmiştir. Sorumlu kuruluş, tek başına veya başkalarıyla birlikte kişisel verilerin işlenmesinin amaçlarını ve araçlarını belirleyen gerçek veya tüzel kişidir.",
       "storageTitle": "Saklama Süresi",
-      "storageText": "Yüklenen belgeler ve çevirileri yalnızca işleme süresince geçici olarak saklanır. Standart saklama süresi, işleme tamamlandıktan sonra 24 saattir (yapılandırılabilir, 0 saate kadar azaltılabilir). Bu sürenin ardından tüm veriler otomatik ve tamamen silinir:",
+      "storageText": "Yüklenen belgeler ve çevirileri yalnızca işleme süresince geçici olarak saklanır. İşleme tamamlandıktan hemen sonra aktif sistemlerden silinir, her halükarda en fazla 1 saat içinde. Tüm veriler otomatik ve tamamen silinir:",
       "storageItems": [
         "Yüklenen orijinal belge",
         "Çıkarılan metinler (kişisel verilerin kaldırılmasından sonra)",
@@ -32,7 +32,7 @@
         "Tüm işleme meta verileri",
         "IP adresleri (güvenlik kaydı için)"
       ],
-      "storageNote": "Bu kısa saklama süresi, veri korumasını en üst düzeye çıkarırken çevirinizi indirmenize olanak tanır. Silmeden sonra veriler kurtarılamaz. Otomatik silme, saatte bir çalışan zamanlanmış temizleme görevleri tarafından gerçekleştirilir.",
+      "storageNote": "Bu kısa saklama süresi, veri korumasını en üst düzeye çıkarırken çevirinizi indirmenize olanak tanır. Aktif sistemlerden silindikten sonra veriler kurtarılamaz.",
       "sslTitle": "SSL/TLS Şifreleme",
       "sslText": "Güvenlik nedenleriyle ve bize gönderdiğiniz tıbbi belgeler gibi gizli içeriklerin iletimini korumak için bu site SSL/TLS şifreleme kullanmaktadır. Şifreli bir bağlantıyı, tarayıcı adres çubuğunun \"http://\"den \"https://\"ye değişmesinden ve tarayıcı çubuğundaki kilit simgesinden anlayabilirsiniz."
     },
@@ -59,13 +59,14 @@
       "medicalText": "Tıbbi belgeler için çeviri hizmetimizi kullanırken aşağıdaki veri koruma önlemleri uygulanır:",
       "medicalItems": [
         "Kişisel verilerin otomatik kaldırılması: Yapay zeka sistemleri tarafından işlenmeden önce, kişisel bilgiler (isimler, adresler, telefonlar, doğum tarihleri, sigorta numaraları) belgelerden otomatik olarak kaldırılır.",
-        "Geçici depolama: Belgeler yalnızca işleme süresince geçici olarak saklanır (maksimum 24 saat)",
-        "Otomatik silme: Çeviri tamamlandıktan sonra tüm veriler otomatik ve tamamen silinir",
+        "Geçici depolama: Belgeler yalnızca işleme süresince geçici olarak saklanır (maksimum 1 saat)",
+        "Otomatik silme: Çeviri tamamlandıktan sonra tüm veriler aktif sistemlerden hemen silinir, her halükarda 1 saat içinde. Yalnızca anonim istatistikler kalır",
         "Kalıcı depolama yok: Belgelerin veya çevirilerin kalıcı olarak saklanması yoktur",
         "Paylaşım yok: Üçüncü taraflarla veri paylaşımı yoktur (OCR ve çeviri için Mistral AI (Fransa) ve kişisel verilerin kaldırılması için Hetzner (Almanya) hariç. Çeviri için yalnızca kişisel verilerden temizlenmiş metinler iletilir)",
         "Şifreli iletim: Tüm veriler HTTPS/TLS üzerinden şifrelenmiş olarak iletilir",
         "Durağan şifreleme: Yüklenen tüm belgeler AES-256-GCM ile şifrelenir ve veritabanında saklanır. Yönetici hesapları ayrıca e-posta adresleri ve isimler için şifreli depolama kullanır.",
-        "İzleme çerezi yok: Hizmetimiz pazarlama, analitik veya izleme çerezleri kullanmaz. Yalnızca dil ayarları ve güvenlik için kesinlikle gerekli çerezler kullanılır."
+        "İzleme çerezi yok: Hizmetimiz pazarlama, analitik veya izleme çerezleri kullanmaz. Yalnızca dil ayarları ve güvenlik için kesinlikle gerekli çerezler kullanılır.",
+        "Veri işleme ağırlıklı olarak AB'de: Belgelerinizin işlenmesi yalnızca AB içinde (Almanya ve Fransa) gerçekleşir. CDN ve güvenlik hizmetleri (Cloudflare) için ABD'ye veri aktarımı olabilir, bu AB Standart Sözleşme Maddeleri ve AB-ABD Veri Gizliliği Çerçevesi ile korunmaktadır (Bölüm 6'ya bakın)."
       ]
     },
     "section4": {
@@ -74,7 +75,7 @@
       "accessTitle": "Erişim Hakkı",
       "accessText": "Son kullanıcılardan kişisel veri saklamadığımız ve işleme anonim olduğu için, böyle bir veri mevcut olmadığından saklanan veriler hakkında bilgi sağlayamayız. Veri koruma hakkında sorularınız varsa, her zaman bizimle iletişime geçebilirsiniz (yasal bilgilerdeki iletişime bakın).",
       "deletionTitle": "Silme Hakkı",
-      "deletionText": "Yüklediğiniz belgeler 24 saat sonra (veya daha önce) otomatik olarak silinir. Silme otomatik olarak gerçekleştiği için manuel silme gerekmez. Anında silme isterseniz bizimle iletişime geçebilirsiniz.",
+      "deletionText": "Yüklediğiniz belgeler işlemeden hemen sonra aktif sistemlerden silinir, her halükarda 1 saat içinde. Silme otomatik olarak gerçekleştiği için manuel silme gerekmez. Onayınızla geri bildirim verdiyseniz, bizimle iletişime geçerek verilerinizin silinmesini isteyebilirsiniz.",
       "restrictionTitle": "İşlemeyi Kısıtlama Hakkı",
       "restrictionText": "Çeviri tamamlanmadan önce işlemeyi sonlandırarak belgelerinizin işlenmesini istediğiniz zaman iptal edebilirsiniz. Bu durumda veriler hemen silinir.",
       "portabilityTitle": "Veri Taşınabilirliği Hakkı",
@@ -87,11 +88,11 @@
       "intro": "Hizmetimiz sağlık verisi içerebilecek tıbbi belgelerin işlenmesine izin verdiğinden, özellikle şunları belirtiyoruz:",
       "items": [
         "Sağlık verileri GDPR Madde 9 kapsamında özel kişisel veri kategorilerine aittir",
-        "Bu verileri yalnızca çeviri amaçları için ve yalnızca açık onayınızla (yükleme sırasında gizlilik politikasını kabul ederek) işliyoruz",
-        "İşleme tamamen anonimdir - son kullanıcılardan hiçbir kişisel veri saklanmaz",
+        "Bu verileri yalnızca çeviri amaçları için ve yalnızca açık ve ayrı onayınızla (Bölüm 9'a bakın) işliyoruz",
         "Yapay zeka işlemesinden önce tüm kişisel bilgiler (isimler, adresler, telefonlar vb.) otomatik olarak kaldırılır",
         "Bu verileri korumak için özel teknik ve organizasyonel önlemler alınır (şifreleme, kısa saklama süresi, otomatik silme)",
-        "Tüm veriler en fazla 24 saat sonra otomatik ve tamamen silinir"
+        "Tüm veriler işlemeden hemen sonra aktif sistemlerden silinir, her halükarda 1 saat içinde",
+        "Çeviri sonuçları yalnızca bilgi amaçlıdır ve tıbbi danışma ve tavsiyenin yerini almaz. Hiçbir teşhis, muayene veya tedavi önerisi yapılmaz"
       ]
     },
     "section6": {
@@ -109,7 +110,7 @@
         "Hetzner (Almanya/AB): Kişisel verilerin kaldırılması ve yedek OCR hizmeti (PaddleOCR) olarak. Sunucular Almanya'da bulunmaktadır.",
         "Railway (AB): Uygulama ve şifreli PostgreSQL veritabanı barındırma için. Railway SOC 2 Tip I sertifikalıdır ve GDPR uyumlu veri işleme sözleşmeleri sunar."
       ],
-      "note": "Tüm veri işleme yalnızca AB içinde (Fransa ve Almanya) gerçekleşir. Uluslararası veri transferi yapılmaz."
+      "note": "Veri işleme ağırlıklı olarak AB içinde gerçekleşir. CDN ve güvenlik hizmeti (Cloudflare) için ABD'ye veri aktarımı olabilir, bu uygun güvencelerle korunmaktadır."
     },
     "section7a": {
       "title": "7a. Kişisel Verilerin Kaldırılması Hakkında Önemli Uyarı",

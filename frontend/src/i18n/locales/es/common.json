@@ -223,7 +223,7 @@
     "privacyPolicy": "Política de privacidad",
     "consentAnd": "y los",
     "termsOfUse": "Términos de uso",
-    "consentSuffix": "y consiento que mis comentarios y el contenido de los documentos asociados se utilicen para mejorar la calidad.",
+    "consentSuffix": "y consiento conforme al Art. 6(1)(a) del RGPD que mis comentarios y el contenido de los documentos asociados se utilicen para la mejora de la calidad.",
     "ratingRequired": "Por favor proporciona una valoración general.",
     "consentRequired": "Por favor acepta el uso de datos.",
     "submitError": "No se pudo enviar el comentario.",
@@ -299,12 +299,12 @@
     "contactLink": "Contáctanos",
     "items": {
       "0": {
-        "question": "¿Dónde se procesan mis datos y qué tan seguros están?",
-        "answer": "Tus documentos se procesan exclusivamente en servidores seguros en Europa. Solo trabajamos con proveedores que cumplen estrictas normas europeas de protección de datos. Todos nuestros socios han firmado acuerdos de protección de datos según la normativa europea."
+        "question": "¿Dónde se procesan mis datos?",
+        "answer": "Tus documentos se procesan principalmente en servidores seguros en Europa (Alemania y Francia). Para servicios de seguridad y red, utilizamos Cloudflare (EE.UU.), protegido mediante Cláusulas Contractuales Tipo de la UE y el Marco de Privacidad de Datos UE-EE.UU. Hemos celebrado acuerdos de protección de datos conforme al RGPD con todos nuestros socios."
       },
       "1": {
-        "question": "¿Se almacenan mis datos médicos o se utilizan para entrenar la inteligencia artificial?",
-        "answer": "No, absolutamente no. HealthLingo no almacena ningún dato de forma permanente. Tus documentos se eliminan automáticamente después de la traducción. La inteligencia artificial NO aprende de tus datos - cada solicitud se procesa por separado y no deja rastro."
+        "question": "¿Cuánto tiempo se almacenan mis datos?",
+        "answer": "Tus documentos se eliminan de los sistemas activos inmediatamente después del procesamiento, en todo caso dentro de 1 hora. Si nos proporcionas feedback voluntariamente, estas evaluaciones anonimizadas se conservan durante un máximo de 90 días. No hay almacenamiento permanente de tus documentos."
       },
       "2": {
         "question": "¿Cuánto tiempo tarda la traducción?",
@@ -324,7 +324,7 @@
       },
       "6": {
         "question": "¿Cómo están protegidos técnicamente mis datos?",
-        "answer": "Todos los datos se cifran en reposo con AES-256-GCM, el estándar más avanzado en seguridad de datos. Todas las transmisiones utilizan conexiones seguras HTTPS/TLS. HealthLingo no usa cookies ni seguimiento. Nuestros proveedores de servidores están certificados según estándares de seguridad internacionales. Todo el procesamiento de datos se realiza en Europa."
+        "answer": "Todos los datos se cifran en reposo con AES-256-GCM, el estándar más avanzado en seguridad de datos. Todas las transmisiones utilizan conexiones seguras HTTPS/TLS. HealthLingo no utiliza cookies de marketing ni seguimiento, solo cookies esenciales para la configuración del idioma. El procesamiento de documentos se realiza principalmente en la UE (Alemania, Francia), la seguridad de red a través de Cloudflare (EE.UU., protegido por SCCs)."
       },
       "7": {
         "question": "¿Es la traducción médicamente precisa?",
@@ -341,6 +341,18 @@
       "10": {
         "question": "¿El servicio es realmente gratuito?",
         "answer": "Sí, HealthLingo es completamente gratuito. No hay costos ocultos ni se requiere registro. El servicio está pensado para uso personal. Para uso comercial, contáctanos."
+      },
+      "11": {
+        "question": "¿Cuáles son mis derechos?",
+        "answer": "Tienes un derecho de desistimiento de 14 días, así como todos los derechos previstos en el Reglamento General de Protección de Datos europeo: acceso a tus datos, rectificación y supresión. La eliminación se realiza automáticamente después del uso. Puedes revocar cualquier consentimiento en cualquier momento, simplemente cancelando, cerrando el navegador o enviándonos un correo electrónico."
+      },
+      "12": {
+        "question": "¿Cuándo exactamente se eliminan mis datos?",
+        "answer": "Tus datos se eliminan automática e irreversiblemente de nuestros sistemas activos como máximo 1 hora después del procesamiento. Se elimina: tu documento original, los textos reconocidos y la traducción. Única excepción: el feedback voluntario se almacena durante un máximo de 90 días."
+      },
+      "13": {
+        "question": "¿Qué debo saber sobre el reconocimiento de texto?",
+        "answer": "Para documentos escaneados o fotografiados, primero se debe reconocer el texto antes de que se puedan eliminar los datos personales. Dado que el reconocimiento automático no es perfecto, recomendamos: tacha los datos sensibles como nombres y direcciones tú mismo antes de subir el documento."
       }
     }
   },
@@ -354,9 +366,10 @@
     "madeInLocation": "en Alemania"
   },
   "cookieFree": {
-    "title": "¡Sin cookies!",
-    "description": "HealthLingo no utiliza cookies y no almacena datos de seguimiento.",
-    "closeBanner": "Cerrar banner"
+    "title": "Solo cookies esenciales",
+    "description": "Utilizamos únicamente cookies estrictamente necesarias para configuración de idioma y seguridad. Sin cookies de seguimiento ni marketing.",
+    "privacyLink": "Política de privacidad",
+    "accept": "Aceptar"
   },
   "termination": {
     "title": "Procesamiento detenido",

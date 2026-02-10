@@ -305,8 +305,8 @@
         "answer": "Your documents are processed predominantly on secure servers in Europe (Germany and France). For security and network services, we use Cloudflare (USA), secured by EU Standard Contractual Clauses and the EU-US Data Privacy Framework. All our partners have signed GDPR-compliant data protection agreements."
       },
       "1": {
-        "question": "Is my medical data stored or used for AI training?",
-        "answer": "No, absolutely not. HealthLingo does not permanently store any data. Your documents are automatically deleted after translation. The AI does NOT learn from your data - each request is processed separately and leaves no trace."
+        "question": "How long is my data stored?",
+        "answer": "Your documents are deleted from active systems immediately after processing, in any case within 1 hour. If you voluntarily provide feedback, these anonymized ratings are stored for a maximum of 90 days. There is no permanent storage of your documents."
       },
       "2": {
         "question": "How long does the translation take?",
@@ -326,7 +326,7 @@
       },
       "6": {
         "question": "How is my data technically protected?",
-        "answer": "All data is encrypted at rest using AES-256-GCM – the current state-of-the-art in data security. All transmissions use secure HTTPS/TLS connections. HealthLingo uses no marketing or tracking cookies, only strictly necessary cookies for language settings. Document processing takes place predominantly in the EU (Germany, France), with network security via Cloudflare (USA, secured by SCCs)."
+        "answer": "All data is encrypted at rest using AES-256-GCM - the current state-of-the-art in data security. All transmissions use secure HTTPS/TLS connections. HealthLingo uses no marketing or tracking cookies, only strictly necessary cookies for language settings. Document processing takes place predominantly in the EU (Germany, France), with network security via Cloudflare (USA, secured by SCCs)."
       },
       "7": {
         "question": "Is the translation medically accurate?",
@@ -343,6 +343,18 @@
       "10": {
         "question": "Is the service really free?",
         "answer": "Yes, HealthLingo is completely free. There are no hidden costs and no registration required. The service is intended for personal use. For business use, please contact us."
+      },
+      "11": {
+        "question": "What rights do I have?",
+        "answer": "You have a 14-day right of withdrawal as well as all rights under the European General Data Protection Regulation: access to your data, rectification and deletion. Deletion occurs automatically after use. You can revoke any consent at any time - simply by canceling, closing the browser or by emailing us."
+      },
+      "12": {
+        "question": "When exactly is my data deleted?",
+        "answer": "Your data is automatically and irrevocably deleted from our active systems no later than 1 hour after processing. The following are deleted: your original document, the recognized texts and the translation. The only exception: voluntary feedback is stored for a maximum of 90 days."
+      },
+      "13": {
+        "question": "What should I know about text recognition?",
+        "answer": "For scanned or photographed documents, the text must first be recognized before personal data can be removed. Since automatic recognition is not perfect, we recommend: redact sensitive data such as names and addresses yourself before uploading the document."
       }
     }
   },
@@ -356,9 +368,10 @@
     "madeInLocation": "in Germany"
   },
   "cookieFree": {
-    "title": "No Cookies!",
-    "description": "HealthLingo does not use cookies and does not store any tracking data.",
-    "closeBanner": "Close banner"
+    "title": "Strictly Necessary Cookies",
+    "description": "We only use strictly necessary cookies for language settings and security. No tracking or marketing cookies.",
+    "privacyLink": "Privacy Policy",
+    "accept": "Accept"
   },
   "termination": {
     "title": "Processing stopped",

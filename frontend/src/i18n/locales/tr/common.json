@@ -223,7 +223,7 @@
     "privacyPolicy": "Gizlilik Politikası",
     "consentAnd": "ve",
     "termsOfUse": "Kullanım Koşulları",
-    "consentSuffix": "'nı okudum ve geri bildirimimin ve ilgili belge içeriklerinin kalite iyileştirmesi için kullanılmasına onay veriyorum.",
+    "consentSuffix": "'nı okudum ve GDPR Madde 6(1)(a) uyarınca geri bildirimimin ve ilgili belge içeriklerinin kalite iyileştirmesi için kullanılmasına onay veriyorum.",
     "ratingRequired": "Lütfen genel bir değerlendirme yapın.",
     "consentRequired": "Lütfen veri kullanımını kabul edin.",
     "submitError": "Geri bildirim gönderilemedi.",
@@ -299,12 +299,12 @@
     "contactLink": "Bizimle iletişime geçin",
     "items": {
       "0": {
-        "question": "Verilerim nerede işleniyor ve güvende mi?",
-        "answer": "Belgeleriniz yalnızca Avrupa'daki güvenli sunucularda işlenmektedir. Yalnızca katı Avrupa veri koruma standartlarını karşılayan sağlayıcılarla çalışıyoruz. Tüm ortaklarımız Avrupa düzenlemelerine uygun veri koruma anlaşmaları imzalamıştır."
+        "question": "Verilerim nerede işleniyor?",
+        "answer": "Belgeleriniz ağırlıklı olarak Avrupa'daki (Almanya ve Fransa) güvenli sunucularda işlenmektedir. Güvenlik ve ağ hizmetleri için AB Standart Sözleşme Maddeleri ve AB-ABD Veri Gizliliği Çerçevesi ile korunan Cloudflare (ABD) kullanıyoruz. GDPR'a uygun olarak tüm ortaklarla veri koruma anlaşmalarımız var."
       },
       "1": {
-        "question": "Tıbbi verilerim saklanıyor mu veya yapay zeka eğitimi için kullanılıyor mu?",
-        "answer": "Hayır, kesinlikle hayır. HealthLingo hiçbir veriyi kalıcı olarak saklamaz. Belgeleriniz çeviriden sonra otomatik olarak silinir. Yapay zeka verilerinizden öğrenmiyor - her istek ayrı olarak işlenir ve iz bırakmaz."
+        "question": "Verilerim ne kadar süre saklanıyor?",
+        "answer": "Belgeleriniz işlemeden hemen sonra aktif sistemlerden silinir, her halükarda en fazla 1 saat içinde. Gönüllü olarak geri bildirim verirseniz, bu anonim değerlendirmeler en fazla 90 gün saklanır. Belgelerinizin kalıcı olarak saklanması söz konusu değildir."
       },
       "2": {
         "question": "Çeviri ne kadar sürer?",
@@ -324,7 +324,7 @@
       },
       "6": {
         "question": "Verilerim teknik olarak nasıl korunuyor?",
-        "answer": "Tüm veriler AES-256-GCM ile şifrelenerek saklanır – veri güvenliğinde güncel en yüksek standart. Tüm iletimler güvenli HTTPS/TLS bağlantıları kullanır. HealthLingo çerez veya izleme kullanmaz. Sunucu sağlayıcılarımız uluslararası güvenlik standartlarına göre sertifikalıdır. Tüm veri işleme Avrupa'da gerçekleşir."
+        "answer": "Tüm veriler AES-256-GCM ile şifrelenir – veri güvenliğinde güncel en yüksek standart. Tüm iletimler güvenli HTTPS/TLS bağlantıları kullanır. HealthLingo pazarlama veya izleme çerezi kullanmaz, yalnızca dil ayarları için gerekli çerezler. Belge işleme ağırlıklı olarak AB'de (Almanya, Fransa) gerçekleşir, ağ güvenliği Cloudflare (ABD, SCC'lerle korunan) üzerinden sağlanır."
       },
       "7": {
         "question": "Çeviri tıbbi olarak doğru mu?",
@@ -341,6 +341,18 @@
       "10": {
         "question": "Hizmet gerçekten ücretsiz mi?",
         "answer": "Evet, HealthLingo tamamen ücretsizdir. Gizli maliyet yoktur ve kayıt gerekmez. Hizmet kişisel kullanım içindir. Ticari kullanım için lütfen bizimle iletişime geçin."
+      },
+      "11": {
+        "question": "Hangi haklara sahibim?",
+        "answer": "14 günlük cayma hakkınızın yanı sıra Avrupa Genel Veri Koruma Yönetmeliği kapsamındaki tüm haklara sahipsiniz: verilerinize erişim, düzeltme ve silme. Silme işlemi kullanımdan sonra otomatik olarak gerçekleşir. Herhangi bir onayı istediğiniz zaman iptal edebilirsiniz - sadece iptal ederek, tarayıcıyı kapatarak veya e-posta yoluyla."
+      },
+      "12": {
+        "question": "Verilerim tam olarak ne zaman siliniyor?",
+        "answer": "Verileriniz işlemeden sonra en fazla 1 saat içinde aktif sistemlerimizden otomatik ve geri dönüşsüz olarak silinir. Silinen veriler: orijinal belgeniz, çıkarılan metinler ve çeviri. Tek istisna: Gönüllü geri bildirimler en fazla 90 gün saklanır."
+      },
+      "13": {
+        "question": "Metin tanıma hakkında ne bilmeliyim?",
+        "answer": "Taranan veya fotoğraflanan belgelerde, kişisel veriler kaldırılmadan önce metnin tanınması gerekir. Otomatik tanıma mükemmel olmadığından, yüklemeden önce isimler ve adresler gibi hassas verileri kendiniz karalamanızı öneririz."
       }
     }
   },
@@ -354,9 +366,10 @@
     "madeInLocation": "Almanya'da"
   },
   "cookieFree": {
-    "title": "Çerez yok!",
-    "description": "HealthLingo çerez kullanmaz ve izleme verisi saklamaz.",
-    "closeBanner": "Başlığı kapat"
+    "title": "Sadece zorunlu çerezler",
+    "description": "Yalnızca dil ayarları ve güvenlik için teknik olarak gerekli çerezleri kullanıyoruz. İzleme veya pazarlama çerezi yok.",
+    "privacyLink": "Gizlilik Politikası",
+    "accept": "Kabul et"
   },
   "termination": {
     "title": "İşleme durduruldu",

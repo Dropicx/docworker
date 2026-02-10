@@ -1,51 +1,109 @@
 {
   "datenschutz": {
     "pageTitle": "Politique de confidentialité",
+    "websiteName": "healthlingo.de",
     "section1": {
-      "title": "1. Confidentialité en un coup d'œil",
+      "title": "1. Protection des données en un coup d'œil",
       "generalTitle": "Informations générales",
-      "generalText": "Les notes suivantes donnent un aperçu simple de ce qui arrive à vos données personnelles lorsque vous visitez ce site web. Les données personnelles sont toutes les données qui peuvent être utilisées pour vous identifier personnellement.",
-      "dataCollectionTitle": "Collecte de données sur ce site web",
-      "responsibleText": "Le traitement des données sur ce site web est effectué par l'opérateur du site web. Ses coordonnées se trouvent dans les mentions légales de ce site web.",
+      "generalText": "Les informations suivantes donnent un aperçu simple de ce qui arrive à vos données personnelles lorsque vous visitez ce site web. Les données personnelles sont toutes les données avec lesquelles vous pouvez être personnellement identifié.",
       "responsibleQuestion": "Qui est responsable de la collecte des données sur ce site web ?",
-      "anonymousTitle": "Utilisation anonyme de notre service",
-      "anonymousText": "Notre service de traduction fonctionne de manière complètement anonyme. Vous n'avez pas besoin de compte utilisateur et n'avez pas besoin de vous inscrire pour traduire des documents. Nous ne stockons aucune donnée personnelle des utilisateurs finaux. Vos documents sont traités sans être associés à une identité personnelle.",
+      "responsibleIntro": "Le traitement des données sur ce site web est effectué par :",
+      "responsibleName": "[Prénom Nom / Nom de l'entreprise]",
+      "responsibleAddress": "[Rue et numéro]",
+      "responsibleCity": "[Code postal Ville]",
+      "responsibleEmail": "E-mail : [Adresse e-mail]",
+      "responsiblePhone": "Téléphone : [Numéro de téléphone]",
+      "dpoTitle": "Délégué à la protection des données",
+      "dpoText": "[Si un DPO est désigné, insérez ici le nom et les coordonnées. Si aucun DPO n'est requis, supprimez cette section.]",
+      "dpoName": "[Nom du délégué à la protection des données]",
+      "dpoEmail": "E-mail : [Adresse e-mail du DPO]",
+      "serviceTitle": "Utilisation de notre service",
+      "serviceText": "Notre service de traduction fonctionne avec une collecte minimale de données. Vous n'avez pas besoin de compte utilisateur et n'avez pas besoin de vous inscrire pour traduire des documents. Nous ne stockons pas de données personnelles des utilisateurs finaux au-delà de la durée de traitement. Vos documents sont traités sans être associés à une identité personnelle.",
       "howCollectQuestion": "Comment collectons-nous vos données ?",
-      "howCollectText": "Les seules données que nous collectons sont les documents que vous téléchargez pour la traduction. Ils ne sont stockés que temporairement pendant la durée du traitement. Nous ne collectons aucune autre donnée personnelle vous concernant.",
+      "howCollectText": "Les seules données que nous collectons activement sont les documents que vous téléchargez pour traduction. De plus, des données techniques sont automatiquement collectées (comme votre adresse IP) qui sont techniquement nécessaires au fonctionnement du site web. Celles-ci sont supprimées après 1 heure maximum.",
       "purposeQuestion": "À quoi utilisons-nous vos données ?",
-      "purposeText": "Les documents téléchargés sont traités exclusivement à des fins de traduction. Une fois le traitement terminé, toutes les données sont automatiquement supprimées. Il n'y a pas de stockage permanent, pas de partage avec des tiers ni d'utilisation à d'autres fins.",
+      "purposeText": "Les documents téléchargés sont traités exclusivement à des fins de traduction. Après la fin du traitement, toutes les données personnelles sont automatiquement supprimées. Seules les statistiques d'utilisation anonymes (nombre de tokens, coûts) sont conservées pour améliorer le service. Il n'y a pas de transmission à des tiers à leurs propres fins et pas d'utilisation comme données d'entraînement IA.",
       "rightsQuestion": "Quels sont vos droits concernant vos données ?",
-      "rightsText": "Étant donné que nous ne stockons pas de données personnelles des utilisateurs finaux et que le traitement est complètement anonyme, la plupart des droits du RGPD (tels que l'accès, la rectification, la suppression) ne s'appliquent pas. Vos documents sont automatiquement supprimés après le traitement, il n'y a donc aucune donnée à divulguer."
+      "rightsText": "Vous avez à tout moment le droit d'obtenir des informations sur l'origine, les destinataires et la finalité de vos données personnelles stockées. Vous avez également le droit de demander la rectification, la limitation du traitement ou la suppression de ces données. Pour cela et pour toute autre question relative à la protection des données, vous pouvez nous contacter à tout moment. Vous avez également le droit de déposer une plainte auprès de l'autorité de contrôle compétente."
     },
     "section2": {
-      "title": "2. Informations générales et divulgations obligatoires",
+      "title": "2. Informations générales et mentions obligatoires",
       "privacyTitle": "Protection des données",
-      "privacyText": "Les opérateurs de ces pages prennent très au sérieux la protection de vos données personnelles. Nous traitons vos données personnelles de manière confidentielle et conformément aux réglementations légales sur la protection des données et à cette politique de confidentialité.",
-      "responsibleTitle": "Note sur l'entité responsable",
-      "responsibleText": "L'entité responsable du traitement des données sur ce site web est indiquée dans les mentions légales. L'entité responsable est la personne physique ou morale qui, seule ou conjointement avec d'autres, détermine les finalités et les moyens du traitement des données personnelles.",
-      "storageTitle": "Durée de stockage",
-      "storageText": "Les documents téléchargés et leurs traductions ne sont stockés que temporairement pendant la durée du traitement. La durée de stockage standard est de 24 heures après la fin du traitement (configurable, peut être réduite à 0 heure). Après cette période, toutes les données sont automatiquement et complètement supprimées :",
+      "privacyText": "Les opérateurs de ces pages prennent très au sérieux la protection de vos données personnelles. Nous traitons vos données personnelles de manière confidentielle et conformément aux dispositions légales sur la protection des données ainsi qu'à cette politique de confidentialité.",
+      "responsibleTitle": "Organisme responsable",
+      "responsibleIntro": "L'organisme responsable du traitement des données sur ce site web est :",
+      "responsibleName": "[Prénom Nom / Nom de l'entreprise]",
+      "responsibleAddress": "[Rue et numéro]",
+      "responsibleCity": "[Code postal Ville]",
+      "responsibleEmail": "E-mail : [Adresse e-mail]",
+      "responsiblePhone": "Téléphone : [Numéro de téléphone]",
+      "responsibleNote": "L'organisme responsable est la personne physique ou morale qui, seule ou conjointement avec d'autres, décide des finalités et des moyens du traitement des données personnelles (par ex. noms, adresses e-mail, etc.).",
+      "supervisoryTitle": "Autorité de contrôle compétente",
+      "supervisoryName": "Commissaire à la protection des données et à la liberté d'information [Land]",
+      "supervisoryAddress": "[Adresse]",
+      "supervisoryEmail": "[E-mail]",
+      "supervisoryPhone": "[Téléphone]",
+      "definitionsTitle": "Définitions",
+      "definitionsIntro": "Conformément à l'art. 4 du RGPD, cette politique de confidentialité est basée sur les définitions suivantes :",
+      "definitions": [
+        {
+          "term": "Données personnelles",
+          "article": "Art. 4 n° 1 RGPD",
+          "definition": "sont toutes les informations qui se rapportent à une personne identifiée ou identifiable."
+        },
+        {
+          "term": "Traitement",
+          "article": "Art. 4 n° 2 RGPD",
+          "definition": "est toute opération effectuée sur des données personnelles, avec ou sans l'aide de procédés automatisés."
+        },
+        {
+          "term": "Responsable",
+          "article": "Art. 4 n° 7 RGPD",
+          "definition": "est la personne physique ou morale qui, seule ou conjointement avec d'autres, détermine les finalités et les moyens du traitement des données personnelles."
+        },
+        {
+          "term": "Sous-traitant",
+          "article": "Art. 4 n° 8 RGPD",
+          "definition": "est une personne physique ou morale qui traite des données personnelles pour le compte du responsable."
+        },
+        {
+          "term": "Consentement",
+          "article": "Art. 4 n° 11 RGPD",
+          "definition": "désigne toute manifestation de volonté, libre, spécifique, éclairée et univoque par laquelle la personne concernée accepte que ses données personnelles soient traitées."
+        },
+        {
+          "term": "Données de santé",
+          "article": "Art. 4 n° 15 RGPD",
+          "definition": "sont les données personnelles relatives à la santé physique ou mentale d'une personne physique, y compris la prestation de services de soins de santé, qui révèlent des informations sur l'état de santé de cette personne."
+        }
+      ],
+      "storageTitle": "Durée de conservation",
+      "storageText": "Les documents téléchargés et leurs traductions sont supprimés des systèmes actifs immédiatement après la fin du traitement, dans tous les cas dans un délai d'1 heure. Ce délai vous permet de nous donner un feedback optionnel sur votre traduction. Les données suivantes sont nettoyées :",
       "storageItems": [
         "Le document original téléchargé",
-        "Les textes extraits (après suppression des données personnelles)",
+        "Les textes extraits (après suppression des PII)",
         "Les résultats de traduction",
-        "Toutes les métadonnées de traitement",
-        "Les adresses IP (pour la journalisation de sécurité)"
+        "Les métadonnées de traitement contenant des données personnelles",
+        "Les adresses IP"
       ],
-      "storageNote": "Cette courte durée de stockage vous permet de télécharger votre traduction tout en maximisant la protection des données. Après suppression, les données ne peuvent pas être récupérées. La suppression automatique est effectuée par des tâches de nettoyage planifiées qui s'exécutent toutes les heures.",
+      "storageNote": "Cette courte période de conservation maximise votre protection des données. Après suppression des systèmes actifs, les données ne sont plus récupérables.",
+      "storageRetainedTitle": "Données anonymes conservées",
+      "storageRetainedText": "Pour améliorer notre service et surveiller les coûts, nous conservons exclusivement des statistiques d'utilisation anonymes et agrégées (par ex. nombre de tokens, coûts de traitement, modèles IA utilisés). Ces données ne contiennent aucune information personnelle et ne peuvent pas être retracées jusqu'à vous.",
+      "voluntaryTitle": "Caractère volontaire de la fourniture des données",
+      "voluntaryText": "La fourniture de vos documents est volontaire. Cependant, sans télécharger de document, notre service de traduction ne peut pas être utilisé. Vous décidez vous-même quels documents vous soumettez pour traduction. Il n'y a aucune obligation légale ou contractuelle de fournir des données personnelles.",
       "sslTitle": "Chiffrement SSL/TLS",
-      "sslText": "Pour des raisons de sécurité et pour protéger la transmission de contenus confidentiels, tels que les documents médicaux que vous nous envoyez, ce site utilise le chiffrement SSL/TLS. Vous pouvez reconnaître une connexion chiffrée par le changement de la barre d'adresse du navigateur de \"http://\" à \"https://\" et l'icône de cadenas dans la barre du navigateur."
+      "sslText": "Ce site utilise un chiffrement SSL ou TLS pour des raisons de sécurité et pour protéger la transmission de contenus confidentiels, tels que les documents médicaux que vous nous envoyez. Vous pouvez reconnaître une connexion chiffrée par le changement de la barre d'adresse du navigateur de \"http://\" à \"https://\" et par le symbole du cadenas dans la barre de votre navigateur."
     },
     "section3": {
       "title": "3. Collecte de données sur ce site web",
       "cookiesTitle": "Cookies",
-      "cookiesText1": "Nous n'utilisons pas de cookies de marketing, d'analyse ou de suivi. Notre service utilise uniquement des cookies strictement nécessaires au fonctionnement du site web.",
-      "cookiesText2": "Nous définissons un cookie pour enregistrer votre paramètre de langue préféré. Ce cookie (\"i18next\") stocke votre langue sélectionnée afin que le site web s'affiche automatiquement dans votre langue préférée lors de votre prochaine visite. Ce cookie ne contient aucune donnée personnelle et est purement fonctionnel.",
-      "cookiesText3": "Cloudflare peut définir des cookies de sécurité strictement nécessaires selon la configuration pour protéger notre site web contre les cyberattaques et garantir l'intégrité de notre service. Ces cookies sont utilisés uniquement à des fins de sécurité et ne contiennent aucune donnée personnelle à des fins publicitaires.",
-      "cookiesText4": "De plus, nous utilisons le localStorage du navigateur pour enregistrer votre préférence concernant la bannière de cookies (si vous avez fermé la bannière). Cette information n'est stockée que localement dans votre navigateur et n'est pas transmise à notre serveur.",
-      "cookiesText5": "Puisque nous n'utilisons que des cookies strictement nécessaires, aucun consentement n'est requis en vertu de la loi applicable. Ces cookies sont essentiels pour fournir le service.",
+      "cookiesText": "Nous n'utilisons pas de cookies de marketing, d'analyse ou de suivi. Notre service utilise exclusivement des cookies techniquement nécessaires qui sont requis pour le fonctionnement du site web.",
+      "cookiesLanguage": "Nous définissons un cookie pour enregistrer votre préférence de langue. Ce cookie (\"i18next\") enregistre votre langue sélectionnée afin que le site web s'affiche automatiquement dans votre langue préférée lors de votre prochaine visite. Ce cookie ne contient aucune donnée personnelle et est purement fonctionnel.",
+      "cookiesCloudflare": "Cloudflare peut définir des cookies de sécurité techniquement nécessaires en fonction de la configuration pour protéger notre site web contre les cyberattaques et garantir l'intégrité du service. Ces cookies servent exclusivement à la sécurité et ne contiennent aucune donnée personnelle à des fins publicitaires.",
+      "cookiesLocalStorage": "De plus, nous utilisons le localStorage du navigateur pour enregistrer votre préférence concernant la bannière de cookies (si vous avez fermé la bannière). Cette information est stockée uniquement localement dans votre navigateur et n'est pas transmise à notre serveur.",
+      "cookiesConsentNote": "Puisque nous utilisons exclusivement des cookies techniquement nécessaires, aucun consentement n'est requis conformément au § 25 al. 2 n° 2 TDDDG (anciennement TTDSG). Ces cookies sont absolument nécessaires pour fournir le service.",
       "serverLogsTitle": "Fichiers journaux du serveur",
-      "serverLogsText": "Le fournisseur de ces pages collecte et stocke automatiquement des informations dans des fichiers journaux du serveur, que votre navigateur nous transmet automatiquement. Ce sont :",
+      "serverLogsText": "Le fournisseur de ces pages collecte et stocke automatiquement des informations dans des fichiers journaux du serveur que votre navigateur nous transmet automatiquement. Ce sont :",
       "serverLogsItems": [
         "Type et version du navigateur",
         "Système d'exploitation utilisé",
@@ -54,75 +112,238 @@
         "Heure de la demande au serveur",
         "Adresse IP"
       ],
-      "serverLogsNote": "Ces données ne sont pas fusionnées avec d'autres sources de données.",
+      "serverLogsNote": "Ces données ne sont pas fusionnées avec d'autres sources de données. Le traitement des données de journal du serveur est basé sur notre intérêt légitime à la sécurité et à la stabilité de nos services conformément à l'art. 6 al. 1 lit. f RGPD. Les données de journal sont automatiquement supprimées après 1 heure maximum.",
+      "serverLogsObjection": "Votre droit d'opposition : Vous avez le droit de vous opposer à tout moment, pour des raisons tenant à votre situation particulière, au traitement de vos données personnelles basé sur l'art. 6 al. 1 lit. f RGPD (art. 21 RGPD). Veuillez adresser votre opposition aux coordonnées mentionnées ci-dessus.",
       "medicalTitle": "Traitement des documents médicaux",
-      "medicalText": "Lors de l'utilisation de notre service de traduction pour les documents médicaux, les mesures de protection des données suivantes s'appliquent :",
+      "medicalText": "Lors de l'utilisation de notre service de traduction pour documents médicaux, les mesures de protection des données suivantes s'appliquent :",
       "medicalItems": [
-        "Suppression automatique des données personnelles : Avant le traitement par les systèmes d'IA, les informations personnelles (noms, adresses, téléphones, dates de naissance, numéros d'assurance) sont automatiquement supprimées des documents.",
-        "Stockage temporaire : Les documents ne sont stockés que temporairement pendant la durée du traitement (maximum 24 heures)",
-        "Suppression automatique : Après la fin de la traduction, toutes les données sont automatiquement et complètement supprimées",
-        "Pas de stockage permanent : Il n'y a pas de stockage permanent des documents ou des traductions",
-        "Pas de partage : Aucun partage de données avec des tiers (sauf avec Mistral AI (France) pour l'OCR et la traduction, ainsi que Hetzner (Allemagne) pour la suppression des données personnelles. Seuls les textes nettoyés des données personnelles sont transmis pour la traduction)",
-        "Transmission chiffrée : Toutes les données sont transmises de manière chiffrée via HTTPS/TLS",
-        "Chiffrement au repos : Tous les documents téléchargés sont chiffrés avec AES-256-GCM et stockés dans la base de données. Les comptes administrateurs utilisent en outre un stockage chiffré pour les adresses e-mail et les noms.",
-        "Pas de cookies de suivi : Notre service n'utilise pas de cookies de marketing, d'analyse ou de suivi. Seuls des cookies strictement nécessaires pour les paramètres de langue et la sécurité sont utilisés."
+        {
+          "title": "Suppression automatique des PII",
+          "text": "Avant le traitement par les systèmes d'IA, les informations personnelles (noms, adresses, numéros de téléphone, dates de naissance, numéros d'assurance) sont automatiquement supprimées des documents. Cela se fait localement sur nos serveurs à l'aide de spaCy NER (Natural Entity Recognition) et de modèles spéciaux pour les documents médicaux allemands."
+        },
+        {
+          "title": "Stockage temporaire",
+          "text": "Les documents ne sont stockés que temporairement pendant la durée du traitement (maximum 1 heure)."
+        },
+        {
+          "title": "Suppression automatique",
+          "text": "Après la fin de la traduction, toutes les données personnelles sont supprimées des systèmes actifs immédiatement, dans tous les cas dans un délai d'1 heure. Seules les statistiques d'utilisation anonymes sont conservées."
+        },
+        {
+          "title": "Pas de stockage permanent",
+          "text": "Il n'y a pas de stockage permanent des documents ou des traductions."
+        },
+        {
+          "title": "Pas d'utilisation comme données d'entraînement",
+          "text": "Vos documents et traductions ne sont pas utilisés comme données d'entraînement pour les modèles d'IA."
+        },
+        {
+          "title": "Transmission chiffrée",
+          "text": "Toutes les données sont transmises de manière chiffrée via HTTPS/TLS."
+        },
+        {
+          "title": "Chiffrement au repos",
+          "text": "Tous les documents téléchargés sont chiffrés avec AES-256-GCM et stockés dans la base de données. Les comptes administrateurs utilisent également un stockage chiffré pour les adresses e-mail et les noms."
+        },
+        {
+          "title": "Pas de cookies de suivi",
+          "text": "Notre service n'utilise pas de cookies de marketing, d'analyse ou de suivi. Seuls des cookies techniquement nécessaires sont utilisés pour les paramètres de langue et la sécurité."
+        },
+        {
+          "title": "Traitement des données principalement dans l'UE",
+          "text": "Le traitement de vos documents s'effectue exclusivement au sein de l'UE (Allemagne et France). Pour les services CDN et de sécurité (Cloudflare), un transfert de données vers les USA peut avoir lieu, sécurisé par des clauses contractuelles types de l'UE et le cadre de protection des données UE-USA (voir section 6)."
+        }
       ]
     },
     "section4": {
-      "title": "4. Vos droits",
-      "intro": "Étant donné que notre service fonctionne de manière complètement anonyme et que nous ne stockons pas de données personnelles des utilisateurs finaux, la plupart des droits du RGPD ne s'appliquent pas directement dans ce contexte. Vos documents sont automatiquement supprimés après le traitement, il n'y a donc aucune donnée à divulguer.",
-      "accessTitle": "Droit d'accès",
-      "accessText": "Étant donné que nous ne stockons pas de données personnelles des utilisateurs finaux et que le traitement est anonyme, nous ne pouvons pas fournir d'informations sur les données stockées car de telles données n'existent pas. Si vous avez des questions sur la protection des données, vous pouvez nous contacter à tout moment (voir contact dans les mentions légales).",
-      "deletionTitle": "Droit à l'effacement",
-      "deletionText": "Vos documents téléchargés sont automatiquement supprimés après 24 heures (ou avant). Aucune suppression manuelle n'est requise car la suppression se fait automatiquement. Si vous souhaitez une suppression immédiate, vous pouvez nous contacter.",
-      "restrictionTitle": "Droit à la limitation du traitement",
-      "restrictionText": "Vous pouvez annuler le traitement de vos documents à tout moment en terminant le traitement avant la fin de la traduction. Dans ce cas, les données sont supprimées immédiatement.",
-      "portabilityTitle": "Droit à la portabilité des données",
-      "portabilityText": "Étant donné que nous ne stockons pas de données personnelles des utilisateurs finaux, il n'y a pas de données à transférer. Vous pouvez télécharger les résultats de traduction directement après le traitement.",
-      "complaintTitle": "Droit de déposer une plainte auprès d'une autorité de contrôle",
-      "complaintText": "En cas de violation du RGPD, vous avez le droit de déposer une plainte auprès d'une autorité de contrôle, notamment dans l'État membre de votre résidence habituelle, de votre lieu de travail ou du lieu de la violation présumée."
+      "title": "4. Bases juridiques du traitement",
+      "intro": "Pour les différentes activités de traitement, nous nous appuyons sur les bases juridiques suivantes :",
+      "legalBases": [
+        {
+          "activity": "Traitement des documents (sans données de santé)",
+          "basis": "Art. 6 al. 1 lit. b RGPD (exécution du contrat)",
+          "explanation": "Le traitement est nécessaire à l'exécution du contrat conclu entre vous et nous concernant la fourniture de contenus numériques (§§ 327 et suiv. BGB)."
+        },
+        {
+          "activity": "Traitement des données de santé (documents médicaux)",
+          "basis": "Art. 6 al. 1 lit. b RGPD (exécution du contrat) + Art. 9 al. 2 lit. a RGPD (consentement explicite)",
+          "explanation": "Le traitement est effectué pour l'exécution du contrat de traduction (art. 6). Étant donné que les documents médicaux contiennent régulièrement des données de santé, votre consentement explicite conformément à l'art. 9 RGPD est également requis (voir section 9 – Votre consentement)."
+        },
+        {
+          "activity": "Données de journal du serveur",
+          "basis": "Art. 6 al. 1 lit. f RGPD (intérêts légitimes)",
+          "explanation": "Le traitement est nécessaire pour garantir la sécurité et la stabilité de nos services."
+        },
+        {
+          "activity": "Feedback (optionnel)",
+          "basis": "Art. 6 al. 1 lit. a RGPD (consentement)",
+          "explanation": "Le traitement de vos données de feedback est basé sur votre consentement volontaire."
+        }
+      ]
     },
     "section5": {
       "title": "5. Notes spéciales sur la protection des données de santé",
-      "intro": "Étant donné que notre service permet le traitement de documents médicaux pouvant contenir des données de santé, nous notons spécifiquement :",
+      "intro": "Étant donné que notre service permet le traitement de documents médicaux pouvant contenir des données de santé, nous attirons particulièrement votre attention sur ce qui suit :",
       "items": [
-        "Les données de santé appartiennent aux catégories particulières de données personnelles en vertu de l'art. 9 du RGPD",
-        "Nous traitons ces données exclusivement à des fins de traduction et uniquement avec votre consentement explicite (en acceptant la politique de confidentialité lors du téléchargement)",
-        "Le traitement est complètement anonyme - aucune donnée personnelle des utilisateurs finaux n'est stockée",
-        "Avant le traitement par l'IA, toutes les informations personnelles (noms, adresses, téléphones, etc.) sont automatiquement supprimées",
-        "Des mesures techniques et organisationnelles spéciales sont prises pour protéger ces données (chiffrement, courte durée de stockage, suppression automatique)",
-        "Toutes les données sont automatiquement et complètement supprimées après 24 heures maximum"
+        "Les données de santé appartiennent aux catégories particulières de données personnelles selon l'art. 9 RGPD.",
+        "Nous traitons ces données exclusivement à des fins de traduction et uniquement après votre consentement explicite et séparé (voir section 9).",
+        "Avant le traitement par l'IA, toutes les informations personnelles (noms, adresses, numéros de téléphone, etc.) sont automatiquement supprimées.",
+        "Des mesures techniques et organisationnelles spéciales sont prises pour protéger ces données (chiffrement, courte durée de conservation, suppression automatique).",
+        "Toutes les données sont supprimées des systèmes actifs immédiatement après le traitement, dans tous les cas dans un délai d'1 heure.",
+        "Les résultats de traduction servent exclusivement à votre information et ne remplacent pas la consultation et les conseils médicaux. Aucun examen, diagnostic ou recommandation thérapeutique n'est effectué."
       ]
     },
     "section6": {
-      "title": "6. Contact et demandes de protection des données",
-      "text": "Pour des questions sur la protection des données ou pour exercer vos droits, vous pouvez nous contacter à tout moment. Les coordonnées se trouvent dans les",
-      "impressumLink": "Mentions légales",
-      "responsibleLabel": "Entité responsable :",
-      "responsibleText": "L'entité responsable du traitement des données est indiquée dans les mentions légales de ce site web."
+      "title": "6. Tiers et traitement des données",
+      "intro": "Pour fournir notre service, nous utilisons les prestataires tiers suivants. Le traitement des données s'effectue principalement au sein de l'Union européenne. Pour le service CDN et de sécurité (Cloudflare), un transfert de données vers les USA peut avoir lieu, sécurisé par des garanties appropriées.",
+      "cloudflare": {
+        "title": "Cloudflare (USA/Global)",
+        "address": "Cloudflare, Inc., 101 Townsend St, San Francisco, CA 94107, USA",
+        "purpose": "La protection de vos données de santé sensibles est notre priorité absolue. Nous utilisons Cloudflare comme réseau de distribution de contenu (CDN) et pour les services DNS avec proxy activé pour protéger notre site web et vos données contre les cyberattaques. Cloudflare offre une protection DDoS, un pare-feu d'application web (WAF) et une optimisation des performances.",
+        "importance": "L'utilisation de Cloudflare est essentielle pour garantir la disponibilité et la sécurité de notre service. Compte tenu de la nature sensible des documents médicaux, une protection professionnelle contre les attaques de pirates, les attaques de bots et autres menaces est indispensable.",
+        "dataProcessed": "Lors de chaque accès à notre site web, les données suivantes sont traitées par Cloudflare : adresse IP, URL demandée, en-têtes HTTP (navigateur, système d'exploitation, référent), horodatage de la demande, quantité de données transférées.",
+        "security": "Cloudflare analyse le trafic pour détecter et repousser les attaques (DDoS, attaques de bots, injection SQL). Cela sert à protéger notre infrastructure et vos données.",
+        "legalBasis": "Art. 6 al. 1 lit. f RGPD (intérêt légitime à la sécurité et à la disponibilité de notre site web).",
+        "thirdCountryTransfer": "Cloudflare est une entreprise américaine. Le transfert de données vers les USA s'effectue sur la base des clauses contractuelles types de l'UE (CCT) conformément à l'art. 46 al. 2 lit. c RGPD ainsi que du cadre de protection des données UE-USA. Cloudflare est certifié dans le cadre du Data Privacy Framework.",
+        "retention": "Cloudflare conserve les données de journal pendant 24 heures maximum à des fins de sécurité. Nous n'avons pas accès à ces journaux.",
+        "dpaNote": "Un addendum au traitement des données (DPA) conforme à l'art. 28 RGPD existe avec Cloudflare.",
+        "optOut": "Étant donné que Cloudflare est essentiel à la sécurité et à l'accessibilité de notre site web, une utilisation sans Cloudflare n'est pas possible. Le traitement s'effectue sur la base de notre intérêt légitime."
+      },
+      "mistral": {
+        "title": "Mistral AI (France/UE)",
+        "address": "Mistral AI, 15 rue des Halles, 75001 Paris, France",
+        "purpose": "Reconnaissance de texte (OCR) et traduction assistées par IA. Pour la traduction, seuls les textes nettoyés des PII sont transmis à Mistral AI.",
+        "ocrNote": "Note importante concernant l'OCR : Lors du traitement OCR, le document non traité est transmis à Mistral AI avant que la suppression des PII puisse avoir lieu. Cette circonstance est expressément couverte dans la déclaration de consentement séparée (section 9).",
+        "legalBasis": "Art. 28 RGPD (contrat de sous-traitance). Le traitement des données s'effectue en France au sein de l'UE."
+      },
+      "hetzner": {
+        "title": "Hetzner (Allemagne/UE)",
+        "address": "Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen, Allemagne",
+        "purpose": "Suppression des PII (suppression des données personnelles) et service OCR de secours (PaddleOCR). Les serveurs sont situés en Allemagne.",
+        "legalBasis": "Art. 28 RGPD (contrat de sous-traitance)."
+      },
+      "railway": {
+        "title": "Railway (USA avec traitement de données UE)",
+        "address": "Railway Corporation, San Francisco, CA, USA",
+        "purpose": "Hébergement de l'application et de la base de données PostgreSQL chiffrée dans la région UE. Railway est certifié SOC 2 Type I et propose des accords de traitement des données conformes au RGPD.",
+        "legalBasis": "Art. 28 RGPD (contrat de sous-traitance).",
+        "thirdCountryTransfer": "Railway est une entreprise américaine. L'accès aux données depuis les USA ne peut être totalement exclu. Le transfert de données est sécurisé par des clauses contractuelles types de l'UE (CCT) conformément à l'art. 46 al. 2 lit. c RGPD."
+      },
+      "dpaNote": "Des contrats de sous-traitance (CST) conformes à l'art. 28 RGPD existent avec tous les prestataires tiers mentionnés, garantissant la protection de vos données selon les normes européennes de protection des données. Ces contrats obligent nos partenaires à respecter des exigences strictes en matière de protection des données et à traiter les données exclusivement selon nos instructions."
     },
     "section7": {
-      "title": "7. Tiers et traitement des données",
-      "intro": "Nous utilisons les fournisseurs tiers suivants pour fournir notre service :",
-      "items": [
-        "Mistral AI (France/UE) : Pour la reconnaissance de texte (OCR) et la traduction alimentées par l'IA. Seuls les textes nettoyés des données personnelles sont transmis à Mistral AI pour la traduction. Le traitement des données a lieu en France au sein de l'UE. Note : Lors du traitement OCR, le document non traité est transmis à Mistral AI avant que la suppression des données personnelles puisse avoir lieu.",
-        "Hetzner (Allemagne/UE) : Pour la suppression des données personnelles et comme service OCR de secours (PaddleOCR). Les serveurs sont situés en Allemagne.",
-        "Railway (UE) : Pour l'hébergement de l'application et de la base de données PostgreSQL chiffrée. Railway est certifié SOC 2 Type I et propose des accords de traitement des données conformes au RGPD."
-      ],
-      "note": "Tout le traitement des données a lieu exclusivement au sein de l'UE (France et Allemagne). Aucun transfert international de données n'a lieu."
+      "title": "7. Note importante sur la suppression des données personnelles",
+      "warning": "AUCUNE GARANTIE DE SUPPRESSION COMPLÈTE DES PII",
+      "warningText": "La suppression automatique des données personnelles est un processus au mieux. Nous ne pouvons pas garantir que toutes les données personnelles seront reconnues et supprimées à 100%.",
+      "limitationsText": "Malgré les technologies avancées (spaCy NER, Microsoft Presidio, correspondance de motifs regex), des formats de noms inhabituels, des notes manuscrites ou des structures de documents atypiques peuvent faire passer inaperçues certaines données personnelles.",
+      "ocrWarning": "Important : Lors du traitement OCR, votre document est d'abord transmis à Mistral AI (France) AVANT que la suppression des PII puisse avoir lieu. Ce n'est qu'après la reconnaissance du texte que les données personnelles sont supprimées.",
+      "recommendation": "Avant le téléchargement, nous recommandons vivement de masquer ou de supprimer manuellement les données personnelles évidentes telles que les noms, adresses, dates de naissance et numéros d'assurance.",
+      "medicalTermsNote": "Les termes médicaux, diagnostics et conclusions ne sont délibérément pas supprimés car ils sont nécessaires à la traduction.",
+      "consent": "En téléchargeant vos documents et en donnant votre consentement explicite (section 9), vous confirmez que vous avez compris cette note et acceptez que la suppression des PII ne peut pas être garantie à 100%."
     },
-    "section7a": {
-      "title": "7a. Avis important concernant la suppression des données personnelles",
-      "intro": "Veuillez noter les informations importantes suivantes concernant la suppression automatique des données personnelles (PII) :",
-      "warning": "AUCUNE GARANTIE DE SUPPRESSION COMPLÈTE DES DONNÉES PERSONNELLES",
+    "section8": {
+      "title": "8. Traitement automatisé et intelligence artificielle",
+      "intro": "Notre service utilise l'intelligence artificielle (IA) pour la reconnaissance de texte (OCR) et la traduction de vos documents. Nous souhaitons vous informer des points importants suivants :",
       "items": [
-        "La suppression automatique des données personnelles est un processus au mieux de nos capacités. Nous NE POUVONS PAS garantir que toutes les données personnelles seront détectées et supprimées à 100%.",
-        "Malgré les technologies avancées (spaCy NER, Microsoft Presidio, correspondance de motifs regex), des formats de noms inhabituels, des notes manuscrites ou des structures de documents atypiques peuvent faire passer inaperçues certaines données personnelles.",
-        "IMPORTANT : Lors du traitement OCR, votre document est d'abord transmis à Mistral AI (France) AVANT que la suppression des données personnelles puisse avoir lieu. Les données personnelles ne sont supprimées qu'après la reconnaissance du texte.",
-        "Avant le téléchargement, nous recommandons fortement de masquer ou supprimer manuellement les données personnelles évidentes telles que les noms, adresses, dates de naissance et numéros d'assurance.",
-        "Les termes médicaux, diagnostics et conclusions ne sont délibérément PAS supprimés car ils sont nécessaires à la traduction."
+        "L'IA est utilisée exclusivement pour des tâches techniques (reconnaissance de texte, traduction), et non pour des décisions vous concernant.",
+        "Aucune prise de décision automatisée au sens de l'art. 22 RGPD n'a lieu qui produirait des effets juridiques ou vous affecterait de manière significative de façon similaire.",
+        "Aucun profilage n'est effectué - l'IA n'analyse pas de caractéristiques personnelles, de préférences ou de comportements.",
+        "Vous gardez le contrôle total à tout moment : vous décidez quels documents télécharger et pouvez annuler le processus à tout moment.",
+        "Les résultats de traduction servent exclusivement à votre information et n'ont aucune conséquence juridique ou médicale.",
+        "Les modèles d'IA utilisés (Mistral AI) sont exploités par des fournisseurs européens et sont soumis au RGPD. Les modèles n'ont pas été entraînés avec vos données et ne le seront pas."
+      ]
+    },
+    "section9": {
+      "title": "9. Votre consentement",
+      "intro": "Les données de santé que vous nous communiquez lors de l'utilisation de healthlingo.de sont des données personnelles particulièrement sensibles. Elles font l'objet d'une protection spéciale en vertu de l'art. 9 RGPD et ne peuvent notamment pas être traitées sans votre consentement explicite.",
+      "consentRequest": "Nous vous demandons donc les déclarations de consentement séparées suivantes :",
+      "consent1": {
+        "title": "Consentement 1 – Traitement des données de santé (requis)",
+        "text": "Je consens expressément à ce que healthlingo.de traite les données de santé éventuellement contenues dans les documents téléchargés aux fins de traduction. Je suis conscient(e) que :",
+        "points": [
+          "avant la suppression automatique des PII, mon document est d'abord transmis à Mistral AI (France/UE) pour la reconnaissance de texte (OCR),",
+          "la suppression automatique des PII ne peut pas garantir une reconnaissance à 100% de toutes les données personnelles,",
+          "le traitement de mes documents s'effectue principalement au sein de l'UE, les métadonnées réseau pouvant être traitées par Cloudflare (USA), sécurisées par des clauses contractuelles types de l'UE (voir section 6),",
+          "mes données seront supprimées des systèmes actifs immédiatement après le traitement, dans tous les cas dans un délai d'1 heure."
+        ],
+        "checkbox": "Oui, je consens.",
+        "required": true
+      },
+      "consent2": {
+        "title": "Consentement 2 – Feedback et amélioration de la qualité (optionnel)",
+        "text": "Je consens à ce que mon feedback et les données de traduction anonymisées associées soient stockés pendant 90 jours maximum aux fins d'amélioration de la qualité.",
+        "checkbox": "Oui, je consens.",
+        "required": false
+      },
+      "consentNote": "Note : Le consentement 1 est une condition préalable à l'utilisation du service. Le consentement 2 est volontaire et peut être donné ou refusé indépendamment. Chaque consentement peut être révoqué à tout moment avec effet pour l'avenir.",
+      "withdrawalTitle": "Révocation du consentement",
+      "withdrawalText": "Chacun de ces consentements peut être révoqué à tout moment par vous avec effet pour l'avenir. La révocation peut être effectuée par :",
+      "withdrawalMethods": [
+        "Annulation du processus de traitement",
+        "Contact par e-mail à [adresse e-mail]"
       ],
-      "consent": "En téléchargeant vos documents et en acceptant la politique de confidentialité, vous confirmez que vous avez compris cet avis et acceptez que la suppression des données personnelles ne peut pas être garantie à 100%."
+      "withdrawalNote": "La révocation n'affecte pas la licéité du traitement effectué sur la base du consentement jusqu'à la révocation. Après la révocation, toutes vos données seront immédiatement supprimées.",
+      "withdrawalConsequence": "Si vous révoquez le consentement 1, vous ne pourrez plus utiliser healthlingo.de, car le traitement des données de santé est une condition préalable à la fourniture de notre service."
+    },
+    "section10": {
+      "title": "10. Vos droits",
+      "intro": "En ce qui concerne vos données traitées chez nous, vous disposez des droits suivants :",
+      "accessTitle": "Droit d'accès (Art. 15 RGPD)",
+      "accessText": "Étant donné que nous ne stockons pas de données personnelles des utilisateurs finaux au-delà de la durée de traitement, nous ne pouvons pas fournir d'informations sur les données stockées après la fin du traitement car aucune donnée de ce type n'existe. Pendant le traitement, vous avez le droit de demander des informations sur vos données traitées.",
+      "rectificationTitle": "Droit de rectification (Art. 16 RGPD)",
+      "rectificationText": "Vous avez le droit de demander la rectification de données personnelles inexactes.",
+      "deletionTitle": "Droit à l'effacement (Art. 17 RGPD)",
+      "deletionText": "Vos documents téléchargés sont supprimés des systèmes actifs immédiatement après le traitement, dans tous les cas dans un délai d'1 heure. Aucune suppression manuelle n'est requise. Si vous avez donné un feedback avec consentement, vous pouvez demander la suppression de vos données à tout moment en nous contactant.",
+      "restrictionTitle": "Droit à la limitation du traitement (Art. 18 RGPD)",
+      "restrictionText": "Vous pouvez annuler le traitement de vos documents à tout moment en terminant le processus de traitement avant que la traduction ne soit terminée. Dans ce cas, les données sont immédiatement supprimées.",
+      "portabilityTitle": "Droit à la portabilité des données (Art. 20 RGPD)",
+      "portabilityText": "Vous pouvez télécharger les résultats de traduction directement après le traitement.",
+      "objectionTitle": "Droit d'opposition (Art. 21 RGPD)",
+      "objectionText": "Dans la mesure où le traitement est basé sur un intérêt légitime (art. 6 al. 1 lit. f RGPD), vous avez le droit de vous opposer à tout moment au traitement pour des raisons tenant à votre situation particulière. Cela concerne notamment le traitement des données de journal du serveur.",
+      "withdrawalTitle": "Droit de révocation du consentement",
+      "withdrawalText": "Dans la mesure où le traitement est basé sur votre consentement (notamment pour les données de santé selon l'art. 9 al. 2 lit. a RGPD), vous pouvez révoquer ce consentement à tout moment. Les détails se trouvent à la section 9.",
+      "complaintTitle": "Droit de recours auprès d'une autorité de contrôle",
+      "complaintText": "En cas de violation du RGPD, vous avez le droit de déposer une plainte auprès d'une autorité de contrôle, notamment dans l'État membre de votre résidence habituelle, de votre lieu de travail ou du lieu de la violation présumée."
+    },
+    "section11": {
+      "title": "11. Feedback et évaluations des utilisateurs",
+      "intro": "Sur la page de résultats, vous avez la possibilité de nous donner volontairement un feedback sur votre traduction. Lors de la soumission de feedback, les données suivantes sont collectées :",
+      "dataCollected": [
+        "Votre évaluation globale (1-5 étoiles)",
+        "Évaluations détaillées optionnelles (clarté, précision, formatage, rapidité)",
+        "Votre commentaire optionnel (maximum 2000 caractères)",
+        "Votre adresse IP",
+        "Horodatage de la soumission du feedback"
+      ],
+      "consentNote": "La soumission de feedback nécessite votre consentement séparé (Consentement 2, section 9). Sans ce consentement, aucun feedback ne peut être soumis.",
+      "retentionTitle": "Durée de conservation du feedback",
+      "retentionText": "Si vous donnez un feedback avec consentement à l'amélioration de la qualité, votre feedback et les données de traduction anonymisées associées sont stockés pendant 90 jours maximum. Vous pouvez révoquer votre consentement à tout moment, après quoi les données seront immédiatement supprimées.",
+      "warning": "Veuillez noter : Dans votre commentaire, vous ne devez pas fournir de données personnelles (noms, adresses, numéros d'assurance, etc.). Ces données ne sont pas automatiquement supprimées et seront stockées avec votre feedback."
+    },
+    "section12": {
+      "title": "12. Sécurité des données",
+      "intro": "Pour protéger vos données personnelles, nous avons mis en place des mesures de sécurité techniques et organisationnelles appropriées conformément à l'art. 32 RGPD. Celles-ci comprennent notamment :",
+      "measures": [
+        "Chiffrement de toutes les données en transit (HTTPS/TLS) et au repos (AES-256-GCM)",
+        "Suppression automatique de toutes les données personnelles après le traitement",
+        "Suppression automatique des PII avant le traitement par l'IA",
+        "Traitement des données exclusivement au sein de l'UE",
+        "Aucune utilisation de cookies de marketing, d'analyse ou de suivi (uniquement des cookies techniquement nécessaires pour les paramètres de langue et la sécurité)",
+        "Vérification régulière des mesures de sécurité"
+      ]
+    },
+    "section13": {
+      "title": "13. Contact et demandes de protection des données",
+      "text": "Pour les questions sur la protection des données ou pour exercer vos droits, vous pouvez nous contacter à tout moment :",
+      "contactName": "[Prénom Nom / Nom de l'entreprise]",
+      "contactEmail": "E-mail : [Adresse e-mail]",
+      "contactAddress": "[le cas échéant adresse postale]",
+      "responseNote": "Veuillez indiquer précisément quelles données sont concernées et quel droit vous souhaitez exercer. Nous répondrons à votre demande dans les plus brefs délais, au plus tard dans un délai d'un mois."
+    },
+    "section14": {
+      "title": "14. Mise à jour de cette politique de confidentialité",
+      "text": "Nous révisons et mettons à jour régulièrement cette politique de confidentialité pour répondre aux exigences légales et refléter les modifications de nos services. En cas de modifications substantielles, nous vous informerons par un avis bien visible sur notre site web. Nous vous recommandons de consulter régulièrement cette page pour rester informé des pratiques actuelles en matière de confidentialité.",
+      "versionNote": "La version actuelle est toujours disponible sur notre site web."
     },
     "lastUpdated": "Dernière mise à jour :"
   },
@@ -130,7 +351,7 @@
     "pageTitle": "Mentions légales",
     "section1": {
       "title": "Informations conformément au § 5 TMG",
-      "name": "[Votre nom ou nom de société]",
+      "name": "[Votre nom ou nom de l'entreprise]",
       "address": "[Votre adresse]",
       "city": "[Code postal et ville]",
       "country": "Allemagne"
@@ -155,8 +376,8 @@
     "profession": {
       "title": "Désignation professionnelle et réglementations professionnelles",
       "designation": "Désignation professionnelle : [Votre désignation professionnelle]",
-      "chamber": "Chambre responsable : [Votre chambre responsable]",
-      "grantedIn": "Accordé en : Allemagne",
+      "chamber": "Chambre compétente : [Votre chambre compétente]",
+      "grantedIn": "Attribué en : Allemagne",
       "regulations": "Les réglementations professionnelles suivantes s'appliquent : [Réglementations pertinentes]"
     },
     "responsible": {
@@ -168,84 +389,107 @@
     "disclaimer": {
       "title": "Clause de non-responsabilité",
       "contentTitle": "Responsabilité pour le contenu",
-      "contentText": "Les contenus de nos pages ont été créés avec le plus grand soin. Cependant, nous ne pouvons garantir l'exactitude, l'exhaustivité ou l'actualité du contenu. En tant que fournisseur de services, nous sommes responsables de notre propre contenu sur ces pages conformément aux lois générales selon § 7 al. 1 TMG.",
+      "contentText": "Les contenus de nos pages ont été créés avec le plus grand soin. Cependant, nous ne pouvons garantir l'exactitude, l'exhaustivité ou l'actualité du contenu. En tant que prestataire de services, nous sommes responsables de notre propre contenu sur ces pages conformément aux lois générales selon § 7 al. 1 TMG.",
       "linksTitle": "Responsabilité pour les liens",
-      "linksText": "Notre offre contient des liens vers des sites web externes de tiers sur le contenu desquels nous n'avons aucune influence. Par conséquent, nous ne pouvons accepter aucune responsabilité pour ce contenu tiers. Le fournisseur ou l'opérateur respectif des pages liées est toujours responsable du contenu des pages liées.",
+      "linksText": "Notre offre contient des liens vers des sites web externes de tiers sur le contenu desquels nous n'avons aucune influence. Par conséquent, nous ne pouvons accepter aucune responsabilité pour ces contenus tiers. Le fournisseur ou l'opérateur respectif des pages liées est toujours responsable du contenu des pages liées.",
       "copyrightTitle": "Droit d'auteur",
-      "copyrightText": "Le contenu et les œuvres créés par les opérateurs du site sur ces pages sont soumis au droit d'auteur allemand. La reproduction, l'édition, la distribution et tout type d'exploitation au-delà des limites du droit d'auteur nécessitent le consentement écrit de l'auteur ou du créateur respectif."
+      "copyrightText": "Les contenus et œuvres créés par les opérateurs du site sur ces pages sont soumis au droit d'auteur allemand. La reproduction, le traitement, la distribution et tout type d'exploitation au-delà des limites du droit d'auteur nécessitent le consentement écrit de l'auteur ou du créateur respectif."
     },
     "lastUpdated": "Dernière mise à jour :"
   },
   "nutzungsbedingungen": {
-    "pageTitle": "Conditions d'utilisation",
-    "section1": {
-      "title": "§ 1 Champ d'application",
-      "p1": "(1) Ces conditions d'utilisation s'appliquent à l'utilisation du service de traduction de documents médicaux (ci-après dénommé \"Service\") sur ce site web.",
-      "p2": "(2) En utilisant le Service, vous acceptez ces conditions d'utilisation. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser notre Service."
-    },
-    "section2": {
-      "title": "§ 2 Description du service",
-      "p1": "(1) Notre Service fournit une traduction automatisée de documents médicaux en langage simplifié et facile à comprendre ainsi que dans d'autres langues.",
-      "p2": "(2) Les traductions sont créées par l'intelligence artificielle et sont destinées uniquement à l'information et à une meilleure compréhension du contenu médical.",
-      "p3": "(3) Les traductions ne remplacent pas les conseils médicaux professionnels, le diagnostic ou le traitement."
-    },
-    "section3": {
-      "title": "§ 3 Conditions d'utilisation",
-      "p1": "(1) Le Service ne peut être utilisé qu'à des fins personnelles et non commerciales.",
-      "p2": "(2) Vous acceptez de n'utiliser le Service qu'à des fins légales et de ne pas télécharger de contenu qui :",
+    "pageTitle": "Conditions générales d'utilisation",
+    "websiteName": "healthlingo.de",
+    "medicalDisclaimer": "Veuillez noter : Dans le cadre de ce service, aucun diagnostic médical ou psychothérapeutique n'est posé ou vérifié et aucune recommandation thérapeutique n'est donnée. Notre service ne remplace pas la consultation et les conseils médicaux. Pour toute question concrète concernant un diagnostic, une maladie ou un traitement, veuillez toujours consulter un médecin qualifié.",
+    "tableOfContents": {
+      "title": "Table des matières",
       "items": [
-        "Viole les droits de tiers",
-        "Viole la loi applicable",
-        "Contient des logiciels malveillants ou du code malveillant",
-        "Pourrait nuire au fonctionnement du Service"
-      ],
-      "p3": "(3) L'interrogation ou l'extraction systématique de données est interdite."
+        "§ 1 Champ d'application et objet du contrat",
+        "§ 2 Définitions",
+        "§ 3 Conclusion du contrat",
+        "§ 4 Description des prestations",
+        "§ 5 Conditions d'utilisation",
+        "§ 6 Droits d'utilisation",
+        "§ 7 Obligations de l'utilisateur",
+        "§ 8 Utilisation interdite",
+        "§ 9 Exclusion de responsabilité médicale",
+        "§ 10 Note sur la suppression des PII",
+        "§ 11 Propriété intellectuelle et droit d'auteur",
+        "§ 12 Disponibilité et exigences techniques",
+        "§ 13 Garantie",
+        "§ 14 Limitation de responsabilité",
+        "§ 15 Indemnisation",
+        "§ 16 Protection des données",
+        "§ 17 Droit de rétractation des consommateurs",
+        "§ 18 Résiliation du contrat",
+        "§ 19 Modifications des conditions d'utilisation",
+        "§ 20 Droit applicable et juridiction",
+        "§ 21 Règlement extrajudiciaire des litiges",
+        "§ 22 Compensation et rétention",
+        "§ 23 Clause de divisibilité",
+        "§ 24 Contact"
+      ]
+    },
+    "section1": {
+      "title": "§ 1 Champ d'application et objet du contrat",
+      "p1": "(1) Les présentes conditions générales d'utilisation (ci-après \"CGU\") s'appliquent à l'utilisation du service de traduction de documents médicaux healthlingo.de (ci-après \"Service\", \"Site web\" ou \"Plateforme\").",
+      "p2": "(2) Le service est exploité par :",
+      "providerName": "[Prénom Nom / Nom de l'entreprise]",
+      "providerAddress": "[Rue et numéro]",
+      "providerCity": "[Code postal Ville], Allemagne",
+      "providerEmail": "E-mail : [Adresse e-mail]",
+      "providerPhone": "Téléphone : [Numéro de téléphone]",
+      "providerNote": "(ci-après \"Fournisseur\", \"nous\" ou \"notre\")",
+      "p3": "(3) Les présentes CGU régissent de manière exhaustive la relation contractuelle entre le fournisseur et les utilisateurs du service (ci-après \"Utilisateur\" ou \"vous\"). Des conditions différentes, contraires ou complémentaires de l'utilisateur ne font pas partie intégrante du contrat, sauf si le fournisseur accepte expressément leur validité par écrit.",
+      "p4": "(4) L'utilisation du service suppose l'acceptation des présentes CGU ainsi que la prise de connaissance de la politique de confidentialité et l'octroi des consentements explicites qui y sont décrits.",
+      "p5": "(5) Les présentes CGU s'adressent exclusivement aux consommateurs au sens du § 13 BGB. Un consommateur est toute personne physique qui conclut une transaction juridique à des fins qui ne sont pas principalement attribuables à son activité commerciale ou professionnelle indépendante. Une utilisation commerciale ou professionnelle du service nécessite un accord écrit séparé.",
+      "p6": "(6) Toutes les personnes physiques âgées de 18 ans et plus sont autorisées à utiliser les services de healthlingo.de."
     },
     "section4": {
-      "title": "§ 4 Avertissement médical",
-      "warning": "AVIS IMPORTANT : Les traductions fournies ne doivent PAS être comprises comme des conseils médicaux !",
-      "p1": "(1) Les traductions sont automatiquement créées par l'intelligence artificielle et peuvent contenir des erreurs, des inexactitudes ou des malentendus.",
-      "p2": "(2) Les traductions ne doivent jamais être utilisées comme base pour des décisions médicales.",
-      "p3": "(3) Pour les questions ou problèmes médicaux, consultez toujours un médecin qualifié ou un professionnel de santé.",
-      "p4": "(4) En cas d'urgence, contactez immédiatement les services d'urgence (112) ou rendez-vous aux urgences les plus proches.",
-      "p5": "(5) Ne vous fiez jamais uniquement aux traductions de ce Service pour des décisions liées à la santé."
+      "title": "§ 4 Description des prestations",
+      "subsection1": {
+        "title": "4.1 Objet du contrat et fonctions principales",
+        "intro": "healthlingo.de est un service en ligne qui vous permet de faire traduire des documents médicaux en langage compréhensible. L'objectif est de vous permettre, en tant que patient informé, de comprendre les informations qui vous sont communiquées dans un document médical. Le service comprend :",
+        "items": [
+          "Reconnaissance automatique de texte (OCR) pour les documents téléchargés via IA",
+          "Traduction du langage médical spécialisé en langage compréhensible pour les patients (allemand)",
+          "Traduction vers d'autres langues cibles (anglais, français, espagnol, italien, portugais, néerlandais, polonais)",
+          "Vérification automatisée de la plausibilité et de la cohérence de la traduction (ne remplace pas la consultation médicale)",
+          "Téléchargement des résultats de traduction"
+        ],
+        "note": "Le service est techniquement programmé de manière à ce que la traduction des documents fonctionne de manière entièrement automatique. Les informations du document original ne sont pas évaluées, interprétées ou complétées médicalement, mais uniquement traduites de manière automatique."
+      }
     },
-    "section5": {
-      "title": "§ 5 Limitation de responsabilité",
-      "p1": "(1) Nous n'assumons aucune responsabilité quant à l'exactitude, l'exhaustivité ou l'actualité des traductions.",
-      "p2": "(2) Toute responsabilité pour les dommages résultant directement ou indirectement de l'utilisation du Service est exclue dans la mesure permise par la loi.",
-      "p3": "(3) Cela ne s'applique pas aux dommages résultant d'atteintes à la vie, au corps ou à la santé, ou à d'autres dommages basés sur une violation intentionnelle ou gravement négligente du devoir."
+    "section15": {
+      "title": "§ 15 Indemnisation",
+      "p1": "(1) L'utilisateur dégage le fournisseur de toute réclamation de tiers invoquée en raison d'une violation fautive de leurs droits par l'utilisateur, notamment par le téléchargement de documents sans autorisation correspondante.",
+      "p2": "(2) L'utilisateur rembourse au fournisseur les coûts nécessaires d'une défense juridique raisonnable.",
+      "p3": "(3) L'obligation d'indemnisation ne s'applique pas dans la mesure où l'utilisateur n'est pas responsable de la violation.",
+      "p4": "(4) L'utilisateur est tenu d'informer immédiatement le fournisseur en cas de réclamation de tiers et de l'assister dans la défense juridique."
     },
-    "section6": {
-      "title": "§ 6 Protection des données",
-      "p1": "(1) Le traitement des données personnelles est effectué conformément à notre Politique de confidentialité.",
-      "p2": "(2) Les documents téléchargés ne sont stockés que temporairement pendant la durée du traitement et sont ensuite automatiquement supprimés.",
-      "p3": "(3) Il n'y a pas de stockage permanent ni de partage de vos documents avec des tiers."
+    "section16": {
+      "title": "§ 16 Protection des données",
+      "p1": "(1) La protection de vos données personnelles est particulièrement importante pour nous. Le traitement s'effectue conformément au RGPD et au BDSG.",
+      "p2": "(2) Notre politique de confidentialité complète est disponible sous le point de menu \"Protection des données\" sur notre site web.",
+      "p3": "(3) L'utilisation du service nécessite un consentement explicite au traitement des données de santé.",
+      "p4": "(4) Vos documents sont automatiquement et irrévocablement supprimés de nos systèmes actifs au plus tard 1 heure après le traitement. Les détails sur la suppression ainsi que sur les données de protocole technique se trouvent dans notre politique de confidentialité.",
+      "p5": "(5) Le traitement de vos documents s'effectue au sein de l'Union européenne. Pour les services de sécurité (CDN, protection DDoS), nous utilisons Cloudflare, ce qui peut entraîner un transfert de données de connexion vers les USA. Les détails et les bases juridiques se trouvent dans notre politique de confidentialité (section 6).",
+      "p6": "(6) Sans votre consentement, les données personnelles ne seront pas utilisées à des fins publicitaires.",
+      "linkText": "Vers la politique de confidentialité complète"
     },
-    "section7": {
-      "title": "§ 7 Propriété intellectuelle",
-      "p1": "(1) Tous les droits sur le site web et le Service, y compris les droits d'auteur, les droits de marque et autres droits de propriété intellectuelle, nous appartiennent.",
-      "p2": "(2) L'utilisation du Service ne vous accorde aucun droit sur notre propriété intellectuelle, sauf les droits expressément accordés dans ces conditions d'utilisation."
+    "section19": {
+      "title": "§ 19 Modifications des conditions d'utilisation",
+      "p1": "(1) Le fournisseur se réserve le droit de modifier les présentes CGU à tout moment avec effet pour l'avenir.",
+      "p2": "(2) Les modifications prennent effet par leur publication sur cette page.",
+      "p3": "(3) En cas de modifications substantielles, le fournisseur vous en informera par un avis sur le site web.",
+      "p4": "(4) En cas de modifications substantielles, vous serez invité à confirmer activement les nouvelles CGU avant la prochaine utilisation. Sans cette confirmation, une utilisation ultérieure n'est pas possible.",
+      "p5": "(5) Les CGU dans leur version en vigueur au moment de l'utilisation s'appliquent."
     },
-    "section8": {
-      "title": "§ 8 Disponibilité",
-      "p1": "(1) Nous nous efforçons d'assurer une haute disponibilité du Service mais ne pouvons la garantir.",
-      "p2": "(2) Nous nous réservons le droit de modifier, interrompre ou cesser le Service à tout moment.",
-      "p3": "(3) Les travaux de maintenance seront annoncés à l'avance dans la mesure du possible."
-    },
-    "section9": {
-      "title": "§ 9 Modifications des conditions d'utilisation",
-      "p1": "(1) Nous nous réservons le droit de modifier ces conditions d'utilisation à tout moment.",
-      "p2": "(2) Les modifications seront publiées sur cette page. L'utilisation continue du Service après la publication des modifications constitue l'acceptation des conditions modifiées."
-    },
-    "section10": {
-      "title": "§ 10 Droit applicable et juridiction",
-      "p1": "(1) Le droit de la République fédérale d'Allemagne s'applique, à l'exclusion de la Convention des Nations Unies sur les contrats de vente internationale de marchandises.",
-      "p2": "(2) Le lieu de juridiction pour tous les litiges découlant de ou en relation avec ces conditions d'utilisation est, dans la mesure permise par la loi, [Votre juridiction]."
-    },
-    "section11": {
-      "title": "§ 11 Clause de divisibilité",
-      "text": "Si des dispositions individuelles de ces conditions d'utilisation sont ou deviennent invalides ou inapplicables, la validité des dispositions restantes n'en sera pas affectée."
+    "section21": {
+      "title": "§ 21 Règlement extrajudiciaire des litiges",
+      "p1": "(1) La plateforme de règlement en ligne des litiges (RLL) de l'UE a été abandonnée le 20 juillet 2025. Pour le règlement extrajudiciaire des litiges, vous pouvez vous adresser au Centre de médiation des consommateurs : www.verbraucher-schlichter.de",
+      "p2": "(2) Nous ne sommes ni disposés ni tenus de participer à une procédure de règlement des litiges.",
+      "p3": "(3) Notre adresse e-mail se trouve dans les mentions légales ainsi qu'au § 24 des présentes CGU."
     },
     "lastUpdated": "Dernière mise à jour :"
   }

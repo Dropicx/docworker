@@ -24,7 +24,7 @@
       "responsibleTitle": "Notă privind entitatea responsabilă",
       "responsibleText": "Entitatea responsabilă pentru procesarea datelor pe acest site web este menționată în mențiunile legale. Entitatea responsabilă este persoana fizică sau juridică care, singură sau împreună cu alții, determină scopurile și mijloacele de procesare a datelor personale.",
       "storageTitle": "Durata stocării",
-      "storageText": "Documentele încărcate și traducerile lor sunt stocate doar temporar pe durata procesării. Perioada standard de stocare este de 24 de ore după finalizarea procesării (configurabil, poate fi redusă la 0 ore). După această perioadă, toate datele sunt șterse automat și complet:",
+      "storageText": "Documentele încărcate și traducerile lor sunt stocate doar temporar pe durata procesării. Sunt șterse din sistemele active imediat după finalizarea procesării, în orice caz în maximum 1 oră. Toate datele sunt șterse automat și complet:",
       "storageItems": [
         "Documentul original încărcat",
         "Textele extrase (după eliminarea PII)",
@@ -32,7 +32,7 @@
         "Toate metadatele de procesare",
         "Adresele IP (pentru jurnalizarea securității)"
       ],
-      "storageNote": "Această perioadă scurtă de stocare vă permite să descărcați traducerea în timp ce maximizează protecția datelor. După ștergere, datele nu pot fi recuperate. Ștergerea automată este efectuată de sarcinile de curățare programate care rulează la fiecare oră.",
+      "storageNote": "Această perioadă scurtă de stocare vă permite să descărcați traducerea în timp ce maximizează protecția datelor. După ștergerea din sistemele active, datele nu pot fi recuperate.",
       "sslTitle": "Criptare SSL/TLS",
       "sslText": "Din motive de securitate și pentru a proteja transmiterea conținutului confidențial, cum ar fi documentele medicale pe care ni le trimiteți, acest site utilizează criptare SSL/TLS. Puteți recunoaște o conexiune criptată după bara de adrese a browserului care se schimbă de la \"http://\" la \"https://\" și pictograma lacătului din bara browserului."
     },
@@ -59,13 +59,14 @@
       "medicalText": "Când folosiți serviciul nostru de traducere pentru documente medicale, se aplică următoarele măsuri de protecție a datelor:",
       "medicalItems": [
         "Eliminarea automată a PII: Înainte de procesarea de către sistemele AI, informațiile personale (nume, adrese, numere de telefon, date de naștere, numere de asigurare) sunt eliminate automat din documente. Aceasta se face local pe serverele noastre folosind spaCy NER (Named Entity Recognition) și modele speciale pentru documentele medicale germane.",
-        "Stocare temporară: Documentele sunt stocate doar temporar pe durata procesării (maximum 24 de ore)",
-        "Ștergere automată: După finalizarea traducerii, toate datele sunt șterse automat și complet",
+        "Stocare temporară: Documentele sunt stocate doar temporar pe durata procesării (maximum 1 oră)",
+        "Ștergere automată: După finalizarea traducerii, toate datele sunt șterse imediat din sistemele active, în orice caz în termen de 1 oră. Rămân doar statisticile anonime",
         "Fără stocare permanentă: Nu există stocare permanentă a documentelor sau traducerilor",
         "Fără partajare: Nu se partajează date cu terți (cu excepția Mistral AI (Franța) pentru OCR și traducere, și Hetzner (Germania) pentru eliminarea datelor personale. Doar textele curățate de date personale sunt transmise pentru traducere)",
         "Transmisie criptată: Toate datele sunt transmise criptat prin HTTPS/TLS",
         "Criptare în repaus: Toate documentele încărcate sunt criptate cu AES-256-GCM și stocate în baza de date. Conturile de administrator folosesc în plus stocare criptată pentru adresele de email și numele.",
-        "Fără cookie-uri de urmărire: Serviciul nostru nu folosește cookie-uri de marketing, analitice sau de urmărire. Se folosesc doar cookie-uri strict necesare pentru setările de limbă și securitate."
+        "Fără cookie-uri de urmărire: Serviciul nostru nu folosește cookie-uri de marketing, analitice sau de urmărire. Se folosesc doar cookie-uri strict necesare pentru setările de limbă și securitate.",
+        "Procesarea datelor în principal în UE: Procesarea documentelor dvs. are loc exclusiv în UE (Germania și Franța). Pentru serviciile CDN și de securitate (Cloudflare), poate avea loc transferul de date în SUA, asigurat prin Clauzele Contractuale Standard ale UE și Cadrul de Confidențialitate a Datelor UE-SUA (a se vedea Secțiunea 6)."
       ]
     },
     "section4": {
@@ -74,7 +75,7 @@
       "accessTitle": "Dreptul de acces",
       "accessText": "Deoarece nu stocăm date personale de la utilizatorii finali și procesarea este anonimă, nu putem furniza informații despre datele stocate deoarece astfel de date nu există. Dacă aveți întrebări despre protecția datelor, ne puteți contacta oricând (a se vedea contactul în mențiunile legale).",
       "deletionTitle": "Dreptul la ștergere",
-      "deletionText": "Documentele dvs. încărcate sunt șterse automat după 24 de ore (sau mai devreme). Nu este necesară ștergerea manuală deoarece ștergerea are loc automat. Dacă doriți ștergerea imediată, ne puteți contacta.",
+      "deletionText": "Documentele dvs. încărcate sunt șterse din sistemele active imediat după procesare, în orice caz în termen de 1 oră. Nu este necesară ștergerea manuală deoarece ștergerea are loc automat. Dacă ați oferit feedback cu consimțământul dvs., puteți solicita ștergerea datelor dvs. în orice moment contactându-ne.",
       "restrictionTitle": "Dreptul la restricționarea procesării",
       "restrictionText": "Puteți anula procesarea documentelor dvs. oricând, încheiind procesarea înainte ca traducerea să fie completă. În acest caz, datele sunt șterse imediat.",
       "portabilityTitle": "Dreptul la portabilitatea datelor",
@@ -87,11 +88,11 @@
       "intro": "Deoarece serviciul nostru permite procesarea documentelor medicale care pot conține date de sănătate, observăm în mod specific că:",
       "items": [
         "Datele de sănătate aparțin categoriilor speciale de date personale conform Art. 9 GDPR",
-        "Procesăm aceste date exclusiv în scopuri de traducere și numai cu consimțământul dvs. explicit (prin acceptarea politicii de confidențialitate la încărcare)",
-        "Procesarea este complet anonimă - nu sunt stocate date personale de la utilizatorii finali",
+        "Procesăm aceste date exclusiv în scopuri de traducere și numai cu consimțământul dvs. explicit și separat (a se vedea Secțiunea 9)",
         "Înainte de procesarea AI, toate informațiile personale (nume, adrese, numere de telefon etc.) sunt eliminate automat",
         "Sunt luate măsuri tehnice și organizaționale speciale pentru protejarea acestor date (criptare, durată scurtă de stocare, ștergere automată)",
-        "Toate datele sunt șterse automat și complet după maximum 24 de ore"
+        "Toate datele sunt șterse din sistemele active imediat după procesare, în orice caz în termen de 1 oră",
+        "Rezultatele traducerii sunt doar pentru informare și nu înlocuiesc consultarea și consilierea medicală. Nu se efectuează niciun diagnostic, examinare sau recomandare de tratament"
       ]
     },
     "section6": {
@@ -109,7 +110,7 @@
         "Hetzner (Germania/UE): Pentru eliminarea datelor personale și ca serviciu OCR de rezervă (PaddleOCR). Serverele sunt situate în Germania.",
         "Railway (UE): Pentru găzduirea aplicației și a bazei de date PostgreSQL criptate. Railway este certificat SOC 2 Type I și oferă Acorduri de Procesare a Datelor conforme cu GDPR."
       ],
-      "note": "Toată procesarea datelor are loc exclusiv în UE (Franța și Germania). Nu au loc transferuri internaționale de date."
+      "note": "Procesarea datelor are loc în principal în UE. Pentru serviciul CDN și de securitate (Cloudflare), poate avea loc transferul de date în SUA, asigurat prin garanții adecvate."
     },
     "section7a": {
       "title": "7a. Notificare importantă privind eliminarea datelor personale",

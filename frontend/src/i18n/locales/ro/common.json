@@ -223,7 +223,7 @@
     "privacyPolicy": "Politica de confidențialitate",
     "consentAnd": "și",
     "termsOfUse": "Termenii de utilizare",
-    "consentSuffix": "și îmi dau consimțământul ca feedback-ul meu și conținutul documentelor asociate să fie folosite pentru îmbunătățirea calității.",
+    "consentSuffix": "și îmi dau consimțământul conform Art. 6(1)(a) GDPR ca feedback-ul meu și conținutul documentelor asociate să fie folosite pentru îmbunătățirea calității.",
     "ratingRequired": "Vă rugăm să oferiți o evaluare generală.",
     "consentRequired": "Vă rugăm să acceptați utilizarea datelor.",
     "submitError": "Feedback-ul nu a putut fi trimis.",
@@ -299,12 +299,12 @@
     "contactLink": "Contactați-ne",
     "items": {
       "0": {
-        "question": "Unde sunt procesate datele mele și sunt în siguranță?",
-        "answer": "Documentele dvs. sunt procesate exclusiv pe servere sigure în Europa. Lucrăm doar cu furnizori care respectă standardele stricte europene de protecție a datelor. Toți partenerii noștri au semnat acorduri de protecție a datelor în conformitate cu reglementările europene."
+        "question": "Unde sunt procesate datele mele?",
+        "answer": "Documentele dvs. sunt procesate în principal pe servere sigure în Europa (Germania și Franța). Folosim Cloudflare (SUA) pentru servicii de securitate și rețea, protejat prin Clauzele Contractuale Standard ale UE și Cadrul de Confidențialitate a Datelor UE-SUA. Avem acorduri de protecție a datelor conforme cu GDPR cu toți partenerii."
       },
       "1": {
-        "question": "Datele mele medicale sunt stocate sau folosite pentru antrenarea inteligenței artificiale?",
-        "answer": "Nu, absolut nu. HealthLingo nu stochează permanent nicio dată. Documentele dvs. sunt șterse automat după traducere. Inteligența artificială NU învață din datele dvs. - fiecare cerere este procesată separat și nu lasă urme."
+        "question": "Cât timp sunt stocate datele mele?",
+        "answer": "Documentele dvs. sunt șterse din sistemele active imediat după procesare, în orice caz în maximum 1 oră. Dacă oferiți voluntar feedback, aceste evaluări anonime sunt păstrate maximum 90 de zile. Nu există stocare permanentă a documentelor dvs."
       },
       "2": {
         "question": "Cât durează traducerea?",
@@ -324,7 +324,7 @@
       },
       "6": {
         "question": "Cum sunt protejate tehnic datele mele?",
-        "answer": "Toate datele sunt criptate în repaus folosind AES-256-GCM – standardul actual de securitate a datelor. Toate transmisiile folosesc conexiuni securizate HTTPS/TLS. HealthLingo nu folosește cookie-uri sau urmărire. Furnizorii noștri de servere sunt certificați conform standardelor internaționale de securitate. Toată procesarea datelor are loc în Europa."
+        "answer": "Toate datele sunt criptate cu AES-256-GCM – standardul actual de securitate a datelor. Toate transmisiile folosesc conexiuni securizate HTTPS/TLS. HealthLingo nu folosește cookie-uri de marketing sau urmărire, doar cookie-uri esențiale pentru setările de limbă. Procesarea documentelor are loc în principal în UE (Germania, Franța), cu securitatea rețelei prin Cloudflare (SUA, protejat prin SCC-uri)."
       },
       "7": {
         "question": "Traducerea este precisă din punct de vedere medical?",
@@ -341,6 +341,18 @@
       "10": {
         "question": "Serviciul este cu adevărat gratuit?",
         "answer": "Da, HealthLingo este complet gratuit. Nu există costuri ascunse și nu este necesară înregistrarea. Serviciul este destinat utilizării personale. Pentru utilizare comercială, vă rugăm să ne contactați."
+      },
+      "11": {
+        "question": "Ce drepturi am?",
+        "answer": "Aveți un drept de retragere de 14 zile, precum și toate drepturile conform Regulamentului General European privind Protecția Datelor: acces la datele dvs., rectificare și ștergere. Ștergerea are loc automat după utilizare. Puteți revoca orice consimțământ în orice moment - pur și simplu prin anulare, închiderea browserului sau prin e-mail."
+      },
+      "12": {
+        "question": "Când exact sunt șterse datele mele?",
+        "answer": "Datele dvs. sunt șterse automat și irevocabil din sistemele noastre active în maximum 1 oră după procesare. Sunt șterse: documentul original, textele extrase și traducerea. Singura excepție: feedback-ul voluntar este stocat maximum 90 de zile."
+      },
+      "13": {
+        "question": "Ce trebuie să știu despre recunoașterea textului?",
+        "answer": "Pentru documentele scanate sau fotografiate, textul trebuie mai întâi recunoscut înainte ca datele personale să poată fi eliminate. Deoarece recunoașterea automată nu este perfectă, vă recomandăm să mascați singuri datele sensibile precum numele și adresele înainte de încărcare."
       }
     }
   },
@@ -354,9 +366,10 @@
     "madeInLocation": "în Germania"
   },
   "cookieFree": {
-    "title": "Fără cookie-uri!",
-    "description": "HealthLingo nu folosește cookie-uri și nu stochează date de urmărire.",
-    "closeBanner": "Închide banner"
+    "title": "Doar cookie-uri esențiale",
+    "description": "Folosim exclusiv cookie-uri strict necesare pentru setările de limbă și securitate. Fără cookie-uri de urmărire sau marketing.",
+    "privacyLink": "Politica de confidențialitate",
+    "accept": "Accept"
   },
   "termination": {
     "title": "Procesare oprită",
