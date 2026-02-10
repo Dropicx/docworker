@@ -114,19 +114,19 @@ const qualityTiersData = [
 export const BestResultsSection = () => {
   const { t } = useTranslation();
   return (
-    <div className="h-full flex flex-col">
-      <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-900 mb-6 text-center lg:text-left">
+    <div className="h-full flex flex-col lg:items-start">
+      <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-900 mb-6 text-center lg:text-left w-full">
         {t('howItWorks.bestResults.title')}
       </h3>
-      <div className="flex flex-col gap-4 sm:gap-5 flex-1">
+      <div className="flex flex-col gap-4 sm:gap-5 flex-1 w-full">
         {qualityTiersData.map((tier) => (
           <Card
             key={tier.level}
-            className="group text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300"
+            className="group text-center lg:text-left border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full"
           >
             <CardHeader className="pb-2 sm:pb-3">
               <div
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110"
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto lg:mx-0 bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110"
                 aria-hidden
               >
                 <tier.Icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
@@ -148,7 +148,7 @@ export const BestResultsSection = () => {
                 </p>
               )}
               {tier.level === 'good' && (
-                <ul className="mt-3 space-y-1.5 text-sm text-primary-600 text-left max-w-xs mx-auto">
+                <ul className="mt-3 space-y-1.5 text-sm text-primary-600 text-left max-w-xs mx-auto lg:mx-0">
                   {(
                     t(`howItWorks.bestResults.tiers.good.tips`, {
                       returnObjects: true,

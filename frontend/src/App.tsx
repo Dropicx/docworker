@@ -168,14 +168,14 @@ const MainApp: React.FC<MainAppProps> = ({
               {/* Two columns: Für beste Ergebnisse | Drei gute Gründe (stacked cards) */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 lg:items-stretch">
                 <BestResultsSection />
-                <div className="flex flex-col">
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-900 mb-6 text-center lg:text-left">
+                <div className="flex flex-col lg:items-end">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-900 mb-6 text-center lg:text-right w-full">
                     {t('features.heading')}
                   </h2>
-                  <div className="flex flex-col gap-4 sm:gap-5 flex-1">
-                    <Card className="group text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
+                  <div className="flex flex-col gap-4 sm:gap-5 flex-1 w-full">
+                    <Card className="group text-center lg:text-right border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
                       <CardHeader className="pb-2 sm:pb-3">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto lg:ml-auto lg:mr-0 bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
                           <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                         </div>
                       </CardHeader>
@@ -189,9 +189,9 @@ const MainApp: React.FC<MainAppProps> = ({
                       </CardContent>
                     </Card>
 
-                    <Card className="group text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
+                    <Card className="group text-center lg:text-right border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
                       <CardHeader className="pb-2 sm:pb-3">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto lg:ml-auto lg:mr-0 bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
                           <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                         </div>
                       </CardHeader>
@@ -205,9 +205,9 @@ const MainApp: React.FC<MainAppProps> = ({
                       </CardContent>
                     </Card>
 
-                    <Card className="group text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
+                    <Card className="group text-center lg:text-right border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
                       <CardHeader className="pb-2 sm:pb-3">
-                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center mx-auto">
+                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center mx-auto lg:ml-auto lg:mr-0">
                           <div
                             className="absolute inset-0 rounded-xl border-2 border-white/30 border-t-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-spin"
                             aria-hidden
