@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Sitemap location
+Sitemap: https://healthlingo.de/sitemap.xml
+
+# Disallow internal/protected pages
+Disallow: /login
+Disallow: /settings

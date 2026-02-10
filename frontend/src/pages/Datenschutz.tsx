@@ -319,9 +319,6 @@ const Datenschutz: React.FC = () => {
                 {t('datenschutz.section9.retentionTitle')}
               </h3>
               <p className="mb-4">
-                {t('datenschutz.section9.retentionWithoutConsent')}
-              </p>
-              <p className="mb-4">
                 {t('datenschutz.section9.retentionWithConsent')}
               </p>
 

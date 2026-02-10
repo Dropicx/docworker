@@ -152,12 +152,11 @@
         "Zeitpunkt der Feedbackabgabe"
       ],
       "consentTitle": "Einwilligung zur Qualitätsverbesserung",
-      "consentText": "Bei der Feedbackabgabe können Sie freiwillig einwilligen, dass Ihre Übersetzungsdaten zur Qualitätsverbesserung unseres Dienstes verwendet werden dürfen. Diese Einwilligung ist optional und beeinflusst nicht die Möglichkeit, Feedback abzugeben.",
+      "consentText": "Die Abgabe von Feedback erfordert Ihre ausdrückliche Einwilligung zur Speicherung Ihrer Übersetzungsdaten für Qualitätsverbesserungszwecke. Ohne diese Einwilligung kann kein Feedback abgegeben werden.",
       "retentionTitle": "Speicherdauer",
-      "retentionWithoutConsent": "Ohne Einwilligung zur Qualitätsverbesserung: Ihr Feedback wird zusammen mit den zugehörigen Verarbeitungsdaten nach 24 Stunden automatisch gelöscht.",
-      "retentionWithConsent": "Mit Einwilligung zur Qualitätsverbesserung: Ihr Feedback und die zugehörigen Übersetzungsdaten werden für maximal 90 Tage für die Analyse und Verbesserung unseres Dienstes gespeichert. Nach Ablauf dieser Frist werden die Daten automatisch gelöscht. Sie können diese Einwilligung jederzeit widerrufen.",
+      "retentionWithConsent": "Ihr Feedback und die zugehörigen Übersetzungsdaten werden für maximal 90 Tage für die Analyse und Verbesserung unseres Dienstes gespeichert. Nach Ablauf dieser Frist werden die Daten automatisch gelöscht. Sie können diese Einwilligung jederzeit widerrufen.",
       "legalBasis": "Die Verarbeitung Ihrer Feedbackdaten erfolgt auf Grundlage Ihrer Einwilligung gemäß Art. 6 Abs. 1 lit. a DSGVO. Bei der optionalen Qualitätsverbesserung erfolgt die Verarbeitung ebenfalls auf Grundlage Ihrer ausdrücklichen Einwilligung.",
-      "note": "Bitte beachten Sie: In Ihrem Kommentar sollten Sie keine personenbezogenen Daten (Namen, Adressen, Versicherungsnummern etc.) angeben. Solche Daten werden nicht automatisch entfernt und könnten bei Einwilligung zur Qualitätsverbesserung gespeichert werden."
+      "note": "Bitte beachten Sie: In Ihrem Kommentar sollten Sie keine personenbezogenen Daten (Namen, Adressen, Versicherungsnummern etc.) angeben. Solche Daten werden nicht automatisch entfernt und werden zusammen mit Ihrem Feedback gespeichert."
     },
     "policyUpdatesTitle": "Aktualisierung dieser Datenschutzerklärung",
     "policyUpdatesText": "Wir überprüfen und aktualisieren diese Datenschutzerklärung regelmäßig, um rechtliche Anforderungen zu erfüllen und Änderungen unserer Dienste widerzuspiegeln. Bei wesentlichen Änderungen werden wir Sie durch einen deutlichen Hinweis auf unserer Website informieren. Wir empfehlen Ihnen, diese Seite regelmäßig zu besuchen, um über aktuelle Datenschutzpraktiken informiert zu bleiben.",
