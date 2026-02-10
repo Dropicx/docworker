@@ -1,0 +1,10 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "./Dockerfile"
+
+[deploy]
+startCommand = "./entrypoint.sh"
+healthcheckPath = "/api/health/simple"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
