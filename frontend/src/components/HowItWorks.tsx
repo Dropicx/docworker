@@ -18,18 +18,30 @@ const HowItWorks = () => {
       icon: Upload,
       titleKey: 'howItWorks.steps.1.title',
       descriptionKey: 'howItWorks.steps.1.description',
+      iconBg: 'bg-gradient-to-br from-accent-100 to-accent-200',
+      iconText: 'text-accent-600',
+      badgeBorder: 'border-accent-400',
+      badgeText: 'text-accent-700',
     },
     {
       number: 2,
       icon: Sparkles,
       titleKey: 'howItWorks.steps.2.title',
       descriptionKey: 'howItWorks.steps.2.description',
+      iconBg: 'bg-gradient-to-br from-violet-100 to-violet-200',
+      iconText: 'text-violet-600',
+      badgeBorder: 'border-violet-400',
+      badgeText: 'text-violet-700',
     },
     {
       number: 3,
       icon: FileCheck,
       titleKey: 'howItWorks.steps.3.title',
       descriptionKey: 'howItWorks.steps.3.description',
+      iconBg: 'bg-gradient-to-br from-success-100 to-success-200',
+      iconText: 'text-success-600',
+      badgeBorder: 'border-success-400',
+      badgeText: 'text-success-700',
     },
   ];
 
@@ -61,12 +73,12 @@ const HowItWorks = () => {
                     {/* Number Circle */}
                     <div className="relative inline-flex items-center justify-center mb-4">
                       <div
-                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110 ${step.number === 2 ? 'group-hover:animate-icon-glow' : ''}`}
+                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full ${step.iconBg} flex items-center justify-center ${step.iconText} shadow-soft transition-transform duration-300 ease-out group-hover:scale-110 ${step.number === 2 ? 'group-hover:animate-icon-glow' : ''}`}
                       >
                         <step.icon className="w-6 h-6 sm:w-7 sm:h-7" />
                       </div>
-                      <div className="absolute -top-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white border-2 border-brand-500 flex items-center justify-center">
-                        <span className="text-xs sm:text-sm font-bold text-brand-600">
+                      <div className={`absolute -top-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white border-2 ${step.badgeBorder} flex items-center justify-center`}>
+                        <span className={`text-xs sm:text-sm font-bold ${step.badgeText}`}>
                           {step.number}
                         </span>
                       </div>
@@ -94,20 +106,23 @@ const qualityTiersData = [
   {
     level: 'best',
     Icon: FileText,
-    borderColor: 'border-l-brand-500',
-    iconBg: 'bg-brand-500',
+    borderColor: 'border-l-accent-400',
+    iconBg: 'bg-gradient-to-br from-accent-100 to-accent-200',
+    iconText: 'text-accent-600',
   },
   {
     level: 'great',
     Icon: Smartphone,
-    borderColor: 'border-l-primary-400',
-    iconBg: 'bg-primary-500',
+    borderColor: 'border-l-violet-400',
+    iconBg: 'bg-gradient-to-br from-violet-100 to-violet-200',
+    iconText: 'text-violet-600',
   },
   {
     level: 'good',
     Icon: Camera,
-    borderColor: 'border-l-neutral-400',
-    iconBg: 'bg-neutral-500',
+    borderColor: 'border-l-warning-400',
+    iconBg: 'bg-gradient-to-br from-warning-100 to-warning-200',
+    iconText: 'text-warning-600',
   },
 ];
 
@@ -126,7 +141,7 @@ export const BestResultsSection = () => {
           >
             <CardContent className="flex flex-row items-start gap-4 sm:gap-5 p-4 sm:p-5">
               <div
-                className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110"
+                className={`flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center ${tier.iconBg} ${tier.iconText} shadow-soft transition-transform duration-300 ease-out group-hover:scale-110`}
                 aria-hidden
               >
                 <tier.Icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />

@@ -220,9 +220,9 @@ const MainApp: React.FC<MainAppProps> = ({
                     {t('features.heading')}
                   </h2>
                   <div className="flex flex-col gap-4 sm:gap-5 flex-1 w-full">
-                    <Card className="group text-center lg:text-right border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
+                    <Card className="group text-center lg:text-right border-t-2 border-t-success-400 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
                       <CardContent className="flex flex-row items-start gap-4 sm:gap-5 p-4 sm:p-5">
-                        <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
+                        <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-success-100 to-success-200 text-success-600 shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
                           <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -236,9 +236,9 @@ const MainApp: React.FC<MainAppProps> = ({
                       </CardContent>
                     </Card>
 
-                    <Card className="group text-center lg:text-right border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
+                    <Card className="group text-center lg:text-right border-t-2 border-t-accent-400 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
                       <CardContent className="flex flex-row items-start gap-4 sm:gap-5 p-4 sm:p-5">
-                        <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
+                        <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-accent-100 to-accent-200 text-accent-600 shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
                           <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -252,14 +252,14 @@ const MainApp: React.FC<MainAppProps> = ({
                       </CardContent>
                     </Card>
 
-                    <Card className="group text-center lg:text-right border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
+                    <Card className="group text-center lg:text-right border-t-2 border-t-warning-400 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
                       <CardContent className="flex flex-row items-start gap-4 sm:gap-5 p-4 sm:p-5">
                         <div className="relative flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
                           <div
-                            className="absolute inset-0 rounded-xl border-2 border-white/30 border-t-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-spin"
+                            className="absolute inset-0 rounded-xl border-2 border-warning-300/50 border-t-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-spin"
                             aria-hidden
                           />
-                          <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110 group-hover:animate-icon-flash">
+                          <div className="relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-warning-100 to-warning-200 text-warning-600 shadow-soft transition-transform duration-300 ease-out group-hover:scale-110 group-hover:animate-icon-flash">
                             <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                           </div>
                         </div>
