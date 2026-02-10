@@ -64,6 +64,8 @@
     "pleaseConfirm": "Vă rugăm să confirmați",
     "privacyConsentPrefix": "Am citit",
     "privacyPolicy": "Politica de confidențialitate",
+    "privacyConsentAnd": "și",
+    "termsOfUse": "Termenii de utilizare",
     "privacyConsentSuffix": "și sunt de acord cu procesarea documentelor mele. Înțeleg că datele mele vor fi procesate în conformitate cu GDPR și șterse automat după traducere.",
     "startProcessing": "Începeți procesarea",
     "gdprNotice": "Datele dvs. sunt procesate conform GDPR și nu sunt stocate",
@@ -217,6 +219,11 @@
     "commentOptional": "Comentariu (opțional)",
     "commentPlaceholder": "Împărtășiți-ne gândurile dvs...",
     "consent": "Sunt de acord ca datele mele să fie folosite pentru îmbunătățirea sistemului.",
+    "consentPrefix": "Am citit",
+    "privacyPolicy": "Politica de confidențialitate",
+    "consentAnd": "și",
+    "termsOfUse": "Termenii de utilizare",
+    "consentSuffix": "și sunt de acord ca datele mele să fie folosite pentru îmbunătățirea sistemului.",
     "ratingRequired": "Vă rugăm să oferiți o evaluare generală.",
     "consentRequired": "Vă rugăm să acceptați utilizarea datelor.",
     "submitError": "Feedback-ul nu a putut fi trimis.",
@@ -229,6 +236,61 @@
     "thankYouDescription": "Feedback-ul dvs. ne ajută să îmbunătățim serviciul.",
     "starLabel": "{{count}} stea",
     "starLabel_plural": "{{count}} stele"
+  },
+  "howItWorks": {
+    "title": "Cum funcționează",
+    "subtitle": "3 pași simpli către traducerea dvs. ușor de înțeles",
+    "steps": {
+      "1": {
+        "title": "Încărcați documentul",
+        "description": "Încărcați documentul dvs. medical - scrisoare de la medic, raport sau rezultate de laborator"
+      },
+      "2": {
+        "title": "Simplificare cu IA",
+        "description": "IA noastră recunoaște termenii medicali și îi traduce într-un limbaj ușor de înțeles"
+      },
+      "3": {
+        "title": "Obțineți rezultatele",
+        "description": "Citiți, înțelegeți, descărcați - datele dvs. sunt șterse automat"
+      }
+    },
+    "bestResults": {
+      "title": "Pentru cele mai bune rezultate",
+      "tiers": {
+        "best": {
+          "label": "Cea mai bună calitate",
+          "title": "PDF cu text încorporat",
+          "description": "Scrisori digitale de la medic, atașamente de e-mail",
+          "result": "Recunoaștere perfectă a textului, cele mai rapide rezultate"
+        },
+        "great": {
+          "label": "Foarte bună",
+          "title": "Folosiți scanerul telefonului",
+          "description": "Folosiți funcția de scanner încorporată a telefonului pentru rezultate optime",
+          "result": "Corecție automată a perspectivei și claritate"
+        },
+        "good": {
+          "label": "Bună",
+          "title": "Fotografie normală (cu sfaturile noastre)",
+          "description": "Scanerul nostru încorporat optimizează automat imaginea",
+          "tips": [
+            "Iluminare bună, fără umbre",
+            "Document plat pe masă",
+            "Camera direct deasupra documentului"
+          ]
+        }
+      }
+    },
+    "proTips": {
+      "title": "Sfaturi Pro",
+      "tips": {
+        "pdf": "Fișierele PDF oferă cele mai bune rezultate",
+        "scanner": "Folosiți funcția de scanner a telefonului",
+        "light": "Faceți fotografii cu lumină bună, fără umbre",
+        "flat": "Țineți documentul plat și drept",
+        "privacy": "Mascați datele sensibile în prealabil pentru securitate suplimentară"
+      }
+    }
   },
   "faq": {
     "title": "Întrebări frecvente",

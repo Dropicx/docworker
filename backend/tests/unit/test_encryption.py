@@ -2,12 +2,14 @@
 Unit tests for field-level encryption service.
 
 Tests cover:
-- Basic encryption/decryption operations
+- AES-256-GCM encryption/decryption operations (current format)
+- Legacy Fernet backward compatibility
 - UTF-8 and special character handling
 - Key rotation scenarios
 - Error handling and edge cases
 - Performance benchmarks
 - Batch operations
+- Token format detection
 """
 
 import base64
@@ -19,6 +21,7 @@ import pytest
 from cryptography.fernet import Fernet, InvalidToken
 
 from app.core.encryption import (
+    AES256GCM_VERSION,
     DecryptionError,
     EncryptionError,
     EncryptionKeyError,
@@ -63,10 +66,196 @@ class TestFieldEncryptorBasics:
         encrypted1 = encryptor.encrypt_field(plaintext)
         encrypted2 = encryptor.encrypt_field(plaintext)
 
-        # Fernet includes timestamp, so each encryption is unique
+        # AES-256-GCM uses random nonce, so each encryption is unique
         assert encrypted1 != encrypted2
         assert encryptor.decrypt_field(encrypted1) == plaintext
         assert encryptor.decrypt_field(encrypted2) == plaintext
+
+
+class TestAES256GCMBasics:
+    """Test AES-256-GCM specific functionality"""
+
+    def test_token_has_correct_version_byte(self):
+        """Test that AES-256-GCM tokens have version byte 0xAE"""
+        plaintext = "test_data"
+        encrypted = encryptor.encrypt_field(plaintext)
+
+        # Decode to check version byte
+        token_bytes = base64.urlsafe_b64decode(encrypted)
+        assert token_bytes[0] == AES256GCM_VERSION
+        assert token_bytes[0] == 0xAE
+
+    def test_token_format_structure(self):
+        """Test that token has correct structure: version + timestamp + nonce + ciphertext"""
+        plaintext = "test_data"
+        encrypted = encryptor.encrypt_field(plaintext)
+        token_bytes = base64.urlsafe_b64decode(encrypted)
+
+        # version(1) + timestamp(8) + nonce(12) + ciphertext + tag(16)
+        min_length = 1 + 8 + 12 + len(plaintext.encode()) + 16
+        assert len(token_bytes) >= min_length
+
+    def test_is_aes256gcm_detects_new_format(self):
+        """Test that is_aes256gcm correctly identifies AES-256-GCM tokens"""
+        encrypted = encryptor.encrypt_field("test_data")
+        assert encryptor.is_aes256gcm(encrypted) is True
+        assert encryptor.is_legacy_fernet(encrypted) is False
+
+    def test_generate_key_produces_valid_key(self):
+        """Test that generate_key produces a valid 256-bit key"""
+        key = FieldEncryptor.generate_key()
+
+        # Should be 44 characters (32 bytes base64 encoded)
+        assert len(key) == 44
+
+        # Should be valid base64
+        key_bytes = base64.urlsafe_b64decode(key)
+        assert len(key_bytes) == 32  # 256 bits
+
+    def test_encrypt_with_generated_key(self):
+        """Test encryption/decryption with a generated key"""
+        key = FieldEncryptor.generate_key()
+
+        with patch.dict(os.environ, {"ENCRYPTION_KEY": key}):
+            test_encryptor = FieldEncryptor()
+            plaintext = "sensitive_medical_data"
+            encrypted = test_encryptor.encrypt_field(plaintext)
+            decrypted = test_encryptor.decrypt_field(encrypted)
+
+            assert decrypted == plaintext
+            assert test_encryptor.is_aes256gcm(encrypted)
+
+    def test_timestamp_included_in_token(self):
+        """Test that token includes timestamp (bytes 1-8)"""
+        import struct
+        import time as time_module
+
+        before = int(time_module.time())
+        encrypted = encryptor.encrypt_field("test")
+        after = int(time_module.time())
+
+        token_bytes = base64.urlsafe_b64decode(encrypted)
+        timestamp = struct.unpack(">Q", token_bytes[1:9])[0]
+
+        assert before <= timestamp <= after
+
+
+class TestBackwardCompatibility:
+    """Test backward compatibility with legacy Fernet tokens"""
+
+    def test_decrypt_legacy_fernet_token(self):
+        """Test that legacy Fernet tokens can still be decrypted"""
+        # Create a Fernet token using the legacy method
+        fernet_key = Fernet.generate_key().decode()
+
+        with patch.dict(os.environ, {"ENCRYPTION_KEY_FERNET_LEGACY": fernet_key}):
+            # Create Fernet token directly
+            fernet = Fernet(fernet_key.encode())
+            fernet_token = fernet.encrypt(b"legacy_data").decode()
+
+            # Should be able to decrypt with encryptor
+            test_encryptor = FieldEncryptor()
+            decrypted = test_encryptor.decrypt_field(fernet_token)
+
+            assert decrypted == "legacy_data"
+
+    def test_is_encrypted_detects_both_formats(self):
+        """Test that is_encrypted detects both AES-256-GCM and Fernet"""
+        # Create AES-256-GCM token
+        aes_encrypted = encryptor.encrypt_field("test")
+        assert encryptor.is_encrypted(aes_encrypted) is True
+
+        # Create Fernet token
+        fernet_key = Fernet.generate_key()
+        fernet = Fernet(fernet_key)
+        fernet_token = fernet.encrypt(b"test").decode()
+        assert encryptor.is_encrypted(fernet_token) is True
+
+    def test_is_legacy_fernet_detects_fernet_only(self):
+        """Test that is_legacy_fernet only detects Fernet tokens"""
+        aes_encrypted = encryptor.encrypt_field("test")
+        assert encryptor.is_legacy_fernet(aes_encrypted) is False
+
+        fernet_key = Fernet.generate_key()
+        fernet = Fernet(fernet_key)
+        fernet_token = fernet.encrypt(b"test").decode()
+        assert encryptor.is_legacy_fernet(fernet_token) is True
+
+
+class TestKeyRotationAES256GCM:
+    """Test key rotation with AES-256-GCM"""
+
+    def test_decrypt_with_previous_aes256gcm_key(self):
+        """Test decryption with previous AES-256-GCM key during rotation"""
+        old_key = FieldEncryptor.generate_key()
+        new_key = FieldEncryptor.generate_key()
+
+        # Encrypt with old key
+        with patch.dict(os.environ, {"ENCRYPTION_KEY": old_key}):
+            old_encryptor = FieldEncryptor()
+            encrypted = old_encryptor.encrypt_field("test_data")
+
+        # Decrypt with new key + previous key
+        with patch.dict(
+            os.environ, {"ENCRYPTION_KEY": new_key, "ENCRYPTION_KEY_PREVIOUS": old_key}
+        ):
+            new_encryptor = FieldEncryptor()
+            decrypted = new_encryptor.decrypt_field(encrypted)
+
+        assert decrypted == "test_data"
+
+    def test_rotate_key_from_aes256gcm_to_aes256gcm(self):
+        """Test rotating from one AES-256-GCM key to another"""
+        old_key = FieldEncryptor.generate_key()
+        new_key = FieldEncryptor.generate_key()
+
+        # Encrypt with old key
+        with patch.dict(os.environ, {"ENCRYPTION_KEY": old_key}):
+            old_encryptor = FieldEncryptor()
+            old_encrypted = old_encryptor.encrypt_field("sensitive_data")
+
+        # Rotate to new key
+        with patch.dict(
+            os.environ, {"ENCRYPTION_KEY": new_key, "ENCRYPTION_KEY_PREVIOUS": old_key}
+        ):
+            rotation_encryptor = FieldEncryptor()
+            new_encrypted = rotation_encryptor.rotate_key(old_encrypted)
+
+        # Verify new encryption can be decrypted with new key only
+        with patch.dict(os.environ, {"ENCRYPTION_KEY": new_key}):
+            new_encryptor = FieldEncryptor()
+            decrypted = new_encryptor.decrypt_field(new_encrypted)
+
+        assert decrypted == "sensitive_data"
+        assert old_encrypted != new_encrypted
+
+
+class TestAES256GCMKeyManagement:
+    """Test 256-bit key validation and management"""
+
+    def test_invalid_key_length_raises_error(self):
+        """Test that keys with wrong length raise EncryptionKeyError"""
+        # 16 bytes (128 bits) - too short
+        short_key = base64.urlsafe_b64encode(os.urandom(16)).decode()
+
+        with patch.dict(os.environ, {"ENCRYPTION_KEY": short_key}):
+            try:
+                FieldEncryptor()
+                assert False, "Should have raised EncryptionKeyError"
+            except EncryptionKeyError as e:
+                assert "32 bytes" in str(e)
+
+    def test_valid_256bit_key_works(self):
+        """Test that 256-bit key works correctly"""
+        key = FieldEncryptor.generate_key()
+        key_bytes = base64.urlsafe_b64decode(key)
+        assert len(key_bytes) == 32  # 256 bits
+
+        with patch.dict(os.environ, {"ENCRYPTION_KEY": key}):
+            test_encryptor = FieldEncryptor()
+            encrypted = test_encryptor.encrypt_field("test")
+            decrypted = test_encryptor.decrypt_field(encrypted)
+            assert decrypted == "test"
 
 
 class TestUnicodeAndSpecialCharacters:
@@ -145,13 +334,13 @@ class TestNullAndEmptyValues:
 
 
 class TestKeyRotation:
-    """Test key rotation functionality"""
+    """Test key rotation functionality (using AES-256-GCM keys)"""
 
     def test_decrypt_with_previous_key(self):
         """Test decryption with previous key during rotation"""
-        # Generate two different keys
-        old_key = Fernet.generate_key().decode()
-        new_key = Fernet.generate_key().decode()
+        # Generate two different AES-256-GCM keys
+        old_key = FieldEncryptor.generate_key()
+        new_key = FieldEncryptor.generate_key()
 
         # Encrypt with old key
         with patch.dict(os.environ, {"ENCRYPTION_KEY": old_key}):
@@ -169,8 +358,8 @@ class TestKeyRotation:
 
     def test_rotate_key_functionality(self):
         """Test the rotate_key method"""
-        old_key = Fernet.generate_key().decode()
-        new_key = Fernet.generate_key().decode()
+        old_key = FieldEncryptor.generate_key()
+        new_key = FieldEncryptor.generate_key()
 
         # Encrypt with old key
         with patch.dict(os.environ, {"ENCRYPTION_KEY": old_key}):

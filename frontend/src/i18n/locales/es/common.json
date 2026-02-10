@@ -64,6 +64,8 @@
     "pleaseConfirm": "Por favor confirma",
     "privacyConsentPrefix": "He leído la",
     "privacyPolicy": "Política de privacidad",
+    "privacyConsentAnd": "y los",
+    "termsOfUse": "Términos de uso",
     "privacyConsentSuffix": "y acepto el procesamiento de mis documentos. Entiendo que mis datos serán procesados de acuerdo con el RGPD y eliminados automáticamente después de la traducción.",
     "startProcessing": "Iniciar procesamiento",
     "gdprNotice": "Tus datos se procesan conforme al RGPD y no se almacenan",
@@ -217,6 +219,11 @@
     "commentOptional": "Comentario (opcional)",
     "commentPlaceholder": "Comparte tus pensamientos...",
     "consent": "Acepto que mis datos se utilicen para mejorar el sistema.",
+    "consentPrefix": "He leído la",
+    "privacyPolicy": "Política de privacidad",
+    "consentAnd": "y los",
+    "termsOfUse": "Términos de uso",
+    "consentSuffix": "y acepto que mis datos se utilicen para mejorar el sistema.",
     "ratingRequired": "Por favor proporciona una valoración general.",
     "consentRequired": "Por favor acepta el uso de datos.",
     "submitError": "No se pudo enviar el comentario.",
@@ -229,6 +236,61 @@
     "thankYouDescription": "Tus comentarios nos ayudan a mejorar el servicio.",
     "starLabel": "{{count}} estrella",
     "starLabel_plural": "{{count}} estrellas"
+  },
+  "howItWorks": {
+    "title": "Cómo funciona",
+    "subtitle": "3 simples pasos hacia tu traducción comprensible",
+    "steps": {
+      "1": {
+        "title": "Subir documento",
+        "description": "Sube tu documento médico - carta del médico, informe o resultados de laboratorio"
+      },
+      "2": {
+        "title": "Simplificación con IA",
+        "description": "Nuestra IA reconoce términos médicos y los traduce a un lenguaje fácil de entender"
+      },
+      "3": {
+        "title": "Obtener resultados",
+        "description": "Lee, entiende, descarga - tus datos se eliminan automáticamente"
+      }
+    },
+    "bestResults": {
+      "title": "Para mejores resultados",
+      "tiers": {
+        "best": {
+          "label": "Mejor calidad",
+          "title": "PDF con texto incrustado",
+          "description": "Cartas digitales del médico, archivos adjuntos de correo",
+          "result": "Reconocimiento de texto perfecto, resultados más rápidos"
+        },
+        "great": {
+          "label": "Muy bueno",
+          "title": "Usar escáner del smartphone",
+          "description": "Usa la función de escáner integrada de tu smartphone para resultados óptimos",
+          "result": "Corrección automática de perspectiva y nitidez"
+        },
+        "good": {
+          "label": "Bueno",
+          "title": "Foto normal (con nuestros consejos)",
+          "description": "Nuestro escáner integrado optimiza tu imagen automáticamente",
+          "tips": [
+            "Buena iluminación, sin sombras",
+            "Documento plano sobre la mesa",
+            "Cámara directamente sobre el documento"
+          ]
+        }
+      }
+    },
+    "proTips": {
+      "title": "Consejos Pro",
+      "tips": {
+        "pdf": "Los archivos PDF ofrecen los mejores resultados",
+        "scanner": "Usa la función de escáner de tu smartphone",
+        "light": "Toma fotos con buena luz sin sombras",
+        "flat": "Mantén el documento plano y recto",
+        "privacy": "Oculta datos sensibles previamente para mayor seguridad"
+      }
+    }
   },
   "faq": {
     "title": "Preguntas frecuentes",

@@ -63,7 +63,7 @@
         "Nessuna memorizzazione permanente: Non c'è memorizzazione permanente di documenti o traduzioni",
         "Nessuna condivisione: Nessuna condivisione di dati con terze parti (tranne Mistral AI (Francia) per OCR e traduzione, e Hetzner (Germania) per la rimozione dei dati personali. Solo i testi ripuliti dai dati personali vengono trasmessi per la traduzione)",
         "Trasmissione crittografata: Tutti i dati vengono trasmessi crittografati tramite HTTPS/TLS",
-        "Crittografia a riposo: Tutti i documenti caricati sono crittografati con AES-128 (Fernet) e memorizzati nel database. Gli account amministratore utilizzano inoltre la memorizzazione crittografata per indirizzi email e nomi.",
+        "Crittografia a riposo: Tutti i documenti caricati sono crittografati con AES-256-GCM e memorizzati nel database. Gli account amministratore utilizzano inoltre la memorizzazione crittografata per indirizzi email e nomi.",
         "Nessun cookie: Il nostro servizio non utilizza cookie e non memorizza dati di tracciamento."
       ]
     },

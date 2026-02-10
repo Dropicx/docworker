@@ -865,6 +865,16 @@ const FileUpload: React.FC<FileUploadProps> = ({
                     >
                       {t('upload.privacyPolicy')}
                     </Link>{' '}
+                    {t('upload.privacyConsentAnd')}{' '}
+                    <Link
+                      to="/nutzungsbedingungen"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${t('upload.termsOfUse')} (${t('accessibility.opensInNewTab')})`}
+                      className="text-brand-600 hover:text-brand-700 underline font-medium"
+                    >
+                      {t('upload.termsOfUse')}
+                    </Link>{' '}
                     {t('upload.privacyConsentSuffix')}
                   </label>
                 </div>

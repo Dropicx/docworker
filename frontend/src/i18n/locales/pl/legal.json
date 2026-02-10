@@ -63,7 +63,7 @@
         "Brak trwałego przechowywania: Nie ma trwałego przechowywania dokumentów ani tłumaczeń",
         "Brak udostępniania: Brak udostępniania danych osobom trzecim (z wyjątkiem Mistral AI (Francja) dla OCR i tłumaczenia oraz Hetzner (Niemcy) dla usuwania danych osobowych. Do tłumaczenia przesyłane są tylko teksty oczyszczone z danych osobowych)",
         "Szyfrowana transmisja: Wszystkie dane są przesyłane w formie zaszyfrowanej przez HTTPS/TLS",
-        "Szyfrowanie w spoczynku: Wszystkie przesłane dokumenty są szyfrowane za pomocą AES-128 (Fernet) i przechowywane w bazie danych. Konta administratorów dodatkowo używają zaszyfrowanego przechowywania adresów e-mail i nazwisk.",
+        "Szyfrowanie w spoczynku: Wszystkie przesłane dokumenty są szyfrowane za pomocą AES-256-GCM i przechowywane w bazie danych. Konta administratorów dodatkowo używają zaszyfrowanego przechowywania adresów e-mail i nazwisk.",
         "Brak plików cookie: Nasza usługa nie używa plików cookie i nie przechowuje żadnych danych śledzących. Jest to transparentnie komunikowane poprzez baner informujący o braku plików cookie na stronie."
       ]
     },

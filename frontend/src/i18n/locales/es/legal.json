@@ -63,7 +63,7 @@
         "Sin almacenamiento permanente: No hay almacenamiento permanente de documentos o traducciones",
         "Sin compartir: No se comparten datos con terceros (excepto con Mistral AI (Francia) para OCR y traducción, y Hetzner (Alemania) para la eliminación de datos personales. Solo se transmiten textos limpiados de datos personales para la traducción)",
         "Transmisión cifrada: Todos los datos se transmiten cifrados a través de HTTPS/TLS",
-        "Cifrado en reposo: Todos los documentos subidos se cifran con AES-128 (Fernet) y se almacenan en la base de datos. Las cuentas de administrador utilizan además almacenamiento cifrado para direcciones de correo electrónico y nombres.",
+        "Cifrado en reposo: Todos los documentos subidos se cifran con AES-256-GCM y se almacenan en la base de datos. Las cuentas de administrador utilizan además almacenamiento cifrado para direcciones de correo electrónico y nombres.",
         "Sin cookies: Nuestro servicio no utiliza cookies y no almacena datos de seguimiento."
       ]
     },

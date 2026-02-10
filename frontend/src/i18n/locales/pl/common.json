@@ -64,6 +64,8 @@
     "pleaseConfirm": "Proszę potwierdzić",
     "privacyConsentPrefix": "Przeczytałem/am",
     "privacyPolicy": "Politykę prywatności",
+    "privacyConsentAnd": "i",
+    "termsOfUse": "Warunki użytkowania",
     "privacyConsentSuffix": "i zgadzam się na przetwarzanie moich dokumentów. Rozumiem, że moje dane będą przetwarzane zgodnie z RODO i automatycznie usunięte po tłumaczeniu.",
     "startProcessing": "Rozpocznij przetwarzanie",
     "gdprNotice": "Twoje dane są przetwarzane zgodnie z RODO i nie są przechowywane",
@@ -217,6 +219,11 @@
     "commentOptional": "Komentarz (opcjonalnie)",
     "commentPlaceholder": "Podziel się z nami swoimi przemyśleniami...",
     "consent": "Zgadzam się, aby moje dane mogły być wykorzystane do ulepszenia systemu.",
+    "consentPrefix": "Przeczytałem/am",
+    "privacyPolicy": "Politykę prywatności",
+    "consentAnd": "i",
+    "termsOfUse": "Warunki użytkowania",
+    "consentSuffix": "i zgadzam się, aby moje dane mogły być wykorzystane do ulepszenia systemu.",
     "ratingRequired": "Proszę podać ocenę ogólną.",
     "consentRequired": "Proszę wyrazić zgodę na wykorzystanie danych.",
     "submitError": "Nie udało się wysłać opinii.",
@@ -229,6 +236,61 @@
     "thankYouDescription": "Twoja opinia pomaga nam ulepszać usługę.",
     "starLabel": "{{count}} gwiazdka",
     "starLabel_plural": "{{count}} gwiazdek"
+  },
+  "howItWorks": {
+    "title": "Jak to działa",
+    "subtitle": "3 proste kroki do zrozumiałego tłumaczenia",
+    "steps": {
+      "1": {
+        "title": "Prześlij dokument",
+        "description": "Prześlij swój dokument medyczny - list od lekarza, raport lub wyniki badań"
+      },
+      "2": {
+        "title": "Uproszczenie przez AI",
+        "description": "Nasza AI rozpoznaje terminy medyczne i tłumaczy je na zrozumiały język"
+      },
+      "3": {
+        "title": "Otrzymaj wyniki",
+        "description": "Czytaj, rozumiej, pobierz - Twoje dane są automatycznie usuwane"
+      }
+    },
+    "bestResults": {
+      "title": "Dla najlepszych wyników",
+      "tiers": {
+        "best": {
+          "label": "Najlepsza jakość",
+          "title": "PDF z osadzonym tekstem",
+          "description": "Cyfrowe listy od lekarza, załączniki e-mail",
+          "result": "Idealne rozpoznawanie tekstu, najszybsze wyniki"
+        },
+        "great": {
+          "label": "Bardzo dobra",
+          "title": "Użyj skanera smartfona",
+          "description": "Użyj wbudowanej funkcji skanera w smartfonie dla optymalnych wyników",
+          "result": "Automatyczna korekcja perspektywy i ostrości"
+        },
+        "good": {
+          "label": "Dobra",
+          "title": "Zwykłe zdjęcie (z naszymi wskazówkami)",
+          "description": "Nasz wbudowany skaner automatycznie optymalizuje obraz",
+          "tips": [
+            "Dobre oświetlenie, bez cieni",
+            "Dokument płasko na stole",
+            "Aparat bezpośrednio nad dokumentem"
+          ]
+        }
+      }
+    },
+    "proTips": {
+      "title": "Wskazówki Pro",
+      "tips": {
+        "pdf": "Pliki PDF dają najlepsze wyniki",
+        "scanner": "Użyj funkcji skanera w smartfonie",
+        "light": "Rób zdjęcia przy dobrym świetle bez cieni",
+        "flat": "Trzymaj dokument płasko i prosto",
+        "privacy": "Zacznij wrażliwe dane wcześniej dla dodatkowego bezpieczeństwa"
+      }
+    }
   },
   "faq": {
     "title": "Często zadawane pytania",

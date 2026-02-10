@@ -25,6 +25,17 @@ echo "================================================"
 # Create necessary directories
 mkdir -p /app/logs /tmp/medical-translator
 
+# Run encryption migration (idempotent - safe to run on every deploy)
+echo "🔐 Running encryption migration (AES-256-GCM)..."
+cd /app/backend
+if [ -n "$ENCRYPTION_KEY_FERNET_LEGACY" ]; then
+    echo "   Legacy Fernet key detected, migrating existing data..."
+    python migrations/upgrade_encryption_to_aes256gcm.py || echo "⚠️ Migration failed or no data to migrate"
+else
+    echo "   No legacy key set, skipping migration"
+fi
+echo "================================================"
+
 # Wait for backend to be ready
 echo "Starting backend service..."
 cd /app/backend

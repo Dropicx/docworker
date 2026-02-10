@@ -64,6 +64,8 @@
     "pleaseConfirm": "Lütfen onaylayın",
     "privacyConsentPrefix": "",
     "privacyPolicy": "Gizlilik Politikası",
+    "privacyConsentAnd": "ve",
+    "termsOfUse": "Kullanım Koşulları",
     "privacyConsentSuffix": "'nı okudum ve belgelerimin işlenmesini kabul ediyorum. Verilerimin GDPR uyumlu olarak işleneceğini ve çeviriden sonra otomatik olarak silineceğini anlıyorum.",
     "startProcessing": "İşlemeye başla",
     "gdprNotice": "Verileriniz GDPR uyumlu olarak işlenir ve saklanmaz",
@@ -217,6 +219,11 @@
     "commentOptional": "Yorum (isteğe bağlı)",
     "commentPlaceholder": "Düşüncelerinizi paylaşın...",
     "consent": "Verilerimin sistemi geliştirmek için kullanılmasını kabul ediyorum.",
+    "consentPrefix": "",
+    "privacyPolicy": "Gizlilik Politikası",
+    "consentAnd": "ve",
+    "termsOfUse": "Kullanım Koşulları",
+    "consentSuffix": "'nı okudum ve verilerimin sistemi geliştirmek için kullanılmasını kabul ediyorum.",
     "ratingRequired": "Lütfen genel bir değerlendirme yapın.",
     "consentRequired": "Lütfen veri kullanımını kabul edin.",
     "submitError": "Geri bildirim gönderilemedi.",
@@ -229,6 +236,61 @@
     "thankYouDescription": "Geri bildiriminiz hizmeti geliştirmemize yardımcı oluyor.",
     "starLabel": "{{count}} yıldız",
     "starLabel_plural": "{{count}} yıldız"
+  },
+  "howItWorks": {
+    "title": "Nasıl Çalışır",
+    "subtitle": "Anlaşılır çevirinize 3 basit adım",
+    "steps": {
+      "1": {
+        "title": "Belge Yükle",
+        "description": "Tıbbi belgenizi yükleyin - doktor mektubu, rapor veya laboratuvar sonuçları"
+      },
+      "2": {
+        "title": "Yapay Zeka Sadeleştirmesi",
+        "description": "Yapay zekamız tıbbi terimleri tanır ve kolay anlaşılır bir dile çevirir"
+      },
+      "3": {
+        "title": "Sonuçları Al",
+        "description": "Okuyun, anlayın, indirin - verileriniz otomatik olarak silinir"
+      }
+    },
+    "bestResults": {
+      "title": "En İyi Sonuçlar İçin",
+      "tiers": {
+        "best": {
+          "label": "En İyi Kalite",
+          "title": "Gömülü metinli PDF",
+          "description": "Dijital doktor mektupları, e-posta ekleri",
+          "result": "Mükemmel metin tanıma, en hızlı sonuçlar"
+        },
+        "great": {
+          "label": "Çok İyi",
+          "title": "Akıllı telefon tarayıcısını kullanın",
+          "description": "Optimum sonuçlar için akıllı telefonunuzun dahili tarayıcı işlevini kullanın",
+          "result": "Otomatik perspektif düzeltme ve netlik"
+        },
+        "good": {
+          "label": "İyi",
+          "title": "Normal fotoğraf (ipuçlarımızla)",
+          "description": "Dahili tarayıcımız görüntünüzü otomatik olarak optimize eder",
+          "tips": [
+            "İyi aydınlatma, gölge yok",
+            "Belge masada düz",
+            "Kamera doğrudan belgenin üzerinde"
+          ]
+        }
+      }
+    },
+    "proTips": {
+      "title": "Profesyonel İpuçları",
+      "tips": {
+        "pdf": "PDF dosyaları en iyi sonuçları verir",
+        "scanner": "Akıllı telefonunuzun tarayıcı işlevini kullanın",
+        "light": "Gölge olmadan iyi ışıkta fotoğraf çekin",
+        "flat": "Belgeyi düz ve düzgün tutun",
+        "privacy": "Ekstra güvenlik için hassas verileri önceden karalayın"
+      }
+    }
   },
   "faq": {
     "title": "Sıkça Sorulan Sorular",

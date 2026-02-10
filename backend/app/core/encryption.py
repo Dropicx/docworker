@@ -2,13 +2,22 @@
 Field-Level Encryption Service
 
 Provides transparent encryption/decryption for sensitive database fields
-using Fernet (AES-128-CBC + HMAC-SHA256) from the cryptography library.
+using AES-256-GCM (Galois/Counter Mode) from the cryptography library.
+
+GDPR "Stand der Technik" (State of the Art) compliant:
+- AES-256-GCM provides authenticated encryption with 256-bit security
+- 96-bit nonces ensure uniqueness for each encryption
+- 128-bit authentication tags prevent tampering
 
 SECURITY CRITICAL:
 - Encryption keys must be stored securely (Railway env vars, password manager, backup)
 - Never log or expose encryption keys
 - Supports key rotation with dual-key decryption
-- All encrypted values are base64-encoded Fernet tokens
+- Backward compatible with legacy Fernet tokens during migration
+
+Token Format:
+- AES-256-GCM: version(1) + timestamp(8) + nonce(12) + ciphertext + tag(16)
+- Version byte 0xAE distinguishes from Fernet's 0x80
 
 Usage:
     from app.core.encryption import encryptor
@@ -29,9 +38,12 @@ Usage:
 import base64
 import logging
 import os
+import struct
+import time
 from typing import Any
 
 from cryptography.fernet import Fernet, InvalidToken
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 logger = logging.getLogger(__name__)
 
@@ -54,25 +66,46 @@ class DecryptionError(EncryptionError):
     pass
 
 
+# Version byte for AES-256-GCM tokens (distinguishes from Fernet's 0x80)
+AES256GCM_VERSION = 0xAE
+
+# Nonce size for AES-256-GCM (96 bits = 12 bytes, NIST recommended)
+AES256GCM_NONCE_SIZE = 12
+
+# Timestamp size (8 bytes for 64-bit timestamp)
+AES256GCM_TIMESTAMP_SIZE = 8
+
+
 class FieldEncryptor:
     """
-    Field-level encryption service using Fernet symmetric encryption.
+    Field-level encryption service using AES-256-GCM authenticated encryption.
 
     Features:
-    - AES-128-CBC encryption with HMAC-SHA256 authentication
+    - AES-256-GCM encryption with 256-bit security (GDPR "Stand der Technik")
+    - Authenticated encryption prevents tampering (128-bit auth tag)
     - Automatic key rotation support (dual-key decryption)
+    - Backward compatibility with legacy Fernet tokens during migration
     - Batch encryption/decryption operations
     - UTF-8 safe encoding/decoding
     - Performance optimized with key caching
 
     Environment Variables:
-    - ENCRYPTION_KEY: Primary encryption key (base64-encoded Fernet key)
+    - ENCRYPTION_KEY: Primary encryption key (base64-encoded, 32 bytes for AES-256)
     - ENCRYPTION_KEY_PREVIOUS: Previous key for rotation (optional)
+    - ENCRYPTION_KEY_FERNET_LEGACY: Legacy Fernet key for migration (optional)
     - ENCRYPTION_ENABLED: Enable/disable encryption (default: true)
+
+    Token Format (AES-256-GCM):
+    - Byte 0: Version (0xAE)
+    - Bytes 1-8: Timestamp (64-bit, big-endian)
+    - Bytes 9-20: Nonce (96-bit)
+    - Remaining: Ciphertext + Authentication Tag (16 bytes at end)
     """
 
     def __init__(self):
         """Initialize the encryption service with environment-based configuration"""
+        self._aesgcm_cache: AESGCM | None = None
+        self._aesgcm_previous_cache: AESGCM | None = None
         self._validate_configuration()
 
     def _validate_configuration(self) -> None:
@@ -82,11 +115,11 @@ class FieldEncryptor:
             return
 
         try:
-            self._get_current_cipher()
+            self._get_aesgcm_cipher()
         except Exception as e:
             raise EncryptionKeyError(
                 f"Encryption configuration invalid: {e}. "
-                "Ensure ENCRYPTION_KEY is set with a valid Fernet key."
+                "Ensure ENCRYPTION_KEY is set with a valid 256-bit key (44 chars base64)."
             ) from e
 
     @staticmethod
@@ -94,36 +127,119 @@ class FieldEncryptor:
         """Check if encryption is enabled via environment variable"""
         return os.getenv("ENCRYPTION_ENABLED", "true").lower() == "true"
 
-    def _get_current_cipher(self) -> Fernet:
+    def _get_aesgcm_cipher(self) -> AESGCM:
         """
-        Get the current (primary) encryption cipher.
+        Get the current (primary) AES-256-GCM cipher.
 
         Cached for performance - only loads once per application lifecycle.
 
         Returns:
-            Fernet cipher instance for encryption/decryption
+            AESGCM cipher instance for encryption/decryption
 
         Raises:
             EncryptionKeyError: If ENCRYPTION_KEY is missing or invalid
         """
+        if self._aesgcm_cache is not None:
+            return self._aesgcm_cache
+
         key = os.getenv("ENCRYPTION_KEY")
         if not key:
             raise EncryptionKeyError(
                 "ENCRYPTION_KEY environment variable is not set. "
-                "Generate a key with: python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())'"
+                "Generate a key with: python -c 'import os, base64; print(base64.urlsafe_b64encode(os.urandom(32)).decode())'"
             )
+
+        try:
+            key_bytes = base64.urlsafe_b64decode(key.encode())
+            if len(key_bytes) != 32:
+                raise EncryptionKeyError(
+                    f"ENCRYPTION_KEY must be 32 bytes (256 bits), got {len(key_bytes)} bytes. "
+                    "Generate a new key with: python -c 'import os, base64; print(base64.urlsafe_b64encode(os.urandom(32)).decode())'"
+                )
+            self._aesgcm_cache = AESGCM(key_bytes)
+            return self._aesgcm_cache
+        except Exception as e:
+            if isinstance(e, EncryptionKeyError):
+                raise
+            raise EncryptionKeyError(f"ENCRYPTION_KEY is invalid or corrupted: {e}") from e
+
+    def _get_aesgcm_previous_cipher(self) -> AESGCM | None:
+        """
+        Get the previous AES-256-GCM cipher for key rotation.
+
+        During key rotation, this allows decrypting data encrypted with the old key
+        while new data is encrypted with the current key.
+
+        Returns:
+            AESGCM cipher instance if previous key exists, None otherwise
+        """
+        if self._aesgcm_previous_cache is not None:
+            return self._aesgcm_previous_cache
+
+        key = os.getenv("ENCRYPTION_KEY_PREVIOUS")
+        if not key:
+            return None
+
+        try:
+            key_bytes = base64.urlsafe_b64decode(key.encode())
+            if len(key_bytes) != 32:
+                logger.error(f"ENCRYPTION_KEY_PREVIOUS must be 32 bytes, got {len(key_bytes)}")
+                return None
+            self._aesgcm_previous_cache = AESGCM(key_bytes)
+            return self._aesgcm_previous_cache
+        except Exception as e:
+            logger.error(f"ENCRYPTION_KEY_PREVIOUS is invalid: {e}")
+            return None
+
+    def _get_fernet_legacy_cipher(self) -> Fernet | None:
+        """
+        Get the legacy Fernet cipher for migration from AES-128-CBC.
+
+        This is used during migration to decrypt old Fernet-encrypted data.
+        Set ENCRYPTION_KEY_FERNET_LEGACY to your old Fernet key during migration.
+
+        Returns:
+            Fernet cipher instance if legacy key exists, None otherwise
+        """
+        key = os.getenv("ENCRYPTION_KEY_FERNET_LEGACY")
+        if not key:
+            return None
 
         try:
             return Fernet(key.encode())
         except Exception as e:
-            raise EncryptionKeyError(f"ENCRYPTION_KEY is invalid or corrupted: {e}") from e
+            logger.error(f"ENCRYPTION_KEY_FERNET_LEGACY is invalid: {e}")
+            return None
+
+    def _get_current_cipher(self) -> Fernet:
+        """
+        Get the current Fernet cipher (deprecated, for backward compatibility only).
+
+        DEPRECATED: Use _get_aesgcm_cipher() for new encryption.
+        This method is kept for backward compatibility during migration.
+
+        Returns:
+            Fernet cipher instance for decryption of legacy tokens
+        """
+        legacy = self._get_fernet_legacy_cipher()
+        if legacy:
+            return legacy
+
+        # Fallback: try to use ENCRYPTION_KEY as Fernet key (for legacy setups)
+        key = os.getenv("ENCRYPTION_KEY")
+        if not key:
+            raise EncryptionKeyError("No Fernet key available for legacy decryption")
+
+        try:
+            return Fernet(key.encode())
+        except Exception as e:
+            raise EncryptionKeyError(f"Cannot create Fernet cipher from ENCRYPTION_KEY: {e}") from e
 
     def _get_previous_cipher(self) -> Fernet | None:
         """
-        Get the previous encryption cipher for key rotation.
+        Get the previous Fernet cipher for legacy key rotation.
 
-        During key rotation, this allows decrypting data encrypted with the old key
-        while new data is encrypted with the current key.
+        DEPRECATED: For legacy Fernet token decryption during migration.
 
         Returns:
             Fernet cipher instance if previous key exists, None otherwise
@@ -135,12 +251,120 @@ class FieldEncryptor:
         try:
             return Fernet(key.encode())
         except Exception as e:
-            logger.error(f"ENCRYPTION_KEY_PREVIOUS is invalid: {e}")
+            logger.error(f"ENCRYPTION_KEY_PREVIOUS is invalid as Fernet key: {e}")
             return None
+
+    def _encrypt_aes256gcm(self, plaintext_bytes: bytes) -> bytes:
+        """
+        Encrypt data using AES-256-GCM.
+
+        Token format:
+        - Byte 0: Version (0xAE)
+        - Bytes 1-8: Timestamp (64-bit, big-endian)
+        - Bytes 9-20: Nonce (96-bit)
+        - Remaining: Ciphertext + Authentication Tag (16 bytes)
+
+        Args:
+            plaintext_bytes: Data to encrypt
+
+        Returns:
+            Encrypted token as bytes
+        """
+        cipher = self._get_aesgcm_cipher()
+
+        # Generate random nonce (96 bits = 12 bytes, NIST recommended)
+        nonce = os.urandom(AES256GCM_NONCE_SIZE)
+
+        # Current timestamp (for audit/debugging, not used for security)
+        timestamp = struct.pack(">Q", int(time.time()))
+
+        # Encrypt with authentication
+        ciphertext = cipher.encrypt(nonce, plaintext_bytes, None)
+
+        # Build token: version + timestamp + nonce + ciphertext
+        token = bytes([AES256GCM_VERSION]) + timestamp + nonce + ciphertext
+
+        return token
+
+    def _decrypt_aes256gcm(self, token: bytes) -> bytes:
+        """
+        Decrypt data encrypted with AES-256-GCM.
+
+        Args:
+            token: Encrypted token bytes
+
+        Returns:
+            Decrypted plaintext bytes
+
+        Raises:
+            DecryptionError: If decryption fails
+        """
+        min_length = 1 + AES256GCM_TIMESTAMP_SIZE + AES256GCM_NONCE_SIZE + 16  # version + timestamp + nonce + tag
+        if len(token) < min_length:
+            raise DecryptionError(f"Token too short: {len(token)} bytes (minimum {min_length})")
+
+        # Parse token
+        version = token[0]
+        if version != AES256GCM_VERSION:
+            raise DecryptionError(f"Invalid token version: 0x{version:02X} (expected 0x{AES256GCM_VERSION:02X})")
+
+        # Extract components
+        timestamp_end = 1 + AES256GCM_TIMESTAMP_SIZE
+        nonce_end = timestamp_end + AES256GCM_NONCE_SIZE
+
+        # timestamp = struct.unpack(">Q", token[1:timestamp_end])[0]  # Available for debugging
+        nonce = token[timestamp_end:nonce_end]
+        ciphertext = token[nonce_end:]
+
+        # Try current key first
+        cipher = self._get_aesgcm_cipher()
+        try:
+            return cipher.decrypt(nonce, ciphertext, None)
+        except Exception as current_error:
+            # Try previous key for rotation support
+            previous_cipher = self._get_aesgcm_previous_cipher()
+            if previous_cipher:
+                try:
+                    logger.debug("Current key failed, trying previous key for decryption")
+                    return previous_cipher.decrypt(nonce, ciphertext, None)
+                except Exception:
+                    pass  # Fall through to raise original error
+
+            raise DecryptionError(
+                f"Failed to decrypt AES-256-GCM token: {current_error}"
+            ) from current_error
+
+    def _is_fernet_token(self, token_bytes: bytes) -> bool:
+        """
+        Check if token bytes appear to be a Fernet token.
+
+        Fernet tokens start with version byte 0x80.
+
+        Args:
+            token_bytes: Raw token bytes (after base64 decoding)
+
+        Returns:
+            True if this looks like a Fernet token
+        """
+        return len(token_bytes) > 0 and token_bytes[0] == 0x80
+
+    def _is_aes256gcm_token(self, token_bytes: bytes) -> bool:
+        """
+        Check if token bytes appear to be an AES-256-GCM token.
+
+        AES-256-GCM tokens start with version byte 0xAE.
+
+        Args:
+            token_bytes: Raw token bytes (after base64 decoding)
+
+        Returns:
+            True if this looks like an AES-256-GCM token
+        """
+        return len(token_bytes) > 0 and token_bytes[0] == AES256GCM_VERSION
 
     def encrypt_field(self, plaintext: str | None) -> str | None:
         """
-        Encrypt a single field value.
+        Encrypt a single field value using AES-256-GCM.
 
         Args:
             plaintext: The value to encrypt (str or None)
@@ -153,7 +377,7 @@ class FieldEncryptor:
 
         Example:
             encrypted = encryptor.encrypt_field("patient@example.com")
-            # Returns: "gAAAAABk1x2y..." (Fernet token)
+            # Returns: "rgAAAA..." (AES-256-GCM token, starts with 0xAE base64-encoded)
         """
         if not self.is_enabled():
             logger.debug("Encryption disabled, returning plaintext")
@@ -168,13 +392,11 @@ class FieldEncryptor:
             plaintext_str = str(plaintext)
             plaintext_bytes = plaintext_str.encode("utf-8")
 
-            # Encrypt with current cipher
-            # Fernet.encrypt() returns base64url-encoded bytes, decode directly
-            cipher = self._get_current_cipher()
-            encrypted_bytes = cipher.encrypt(plaintext_bytes)
+            # Encrypt with AES-256-GCM
+            encrypted_bytes = self._encrypt_aes256gcm(plaintext_bytes)
 
-            # Return as string (already base64url-encoded by Fernet)
-            return encrypted_bytes.decode("utf-8")
+            # Base64url-encode for safe storage
+            return base64.urlsafe_b64encode(encrypted_bytes).decode("utf-8")
 
         except Exception as e:
             logger.error(f"Encryption failed: {e}")
@@ -182,7 +404,11 @@ class FieldEncryptor:
 
     def decrypt_field(self, ciphertext: str | None) -> str | None:
         """
-        Decrypt a single field value with automatic key rotation support.
+        Decrypt a single field value with automatic format detection and key rotation.
+
+        Supports both:
+        - AES-256-GCM tokens (version byte 0xAE) - current format
+        - Fernet tokens (version byte 0x80) - legacy format for migration
 
         Args:
             ciphertext: Base64-encoded encrypted value (str or None)
@@ -191,10 +417,11 @@ class FieldEncryptor:
             Decrypted plaintext value, or None if input is None
 
         Raises:
-            DecryptionError: If decryption fails with both current and previous keys
+            DecryptionError: If decryption fails with all available keys
 
         Example:
-            decrypted = encryptor.decrypt_field("gAAAAABk1x2y...")
+            decrypted = encryptor.decrypt_field("rgAAAA...")  # AES-256-GCM
+            decrypted = encryptor.decrypt_field("gAAAAABk1x2y...")  # Legacy Fernet
             # Returns: "patient@example.com"
         """
         if not self.is_enabled():
@@ -206,35 +433,86 @@ class FieldEncryptor:
             return None
 
         try:
-            # Fernet tokens are already base64url-encoded - pass directly to decrypt()
-            # No need to decode first; Fernet.decrypt() handles the base64 internally
             logger.debug(f"Decrypting field: input {len(ciphertext)} chars")
-            token_bytes = ciphertext.encode("utf-8")
 
-            # Try current key first
-            cipher = self._get_current_cipher()
+            # Decode base64 to check version byte
             try:
-                decrypted_bytes = cipher.decrypt(token_bytes)
-                result = decrypted_bytes.decode("utf-8")
-                logger.debug(f"Decryption successful: {len(result)} chars")
-                return result
-            except InvalidToken:
-                # If current key fails, try previous key (key rotation support)
-                previous_cipher = self._get_previous_cipher()
-                if previous_cipher:
-                    logger.debug("Current key failed, trying previous key for decryption")
-                    decrypted_bytes = previous_cipher.decrypt(token_bytes)
-                    return decrypted_bytes.decode("utf-8")
-                raise  # No previous key available, re-raise exception
+                token_bytes = base64.urlsafe_b64decode(ciphertext.encode("utf-8"))
+            except Exception:
+                # If base64 decode fails, might be direct Fernet token (they handle their own base64)
+                token_bytes = ciphertext.encode("utf-8")
 
-        except InvalidToken as e:
-            logger.error(f"Decryption failed - invalid token or wrong key: {e}")
-            raise DecryptionError(
-                "Failed to decrypt field - invalid token or encryption key mismatch"
-            ) from e
+            # Detect token format and decrypt accordingly
+            if len(token_bytes) > 0:
+                if self._is_aes256gcm_token(token_bytes):
+                    # AES-256-GCM token
+                    decrypted_bytes = self._decrypt_aes256gcm(token_bytes)
+                    result = decrypted_bytes.decode("utf-8")
+                    logger.debug(f"AES-256-GCM decryption successful: {len(result)} chars")
+                    return result
+
+                elif self._is_fernet_token(token_bytes):
+                    # Legacy Fernet token - use Fernet decryption
+                    logger.debug("Detected legacy Fernet token, using Fernet decryption")
+                    return self._decrypt_fernet_legacy(ciphertext)
+
+            # If we couldn't detect format, try Fernet first (original behavior)
+            # This handles cases where the token is still base64-encoded Fernet
+            return self._decrypt_fernet_legacy(ciphertext)
+
+        except DecryptionError:
+            raise
         except Exception as e:
             logger.error(f"Decryption failed: {e}")
             raise DecryptionError(f"Failed to decrypt field: {e}") from e
+
+    def _decrypt_fernet_legacy(self, ciphertext: str) -> str:
+        """
+        Decrypt a legacy Fernet token.
+
+        Used for backward compatibility during migration from AES-128-CBC.
+
+        Args:
+            ciphertext: Fernet token string
+
+        Returns:
+            Decrypted plaintext
+
+        Raises:
+            DecryptionError: If decryption fails
+        """
+        token_bytes = ciphertext.encode("utf-8")
+
+        # Try legacy Fernet key first (ENCRYPTION_KEY_FERNET_LEGACY)
+        legacy_cipher = self._get_fernet_legacy_cipher()
+        if legacy_cipher:
+            try:
+                decrypted_bytes = legacy_cipher.decrypt(token_bytes)
+                logger.debug("Legacy Fernet decryption successful with ENCRYPTION_KEY_FERNET_LEGACY")
+                return decrypted_bytes.decode("utf-8")
+            except InvalidToken:
+                pass  # Try other keys
+
+        # Try current key as Fernet (for backward compatibility)
+        try:
+            cipher = self._get_current_cipher()
+            decrypted_bytes = cipher.decrypt(token_bytes)
+            logger.debug("Fernet decryption successful with current key")
+            return decrypted_bytes.decode("utf-8")
+        except InvalidToken:
+            # Try previous key (key rotation support)
+            previous_cipher = self._get_previous_cipher()
+            if previous_cipher:
+                try:
+                    logger.debug("Current key failed, trying previous key for Fernet decryption")
+                    decrypted_bytes = previous_cipher.decrypt(token_bytes)
+                    return decrypted_bytes.decode("utf-8")
+                except InvalidToken:
+                    pass
+
+        raise DecryptionError(
+            "Failed to decrypt field - invalid token or encryption key mismatch"
+        )
 
     def encrypt_dict_fields(self, data: dict[str, Any], fields: list[str]) -> dict[str, Any]:
         """
@@ -334,26 +612,72 @@ class FieldEncryptor:
 
     def is_encrypted(self, value: str | None) -> bool:
         """
-        Check if a value appears to be encrypted (has Fernet token format).
+        Check if a value appears to be encrypted.
+
+        Detects both:
+        - AES-256-GCM tokens (version byte 0xAE)
+        - Legacy Fernet tokens (version byte 0x80)
 
         Args:
             value: Value to check
 
         Returns:
-            True if value looks like a Fernet-encrypted token, False otherwise
+            True if value looks like an encrypted token, False otherwise
 
         Note:
-            This is a heuristic check based on Fernet token format.
-            encrypt_field returns Fernet tokens directly (base64url-encoded).
+            This is a heuristic check based on token version bytes.
         """
         if not value or not isinstance(value, str):
             return False
 
         try:
-            # Fernet tokens are base64url-encoded; decode to check version byte
+            # Tokens are base64url-encoded; decode to check version byte
             decoded = base64.urlsafe_b64decode(value)
-            # Fernet tokens start with version byte 0x80
+            if len(decoded) == 0:
+                return False
+
+            # Check for AES-256-GCM (0xAE) or Fernet (0x80) version bytes
+            return decoded[0] == AES256GCM_VERSION or decoded[0] == 0x80
+        except Exception:
+            return False
+
+    def is_legacy_fernet(self, value: str | None) -> bool:
+        """
+        Check if a value is encrypted with legacy Fernet (AES-128-CBC).
+
+        Useful for identifying records that need migration to AES-256-GCM.
+
+        Args:
+            value: Value to check
+
+        Returns:
+            True if value looks like a Fernet token (version byte 0x80)
+        """
+        if not value or not isinstance(value, str):
+            return False
+
+        try:
+            decoded = base64.urlsafe_b64decode(value)
             return len(decoded) > 0 and decoded[0] == 0x80
+        except Exception:
+            return False
+
+    def is_aes256gcm(self, value: str | None) -> bool:
+        """
+        Check if a value is encrypted with AES-256-GCM.
+
+        Args:
+            value: Value to check
+
+        Returns:
+            True if value looks like an AES-256-GCM token (version byte 0xAE)
+        """
+        if not value or not isinstance(value, str):
+            return False
+
+        try:
+            decoded = base64.urlsafe_b64decode(value)
+            return len(decoded) > 0 and decoded[0] == AES256GCM_VERSION
         except Exception:
             return False
 
@@ -376,14 +700,30 @@ class FieldEncryptor:
         # Decrypt with previous key (falls back automatically)
         decrypted = self.decrypt_field(old_encrypted)
 
-        # Re-encrypt with current key
+        # Re-encrypt with current key (AES-256-GCM)
         return self.encrypt_field(decrypted)
+
+    @staticmethod
+    def generate_key() -> str:
+        """
+        Generate a new AES-256-GCM encryption key.
+
+        Returns:
+            Base64url-encoded 256-bit key (44 characters)
+
+        Example:
+            key = FieldEncryptor.generate_key()
+            # Returns: "kB4xY2z..." (44-character base64url string)
+            # Set this as ENCRYPTION_KEY environment variable
+        """
+        key_bytes = os.urandom(32)  # 256 bits
+        return base64.urlsafe_b64encode(key_bytes).decode("utf-8")
 
     def encrypt_binary_field(self, binary_data: bytes | None) -> str | None:
         """
         Encrypt a binary field (e.g., file content) by converting to base64 first.
 
-        Binary data is first base64-encoded to a string, then encrypted using Fernet.
+        Binary data is first base64-encoded to a string, then encrypted using AES-256-GCM.
         This allows storing encrypted binary data as text in the database.
 
         Args:
@@ -399,7 +739,7 @@ class FieldEncryptor:
             with open("document.pdf", "rb") as f:
                 file_content = f.read()
             encrypted = encryptor.encrypt_binary_field(file_content)
-            # Returns: "gAAAAABk1x2y..." (base64-encoded Fernet token)
+            # Returns: "rgAAAA..." (base64-encoded AES-256-GCM token)
         """
         if not self.is_enabled():
             logger.warning(
@@ -429,34 +769,14 @@ class FieldEncryptor:
                 encrypted_size = len(encrypted_string)
                 logger.debug(f"   encrypt_binary_field: Encrypted to {encrypted_size} chars")
 
-            # Verify it's actually encrypted
-            # Note: Fernet tokens start with "gAAAAA" in base64, which is "Z0FBQUFB" in base64 encoding
-            # But the encrypted_string is already base64-encoded, so we check for the base64 representation
-            if encrypted_string.startswith("gAAAAA"):
-                logger.debug(
-                    "   ✅ encrypt_binary_field: Verified Fernet token format (starts with 'gAAAAA')"
-                )
-            elif encrypted_string.startswith("Z0FBQUFB"):
-                logger.debug(
-                    "   ✅ encrypt_binary_field: Verified Fernet token format (base64 encoded, starts with 'Z0FBQUFB')"
-                )
-            else:
-                # Decode base64 to check if it's a Fernet token
-                try:
-                    import base64 as b64
-
-                    decoded = b64.b64decode(encrypted_string)
-                    if decoded.startswith(b"gAAAAA"):
-                        logger.debug(
-                            "   ✅ encrypt_binary_field: Verified Fernet token format (after base64 decode)"
-                        )
-                    else:
-                        logger.warning(
-                            f"   ⚠️ encrypt_binary_field: Doesn't look like Fernet token: {encrypted_string[:20]}..."
-                        )
-                except Exception:
+                # Verify it's actually encrypted (AES-256-GCM tokens start with 0xAE)
+                if self.is_aes256gcm(encrypted_string):
+                    logger.debug(
+                        "   ✅ encrypt_binary_field: Verified AES-256-GCM token format"
+                    )
+                else:
                     logger.warning(
-                        f"   ⚠️ encrypt_binary_field: Cannot verify token format: {encrypted_string[:20]}..."
+                        f"   ⚠️ encrypt_binary_field: Unexpected token format: {encrypted_string[:20]}..."
                     )
 
             return encrypted_string
@@ -472,6 +792,8 @@ class FieldEncryptor:
         """
         Decrypt a binary field by decrypting then base64-decoding.
 
+        Supports both AES-256-GCM and legacy Fernet tokens.
+
         Args:
             encrypted_string: Base64-encoded encrypted value (str or None)
 
@@ -482,7 +804,7 @@ class FieldEncryptor:
             DecryptionError: If decryption fails
 
         Example:
-            encrypted = "gAAAAABk1x2y..."  # From encrypt_binary_field()
+            encrypted = "rgAAAA..."  # From encrypt_binary_field()
             binary_data = encryptor.decrypt_binary_field(encrypted)
             # Returns: b'%PDF-1.4...' (original binary data)
         """
@@ -519,13 +841,13 @@ class FieldEncryptor:
         Encrypt a JSON/dict field by serializing to JSON string first.
 
         This allows encrypting complex data structures (dicts, lists) that are
-        stored in PostgreSQL JSON columns.
+        stored in PostgreSQL JSON columns using AES-256-GCM.
 
         Args:
             json_data: Dictionary or JSON-serializable object to encrypt
 
         Returns:
-            Encrypted string (Fernet token), or None if input is None
+            Encrypted string (AES-256-GCM token), or None if input is None
 
         Example:
             result_data = {"original_text": "...", "translated_text": "..."}
@@ -570,8 +892,10 @@ class FieldEncryptor:
         """
         Decrypt a JSON field back to dict.
 
+        Supports both AES-256-GCM and legacy Fernet tokens.
+
         Args:
-            encrypted_string: Encrypted Fernet token from database
+            encrypted_string: Encrypted token from database
 
         Returns:
             Decrypted dictionary, or None if input is None
@@ -582,8 +906,8 @@ class FieldEncryptor:
             original_text = result_data["original_text"]
 
         Note:
-            Handles both encrypted and plaintext JSON (for backward compatibility
-            with data that was stored before encryption was enabled).
+            Handles encrypted (AES-256-GCM or Fernet) and plaintext JSON
+            (for backward compatibility with data stored before encryption).
         """
         if not encrypted_string:
             return None
@@ -597,16 +921,12 @@ class FieldEncryptor:
         try:
             import json
 
-            # Check if it's encrypted (Fernet token) or plaintext JSON
-            # Use heuristic check: Fernet tokens start with 'gAAAAA' or base64-encoded 'Z0FBQUFB'
-            looks_encrypted = (
-                encrypted_string.startswith("gAAAAA")  # Direct Fernet token
-                or encrypted_string.startswith("Z0FBQUFB")  # Base64-encoded Fernet token
-            )
+            # Check if it's encrypted (AES-256-GCM or Fernet) or plaintext JSON
+            looks_encrypted = self.is_encrypted(encrypted_string)
             logger.debug(
                 f"Checking if encrypted: first 50 chars: {encrypted_string[:50] if encrypted_string else 'EMPTY'}..."
             )
-            logger.info(f"looks_encrypted (heuristic): {looks_encrypted}")
+            logger.debug(f"looks_encrypted: {looks_encrypted}")
 
             if looks_encrypted:
                 # Step 1: Decrypt to JSON string

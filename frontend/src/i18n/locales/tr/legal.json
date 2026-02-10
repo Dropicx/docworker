@@ -63,7 +63,7 @@
         "Kalıcı depolama yok: Belgelerin veya çevirilerin kalıcı olarak saklanması yoktur",
         "Paylaşım yok: Üçüncü taraflarla veri paylaşımı yoktur (OCR ve çeviri için Mistral AI (Fransa) ve kişisel verilerin kaldırılması için Hetzner (Almanya) hariç. Çeviri için yalnızca kişisel verilerden temizlenmiş metinler iletilir)",
         "Şifreli iletim: Tüm veriler HTTPS/TLS üzerinden şifrelenmiş olarak iletilir",
-        "Durağan şifreleme: Yüklenen tüm belgeler AES-128 (Fernet) ile şifrelenir ve veritabanında saklanır. Yönetici hesapları ayrıca e-posta adresleri ve isimler için şifreli depolama kullanır.",
+        "Durağan şifreleme: Yüklenen tüm belgeler AES-256-GCM ile şifrelenir ve veritabanında saklanır. Yönetici hesapları ayrıca e-posta adresleri ve isimler için şifreli depolama kullanır.",
         "Çerez yok: Hizmetimiz çerez kullanmaz ve izleme verisi saklamaz."
       ]
     },

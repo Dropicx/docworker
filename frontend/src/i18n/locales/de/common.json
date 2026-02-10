@@ -64,6 +64,8 @@
     "pleaseConfirm": "Bitte bestätigen",
     "privacyConsentPrefix": "Ich habe die",
     "privacyPolicy": "Datenschutzerklärung",
+    "privacyConsentAnd": "und die",
+    "termsOfUse": "Nutzungsbedingungen",
     "privacyConsentSuffix": "gelesen und stimme der Verarbeitung meiner Dokumente zu. Ich verstehe, dass meine Daten DSGVO-konform verarbeitet und nach der Übersetzung automatisch gelöscht werden.",
     "startProcessing": "Verarbeitung starten",
     "gdprNotice": "Ihre Daten werden DSGVO-konform verarbeitet und nicht gespeichert",
@@ -217,6 +219,11 @@
     "commentOptional": "Kommentar (optional)",
     "commentPlaceholder": "Teilen Sie uns Ihre Gedanken mit...",
     "consent": "Ich stimme zu, dass meine Daten zur Verbesserung des Systems verwendet werden dürfen.",
+    "consentPrefix": "Ich habe die",
+    "privacyPolicy": "Datenschutzerklärung",
+    "consentAnd": "und die",
+    "termsOfUse": "Nutzungsbedingungen",
+    "consentSuffix": "gelesen und stimme zu, dass meine Daten zur Verbesserung des Systems verwendet werden dürfen.",
     "ratingRequired": "Bitte geben Sie eine Gesamtbewertung ab.",
     "consentRequired": "Bitte stimmen Sie der Datenverwendung zu.",
     "submitError": "Feedback konnte nicht gesendet werden.",
@@ -230,6 +237,61 @@
     "starLabel": "{{count}} Stern",
     "starLabel_plural": "{{count}} Sterne"
   },
+  "howItWorks": {
+    "title": "So funktioniert's",
+    "subtitle": "3 einfache Schritte zu Ihrer verständlichen Übersetzung",
+    "steps": {
+      "1": {
+        "title": "Dokument hochladen",
+        "description": "Laden Sie Ihr medizinisches Dokument hoch - Arztbrief, Befund oder Laborwerte"
+      },
+      "2": {
+        "title": "KI-Vereinfachung",
+        "description": "Unsere KI erkennt Fachbegriffe und übersetzt sie in verständliche Sprache"
+      },
+      "3": {
+        "title": "Ergebnis erhalten",
+        "description": "Lesen, verstehen, herunterladen - Ihre Daten werden automatisch gelöscht"
+      }
+    },
+    "bestResults": {
+      "title": "Für beste Ergebnisse",
+      "tiers": {
+        "best": {
+          "label": "Beste Qualität",
+          "title": "PDF mit eingebettetem Text",
+          "description": "Digitale Arztbriefe, E-Mail-Anhänge",
+          "result": "Perfekte Texterkennung, schnellstes Ergebnis"
+        },
+        "great": {
+          "label": "Sehr gut",
+          "title": "Smartphone-Scanner verwenden",
+          "description": "Nutzen Sie die eingebaute Scanner-Funktion Ihres Smartphones für optimale Ergebnisse",
+          "result": "Automatische Perspektivkorrektur & Schärfe"
+        },
+        "good": {
+          "label": "Gut",
+          "title": "Normales Foto (mit unseren Tipps)",
+          "description": "Unser eingebauter Scanner optimiert Ihr Bild automatisch",
+          "tips": [
+            "Gute Beleuchtung, kein Schatten",
+            "Dokument flach auf Tisch",
+            "Kamera direkt über dem Dokument"
+          ]
+        }
+      }
+    },
+    "proTips": {
+      "title": "Profi-Tipps",
+      "tips": {
+        "pdf": "PDF-Dateien liefern die besten Ergebnisse",
+        "scanner": "Nutzen Sie die Scanner-Funktion Ihres Smartphones",
+        "light": "Fotografieren Sie bei gutem Licht ohne Schatten",
+        "flat": "Halten Sie das Dokument flach und gerade",
+        "privacy": "Schwärzen Sie sensible Daten vorab für extra Sicherheit"
+      }
+    }
+  },
   "faq": {
     "title": "Häufig gestellte Fragen",
     "subtitle": "Alles was Sie über HealthLingo und die sichere Verarbeitung Ihrer medizinischen Dokumente wissen müssen",
@@ -237,12 +299,12 @@
     "contactLink": "Kontaktieren Sie uns",
     "items": {
       "0": {
-        "question": "Wo werden meine Daten verarbeitet und wie sicher ist das?",
-        "answer": "HealthLingo wird auf Railway.app gehostet, einem SOC 2 Type I zertifizierten Provider mit vollständiger DSGVO-Konformität. Die Server befinden sich in der EU und Railway bietet einen Data Processing Agreement (DPA) gemäß DSGVO Artikel 28. Die KI-Verarbeitung erfolgt über OVH AI Endpoints in europäischen Rechenzentren (ISO 27001, 27017, 27018, 27701 zertifiziert). OVH garantiert, dass Ihre Daten NIEMALS für das Training von KI-Modellen verwendet werden - alle Anfragen sind anonymisiert und werden nach der Verarbeitung sofort gelöscht."
+        "question": "Wo werden meine Daten verarbeitet und welche Dienste sind beteiligt?",
+        "answer": "HealthLingo nutzt mehrere spezialisierte Dienste: Railway (EU) für Hosting mit SOC 2 Zertifizierung, Mistral AI (Frankreich) für OCR und Übersetzung, Hetzner (Deutschland) für PII-Entfernung. Für CDN-Sicherheit nutzen wir Cloudflare (USA), abgesichert durch EU-Standardvertragsklauseln. Mit allen Anbietern bestehen Auftragsverarbeitungsverträge (Art. 28 DSGVO). Dokumentinhalte werden ausschließlich in der EU verarbeitet."
       },
       "1": {
-        "question": "Werden meine medizinischen Daten gespeichert oder für KI-Training verwendet?",
-        "answer": "Nein, absolut nicht. HealthLingo speichert keinerlei Daten dauerhaft. OVH AI Endpoints hat eine strikte No-Training-Policy: Kundendaten werden niemals gespeichert oder für Modelltraining verwendet. Nach der Übersetzung werden alle Dokumente, Texte und persönlichen Informationen automatisch und unwiderruflich gelöscht. Die KI-Modelle lernen NICHT aus Ihren Daten - jede Anfrage ist isoliert und hinterlässt keine Spuren."
+        "question": "Wie lange werden meine Daten gespeichert?",
+        "answer": "Dokumente werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen. Als Sicherheitsfallback erfolgt eine Löschung spätestens nach 1 Stunde. Falls Sie optionales Feedback mit Einwilligung geben, werden diese anonymisierten Daten maximal 90 Tage zur Qualitätsverbesserung aufbewahrt. Nach der Löschung sind Daten unwiderruflich entfernt. Es erfolgt keine dauerhafte Speicherung."
       },
       "2": {
         "question": "Wie lange dauert die Übersetzung?",
@@ -250,7 +312,7 @@
       },
       "3": {
         "question": "Welche Dateiformate werden unterstützt?",
-        "answer": "HealthLingo unterstützt PDF-Dateien (sowohl mit eingebettetem Text als auch gescannte Dokumente) sowie Bilddateien (JPG, PNG, JPEG). Die maximale Dateigröße beträgt 10 MB. Mehrseitige Dokumente werden vollständig verarbeitet."
+        "answer": "HealthLingo unterstützt PDF-Dateien (mit eingebettetem Text oder gescannt) sowie Bilddateien (JPEG, JPG, PNG, GIF, BMP, TIFF, WebP). Die maximale Dateigröße beträgt 100 MB pro Dokument. Mehrseitige Dokumente werden vollständig verarbeitet."
       },
       "4": {
         "question": "In welche Sprachen kann übersetzt werden?",
@@ -258,15 +320,15 @@
       },
       "5": {
         "question": "Was passiert mit persönlichen Daten im Dokument?",
-        "answer": "Persönliche Daten wie Namen, Adressen, Geburtsdaten und Versicherungsnummern werden automatisch erkannt und durch Platzhalter ersetzt (z.B. [NAME ENTFERNT]). Dies schützt Ihre Privatsphäre, während alle medizinischen Informationen vollständig erhalten bleiben. Die Anonymisierung erfolgt lokal, bevor Daten an die KI-Endpoints gesendet werden."
+        "answer": "Personenbezogene Daten (Namen, Adressen, Geburtsdaten, Versicherungsnummern) werden mit spaCy NER und speziellen Mustern für deutsche medizinische Dokumente automatisch erkannt und durch Platzhalter ersetzt. WICHTIG: Die automatische PII-Entfernung kann keine 100%ige Erkennung garantieren. Ungewöhnliche Namensformate können übersehen werden. Wir empfehlen, offensichtliche personenbezogene Daten vor dem Hochladen manuell zu schwärzen."
       },
       "6": {
-        "question": "Welche Sicherheitszertifizierungen haben die verwendeten Dienste?",
-        "answer": "Railway.app ist SOC 2 Type I zertifiziert (Type II folgt 2025) und bietet DSGVO-konforme Data Processing Agreements. OVH Cloud besitzt umfassende Zertifizierungen: ISO/IEC 27001 (Informationssicherheit), ISO/IEC 27017 (Cloud-Sicherheit), ISO/IEC 27018 (Datenschutz in der Cloud) und ISO/IEC 27701 (Datenschutz-Management). Beide Provider unterliegen europäischem Recht und garantieren, dass Ihre Daten die EU nicht verlassen."
+        "question": "Wie sind meine Daten technisch geschützt?",
+        "answer": "Alle Daten werden mit AES-256-GCM verschlüsselt gespeichert und über HTTPS/TLS übertragen. HealthLingo verwendet keine Cookies und kein Tracking. Railway ist SOC 2 Type I zertifiziert. Mit allen Drittanbietern bestehen Auftragsverarbeitungsverträge (AVV) gemäß Art. 28 DSGVO. Die Datenverarbeitung erfolgt innerhalb der EU bzw. mit EU-konformen Garantien."
       },
       "7": {
-        "question": "Ist die Übersetzung medizinisch korrekt?",
-        "answer": "HealthLingo verwendet fortschrittliche KI-Technologie, die speziell für medizinische Texte trainiert wurde. Die Übersetzungen sind sehr präzise, ersetzen jedoch keine professionelle medizinische Beratung. Bei wichtigen medizinischen Entscheidungen sollten Sie immer Ihren Arzt konsultieren."
+        "question": "Ist die Übersetzung medizinisch verbindlich?",
+        "answer": "WICHTIG: Die Übersetzungen stellen KEINE medizinische Beratung dar und ersetzen in keinem Fall die ärztliche Aufklärung. HealthLingo erstellt keine Diagnosen, überprüft keine Befunde und gibt keine Therapieempfehlungen. Die Übersetzungen dienen ausschließlich der Information und dem besseren Verständnis. Bei medizinischen Fragen wenden Sie sich immer an Ihren Arzt. Bei Notfällen rufen Sie sofort 112 an."
       },
       "8": {
         "question": "Kann ich die Übersetzung herunterladen?",
@@ -278,7 +340,19 @@
       },
       "10": {
         "question": "Ist der Service wirklich kostenlos?",
-        "answer": "Ja, HealthLingo ist vollständig kostenlos nutzbar. Es gibt keine versteckten Kosten, keine Registrierung und keine Begrenzung der Anzahl der Übersetzungen. Unser Ziel ist es, medizinische Informationen für alle zugänglich zu machen."
+        "answer": "Ja, HealthLingo ist vollständig kostenlos nutzbar. Es gibt keine versteckten Kosten und keine Registrierung erforderlich. Der Service ist für den persönlichen, nicht-kommerziellen Gebrauch bestimmt. Eine kommerzielle Nutzung bedarf einer gesonderten schriftlichen Vereinbarung."
+      },
+      "11": {
+        "question": "Welche Verbraucherrechte habe ich?",
+        "answer": "Als Verbraucher haben Sie ein 14-tägiges Widerrufsrecht sowie umfassende DSGVO-Rechte: Auskunft, Berichtigung, Löschung (wird automatisch durchgeführt), Einschränkung der Verarbeitung und Datenübertragbarkeit. Jede erteilte Einwilligung können Sie jederzeit widerrufen - durch Abbrechen des Prozesses, Schließen des Browsers oder Kontaktaufnahme per E-Mail. Nach dem Widerruf werden alle Daten sofort gelöscht."
+      },
+      "12": {
+        "question": "Wann genau werden meine Daten gelöscht?",
+        "answer": "Die Löschung erfolgt automatisch beim Verlassen der Ergebnisseite. Dies umfasst: das Originaldokument, extrahierte Texte, Übersetzungsergebnisse und IP-Adressen. Falls Sie die Seite nicht aktiv verlassen, greift nach 1 Stunde eine automatische Sicherheitslöschung. Diese Frist ermöglicht optionales Feedback. Einzige Ausnahme: Feedback mit Einwilligung wird 90 Tage aufbewahrt."
+      },
+      "13": {
+        "question": "Was sollte ich über die Texterkennung (OCR) wissen?",
+        "answer": "Bei der OCR-Verarbeitung wird Ihr Dokument zunächst an Mistral AI (Frankreich/EU) übertragen, BEVOR die automatische PII-Entfernung erfolgen kann. Die PII-Entfernung ist erst nach der Texterkennung technisch möglich. Da die PII-Erkennung keine 100%ige Garantie bietet, empfehlen wir dringend, offensichtliche personenbezogene Daten vor dem Hochladen manuell zu schwärzen."
       }
     }
   },

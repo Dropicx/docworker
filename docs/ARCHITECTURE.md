@@ -180,7 +180,7 @@ backend/app/
     ├── security.py          # JWT, password hashing
     ├── dependencies.py      # DI providers
     ├── permissions.py       # RBAC
-    ├── encryption.py        # Fernet encryption
+    ├── encryption.py        # AES-256-GCM encryption
     ├── circuit_breaker.py   # External service resilience
     └── feature_flags.py     # Runtime toggles
 ```
@@ -567,7 +567,7 @@ Load OCRConfigurationDB
 
 | Measure | Implementation |
 |---------|----------------|
-| **Encryption at rest** | Fernet AES-128 for file content |
+| **Encryption at rest** | AES-256-GCM for file content |
 | **Encryption in transit** | TLS 1.3 (Railway automatic) |
 | **PII removal** | Before any AI processing |
 | **Data retention** | 24 hours default (configurable to 0) |

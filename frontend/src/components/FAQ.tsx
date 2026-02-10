@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Shield, Lock, Clock, Database, Globe, FileText, AlertCircle } from 'lucide-react';
+import { Shield, Lock, Clock, Database, Globe, FileText, AlertCircle, Scale, Trash2, AlertTriangle } from 'lucide-react';
 import {
   Accordion,
   AccordionContent,
@@ -67,7 +67,7 @@ const FAQ: React.FC = () => {
     return model.split('-')[0] || 'Llama 3.3';
   };
 
-  const faqIcons = [Shield, Database, Clock, FileText, Globe, Lock, Shield, AlertCircle, FileText, FileText, Shield];
+  const faqIcons = [Shield, Database, Clock, FileText, Globe, Lock, Shield, AlertCircle, FileText, FileText, Shield, Scale, Trash2, AlertTriangle];
 
   const faqItems = faqIcons.map((icon, index) => ({
     question: t(`faq.items.${index}.question`),

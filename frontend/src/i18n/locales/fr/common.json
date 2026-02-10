@@ -64,6 +64,8 @@
     "pleaseConfirm": "Veuillez confirmer",
     "privacyConsentPrefix": "J'ai lu la",
     "privacyPolicy": "Politique de confidentialité",
+    "privacyConsentAnd": "et les",
+    "termsOfUse": "Conditions d'utilisation",
     "privacyConsentSuffix": "et j'accepte le traitement de mes documents. Je comprends que mes données seront traitées conformément au RGPD et automatiquement supprimées après la traduction.",
     "startProcessing": "Démarrer le traitement",
     "gdprNotice": "Vos données sont traitées conformément au RGPD et non stockées",
@@ -217,6 +219,11 @@
     "commentOptional": "Commentaire (optionnel)",
     "commentPlaceholder": "Partagez vos impressions...",
     "consent": "J'accepte que mes données soient utilisées pour améliorer le système.",
+    "consentPrefix": "J'ai lu la",
+    "privacyPolicy": "Politique de confidentialité",
+    "consentAnd": "et les",
+    "termsOfUse": "Conditions d'utilisation",
+    "consentSuffix": "et j'accepte que mes données soient utilisées pour améliorer le système.",
     "ratingRequired": "Veuillez donner une note globale.",
     "consentRequired": "Veuillez accepter l'utilisation des données.",
     "submitError": "Impossible d'envoyer le commentaire.",
@@ -229,6 +236,61 @@
     "thankYouDescription": "Votre avis nous aide à améliorer le service.",
     "starLabel": "{{count}} étoile",
     "starLabel_plural": "{{count}} étoiles"
+  },
+  "howItWorks": {
+    "title": "Comment ça marche",
+    "subtitle": "3 étapes simples vers votre traduction compréhensible",
+    "steps": {
+      "1": {
+        "title": "Télécharger le document",
+        "description": "Téléchargez votre document médical - lettre du médecin, rapport ou résultats de laboratoire"
+      },
+      "2": {
+        "title": "Simplification par IA",
+        "description": "Notre IA reconnaît les termes médicaux et les traduit en langage facile à comprendre"
+      },
+      "3": {
+        "title": "Obtenir les résultats",
+        "description": "Lisez, comprenez, téléchargez - vos données sont automatiquement supprimées"
+      }
+    },
+    "bestResults": {
+      "title": "Pour de meilleurs résultats",
+      "tiers": {
+        "best": {
+          "label": "Meilleure qualité",
+          "title": "PDF avec texte intégré",
+          "description": "Lettres numériques du médecin, pièces jointes par e-mail",
+          "result": "Reconnaissance de texte parfaite, résultats les plus rapides"
+        },
+        "great": {
+          "label": "Très bien",
+          "title": "Utilisez le scanner du smartphone",
+          "description": "Utilisez la fonction de scanner intégrée de votre smartphone pour des résultats optimaux",
+          "result": "Correction automatique de la perspective et netteté"
+        },
+        "good": {
+          "label": "Bien",
+          "title": "Photo normale (avec nos conseils)",
+          "description": "Notre scanner intégré optimise automatiquement votre image",
+          "tips": [
+            "Bon éclairage, pas d'ombres",
+            "Document à plat sur la table",
+            "Caméra directement au-dessus du document"
+          ]
+        }
+      }
+    },
+    "proTips": {
+      "title": "Conseils Pro",
+      "tips": {
+        "pdf": "Les fichiers PDF donnent les meilleurs résultats",
+        "scanner": "Utilisez la fonction scanner de votre smartphone",
+        "light": "Prenez des photos avec un bon éclairage sans ombres",
+        "flat": "Gardez le document plat et droit",
+        "privacy": "Masquez les données sensibles au préalable pour plus de sécurité"
+      }
+    }
   },
   "faq": {
     "title": "Questions fréquentes",

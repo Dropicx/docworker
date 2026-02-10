@@ -64,6 +64,8 @@
     "pleaseConfirm": "Please confirm",
     "privacyConsentPrefix": "I have read the",
     "privacyPolicy": "Privacy Policy",
+    "privacyConsentAnd": "and the",
+    "termsOfUse": "Terms of Use",
     "privacyConsentSuffix": "and agree to the processing of my documents. I understand that my data will be processed in compliance with GDPR and automatically deleted after translation.",
     "startProcessing": "Start processing",
     "gdprNotice": "Your data is processed GDPR-compliant and not stored",
@@ -217,6 +219,11 @@
     "commentOptional": "Comment (optional)",
     "commentPlaceholder": "Share your thoughts with us...",
     "consent": "I agree that my data may be used to improve the system.",
+    "consentPrefix": "I have read the",
+    "privacyPolicy": "Privacy Policy",
+    "consentAnd": "and the",
+    "termsOfUse": "Terms of Use",
+    "consentSuffix": "and agree that my data may be used to improve the system.",
     "ratingRequired": "Please provide an overall rating.",
     "consentRequired": "Please agree to the data usage.",
     "submitError": "Feedback could not be sent.",
@@ -229,6 +236,61 @@
     "thankYouDescription": "Your feedback helps us improve the service.",
     "starLabel": "{{count}} star",
     "starLabel_plural": "{{count}} stars"
+  },
+  "howItWorks": {
+    "title": "How It Works",
+    "subtitle": "3 simple steps to your easy-to-understand translation",
+    "steps": {
+      "1": {
+        "title": "Upload Document",
+        "description": "Upload your medical document - doctor's letter, report or lab results"
+      },
+      "2": {
+        "title": "AI Simplification",
+        "description": "Our AI recognizes medical terms and translates them into easy-to-understand language"
+      },
+      "3": {
+        "title": "Get Results",
+        "description": "Read, understand, download - your data is automatically deleted"
+      }
+    },
+    "bestResults": {
+      "title": "For Best Results",
+      "tiers": {
+        "best": {
+          "label": "Best Quality",
+          "title": "PDF with embedded text",
+          "description": "Digital doctor's letters, email attachments",
+          "result": "Perfect text recognition, fastest results"
+        },
+        "great": {
+          "label": "Very Good",
+          "title": "Use smartphone scanner",
+          "description": "Use your smartphone's built-in scanner function for optimal results",
+          "result": "Automatic perspective correction & sharpening"
+        },
+        "good": {
+          "label": "Good",
+          "title": "Regular photo (with our tips)",
+          "description": "Our built-in scanner optimizes your image automatically",
+          "tips": [
+            "Good lighting, no shadows",
+            "Document flat on table",
+            "Camera directly above document"
+          ]
+        }
+      }
+    },
+    "proTips": {
+      "title": "Pro Tips",
+      "tips": {
+        "pdf": "PDF files deliver the best results",
+        "scanner": "Use your smartphone's built-in scanner function",
+        "light": "Take photos in good light without shadows",
+        "flat": "Keep the document flat and straight",
+        "privacy": "Redact sensitive data beforehand for extra security"
+      }
+    }
   },
   "faq": {
     "title": "Frequently Asked Questions",

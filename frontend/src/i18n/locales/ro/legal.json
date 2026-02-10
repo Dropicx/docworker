@@ -63,7 +63,7 @@
         "Fără stocare permanentă: Nu există stocare permanentă a documentelor sau traducerilor",
         "Fără partajare: Nu se partajează date cu terți (cu excepția Mistral AI (Franța) pentru OCR și traducere, și Hetzner (Germania) pentru eliminarea datelor personale. Doar textele curățate de date personale sunt transmise pentru traducere)",
         "Transmisie criptată: Toate datele sunt transmise criptat prin HTTPS/TLS",
-        "Criptare în repaus: Toate documentele încărcate sunt criptate cu AES-128 (Fernet) și stocate în baza de date. Conturile de administrator folosesc în plus stocare criptată pentru adresele de email și numele.",
+        "Criptare în repaus: Toate documentele încărcate sunt criptate cu AES-256-GCM și stocate în baza de date. Conturile de administrator folosesc în plus stocare criptată pentru adresele de email și numele.",
         "Fără cookie-uri: Serviciul nostru nu folosește cookie-uri și nu stochează date de urmărire. Acest lucru este comunicat transparent prin bannerul fără cookie-uri de pe site."
       ]
     },

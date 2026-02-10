@@ -7,6 +7,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Star, ChevronDown, ChevronUp, Send, CheckCircle, MessageSquare } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { Link } from 'react-router-dom';
 import { feedbackApi } from '../services/feedbackApi';
 import type { DetailedRatings, FeedbackSubmission } from '../types/feedback';
 
@@ -282,7 +283,25 @@ const FeedbackWidget: React.FC<FeedbackWidgetProps> = ({ processingId, onFeedbac
               className="mt-1 w-5 h-5 text-brand-600 border-neutral-300 rounded focus:ring-brand-500 cursor-pointer"
             />
             <span className="text-sm text-primary-700">
-              {t('feedback.consent')}
+              {t('feedback.consentPrefix')}{' '}
+              <Link
+                to="/datenschutz"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-600 hover:text-brand-700 underline font-medium"
+              >
+                {t('feedback.privacyPolicy')}
+              </Link>{' '}
+              {t('feedback.consentAnd')}{' '}
+              <Link
+                to="/nutzungsbedingungen"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-brand-600 hover:text-brand-700 underline font-medium"
+              >
+                {t('feedback.termsOfUse')}
+              </Link>{' '}
+              {t('feedback.consentSuffix')}
               <span className="text-error-500 ml-1">*</span>
             </span>
           </label>

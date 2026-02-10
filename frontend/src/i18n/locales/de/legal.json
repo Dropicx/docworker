@@ -141,7 +141,7 @@
         },
         {
           "title": "Verschlüsselung bei Speicherung",
-          "text": "Alle hochgeladenen Dokumente werden mit AES-128 (Fernet) verschlüsselt in der Datenbank gespeichert. Administratorkonten verwenden zusätzlich verschlüsselte Speicherung für E-Mail-Adressen und Namen."
+          "text": "Alle hochgeladenen Dokumente werden mit AES-256-GCM verschlüsselt in der Datenbank gespeichert. Administratorkonten verwenden zusätzlich verschlüsselte Speicherung für E-Mail-Adressen und Namen."
         },
         {
           "title": "Keine Cookies",
@@ -323,7 +323,7 @@
       "title": "12. Datensicherheit",
       "intro": "Um Ihre personenbezogenen Daten zu schützen, haben wir gemäß Art. 32 DSGVO angemessene technische und organisatorische Sicherheitsmaßnahmen getroffen. Diese umfassen insbesondere:",
       "measures": [
-        "Verschlüsselung aller Daten bei Übertragung (HTTPS/TLS) und Speicherung (AES-128 Fernet)",
+        "Verschlüsselung aller Daten bei Übertragung (HTTPS/TLS) und Speicherung (AES-256-GCM)",
         "Automatische Löschung aller personenbezogenen Daten nach der Verarbeitung",
         "Automatische PII-Entfernung vor der KI-Verarbeitung",
         "Ausschließliche Datenverarbeitung innerhalb der EU",

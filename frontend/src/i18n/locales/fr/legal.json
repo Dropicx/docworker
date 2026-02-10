@@ -63,7 +63,7 @@
         "Pas de stockage permanent : Il n'y a pas de stockage permanent des documents ou des traductions",
         "Pas de partage : Aucun partage de données avec des tiers (sauf avec Mistral AI (France) pour l'OCR et la traduction, ainsi que Hetzner (Allemagne) pour la suppression des données personnelles. Seuls les textes nettoyés des données personnelles sont transmis pour la traduction)",
         "Transmission chiffrée : Toutes les données sont transmises de manière chiffrée via HTTPS/TLS",
-        "Chiffrement au repos : Tous les documents téléchargés sont chiffrés avec AES-128 (Fernet) et stockés dans la base de données. Les comptes administrateurs utilisent en outre un stockage chiffré pour les adresses e-mail et les noms.",
+        "Chiffrement au repos : Tous les documents téléchargés sont chiffrés avec AES-256-GCM et stockés dans la base de données. Les comptes administrateurs utilisent en outre un stockage chiffré pour les adresses e-mail et les noms.",
         "Pas de cookies : Notre service n'utilise pas de cookies et ne stocke aucune donnée de suivi."
       ]
     },

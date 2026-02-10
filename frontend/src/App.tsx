@@ -12,6 +12,7 @@ import TranslationResult from './components/TranslationResult';
 import TerminationCard from './components/TerminationCard';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
+import HowItWorks from './components/HowItWorks';
 import CookieFreeBanner from './components/CookieFreeBanner';
 import Impressum from './pages/Impressum';
 import Datenschutz from './pages/Datenschutz';
@@ -211,6 +212,9 @@ const MainApp: React.FC<MainAppProps> = ({
                   </CardContent>
                 </Card>
               </div>
+
+              {/* How It Works Section */}
+              <HowItWorks />
 
               {/* FAQ Section */}
               <div className="mt-8 sm:mt-12 lg:mt-16">
