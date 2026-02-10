@@ -59,10 +59,13 @@ DATABASE_URL = os.getenv(
 )
 
 
-def is_fernet_encrypted(value: str | bytes | None) -> bool:
+def is_fernet_encrypted(value: str | bytes | memoryview | None) -> bool:
     """Check if a value is encrypted with legacy Fernet."""
     if value is None:
         return False
+    # Handle memoryview from SQLAlchemy bytea columns
+    if isinstance(value, memoryview):
+        value = bytes(value)
     # Handle bytes from bytea columns - convert to string first
     if isinstance(value, bytes):
         try:
@@ -74,16 +77,20 @@ def is_fernet_encrypted(value: str | bytes | None) -> bool:
         import base64
         decoded = base64.urlsafe_b64decode(value)
         first_byte = decoded[0] if decoded else None
-        print(f"    [DEBUG] is_fernet check: first_byte=0x{first_byte:02X if first_byte is not None else 'None'}, expected=0x80")
+        fb_hex = f"0x{first_byte:02X}" if first_byte is not None else "None"
+        print(f"    [DEBUG] is_fernet check: first_byte={fb_hex}, expected=0x80")
     except Exception as e:
         print(f"    [DEBUG] is_fernet check: base64 decode failed: {e}")
     return encryptor.is_legacy_fernet(value)
 
 
-def is_aes256gcm_encrypted(value: str | bytes | None) -> bool:
+def is_aes256gcm_encrypted(value: str | bytes | memoryview | None) -> bool:
     """Check if a value is already encrypted with AES-256-GCM."""
     if value is None:
         return False
+    # Handle memoryview from SQLAlchemy bytea columns
+    if isinstance(value, memoryview):
+        value = bytes(value)
     # Handle bytes from bytea columns - convert to string first
     if isinstance(value, bytes):
         try:
@@ -149,9 +156,15 @@ def migrate_binary_field(value: str | bytes | None, dry_run: bool = False) -> tu
         print("    [DEBUG] Binary field is None")
         return None, "skipped_null"
 
-    # Convert bytes to string for processing (bytea columns return bytes)
+    # Convert bytes/memoryview to string for processing (bytea columns return memoryview in SQLAlchemy)
     original_value = value
     print(f"    [DEBUG] Binary field type: {type(value).__name__}, length: {len(value)}")
+
+    # Handle memoryview (SQLAlchemy returns bytea as memoryview)
+    if isinstance(value, memoryview):
+        value = bytes(value)
+        print(f"    [DEBUG] Converted memoryview to bytes")
+
     if isinstance(value, bytes):
         print(f"    [DEBUG] First 20 bytes hex: {value[:20].hex()}")
         print(f"    [DEBUG] First 20 bytes repr: {value[:20]!r}")
