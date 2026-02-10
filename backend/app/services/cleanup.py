@@ -51,6 +51,9 @@ MAX_DATA_AGE = timedelta(minutes=30)
 # Database retention period (24 hours for development, configurable via env)
 DB_RETENTION_HOURS = int(os.getenv("DB_RETENTION_HOURS", "24"))
 
+# Maximum retention for consented data (90 days)
+CONSENT_RETENTION_DAYS = int(os.getenv("CONSENT_RETENTION_DAYS", "90"))
+
 
 async def cleanup_temp_files():
     """Orchestrate comprehensive cleanup across all domains.
@@ -299,6 +302,41 @@ async def cleanup_old_database_jobs():
             )
             if consented_jobs_count > 0:
                 logger.info(f"📋 Preserved {consented_jobs_count} old jobs with user consent")
+
+            # Also cleanup consented jobs older than CONSENT_RETENTION_DAYS (90 days max)
+            consent_cutoff_time = datetime.now() - timedelta(days=CONSENT_RETENTION_DAYS)
+            old_consented_jobs = (
+                db.query(PipelineJobDB)
+                .filter(
+                    PipelineJobDB.uploaded_at < consent_cutoff_time,
+                    PipelineJobDB.data_consent_given.is_(True),
+                )
+                .all()
+            )
+
+            if old_consented_jobs:
+                logger.info(
+                    f"🗑️ Found {len(old_consented_jobs)} consented jobs older than {CONSENT_RETENTION_DAYS} days"
+                )
+
+                for job in old_consented_jobs:
+                    # Delete related step executions (contains PII text)
+                    db.query(PipelineStepExecutionDB).filter(
+                        PipelineStepExecutionDB.job_id == job.job_id
+                    ).delete(synchronize_session=False)
+
+                    # Delete related feedback (consent expires with job)
+                    db.query(UserFeedbackDB).filter(
+                        UserFeedbackDB.processing_id == job.processing_id
+                    ).delete(synchronize_session=False)
+
+                    db.delete(job)
+                    jobs_removed += 1
+
+                db.commit()
+                logger.info(
+                    f"✅ Deleted {len(old_consented_jobs)} consented jobs older than {CONSENT_RETENTION_DAYS} days"
+                )
 
             return jobs_removed
 

@@ -141,6 +141,24 @@
       ],
       "note": "Die verwendeten KI-Modelle (Mistral AI) werden von europäischen Anbietern betrieben und unterliegen der DSGVO. Die Modelle wurden nicht mit Ihren Daten trainiert und werden es auch nicht."
     },
+    "section9": {
+      "title": "9. Feedback und Nutzerbewertungen",
+      "intro": "Auf der Ergebnisseite haben Sie die Möglichkeit, uns freiwillig Feedback zu Ihrer Übersetzung zu geben. Bei der Abgabe von Feedback werden folgende Daten erfasst:",
+      "dataCollected": [
+        "Ihre Gesamtbewertung (1-5 Sterne)",
+        "Optionale Detailbewertungen (Verständlichkeit, Genauigkeit, Formatierung, Geschwindigkeit)",
+        "Ihr optionaler Kommentar (maximal 2000 Zeichen)",
+        "Ihre IP-Adresse",
+        "Zeitpunkt der Feedbackabgabe"
+      ],
+      "consentTitle": "Einwilligung zur Qualitätsverbesserung",
+      "consentText": "Bei der Feedbackabgabe können Sie freiwillig einwilligen, dass Ihre Übersetzungsdaten zur Qualitätsverbesserung unseres Dienstes verwendet werden dürfen. Diese Einwilligung ist optional und beeinflusst nicht die Möglichkeit, Feedback abzugeben.",
+      "retentionTitle": "Speicherdauer",
+      "retentionWithoutConsent": "Ohne Einwilligung zur Qualitätsverbesserung: Ihr Feedback wird zusammen mit den zugehörigen Verarbeitungsdaten nach 24 Stunden automatisch gelöscht.",
+      "retentionWithConsent": "Mit Einwilligung zur Qualitätsverbesserung: Ihr Feedback und die zugehörigen Übersetzungsdaten werden für maximal 90 Tage für die Analyse und Verbesserung unseres Dienstes gespeichert. Nach Ablauf dieser Frist werden die Daten automatisch gelöscht. Sie können diese Einwilligung jederzeit widerrufen.",
+      "legalBasis": "Die Verarbeitung Ihrer Feedbackdaten erfolgt auf Grundlage Ihrer Einwilligung gemäß Art. 6 Abs. 1 lit. a DSGVO. Bei der optionalen Qualitätsverbesserung erfolgt die Verarbeitung ebenfalls auf Grundlage Ihrer ausdrücklichen Einwilligung.",
+      "note": "Bitte beachten Sie: In Ihrem Kommentar sollten Sie keine personenbezogenen Daten (Namen, Adressen, Versicherungsnummern etc.) angeben. Solche Daten werden nicht automatisch entfernt und könnten bei Einwilligung zur Qualitätsverbesserung gespeichert werden."
+    },
     "policyUpdatesTitle": "Aktualisierung dieser Datenschutzerklärung",
     "policyUpdatesText": "Wir überprüfen und aktualisieren diese Datenschutzerklärung regelmäßig, um rechtliche Anforderungen zu erfüllen und Änderungen unserer Dienste widerzuspiegeln. Bei wesentlichen Änderungen werden wir Sie durch einen deutlichen Hinweis auf unserer Website informieren. Wir empfehlen Ihnen, diese Seite regelmäßig zu besuchen, um über aktuelle Datenschutzpraktiken informiert zu bleiben.",
     "lastUpdated": "Stand:"

@@ -295,6 +295,45 @@ const Datenschutz: React.FC = () => {
               </p>
             </section>
 
+            <section>
+              <h2 className="text-xl font-semibold text-primary-900 mb-3">
+                {t('datenschutz.section9.title')}
+              </h2>
+              <p className="mb-4">
+                {t('datenschutz.section9.intro')}
+              </p>
+              <ul className="list-disc list-inside mb-4 ml-4">
+                {(t('datenschutz.section9.dataCollected', { returnObjects: true }) as string[]).map((item, i) => (
+                  <li key={i}>{item}</li>
+                ))}
+              </ul>
+
+              <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
+                {t('datenschutz.section9.consentTitle')}
+              </h3>
+              <p className="mb-4">
+                {t('datenschutz.section9.consentText')}
+              </p>
+
+              <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
+                {t('datenschutz.section9.retentionTitle')}
+              </h3>
+              <p className="mb-4">
+                {t('datenschutz.section9.retentionWithoutConsent')}
+              </p>
+              <p className="mb-4">
+                {t('datenschutz.section9.retentionWithConsent')}
+              </p>
+
+              <p className="mb-4">
+                {t('datenschutz.section9.legalBasis')}
+              </p>
+
+              <p className="mb-4 text-sm bg-amber-50 p-3 rounded border-l-4 border-amber-500">
+                {t('datenschutz.section9.note')}
+              </p>
+            </section>
+
             <section className="pt-4 border-t border-primary-200">
               <h3 className="text-lg font-semibold text-primary-800 mb-2">
                 {t('datenschutz.policyUpdatesTitle')}
