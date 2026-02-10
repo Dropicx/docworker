@@ -12,7 +12,7 @@ import TranslationResult from './components/TranslationResult';
 import TerminationCard from './components/TerminationCard';
 import Footer from './components/Footer';
 import FAQ from './components/FAQ';
-import HowItWorks from './components/HowItWorks';
+import HowItWorks, { BestResultsSection } from './components/HowItWorks';
 import CookieFreeBanner from './components/CookieFreeBanner';
 import Impressum from './pages/Impressum';
 import Datenschutz from './pages/Datenschutz';
@@ -165,60 +165,63 @@ const MainApp: React.FC<MainAppProps> = ({
               {/* How It Works Section */}
               <HowItWorks />
 
-              {/* Feature Cards with shadcn Card */}
-              <div className="text-center mb-8 sm:mb-10">
-                <h2 className="text-2xl sm:text-3xl font-bold text-primary-900">
-                  {t('features.heading')}
-                </h2>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-                <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
-                  <CardHeader className="pb-2 sm:pb-3">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
-                      <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                      {t('features.privacyTitle')}
-                    </h3>
-                    <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                      {t('features.privacyDescription')}
-                    </p>
-                  </CardContent>
-                </Card>
+              {/* Two columns: Für beste Ergebnisse | Drei gute Gründe (stacked cards) */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 lg:items-stretch">
+                <BestResultsSection />
+                <div className="flex flex-col">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-900 mb-6 text-center lg:text-left">
+                    {t('features.heading')}
+                  </h2>
+                  <div className="flex flex-col gap-4 sm:gap-5 flex-1">
+                    <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
+                      <CardHeader className="pb-2 sm:pb-3">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
+                          <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                          {t('features.privacyTitle')}
+                        </h3>
+                        <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                          {t('features.privacyDescription')}
+                        </p>
+                      </CardContent>
+                    </Card>
 
-                <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
-                  <CardHeader className="pb-2 sm:pb-3">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
-                      <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                      {t('features.precisionTitle')}
-                    </h3>
-                    <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                      {t('features.precisionDescription')}
-                    </p>
-                  </CardContent>
-                </Card>
+                    <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
+                      <CardHeader className="pb-2 sm:pb-3">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
+                          <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                          {t('features.precisionTitle')}
+                        </h3>
+                        <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                          {t('features.precisionDescription')}
+                        </p>
+                      </CardContent>
+                    </Card>
 
-                <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 sm:col-span-2 lg:col-span-1">
-                  <CardHeader className="pb-2 sm:pb-3">
-                    <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
-                      <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                      {t('features.speedTitle')}
-                    </h3>
-                    <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                      {t('features.speedDescription')}
-                    </p>
-                  </CardContent>
-                </Card>
+                    <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
+                      <CardHeader className="pb-2 sm:pb-3">
+                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft">
+                          <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                          {t('features.speedTitle')}
+                        </h3>
+                        <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                          {t('features.speedDescription')}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </div>
               </div>
 
               {/* FAQ Section */}

@@ -33,27 +33,6 @@ const HowItWorks = () => {
     },
   ];
 
-  const qualityTiers = [
-    {
-      level: 'best',
-      Icon: FileText,
-      borderColor: 'border-l-brand-500',
-      iconBg: 'bg-brand-500',
-    },
-    {
-      level: 'great',
-      Icon: Smartphone,
-      borderColor: 'border-l-primary-400',
-      iconBg: 'bg-primary-500',
-    },
-    {
-      level: 'good',
-      Icon: Camera,
-      borderColor: 'border-l-neutral-400',
-      iconBg: 'bg-neutral-500',
-    },
-  ];
-
   return (
     <section className="py-8 sm:py-12 lg:py-16" aria-labelledby="how-it-works-title">
       {/* Section Header */}
@@ -105,62 +84,86 @@ const HowItWorks = () => {
           </div>
         </div>
       </div>
+    </section>
+  );
+};
 
-      {/* Part B: Quality Tiers — professional document-style layout, centered */}
-      <div className="mb-10 sm:mb-14 lg:mb-16 max-w-2xl mx-auto">
-        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-900 mb-6 text-center">
-          {t('howItWorks.bestResults.title')}
-        </h3>
+const qualityTiersData = [
+  {
+    level: 'best',
+    Icon: FileText,
+    borderColor: 'border-l-brand-500',
+    iconBg: 'bg-brand-500',
+  },
+  {
+    level: 'great',
+    Icon: Smartphone,
+    borderColor: 'border-l-primary-400',
+    iconBg: 'bg-primary-500',
+  },
+  {
+    level: 'good',
+    Icon: Camera,
+    borderColor: 'border-l-neutral-400',
+    iconBg: 'bg-neutral-500',
+  },
+];
 
-        <div className="space-y-0 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm">
-          {qualityTiers.map((tier) => (
-            <div
-              key={tier.level}
-              className={`border-l-4 ${tier.borderColor} bg-white px-4 py-4 sm:px-6 sm:py-5 ${tier.level !== 'good' ? 'border-b border-neutral-100' : ''}`}
-            >
-              <div className="flex gap-4 sm:gap-5">
-                <div
-                  className={`flex-shrink-0 w-10 h-10 rounded-lg ${tier.iconBg} flex items-center justify-center text-white`}
-                  aria-hidden
-                >
-                  <tier.Icon className="w-5 h-5" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-primary-500 mb-0.5">
-                    {t(`howItWorks.bestResults.tiers.${tier.level}.label`)}
+export const BestResultsSection = () => {
+  const { t } = useTranslation();
+  return (
+    <div className="h-full flex flex-col">
+      <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-900 mb-6 text-center lg:text-left">
+        {t('howItWorks.bestResults.title')}
+      </h3>
+      <div className="space-y-0 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm flex-1">
+        {qualityTiersData.map((tier) => (
+          <div
+            key={tier.level}
+            className={`border-l-4 ${tier.borderColor} bg-white px-4 py-4 sm:px-6 sm:py-5 ${tier.level !== 'good' ? 'border-b border-neutral-100' : ''}`}
+          >
+            <div className="flex gap-4 sm:gap-5">
+              <div
+                className={`flex-shrink-0 w-10 h-10 rounded-lg ${tier.iconBg} flex items-center justify-center text-white`}
+                aria-hidden
+              >
+                <tier.Icon className="w-5 h-5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-primary-500 mb-0.5">
+                  {t(`howItWorks.bestResults.tiers.${tier.level}.label`)}
+                </p>
+                <h4 className="text-base font-semibold text-primary-900 mb-1">
+                  {t(`howItWorks.bestResults.tiers.${tier.level}.title`)}
+                </h4>
+                <p className="text-sm text-primary-600 leading-relaxed">
+                  {t(`howItWorks.bestResults.tiers.${tier.level}.description`)}
+                </p>
+                {tier.level !== 'good' && (
+                  <p className="text-sm text-primary-600 mt-2 font-medium">
+                    {t(`howItWorks.bestResults.tiers.${tier.level}.result`)}
                   </p>
-                  <h4 className="text-base font-semibold text-primary-900 mb-1">
-                    {t(`howItWorks.bestResults.tiers.${tier.level}.title`)}
-                  </h4>
-                  <p className="text-sm text-primary-600 leading-relaxed">
-                    {t(`howItWorks.bestResults.tiers.${tier.level}.description`)}
-                  </p>
-                  {tier.level !== 'good' && (
-                    <p className="text-sm text-primary-600 mt-2 font-medium">
-                      {t(`howItWorks.bestResults.tiers.${tier.level}.result`)}
-                    </p>
-                  )}
-                  {tier.level === 'good' && (
-                    <ul className="mt-3 space-y-1.5 text-sm text-primary-600">
-                      {(
-                        t(`howItWorks.bestResults.tiers.good.tips`, {
-                          returnObjects: true,
-                        }) as string[]
-                      ).map((tip, i) => (
-                        <li key={i} className="flex items-center gap-2">
-                          <span className="w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0" />
-                          {tip}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
+                )}
+                {tier.level === 'good' && (
+                  <ul className="mt-3 space-y-1.5 text-sm text-primary-600">
+                    {(
+                      t(`howItWorks.bestResults.tiers.good.tips`, {
+                        returnObjects: true,
+                      }) as string[]
+                    ).map((tip, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0" />
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
-    </section>
+    </div>
   );
 };
 
