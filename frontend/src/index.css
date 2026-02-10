@@ -493,7 +493,9 @@
   .animate-slide-down,
   .animate-fade-in,
   .animate-scale-in,
-  .animate-pulse-soft {
+  .animate-pulse-soft,
+  .animate-icon-glow,
+  .animate-icon-flash {
     animation: none !important;
   }
 }

@@ -181,7 +181,9 @@ module.exports = {
   			'scale-in': 'scaleIn 0.3s ease-out',
   			shimmer: 'shimmer 2s infinite',
   			'accordion-down': 'accordion-down 0.2s ease-out',
-  			'accordion-up': 'accordion-up 0.2s ease-out'
+  			'accordion-up': 'accordion-up 0.2s ease-out',
+  			'icon-glow': 'iconGlow 1.5s ease-in-out infinite',
+  			'icon-flash': 'iconFlash 0.6s ease-out 1'
   		},
   		keyframes: {
   			fadeIn: {
@@ -253,6 +255,14 @@ module.exports = {
   				to: {
   					height: '0'
   				}
+  			},
+  			iconGlow: {
+  				'0%, 100%': { boxShadow: '0 0 0 0 rgba(16, 185, 129, 0.35)' },
+  				'50%': { boxShadow: '0 0 20px 8px rgba(16, 185, 129, 0.25)' }
+  			},
+  			iconFlash: {
+  				'0%, 100%': { opacity: '1', filter: 'brightness(1)' },
+  				'50%': { opacity: '0.9', filter: 'brightness(1.4)' }
   			}
   		},
   		backgroundImage: {

@@ -47,7 +47,8 @@ from pathlib import Path
 backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine, text, bindparam
+from sqlalchemy.types import LargeBinary
 
 from app.core.encryption import encryptor, FieldEncryptor
 
@@ -294,11 +295,27 @@ def migrate_pipeline_jobs_table(conn, batch_size: int, dry_run: bool) -> dict:
 
             # Update if anything was migrated
             if not dry_run and any_migrated:
-                set_clause = ", ".join([f"{k} = :{k}" for k in new_values.keys()])
-                conn.execute(
-                    text(f"UPDATE pipeline_jobs SET {set_clause} WHERE id = :id"),
-                    {**new_values, "id": job_id},
-                )
+                # Build SET clause with proper type binding for bytea column
+                set_parts = []
+                for k in new_values.keys():
+                    if k == "file_content":
+                        set_parts.append(f"{k} = :file_content")
+                    else:
+                        set_parts.append(f"{k} = :{k}")
+                set_clause = ", ".join(set_parts)
+
+                # Use bindparam with LargeBinary type for bytea column
+                stmt = text(f"UPDATE pipeline_jobs SET {set_clause} WHERE id = :id")
+                if "file_content" in new_values and new_values["file_content"] is not None:
+                    # Ensure file_content is bytes for bytea column
+                    fc_value = new_values["file_content"]
+                    if isinstance(fc_value, str):
+                        fc_value = fc_value.encode("utf-8")
+                    stmt = stmt.bindparams(bindparam("file_content", value=fc_value, type_=LargeBinary))
+                    new_values_copy = {k: v for k, v in new_values.items() if k != "file_content"}
+                    conn.execute(stmt, {**new_values_copy, "id": job_id})
+                else:
+                    conn.execute(stmt, {**new_values, "id": job_id})
 
         stats["migrated"] += batch_migrated
         stats["skipped"] += batch_skipped

@@ -7,7 +7,7 @@ import {
   Smartphone,
   Camera,
 } from 'lucide-react';
-import { Card, CardContent } from './ui/card';
+import { Card, CardContent, CardHeader } from './ui/card';
 
 const HowItWorks = () => {
   const { t } = useTranslation();
@@ -56,11 +56,13 @@ const HowItWorks = () => {
             {steps.map((step, index) => (
               <div key={step.number} className="relative">
                 {/* Step Card */}
-                <Card className="text-center h-full hover:shadow-medium transition-all duration-300 border-t-2 border-t-brand-400">
+                <Card className="group text-center h-full hover:shadow-medium transition-all duration-300 border-t-2 border-t-brand-400">
                   <CardContent className="pt-6 pb-6 px-4 sm:px-6">
                     {/* Number Circle */}
                     <div className="relative inline-flex items-center justify-center mb-4">
-                      <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white shadow-soft">
+                      <div
+                        className={`w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-brand-500 to-brand-600 flex items-center justify-center text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110 ${step.number === 2 ? 'group-hover:animate-icon-glow' : ''}`}
+                      >
                         <step.icon className="w-6 h-6 sm:w-7 sm:h-7" />
                       </div>
                       <div className="absolute -top-1 -right-1 w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white border-2 border-brand-500 flex items-center justify-center">
@@ -116,51 +118,51 @@ export const BestResultsSection = () => {
       <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-900 mb-6 text-center lg:text-left">
         {t('howItWorks.bestResults.title')}
       </h3>
-      <div className="space-y-0 overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm flex-1">
+      <div className="flex flex-col gap-4 sm:gap-5 flex-1">
         {qualityTiersData.map((tier) => (
-          <div
+          <Card
             key={tier.level}
-            className={`border-l-4 ${tier.borderColor} bg-white px-4 py-4 sm:px-6 sm:py-5 ${tier.level !== 'good' ? 'border-b border-neutral-100' : ''}`}
+            className="group text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300"
           >
-            <div className="flex gap-4 sm:gap-5">
+            <CardHeader className="pb-2 sm:pb-3">
               <div
-                className={`flex-shrink-0 w-10 h-10 rounded-lg ${tier.iconBg} flex items-center justify-center text-white`}
+                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110"
                 aria-hidden
               >
-                <tier.Icon className="w-5 h-5" />
+                <tier.Icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="text-xs font-semibold uppercase tracking-wider text-primary-500 mb-0.5">
-                  {t(`howItWorks.bestResults.tiers.${tier.level}.label`)}
+            </CardHeader>
+            <CardContent>
+              <p className="text-xs font-semibold uppercase tracking-wider text-primary-500 mb-1">
+                {t(`howItWorks.bestResults.tiers.${tier.level}.label`)}
+              </p>
+              <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                {t(`howItWorks.bestResults.tiers.${tier.level}.title`)}
+              </h3>
+              <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                {t(`howItWorks.bestResults.tiers.${tier.level}.description`)}
+              </p>
+              {tier.level !== 'good' && (
+                <p className="text-sm text-primary-600 mt-2 font-medium">
+                  {t(`howItWorks.bestResults.tiers.${tier.level}.result`)}
                 </p>
-                <h4 className="text-base font-semibold text-primary-900 mb-1">
-                  {t(`howItWorks.bestResults.tiers.${tier.level}.title`)}
-                </h4>
-                <p className="text-sm text-primary-600 leading-relaxed">
-                  {t(`howItWorks.bestResults.tiers.${tier.level}.description`)}
-                </p>
-                {tier.level !== 'good' && (
-                  <p className="text-sm text-primary-600 mt-2 font-medium">
-                    {t(`howItWorks.bestResults.tiers.${tier.level}.result`)}
-                  </p>
-                )}
-                {tier.level === 'good' && (
-                  <ul className="mt-3 space-y-1.5 text-sm text-primary-600">
-                    {(
-                      t(`howItWorks.bestResults.tiers.good.tips`, {
-                        returnObjects: true,
-                      }) as string[]
-                    ).map((tip, i) => (
-                      <li key={i} className="flex items-center gap-2">
-                        <span className="w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0" />
-                        {tip}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            </div>
-          </div>
+              )}
+              {tier.level === 'good' && (
+                <ul className="mt-3 space-y-1.5 text-sm text-primary-600 text-left max-w-xs mx-auto">
+                  {(
+                    t(`howItWorks.bestResults.tiers.good.tips`, {
+                      returnObjects: true,
+                    }) as string[]
+                  ).map((tip, i) => (
+                    <li key={i} className="flex items-center gap-2">
+                      <span className="w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0" />
+                      {tip}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>
