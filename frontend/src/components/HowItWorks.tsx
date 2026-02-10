@@ -7,7 +7,7 @@ import {
   Smartphone,
   Camera,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader } from './ui/card';
+import { Card, CardContent } from './ui/card';
 
 const HowItWorks = () => {
   const { t } = useTranslation();
@@ -124,43 +124,43 @@ export const BestResultsSection = () => {
             key={tier.level}
             className="group text-center lg:text-left border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full"
           >
-            <CardHeader className="pb-2 sm:pb-3">
+            <CardContent className="flex flex-row items-start gap-4 sm:gap-5 p-4 sm:p-5">
               <div
-                className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto lg:mx-0 bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110"
+                className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110"
                 aria-hidden
               >
                 <tier.Icon className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
               </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-xs font-semibold uppercase tracking-wider text-primary-500 mb-1">
-                {t(`howItWorks.bestResults.tiers.${tier.level}.label`)}
-              </p>
-              <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                {t(`howItWorks.bestResults.tiers.${tier.level}.title`)}
-              </h3>
-              <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                {t(`howItWorks.bestResults.tiers.${tier.level}.description`)}
-              </p>
-              {tier.level !== 'good' && (
-                <p className="text-sm text-primary-600 mt-2 font-medium">
-                  {t(`howItWorks.bestResults.tiers.${tier.level}.result`)}
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-semibold uppercase tracking-wider text-primary-500 mb-1">
+                  {t(`howItWorks.bestResults.tiers.${tier.level}.label`)}
                 </p>
-              )}
-              {tier.level === 'good' && (
-                <ul className="mt-3 space-y-1.5 text-sm text-primary-600 text-left max-w-xs mx-auto lg:mx-0">
-                  {(
-                    t(`howItWorks.bestResults.tiers.good.tips`, {
-                      returnObjects: true,
-                    }) as string[]
-                  ).map((tip, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                      <span className="w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0" />
-                      {tip}
-                    </li>
-                  ))}
-                </ul>
-              )}
+                <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                  {t(`howItWorks.bestResults.tiers.${tier.level}.title`)}
+                </h3>
+                <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                  {t(`howItWorks.bestResults.tiers.${tier.level}.description`)}
+                </p>
+                {tier.level !== 'good' && (
+                  <p className="text-sm text-primary-600 mt-2 font-medium">
+                    {t(`howItWorks.bestResults.tiers.${tier.level}.result`)}
+                  </p>
+                )}
+                {tier.level === 'good' && (
+                  <ul className="mt-3 space-y-1.5 text-sm text-primary-600 text-left">
+                    {(
+                      t(`howItWorks.bestResults.tiers.good.tips`, {
+                        returnObjects: true,
+                      }) as string[]
+                    ).map((tip, i) => (
+                      <li key={i} className="flex items-center gap-2">
+                        <span className="w-1 h-1 rounded-full bg-neutral-400 flex-shrink-0" />
+                        {tip}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </CardContent>
           </Card>
         ))}

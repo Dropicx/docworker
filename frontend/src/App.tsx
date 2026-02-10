@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Shield, AlertTriangle, Sparkles, FileText, Zap } from 'lucide-react';
-import { Card, CardHeader, CardContent } from './components/ui/card';
+import { Card, CardContent } from './components/ui/card';
 import { Button } from './components/ui/button';
 import FileUpload from './components/FileUpload';
 import DocumentProcessor from './components/DocumentProcessor';
@@ -75,6 +75,42 @@ const MainApp: React.FC<MainAppProps> = ({
   onClearQualityGateError,
 }) => {
   const { t } = useTranslation();
+  const twoColSectionRef = useRef<HTMLDivElement>(null);
+  const [scrollFillPercent, setScrollFillPercent] = useState(0);
+
+  useEffect(() => {
+    const section = twoColSectionRef.current;
+    if (!section) return;
+
+    const updateFill = () => {
+      const rect = section.getBoundingClientRect();
+      const viewHeight = window.innerHeight;
+      if (rect.height <= 0) return;
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (reducedMotion) {
+        setScrollFillPercent(rect.top <= viewHeight && rect.bottom >= 0 ? 50 : 0);
+        return;
+      }
+      if (rect.bottom <= 0) {
+        setScrollFillPercent(100);
+        return;
+      }
+      if (rect.top >= viewHeight) {
+        setScrollFillPercent(0);
+        return;
+      }
+      const progress = Math.min(100, Math.max(0, (-rect.top) / rect.height * 100));
+      setScrollFillPercent(progress);
+    };
+
+    updateFill();
+    window.addEventListener('scroll', updateFill, { passive: true });
+    window.addEventListener('resize', updateFill);
+    return () => {
+      window.removeEventListener('scroll', updateFill);
+      window.removeEventListener('resize', updateFill);
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-neutral-50 via-white to-accent-50/30 flex flex-col">
@@ -166,48 +202,59 @@ const MainApp: React.FC<MainAppProps> = ({
               <HowItWorks />
 
               {/* Two columns: Für beste Ergebnisse | Drei gute Gründe (stacked cards) */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 lg:items-stretch">
-                <BestResultsSection />
-                <div className="flex flex-col lg:items-end">
+              <div ref={twoColSectionRef} className="relative">
+                {/* Scroll progress line (desktop): track + fill */}
+                <div
+                  className="hidden lg:block absolute top-0 bottom-0 left-1/2 w-0.5 -translate-x-1/2 bg-neutral-200 rounded-full overflow-hidden pointer-events-none"
+                  aria-hidden
+                >
+                  <div
+                    className="w-full bg-brand-500 transition-[height] duration-150 ease-out"
+                    style={{ height: `${scrollFillPercent}%` }}
+                  />
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 lg:items-start">
+                  <BestResultsSection />
+                  <div className="flex flex-col lg:items-end lg:pt-16">
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-900 mb-6 text-center lg:text-right w-full">
                     {t('features.heading')}
                   </h2>
                   <div className="flex flex-col gap-4 sm:gap-5 flex-1 w-full">
                     <Card className="group text-center lg:text-right border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
-                      <CardHeader className="pb-2 sm:pb-3">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto lg:ml-auto lg:mr-0 bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
+                      <CardContent className="flex flex-row items-start gap-4 sm:gap-5 p-4 sm:p-5">
+                        <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
                           <Shield className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                          {t('features.privacyTitle')}
-                        </h3>
-                        <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                          {t('features.privacyDescription')}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                            {t('features.privacyTitle')}
+                          </h3>
+                          <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                            {t('features.privacyDescription')}
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
 
                     <Card className="group text-center lg:text-right border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
-                      <CardHeader className="pb-2 sm:pb-3">
-                        <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center mx-auto lg:ml-auto lg:mr-0 bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
+                      <CardContent className="flex flex-row items-start gap-4 sm:gap-5 p-4 sm:p-5">
+                        <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex items-center justify-center bg-gradient-to-br from-brand-500 to-brand-600 text-white shadow-soft transition-transform duration-300 ease-out group-hover:scale-110">
                           <FileText className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                          {t('features.precisionTitle')}
-                        </h3>
-                        <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                          {t('features.precisionDescription')}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                            {t('features.precisionTitle')}
+                          </h3>
+                          <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                            {t('features.precisionDescription')}
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
 
                     <Card className="group text-center lg:text-right border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300 w-full">
-                      <CardHeader className="pb-2 sm:pb-3">
-                        <div className="relative w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center mx-auto lg:ml-auto lg:mr-0">
+                      <CardContent className="flex flex-row items-start gap-4 sm:gap-5 p-4 sm:p-5">
+                        <div className="relative flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center">
                           <div
                             className="absolute inset-0 rounded-xl border-2 border-white/30 border-t-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 animate-spin"
                             aria-hidden
@@ -216,17 +263,18 @@ const MainApp: React.FC<MainAppProps> = ({
                             <Zap className="w-5 h-5 sm:w-6 sm:h-6 lg:w-7 lg:h-7" />
                           </div>
                         </div>
-                      </CardHeader>
-                      <CardContent>
-                        <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
-                          {t('features.speedTitle')}
-                        </h3>
-                        <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
-                          {t('features.speedDescription')}
-                        </p>
+                        <div className="min-w-0 flex-1">
+                          <h3 className="text-lg sm:text-xl font-bold text-primary-900 mb-2 sm:mb-3">
+                            {t('features.speedTitle')}
+                          </h3>
+                          <p className="text-sm sm:text-base text-primary-600 leading-relaxed">
+                            {t('features.speedDescription')}
+                          </p>
+                        </div>
                       </CardContent>
                     </Card>
                   </div>
+                </div>
                 </div>
               </div>
 
