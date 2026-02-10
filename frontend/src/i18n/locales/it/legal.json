@@ -61,9 +61,9 @@
         "Memorizzazione temporanea: I documenti vengono memorizzati temporaneamente solo per la durata dell'elaborazione (massimo 24 ore)",
         "Eliminazione automatica: Al termine della traduzione, tutti i dati vengono automaticamente e completamente eliminati",
         "Nessuna memorizzazione permanente: Non c'è memorizzazione permanente di documenti o traduzioni",
-        "Nessuna condivisione: Nessuna condivisione di dati con terze parti (tranne il provider IA OVH per la traduzione, dove vengono trasmessi solo testi ripuliti dai dati personali)",
+        "Nessuna condivisione: Nessuna condivisione di dati con terze parti (tranne Mistral AI (Francia) per OCR e traduzione, e Hetzner (Germania) per la rimozione dei dati personali. Solo i testi ripuliti dai dati personali vengono trasmessi per la traduzione)",
         "Trasmissione crittografata: Tutti i dati vengono trasmessi crittografati tramite HTTPS/TLS",
-        "Crittografia a riposo: Gli account amministratore (non per utenti finali) utilizzano la memorizzazione crittografata per indirizzi email e nomi.",
+        "Crittografia a riposo: Tutti i documenti caricati sono crittografati con AES-128 (Fernet) e memorizzati nel database. Gli account amministratore utilizzano inoltre la memorizzazione crittografata per indirizzi email e nomi.",
         "Nessun cookie: Il nostro servizio non utilizza cookie e non memorizza dati di tracciamento."
       ]
     },
@@ -104,11 +104,24 @@
       "title": "7. Terze parti ed elaborazione dei dati",
       "intro": "Utilizziamo i seguenti fornitori terzi per fornire il nostro servizio:",
       "items": [
-        "OVH Cloud (UE): Per la traduzione alimentata da IA. Solo i testi ripuliti dai dati personali vengono trasmessi a OVH. L'elaborazione dei dati avviene esclusivamente nell'UE.",
-        "Railway (UE): Per l'hosting dell'applicazione e del database. Railway è certificato SOC 2 Type I e offre accordi per il trattamento dei dati conformi al GDPR.",
-        "PostgreSQL: Come sistema di database. Il database è ospitato nell'UE."
+        "Mistral AI (Francia/UE): Per il riconoscimento del testo (OCR) e la traduzione alimentati da IA. Solo i testi ripuliti dai dati personali vengono trasmessi a Mistral AI per la traduzione. L'elaborazione dei dati avviene in Francia all'interno dell'UE. Nota: Durante l'elaborazione OCR, il documento non elaborato viene trasmesso a Mistral AI prima che possa avvenire la rimozione dei dati personali.",
+        "Hetzner (Germania/UE): Per la rimozione dei dati personali e come servizio OCR di backup (PaddleOCR). I server sono situati in Germania.",
+        "Railway (UE): Per l'hosting dell'applicazione e del database PostgreSQL crittografato. Railway è certificato SOC 2 Type I e offre accordi per il trattamento dei dati conformi al GDPR."
       ],
-      "note": "Tutta l'elaborazione dei dati avviene esclusivamente all'interno dell'UE. Non avvengono trasferimenti internazionali di dati."
+      "note": "Tutta l'elaborazione dei dati avviene esclusivamente all'interno dell'UE (Francia e Germania). Non avvengono trasferimenti internazionali di dati."
+    },
+    "section7a": {
+      "title": "7a. Avviso importante sulla rimozione dei dati personali",
+      "intro": "Si prega di notare le seguenti informazioni importanti sulla rimozione automatica delle informazioni di identificazione personale (PII):",
+      "warning": "NESSUNA GARANZIA DI RIMOZIONE COMPLETA DEI PII",
+      "items": [
+        "La rimozione automatica delle informazioni personali è un processo al meglio delle nostre capacità. NON possiamo garantire che tutti i dati personali vengano rilevati e rimossi al 100%.",
+        "Nonostante le tecnologie avanzate (spaCy NER, Microsoft Presidio, pattern matching regex), formati di nomi insoliti, note scritte a mano o strutture di documenti atipiche possono far passare inosservati alcuni dati personali.",
+        "IMPORTANTE: Durante l'elaborazione OCR, il tuo documento viene prima trasmesso a Mistral AI (Francia) PRIMA che possa avvenire la rimozione dei PII. I dati personali vengono rimossi solo dopo il riconoscimento del testo.",
+        "Prima del caricamento, raccomandiamo vivamente di oscurare o rimuovere manualmente i dati personali evidenti come nomi, indirizzi, date di nascita e numeri di assicurazione.",
+        "I termini medici, le diagnosi e i risultati deliberatamente NON vengono rimossi in quanto sono necessari per la traduzione."
+      ],
+      "consent": "Caricando i tuoi documenti e accettando l'informativa sulla privacy, confermi di aver compreso questo avviso e di accettare che la rimozione dei PII non può essere garantita al 100%."
     },
     "lastUpdated": "Ultimo aggiornamento:"
   },

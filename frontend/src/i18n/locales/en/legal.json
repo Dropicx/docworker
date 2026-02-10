@@ -61,9 +61,9 @@
         "Temporary Storage: Documents are only temporarily stored for the duration of processing (maximum 24 hours)",
         "Automatic Deletion: After translation is complete, all data is automatically and completely deleted",
         "No Permanent Storage: There is no permanent storage of documents or translations",
-        "No Sharing: No sharing of data with third parties (except to the AI provider OVH for translation, where only PII-cleaned texts are transmitted)",
+        "No Sharing: No sharing of data with third parties (except to Mistral AI (France) for OCR and translation, and Hetzner (Germany) for PII removal. Only PII-cleaned texts are transmitted for translation)",
         "Encrypted Transmission: All data is transmitted encrypted via HTTPS/TLS",
-        "Encryption at Rest: Administrator accounts (not for end users) use encrypted storage for email addresses and names. Encryption of document contents is planned (see technical roadmap).",
+        "Encryption at Rest: All uploaded documents are encrypted with AES-128 (Fernet) and stored in the database. Administrator accounts additionally use encrypted storage for email addresses and names.",
         "No Cookies: Our service does not use cookies and does not store any tracking data. This is transparently communicated through a cookie-free notice banner on the website."
       ]
     },
@@ -104,11 +104,24 @@
       "title": "7. Third Parties and Data Processing",
       "intro": "We use the following third-party providers to deliver our service:",
       "items": [
-        "OVH Cloud (EU): For AI-powered translation. Only PII-cleaned texts are transmitted to OVH. Data processing takes place exclusively in the EU.",
-        "Railway (EU): For hosting the application and database. Railway is SOC 2 Type I certified and offers GDPR-compliant Data Processing Agreements.",
-        "PostgreSQL: As the database system. The database is hosted in the EU."
+        "Mistral AI (France/EU): For AI-powered text recognition (OCR) and translation. Only PII-cleaned texts are transmitted to Mistral AI for translation. Data processing takes place in France within the EU. Note: During OCR processing, the unprocessed document is transmitted to Mistral AI before PII removal can take place.",
+        "Hetzner (Germany/EU): For PII removal (removal of personally identifiable information) and as a fallback OCR service (PaddleOCR). The servers are located in Germany.",
+        "Railway (EU): For hosting the application and the encrypted PostgreSQL database. Railway is SOC 2 Type I certified and offers GDPR-compliant Data Processing Agreements."
       ],
-      "note": "All data processing takes place exclusively within the EU. No international data transfers take place."
+      "note": "All data processing takes place exclusively within the EU (France and Germany). No international data transfers take place."
+    },
+    "section7a": {
+      "title": "7a. Important Notice Regarding PII Removal",
+      "intro": "Please note the following important information regarding automatic removal of personally identifiable information (PII):",
+      "warning": "NO GUARANTEE FOR COMPLETE PII REMOVAL",
+      "items": [
+        "The automatic removal of personally identifiable information is a best-effort process. We CANNOT guarantee that all personal data will be 100% detected and removed.",
+        "Despite advanced technologies (spaCy NER, Microsoft Presidio, regex pattern matching), unusual name formats, handwritten notes, or atypical document structures may cause personal data to go undetected.",
+        "IMPORTANT: During OCR processing, your document is first transmitted to Mistral AI (France) BEFORE PII removal can take place. Personal data is only removed after text recognition.",
+        "Before uploading, we strongly recommend manually redacting or removing obvious personal data such as names, addresses, birth dates, and insurance numbers.",
+        "Medical terms, diagnoses, and findings are deliberately NOT removed as they are required for translation."
+      ],
+      "consent": "By uploading your documents and accepting the privacy policy, you confirm that you have understood this notice and accept that PII removal cannot be guaranteed to be 100% complete."
     },
     "lastUpdated": "Last updated:"
   },

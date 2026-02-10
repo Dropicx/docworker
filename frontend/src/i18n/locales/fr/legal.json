@@ -61,9 +61,9 @@
         "Stockage temporaire : Les documents ne sont stockés que temporairement pendant la durée du traitement (maximum 24 heures)",
         "Suppression automatique : Après la fin de la traduction, toutes les données sont automatiquement et complètement supprimées",
         "Pas de stockage permanent : Il n'y a pas de stockage permanent des documents ou des traductions",
-        "Pas de partage : Aucun partage de données avec des tiers (sauf avec le fournisseur d'IA OVH pour la traduction, où seuls les textes nettoyés des données personnelles sont transmis)",
+        "Pas de partage : Aucun partage de données avec des tiers (sauf avec Mistral AI (France) pour l'OCR et la traduction, ainsi que Hetzner (Allemagne) pour la suppression des données personnelles. Seuls les textes nettoyés des données personnelles sont transmis pour la traduction)",
         "Transmission chiffrée : Toutes les données sont transmises de manière chiffrée via HTTPS/TLS",
-        "Chiffrement au repos : Les comptes administrateurs (pas pour les utilisateurs finaux) utilisent un stockage chiffré pour les adresses e-mail et les noms.",
+        "Chiffrement au repos : Tous les documents téléchargés sont chiffrés avec AES-128 (Fernet) et stockés dans la base de données. Les comptes administrateurs utilisent en outre un stockage chiffré pour les adresses e-mail et les noms.",
         "Pas de cookies : Notre service n'utilise pas de cookies et ne stocke aucune donnée de suivi."
       ]
     },
@@ -104,11 +104,24 @@
       "title": "7. Tiers et traitement des données",
       "intro": "Nous utilisons les fournisseurs tiers suivants pour fournir notre service :",
       "items": [
-        "OVH Cloud (UE) : Pour la traduction alimentée par l'IA. Seuls les textes nettoyés des données personnelles sont transmis à OVH. Le traitement des données a lieu exclusivement dans l'UE.",
-        "Railway (UE) : Pour l'hébergement de l'application et de la base de données. Railway est certifié SOC 2 Type I et propose des accords de traitement des données conformes au RGPD.",
-        "PostgreSQL : Comme système de base de données. La base de données est hébergée dans l'UE."
+        "Mistral AI (France/UE) : Pour la reconnaissance de texte (OCR) et la traduction alimentées par l'IA. Seuls les textes nettoyés des données personnelles sont transmis à Mistral AI pour la traduction. Le traitement des données a lieu en France au sein de l'UE. Note : Lors du traitement OCR, le document non traité est transmis à Mistral AI avant que la suppression des données personnelles puisse avoir lieu.",
+        "Hetzner (Allemagne/UE) : Pour la suppression des données personnelles et comme service OCR de secours (PaddleOCR). Les serveurs sont situés en Allemagne.",
+        "Railway (UE) : Pour l'hébergement de l'application et de la base de données PostgreSQL chiffrée. Railway est certifié SOC 2 Type I et propose des accords de traitement des données conformes au RGPD."
       ],
-      "note": "Tout le traitement des données a lieu exclusivement au sein de l'UE. Aucun transfert international de données n'a lieu."
+      "note": "Tout le traitement des données a lieu exclusivement au sein de l'UE (France et Allemagne). Aucun transfert international de données n'a lieu."
+    },
+    "section7a": {
+      "title": "7a. Avis important concernant la suppression des données personnelles",
+      "intro": "Veuillez noter les informations importantes suivantes concernant la suppression automatique des données personnelles (PII) :",
+      "warning": "AUCUNE GARANTIE DE SUPPRESSION COMPLÈTE DES DONNÉES PERSONNELLES",
+      "items": [
+        "La suppression automatique des données personnelles est un processus au mieux de nos capacités. Nous NE POUVONS PAS garantir que toutes les données personnelles seront détectées et supprimées à 100%.",
+        "Malgré les technologies avancées (spaCy NER, Microsoft Presidio, correspondance de motifs regex), des formats de noms inhabituels, des notes manuscrites ou des structures de documents atypiques peuvent faire passer inaperçues certaines données personnelles.",
+        "IMPORTANT : Lors du traitement OCR, votre document est d'abord transmis à Mistral AI (France) AVANT que la suppression des données personnelles puisse avoir lieu. Les données personnelles ne sont supprimées qu'après la reconnaissance du texte.",
+        "Avant le téléchargement, nous recommandons fortement de masquer ou supprimer manuellement les données personnelles évidentes telles que les noms, adresses, dates de naissance et numéros d'assurance.",
+        "Les termes médicaux, diagnostics et conclusions ne sont délibérément PAS supprimés car ils sont nécessaires à la traduction."
+      ],
+      "consent": "En téléchargeant vos documents et en acceptant la politique de confidentialité, vous confirmez que vous avez compris cet avis et acceptez que la suppression des données personnelles ne peut pas être garantie à 100%."
     },
     "lastUpdated": "Dernière mise à jour :"
   },

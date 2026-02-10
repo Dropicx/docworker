@@ -61,9 +61,9 @@
         "Stocare temporară: Documentele sunt stocate doar temporar pe durata procesării (maximum 24 de ore)",
         "Ștergere automată: După finalizarea traducerii, toate datele sunt șterse automat și complet",
         "Fără stocare permanentă: Nu există stocare permanentă a documentelor sau traducerilor",
-        "Fără partajare: Nu se partajează date cu terți (cu excepția furnizorului AI OVH pentru traducere, unde sunt transmise doar texte curățate de PII)",
+        "Fără partajare: Nu se partajează date cu terți (cu excepția Mistral AI (Franța) pentru OCR și traducere, și Hetzner (Germania) pentru eliminarea datelor personale. Doar textele curățate de date personale sunt transmise pentru traducere)",
         "Transmisie criptată: Toate datele sunt transmise criptat prin HTTPS/TLS",
-        "Criptare în repaus: Conturile de administrator (nu pentru utilizatorii finali) folosesc stocare criptată pentru adresele de email și numele. Criptarea conținutului documentelor este planificată (a se vedea foaia de parcurs tehnică).",
+        "Criptare în repaus: Toate documentele încărcate sunt criptate cu AES-128 (Fernet) și stocate în baza de date. Conturile de administrator folosesc în plus stocare criptată pentru adresele de email și numele.",
         "Fără cookie-uri: Serviciul nostru nu folosește cookie-uri și nu stochează date de urmărire. Acest lucru este comunicat transparent prin bannerul fără cookie-uri de pe site."
       ]
     },
@@ -104,11 +104,24 @@
       "title": "7. Terți și procesarea datelor",
       "intro": "Folosim următorii furnizori terți pentru a livra serviciul nostru:",
       "items": [
-        "OVH Cloud (UE): Pentru traducere alimentată de AI. Doar textele curățate de PII sunt transmise către OVH. Procesarea datelor are loc exclusiv în UE.",
-        "Railway (UE): Pentru găzduirea aplicației și a bazei de date. Railway este certificat SOC 2 Type I și oferă Acorduri de Procesare a Datelor conforme cu GDPR.",
-        "PostgreSQL: Ca sistem de baze de date. Baza de date este găzduită în UE."
+        "Mistral AI (Franța/UE): Pentru recunoașterea textului (OCR) și traducere alimentată de AI. Doar textele curățate de date personale sunt transmise către Mistral AI pentru traducere. Procesarea datelor are loc în Franța în cadrul UE. Notă: În timpul procesării OCR, documentul neprocesat este transmis către Mistral AI înainte ca eliminarea datelor personale să poată avea loc.",
+        "Hetzner (Germania/UE): Pentru eliminarea datelor personale și ca serviciu OCR de rezervă (PaddleOCR). Serverele sunt situate în Germania.",
+        "Railway (UE): Pentru găzduirea aplicației și a bazei de date PostgreSQL criptate. Railway este certificat SOC 2 Type I și oferă Acorduri de Procesare a Datelor conforme cu GDPR."
       ],
-      "note": "Toată procesarea datelor are loc exclusiv în UE. Nu au loc transferuri internaționale de date."
+      "note": "Toată procesarea datelor are loc exclusiv în UE (Franța și Germania). Nu au loc transferuri internaționale de date."
+    },
+    "section7a": {
+      "title": "7a. Notificare importantă privind eliminarea datelor personale",
+      "intro": "Vă rugăm să rețineți următoarele informații importante privind eliminarea automată a informațiilor de identificare personală (PII):",
+      "warning": "NICIO GARANȚIE PENTRU ELIMINAREA COMPLETĂ A PII",
+      "items": [
+        "Eliminarea automată a informațiilor personale este un proces bazat pe cel mai bun efort. NU putem garanta că toate datele personale vor fi detectate și eliminate 100%.",
+        "În ciuda tehnologiilor avansate (spaCy NER, Microsoft Presidio, potrivirea modelelor regex), formatele de nume neobișnuite, notele scrise de mână sau structurile de documente atipice pot face ca unele date personale să rămână nedetectate.",
+        "IMPORTANT: În timpul procesării OCR, documentul dvs. este mai întâi transmis către Mistral AI (Franța) ÎNAINTE ca eliminarea PII să poată avea loc. Datele personale sunt eliminate doar după recunoașterea textului.",
+        "Înainte de încărcare, vă recomandăm insistent să redactați sau să eliminați manual datele personale evidente, cum ar fi numele, adresele, datele de naștere și numerele de asigurare.",
+        "Termenii medicali, diagnosticele și constatările NU sunt eliminate în mod deliberat deoarece sunt necesare pentru traducere."
+      ],
+      "consent": "Prin încărcarea documentelor și acceptarea politicii de confidențialitate, confirmați că ați înțeles această notificare și acceptați că eliminarea PII nu poate fi garantată 100%."
     },
     "lastUpdated": "Ultima actualizare:"
   },

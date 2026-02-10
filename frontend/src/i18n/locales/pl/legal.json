@@ -61,9 +61,9 @@
         "Tymczasowe przechowywanie: Dokumenty są przechowywane tylko tymczasowo na czas przetwarzania (maksymalnie 24 godziny)",
         "Automatyczne usuwanie: Po zakończeniu tłumaczenia wszystkie dane są automatycznie i całkowicie usuwane",
         "Brak trwałego przechowywania: Nie ma trwałego przechowywania dokumentów ani tłumaczeń",
-        "Brak udostępniania: Brak udostępniania danych osobom trzecim (z wyjątkiem dostawcy AI OVH do tłumaczenia, gdzie przesyłane są tylko teksty oczyszczone z danych osobowych)",
+        "Brak udostępniania: Brak udostępniania danych osobom trzecim (z wyjątkiem Mistral AI (Francja) dla OCR i tłumaczenia oraz Hetzner (Niemcy) dla usuwania danych osobowych. Do tłumaczenia przesyłane są tylko teksty oczyszczone z danych osobowych)",
         "Szyfrowana transmisja: Wszystkie dane są przesyłane w formie zaszyfrowanej przez HTTPS/TLS",
-        "Szyfrowanie w spoczynku: Konta administratorów (nie dla użytkowników końcowych) używają zaszyfrowanego przechowywania adresów e-mail i nazwisk. Szyfrowanie zawartości dokumentów jest planowane (patrz plan techniczny).",
+        "Szyfrowanie w spoczynku: Wszystkie przesłane dokumenty są szyfrowane za pomocą AES-128 (Fernet) i przechowywane w bazie danych. Konta administratorów dodatkowo używają zaszyfrowanego przechowywania adresów e-mail i nazwisk.",
         "Brak plików cookie: Nasza usługa nie używa plików cookie i nie przechowuje żadnych danych śledzących. Jest to transparentnie komunikowane poprzez baner informujący o braku plików cookie na stronie."
       ]
     },
@@ -104,11 +104,24 @@
       "title": "7. Podmioty trzecie i przetwarzanie danych",
       "intro": "Korzystamy z następujących zewnętrznych dostawców w celu świadczenia naszej usługi:",
       "items": [
-        "OVH Cloud (UE): Do tłumaczenia opartego na AI. Do OVH przesyłane są tylko teksty oczyszczone z danych osobowych. Przetwarzanie danych odbywa się wyłącznie w UE.",
-        "Railway (UE): Do hostingu aplikacji i bazy danych. Railway posiada certyfikat SOC 2 Type I i oferuje Umowy o Przetwarzaniu Danych zgodne z RODO.",
-        "PostgreSQL: Jako system bazy danych. Baza danych jest hostowana w UE."
+        "Mistral AI (Francja/UE): Do rozpoznawania tekstu (OCR) i tłumaczenia opartego na AI. Do Mistral AI przesyłane są tylko teksty oczyszczone z danych osobowych w celu tłumaczenia. Przetwarzanie danych odbywa się we Francji w ramach UE. Uwaga: Podczas przetwarzania OCR nieprzetworzony dokument jest przesyłany do Mistral AI zanim może nastąpić usunięcie danych osobowych.",
+        "Hetzner (Niemcy/UE): Do usuwania danych osobowych i jako zapasowa usługa OCR (PaddleOCR). Serwery znajdują się w Niemczech.",
+        "Railway (UE): Do hostingu aplikacji i zaszyfrowanej bazy danych PostgreSQL. Railway posiada certyfikat SOC 2 Type I i oferuje Umowy o Przetwarzaniu Danych zgodne z RODO."
       ],
-      "note": "Całe przetwarzanie danych odbywa się wyłącznie na terenie UE. Nie ma międzynarodowych transferów danych."
+      "note": "Całe przetwarzanie danych odbywa się wyłącznie na terenie UE (Francja i Niemcy). Nie ma międzynarodowych transferów danych."
+    },
+    "section7a": {
+      "title": "7a. Ważna informacja dotycząca usuwania danych osobowych",
+      "intro": "Proszę zapoznać się z następującą ważną informacją dotyczącą automatycznego usuwania danych osobowych (PII):",
+      "warning": "BRAK GWARANCJI CAŁKOWITEGO USUNIĘCIA PII",
+      "items": [
+        "Automatyczne usuwanie danych osobowych jest procesem opartym na najlepszych staraniach. NIE możemy zagwarantować, że wszystkie dane osobowe zostaną wykryte i usunięte w 100%.",
+        "Pomimo zaawansowanych technologii (spaCy NER, Microsoft Presidio, dopasowywanie wzorców regex), nietypowe formaty nazw, odręczne notatki lub nietypowe struktury dokumentów mogą spowodować, że niektóre dane osobowe pozostaną niewykryte.",
+        "WAŻNE: Podczas przetwarzania OCR Twój dokument jest najpierw przesyłany do Mistral AI (Francja) ZANIM może nastąpić usunięcie PII. Dane osobowe są usuwane dopiero po rozpoznaniu tekstu.",
+        "Przed przesłaniem zdecydowanie zalecamy ręczne zaczernenie lub usunięcie oczywistych danych osobowych, takich jak imiona i nazwiska, adresy, daty urodzenia i numery ubezpieczenia.",
+        "Terminy medyczne, diagnozy i wyniki celowo NIE są usuwane, ponieważ są niezbędne do tłumaczenia."
+      ],
+      "consent": "Przesyłając swoje dokumenty i akceptując politykę prywatności, potwierdzasz, że zrozumiałeś tę informację i akceptujesz, że usunięcie PII nie może być zagwarantowane w 100%."
     },
     "lastUpdated": "Ostatnia aktualizacja:"
   },

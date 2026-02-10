@@ -61,9 +61,9 @@
         "Almacenamiento temporal: Los documentos solo se almacenan temporalmente durante el procesamiento (máximo 24 horas)",
         "Eliminación automática: Después de completar la traducción, todos los datos se eliminan automática y completamente",
         "Sin almacenamiento permanente: No hay almacenamiento permanente de documentos o traducciones",
-        "Sin compartir: No se comparten datos con terceros (excepto con el proveedor de IA OVH para la traducción, donde solo se transmiten textos limpiados de datos personales)",
+        "Sin compartir: No se comparten datos con terceros (excepto con Mistral AI (Francia) para OCR y traducción, y Hetzner (Alemania) para la eliminación de datos personales. Solo se transmiten textos limpiados de datos personales para la traducción)",
         "Transmisión cifrada: Todos los datos se transmiten cifrados a través de HTTPS/TLS",
-        "Cifrado en reposo: Las cuentas de administrador (no para usuarios finales) utilizan almacenamiento cifrado para direcciones de correo electrónico y nombres.",
+        "Cifrado en reposo: Todos los documentos subidos se cifran con AES-128 (Fernet) y se almacenan en la base de datos. Las cuentas de administrador utilizan además almacenamiento cifrado para direcciones de correo electrónico y nombres.",
         "Sin cookies: Nuestro servicio no utiliza cookies y no almacena datos de seguimiento."
       ]
     },
@@ -104,11 +104,24 @@
       "title": "7. Terceros y procesamiento de datos",
       "intro": "Utilizamos los siguientes proveedores externos para proporcionar nuestro servicio:",
       "items": [
-        "OVH Cloud (UE): Para traducción impulsada por IA. Solo los textos limpiados de datos personales se transmiten a OVH. El procesamiento de datos tiene lugar exclusivamente en la UE.",
-        "Railway (UE): Para el alojamiento de la aplicación y la base de datos. Railway tiene certificación SOC 2 Tipo I y ofrece acuerdos de procesamiento de datos conformes con el RGPD.",
-        "PostgreSQL: Como sistema de base de datos. La base de datos está alojada en la UE."
+        "Mistral AI (Francia/UE): Para reconocimiento de texto (OCR) y traducción impulsados por IA. Solo los textos limpiados de datos personales se transmiten a Mistral AI para la traducción. El procesamiento de datos tiene lugar en Francia dentro de la UE. Nota: Durante el procesamiento OCR, el documento sin procesar se transmite a Mistral AI antes de que pueda realizarse la eliminación de datos personales.",
+        "Hetzner (Alemania/UE): Para la eliminación de datos personales y como servicio OCR de respaldo (PaddleOCR). Los servidores están ubicados en Alemania.",
+        "Railway (UE): Para el alojamiento de la aplicación y la base de datos PostgreSQL cifrada. Railway tiene certificación SOC 2 Tipo I y ofrece acuerdos de procesamiento de datos conformes con el RGPD."
       ],
-      "note": "Todo el procesamiento de datos tiene lugar exclusivamente dentro de la UE. No se realizan transferencias internacionales de datos."
+      "note": "Todo el procesamiento de datos tiene lugar exclusivamente dentro de la UE (Francia y Alemania). No se realizan transferencias internacionales de datos."
+    },
+    "section7a": {
+      "title": "7a. Aviso importante sobre la eliminación de datos personales",
+      "intro": "Por favor, tenga en cuenta la siguiente información importante sobre la eliminación automática de información de identificación personal (PII):",
+      "warning": "SIN GARANTÍA DE ELIMINACIÓN COMPLETA DE PII",
+      "items": [
+        "La eliminación automática de información personal es un proceso de mejor esfuerzo. NO podemos garantizar que todos los datos personales sean detectados y eliminados al 100%.",
+        "A pesar de las tecnologías avanzadas (spaCy NER, Microsoft Presidio, coincidencia de patrones regex), formatos de nombres inusuales, notas manuscritas o estructuras de documentos atípicas pueden hacer que algunos datos personales pasen desapercibidos.",
+        "IMPORTANTE: Durante el procesamiento OCR, su documento se transmite primero a Mistral AI (Francia) ANTES de que pueda realizarse la eliminación de PII. Los datos personales solo se eliminan después del reconocimiento de texto.",
+        "Antes de subir, recomendamos encarecidamente tachar o eliminar manualmente los datos personales obvios como nombres, direcciones, fechas de nacimiento y números de seguro.",
+        "Los términos médicos, diagnósticos y hallazgos deliberadamente NO se eliminan ya que son necesarios para la traducción."
+      ],
+      "consent": "Al subir sus documentos y aceptar la política de privacidad, confirma que ha entendido este aviso y acepta que la eliminación de PII no puede garantizarse al 100%."
     },
     "lastUpdated": "Última actualización:"
   },

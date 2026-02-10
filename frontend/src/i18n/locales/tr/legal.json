@@ -61,9 +61,9 @@
         "Geçici depolama: Belgeler yalnızca işleme süresince geçici olarak saklanır (maksimum 24 saat)",
         "Otomatik silme: Çeviri tamamlandıktan sonra tüm veriler otomatik ve tamamen silinir",
         "Kalıcı depolama yok: Belgelerin veya çevirilerin kalıcı olarak saklanması yoktur",
-        "Paylaşım yok: Üçüncü taraflarla veri paylaşımı yoktur (çeviri için yapay zeka sağlayıcısı OVH hariç, yalnızca kişisel verilerden temizlenmiş metinler iletilir)",
+        "Paylaşım yok: Üçüncü taraflarla veri paylaşımı yoktur (OCR ve çeviri için Mistral AI (Fransa) ve kişisel verilerin kaldırılması için Hetzner (Almanya) hariç. Çeviri için yalnızca kişisel verilerden temizlenmiş metinler iletilir)",
         "Şifreli iletim: Tüm veriler HTTPS/TLS üzerinden şifrelenmiş olarak iletilir",
-        "Durağan şifreleme: Yönetici hesapları (son kullanıcılar için değil) e-posta adresleri ve isimler için şifreli depolama kullanır.",
+        "Durağan şifreleme: Yüklenen tüm belgeler AES-128 (Fernet) ile şifrelenir ve veritabanında saklanır. Yönetici hesapları ayrıca e-posta adresleri ve isimler için şifreli depolama kullanır.",
         "Çerez yok: Hizmetimiz çerez kullanmaz ve izleme verisi saklamaz."
       ]
     },
@@ -104,11 +104,24 @@
       "title": "7. Üçüncü Taraflar ve Veri İşleme",
       "intro": "Hizmetimizi sunmak için aşağıdaki üçüncü taraf sağlayıcıları kullanıyoruz:",
       "items": [
-        "OVH Cloud (AB): Yapay zeka destekli çeviri için. Yalnızca kişisel verilerden temizlenmiş metinler OVH'ye iletilir. Veri işleme yalnızca AB içinde gerçekleşir.",
-        "Railway (AB): Uygulama ve veritabanı barındırma için. Railway SOC 2 Tip I sertifikalıdır ve GDPR uyumlu veri işleme sözleşmeleri sunar.",
-        "PostgreSQL: Veritabanı sistemi olarak. Veritabanı AB'de barındırılmaktadır."
+        "Mistral AI (Fransa/AB): Yapay zeka destekli metin tanıma (OCR) ve çeviri için. Çeviri için yalnızca kişisel verilerden temizlenmiş metinler Mistral AI'ya iletilir. Veri işleme Fransa'da AB içinde gerçekleşir. Not: OCR işleme sırasında, işlenmemiş belge kişisel verilerin kaldırılması gerçekleşmeden önce Mistral AI'ya iletilir.",
+        "Hetzner (Almanya/AB): Kişisel verilerin kaldırılması ve yedek OCR hizmeti (PaddleOCR) olarak. Sunucular Almanya'da bulunmaktadır.",
+        "Railway (AB): Uygulama ve şifreli PostgreSQL veritabanı barındırma için. Railway SOC 2 Tip I sertifikalıdır ve GDPR uyumlu veri işleme sözleşmeleri sunar."
       ],
-      "note": "Tüm veri işleme yalnızca AB içinde gerçekleşir. Uluslararası veri transferi yapılmaz."
+      "note": "Tüm veri işleme yalnızca AB içinde (Fransa ve Almanya) gerçekleşir. Uluslararası veri transferi yapılmaz."
+    },
+    "section7a": {
+      "title": "7a. Kişisel Verilerin Kaldırılması Hakkında Önemli Uyarı",
+      "intro": "Lütfen kişisel tanımlama bilgilerinin (PII) otomatik olarak kaldırılmasıyla ilgili aşağıdaki önemli bilgileri dikkate alın:",
+      "warning": "TAM PII KALDIRMA GARANTİSİ YOKTUR",
+      "items": [
+        "Kişisel bilgilerin otomatik olarak kaldırılması, en iyi çaba sürecidir. Tüm kişisel verilerin %100 tespit edilip kaldırılacağını GARANTİ EDEMEYİZ.",
+        "Gelişmiş teknolojilere (spaCy NER, Microsoft Presidio, regex desen eşleştirme) rağmen, olağandışı isim formatları, el yazısı notlar veya atipik belge yapıları bazı kişisel verilerin tespit edilmeden kalmasına neden olabilir.",
+        "ÖNEMLİ: OCR işleme sırasında belgeniz önce Mistral AI'ya (Fransa) iletilir, PII kaldırma işlemi DAHA SONRA gerçekleşebilir. Kişisel veriler yalnızca metin tanıma işleminden sonra kaldırılır.",
+        "Yüklemeden önce, isimler, adresler, doğum tarihleri ve sigorta numaraları gibi açık kişisel verileri manuel olarak karartmanızı veya kaldırmanızı şiddetle tavsiye ediyoruz.",
+        "Tıbbi terimler, teşhisler ve bulgular çeviri için gerekli olduklarından kasıtlı olarak KALDIRILMAZ."
+      ],
+      "consent": "Belgelerinizi yükleyerek ve gizlilik politikasını kabul ederek, bu uyarıyı anladığınızı ve PII kaldırmanın %100 garanti edilemeyeceğini kabul ettiğinizi onaylıyorsunuz."
     },
     "lastUpdated": "Son güncelleme:"
   },
