@@ -166,6 +166,11 @@ const MainApp: React.FC<MainAppProps> = ({
               <HowItWorks />
 
               {/* Feature Cards with shadcn Card */}
+              <div className="text-center mb-8 sm:mb-10">
+                <h2 className="text-2xl sm:text-3xl font-bold text-primary-900">
+                  {t('features.heading')}
+                </h2>
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
                 <Card className="text-center border-t-2 border-t-brand-500 hover:shadow-medium hover:-translate-y-1 transition-all duration-300">
                   <CardHeader className="pb-2 sm:pb-3">

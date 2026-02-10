@@ -106,9 +106,9 @@ const HowItWorks = () => {
         </div>
       </div>
 
-      {/* Part B: Quality Tiers — professional document-style layout */}
-      <div className="mb-10 sm:mb-14 lg:mb-16">
-        <h3 className="text-xl sm:text-2xl font-bold text-primary-900 mb-6">
+      {/* Part B: Quality Tiers — professional document-style layout, centered */}
+      <div className="mb-10 sm:mb-14 lg:mb-16 max-w-2xl mx-auto">
+        <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-primary-900 mb-6 text-center">
           {t('howItWorks.bestResults.title')}
         </h3>
 

@@ -66,7 +66,7 @@
     "privacyPolicy": "Informativa sulla privacy",
     "privacyConsentAnd": "e i",
     "termsOfUse": "Termini di utilizzo",
-    "privacyConsentSuffix": "e acconsento al trattamento dei miei documenti. Comprendo che i miei dati saranno trattati in conformità con il GDPR e automaticamente eliminati dopo la traduzione.",
+    "privacyConsentSuffix": "e acconsento espressamente al trattamento dei miei documenti medici ai sensi dell'Art. 9(2)(a) del GDPR. I miei dati saranno automaticamente eliminati dopo la traduzione.",
     "startProcessing": "Avvia elaborazione",
     "gdprNotice": "I tuoi dati sono trattati in conformità con il GDPR e non vengono memorizzati",
     "uploadFailed": "Caricamento fallito"
@@ -223,7 +223,7 @@
     "privacyPolicy": "Informativa sulla privacy",
     "consentAnd": "e i",
     "termsOfUse": "Termini di utilizzo",
-    "consentSuffix": "e acconsento che i miei dati vengano utilizzati per migliorare il sistema.",
+    "consentSuffix": "e acconsento che il mio feedback e i contenuti dei documenti associati vengano utilizzati per il miglioramento della qualità.",
     "ratingRequired": "Fornisci una valutazione complessiva.",
     "consentRequired": "Acconsenti all'utilizzo dei dati.",
     "submitError": "Impossibile inviare il feedback.",
