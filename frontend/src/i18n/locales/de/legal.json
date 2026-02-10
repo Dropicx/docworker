@@ -26,7 +26,7 @@
       "responsibleTitle": "Hinweis zur verantwortlichen Stelle",
       "responsibleText": "Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist im Impressum angegeben. Verantwortliche Stelle ist die natürliche oder juristische Person, die allein oder gemeinsam mit anderen über die Zwecke und Mittel der Verarbeitung von personenbezogenen Daten entscheidet.",
       "storageTitle": "Speicherdauer",
-      "storageText": "Hochgeladene Dokumente und deren Übersetzungen werden nur für die Dauer der Verarbeitung temporär gespeichert. Die Standard-Speicherdauer beträgt 24 Stunden nach Abschluss der Verarbeitung (konfigurierbar, kann auf bis zu 0 Stunden reduziert werden). Nach Ablauf dieser Frist werden alle Daten automatisch und vollständig gelöscht:",
+      "storageText": "Hochgeladene Dokumente und deren Übersetzungen werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen. Falls Sie die Seite nicht aktiv verlassen, werden die Daten spätestens nach 1 Stunde automatisch gelöscht. Diese Frist ermöglicht es Ihnen, uns Feedback zu Ihrer Übersetzung zu geben. Folgende Daten werden bereinigt:",
       "storageItems": [
         "Das hochgeladene Originaldokument",
         "Die extrahierten Texte (nach PII-Entfernung)",
@@ -34,7 +34,7 @@
         "Alle Verarbeitungsmetadaten",
         "IP-Adressen (für Sicherheitsprotokollierung)"
       ],
-      "storageNote": "Diese kurze Speicherdauer ermöglicht es Ihnen, Ihre Übersetzung herunterzuladen, während gleichzeitig der Datenschutz maximiert wird. Nach der Löschung sind die Daten nicht mehr wiederherstellbar. Die automatische Löschung erfolgt durch geplante Cleanup-Aufgaben, die stündlich ausgeführt werden.",
+      "storageNote": "Diese sofortige Löschung bei Verlassen der Seite maximiert Ihren Datenschutz. Nach der Löschung sind die Daten nicht mehr wiederherstellbar. Als zusätzliche Sicherheit werden Daten, die nicht durch das Verlassen der Seite gelöscht wurden (z.B. bei Verbindungsabbruch), spätestens nach 1 Stunde automatisch entfernt. Die 1-Stunden-Frist dient dazu, Ihnen Zeit für die optionale Feedbackabgabe zu geben.",
       "sslTitle": "SSL- bzw. TLS-Verschlüsselung",
       "sslText": "Diese Seite nutzt aus Sicherheitsgründen und zum Schutz der Übertragung vertraulicher Inhalte, wie zum Beispiel medizinischer Dokumente, die Sie an uns senden, eine SSL- bzw. TLS-Verschlüsselung. Eine verschlüsselte Verbindung erkennen Sie daran, dass die Adresszeile des Browsers von \"http://\" auf \"https://\" wechselt und an dem Schloss-Symbol in Ihrer Browserzeile."
     },
@@ -56,12 +56,12 @@
         "IP-Adresse"
       ],
       "serverLogsNote": "Eine Zusammenführung dieser Daten mit anderen Datenquellen wird nicht vorgenommen.",
-      "serverLogsLegalBasis": "Die Verarbeitung von Server-Logdaten (IP-Adressen, Browserinformationen) erfolgt auf Grundlage unseres berechtigten Interesses an der Sicherheit und Stabilität unserer Dienste gemäß Art. 6 Abs. 1 lit. f DSGVO. Die Logdaten werden nach maximal 24 Stunden automatisch gelöscht.",
+      "serverLogsLegalBasis": "Die Verarbeitung von Server-Logdaten (IP-Adressen, Browserinformationen) erfolgt auf Grundlage unseres berechtigten Interesses an der Sicherheit und Stabilität unserer Dienste gemäß Art. 6 Abs. 1 lit. f DSGVO. Die Logdaten werden nach maximal 1 Stunde automatisch gelöscht.",
       "medicalTitle": "Verarbeitung medizinischer Dokumente",
       "medicalText": "Bei der Nutzung unseres Übersetzungsdienstes für medizinische Dokumente gelten folgende Datenschutzmaßnahmen:",
       "medicalItems": [
         "Automatische PII-Entfernung: Vor der Verarbeitung durch KI-Systeme werden personenbezogene Informationen (Namen, Adressen, Telefonnummern, Geburtsdaten, Versicherungsnummern) automatisch aus den Dokumenten entfernt. Dies erfolgt lokal auf unseren Servern mit Hilfe von spaCy NER (Natural Entity Recognition) und speziellen Mustern für deutsche medizinische Dokumente.",
-        "Temporäre Speicherung: Dokumente werden nur für die Dauer der Verarbeitung (maximal 24 Stunden) temporär gespeichert",
+        "Temporäre Speicherung: Dokumente werden nur für die Dauer der Verarbeitung (maximal 1 Stunde) temporär gespeichert, um Ihnen Zeit für die Feedbackabgabe zu geben",
         "Automatische Löschung: Nach Abschluss der Übersetzung werden alle Daten automatisch und vollständig gelöscht",
         "Keine dauerhafte Speicherung: Es erfolgt keine dauerhafte Speicherung von Dokumenten oder Übersetzungen",
         "Keine Weitergabe: Keine Weitergabe der Daten an Dritte (außer an Mistral AI (Frankreich) für OCR und Übersetzung sowie Hetzner (Deutschland) für die PII-Entfernung. Für die Übersetzung werden nur PII-bereinigte Texte übertragen)",
@@ -76,7 +76,7 @@
       "accessTitle": "Auskunftsrecht",
       "accessText": "Da wir keine personenbezogenen Daten von Endnutzern speichern und die Verarbeitung anonym erfolgt, können wir keine Auskunft über gespeicherte Daten erteilen, da keine solchen Daten existieren. Falls Sie Fragen zum Thema Datenschutz haben, können Sie sich jederzeit an uns wenden (siehe Kontakt im Impressum).",
       "deletionTitle": "Recht auf Löschung",
-      "deletionText": "Ihre hochgeladenen Dokumente werden automatisch nach 24 Stunden (oder früher) gelöscht. Es ist keine manuelle Löschung erforderlich, da die Löschung automatisch erfolgt. Falls Sie eine sofortige Löschung wünschen, können Sie sich an uns wenden.",
+      "deletionText": "Ihre hochgeladenen Dokumente werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen. Es ist keine manuelle Löschung erforderlich. Sollten Sie Feedback mit Einwilligung abgegeben haben, können Sie die Löschung Ihrer Daten jederzeit durch Kontaktaufnahme mit uns anfordern.",
       "restrictionTitle": "Recht auf Einschränkung der Verarbeitung",
       "restrictionText": "Sie können jederzeit die Verarbeitung Ihrer Dokumente abbrechen, indem Sie den Verarbeitungsprozess beenden, bevor die Übersetzung abgeschlossen ist. In diesem Fall werden die Daten sofort gelöscht.",
       "portabilityTitle": "Recht auf Datenübertragbarkeit",
@@ -95,7 +95,7 @@
         "Die Verarbeitung erfolgt vollständig anonym - es werden keine personenbezogenen Daten von Endnutzern gespeichert",
         "Vor der KI-Verarbeitung werden alle personenbezogenen Informationen (Namen, Adressen, Telefonnummern, etc.) automatisch entfernt",
         "Es werden besondere technische und organisatorische Maßnahmen zum Schutz dieser Daten getroffen (Verschlüsselung, kurze Speicherdauer, automatische Löschung)",
-        "Alle Daten werden nach maximal 24 Stunden automatisch und vollständig gelöscht"
+        "Alle Daten werden beim Verlassen der Ergebnisseite automatisch gelöscht (spätestens nach 1 Stunde als Sicherheitsfallback für die Feedbackabgabe)"
       ]
     },
     "section6": {
@@ -154,7 +154,7 @@
       "consentTitle": "Einwilligung zur Qualitätsverbesserung",
       "consentText": "Die Abgabe von Feedback erfordert Ihre ausdrückliche Einwilligung zur Speicherung Ihrer Übersetzungsdaten für Qualitätsverbesserungszwecke. Ohne diese Einwilligung kann kein Feedback abgegeben werden.",
       "retentionTitle": "Speicherdauer",
-      "retentionWithConsent": "Ihr Feedback und die zugehörigen Übersetzungsdaten werden für maximal 90 Tage für die Analyse und Verbesserung unseres Dienstes gespeichert. Nach Ablauf dieser Frist werden die Daten automatisch gelöscht. Sie können diese Einwilligung jederzeit widerrufen.",
+      "retentionWithConsent": "Ausnahme bei Feedback: Wenn Sie Feedback mit Einwilligung zur Qualitätsverbesserung abgeben, werden Ihr Feedback und die zugehörigen Übersetzungsdaten für maximal 90 Tage gespeichert. Ohne Feedbackabgabe werden Ihre Daten sofort beim Verlassen der Ergebnisseite gelöscht. Sie können Ihre Einwilligung jederzeit widerrufen, woraufhin die Daten umgehend gelöscht werden.",
       "legalBasis": "Die Verarbeitung Ihrer Feedbackdaten erfolgt auf Grundlage Ihrer Einwilligung gemäß Art. 6 Abs. 1 lit. a DSGVO. Bei der optionalen Qualitätsverbesserung erfolgt die Verarbeitung ebenfalls auf Grundlage Ihrer ausdrücklichen Einwilligung.",
       "note": "Bitte beachten Sie: In Ihrem Kommentar sollten Sie keine personenbezogenen Daten (Namen, Adressen, Versicherungsnummern etc.) angeben. Solche Daten werden nicht automatisch entfernt und werden zusammen mit Ihrem Feedback gespeichert."
     },

@@ -12,7 +12,7 @@ and database pipeline jobs. Supports regular cleanup + emergency procedures.
 **Retention Policies**:
     - Temp Files: 1 hour (immediate processing completion)
     - Memory Store: 30 minutes (active processing window)
-    - Database Jobs: 24 hours (configurable via DB_RETENTION_HOURS env var)
+    - Database Jobs: 1 hour (configurable via DB_RETENTION_HOURS env var)
 
 **Security Features**:
     - Secure temp file creation with 0o600 permissions (owner-only)
@@ -29,7 +29,7 @@ and database pipeline jobs. Supports regular cleanup + emergency procedures.
 Module-level Constants:
     processing_store (dict): Global in-memory store for active processing jobs
     MAX_DATA_AGE (timedelta): Memory store retention (30 minutes)
-    DB_RETENTION_HOURS (int): Database job retention from env (default 24h)
+    DB_RETENTION_HOURS (int): Database job retention from env (default 1h)
 """
 
 from datetime import datetime, timedelta
@@ -48,8 +48,8 @@ processing_store: dict[str, dict[str, Any]] = {}
 # Maximale Lebenszeit für temporäre Daten (30 Minuten)
 MAX_DATA_AGE = timedelta(minutes=30)
 
-# Database retention period (24 hours for development, configurable via env)
-DB_RETENTION_HOURS = int(os.getenv("DB_RETENTION_HOURS", "24"))
+# Database retention period (1 hour fallback for feedback window, configurable via env)
+DB_RETENTION_HOURS = int(os.getenv("DB_RETENTION_HOURS", "1"))
 
 # Maximum retention for consented data (90 days)
 CONSENT_RETENTION_DAYS = int(os.getenv("CONSENT_RETENTION_DAYS", "90"))
