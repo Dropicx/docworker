@@ -397,9 +397,9 @@
     "lastUpdated": "Stand:"
   },
   "nutzungsbedingungen": {
-    "pageTitle": "Allgemeine Nutzungsbedingungen",
+    "pageTitle": "Allgemeine Geschäfts- und Nutzungsbedingungen",
     "websiteName": "healthlingo.de",
-    "intro": "Willkommen bei healthlingo.de. Die nachfolgenden Allgemeinen Nutzungsbedingungen (\"AGB\") regeln die Nutzung unseres KI-gestützten Übersetzungsdienstes für medizinische Dokumente. Bitte lesen Sie diese Bedingungen sorgfältig durch, bevor Sie unseren Dienst nutzen.",
+    "medicalDisclaimer": "Bitte beachten Sie: Im Rahmen dieses Dienstes werden keine medizinischen oder psychotherapeutischen Diagnosen gestellt oder überprüft und keine Therapieempfehlungen gegeben. Unser Dienst ersetzt nicht die ärztliche Aufklärung und Beratung. Wenden Sie sich mit konkreten Fragen zu einem Befund, einer Erkrankung oder Therapie stets an einen entsprechend qualifizierten Arzt oder eine qualifizierte Ärztin.",
     "tableOfContents": {
       "title": "Inhaltsverzeichnis",
       "items": [
@@ -408,34 +408,45 @@
         "§ 3 Vertragsschluss",
         "§ 4 Leistungsbeschreibung",
         "§ 5 Nutzungsvoraussetzungen",
-        "§ 6 Pflichten des Nutzers",
-        "§ 7 Verbotene Nutzung",
-        "§ 8 Medizinischer Haftungsausschluss",
-        "§ 9 Hinweis zur PII-Entfernung",
-        "§ 10 Geistiges Eigentum und Urheberrecht",
-        "§ 11 Verfügbarkeit und technische Anforderungen",
-        "§ 12 Haftungsbeschränkung",
-        "§ 13 Freistellung",
-        "§ 14 Datenschutz",
-        "§ 15 Vertragsbeendigung",
-        "§ 16 Änderungen der Nutzungsbedingungen",
-        "§ 17 Anwendbares Recht und Gerichtsstand",
-        "§ 18 Außergerichtliche Streitbeilegung",
-        "§ 19 Salvatorische Klausel",
-        "§ 20 Kontakt"
+        "§ 6 Nutzungsrechte",
+        "§ 7 Pflichten des Nutzers",
+        "§ 8 Verbotene Nutzung",
+        "§ 9 Medizinischer Haftungsausschluss",
+        "§ 10 Hinweis zur PII-Entfernung",
+        "§ 11 Geistiges Eigentum und Urheberrecht",
+        "§ 12 Verfügbarkeit und technische Anforderungen",
+        "§ 13 Sachmängelgewährleistung",
+        "§ 14 Haftungsbeschränkung",
+        "§ 15 Freistellung",
+        "§ 16 Datenschutz",
+        "§ 17 Verbraucherwiderrufsrecht",
+        "§ 18 Vertragsbeendigung",
+        "§ 19 Änderungen der Nutzungsbedingungen",
+        "§ 20 Anwendbares Recht und Gerichtsstand",
+        "§ 21 Außergerichtliche Streitbeilegung",
+        "§ 22 Aufrechnung und Zurückbehaltung",
+        "§ 23 Salvatorische Klausel",
+        "§ 24 Kontakt"
       ]
     },
     "section1": {
       "title": "§ 1 Geltungsbereich und Vertragsgegenstand",
-      "p1": "(1) Diese Allgemeinen Nutzungsbedingungen (nachfolgend \"AGB\" oder \"Nutzungsbedingungen\") gelten für die Nutzung des medizinischen Dokumentenübersetzungsdienstes healthlingo.de (nachfolgend \"Dienst\", \"Website\" oder \"Plattform\" genannt).",
-      "p2": "(2) Der Dienst wird betrieben von [Vorname Nachname / Firmenname], [Straße und Hausnummer], [PLZ Ort], Deutschland (nachfolgend \"Anbieter\", \"wir\" oder \"uns\" genannt).",
-      "p3": "(3) Diese AGB regeln das Vertragsverhältnis zwischen dem Anbieter und den Nutzern des Dienstes (nachfolgend \"Nutzer\" oder \"Sie\" genannt) abschließend. Abweichende, entgegenstehende oder ergänzende Bedingungen des Nutzers werden nicht Vertragsbestandteil, es sei denn, der Anbieter stimmt ihrer Geltung ausdrücklich schriftlich zu.",
-      "p4": "(4) Die Nutzung des Dienstes setzt die Anerkennung dieser Nutzungsbedingungen sowie der Datenschutzerklärung voraus. Mit der Nutzung des Dienstes erklären Sie sich mit diesen Bedingungen einverstanden.",
-      "p5": "(5) Diese AGB gelten sowohl für Verbraucher als auch für Unternehmer im Sinne des § 14 BGB, wobei besondere Regelungen für Verbraucher gemäß §§ 312 ff. BGB zu beachten sind."
+      "p1": "(1) Diese Allgemeinen Geschäfts- und Nutzungsbedingungen (nachfolgend \"AGB\") gelten für die Nutzung des medizinischen Dokumentenübersetzungsdienstes healthlingo.de (nachfolgend \"Dienst\", \"Website\" oder \"Plattform\").",
+      "p2": "(2) Der Dienst wird betrieben von:",
+      "providerName": "[Vorname Nachname / Firmenname]",
+      "providerAddress": "[Straße und Hausnummer]",
+      "providerCity": "[PLZ Ort], Deutschland",
+      "providerEmail": "E-Mail: [E-Mail-Adresse]",
+      "providerPhone": "Telefon: [Telefonnummer]",
+      "providerNote": "(nachfolgend \"Anbieter\", \"wir\" oder \"uns\")",
+      "p3": "(3) Diese AGB regeln das Vertragsverhältnis zwischen dem Anbieter und den Nutzern des Dienstes (nachfolgend \"Nutzer\" oder \"Sie\") abschließend. Abweichende, entgegenstehende oder ergänzende Bedingungen des Nutzers werden nicht Vertragsbestandteil, es sei denn, der Anbieter stimmt ihrer Geltung ausdrücklich schriftlich zu.",
+      "p4": "(4) Die Nutzung des Dienstes setzt die Anerkennung dieser AGB sowie die Kenntnisnahme der Datenschutzerklärung und die Erteilung der dort beschriebenen ausdrücklichen Einwilligungen voraus.",
+      "p5": "(5) Diese AGB richten sich ausschließlich an Verbraucher im Sinne des § 13 BGB. Verbraucher ist jede natürliche Person, die ein Rechtsgeschäft zu Zwecken abschließt, die überwiegend weder ihrer gewerblichen noch ihrer selbständigen beruflichen Tätigkeit zugerechnet werden können. Für eine gewerbliche oder berufliche Nutzung des Dienstes bedarf es einer gesonderten schriftlichen Vereinbarung.",
+      "p6": "(6) Zur Nutzung der Leistungen von healthlingo.de sind alle natürlichen Personen ab dem 18. Lebensjahr berechtigt."
     },
     "section2": {
       "title": "§ 2 Begriffsbestimmungen",
-      "intro": "Im Sinne dieser Nutzungsbedingungen gelten folgende Begriffsbestimmungen:",
+      "intro": "Im Sinne dieser AGB gelten folgende Begriffsbestimmungen:",
       "definitions": [
         {
           "term": "Dienst",
@@ -443,7 +454,7 @@
         },
         {
           "term": "Nutzer",
-          "definition": "Jede natürliche Person, die den Dienst zur Übersetzung von Dokumenten nutzt, unabhängig davon, ob es sich um ein eigenes oder ein fremdes Dokument handelt."
+          "definition": "Jede natürliche Person, die den Dienst zur Übersetzung von Dokumenten nutzt, unabhängig davon, ob es sich um ein eigenes oder - bei entsprechender Befugnis - ein fremdes Dokument handelt."
         },
         {
           "term": "Dokument",
@@ -451,7 +462,7 @@
         },
         {
           "term": "Übersetzung",
-          "definition": "Das vom Dienst erzeugte Ergebnis der KI-gestützten Verarbeitung eines hochgeladenen Dokuments."
+          "definition": "Das vom Dienst erzeugte Ergebnis der KI-gestützten Verarbeitung eines hochgeladenen Dokuments. Die Übersetzung stellt ein digitales Produkt im Sinne der §§ 327 ff. BGB dar."
         },
         {
           "term": "KI / Künstliche Intelligenz",
@@ -463,31 +474,27 @@
         },
         {
           "term": "Gesundheitsdaten",
-          "definition": "Personenbezogene Daten gemäß Art. 4 Nr. 15 DSGVO, die sich auf die körperliche oder geistige Gesundheit einer natürlichen Person beziehen."
-        },
-        {
-          "term": "Verbraucher",
-          "definition": "Jede natürliche Person, die ein Rechtsgeschäft zu Zwecken abschließt, die überwiegend weder ihrer gewerblichen noch ihrer selbständigen beruflichen Tätigkeit zugerechnet werden können (§ 13 BGB)."
-        },
-        {
-          "term": "Unternehmer",
-          "definition": "Eine natürliche oder juristische Person oder eine rechtsfähige Personengesellschaft, die bei Abschluss eines Rechtsgeschäfts in Ausübung ihrer gewerblichen oder selbständigen beruflichen Tätigkeit handelt (§ 14 BGB)."
+          "definition": "Personenbezogene Daten gemäß Art. 4 Nr. 15 DSGVO, die sich auf die körperliche oder geistige Gesundheit einer natürlichen Person beziehen und aus denen Informationen über deren Gesundheitszustand hervorgehen."
         }
       ]
     },
     "section3": {
       "title": "§ 3 Vertragsschluss",
-      "p1": "(1) Der Nutzungsvertrag über die Inanspruchnahme des Dienstes kommt durch die tatsächliche Nutzung des Dienstes zustande, ohne dass es einer ausdrücklichen Annahmeerklärung bedarf. Die Nutzung des Dienstes gilt als konkludente Annahme dieser Nutzungsbedingungen.",
-      "p2": "(2) Der Vertrag über digitale Inhalte gemäß §§ 327 ff. BGB kommt zustande, sobald der Nutzer ein Dokument hochlädt und damit die Verarbeitung initiiert. Der Anbieter stellt die digitalen Inhalte (Übersetzung) unentgeltlich bereit.",
-      "p3": "(3) Die Nutzung des Dienstes erfordert die Erteilung einer ausdrücklichen Einwilligung zur Verarbeitung von Gesundheitsdaten gemäß Art. 9 Abs. 2 lit. a DSGVO. Diese Einwilligung ist Voraussetzung für den Vertragsschluss. Ohne diese Einwilligung kann der Dienst nicht genutzt werden.",
-      "p4": "(4) Der Nutzer versichert mit der Nutzung des Dienstes, dass er das 18. Lebensjahr vollendet hat oder mit Zustimmung eines Erziehungsberechtigten handelt.",
-      "p5": "(5) Die Vertragssprache ist Deutsch. Der Vertragstext wird vom Anbieter nicht gespeichert und ist nach Vertragsschluss nicht mehr abrufbar. Diese Nutzungsbedingungen können jedoch jederzeit auf der Website eingesehen werden."
+      "p1": "(1) Die Darstellung des Dienstes auf der Website stellt kein verbindliches Angebot zum Vertragsschluss dar, sondern eine unverbindliche Aufforderung an den Nutzer, den Dienst in Anspruch zu nehmen.",
+      "p2": "(2) Der Vertrag über die Bereitstellung digitaler Inhalte gemäß §§ 327 ff. BGB kommt wie folgt zustande:",
+      "contractSteps": [
+        "a) Der Nutzer lädt ein Dokument hoch und erteilt seine ausdrückliche Einwilligung zur Verarbeitung von Gesundheitsdaten gemäß Art. 9 Abs. 2 lit. a DSGVO durch Setzen der entsprechenden Checkbox (Einwilligung 1 der Datenschutzerklärung). Dies stellt das Angebot des Nutzers zum Vertragsschluss dar.",
+        "b) Der Anbieter nimmt das Angebot durch Beginn der Verarbeitung des Dokuments an."
+      ],
+      "p3": "(3) Die Erteilung der ausdrücklichen Einwilligung zur Verarbeitung von Gesundheitsdaten (Einwilligung 1 gemäß der Datenschutzerklärung) ist zwingende Voraussetzung für den Vertragsschluss. Ohne diese Einwilligung kann der Dienst nicht genutzt werden.",
+      "p4": "(4) Der Nutzer versichert mit der Nutzung des Dienstes, dass er das 18. Lebensjahr vollendet hat.",
+      "p5": "(5) Die Vertragssprache ist Deutsch. Der Vertragstext wird vom Anbieter nicht gespeichert und ist nach Vertragsschluss nicht mehr abrufbar. Diese AGB können jedoch jederzeit auf der Website eingesehen und ausgedruckt werden."
     },
     "section4": {
       "title": "§ 4 Leistungsbeschreibung",
-      "intro": "Der Dienst umfasst folgende Leistungen:",
       "subsection1": {
-        "title": "4.1 Kernfunktionen",
+        "title": "4.1 Vertragsgegenstand und Kernfunktionen",
+        "intro": "healthlingo.de ist ein Onlinedienst, der es Ihnen ermöglicht, medizinische Dokumente in eine verständliche Sprache übersetzen zu lassen. Das Ziel ist es, Sie als informierten Patienten in die Lage zu versetzen, die Ihnen in einem medizinischen Dokument mitgeteilten Informationen zu verstehen. Der Dienst umfasst:",
         "items": [
           "Automatische Texterkennung (OCR) für hochgeladene Dokumente mittels KI",
           "Übersetzung medizinischer Fachsprache in patientenfreundliche, verständliche Sprache (Deutsch)",
@@ -495,270 +502,300 @@
           "Automatische Entfernung personenbezogener Daten (PII-Entfernung) vor der KI-Verarbeitung",
           "Medizinische Validierung und Faktenprüfung der Übersetzungen",
           "Download der Übersetzungsergebnisse"
-        ]
+        ],
+        "note": "Der Service ist technisch so programmiert, dass die Übersetzung der Dokumente vollautomatisch funktioniert. Die Informationen aus dem Originaldokument werden dabei nicht medizinisch bewertet, interpretiert oder ergänzt, sondern ausschließlich maschinell übersetzt."
       },
       "subsection2": {
-        "title": "4.2 Unterstützte Dokumenttypen",
-        "items": [
-          "Arztbriefe und Entlassungsbriefe",
-          "Befundberichte und radiologische Befunde",
-          "Laborwerte und Blutuntersuchungen",
-          "Sonstige medizinische Dokumente"
-        ]
+        "title": "4.2 Kein Ersatz der ärztlichen Beratung",
+        "text": "healthlingo.de stellt lediglich eine den Patienten informierende und unterstützende Leistung dar und kann die ärztliche Beratung in keinem Fall ersetzen. Die Webanwendung stellt keine Diagnosen und trifft keine Therapieentscheidungen."
       },
       "subsection3": {
-        "title": "4.3 Unterstützte Dateiformate",
-        "text": "Der Dienst akzeptiert folgende Dateiformate: PDF, JPEG, JPG, PNG, GIF, BMP, TIFF, WebP. Die maximale Dateigröße beträgt 100 MB pro Dokument."
+        "title": "4.3 Unterstützte Dokumenttypen und Dateiformate",
+        "documentTypes": "Der Dienst unterstützt folgende Dokumenttypen: Arztbriefe und Entlassungsbriefe, Befundberichte und radiologische Befunde, Laborwerte und Blutuntersuchungen sowie sonstige medizinische Dokumente.",
+        "fileFormats": "Akzeptierte Dateiformate: PDF, JPEG, JPG, PNG, GIF, BMP, TIFF, WebP. Die maximale Dateigröße beträgt 100 MB pro Dokument."
       },
       "subsection4": {
         "title": "4.4 Verarbeitungszeit",
-        "text": "Die Verarbeitungszeit hängt von der Dokumentgröße und -komplexität ab. In der Regel erfolgt die Verarbeitung innerhalb weniger Minuten. Bei hoher Auslastung kann die Verarbeitungszeit länger dauern."
+        "text": "Die Verarbeitungszeit hängt von der Dokumentgröße und -komplexität ab. In der Regel erfolgt die Verarbeitung innerhalb weniger Minuten."
       },
       "subsection5": {
         "title": "4.5 Kostenfreiheit",
-        "text": "Der Dienst wird derzeit kostenlos angeboten. Der Anbieter behält sich vor, in Zukunft kostenpflichtige Funktionen einzuführen, wobei bestehende kostenlose Funktionen nicht ohne Vorankündigung eingeschränkt werden."
+        "text": "Der Dienst wird derzeit unentgeltlich angeboten. Der Anbieter behält sich vor, in Zukunft kostenpflichtige Zusatzfunktionen einzuführen."
       },
       "subsection6": {
-        "title": "4.6 Keine Gewährleistung der Übersetzungsqualität",
-        "text": "Der Anbieter gibt keine Gewähr für die Richtigkeit, Vollständigkeit, Aktualität oder Eignung der Übersetzungen für einen bestimmten Zweck. Die Übersetzungen werden \"wie besehen\" (as-is) bereitgestellt. Die KI-generierten Inhalte können Fehler, Ungenauigkeiten oder Auslassungen enthalten."
+        "title": "4.6 Bereitstellung des Ergebnisses",
+        "text": "Indem Ihnen die Übersetzung über die Webanwendung zugänglich gemacht wird, wurde Ihnen das digitale Produkt im Sinne des § 327b Abs. 3 BGB bereitgestellt."
+      },
+      "subsection7": {
+        "title": "4.7 Keine Gewährleistung der Übersetzungsqualität",
+        "text": "Der Anbieter gibt keine Gewähr für die Richtigkeit, Vollständigkeit, Aktualität oder Eignung der Übersetzungen. KI-generierte Inhalte können Fehler enthalten."
+      },
+      "subsection8": {
+        "title": "4.8 Änderung der Leistungen",
+        "text": "Der Anbieter behält sich vor, die Website und die darauf vorgehaltenen Leistungen zu ändern, zu erweitern oder einzustellen."
       }
     },
     "section5": {
       "title": "§ 5 Nutzungsvoraussetzungen",
       "p1": "(1) Die Nutzung des Dienstes setzt einen internetfähigen Computer, ein Smartphone oder ein anderes geeignetes Endgerät mit einem modernen Webbrowser voraus.",
-      "p2": "(2) Empfohlene Browser: Google Chrome (aktuelle Version), Mozilla Firefox (aktuelle Version), Safari (aktuelle Version), Microsoft Edge (aktuelle Version). Die Nutzung mit anderen oder veralteten Browsern kann zu Einschränkungen führen.",
-      "p3": "(3) Für die Nutzung des Dienstes ist eine stabile Internetverbindung erforderlich. Der Anbieter übernimmt keine Verantwortung für Probleme, die durch unzureichende Internetverbindungen entstehen.",
-      "p4": "(4) JavaScript muss im Browser aktiviert sein, um den Dienst nutzen zu können.",
+      "p2": "(2) Empfohlene Browser: Google Chrome, Mozilla Firefox, Safari, Microsoft Edge (jeweils aktuelle Version).",
+      "p3": "(3) Für die Nutzung ist eine stabile Internetverbindung erforderlich.",
+      "p4": "(4) JavaScript muss im Browser aktiviert sein.",
       "p5": "(5) Der Nutzer ist selbst dafür verantwortlich, dass seine technische Ausstattung die Nutzung des Dienstes ermöglicht.",
-      "p6": "(6) Eine Registrierung oder Erstellung eines Benutzerkontos ist nicht erforderlich. Der Dienst kann ohne Anmeldung genutzt werden."
+      "p6": "(6) Eine Registrierung oder Erstellung eines Benutzerkontos ist nicht erforderlich."
     },
     "section6": {
-      "title": "§ 6 Pflichten des Nutzers",
+      "title": "§ 6 Nutzungsrechte",
+      "p1": "(1) Der Nutzer erhält vom Anbieter eine unentgeltliche, einfache (nicht ausschließliche), persönliche, nicht übertragbare, widerrufliche Lizenz zur Nutzung des Dienstes und der Übersetzungsergebnisse für den persönlichen, nicht-kommerziellen Gebrauch.",
+      "p2": "(2) Die kommerzielle Nutzung der Übersetzungsergebnisse bedarf der vorherigen schriftlichen Genehmigung des Anbieters.",
+      "p3": "(3) Informationen, Markennamen, Design und sonstige Inhalte von healthlingo.de dürfen nicht ohne Genehmigung genutzt werden.",
+      "p4": "(4) Verstößt der Nutzer gegen diese Maßgaben, werden sämtliche eingeräumten Rechte sofort unwirksam."
+    },
+    "section7": {
+      "title": "§ 7 Pflichten des Nutzers",
       "intro": "Der Nutzer verpflichtet sich zu folgendem Verhalten:",
       "obligations": [
         {
-          "title": "Rechtmäßige Nutzung",
+          "title": "7.1 Rechtmäßige Nutzung",
           "text": "Der Dienst darf nur für rechtmäßige Zwecke genutzt werden. Der Nutzer stellt sicher, dass er zur Nutzung der hochgeladenen Dokumente berechtigt ist."
         },
         {
-          "title": "Einwilligung von Dritten",
-          "text": "Werden Dokumente hochgeladen, die personenbezogene Daten Dritter enthalten (z.B. Dokumente von Familienangehörigen), muss der Nutzer die Einwilligung dieser Personen zur Verarbeitung eingeholt haben."
+          "title": "7.2 Nur eigene Dokumente",
+          "text": "Der Nutzer darf grundsätzlich nur eigene Dokumente hochladen. Eine Ausnahme besteht bei entsprechender Befugnis (z. B. rechtliche Betreuung, Vorsorgevollmacht)."
         },
         {
-          "title": "Keine Manipulation",
-          "text": "Der Nutzer unterlässt jegliche Versuche, die technische Infrastruktur des Dienstes zu manipulieren, zu überlasten oder in ihrer Funktion zu beeinträchtigen."
+          "title": "7.3 Einwilligung von Dritten",
+          "text": "Werden Dokumente hochgeladen, die personenbezogene Daten Dritter enthalten, muss der Nutzer die Einwilligung dieser Personen eingeholt haben."
         },
         {
-          "title": "Keine automatisierte Nutzung",
-          "text": "Die automatisierte oder systematische Abfrage des Dienstes (z.B. durch Bots, Scraper oder vergleichbare Technologien) ist ohne ausdrückliche schriftliche Genehmigung untersagt."
+          "title": "7.4 Keine Manipulation",
+          "text": "Der Nutzer unterlässt jegliche Versuche, die technische Infrastruktur des Dienstes zu manipulieren oder zu beeinträchtigen."
         },
         {
-          "title": "Eigenverantwortung",
-          "text": "Der Nutzer trägt die volle Verantwortung für alle Handlungen, die unter Nutzung des Dienstes erfolgen, sowie für die Konsequenzen dieser Handlungen."
+          "title": "7.5 Keine automatisierte Nutzung",
+          "text": "Die automatisierte oder systematische Abfrage des Dienstes (z. B. durch Bots) ist ohne Genehmigung untersagt."
         },
         {
-          "title": "Prüfung der Ergebnisse",
+          "title": "7.6 Eigenverantwortung",
+          "text": "Der Nutzer trägt die volle Verantwortung für alle Handlungen unter Nutzung des Dienstes."
+        },
+        {
+          "title": "7.7 Prüfung der Ergebnisse",
           "text": "Der Nutzer ist verpflichtet, die Übersetzungsergebnisse kritisch zu prüfen und bei Unklarheiten professionelle medizinische Beratung einzuholen."
         },
         {
-          "title": "Schwärzung sensibler Daten",
-          "text": "Der Nutzer sollte vor dem Hochladen offensichtliche personenbezogene Daten (Namen, Adressen, Geburtsdaten, Versicherungsnummern) manuell schwärzen oder entfernen, da die automatische PII-Entfernung keine 100%ige Erkennung garantiert."
+          "title": "7.8 Schwärzung sensibler Daten",
+          "text": "Der Nutzer sollte vor dem Hochladen offensichtliche personenbezogene Daten manuell schwärzen (siehe § 10)."
         }
       ]
     },
-    "section7": {
-      "title": "§ 7 Verbotene Nutzung",
+    "section8": {
+      "title": "§ 8 Verbotene Nutzung",
       "intro": "Folgende Nutzungen des Dienstes sind ausdrücklich untersagt:",
       "prohibitions": [
-        "Das Hochladen von Dokumenten, die der Nutzer nicht besitzt oder für deren Verarbeitung er keine Berechtigung hat",
-        "Das Hochladen von Dokumenten mit rechtswidrigen, beleidigenden, diffamierenden, bedrohenden, gewaltverherrlichenden oder anderweitig anstößigen Inhalten",
-        "Das Hochladen von Dokumenten, die gegen Urheberrechte, Markenrechte oder sonstige Schutzrechte Dritter verstoßen",
-        "Das Hochladen von Schadsoftware, Viren, Trojanern oder anderem schädlichen Code",
-        "Versuche, unbefugten Zugang zu Systemen, Netzwerken oder Daten des Anbieters zu erlangen",
-        "Das Reverse Engineering, Dekompilieren oder Disassemblieren des Dienstes oder seiner Komponenten",
-        "Die Nutzung des Dienstes für kommerzielle Zwecke ohne vorherige schriftliche Genehmigung",
-        "Die Weitergabe von Übersetzungsergebnissen an Dritte zu kommerziellen Zwecken",
-        "Die Nutzung des Dienstes zur Generierung von Trainingsdaten für eigene KI-Modelle",
+        "Das Hochladen von Dokumenten, zu deren Verarbeitung der Nutzer nicht berechtigt ist",
+        "Das Hochladen von Dokumenten mit rechtswidrigen, beleidigenden oder anderweitig anstößigen Inhalten",
+        "Das Hochladen von Dokumenten, die gegen Schutzrechte Dritter verstoßen",
+        "Das Hochladen von Schadsoftware oder schädlichem Code",
+        "Versuche, unbefugten Zugang zu Systemen des Anbieters zu erlangen",
+        "Das Reverse Engineering des Dienstes (vorbehaltlich § 69e UrhG)",
+        "Die kommerzielle Nutzung ohne Genehmigung",
+        "Die Nutzung zur Generierung von Trainingsdaten für eigene KI-Modelle",
         "Jegliche Nutzung, die gegen geltendes Recht verstößt"
       ],
-      "consequence": "Bei Verstößen gegen diese Bestimmungen behält sich der Anbieter vor, den Zugang zum Dienst zu sperren und gegebenenfalls rechtliche Schritte einzuleiten."
+      "consequence": "Bei Verstößen behält sich der Anbieter vor, den Zugang zum Dienst zu sperren und rechtliche Schritte einzuleiten."
     },
-    "section8": {
-      "title": "§ 8 Medizinischer Haftungsausschluss",
+    "section9": {
+      "title": "§ 9 Medizinischer Haftungsausschluss",
       "warning": "WICHTIGER HINWEIS: Die bereitgestellten Übersetzungen stellen KEINE medizinische Beratung, Diagnose oder Behandlungsempfehlung dar!",
       "subsection1": {
-        "title": "8.1 Keine medizinische Beratung",
+        "title": "9.1 Keine medizinische Beratung",
         "items": [
-          "Die Übersetzungen werden vollautomatisch durch künstliche Intelligenz erstellt und können Fehler, Ungenauigkeiten, Auslassungen oder Missverständnisse enthalten.",
+          "Die Übersetzungen werden vollautomatisch durch künstliche Intelligenz erstellt und können Fehler enthalten.",
           "Die Übersetzungen dienen ausschließlich der Information und dem besseren Verständnis medizinischer Dokumente.",
-          "Die Übersetzungen ersetzen in keinem Fall die professionelle medizinische Beratung, Diagnose oder Behandlung durch qualifizierte Ärzte oder andere Gesundheitsdienstleister."
+          "Die Übersetzungen ersetzen in keinem Fall die professionelle medizinische Beratung.",
+          "healthlingo.de dient nicht der Diagnose, Verhütung, Überwachung oder Behandlung von Erkrankungen."
         ]
       },
       "subsection2": {
-        "title": "8.2 Verhaltenshinweise",
+        "title": "9.2 Verhaltenshinweise",
         "items": [
-          "Treffen Sie niemals medizinische Entscheidungen ausschließlich auf Grundlage der Übersetzungen dieses Dienstes.",
-          "Konsultieren Sie bei allen medizinischen Fragen, Symptomen oder Beschwerden immer einen qualifizierten Arzt.",
-          "Bei medizinischen Notfällen kontaktieren Sie sofort den Notruf (112) oder begeben Sie sich in die nächste Notaufnahme.",
-          "Brechen Sie niemals eine ärztlich verordnete Behandlung ab oder ändern Sie diese aufgrund von Informationen aus den Übersetzungen."
+          "Treffen Sie niemals medizinische Entscheidungen ausschließlich auf Grundlage der Übersetzungen.",
+          "Konsultieren Sie bei medizinischen Fragen immer einen qualifizierten Arzt.",
+          "Bei medizinischen Notfällen kontaktieren Sie sofort den Notruf (112).",
+          "Brechen Sie niemals eine ärztlich verordnete Behandlung aufgrund der Übersetzungen ab."
         ]
       },
       "subsection3": {
-        "title": "8.3 Keine Arzt-Patient-Beziehung",
-        "text": "Durch die Nutzung des Dienstes wird keine Arzt-Patient-Beziehung begründet. Der Anbieter erbringt keine medizinischen Leistungen und praktiziert keine Heilkunde."
+        "title": "9.3 Keine Arzt-Patient-Beziehung",
+        "text": "Durch die Nutzung des Dienstes wird keine Arzt-Patient-Beziehung begründet. Der Anbieter erbringt keine medizinischen Leistungen."
       },
       "acknowledgment": "Mit der Nutzung des Dienstes bestätigen Sie, dass Sie diesen medizinischen Haftungsausschluss gelesen, verstanden und akzeptiert haben."
     },
-    "section9": {
-      "title": "§ 9 Hinweis zur PII-Entfernung",
-      "warning": "KEINE GARANTIE FÜR VOLLSTÄNDIGE ENTFERNUNG PERSONENBEZOGENER DATEN",
-      "p1": "(1) Der Dienst verwendet fortschrittliche Technologien (spaCy NER, Microsoft Presidio, Regex-Mustererkennung) zur automatischen Erkennung und Entfernung personenbezogener Daten aus hochgeladenen Dokumenten.",
-      "p2": "(2) Trotz dieser Technologien kann keine 100%ige Erkennung und Entfernung aller personenbezogenen Daten garantiert werden. Ungewöhnliche Namensformate, handschriftliche Notizen, atypische Dokumentstrukturen oder seltene Datenformate können dazu führen, dass personenbezogene Daten nicht erkannt werden.",
-      "p3": "(3) Bei der OCR-Verarbeitung (Texterkennung) wird Ihr Dokument zunächst an Mistral AI (Frankreich/EU) übertragen, BEVOR die PII-Entfernung erfolgen kann. Dieser Umstand ist technisch bedingt und wird in der Einwilligungserklärung ausdrücklich erläutert.",
-      "p4": "(4) Medizinische Fachbegriffe, Diagnosen, Befunde und Behandlungsinformationen werden bewusst nicht entfernt, da sie für die Übersetzung erforderlich sind.",
-      "p5": "(5) Mit dem Hochladen eines Dokuments und der Erteilung Ihrer Einwilligung bestätigen Sie, dass Sie diesen Hinweis verstanden haben und das verbleibende Risiko akzeptieren.",
-      "recommendation": "Empfehlung: Schwärzen Sie vor dem Hochladen offensichtliche personenbezogene Daten wie Namen, Adressen, Geburtsdaten und Versicherungsnummern manuell."
-    },
     "section10": {
-      "title": "§ 10 Geistiges Eigentum und Urheberrecht",
-      "subsection1": {
-        "title": "10.1 Rechte des Anbieters",
-        "items": [
-          "Alle Rechte an der Website, dem Dienst und dessen Komponenten, einschließlich Urheberrechte, Markenrechte, Patente, Geschäftsgeheimnisse und sonstige gewerbliche Schutzrechte, verbleiben beim Anbieter oder dessen Lizenzgebern.",
-          "Der Quellcode, die Algorithmen, das Design, die Benutzeroberfläche und alle Inhalte der Website sind urheberrechtlich geschützt.",
-          "Die Nutzung des Dienstes gewährt dem Nutzer keine Rechte am geistigen Eigentum des Anbieters, außer dem begrenzten Recht zur Nutzung gemäß diesen Nutzungsbedingungen."
-        ]
-      },
-      "subsection2": {
-        "title": "10.2 Rechte des Nutzers",
-        "items": [
-          "Der Nutzer behält alle Rechte an den von ihm hochgeladenen Originaldokumenten.",
-          "Der Nutzer erhält ein einfaches, nicht übertragbares Nutzungsrecht an den Übersetzungsergebnissen für den persönlichen Gebrauch.",
-          "Die kommerzielle Nutzung der Übersetzungsergebnisse bedarf der vorherigen schriftlichen Genehmigung des Anbieters."
-        ]
-      },
-      "subsection3": {
-        "title": "10.3 Nutzungslizenz",
-        "text": "Der Nutzer erhält eine unentgeltliche, nicht ausschließliche, nicht übertragbare, widerrufliche Lizenz zur Nutzung des Dienstes für den persönlichen, nicht-kommerziellen Gebrauch, unter Einhaltung dieser Nutzungsbedingungen."
-      }
+      "title": "§ 10 Hinweis zur PII-Entfernung",
+      "warning": "KEINE GARANTIE FÜR VOLLSTÄNDIGE ENTFERNUNG PERSONENBEZOGENER DATEN",
+      "p1": "(1) Der Dienst verwendet fortschrittliche Technologien zur automatischen Erkennung und Entfernung personenbezogener Daten.",
+      "p2": "(2) Trotz dieser Technologien kann keine 100%ige Erkennung garantiert werden.",
+      "p3": "(3) Bei der OCR-Verarbeitung wird Ihr Dokument zunächst an Mistral AI (Frankreich/EU) übertragen, BEVOR die PII-Entfernung erfolgen kann.",
+      "p4": "(4) Medizinische Fachbegriffe, Diagnosen und Befunde werden bewusst nicht entfernt, da sie für die Übersetzung erforderlich sind.",
+      "p5": "(5) Mit dem Hochladen bestätigen Sie, dass Sie diesen Hinweis verstanden haben und das verbleibende Risiko akzeptieren.",
+      "recommendation": "Empfehlung: Schwärzen Sie vor dem Hochladen offensichtliche personenbezogene Daten manuell."
     },
     "section11": {
-      "title": "§ 11 Verfügbarkeit und technische Anforderungen",
+      "title": "§ 11 Geistiges Eigentum und Urheberrecht",
       "subsection1": {
-        "title": "11.1 Verfügbarkeit",
-        "items": [
-          "Der Anbieter ist bestrebt, den Dienst mit einer möglichst hohen Verfügbarkeit bereitzustellen, kann jedoch keine bestimmte Verfügbarkeit garantieren.",
-          "Vorübergehende Betriebsunterbrechungen aufgrund von Wartungsarbeiten, Updates, technischen Störungen oder höherer Gewalt sind möglich.",
-          "Geplante Wartungsarbeiten werden, soweit möglich, außerhalb der üblichen Nutzungszeiten durchgeführt und im Voraus angekündigt."
-        ]
+        "title": "11.1 Rechte des Anbieters",
+        "text": "Alle Rechte an der Website, dem Dienst und dessen Komponenten verbleiben beim Anbieter oder dessen Lizenzgebern."
       },
       "subsection2": {
-        "title": "11.2 Änderungen und Einstellung",
-        "items": [
-          "Der Anbieter behält sich vor, den Dienst jederzeit zu ändern, zu erweitern oder einzuschränken.",
-          "Der Anbieter behält sich vor, den Dienst jederzeit ohne Angabe von Gründen einzustellen.",
-          "Ein Anspruch auf Aufrechterhaltung des Dienstes besteht nicht."
-        ]
+        "title": "11.2 Rechte des Nutzers",
+        "text": "Der Nutzer behält alle Rechte an den hochgeladenen Originaldokumenten und erhält ein Nutzungsrecht an den Übersetzungsergebnissen gemäß § 6."
       },
       "subsection3": {
-        "title": "11.3 Technische Störungen",
-        "text": "Der Anbieter übernimmt keine Haftung für technische Störungen, Datenverluste oder andere Beeinträchtigungen, die außerhalb seines Einflussbereichs liegen, insbesondere bei Störungen der Internetverbindung, der Server-Infrastruktur oder bei Angriffen durch Dritte."
+        "title": "11.3 Keine Nutzung als Trainingsdaten",
+        "text": "Die hochgeladenen Dokumente und Übersetzungsergebnisse werden nicht als Trainingsdaten für KI-Modelle verwendet."
       }
     },
     "section12": {
-      "title": "§ 12 Haftungsbeschränkung",
+      "title": "§ 12 Verfügbarkeit und technische Anforderungen",
       "subsection1": {
-        "title": "12.1 Allgemeine Haftungsbeschränkung",
-        "p1": "(1) Der Anbieter haftet unbeschränkt für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit, die auf einer vorsätzlichen oder fahrlässigen Pflichtverletzung des Anbieters oder seiner gesetzlichen Vertreter oder Erfüllungsgehilfen beruhen.",
-        "p2": "(2) Der Anbieter haftet unbeschränkt für sonstige Schäden, die auf einer vorsätzlichen oder grob fahrlässigen Pflichtverletzung des Anbieters oder seiner gesetzlichen Vertreter oder Erfüllungsgehilfen beruhen.",
-        "p3": "(3) Bei Verletzung wesentlicher Vertragspflichten (Kardinalpflichten) durch einfache Fahrlässigkeit ist die Haftung auf den Ersatz des vorhersehbaren, vertragstypischen Schadens begrenzt.",
-        "p4": "(4) Im Übrigen ist die Haftung des Anbieters – gleich aus welchem Rechtsgrund – ausgeschlossen."
+        "title": "12.1 Verfügbarkeit",
+        "text": "Eine ununterbrochene Verfügbarkeit des Dienstes kann nicht gewährleistet werden. Vorübergehende Unterbrechungen sind möglich."
       },
       "subsection2": {
-        "title": "12.2 Haftungsausschluss für Übersetzungen",
-        "text": "Der Anbieter übernimmt keine Haftung für die Richtigkeit, Vollständigkeit, Aktualität oder Eignung der Übersetzungsergebnisse. Insbesondere haftet der Anbieter nicht für Schäden, die durch fehlerhafte, unvollständige oder missverständliche Übersetzungen entstehen, einschließlich – aber nicht beschränkt auf – medizinische Fehlentscheidungen, gesundheitliche Beeinträchtigungen oder wirtschaftliche Schäden."
+        "title": "12.2 Änderungen und Einstellung",
+        "text": "Der Anbieter behält sich vor, den Dienst jederzeit zu ändern, einzuschränken oder einzustellen."
       },
       "subsection3": {
-        "title": "12.3 Haftung für Links",
-        "text": "Soweit die Website Links zu externen Websites Dritter enthält, übernimmt der Anbieter keine Haftung für die Inhalte, Verfügbarkeit oder Datenschutzpraktiken dieser externen Websites."
-      },
-      "subsection4": {
-        "title": "12.4 Keine Haftungsbeschränkung",
-        "text": "Die vorstehenden Haftungsbeschränkungen gelten nicht für Ansprüche nach dem Produkthaftungsgesetz sowie bei arglistigem Verschweigen von Mängeln oder Übernahme einer Garantie."
+        "title": "12.3 Technische Störungen",
+        "text": "Der Anbieter übernimmt keine Haftung für technische Störungen außerhalb seines Einflussbereichs."
       }
     },
     "section13": {
-      "title": "§ 13 Freistellung",
-      "p1": "(1) Der Nutzer stellt den Anbieter von sämtlichen Ansprüchen frei, die Dritte gegen den Anbieter aufgrund einer Verletzung ihrer Rechte durch die vom Nutzer hochgeladenen Dokumente oder durch die sonstige Nutzung des Dienstes durch den Nutzer geltend machen.",
-      "p2": "(2) Der Nutzer übernimmt hierbei die Kosten der notwendigen Rechtsverteidigung des Anbieters einschließlich aller Gerichts- und Anwaltskosten in gesetzlicher Höhe.",
-      "p3": "(3) Dies gilt nicht, wenn der Nutzer die Rechtsverletzung nicht zu vertreten hat.",
-      "p4": "(4) Der Nutzer ist verpflichtet, den Anbieter im Falle einer Inanspruchnahme durch Dritte unverzüglich, wahrheitsgemäß und vollständig über alle ihm bekannten Umstände zu informieren."
+      "title": "§ 13 Sachmängelgewährleistung",
+      "p1": "(1) Der Anbieter haftet für Sachmängel an den digitalen Produkten nach den geltenden Vorschriften, insbesondere §§ 327 ff. BGB.",
+      "p2": "(2) Ansprüche wegen Sachmängeln setzen voraus, dass der Nutzer den Mangel beschreibt und dem Anbieter Gelegenheit zur Nacherfüllung gibt.",
+      "p3": "(3) Eine zusätzliche Garantie besteht nicht, es sei denn, diese wird ausdrücklich erklärt.",
+      "p4": "(4) Die Gewährleistung bezieht sich auf die technische Funktionsfähigkeit, nicht auf die inhaltliche Richtigkeit der Übersetzungen."
     },
     "section14": {
-      "title": "§ 14 Datenschutz",
-      "p1": "(1) Der Schutz Ihrer personenbezogenen Daten ist uns besonders wichtig. Die Verarbeitung Ihrer Daten erfolgt gemäß der Datenschutz-Grundverordnung (DSGVO), dem Bundesdatenschutzgesetz (BDSG) und unserer ausführlichen Datenschutzerklärung.",
-      "p2": "(2) Unsere vollständige Datenschutzerklärung ist jederzeit unter dem Menüpunkt \"Datenschutz\" auf unserer Website abrufbar. Dort finden Sie umfassende Informationen zu:",
-      "items": [
-        "Den erhobenen Datenarten und Verarbeitungszwecken",
-        "Den Rechtsgrundlagen der Verarbeitung",
-        "Der Speicherdauer und automatischen Löschung",
-        "Ihren Rechten als betroffene Person (Auskunft, Berichtigung, Löschung, etc.)",
-        "Den eingesetzten Drittanbietern und Auftragsverarbeitern",
-        "Der Verarbeitung von Gesundheitsdaten gemäß Art. 9 DSGVO",
-        "Der erforderlichen Einwilligungserklärungen"
-      ],
-      "p3": "(3) Durch die Nutzung des Dienstes bestätigen Sie, dass Sie unsere Datenschutzerklärung zur Kenntnis genommen haben.",
-      "linkText": "Zur vollständigen Datenschutzerklärung"
-    },
-    "section15": {
-      "title": "§ 15 Vertragsbeendigung",
+      "title": "§ 14 Haftungsbeschränkung",
       "subsection1": {
-        "title": "15.1 Beendigung durch den Nutzer",
-        "text": "Der Nutzer kann den Nutzungsvertrag jederzeit durch Beenden der Nutzung beenden. Mit dem Verlassen der Ergebnisseite oder dem Schließen des Browsers endet der aktuelle Nutzungsvorgang und alle damit verbundenen Daten werden automatisch gelöscht."
+        "title": "14.1 Allgemeine Haftungsbeschränkung",
+        "p1": "(1) Der Anbieter haftet unbeschränkt für Schäden aus der Verletzung des Lebens, des Körpers oder der Gesundheit.",
+        "p2": "(2) Der Anbieter haftet unbeschränkt für Schäden aus vorsätzlicher oder grob fahrlässiger Pflichtverletzung.",
+        "p3": "(3) Bei Verletzung wesentlicher Vertragspflichten durch einfache Fahrlässigkeit ist die Haftung auf den vorhersehbaren, vertragstypischen Schaden begrenzt.",
+        "p4": "(4) Im Übrigen ist die Haftung des Anbieters ausgeschlossen.",
+        "p5": "(5) Diese Beschränkungen gelten auch zugunsten der gesetzlichen Vertreter und Erfüllungsgehilfen des Anbieters."
       },
       "subsection2": {
-        "title": "15.2 Beendigung durch den Anbieter",
-        "text": "Der Anbieter kann den Nutzungsvertrag jederzeit ohne Angabe von Gründen beenden, insbesondere bei Verstößen gegen diese Nutzungsbedingungen. In diesem Fall kann der Zugang zum Dienst gesperrt werden."
+        "title": "14.2 Haftungsausschluss für Übersetzungen",
+        "text": "Der Anbieter übernimmt keine Haftung für die Richtigkeit der Übersetzungsergebnisse."
       },
       "subsection3": {
-        "title": "15.3 Folgen der Beendigung",
-        "text": "Mit Beendigung des Nutzungsverhältnisses werden alle temporär gespeicherten Daten (Dokumente, Übersetzungen, Metadaten) automatisch gelöscht. Ein Anspruch auf Zugang zu früheren Übersetzungsergebnissen besteht nicht."
+        "title": "14.3 Haftung für Links",
+        "text": "Für externe Links übernimmt der Anbieter keine Haftung."
       },
       "subsection4": {
-        "title": "15.4 Fortgeltung",
-        "text": "Die Bestimmungen zu Haftung, Freistellung, geistigem Eigentum und anwendbarem Recht gelten auch nach Beendigung des Nutzungsverhältnisses fort."
+        "title": "14.4 Unberührt bleibende Ansprüche",
+        "text": "Die Haftungsbeschränkungen gelten nicht für Ansprüche nach dem Produkthaftungsgesetz."
       }
     },
+    "section15": {
+      "title": "§ 15 Freistellung",
+      "p1": "(1) Der Nutzer stellt den Anbieter von sämtlichen Ansprüchen Dritter frei, die aufgrund einer Verletzung ihrer Rechte durch den Nutzer geltend gemacht werden.",
+      "p2": "(2) Der Nutzer übernimmt die Kosten der Rechtsverteidigung des Anbieters.",
+      "p3": "(3) Dies gilt nicht, wenn der Nutzer die Rechtsverletzung nicht zu vertreten hat.",
+      "p4": "(4) Der Nutzer ist verpflichtet, den Anbieter bei Inanspruchnahme durch Dritte unverzüglich zu informieren."
+    },
     "section16": {
-      "title": "§ 16 Änderungen der Nutzungsbedingungen",
-      "p1": "(1) Der Anbieter behält sich vor, diese Nutzungsbedingungen jederzeit mit Wirkung für die Zukunft zu ändern.",
-      "p2": "(2) Änderungen werden durch Veröffentlichung der geänderten Nutzungsbedingungen auf dieser Seite wirksam. Das Datum der letzten Aktualisierung ist am Ende dieser Seite angegeben.",
-      "p3": "(3) Bei wesentlichen Änderungen werden wir Sie durch einen deutlichen Hinweis auf unserer Website informieren.",
-      "p4": "(4) Die fortgesetzte Nutzung des Dienstes nach Inkrafttreten geänderter Nutzungsbedingungen gilt als Zustimmung zu den Änderungen.",
-      "p5": "(5) Wir empfehlen Ihnen, diese Nutzungsbedingungen regelmäßig auf Änderungen zu überprüfen."
+      "title": "§ 16 Datenschutz",
+      "p1": "(1) Der Schutz Ihrer personenbezogenen Daten ist uns besonders wichtig. Die Verarbeitung erfolgt gemäß DSGVO und BDSG.",
+      "p2": "(2) Unsere vollständige Datenschutzerklärung finden Sie unter dem Menüpunkt \"Datenschutz\" auf unserer Website.",
+      "p3": "(3) Für die Nutzung des Dienstes ist eine ausdrückliche Einwilligung zur Verarbeitung von Gesundheitsdaten erforderlich.",
+      "p4": "(4) Ihre Dokumente werden automatisch gelöscht, sobald Sie die Ergebnisseite verlassen, spätestens nach 1 Stunde.",
+      "p5": "(5) Die Datenverarbeitung erfolgt ausschließlich innerhalb der Europäischen Union.",
+      "p6": "(6) Ohne Ihre Einwilligung werden personenbezogene Daten nicht für Werbung genutzt.",
+      "linkText": "Zur vollständigen Datenschutzerklärung"
     },
     "section17": {
-      "title": "§ 17 Anwendbares Recht und Gerichtsstand",
-      "p1": "(1) Für diese Nutzungsbedingungen und alle sich daraus ergebenden Rechtsbeziehungen zwischen dem Anbieter und dem Nutzer gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts (CISG).",
-      "p2": "(2) Ist der Nutzer Verbraucher, bleibt das zwingende Verbraucherschutzrecht des Staates, in dem der Nutzer seinen gewöhnlichen Aufenthalt hat, unberührt, soweit es für den Nutzer günstiger ist.",
-      "p3": "(3) Ist der Nutzer Kaufmann, juristische Person des öffentlichen Rechts oder öffentlich-rechtliches Sondervermögen, ist ausschließlicher Gerichtsstand für alle sich aus dem Vertragsverhältnis ergebenden Streitigkeiten der Sitz des Anbieters.",
-      "p4": "(4) Für Verbraucher gelten die gesetzlichen Gerichtsstände."
+      "title": "§ 17 Verbraucherwiderrufsrecht",
+      "subsection1": {
+        "title": "17.1 Widerrufsbelehrung",
+        "text": "Sie haben das Recht, binnen vierzehn Tagen ohne Angabe von Gründen diesen Vertrag zu widerrufen.",
+        "howTo": "Um Ihr Widerrufsrecht auszuüben, müssen Sie uns mittels einer eindeutigen Erklärung (z. B. Brief oder E-Mail) über Ihren Entschluss informieren."
+      },
+      "subsection2": {
+        "title": "17.2 Folgen des Widerrufs",
+        "text": "Wenn Sie diesen Vertrag widerrufen, haben wir Ihnen alle erhaltenen Zahlungen unverzüglich zurückzuzahlen."
+      },
+      "subsection3": {
+        "title": "17.3 Vorzeitiger Beginn der Leistung",
+        "note": "Hinweis: Da der Dienst derzeit unentgeltlich angeboten wird, entstehen Ihnen keine Kosten.",
+        "text": "Mit dem Hochladen verlangen Sie ausdrücklich, dass der Anbieter mit der Leistung vor Ablauf der Widerrufsfrist beginnt. Ihr Widerrufsrecht erlischt mit vollständiger Erbringung der Leistung."
+      },
+      "subsection4": {
+        "title": "17.4 Muster-Widerrufsformular",
+        "intro": "(Wenn Sie den Vertrag widerrufen wollen, füllen Sie bitte dieses Formular aus und senden Sie es zurück.)",
+        "formText": "Hiermit widerrufe(n) ich/wir (*) den von mir/uns (*) abgeschlossenen Vertrag über die Erbringung der folgenden Dienstleistung:\n\nBestellt am (*) / erhalten am (*):\n\nName des/der Verbraucher(s):\n\nAnschrift des/der Verbraucher(s):\n\nUnterschrift (nur bei Papier):\n\nDatum:\n\n(*) Unzutreffendes streichen."
+      }
     },
     "section18": {
-      "title": "§ 18 Außergerichtliche Streitbeilegung",
-      "p1": "(1) Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung (OS-Plattform) bereit, die Sie unter https://ec.europa.eu/consumers/odr finden.",
-      "p2": "(2) Zur Teilnahme an einem Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle sind wir weder bereit noch verpflichtet.",
-      "p3": "(3) Unsere E-Mail-Adresse finden Sie im Impressum."
+      "title": "§ 18 Vertragsbeendigung",
+      "subsection1": {
+        "title": "18.1 Beendigung durch den Nutzer",
+        "text": "Der Nutzer kann den Nutzungsvertrag jederzeit durch Beenden der Nutzung beenden. Alle Daten werden automatisch gelöscht."
+      },
+      "subsection2": {
+        "title": "18.2 Beendigung durch den Anbieter",
+        "text": "Der Anbieter kann den Nutzungsvertrag jederzeit beenden, insbesondere bei Verstößen gegen diese AGB."
+      },
+      "subsection3": {
+        "title": "18.3 Folgen der Beendigung",
+        "text": "Mit Beendigung werden alle temporär gespeicherten Daten automatisch gelöscht."
+      },
+      "subsection4": {
+        "title": "18.4 Fortgeltung",
+        "text": "Die Bestimmungen zu Haftung (§ 14), Freistellung (§ 15), geistigem Eigentum (§ 11) und anwendbarem Recht (§ 20) gelten fort."
+      }
     },
     "section19": {
-      "title": "§ 19 Salvatorische Klausel",
-      "p1": "(1) Sollten einzelne Bestimmungen dieser Nutzungsbedingungen ganz oder teilweise unwirksam oder undurchführbar sein oder werden, so wird dadurch die Wirksamkeit der übrigen Bestimmungen nicht berührt.",
-      "p2": "(2) An die Stelle der unwirksamen oder undurchführbaren Bestimmung tritt diejenige wirksame und durchführbare Bestimmung, die dem wirtschaftlichen Zweck der unwirksamen oder undurchführbaren Bestimmung am nächsten kommt.",
-      "p3": "(3) Die vorstehenden Regelungen gelten entsprechend für den Fall, dass sich die Nutzungsbedingungen als lückenhaft erweisen."
+      "title": "§ 19 Änderungen der Nutzungsbedingungen",
+      "p1": "(1) Der Anbieter behält sich vor, diese AGB jederzeit mit Wirkung für die Zukunft zu ändern.",
+      "p2": "(2) Änderungen werden durch Veröffentlichung auf dieser Seite wirksam.",
+      "p3": "(3) Bei wesentlichen Änderungen wird der Anbieter Sie durch einen Hinweis auf der Website informieren.",
+      "p4": "(4) Die fortgesetzte Nutzung des Dienstes nach Inkrafttreten gilt als Zustimmung.",
+      "p5": "(5) Es gelten die AGB in ihrer zum Zeitpunkt der Nutzung gültigen Fassung."
     },
     "section20": {
-      "title": "§ 20 Kontakt",
-      "intro": "Bei Fragen zu diesen Nutzungsbedingungen können Sie uns wie folgt erreichen:",
+      "title": "§ 20 Anwendbares Recht und Gerichtsstand",
+      "p1": "(1) Es gilt das Recht der Bundesrepublik Deutschland unter Ausschluss des UN-Kaufrechts (CISG).",
+      "p2": "(2) Zwingendes Verbraucherschutzrecht des Aufenthaltsstaates bleibt unberührt.",
+      "p3": "(3) Für Verbraucher gelten die gesetzlichen Gerichtsstände.",
+      "p4": "(4) Die Vertragssprache ist Deutsch."
+    },
+    "section21": {
+      "title": "§ 21 Außergerichtliche Streitbeilegung",
+      "p1": "(1) Die Europäische Kommission stellt eine Plattform zur Online-Streitbeilegung bereit: https://ec.europa.eu/consumers/odr",
+      "p2": "(2) Zur Teilnahme an einem Streitbeilegungsverfahren sind wir weder bereit noch verpflichtet.",
+      "p3": "(3) Unsere E-Mail-Adresse finden Sie im Impressum sowie unter § 24 dieser AGB."
+    },
+    "section22": {
+      "title": "§ 22 Aufrechnung und Zurückbehaltung",
+      "p1": "(1) Der Nutzer hat ein Recht zur Aufrechnung nur bei rechtskräftig festgestellten oder anerkannten Gegenansprüchen.",
+      "p2": "(2) Ein Zurückbehaltungsrecht kann der Nutzer nur bei Gegenansprüchen aus demselben Vertragsverhältnis ausüben."
+    },
+    "section23": {
+      "title": "§ 23 Salvatorische Klausel",
+      "p1": "(1) Sollten einzelne Bestimmungen unwirksam sein, bleibt die Wirksamkeit der übrigen Bestimmungen unberührt.",
+      "p2": "(2) An die Stelle unwirksamer Bestimmungen tritt die nächstkommende wirksame Regelung.",
+      "p3": "(3) Diese Regelung gilt entsprechend für Lücken in den AGB.",
+      "p4": "(4) Soweit dies für eine Vertragspartei eine unzumutbare Härte darstellt, wird der Vertrag im Ganzen unwirksam."
+    },
+    "section24": {
+      "title": "§ 24 Kontakt",
+      "intro": "Bei Fragen zu diesen AGB können Sie uns wie folgt erreichen:",
       "name": "[Vorname Nachname / Firmenname]",
       "address": "[Straße und Hausnummer]",
       "city": "[PLZ Ort]",
