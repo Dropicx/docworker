@@ -1,6 +1,40 @@
 {
   "datenschutz": {
     "pageTitle": "Gizlilik Politikası",
+    "websiteName": "healthlingo.de",
+    "tableOfContents": {
+      "title": "İçindekiler",
+      "items": [
+        "1. Veri Koruma Özeti",
+        "2. Genel Bilgiler ve Zorunlu Açıklamalar",
+        "3. Bu Web Sitesinde Veri Toplama",
+        "4. İşlemenin Hukuki Temelleri",
+        "5. Sağlık Verilerinin Korunması",
+        "6. Üçüncü Taraflar ve Veri İşleme",
+        "7. Kişisel Veri Silme Bildirimi",
+        "8. Otomatik İşleme ve Yapay Zeka",
+        "9. Onayınız",
+        "10. Haklarınız",
+        "11. Geri Bildirim ve Değerlendirmeler",
+        "12. Veri Güvenliği",
+        "13. İletişim ve Gizlilik Talepleri",
+        "14. Bu Politikanın Güncellenmesi"
+      ]
+    },
+    "labels": {
+      "purpose": "Amaç:",
+      "legalBasis": "Hukuki Dayanak:",
+      "dataProcessed": "İşlenen Veriler:",
+      "security": "Güvenlik:",
+      "thirdCountryTransfer": "Üçüncü Ülkelere Aktarım:",
+      "retention": "Saklama:",
+      "ocrNote": "OCR Hakkında Önemli Not:",
+      "objectionRight": "İtiraz Hakkı:",
+      "important": "Önemli:",
+      "note": "Not:",
+      "processingActivity": "İşleme Faaliyeti",
+      "explanation": "Açıklama"
+    },
     "section1": {
       "title": "1. Gizlilik Bir Bakışta",
       "generalTitle": "Genel Bilgiler",

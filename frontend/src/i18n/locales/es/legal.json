@@ -2,6 +2,39 @@
   "datenschutz": {
     "pageTitle": "Política de privacidad",
     "websiteName": "healthlingo.de",
+    "tableOfContents": {
+      "title": "Índice",
+      "items": [
+        "1. Protección de datos de un vistazo",
+        "2. Información general y obligatoria",
+        "3. Recopilación de datos en este sitio web",
+        "4. Bases legales del tratamiento",
+        "5. Protección de datos de salud",
+        "6. Terceros y tratamiento de datos",
+        "7. Aviso sobre eliminación de DPI",
+        "8. Procesamiento automatizado e IA",
+        "9. Su consentimiento",
+        "10. Sus derechos",
+        "11. Comentarios y valoraciones",
+        "12. Seguridad de datos",
+        "13. Contacto y solicitudes de privacidad",
+        "14. Actualización de esta política"
+      ]
+    },
+    "labels": {
+      "purpose": "Finalidad:",
+      "legalBasis": "Base legal:",
+      "dataProcessed": "Datos procesados:",
+      "security": "Seguridad:",
+      "thirdCountryTransfer": "Transferencia a terceros países:",
+      "retention": "Conservación:",
+      "ocrNote": "Nota importante sobre OCR:",
+      "objectionRight": "Derecho de oposición:",
+      "important": "Importante:",
+      "note": "Nota:",
+      "processingActivity": "Actividad de tratamiento",
+      "explanation": "Explicación"
+    },
     "section1": {
       "title": "1. Protección de datos en resumen",
       "generalTitle": "Información general",
@@ -163,7 +196,7 @@
         "address": "Railway Corporation, San Francisco, CA, USA",
         "purpose": "Alojamiento de la aplicación y la base de datos PostgreSQL cifrada en la región UE. Railway está certificado SOC 2 Type I y ofrece acuerdos de tratamiento de datos conformes con el RGPD.",
         "legalBasis": "Art. 28 RGPD (contrato de encargado del tratamiento).",
-        "thirdCountryTransfer": "Railway es una empresa estadounidense. El acceso a datos desde EE.UU. no puede excluirse completamente. La transferencia de datos está protegida por cláusulas contractuales tipo de la UE (CCT) conforme al Art. 46(2)(c) RGPD."
+        "thirdCountryNote": "Railway es una empresa estadounidense. El acceso a datos desde EE.UU. no puede excluirse completamente. La transferencia de datos está protegida por cláusulas contractuales tipo de la UE (CCT) conforme al Art. 46(2)(c) RGPD."
       },
       "dpaNote": "Existen contratos de encargado del tratamiento (DPA) conforme al Art. 28 RGPD con todos los proveedores externos mencionados, que garantizan la protección de sus datos según los estándares europeos de protección de datos."
     },

@@ -1,6 +1,40 @@
 {
   "datenschutz": {
     "pageTitle": "Polityka prywatności",
+    "websiteName": "healthlingo.de",
+    "tableOfContents": {
+      "title": "Spis treści",
+      "items": [
+        "1. Ochrona danych w skrócie",
+        "2. Informacje ogólne i obowiązkowe",
+        "3. Gromadzenie danych na tej stronie",
+        "4. Podstawy prawne przetwarzania",
+        "5. Ochrona danych zdrowotnych",
+        "6. Podmioty trzecie i przetwarzanie danych",
+        "7. Informacja o usuwaniu danych osobowych",
+        "8. Automatyczne przetwarzanie i AI",
+        "9. Twoja zgoda",
+        "10. Twoje prawa",
+        "11. Opinie i oceny",
+        "12. Bezpieczeństwo danych",
+        "13. Kontakt i wnioski o prywatność",
+        "14. Aktualizacja tej polityki"
+      ]
+    },
+    "labels": {
+      "purpose": "Cel:",
+      "legalBasis": "Podstawa prawna:",
+      "dataProcessed": "Przetwarzane dane:",
+      "security": "Bezpieczeństwo:",
+      "thirdCountryTransfer": "Transfer do krajów trzecich:",
+      "retention": "Przechowywanie:",
+      "ocrNote": "Ważna uwaga o OCR:",
+      "objectionRight": "Prawo do sprzeciwu:",
+      "important": "Ważne:",
+      "note": "Uwaga:",
+      "processingActivity": "Działanie przetwarzania",
+      "explanation": "Wyjaśnienie"
+    },
     "section1": {
       "title": "1. Prywatność w skrócie",
       "generalTitle": "Informacje ogólne",

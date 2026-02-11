@@ -1,6 +1,40 @@
 {
   "datenschutz": {
     "pageTitle": "Politica de confidențialitate",
+    "websiteName": "healthlingo.de",
+    "tableOfContents": {
+      "title": "Cuprins",
+      "items": [
+        "1. Protecția datelor pe scurt",
+        "2. Informații generale și obligatorii",
+        "3. Colectarea datelor pe acest site",
+        "4. Temeiurile legale ale prelucrării",
+        "5. Protecția datelor medicale",
+        "6. Terți și prelucrarea datelor",
+        "7. Notificare privind ștergerea PII",
+        "8. Prelucrare automatizată și IA",
+        "9. Consimțământul dvs.",
+        "10. Drepturile dvs.",
+        "11. Feedback și evaluări",
+        "12. Securitatea datelor",
+        "13. Contact și solicitări de confidențialitate",
+        "14. Actualizarea acestei politici"
+      ]
+    },
+    "labels": {
+      "purpose": "Scop:",
+      "legalBasis": "Temei legal:",
+      "dataProcessed": "Date prelucrate:",
+      "security": "Securitate:",
+      "thirdCountryTransfer": "Transfer către țări terțe:",
+      "retention": "Păstrare:",
+      "ocrNote": "Notă importantă despre OCR:",
+      "objectionRight": "Dreptul la opoziție:",
+      "important": "Important:",
+      "note": "Notă:",
+      "processingActivity": "Activitate de prelucrare",
+      "explanation": "Explicație"
+    },
     "section1": {
       "title": "1. Confidențialitatea pe scurt",
       "generalTitle": "Informații generale",

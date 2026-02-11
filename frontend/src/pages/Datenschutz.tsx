@@ -34,22 +34,15 @@ const Datenschutz: React.FC = () => {
 
           {/* Table of Contents */}
           <nav className="mb-8 pb-6 border-b border-gray-200">
-            <h2 className="text-sm font-semibold text-primary-900 mb-3 uppercase tracking-wide">Inhalt</h2>
+            <h2 className="text-sm font-semibold text-primary-900 mb-3 uppercase tracking-wide">{t('datenschutz.tableOfContents.title')}</h2>
             <ol className="grid grid-cols-1 md:grid-cols-2 gap-1 text-sm">
-              <li><a href="#section1" className="text-primary-600 hover:text-primary-900 hover:underline">1. Datenschutz auf einen Blick</a></li>
-              <li><a href="#section2" className="text-primary-600 hover:text-primary-900 hover:underline">2. Allgemeine Hinweise und Pflichtinformationen</a></li>
-              <li><a href="#section3" className="text-primary-600 hover:text-primary-900 hover:underline">3. Datenerfassung auf dieser Website</a></li>
-              <li><a href="#section4" className="text-primary-600 hover:text-primary-900 hover:underline">4. Rechtsgrundlagen der Verarbeitung</a></li>
-              <li><a href="#section5" className="text-primary-600 hover:text-primary-900 hover:underline">5. Gesundheitsdatenschutz</a></li>
-              <li><a href="#section6" className="text-primary-600 hover:text-primary-900 hover:underline">6. Drittparteien und Datenverarbeitung</a></li>
-              <li><a href="#section7" className="text-primary-600 hover:text-primary-900 hover:underline">7. Hinweis zur PII-Entfernung</a></li>
-              <li><a href="#section8" className="text-primary-600 hover:text-primary-900 hover:underline">8. Automatisierte Verarbeitung und KI</a></li>
-              <li><a href="#section9" className="text-primary-600 hover:text-primary-900 hover:underline">9. Ihre Einwilligung</a></li>
-              <li><a href="#section10" className="text-primary-600 hover:text-primary-900 hover:underline">10. Ihre Rechte</a></li>
-              <li><a href="#section11" className="text-primary-600 hover:text-primary-900 hover:underline">11. Feedback und Nutzerbewertungen</a></li>
-              <li><a href="#section12" className="text-primary-600 hover:text-primary-900 hover:underline">12. Datensicherheit</a></li>
-              <li><a href="#section13" className="text-primary-600 hover:text-primary-900 hover:underline">13. Kontakt und Datenschutzanfragen</a></li>
-              <li><a href="#section14" className="text-primary-600 hover:text-primary-900 hover:underline">14. Aktualisierung dieser Erklärung</a></li>
+              {(t('datenschutz.tableOfContents.items', { returnObjects: true }) as string[]).map((item, i) => (
+                <li key={i}>
+                  <a href={`#section${i + 1}`} className="text-primary-600 hover:text-primary-900 hover:underline">
+                    {item}
+                  </a>
+                </li>
+              ))}
             </ol>
           </nav>
 
@@ -207,7 +200,7 @@ const Datenschutz: React.FC = () => {
               </ul>
               <p className="mb-4">{t('datenschutz.section3.serverLogsNote')}</p>
               <p className="mb-4">
-                <strong>Widerspruchsrecht:</strong> {t('datenschutz.section3.serverLogsObjection')}
+                <strong>{t('datenschutz.labels.objectionRight')}</strong> {t('datenschutz.section3.serverLogsObjection')}
               </p>
 
               <h3 className="text-lg font-semibold text-primary-800 mt-4 mb-2">
@@ -233,9 +226,9 @@ const Datenschutz: React.FC = () => {
                 <table className="min-w-full border border-gray-300 mb-4">
                   <thead>
                     <tr className="border-b border-gray-300">
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900">Verarbeitungstätigkeit</th>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900">Rechtsgrundlage</th>
-                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900">Erläuterung</th>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900">{t('datenschutz.labels.processingActivity')}</th>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900">{t('datenschutz.labels.legalBasis').replace(':', '')}</th>
+                      <th className="px-4 py-2 text-left text-sm font-semibold text-primary-900">{t('datenschutz.labels.explanation')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -279,13 +272,13 @@ const Datenschutz: React.FC = () => {
               <div className="mb-6">
                 <h4 className="font-semibold text-primary-900 mb-1">{t('datenschutz.section6.cloudflare.title')}</h4>
                 <p className="text-sm text-primary-600 mb-2">{t('datenschutz.section6.cloudflare.address')}</p>
-                <p className="mb-2"><strong>Zweck:</strong> {t('datenschutz.section6.cloudflare.purpose')}</p>
+                <p className="mb-2"><strong>{t('datenschutz.labels.purpose')}</strong> {t('datenschutz.section6.cloudflare.purpose')}</p>
                 <p className="mb-2">{t('datenschutz.section6.cloudflare.importance')}</p>
-                <p className="mb-2"><strong>Verarbeitete Daten:</strong> {t('datenschutz.section6.cloudflare.dataProcessed')}</p>
-                <p className="mb-2"><strong>Sicherheit:</strong> {t('datenschutz.section6.cloudflare.security')}</p>
-                <p className="mb-2"><strong>Rechtsgrundlage:</strong> {t('datenschutz.section6.cloudflare.legalBasis')}</p>
-                <p className="mb-2"><strong>Drittlandtransfer:</strong> {t('datenschutz.section6.cloudflare.thirdCountryTransfer')}</p>
-                <p className="mb-2"><strong>Speicherdauer:</strong> {t('datenschutz.section6.cloudflare.retention')}</p>
+                <p className="mb-2"><strong>{t('datenschutz.labels.dataProcessed')}</strong> {t('datenschutz.section6.cloudflare.dataProcessed')}</p>
+                <p className="mb-2"><strong>{t('datenschutz.labels.security')}</strong> {t('datenschutz.section6.cloudflare.security')}</p>
+                <p className="mb-2"><strong>{t('datenschutz.labels.legalBasis')}</strong> {t('datenschutz.section6.cloudflare.legalBasis')}</p>
+                <p className="mb-2"><strong>{t('datenschutz.labels.thirdCountryTransfer')}</strong> {t('datenschutz.section6.cloudflare.thirdCountryTransfer')}</p>
+                <p className="mb-2"><strong>{t('datenschutz.labels.retention')}</strong> {t('datenschutz.section6.cloudflare.retention')}</p>
                 <p className="text-sm">{t('datenschutz.section6.cloudflare.dpaNote')}</p>
               </div>
 
@@ -293,8 +286,8 @@ const Datenschutz: React.FC = () => {
               <div className="mb-6">
                 <h4 className="font-semibold text-primary-900 mb-1">{t('datenschutz.section6.mistral.title')}</h4>
                 <p className="text-sm text-primary-600 mb-2">{t('datenschutz.section6.mistral.address')}</p>
-                <p className="mb-2"><strong>Zweck:</strong> {t('datenschutz.section6.mistral.purpose')}</p>
-                <p className="mb-2"><strong>Wichtiger Hinweis zur OCR:</strong> {t('datenschutz.section6.mistral.ocrNote')}</p>
+                <p className="mb-2"><strong>{t('datenschutz.labels.purpose')}</strong> {t('datenschutz.section6.mistral.purpose')}</p>
+                <p className="mb-2"><strong>{t('datenschutz.labels.ocrNote')}</strong> {t('datenschutz.section6.mistral.ocrNote')}</p>
                 <p className="text-sm">{t('datenschutz.section6.mistral.legalBasis')}</p>
               </div>
 
@@ -302,7 +295,7 @@ const Datenschutz: React.FC = () => {
               <div className="mb-6">
                 <h4 className="font-semibold text-primary-900 mb-1">{t('datenschutz.section6.hetzner.title')}</h4>
                 <p className="text-sm text-primary-600 mb-2">{t('datenschutz.section6.hetzner.address')}</p>
-                <p className="mb-2"><strong>Zweck:</strong> {t('datenschutz.section6.hetzner.purpose')}</p>
+                <p className="mb-2"><strong>{t('datenschutz.labels.purpose')}</strong> {t('datenschutz.section6.hetzner.purpose')}</p>
                 <p className="text-sm">{t('datenschutz.section6.hetzner.legalBasis')}</p>
               </div>
 
@@ -310,7 +303,7 @@ const Datenschutz: React.FC = () => {
               <div className="mb-6">
                 <h4 className="font-semibold text-primary-900 mb-1">{t('datenschutz.section6.railway.title')}</h4>
                 <p className="text-sm text-primary-600 mb-2">{t('datenschutz.section6.railway.address')}</p>
-                <p className="mb-2"><strong>Zweck:</strong> {t('datenschutz.section6.railway.purpose')}</p>
+                <p className="mb-2"><strong>{t('datenschutz.labels.purpose')}</strong> {t('datenschutz.section6.railway.purpose')}</p>
                 <p className="mb-2">{t('datenschutz.section6.railway.legalBasis')}</p>
                 <p className="text-sm italic">{t('datenschutz.section6.railway.thirdCountryNote')}</p>
               </div>
@@ -330,7 +323,7 @@ const Datenschutz: React.FC = () => {
               </p>
               <p className="mb-4">{t('datenschutz.section7.warningText')}</p>
               <p className="mb-4">{t('datenschutz.section7.limitationsText')}</p>
-              <p className="mb-4"><strong>Wichtig:</strong> {t('datenschutz.section7.ocrWarning')}</p>
+              <p className="mb-4"><strong>{t('datenschutz.labels.important')}</strong> {t('datenschutz.section7.ocrWarning')}</p>
               <p className="mb-4">{t('datenschutz.section7.recommendation')}</p>
               <p className="mb-4">{t('datenschutz.section7.medicalTermsNote')}</p>
               <p className="text-sm italic">{t('datenschutz.section7.consent')}</p>
@@ -446,7 +439,7 @@ const Datenschutz: React.FC = () => {
               <p className="mb-4">{t('datenschutz.section11.retentionText')}</p>
 
               <p className="mb-4 text-sm">
-                <strong>Hinweis:</strong> {t('datenschutz.section11.warning')}
+                <strong>{t('datenschutz.labels.note')}</strong> {t('datenschutz.section11.warning')}
               </p>
             </section>
 

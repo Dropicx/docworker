@@ -2,6 +2,39 @@
   "datenschutz": {
     "pageTitle": "Privacy Policy",
     "websiteName": "healthlingo.de",
+    "tableOfContents": {
+      "title": "Contents",
+      "items": [
+        "1. Privacy at a Glance",
+        "2. General Information and Mandatory Disclosures",
+        "3. Data Collection on This Website",
+        "4. Legal Basis for Processing",
+        "5. Health Data Protection",
+        "6. Third Parties and Data Processing",
+        "7. PII Removal Notice",
+        "8. Automated Processing and AI",
+        "9. Your Consent",
+        "10. Your Rights",
+        "11. Feedback and User Reviews",
+        "12. Data Security",
+        "13. Contact and Privacy Requests",
+        "14. Updates to This Policy"
+      ]
+    },
+    "labels": {
+      "purpose": "Purpose:",
+      "legalBasis": "Legal Basis:",
+      "dataProcessed": "Data Processed:",
+      "security": "Security:",
+      "thirdCountryTransfer": "Third Country Transfer:",
+      "retention": "Retention:",
+      "ocrNote": "Important OCR Note:",
+      "objectionRight": "Right to Object:",
+      "important": "Important:",
+      "note": "Note:",
+      "processingActivity": "Processing Activity",
+      "explanation": "Explanation"
+    },
     "section1": {
       "title": "1. Privacy at a Glance",
       "generalTitle": "General Information",
@@ -227,7 +260,7 @@
         "address": "Railway Corporation, San Francisco, CA, USA",
         "purpose": "Hosting of the application and the encrypted PostgreSQL database in the EU region. Railway is SOC 2 Type I certified and offers GDPR-compliant Data Processing Agreements.",
         "legalBasis": "Art. 28 GDPR (Data Processing Agreement).",
-        "thirdCountryTransfer": "Railway is a US company. Data access from the USA cannot be fully excluded. Data transfer is secured by EU Standard Contractual Clauses (SCCs) pursuant to Art. 46(2)(c) GDPR."
+        "thirdCountryNote": "Railway is a US company. Data access from the USA cannot be fully excluded. Data transfer is secured by EU Standard Contractual Clauses (SCCs) pursuant to Art. 46(2)(c) GDPR."
       },
       "dpaNote": "Data Processing Agreements (DPAs) pursuant to Art. 28 GDPR exist with all named third-party providers, ensuring the protection of your data according to European data protection standards. These agreements obligate our partners to comply with strict data protection requirements and to process data only according to our instructions."
     },

@@ -2,6 +2,39 @@
   "datenschutz": {
     "pageTitle": "Datenschutzerklärung",
     "websiteName": "healthlingo.de",
+    "tableOfContents": {
+      "title": "Inhalt",
+      "items": [
+        "1. Datenschutz auf einen Blick",
+        "2. Allgemeine Hinweise und Pflichtinformationen",
+        "3. Datenerfassung auf dieser Website",
+        "4. Rechtsgrundlagen der Verarbeitung",
+        "5. Gesundheitsdatenschutz",
+        "6. Drittparteien und Datenverarbeitung",
+        "7. Hinweis zur PII-Entfernung",
+        "8. Automatisierte Verarbeitung und KI",
+        "9. Ihre Einwilligung",
+        "10. Ihre Rechte",
+        "11. Feedback und Nutzerbewertungen",
+        "12. Datensicherheit",
+        "13. Kontakt und Datenschutzanfragen",
+        "14. Aktualisierung dieser Erklärung"
+      ]
+    },
+    "labels": {
+      "purpose": "Zweck:",
+      "legalBasis": "Rechtsgrundlage:",
+      "dataProcessed": "Verarbeitete Daten:",
+      "security": "Sicherheit:",
+      "thirdCountryTransfer": "Drittlandtransfer:",
+      "retention": "Speicherdauer:",
+      "ocrNote": "Wichtiger Hinweis zur OCR:",
+      "objectionRight": "Widerspruchsrecht:",
+      "important": "Wichtig:",
+      "note": "Hinweis:",
+      "processingActivity": "Verarbeitungstätigkeit",
+      "explanation": "Erläuterung"
+    },
     "section1": {
       "title": "1. Datenschutz auf einen Blick",
       "generalTitle": "Allgemeine Hinweise",
@@ -227,7 +260,7 @@
         "address": "Railway Corporation, San Francisco, CA, USA",
         "purpose": "Hosting der Anwendung und der verschlüsselten PostgreSQL-Datenbank in der EU-Region. Railway ist SOC 2 Type I zertifiziert und bietet DSGVO-konforme Data Processing Agreements.",
         "legalBasis": "Art. 28 DSGVO (Auftragsverarbeitungsvertrag).",
-        "thirdCountryTransfer": "Railway ist ein US-Unternehmen. Der Datenzugriff aus den USA kann nicht vollständig ausgeschlossen werden. Die Datenübertragung ist durch EU-Standardvertragsklauseln (SCCs) gemäß Art. 46 Abs. 2 lit. c DSGVO abgesichert."
+        "thirdCountryNote": "Railway ist ein US-Unternehmen. Der Datenzugriff aus den USA kann nicht vollständig ausgeschlossen werden. Die Datenübertragung ist durch EU-Standardvertragsklauseln (SCCs) gemäß Art. 46 Abs. 2 lit. c DSGVO abgesichert."
       },
       "dpaNote": "Mit allen genannten Drittanbietern bestehen Auftragsverarbeitungsverträge (AVV) gemäß Art. 28 DSGVO, die den Schutz Ihrer Daten nach europäischen Datenschutzstandards gewährleisten. Diese Verträge verpflichten unsere Partner zur Einhaltung strenger Datenschutzanforderungen und zur ausschließlichen Verarbeitung nach unseren Weisungen."
     },
