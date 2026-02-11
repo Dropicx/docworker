@@ -1,6 +1,6 @@
-# DocTranslator 🏥
+# DocWorker 📄
 
-> GDPR-compliant medical document translation service powered by AI
+> GDPR-compliant document translation and processing service powered by AI
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11-blue.svg)
@@ -10,18 +10,18 @@
 ![Tests](https://img.shields.io/badge/tests-passing-brightgreen.svg)
 ![Coverage](https://img.shields.io/badge/coverage-60%25-yellow.svg)
 
-DocTranslator transforms complex medical documents into patient-friendly language while maintaining complete data privacy and GDPR compliance. Built with FastAPI and React, powered by OVH AI Endpoints.
+DocWorker transforms documents (letters, reports, forms, and more) into clear, readable language while maintaining complete data privacy and GDPR compliance. Built with FastAPI and React, powered by OVH AI Endpoints. Use it for medical documents, legal correspondence, administrative letters, or any text-heavy documents.
 
 ## ✨ Features
 
 - 🔒 **GDPR Compliant** - All data processing within EU, zero data retention
-- 🏥 **Medical Specialization** - Optimized for medical terminology and documents
+- 📄 **Generic Document Support** - Letters, reports, forms, lab results, and more
 - 🌍 **Multi-Language Support** - DE, EN, FR, ES, IT, PT, NL, PL
 - 📄 **Multiple Formats** - PDF, DOCX, TXT, JPG, PNG (up to 50MB)
 - 🔍 **Full OCR Support** - Tesseract OCR for scanned documents
 - 🚀 **AI-Powered** - Llama 3.3 70B and Mistral Nemo via OVH AI Endpoints
 - 🛡️ **Privacy Filter** - Automatic PII removal with spaCy NER
-- ⚡ **Fast Processing** - Optimized 9-step pipeline
+- ⚡ **Fast Processing** - Optimized pipeline
 - 🎨 **Modern UI** - React + TypeScript + TailwindCSS
 - 📊 **Admin Dashboard** - Configurable prompts and pipeline steps
 
@@ -50,8 +50,8 @@ See [DEPLOYMENT.md](./docs/DEPLOYMENT.md) for detailed instructions.
 
 ```bash
 # Clone repository
-git clone <your-repo-url>
-cd doctranslator
+git clone https://github.com/Dropicx/docworker
+cd docworker
 
 # Set environment variables
 cp .env.example .env
@@ -159,28 +159,32 @@ See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for complete local setup guide.
 - ✅ **CORS Protection** - Configurable origins
 - ✅ **Input Validation** - Pydantic models
 
-## 🏥 Medical Document Support
+## 📄 Document Support
 
-| Document Type | Description | Examples |
-|---------------|-------------|----------|
-| **ARZTBRIEF** | Doctor's letters | Discharge summaries, referrals |
-| **BEFUNDBERICHT** | Medical reports | Radiology, pathology findings |
-| **LABORWERTE** | Lab results | Blood tests, clinical chemistry |
+DocWorker can process a wide range of documents. Example types (configurable):
+
+| Document Type   | Description              | Examples                          |
+|-----------------|--------------------------|-----------------------------------|
+| **ARZTBRIEF**   | Letters / correspondence | Discharge summaries, referrals    |
+| **BEFUNDBERICHT** | Reports / findings     | Radiology, pathology, any report  |
+| **LABORWERTE**  | Structured data          | Lab results, tables, measurements |
+
+Pipeline steps (e.g. content validation, classification) are configurable via the admin dashboard so you can adapt them to your domain (medical, legal, administrative, etc.).
 
 ## 🌍 Language Support
 
-| Input | Output Translations |
-|-------|---------------------|
+| Input   | Output Translations |
+|--------|----------------------|
 | German (DE) | English, French, Spanish, Italian, Portuguese, Dutch, Polish |
 
 ## 📊 Processing Pipeline
 
 1. **TEXT_EXTRACTION** - OCR preprocessing with Qwen Vision
-2. **MEDICAL_VALIDATION** - Binary medical classification
+2. **MEDICAL_VALIDATION** - Content validation (configurable; can enforce document type)
 3. **CLASSIFICATION** - Document type detection
 4. **PII_PREPROCESSING** - Privacy filtering
-5. **TRANSLATION** - Patient-friendly German
-6. **FACT_CHECK** - Medical accuracy verification
+5. **TRANSLATION** - Clear, readable output
+6. **FACT_CHECK** - Accuracy verification
 7. **GRAMMAR_CHECK** - Language correction
 8. **LANGUAGE_TRANSLATION** - Multi-language support
 9. **FINAL_CHECK** - Quality assurance
@@ -231,11 +235,11 @@ npm run test:e2e
 
 ## 🎯 Code Quality
 
-DocTranslator maintains high code quality standards through automated tooling and CI/CD pipelines.
+DocWorker maintains high code quality standards through automated tooling and CI/CD pipelines.
 
 ### Backend Quality Tools
 
-- **Ruff** - Fast Python linter and formatter (1,451 issues auto-fixed)
+- **Ruff** - Fast Python linter and formatter
 - **MyPy** - Static type checking for Python
 - **Bandit** - Security vulnerability scanning
 - **pytest** - Unit and integration testing (60%+ coverage)
@@ -257,36 +261,7 @@ pre-commit install
 pre-commit run --all-files
 ```
 
-Hooks automatically run on every commit:
-- Ruff linting and formatting
-- MyPy type checking
-- Bandit security scanning
-- JSON/YAML validation
-- Secret detection (gitleaks)
-- Trailing whitespace removal
-- Conventional commit message validation
-
-### CI/CD Pipeline
-
-Every push and pull request triggers automated quality checks on self-hosted ARC runners:
-
-**Quality Checks:**
-- ✅ **Backend Quality** - Ruff linting & formatting, MyPy type checking, Bandit security scan
-- ✅ **Backend Tests** - pytest with PostgreSQL (Docker-in-Docker on Kubernetes)
-- ✅ **Frontend Quality** - ESLint, Prettier, TypeScript strict mode
-- ✅ **Frontend Build** - Production build verification with Vite
-- ✅ **Security Audit** - pip-audit and npm audit for dependency vulnerabilities
-- ✅ **Quality Gate** - All checks must pass for PR merge
-
-**Self-Hosted Runners:**
-- Runs on Actions Runner Controller (ARC) in Kubernetes cluster
-- Docker daemon access for service containers (PostgreSQL for tests)
-- Python 3.11 and Node.js 18 environments pre-configured
-- Faster builds with internal network access and better resource control
-
-**Workflow Configuration:** `.github/workflows/quality.yml`
-
-See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) for detailed CI/CD setup and [CONTRIBUTING.md](./CONTRIBUTING.md) for code style guidelines.
+See [DEVELOPMENT.md](./docs/DEVELOPMENT.md) and [CONTRIBUTING.md](./CONTRIBUTING.md) for code style and CI/CD details.
 
 ## 🤝 Contributing
 
@@ -319,8 +294,8 @@ MIT License - see [LICENSE](LICENSE) file for details.
 ## 📞 Support
 
 - 📖 [Documentation](./docs/README.md)
-- 🐛 [Issues](https://github.com/your-repo/issues)
-- 💬 [Discussions](https://github.com/your-repo/discussions)
+- 🐛 [Issues](https://github.com/Dropicx/docworker/issues)
+- 💬 [Discussions](https://github.com/Dropicx/docworker/discussions)
 
 ## 🗺️ Roadmap
 
@@ -334,4 +309,4 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ---
 
-**Built with ❤️ for healthcare professionals and patients**
+**Built with ❤️ for clear, private document processing**

@@ -230,18 +230,19 @@ def seed_modular_pipeline():
             pipeline_steps = [
                 # ==================== BILINGUAL UNIVERSAL STEPS (DE + EN) ====================
                 {
-                    "name": "Medical Content Validation",
-                    "description": "Validates if document contains medical content (Universal Branching Step)",
+                    "name": "Content Validation",
+                    "description": "Validates if document contains processable content (e.g. letter, report, form) - Universal Branching Step",
                     "order": 1,
                     "enabled": True,
                     "prompt_template": """{source_language_instruction}
 
-Analyze the following text and determine if it contains medical content.
+Analyze the following text and determine if it contains processable document content (e.g. letters, reports, forms, correspondence, structured data).
 
 Text:
 {input_text}
 
-Respond ONLY with: MEDICAL or NON_MEDICAL""",
+Respond ONLY with: MEDICAL or NON_MEDICAL
+(Use MEDICAL for medical documents; use NON_MEDICAL for content that is not a processable document.)""",
                     "selected_model_id": mistral_id,
                     "temperature": 0.3,
                     "max_tokens": 100,
@@ -256,8 +257,8 @@ Respond ONLY with: MEDICAL or NON_MEDICAL""",
                     "ui_stage": "validation",
                     "stop_conditions": {
                         "stop_on_values": ["NON_MEDICAL", "NICHT_MEDIZINISCH", "NOT_MEDICAL"],
-                        "termination_reason": "Non-medical content detected",
-                        "termination_message": "The uploaded document does not contain medical content. Please upload a medical document (e.g., doctor's letter, medical report, lab results).",
+                        "termination_reason": "Content validation failed",
+                        "termination_message": "The uploaded document could not be processed. Please upload a supported document (e.g. letter, report, form, correspondence).",
                     },
                 },
                 {
@@ -267,10 +268,10 @@ Respond ONLY with: MEDICAL or NON_MEDICAL""",
                     "enabled": True,
                     "prompt_template": """{source_language_instruction}
 
-Analyze this medical text and classify it as one of:
-- ARZTBRIEF: Doctor's letter, discharge summary, referral letter
-- BEFUNDBERICHT: Medical findings report, diagnostic report, imaging report
-- LABORWERTE: Laboratory results, blood tests, clinical measurements
+Analyze this text and classify it as one of:
+- ARZTBRIEF: Letter, correspondence, discharge summary, referral
+- BEFUNDBERICHT: Report, findings, diagnostic or imaging report
+- LABORWERTE: Structured data, lab results, measurements, tables
 
 Text:
 {input_text}

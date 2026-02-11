@@ -16,7 +16,7 @@ WORKER_MAX_TASKS_PER_CHILD = int(os.getenv('WORKER_MAX_TASKS_PER_CHILD', '50'))
 WORKER_PREFETCH_MULTIPLIER = int(os.getenv('WORKER_PREFETCH_MULTIPLIER', '1'))
 
 # ==================== TASK TIMEOUTS ====================
-# Increased for complex medical documents like lab reports
+# Increased for complex documents (e.g. lab reports, long reports)
 TASK_TIME_LIMIT = int(os.getenv('TASK_TIME_LIMIT', '1200'))  # 20 minutes hard limit
 TASK_SOFT_TIME_LIMIT = int(os.getenv('TASK_SOFT_TIME_LIMIT', '1080'))  # 18 minutes soft limit
 
@@ -36,7 +36,8 @@ CELERY_TASK_DEFAULT_ROUTING_KEY = 'default'
 # Route tasks to appropriate queues
 CELERY_TASK_ROUTES = {
     # High priority - interactive user uploads
-    'process_medical_document': {'queue': 'high_priority'},
+    'process_document': {'queue': 'high_priority'},
+    'process_medical_document': {'queue': 'high_priority'},  # alias for backward compatibility
 
     # Low priority - background analysis tasks
     'analyze_feedback_quality': {'queue': 'low_priority'},

@@ -1,7 +1,7 @@
 {
-  "name": "medical-document-translator-frontend",
+  "name": "docworker-frontend",
   "version": "1.0.0",
-  "description": "DSGVO-konforme Übersetzung medizinischer Dokumente - Frontend",
+  "description": "DocWorker - GDPR-compliant document translation and processing - Frontend",
   "private": true,
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.12",

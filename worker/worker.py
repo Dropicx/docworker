@@ -27,7 +27,7 @@ logger.info(f"🔗 Connecting to Redis: {config.REDIS_URL.split('@')[0]}...")
 
 # Create Celery app
 celery_app = Celery(
-    'doctranslator_worker',
+    'docworker_worker',
     broker=config.REDIS_URL,
     backend=config.REDIS_URL,
     include=['worker.tasks.document_processing', 'worker.tasks.scheduled_tasks', 'worker.tasks.feedback_analysis']

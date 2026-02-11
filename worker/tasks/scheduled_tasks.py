@@ -54,7 +54,7 @@ def health_check_worker():
     Used by monitoring systems to verify worker is responsive
     """
     logger.debug("❤️ Worker health check")
-    return {'status': 'healthy', 'worker': 'doctranslator-worker'}
+    return {'status': 'healthy', 'worker': 'docworker'}
 
 
 @celery_app.task(name='cleanup_celery_results')
@@ -244,7 +244,7 @@ def cleanup_old_files():
         import time
         from pathlib import Path
 
-        tmp_dir = Path('/tmp/medical-translator')
+        tmp_dir = Path('/tmp/docworker')
         if not tmp_dir.exists():
             logger.info("✅ No temporary directory found")
             return {'status': 'completed', 'files_removed': 0}

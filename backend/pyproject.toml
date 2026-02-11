@@ -7,7 +7,7 @@
 #
 
 [project]
-name = "doctranslator"
+name = "docworker"
 version = "1.0.0"
 description = "GDPR-compliant medical document translation service"
 requires-python = ">=3.11"

@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**DocTranslator** - GDPR-compliant medical document translation service with OCR support, powered by OVH AI Endpoints (Llama 3.3 70B).
+**DocWorker** - GDPR-compliant document translation and processing service with OCR support, powered by OVH AI Endpoints (Llama 3.3 70B). Generic pipeline for letters, reports, forms, and more.
 
 ### Tech Stack
 - **Backend**: FastAPI 0.120+ + Python 3.11 (async)
@@ -16,7 +16,7 @@
 
 ### Project Structure
 ```
-doctranslator/
+docworker/
 ├── backend/
 │   ├── app/
 │   │   ├── routers/        # API endpoints
@@ -93,7 +93,7 @@ docker-compose down
 
 ### 10-Step Processing Pipeline
 1. TEXT_EXTRACTION - OCR via Mistral OCR (primary) or PaddleOCR
-2. MEDICAL_VALIDATION - Medical content classification
+2. MEDICAL_VALIDATION - Content validation (configurable; processable document check)
 3. CLASSIFICATION - Document type detection
 4. PII_PREPROCESSING - Privacy filtering via Hetzner PII service
 5. TRANSLATION - Patient-friendly translation (Llama 3.3 70B)
@@ -103,10 +103,10 @@ docker-compose down
 9. FINAL_CHECK - Quality assurance
 10. FORMATTING - Markdown output
 
-### Document Types
-- **ARZTBRIEF** - Doctor's letters, discharge summaries
-- **BEFUNDBERICHT** - Medical reports, findings
-- **LABORWERTE** - Lab results, blood tests
+### Document Types (configurable)
+- **ARZTBRIEF** - Letters, correspondence, discharge summaries
+- **BEFUNDBERICHT** - Reports, findings, diagnostic reports
+- **LABORWERTE** - Structured data, lab results, tables
 
 ### Supported Languages
 - Input: German (DE)

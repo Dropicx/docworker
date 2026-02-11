@@ -77,7 +77,7 @@ Note:
     Worker defined in separate worker/ directory with task implementations.
 
     **No Task Definitions**: Backend only enqueues tasks via send_task().
-    Actual task logic (process_medical_document) resides in worker service.
+    Actual task logic (process_document) resides in worker service.
 
     **Shared Redis**: Backend and worker must connect to same Redis instance
     for task queue to function. Verify REDIS_URL matches across services.
@@ -106,7 +106,8 @@ celery_client.conf.update(
     result_expires=3600,  # Task results expire after 1 hour
     # Task routing - ensures tasks go to correct priority queues
     task_routes={
-        "process_medical_document": {"queue": "high_priority"},
+        "process_document": {"queue": "high_priority"},
+    "process_medical_document": {"queue": "high_priority"},  # alias
         "analyze_feedback_quality": {"queue": "low_priority"},
         "retry_failed_analyses": {"queue": "maintenance"},
         "cleanup_orphaned_jobs": {"queue": "maintenance"},
@@ -117,7 +118,7 @@ celery_client.conf.update(
 )
 
 logger.info(f"🔗 Celery client configured with Redis: {REDIS_URL.split('@')[0]}...")
-logger.info("📋 Task routing: process_medical_document → high_priority queue")
+logger.info("📋 Task routing: process_document → high_priority queue")
 
 
 def test_privacy_filter_via_worker(text: str, timeout: int = 30) -> dict[str, Any]:
@@ -253,7 +254,7 @@ def enqueue_document_processing(processing_id: str, options: dict[str, Any] | No
 
     Note:
         **Task Routing**:
-        Sends to 'process_medical_document' task on worker.
+        Sends to 'process_document' task on worker.
         Worker must have matching task definition registered.
 
         **Error Propagation**:
@@ -277,7 +278,7 @@ def enqueue_document_processing(processing_id: str, options: dict[str, Any] | No
 
         # Send task to worker
         result = celery_client.send_task(
-            "process_medical_document", args=(processing_id,), kwargs={"options": options or {}}
+            "process_document", args=(processing_id,), kwargs={"options": options or {}}
         )
 
         logger.info(f"✅ Task enqueued: {processing_id} (task_id: {result.id})")

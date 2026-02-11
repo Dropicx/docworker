@@ -150,7 +150,7 @@ export const DOCUMENT_TYPE_INFO: Record<DocumentClass, DocumentTypeInfo> = {
   [DocumentClass.BEFUNDBERICHT]: {
     id: 'befundbericht',
     name: 'Befundbericht',
-    description: 'Medizinische Befunde, Untersuchungsergebnisse, Bildgebung',
+    description: 'Befunde, Berichte, Untersuchungsergebnisse, Bildgebung',
     icon: '🔬',
     examples: ['MRT-Befund', 'CT-Bericht', 'Ultraschallbefund', 'Pathologiebefund'],
   },
@@ -200,9 +200,9 @@ export const GLOBAL_PROMPT_STEPS = {
     order: 0,
   },
   medical_validation_prompt: {
-    name: '🔍 Medizinische Validierung (Universal)',
-    description: 'Erkennt medizinische Inhalte - gilt für alle Dokumenttypen - Schritt 1',
-    placeholder: 'Analysiere diesen Text und bestimme, ob er medizinischen Inhalt enthält...',
+    name: '🔍 Inhaltsvalidierung (Universal)',
+    description: 'Prüft, ob das Dokument verarbeitbaren Inhalt enthält - Schritt 1',
+    placeholder: 'Analysiere diesen Text und bestimme, ob er verarbeitbaren Dokumentinhalt enthält...',
     category: 'preprocessing',
     order: 1,
   },

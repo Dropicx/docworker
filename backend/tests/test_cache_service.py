@@ -40,7 +40,7 @@ class TestCacheServiceInit:
     def test_key_prefix(self, cache_service):
         """Test that cache keys use correct prefix."""
         key = cache_service._make_key("pipeline_steps", "enabled")
-        assert key == "doctranslator:pipeline_steps:enabled"
+        assert key == "docworker:pipeline_steps:enabled"
 
     def test_namespaces_defined(self, cache_service):
         """Test that cache namespaces are defined."""

@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     cache_pipeline_ttl_seconds: int = Field(
         default=600, description="Pipeline/model config cache TTL in seconds (10 minutes)"
     )
-    cache_key_prefix: str = Field(default="doctranslator", description="Redis cache key prefix")
+    cache_key_prefix: str = Field(default="docworker", description="Redis cache key prefix")
 
     # ==================
     # OVH AI Endpoints

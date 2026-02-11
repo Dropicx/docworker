@@ -16,9 +16,9 @@
     "pdfProcessing": "PDF-Verarbeitung"
   },
   "hero": {
-    "title1": "Medizinische Dokumente",
+    "title1": "Dokumente",
     "title2": "einfach verstehen",
-    "description": "Verwandeln Sie komplexe Arztbriefe und medizinische Befunde in verständliche Sprache. Schnell, sicher und DSGVO-konform.",
+    "description": "Verwandeln Sie Briefe, Berichte und Formulare in klare, verständliche Sprache. Schnell, sicher und DSGVO-konform.",
     "gdpr": "100% DSGVO",
     "ready": "Sofort bereit",
     "noStorage": "Keine Speicherung"
@@ -27,10 +27,10 @@
     "heading": "Drei gute Gründe",
     "privacyTitle": "Datenschutz zuerst",
     "privacyDescription": "Ihre Daten werden nur während der Verarbeitung gespeichert, nie für KI-Training verwendet und direkt nach der Übersetzung automatisch gelöscht.",
-    "precisionTitle": "Medizinisch präzise",
-    "precisionDescription": "Unterstützt durch KI, die für medizinische Fachbegriffe optimiert ist. Präzise Übersetzungen, die die klinische Bedeutung bewahren.",
+    "precisionTitle": "Präzise & kontextbewusst",
+    "precisionDescription": "Unterstützt durch KI. Präzise Übersetzungen, die die Bedeutung für Briefe, Berichte und strukturierte Inhalte bewahren.",
     "speedTitle": "Schnelle Verarbeitung",
-    "speedDescription": "Erhalten Sie innerhalb weniger Sekunden eine klare, verständliche Übersetzung Ihrer medizinischen Dokumente."
+    "speedDescription": "Erhalten Sie innerhalb weniger Sekunden eine klare, verständliche Übersetzung Ihrer Dokumente."
   },
   "upload": {
     "title": "Dokumente hochladen",

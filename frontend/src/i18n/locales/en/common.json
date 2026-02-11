@@ -16,9 +16,9 @@
     "pdfProcessing": "PDF processing"
   },
   "hero": {
-    "title1": "Medical Documents",
+    "title1": "Documents",
     "title2": "made simple",
-    "description": "Transform complex medical letters and reports into easy-to-understand language. Fast, secure and GDPR-compliant.",
+    "description": "Transform letters, reports and forms into clear, easy-to-understand language. Fast, secure and GDPR-compliant.",
     "gdpr": "100% GDPR",
     "ready": "Instant access",
     "noStorage": "No data storage"
@@ -27,10 +27,10 @@
     "heading": "Three good reasons",
     "privacyTitle": "Privacy first",
     "privacyDescription": "Your data is only stored during processing, never used for AI training, and automatically deleted immediately after translation.",
-    "precisionTitle": "Medically precise",
-    "precisionDescription": "Powered by AI optimized for medical terminology. Accurate translations that preserve clinical meaning.",
+    "precisionTitle": "Accurate & domain-aware",
+    "precisionDescription": "Powered by AI. Accurate translations that preserve meaning for letters, reports and structured content.",
     "speedTitle": "Fast processing",
-    "speedDescription": "Receive a clear, easy-to-understand translation of your medical documents within seconds."
+    "speedDescription": "Receive a clear, easy-to-understand translation of your documents within seconds."
   },
   "upload": {
     "title": "Upload documents",

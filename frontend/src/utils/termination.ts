@@ -71,19 +71,25 @@ export function getTerminationMetadata(status: ProcessingProgress): TerminationM
  * @returns Localized title string
  */
 export function getTerminationTitle(metadata: TerminationMetadata): string {
-  if (metadata.reason === 'Non-medical content detected') {
-    return 'Nicht-medizinischer Inhalt erkannt';
+  if (
+    metadata.reason === 'Non-medical content detected' ||
+    metadata.reason === 'Content validation failed'
+  ) {
+    return 'Inhalt konnte nicht verarbeitet werden';
   }
 
   return 'Verarbeitung gestoppt';
 }
 
 /**
- * Check if termination is due to non-medical content
+ * Check if termination is due to content validation (unsupported or non-processable content)
  *
  * @param metadata - Termination metadata
- * @returns true if non-medical content was detected
+ * @returns true if content validation failed or non-medical content was detected
  */
 export function isNonMedicalTermination(metadata: TerminationMetadata): boolean {
-  return metadata.reason === 'Non-medical content detected';
+  return (
+    metadata.reason === 'Non-medical content detected' ||
+    metadata.reason === 'Content validation failed'
+  );
 }

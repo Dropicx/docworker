@@ -406,7 +406,7 @@ Contact: mailto:security@healthlingo.de
 Expires: 2027-12-31T23:59:59.000Z
 Preferred-Languages: en, de
 Canonical: https://healthlingo.de/.well-known/security.txt
-Policy: https://github.com/Dropicx/doctranslator/security/policy
+Policy: https://github.com/Dropicx/docworker/security/policy
 """
 
 

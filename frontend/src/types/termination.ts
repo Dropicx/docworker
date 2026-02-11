@@ -1,7 +1,7 @@
 /**
  * Pipeline Termination Types
  *
- * Types for handling early pipeline termination (e.g., non-medical content)
+ * Types for handling early pipeline termination (e.g., content validation failed)
  */
 
 export interface TerminationInfo {

@@ -20,7 +20,7 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 # Redis key prefix for pipeline progress
-_KEY_PREFIX = "doctranslator:pipeline_progress"
+_KEY_PREFIX = "docworker:pipeline_progress"
 _TTL_SECONDS = 3600
 
 
@@ -28,7 +28,7 @@ class PipelineProgressTracker:
     """
     Lightweight async service that writes/reads a Redis hash per processing job.
 
-    Redis key: doctranslator:pipeline_progress:{processing_id}
+    Redis key: docworker:pipeline_progress:{processing_id}
     Type: Hash
     TTL: 3600s (auto-cleanup)
 

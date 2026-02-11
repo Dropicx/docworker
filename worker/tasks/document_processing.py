@@ -1,7 +1,7 @@
 """
 Document Processing Tasks
 
-Background tasks for medical document translation and processing.
+Background tasks for document translation and processing (generic pipeline).
 """
 import logging
 import sys
@@ -13,17 +13,16 @@ from worker.worker import celery_app
 
 # Add backend to path
 sys.path.insert(0, '/app/backend')
-sys.path.insert(0, '/home/catchmelit/Projects/doctranslator/backend')
 
 logger = logging.getLogger(__name__)
 
 
-@celery_app.task(bind=True, name='process_medical_document')
-def process_medical_document(self, processing_id: str, options: dict = None):
+def _process_document_impl(self, processing_id: str, options: dict = None):
     """
-    Background task for processing medical documents with modular pipeline
+    Shared implementation for document processing pipeline.
 
     Args:
+        self: Celery task instance (for update_state)
         processing_id: Unique identifier for the processing job
         options: Optional processing parameters (target_language, etc.)
 
@@ -174,7 +173,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
                 pii_start_time = time.time()
                 original_length = len(extracted_text)
 
-                # Get source language from options (default to German for medical documents)
+                # Get source language from options (default to German)
                 source_language = options.get('source_language', 'de') if options else 'de'
                 logger.info(f"   Using language model: {source_language}")
 
@@ -236,7 +235,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             # Check if this is a controlled termination (valid outcome) vs. actual failure
             if metadata.get('terminated', False):
                 # ==================== CONTROLLED TERMINATION ====================
-                # This is a VALID outcome (e.g., non-medical content detected)
+                # This is a VALID outcome (e.g., content validation failed / unsupported content)
                 # Not an error - just an early exit with a specific reason
                 termination_reason = metadata.get('termination_reason', 'Processing stopped')
                 termination_message = metadata.get('termination_message', 'Processing was terminated.')
@@ -305,7 +304,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
         # ==================== FINALIZE JOB (SINGLE SOURCE OF TRUTH) ====================
         # Update job columns directly (Issue #55: separate encrypted DB columns)
-        # Medical content columns will be encrypted by repository automatically
+        # Content columns will be encrypted by repository automatically
         job_repo.update(
             job_id_for_updates,
             status=StepExecutionStatus.COMPLETED,
@@ -313,7 +312,7 @@ def process_medical_document(self, processing_id: str, options: dict = None):
             progress_percent=100,
             total_execution_time_seconds=total_time,
 
-            # Encrypted medical content
+            # Encrypted content
             original_text=extracted_text,
             translated_text=final_output,
             language_translated_text=metadata.get('language_translation'),
@@ -415,6 +414,18 @@ def process_medical_document(self, processing_id: str, options: dict = None):
 
     finally:
         db.close()
+
+
+@celery_app.task(bind=True, name='process_document')
+def process_document(self, processing_id: str, options: dict = None):
+    """Background task for document processing (primary task name)."""
+    return _process_document_impl(self, processing_id, options)
+
+
+@celery_app.task(bind=True, name='process_medical_document')
+def process_medical_document(self, processing_id: str, options: dict = None):
+    """Alias for process_document (backward compatibility)."""
+    return _process_document_impl(self, processing_id, options)
 
 
 def await_sync(coroutine):
